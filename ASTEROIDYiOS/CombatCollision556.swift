@@ -28,3 +28,49 @@ enum CombatCollision556 {
         return first
     }
 }
+
+
+// Common, pure combat decision core shared by the flat and spherical iOS
+// test sectors. Values follow Windows/src/Game.cs Rock.Health and Game.Split.
+// Caller still owns the geometry, fragment generation and visuals.
+enum CombatDamage556 {
+    struct RockResult: Equatable {
+        let health: Int
+        let destroyed: Bool
+        let removedShard: Bool
+        let score: Int
+    }
+
+    static func rockScore(size:Int,originalHealth:Int,tier:Int) -> Int {
+        (size == 3 ? 20 : size == 2 ? 50 : 100)
+          + (originalHealth - 1) * 30 + tier * 10
+    }
+    static func hitRock(health:Int,shardLife:Float,amount:Int,
+                        size:Int,originalHealth:Int,tier:Int) -> RockResult {
+        guard amount > 0 else {
+            return RockResult(health:health,destroyed:false,
+                              removedShard:false,score:0)
+        }
+        if shardLife > 0 {
+            return RockResult(health:health,destroyed:false,
+                              removedShard:true,score:0)
+        }
+        let remaining=health-amount
+        if remaining > 0 {
+            return RockResult(health:remaining,destroyed:false,
+                              removedShard:false,score:0)
+        }
+        return RockResult(health:remaining,destroyed:true,
+                          removedShard:false,
+                          score:rockScore(size:size,originalHealth:originalHealth,tier:tier))
+    }
+
+    /// Compare contact times, not array iteration order. The reference game
+    /// tests each candidate and updates the winner only on STRICTLY earlier
+    /// intersection. Equal-time hits keep the first candidate.
+    static func prefer(candidateTime:Float,candidateIndex:Int,
+                       bestTime:Float,bestIndex:Int?) -> Bool {
+        candidateTime >= 0 && candidateTime <= 1 &&
+        (bestIndex == nil || candidateTime < bestTime)
+    }
+}
