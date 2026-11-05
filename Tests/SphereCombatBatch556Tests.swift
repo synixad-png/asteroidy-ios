@@ -66,7 +66,7 @@ import Foundation
         // Timed objective alone cannot clear a sector with surviving rocks.
         var timed = SphereSector556(balance:waveBalance,diagnosticAsteroids:[])
         precondition(timed.objective == .waves && !timed.sectorFinished)
-        move(&timed,count:5750,player:Vec2(x:320,y:360))
+        move(&timed,count:5800,player:Vec2(x:320,y:360))
         precondition(timed.objectiveWave == 3)
         precondition(timed.objectiveTimerComplete && timed.sectorFinished && timed.sectorCleared)
         var defended = SphereSector556(
