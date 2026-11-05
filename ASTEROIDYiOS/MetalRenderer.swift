@@ -314,7 +314,13 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             // Geodesic asteroid positions on the visible Boreas mesh.
             // Radius is translated from the original H/pi spherical atlas.
             for asteroid in sphereSector.asteroids {
-                let surface = PlanetPreview556.shipSurfacePosition(asteroid.position, altitude: 0.10)
+                // AmigaBounce265 / GpuSphere67: radial hop in original
+                // spherical world units. On the unit-radius Metal planet,
+                // divide source arc units by Sphere67.radius (H / PI).
+                let radialHop = sphereSector.isAmigaDemo
+                    ? asteroid.bounceHeight / Sphere67.radius : 0
+                let surface = PlanetPreview556.shipSurfacePosition(
+                    asteroid.position,altitude:0.10+radialHop)
                 let visualRadius = max(0.014, asteroid.radius / Sphere67.radius * 0.65)
                 let normal = Sphere67.normal(asteroid.position)
                 let spinAxis = SIMD3<Float>(normal.x,normal.y,normal.z)
