@@ -450,10 +450,9 @@ enum SphereNebula556 {
             weight *= 0.48
         }
         // Source uses Math.Sin/Math.Pow/Math.Exp (Double).
-        let edge=pow(sin(Double(nx)*Double.pi)*
-                     sin(Double(ny)*Double.pi),0.75)
-        let ribbonAxis=Double(ny)-0.48-
-            Double(sin(nx*5+Float(theme)))*0.16-Double(warp)*0.13
+        let edgeProduct=sin(Double(nx)*Double.pi)*sin(Double(ny)*Double.pi)
+        let edge=pow(max(0,edgeProduct),0.75)
+        let ribbonAxis=Double(ny)-0.48-Double(sin(nx*5+Float(theme)))*0.16-Double(warp)*0.13
         let ribbon=exp(-pow(ribbonAxis*3.1,2))
         let cloud=Double(max(0,value-0.34))*3.5
         let alpha=max(0,min(190,Int(edge*ribbon*cloud*220)))
@@ -491,10 +490,8 @@ enum SphereNebula556 {
             let f=SphereCameraView556(camera:camera)
             let depth = -SphereVector3.dot(f.back,direction)
             guard depth>0.4 else {return nil}
-            let x:Float=640+SphereVector3.dot(f.right,direction)*720/
-                max(0.01,depth)
-            let y:Float=360-SphereVector3.dot(f.up,direction)*720/
-                max(0.01,depth)
+            let x:Float=640+SphereVector3.dot(f.right,direction)*720/max(0.01,depth)
+            let y:Float=360-SphereVector3.dot(f.up,direction)*720/max(0.01,depth)
             if near {
                 guard x > -900 && x < 2180 &&
                       y > -600 && y < 1320 else {return nil}
