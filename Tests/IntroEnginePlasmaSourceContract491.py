@@ -81,13 +81,20 @@ order=[
     'drawMesh(mesh,planetModel)',
     'drawMesh(shipMesh,craft)',
     'encoder.setRenderPipelineState(fighterPlasmaPipeline491)',
-    'encoder.drawPrimitives(type:.triangle,vertexStart:0,',
     'encoder.setRenderPipelineState(atmospherePipeline)',
     'encoder.endEncoding()',
 ]
 positions=[intro.index(t) for t in order]
 check(positions==sorted(positions) and len(set(positions))==len(positions),
       'Original GpuIntro41 painter order: planet -> ship -> engine flames -> atmosphere')
+# Several original IntroSky overlays also draw triangles BEFORE the
+# fighter. The plasma draw itself must occur AFTER switching to the
+# plasma pipeline but BEFORE selecting the atmosphere pipeline.
+flame=intro[intro.index(
+    'encoder.setRenderPipelineState(fighterPlasmaPipeline491)'):]
+check(flame.index('encoder.drawPrimitives(type:.triangle,vertexStart:0,') <
+      flame.index('encoder.setRenderPipelineState(atmospherePipeline)'),
+      'GpuShip v491 plasma draw missing or executed after atmospheric cap')
 check('frame:SIMD4<Float>(introTime41,1,' in intro,
       'Cinematic must use original DrawFighterMesh(time,power=1) source thrust')
 check('Self.scale(inv)' in intro and 'let plasmaModel=' in intro,
