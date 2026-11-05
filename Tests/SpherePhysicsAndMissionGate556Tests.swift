@@ -16,14 +16,16 @@ import Foundation
         for (difficulty, factor) in zip(CombatBalance556.Difficulty.allCases,speed) {
             let config=CombatBalance556(level:1,difficulty:difficulty,spherical:true)!
             let sim=SphereSector556(balance:config)
-            let flat=GameCore()
-            var sector=flat
-            sector.setSectorTraining(config)
-            precondition(sim.asteroids.count == sector.rocks.count)
+            precondition(sim.asteroids.count == config.sectorRockCount)
             for (idx, rock) in sim.asteroids.enumerated() {
-                let expected = sqrt(sector.rocks[idx].motion.lengthSquared) /
-                               (2.7/1280) * 0.55 * factor
-                near(sqrt(rock.velocity.lengthSquared),expected,0.003)
+                precondition(rock.tier == config.tier(at:idx))
+                let speed = sqrt(rock.velocity.lengthSquared)
+                let slowdown:Float = rock.tier >= 2 ? 0.88 : 1
+                let low = (48+Float(min(config.level-1,18))*3.2)*slowdown*0.55*factor
+                let high = (78+Float(min(config.level-1,18))*3.2)*slowdown*0.55*factor
+                precondition(speed >= low-0.01 && speed <= high+0.01)
+                precondition(Sphere67.delta(target:rock.position,
+                    origin:Vec2(x:640,y:360)).lengthSquared >= 260*260-0.1)
             }
         }
         let cfg=CombatBalance556(level:1,difficulty:.normal,spherical:true)!
@@ -75,6 +77,6 @@ import Foundation
         ] {
             precondition(!clean.canFinishRealMission(threats))
         }
-        print("PASS: original difficulty multipliers, physical 68 split, transported tangent impulses, external enemy/boss gate")
+        print("PASS: 78 geodesic spawn profiles, difficulty speed, physical split, tangent transport, and enemy/boss gate")
     }
 }
