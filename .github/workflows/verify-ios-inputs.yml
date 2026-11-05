@@ -13,6 +13,8 @@ on:
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/IntroOrbit41.swift'
+      - 'ASTEROIDYiOS/IntroRockGeometry41.swift'
+      - 'Tests/IntroRockGeometry41Tests.swift'
       - 'Tests/IntroOrbit41Tests.swift'
       - 'Tests/IntroOrbitSourceContract41.py'
       - 'Tests/SourceSceneStartupContract556.py'
@@ -36,4 +38,5 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
           swiftc -frontend -parse ASTEROIDYiOS/IntroOrbit41.swift
+          swiftc -frontend -parse ASTEROIDYiOS/IntroRockGeometry41.swift
           python3 Tests/IntroOrbitSourceContract41.py
