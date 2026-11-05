@@ -14,7 +14,7 @@ import Foundation
         precondition(response.contacts==1)
         precondition(sector.hull==2 && sector.damageEvents==1)
         precondition(response.velocity.x<60)
-        precondition(sector.asteroids[0].velocity.x>-10)
+        precondition(sector.asteroids[0].velocity.x > -10)
         let distance=sqrt(Sphere67.delta(target:sector.asteroids[0].position,
                                          origin:response.position).lengthSquared)
         precondition(distance>20)
