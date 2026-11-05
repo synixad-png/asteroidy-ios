@@ -49,9 +49,12 @@ enum CombatVerifiedHit556 {
         }
         let damage=CombatSurvival96.collisionDamage(level:level,
                                                      difficulty:difficulty)
-        if survival.shieldCharges>0 {
-            return .applied(survival.applyUnblockedCollision(
-                level:level,difficulty:difficulty,cause:cause,damage:damage))
+        // BossTunnelGame.HitByBoss absorbs any ApplyHit96 collision with
+        // a purchased shield before entering Game.Damage(). Invulnerability
+        // lasts 1s and lives stay unchanged; Game.Damage only clears charges
+        // when no shield intercepted the hit.
+        if let absorbed=survival.absorbPurchasedHitByBoss(cause:cause) {
+            return .applied(absorbed)
         }
         // Game.Damage checks guardian, then talents, then TryDown65.
         // Tarcza145 has just been checked by HitByBoss, so with no state
