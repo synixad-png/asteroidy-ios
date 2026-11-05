@@ -37,6 +37,11 @@ jobs:
           print('PASS: native project declares iPhone + iPad (UIDeviceFamily 1,2)')
           PY
           python3 Tools/verify_ios_inputs.py | tee reports/source-assets.txt
+      - name: Import compact source-verified Vanguard431 asset bundle when supplied
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/prepare_vanguard431_assets.py | tee reports/vanguard-asset-import.txt
       - name: Require original Vanguard 4311 UV + BaseColor for NEW textured release
         shell: bash
         env:
@@ -94,6 +99,7 @@ jobs:
             reports/device-families.txt
             reports/source-assets.txt
             reports/vanguard-material.txt
+            reports/vanguard-asset-import.txt
             reports/environment.txt
             reports/verification.txt
             reports/SHA256SUMS.txt
