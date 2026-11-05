@@ -215,8 +215,8 @@ struct SphereSector556 {
         let lever = distance > rock.radius ? r*(rock.radius/distance) : r
         rock.velocity = rock.velocity+impact*(1/rock.mass)
         let moment = lever.x*impact.y-lever.y*impact.x
-        rock.spin = max(-2.5,min(2.5,rock.spin+
-            moment/max(0.0001,0.4*rock.mass*rock.radius*rock.radius)))
+        rock.spin = max(-2.5, min(2.5,
+            rock.spin + moment / max(0.0001, 0.4 * rock.mass * rock.radius * rock.radius)))
         asteroids[index] = rock
     }
     private mutating func damageRock(at index:Int,amount:Int=1) {
