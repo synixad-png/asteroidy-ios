@@ -14,6 +14,9 @@ on:
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/IntroOrbit41.swift'
       - 'ASTEROIDYiOS/SourceFighterToon60.swift'
+      - 'ASTEROIDYiOS/SourceVanguardMesh431.swift'
+      - 'Tests/SourceVanguardMesh431Tests.swift'
+      - 'Tests/SourceVanguardTextureContract431.py'
       - 'Tests/SourceFighterToon60Tests.swift'
       - 'Tests/SourceFighterToonContract60.py'
       - 'ASTEROIDYiOS/IntroEnginePlasma491.swift'
@@ -52,6 +55,7 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
           swiftc -frontend -parse ASTEROIDYiOS/IntroOrbit41.swift
           swiftc -frontend -parse ASTEROIDYiOS/SourceFighterToon60.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourceVanguardMesh431.swift
           swiftc -frontend -parse ASTEROIDYiOS/IntroEnginePlasma491.swift
           swiftc -frontend -parse ASTEROIDYiOS/IntroVanguard431.swift
           swiftc -frontend -parse ASTEROIDYiOS/IntroRockGeometry41.swift
@@ -62,3 +66,4 @@ jobs:
           python3 Tests/IntroVanguardSourceContract431.py
           python3 Tests/IntroEnginePlasmaSourceContract491.py
           python3 Tests/SourceFighterToonContract60.py
+          python3 Tests/SourceVanguardTextureContract431.py
