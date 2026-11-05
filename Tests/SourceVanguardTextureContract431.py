@@ -29,6 +29,12 @@ for token in (
     'guard offset <= data.count-remaining &&',
 ):
     check(token in reader,'Actual PC Vanguard431 packet parser changed: '+token)
+check('constexpr sampler sourceUV(address::clamp_to_edge,filter::linear);' in shader,
+      'Actual GpuRenderer.cs GL_CLAMP_TO_EDGE/GL_LINEAR sampler changed')
+check('address::repeat' not in shader.split(
+      'fragment float4 sourceVanguardTexturedToonFragment431(',1)[1],
+      'Original PC glTexParameteri GL_CLAMP_TO_EDGE violated in Vanguard skin')
+
 for token in (
     'vertex FighterSourceRaster431 sourceVanguardVertex431(',
     'device const float *packed [[buffer(0)]]',
@@ -55,8 +61,8 @@ for token in (
     'let native=try SourceVanguardMesh431(',
     'device.makeBuffer(bytes:$0,length:native.vertices.count,',
     'MTKTextureLoader(device:device).newTexture(',
-    '.SRGB:true,',
-    '.generateMipmaps:true,',
+    '.SRGB:false,',
+    '.generateMipmaps:false,',
     '.origin:MTKTextureLoader.Origin.topLeft',
     'if let native=sourceVanguard431 {',
     'encoder.setRenderPipelineState(',
