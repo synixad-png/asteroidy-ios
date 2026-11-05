@@ -9,6 +9,9 @@ on:
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/IntroOrbit41.swift'
+      - 'ASTEROIDYiOS/IntroEnginePlasma491.swift'
+      - 'Tests/IntroEnginePlasma491Tests.swift'
+      - 'Tests/IntroEnginePlasmaSourceContract491.py'
       - 'ASTEROIDYiOS/IntroVanguard431.swift'
       - 'Tests/IntroVanguard431Tests.swift'
       - 'Tests/IntroVanguardSourceContract431.py'
@@ -132,6 +135,19 @@ jobs:
             -o /tmp/intro-vanguard-431
           /tmp/intro-vanguard-431
           python3 Tests/IntroVanguardSourceContract431.py
+      - name: Original GpuShip v491 additive two-engine plasma (CPU golden tests + GPU source contract)
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/IntroEnginePlasma491.swift \
+            Tests/IntroEnginePlasma491Tests.swift \
+            -o /tmp/intro-plasma491
+          /tmp/intro-plasma491
+          python3 Tests/IntroEnginePlasmaSourceContract491.py
       - name: Original GpuIntro41 seed-specific cratered rock geometry and normals
         run: |
           set -eu
