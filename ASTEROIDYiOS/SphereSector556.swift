@@ -20,6 +20,7 @@ struct SphereSector556 {
     private(set) var bolts: [SphereBolt556] = []
     private(set) var score = 0
     private(set) var destroyedRocks = 0
+    private(set) var amigaHits = 0
     private(set) var shipContacts = 0
     private(set) var hull = 3
     private(set) var hitCooldown: Float = 0
@@ -33,7 +34,9 @@ struct SphereSector556 {
     private(set) var objectiveWave = 1
     private(set) var sectorCleared = false
     let balance: CombatBalance556
+    let cooperative: Bool
     let objective: GameCore.TrainingObjective
+    var isAmigaDemo:Bool {balance.spherical && balance.level==25}
     private var shotCooldown: Float = 0
     private var seed: UInt32 = 0x556A57E
     private var verifiedEnemyCount: Int? = nil
@@ -75,14 +78,20 @@ struct SphereSector556 {
         case .waves: return 48
         }
     }
-    var objectiveTimerComplete: Bool { elapsed >= objectiveDuration }
+    // AmigaBounce265 / Gameplay65: level 25 is a perpetual showroom,
+    // not a clearable timed mission. The "20 hits" is only a HUD milestone.
+    var objectiveTimerComplete: Bool {
+        !isAmigaDemo && elapsed >= objectiveDuration
+    }
     var sectorFinished: Bool {
-        objectiveTimerComplete && incomingRocksLeft == 0 && asteroids.isEmpty
+        !isAmigaDemo && objectiveTimerComplete &&
+        incomingRocksLeft == 0 && asteroids.isEmpty
     }
 
     init(balance: CombatBalance556, diagnosticAsteroids: [SphereAsteroid556]? = nil,
-         diagnosticIncomingQuota:Int? = nil) {
+         diagnosticIncomingQuota:Int? = nil,cooperative:Bool=false) {
         self.balance = balance
+        self.cooperative = cooperative
         self.objective = GameCore.objectiveFor(level:balance.level)
         if let diagnosticAsteroids {
             asteroids = diagnosticAsteroids
@@ -107,18 +116,29 @@ struct SphereSector556 {
                     dangerSpeed:Self.dangerSpeed(balance.difficulty))
                 let angle = random()*2*Float.pi
                 let spin = (random()*2-1)*0.65
-                _ = random() // mesh shape seed is not rendered in the testbed
-                asteroids.append(SphereAsteroid556(
-                    position:position,
+                let shapeSeed=Int(random()*Float(Int32.max))
+                // Original Game.Wave calls PrepareRock70: large spherical
+                // radius is scaled to 0.52 (0.41 for level 25), and HP
+                // comes from Balance70, NOT the flat Rock constructor.
+                let hp=balance.sphericalRockHealth(size:3,tier:tier,
+                                                    cooperative:cooperative)
+                var rock=SphereAsteroid556(position:position,
                     velocity:Vec2(x:cos(heading),y:sin(heading))*initialSpeed,
-                    radius:Rock.radiusFor(size:3)/Self.unit,
-                    size:3,tier:tier,spin:spin,angle:angle))
+                    radius:balance.sphericalRockRadius(size:3),
+                    size:3,tier:tier,health:hp,spin:spin,angle:angle,
+                    originalHealth:Rock.healthFor(size:3,tier:tier),
+                    shapeSeed:shapeSeed)
+                if balance.level==25 { AmigaBounce265.prepare(&rock) }
+                asteroids.append(rock)
             }
             var flat = GameCore()
             flat.setSectorTraining(balance)
             incomingRocksLeft = flat.incomingRocksLeft
             nextIncoming = objective == .waves ? 16 : 12
         }
+        // Action38.ConfigureActionSector followed by Game.Wave:
+        // original AmigaOnly266 explicitly disables reinforcements.
+        if isAmigaDemo { incomingRocksLeft=0 }
     }
     private mutating func random() -> Float {
         seed = seed &* 1664525 &+ 1013904223
