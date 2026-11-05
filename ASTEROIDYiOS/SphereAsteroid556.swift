@@ -11,7 +11,16 @@ struct SphereAsteroid556 {
     var size: Int
     var tier: Int
     var health: Int
+    // Windows Rock.MaxHealth is modified by Balance70.PrepareRock70.
+    // Rock.OriginalHP70 remains the original constructor's lower HP
+    // and governs score after destruction.
+    var maxHealth: Int
     var originalHealth: Int
+    // Original Game.Rock Shape and AmigaBounce265 per-ball state.
+    var shapeSeed: Int
+    var bounceHeight: Float = 0
+    var bounceVertical: Float = 0
+    var bounceCount: Int = 0
     var fragment: Bool
     var shardLife: Float
     var mass: Float
@@ -20,7 +29,8 @@ struct SphereAsteroid556 {
     init(position: Vec2, velocity: Vec2, radius: Float,
          size: Int = 3, tier: Int = 0, health: Int? = nil,
          fragment: Bool = false, shardLife: Float = 0,
-         mass: Float? = nil, spin: Float = 0, angle: Float = 0) {
+         mass: Float? = nil, spin: Float = 0, angle: Float = 0,
+         originalHealth: Int? = nil, shapeSeed: Int = 0) {
         self.position = Sphere67.canonical(position)
         self.velocity = velocity
         self.radius = radius
@@ -28,7 +38,9 @@ struct SphereAsteroid556 {
         self.tier = tier
         let hp = health ?? Rock.healthFor(size:size,tier:tier)
         self.health = hp
-        self.originalHealth = hp
+        self.maxHealth = hp
+        self.originalHealth = originalHealth ?? hp
+        self.shapeSeed = shapeSeed
         self.fragment = fragment
         self.shardLife = shardLife
         self.mass = mass ?? (shardLife > 0 ? 0.09 : size == 3 ? 8 : size == 2 ? 4 : 2)
