@@ -43,9 +43,9 @@ import Foundation
         precondition(incoming.incomingRocksLeft==0)
         precondition(incoming.destroyedRocks==0 && incoming.score==0,
                      "Original Balance70 spherical armor survives one shot")
+        let expectedHP=config.sphericalRockHealth(size:3,tier:0)-1
         precondition(incoming.asteroids.count==1 &&
-                     incoming.asteroids[0].health==
-                     config.sphericalRockHealth(size:3,tier:0)-1,
+                     incoming.asteroids[0].health==expectedHP,
                      "New Action38 asteroid must accept a same-frame shot")
         precondition(incoming.bolts.isEmpty)
         precondition(incoming.arrivalNoticeRemaining > 1.58)
