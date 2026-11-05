@@ -11,7 +11,7 @@ struct Vec2: Equatable {
 }
 
 struct FlightCommand { var turn: Float = 0; var throttle: Float = 0; var fire = false }
-struct Rock { var at: Vec2; var motion: Vec2; var radius: Float; var phase: Float }
+struct Rock { var at: Vec2; var motion: Vec2; var radius: Float; var phase: Float; var tier: Int = 0 }
 struct Bolt { var at: Vec2; var motion: Vec2; var life: Float }
 
 struct GameCore {
@@ -28,6 +28,18 @@ struct GameCore {
     private var hitTimer: Float = 0
     private var seed: UInt32 = 0x556A57E
     let extent: Float = 1.35
+    private(set) var trainingBalance: CombatBalance556? = nil
+    var targetRockCount: Int { trainingBalance?.sectorRockCount ?? 9 }
+    private var nextSpawnIndex: Int = 0
+
+    // Diagnostic arena; does not launch or complete a campaign mission.
+    mutating func setSectorTraining(_ balance: CombatBalance556?) {
+        trainingBalance = balance
+        nextSpawnIndex = 0
+        rocks.removeAll(keepingCapacity: true)
+        bolts.removeAll(keepingCapacity: true)
+        while rocks.count < targetRockCount { spawnRock() }
+    }
 
     init() {
         for _ in 0..<9 { spawnRock() }
@@ -41,7 +53,11 @@ struct GameCore {
         let d = 0.6 + random() * 0.6
         let p = Vec2(x: cos(a) * d, y: sin(a) * d)
         let v = Vec2(x: (random() - 0.5) * 0.14, y: (random() - 0.5) * 0.14)
-        rocks.append(Rock(at: p, motion: v, radius: 0.055 + random() * 0.055, phase: random() * 6.28))
+        let radius = 0.055 + random() * 0.055
+        let phase = random() * 6.28
+        let tier = trainingBalance?.tier(at: nextSpawnIndex % targetRockCount) ?? 0
+        nextSpawnIndex += 1
+        rocks.append(Rock(at: p, motion: v, radius: radius, phase: phase, tier: tier))
     }
     // Swept segment-circle collision on the periodic arena. Both bodies move
     // during each physics step, so collision is computed in relative motion.
@@ -101,7 +117,7 @@ struct GameCore {
         }
         rocks = rocks.enumerated().compactMap { removeRocks.contains($0.offset) ? nil : $0.element }
         bolts = bolts.enumerated().compactMap { removeBolts.contains($0.offset) || $0.element.life <= 0 ? nil : $0.element }
-        while rocks.count < 9 { spawnRock() }
+        while rocks.count < targetRockCount { spawnRock() }
         if hull == 0 { hull = 3; ship = Vec2(x: 0, y: 0); velocity = Vec2(x: 0, y: 0); hitTimer = 1.3 }
     }
 }
