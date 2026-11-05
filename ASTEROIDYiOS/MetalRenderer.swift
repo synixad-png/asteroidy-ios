@@ -38,6 +38,10 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         return f
     }()
     var game = GameCore()
+    // Separate sphere sandbox: actual Sphere67 motion and contact queries.
+    // Does not claim to run a real v556 planet mission.
+    private var sphereSector = SphereSector556(
+        balance: CombatBalance556(level: 1, difficulty: .normal, spherical: true)!)
     private var previousSectorTraining = false
     private var lastTime = CACurrentMediaTime()
     private var fixedClock = FixedStepClock()
@@ -177,13 +181,15 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 planetAnimationTime += fixedClockStep
                 sphereFlight.tick(move: Vec2(x:input.steer,y:-input.thrust),
                                   aim: Vec2(x:input.steer,y:-input.thrust),dt:Float(fixedClockStep))
+                sphereSector.tick(dt:Float(fixedClockStep),playerPosition:sphereFlight.position)
             } else {
                 game.tick(command,dt:Float(fixedClockStep))
             }
         }
         if now-lastHUDTime > 0.14 {
             lastHUDTime = now
-            let score = game.score, hull = game.hull, rockCount = game.rocks.count
+            let score = game.score, hull = game.hull
+            let rockCount = input.planetPreview ? sphereSector.asteroids.count : game.rocks.count
             DispatchQueue.main.async { [weak input] in
                 input?.score = score
                 input?.hull = hull
@@ -253,6 +259,14 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             // Boreas GLB from v556, converted with all node transforms.
             // Spherical flight collision is still a diagnostic approximation.
             drawMesh(activeMesh, Self.scale(1.0))
+            // Geodesic asteroid positions on the visible Boreas mesh.
+            // Radius is translated from the original H/pi spherical atlas.
+            for asteroid in sphereSector.asteroids {
+                let surface = PlanetPreview556.shipSurfacePosition(asteroid.position, altitude: 0.10)
+                let visualRadius = max(0.014, asteroid.radius / Sphere67.radius * 0.65)
+                drawMesh(asteroidMesh,
+                         Self.translation(surface.x,surface.y,surface.z) * Self.scale(visualRadius))
+            }
             let p = PlanetPreview556.shipSurfacePosition(sphereFlight.position)
             drawMesh(shipMesh, Self.translation(p.x,p.y,p.z) * Self.scale(0.065))
             encoder.endEncoding()
