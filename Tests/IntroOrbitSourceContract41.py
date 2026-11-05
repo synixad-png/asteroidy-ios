@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""Static wiring guard for original 16-second Windows IntroScene41 scene.
+
+Checks that the actual default iOS app enters a distinct source-derived
+3D camera with original ship, Boreas asset, 1,500 stars and the 820
+C# legacy belt coordinates; cannot prove shader output, rock
+geometry parity, or completion of any mission.
+"""
+from pathlib import Path
+root=Path(__file__).resolve().parents[1]
+intro=(root/'ASTEROIDYiOS/IntroOrbit41.swift').read_text()
+metal=(root/'ASTEROIDYiOS/MetalRenderer.swift').read_text()
+app=(root/'ASTEROIDYiOS/App.swift').read_text()
+project=(root/'project.yml').read_text()
+def ck(ok,msg):
+    if not ok:raise AssertionError(msg)
+
+for token in (
+    'static let duration: Float = 16',
+    'static let approachStart: Float = 8.4',
+    'static let arrivalTime: Float = 15.2',
+    'static let planetCenter = V(x:-38,y:4,z:-56)',
+    'static let arrivalRadius: Float = 34',
+    'static func orbitalShip(',
+    'static func ship(',
+    'static func forward(',
+    'static func camera(',
+    'static func craftOrientationColumns(',
+    'static func frame(',
+    'static let beltStoneCount=820',
+    'DotNetRandom(seed:4109)',
+    '2.399963',
+    'radius:Float=52+Float(rng.nextDouble())*16',
+    'size:Float=0.22+Float(randomSize*randomSize*randomSize)*1.75',
+    'for sample in 0...80',
+    'static func visible(',
+    'static func planetRotationDegrees(',
+    'Float(level)*29+time*2.2',
+):
+    ck(token in intro,'IntroScene41/OrbitWorld51 source changed: '+token)
+
+ck('@Published var introPreview41 = true' in app,
+   'The new source cinematic must be initially visible, not old training arena')
+ck('@Published var planetPreview = true' in app,
+   'Existing source Boreas sector still enabled as alternate scene')
+ck('input.introPreview41.toggle()' in app and
+   'Button(input.introPreview41 ? "BOREAS 3D" : "PRZELOT 3D")' in app,
+   'Cinematic/Boreas scene switch no longer reachable')
+ck('SCENA ROBOCZA • NIE JEST PEŁNĄ MISJĄ' in app,
+   'Must label the unfinished intro faithfully')
+ck('introProgress41' in app and 'input?.introProgress41 = introElapsed41' in metal,
+   'Real 16-second source timeline is not reflected in preview')
+ck('if input.introPreview41 {' in metal and
+   'cameraFrame=Self.introView41(introTime41)' in metal,
+   'Source IntroScene41 camera not connected to actual Metal rendering')
+ck('Self.perspective(' in metal and
+   'aspect,spherical:input.planetPreview || input.introPreview41' in metal,
+   'Cinematic must share original intro frustum, not 36-degree flat arena')
+ck('for rock in IntroOrbit41.belt where IntroOrbit41.visible(rock,in:frame)' in metal,
+   '820 source belt rock coordinates are not drawn with frustum culling')
+ck('drawMesh(mesh,planetModel)' in metal and
+   'IntroOrbit41.introPlanetScale' in metal,
+   'Real original planet asset absent from cinematic')
+ck('drawMesh(shipMesh,craft)' in metal and
+   'IntroOrbit41.craftOrientationColumns(introTime41)' in metal,
+   'Actual Vanguard and source orientation absent')
+ck('vertexCount:sphereSkyMesh.count)' in metal and
+   'encoder.setRenderPipelineState(skyPointPipeline)' in metal,
+   'Original deep-space stars missing')
+ck('if input.introPreview41 {\n                // No sandbox simulation' in metal,
+   'Cinematic is incorrectly advancing training gameplay')
+ck('return\n        }\n        if input.planetPreview {' in metal,
+   'Cinematic draw is not separate from diagnostic planet mode')
+ck("TARGETED_DEVICE_FAMILY: '1,2'" in project,
+   'Source project no longer supports both iPhone and iPad')
+print('PASS: original source IntroScene41 16-second camera/world/ship/belt')
+print('      connected to real Metal, visual preview isolated, iPhone+iPad')
+print('LIMITATIONS: rock octahedra and ship cinematic scale are provisional')
+print('             and runtime Apple GPU/iPad imagery NOT verified')
