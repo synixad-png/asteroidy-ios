@@ -19,7 +19,10 @@ final class FlightInput: ObservableObject {
     @Published var shooting = false
     // Windows Game.Input.Tarcza145 is a momentary held input.
     @Published var tarczaHeld = false
-    @Published var planetPreview = false
+    // Start in the real v556 Boreas GLB renderer instead of the
+    // independent 9-rock flat diagnostic arena. This is still a
+    // test sector, NOT a port of the complete original mission.
+    @Published var planetPreview = true
     // Source-defined diagnostic cases: ordinary rocks (1), timed waves
     // (9/17) and AmigaOnly266 perpetual bouncing balls (25).
     // This is NOT a mission/campaign unlock selector.
@@ -54,25 +57,33 @@ struct GameView: View {
                     .ignoresSafeArea()
                 VStack {
                     if let error = input.rendererError { Text(error).font(.system(size: 12, weight: .bold)).foregroundStyle(.red).padding(8).background(.black.opacity(0.9)) }
+                    // Two compact rows keep the native source-scene
+                    // switch reachable in landscape on BOTH iPhone/iPad.
                     HStack {
                         Text("ASTEROIDY  •  iOS v21")
                             .font(.system(size: 17, weight: .semibold, design: .monospaced))
                             .foregroundStyle(.cyan)
-                        Spacer()
+                        Spacer(minLength: 8)
                         Button("KAMPANIA") { showCampaign = true }
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.cyan)
-                        Button(input.sectorTraining ? "SEKTOR 01 • TEST" : "9 ASTEROID • TEST") { input.sectorTraining.toggle() }
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.cyan)
-                        Button(input.planetPreview ? "ARENA TESTOWA" : "BOREAS GLB • TEST") {
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.top, 12)
+                    HStack(spacing: 12) {
+                        Button(input.planetPreview ? "ARENA • DIAGNOSTYKA" : "BOREAS GLB • TEST") {
                             input.planetPreview.toggle()
                             input.tarczaHeld = false
+                            input.shooting = false
                         }
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.cyan)
+                        Spacer(minLength: 4)
+                        Button(input.sectorTraining ? "SEKTOR 01 • TEST" : "9 ASTEROID • TEST") {
+                            input.sectorTraining.toggle()
+                        }
                     }
-                    .padding(18)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.cyan)
+                    .padding(.horizontal, 18)
                     HStack {
                         Text("WYNIK: \(input.score)")
                         Spacer()
