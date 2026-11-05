@@ -350,9 +350,19 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     /// All three texture arrays remain cached within this renderer for
     /// the rest of the session, regardless of flat/sphere toggling.
     /// Errors log once, and gameplay continues without that sky layer.
-    private func ensureCloudTextures55() -> MTLTexture? {
+    private static let sourceCloudLayers55: [SphereNebula556.Layer] =
+        (0..<SphereNebula556.orbitLayerCount).map {SphereNebula556.layer($0)}
+
+    private func ensureCloudTextures55(camera: SphereCamera67) -> MTLTexture? {
         if let current=nebulaTexture { return current }
-        guard nebulaLoadGate.shouldAllocate(visible: true) else { return nil }
+        // GpuCosmos39.CloudLayer creates a texture only if SkyProject55
+        // projected an actual sky layer. A prebuilt 36-direction cache
+        // avoids recomputing the original sin/cos offsets every frame.
+        let hasVisibleCloud=Self.sourceCloudLayers55.contains {
+            $0.projected(camera:camera) != nil
+        }
+        guard nebulaLoadGate.shouldAllocate(visible:hasVisibleCloud)
+        else { return nil }
         do {
             let created=try Self.makeNebulaTextures556(device)
             nebulaTexture=created
@@ -739,7 +749,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 SIMD4<Float>(2/(720*aspect),-2/720,0,0)
             )
             encoder.setDepthStencilState(skyDepthState)
-            let sourceCloudTexture=ensureCloudTextures55()
+            let sourceCloudTexture=ensureCloudTextures55(camera:c)
             if let clouds=sourceCloudTexture {
                 encoder.setRenderPipelineState(nebulaOverlayPipeline)
                 encoder.setVertexBuffer(
