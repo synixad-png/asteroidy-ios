@@ -21,7 +21,7 @@ jobs:
           { sw_vers; xcodebuild -version; swift --version; echo "Commit $GITHUB_SHA"; } | tee reports/environment.txt
       - name: Verify gameplay core (all required dependencies)
         run: |
-          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift Tests/GameCoreTests.swift -o /tmp/ios-gamecore-tests
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift Tests/GameCoreTests.swift -o /tmp/ios-gamecore-tests
           /tmp/ios-gamecore-tests
       - name: Verify v556 campaign progress rules
         run: |
@@ -31,6 +31,10 @@ jobs:
         run: |
           swiftc ASTEROIDYiOS/CombatBalance556.swift Tests/CombatBalance556Tests.swift -o /tmp/ios-combat-balance-tests
           /tmp/ios-combat-balance-tests
+      - name: Verify integrated sector sandbox and legacy arena
+        run: |
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift Tests/SectorSandbox556Tests.swift -o /tmp/sector-tests
+          /tmp/sector-tests
       - name: Verify telemetry module
         run: |
           swiftc ASTEROIDYiOS/RenderTelemetry.swift Tests/RenderTelemetryTests.swift -o /tmp/ios-telemetry-tests
