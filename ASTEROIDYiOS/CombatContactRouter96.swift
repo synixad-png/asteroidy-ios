@@ -56,6 +56,15 @@ enum CombatContactRouter96 {
         case .guardianAbsorbed, .tarczaAbsorbed, .talentAbsorbed, .coopDown:
             return .externalDefenseAbsorbed
         case .noneAbsorbed:
+            // The v556 purchased shield is only an asteroid-contact
+            // interception, not a generic defense for robots or bosses.
+            switch event {
+            case .shipRock, .partnerRock:
+                if let absorbed=survival.absorbPurchasedRockContact(cause:source) {
+                    return .applied(absorbed)
+                }
+            default: break
+            }
             let damage=CombatSurvival96.collisionDamage(level:level,
                                                          difficulty:difficulty)
             return .applied(survival.applyUnblockedCollision(
@@ -121,6 +130,11 @@ enum CombatContactRouter96 {
                 // do not consume lives/shields again.
                 outcomes.append(.externalDefenseAbsorbed)
             case .noneAbsorbed:
+                if case .shipRock = event,
+                   let absorbed=survival.absorbPurchasedRockContact(cause:source) {
+                    outcomes.append(.applied(absorbed))
+                    continue
+                }
                 let damage=CombatSurvival96.collisionDamage(
                     level:level,difficulty:difficulty)
                 let hit=survival.applyUnblockedCollision(
