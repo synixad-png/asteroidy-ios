@@ -57,16 +57,43 @@ struct GameCore {
     private(set) var nextIncoming: Float = 0
     private(set) var sectorCleared = false
     private(set) var destroyedRocks = 0
-    enum TrainingObjective { case clear, waves, escort, defend }
+    enum TrainingObjective: Equatable { case clear, waves, escort, defend }
     private(set) var trainingObjective: TrainingObjective = .clear
+    private(set) var objectiveWave = 1
+
+    // Gameplay65.cs: level-specific objective types; no assumptions about
+    // missing boss logic, escorts, or objective collision beyond the timer.
+    static func objectiveFor(level: Int) -> TrainingObjective {
+        if [2, 11, 21].contains(level) { return .escort }
+        if [5, 14, 23].contains(level) { return .defend }
+        if [9, 17].contains(level) { return .waves }
+        return .clear
+    }
+    var objectiveDuration: Float {
+        switch trainingObjective {
+        case .escort: return 40
+        case .defend: return 50
+        case .waves: return 48
+        case .clear: return 0
+        }
+    }
+    var objectiveTimerComplete: Bool {
+        trainingObjective == .clear || sectorElapsed >= objectiveDuration
+    }
+    // Finishing additionally requires no remaining rocks, shards or arrivals:
+    // Game.cs FinishLevel() / Gameplay65.cs ObjectiveComplete65.
+    var sectorFinished: Bool {
+        trainingBalance != nil && objectiveTimerComplete &&
+        rocks.isEmpty && incomingRocksLeft == 0
+    }
     var activeThreatCount: Int { rocks.filter { $0.shardLife <= 0 }.count }
-    var sectorFinished: Bool { trainingBalance != nil && activeThreatCount == 0 && incomingRocksLeft == 0 }
 
 
     // Diagnostic arena; does not launch or complete a campaign mission.
-    mutating func setSectorTraining(_ balance: CombatBalance556?, objective: TrainingObjective = .clear) {
+    mutating func setSectorTraining(_ balance: CombatBalance556?, objective: TrainingObjective? = nil) {
         trainingBalance = balance
-        trainingObjective = objective
+        trainingObjective = objective ?? balance.map { Self.objectiveFor(level: $0.level) } ?? .clear
+        objectiveWave = 1
         nextSpawnIndex = 0
         sectorElapsed = 0
         sectorCleared = false
@@ -74,14 +101,14 @@ struct GameCore {
         if let balance {
             let quota = balance.reinforcementQuota
             let initial: Int
-            switch objective {
+            switch trainingObjective {
             case .clear: initial = quota
             case .waves: initial = 4
             case .escort: initial = max(4, quota)
             case .defend: initial = max(6, quota)
             }
             incomingRocksLeft = Int((Double(initial) * 0.8).rounded(.toNearestOrEven))
-            nextIncoming = objective == .waves ? 16 : 12
+            nextIncoming = trainingObjective == .waves ? 16 : 12
         } else {
             incomingRocksLeft = 0
             nextIncoming = 0
@@ -185,7 +212,11 @@ struct GameCore {
     private mutating func stepTrainingSector(dt: Float) {
         guard trainingBalance != nil else { return }
         sectorElapsed += dt
-        // Objective65 logic is not yet ported; simulate only Action38 timing and quotas.
+        // Gameplay65.StepObjective65: three 16-second intervals, capped at wave 3.
+        if trainingObjective == .waves {
+            objectiveWave = min(3, 1 + Int(sectorElapsed / 16))
+        }
+        // Sector training remains separate from unported real mission transitions.
         if incomingRocksLeft > 0 && (sectorElapsed >= nextIncoming ||
            (trainingObjective != .waves && activeThreatCount <= 4)) { spawnIncoming() }
         if sectorFinished { sectorCleared = true }
