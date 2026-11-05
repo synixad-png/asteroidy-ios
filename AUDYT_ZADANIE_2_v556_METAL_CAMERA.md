@@ -1,6 +1,8 @@
 # ASTEROIDY iOS — zadanie 2 / silnik graficzny Metal: kamera sferyczna
 
 **Data:** 2026-11-05.
+
+**AKTUALNY STAN: źródłowa tekstura i obie warstwy gwiazd `IntroHalo` zostały przeniesione po odnalezieniu oryginalnego archiwum C# — szczegóły w końcowej sekcji tego raportu. Opisy poniżej dotyczące brakującej tekstury i uproszczonych trójkątów przedstawiają wcześniejsze etapy, a nie obecny kod.**
 **Oryginał:** wyłącznie ASTEROIDY v556 z oryginalnego archiwum `Asteroidy_v556_ZRODLA_Windows_SteamOS_BEZ_EXE_BEZ_HANGARU.zip`, SHA256 `d0f6b83659d080fcd9084a0d1618ef53feb29c51aeea476feb90457030787d08`.
 
 ## Potwierdzony problem
@@ -103,3 +105,22 @@ W aktualnej poprawce:
 - [GitHub Actions 42062785842](https://github.com/synixad-png/asteroidy-ios/actions/runs/42062785842) — **PASS** dla Swift/Linux, statycznego kontraktu Metal i składni SwiftUI/Metal.
 
 **Nadal nie zweryfikowano:** natywnej kompilacji shaderów Apple, obrazu na urządzeniu i dokładnej tekstury `IntroHalo`. Nie sprawdzano statusu IPA.
+
+## Aktualny kod źródłowy v556 — rzeczywiste StarTexture/IntroHalo (zastępuje wcześniejsze przybliżenia)
+
+Po odnalezieniu rzeczywistego archiwum `Asteroidy_v556_ZRODLA_Windows_SteamOS_BEZ_EXE_BEZ_HANGARU.zip` i odczytaniu `Windows/src` potwierdzono następujące fakty:
+
+- `GpuAmbient37.cs:5` — `StarTexture()` generuje **64×64** pikseli `Format32bppPArgb`; dla każdej pary `x,y`: `dx=(x-31.5)/31.5`, `dy=(y-31.5)/31.5`, `r=sqrt(dx²+dy²)`, `edge=max(0,1-r)`, `a=(byte)(exp(-4*r²)*edge²*255)`. **Wszystkie cztery kanały BGRA mają taką samą wartość `a`**. Filtr tekstury w `GpuRenderer.cs:62–64` to `LINEAR`.
+- `Gpu2DRenderer.cs:68,70,74` — `Begin2D/Flush2D` używa **premultiplied alpha**: `blendFunc(ONE,ONE_MINUS_SRC_ALPHA)`, a `Vertex2D` zapisuje `RGB=tintRGB*tintAlpha`. Wcześniejsze `sourceAlpha` w portowanym niebie Metal było rozbieżne.
+- `GpuIntro41.cs:23,451–452` — `IntroHalo(p,radius,tint,halo)` to kwadrat o bokach `2*radius` z teksturą `StarTexture`. Dla **każdej** gwiazdy używa promienia `size*2` (czyli średnicy **4*size**: 2,8/5,6/11,2 px). Dla gwiazd `rz>.87` i aktywnego `GlowEnabled` najpierw dodaje **dodatkowy halo 10 px**, a dla `rz>.98` — **21 px**; oba z alfą 125/255. Domyślnie `Renderer.cs:25` ma `GlowEnabled=true`. Źródłowy `SpaceRand207` daje dokładnie **1294 normalne, 172 średnio jasne i 34 bardzo jasne gwiazdy**, a także **161 ciepłych**. Dlatego oryginalny widok z włączonym glow ma **1706 nakładających się warstw** (1500 podstawowych + 206 dodatkowych).
+- `GpuSphere67.cs:420` wywołuje `IntroSky(glow,nebula,rays,true)`. Opcje oddzielnych mgławic i promieni nie zostały jeszcze wdrożone; w bieżącym podglądzie domyślny oryginalny stan glow=true jest odtwarzany statycznie do czasu portu ustawień (zadanie 14).
+
+Implementacja aktualna:
+
+- `SphereSky207.haloTexelsBGRA()` odtwarza dokładnie powyższe **16384 bajty** 64×64×4, łącznie z zaokrągleniem w dół przy konwersji do `UInt8`. Przykładowe wartości z oryginalnego wzoru: (31,31)→243, (31,10)→3, (31,16)→24, (31,20)→60, (31,24)→117, (31,28)→191.
+- `MetalRenderer.makeSphereHaloTexture` tworzy **jedną** teksturę `BGRA8Unorm` o wymiarach 64×64, z filtrowaniem liniowym w MSL i bez duplikowania tekstury na każdą gwiazdę.
+- `sphereSky207()` umieszcza w buforze najpierw dodatkową jasną poświatę, potem podstawową, zgodnie z kolejnością `GpuIntro41.cs:452`, i renderuje wszystkie 1706 punktów **jednym poleceniem drawPrimitives**. Ekranowa wielkość jest skalowana na iPhone/iPad według `drawableHeight/720`.
+- `Ship.metal` **próbkuje rzeczywistą teksturę 64×64**, a kolor wierzchołka i stan blend są premultiplikowane zgodnie z `Gpu2DRenderer.cs`: `srcRGB=ONE`, `dstRGB=ONE_MINUS_SRC_ALPHA`, również bez zapisów do głębi. **Usunięto poprzednią improwizowaną maskę `smoothstep`.**
+- `Tests/SphereCameraView556Tests.swift` weryfikuje dokładne piksele oryginalnej tekstury, średnice jasnych i podstawowych poświat oraz 1500 gwiazd i 206 jasnych warstw. `Tests/SkyPointSourceContract556.py` sprawdza kompletne połączenie tekstury, RGBA, skali, kolejności, odpowiedzi shaderów i pipeline’u.
+
+**Wynik:** [GitHub Actions 42065903420](https://github.com/synixad-png/asteroidy-ios/actions/runs/42065903420), `source-camera-linux` — **PASS**, w tym Swift/Linux i testy statyczne źródłowego kontraktu Metal. Oddzielny `Xcode Metal/Swift compile verification ONLY (NO IPA)` **w kolejce macOS** przy ostatnim sprawdzeniu. Żadne z tych potwierdzeń nie zastępuje wizualnego testu na fizycznym iPhonie. Poświaty gwiazd zostały odtworzone z rzeczywistej procedury, ale **nie** oznacza to jeszcze pełnego `IntroSky` (mgławice i promienie) ani zakończenia całego zadania 2. **Nie sprawdzano IPA.**
