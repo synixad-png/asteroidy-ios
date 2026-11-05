@@ -97,14 +97,14 @@ struct SphereSector556 {
                     baseRandomSpeed:48+random()*30,
                     level:balance.level,tier:tier,
                     dangerSpeed:Self.dangerSpeed(balance.difficulty))
+                let angle = random()*2*Float.pi
+                let spin = (random()*2-1)*0.65
+                _ = random() // mesh shape seed is not rendered in the testbed
                 asteroids.append(SphereAsteroid556(
                     position:position,
                     velocity:Vec2(x:cos(heading),y:sin(heading))*initialSpeed,
                     radius:Rock.radiusFor(size:3)/Self.unit,
-                    size:3,tier:tier))
-                // The source also consumes RNG for angle, spin and mesh seed;
-                // mesh RNG is intentionally not modeled by this test sector.
-                _ = random()
+                    size:3,tier:tier,spin:spin,angle:angle))
             }
             var flat = GameCore()
             flat.setSectorTraining(balance)
@@ -148,8 +148,12 @@ struct SphereSector556 {
                 baseRandomSpeed:60 + random()*40,
                 dangerSpeed:Self.dangerSpeed(balance.difficulty))
             let radius: Float = Rock.radiusFor(size:3) / Self.unit
+            let angle = random()*2*Float.pi
+            let spin = (random()*2-1)*0.85
+            _ = random() // original Rock.Shape random seed
             asteroids.append(SphereAsteroid556(position:candidate,velocity:heading*speed,
-                                              radius:radius,size:3,tier:tier))
+                                              radius:radius,size:3,tier:tier,
+                                              spin:spin,angle:angle))
         }
         nextIncoming = elapsed + (objective == .waves ? 16 : 11)
     }
@@ -177,7 +181,8 @@ struct SphereSector556 {
             asteroids.append(SphereAsteroid556(position:position,velocity:transported,
                                                radius:radius,size:size,tier:tier,fragment:true,
                                                mass:parent.mass*0.5,
-                                               spin:parent.spin+sign*0.35))
+                                               spin:parent.spin+sign*0.35,
+                                               angle:parent.angle))
         }
     }
     private mutating func terminalShards(_ parent:SphereAsteroid556) {
@@ -196,7 +201,9 @@ struct SphereSector556 {
                                                     from:Sphere67.normal(parent.position),
                                                     to:Sphere67.normal(pos))),
                                               radius:radius,size:1,tier:0,
-                                              health:1,fragment:true,shardLife:life))
+                                              health:1,fragment:true,shardLife:life,
+                                              spin:(random()*2-1)*5,
+                                              angle:parent.angle))
         }
     }
 
