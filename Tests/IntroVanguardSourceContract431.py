@@ -56,7 +56,8 @@ check('SphereSurfaceStamp556.sourceCraftRadius*inv' not in intro,
 check('drawMesh(shipMesh,craft)' in intro,
       'Cinematic must still render the original Vanguard AS3D asset')
 check('if input.planetPreview {' in metal and
-      'let shipModel=Self.translation(ship.x,ship.y,0)' in metal,
+      'let shipModel=craft *' in metal and
+      'Self.translation(game.ship.x,game.ship.y,0.18)' in metal,
       'Legacy sandbox renderer / gameplay ship must be preserved')
 print('PASS: actual PC v4311 source baked Vanguard dimensions, source axes')
 print('      original cinematic yaw and standalone iOS combat regression guard')
