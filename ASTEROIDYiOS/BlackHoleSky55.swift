@@ -49,7 +49,7 @@ enum BlackHoleSky55 {
         // GpuIntro41 rear/front masks are exact zero on opposite
         // halves of the rotated accretion plane. Preserve the same
         // pixels while skipping expensive exponentials.
-        if (front && v<=-9) || (!front && v>=9) {
+        if (front && v <= -9) || (!front && v >= 9) {
             return (0,0,0,0)
         }
         // The rear disk also has an exact transparent core gap.
