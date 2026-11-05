@@ -161,6 +161,16 @@ enum IntroOrbit41 {
     }
 
     static let beltStoneCount=820
+
+    // OrbitWorld51.BuildBelt51 evaluates the SAME 81 source samples
+    // for every stone and every reposition attempt. Cache just those
+    // camera/ship segments once: still the exact C# coordinates,
+    // with far fewer first-frame trigonometric operations on iOS.
+    static let corridorSamples:[(eye:V,line:V)] = (0...80).map { sample in
+        let time=Float(sample)*0.2
+        let eye=camera(time)
+        return (eye,ship(time)-eye)
+    }
     static let belt: [Stone] = {
         var rng=DotNetRandom(seed:4109)
         var rocks:[Stone]=[]
@@ -181,10 +191,7 @@ enum IntroOrbit41 {
             // OrbitWorld51.BuildBelt51 does over 81 samples, four attempts.
             for _ in 0..<4 {
                 var blocked=false
-                for sample in 0...80 {
-                    let time=Float(sample)*0.2
-                    let eye=camera(time)
-                    let line=ship(time)-eye
+                for (eye,line) in corridorSamples {
                     let point=origin+planetCenter-eye
                     let projection=clamped(V.dot(point,line)/max(0.001,V.dot(line,line)),0,1)
                     if (point-line*projection).length<size+3.2 {
