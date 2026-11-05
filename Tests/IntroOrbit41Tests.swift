@@ -54,6 +54,14 @@ import Foundation
             near(frame.up.length,1,0.0002)
             near(frame.back.length,1,0.0002)
             near(SphereVector3.dot(frame.right,frame.up),0,0.0002)
+            // Source IntroScene41.View must drive the SAME basis into
+            // original GpuIntro41 sky projections (deep planets/clouds,
+            // black hole and the five rays), not sphere-combat camera.
+            let sky=IntroOrbit41.skyCamera(time:t)
+            near3(sky.focus,frame.back * -1,0.00001)
+            near3(sky.right,frame.right,0.00001)
+            near3(sky.up,frame.up,0.00001)
+            near(SphereVector3.dot(sky.right,sky.focus),0,0.0002)
         }
         let belt=IntroOrbit41.belt
         precondition(belt.count==820)
