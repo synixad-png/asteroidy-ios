@@ -86,6 +86,43 @@ import Foundation
                            guardianFirst:.clear,talentFirst:.clear)
         precondition(idle.contacts.isEmpty && idle.hitOutcomes.isEmpty)
         precondition(coop.domeFirst.energy==e)
+        // Actual defenses, not caller-declared .clear flags:
+        // purchased shield -> one-charge Guardian37 -> Talents78 armor/hull.
+        var defended=setup()
+        defended.encounter.firstSurvival.shieldCharges=1
+        defended.firstGuardian=CombatGuardian37(owned:true)
+        defended.firstVitals=CombatTalentVitals78()
+        let purchased=defended.step(dt:1/120)
+        precondition(purchased.hitOutcomes == [
+            V.TeamOutcome(player:.first,outcome:.applied(
+                .shieldAbsorbed(remaining:0,cause:"ASTEROIDA")))])
+        precondition(defended.firstGuardian!.charges==1)
+        precondition(defended.firstVitals!.armor==25 &&
+                     defended.firstVitals!.hull==60)
+        defended.encounter.rocks=[]
+        _=defended.step(dt:1.1)
+        defended.encounter.first=body(640)
+        defended.encounter.rocks=[rock()]
+        let guardianHit=defended.step(dt:1/120)
+        precondition(guardianHit.hitOutcomes == [
+            V.TeamOutcome(player:.first,outcome:.guardianAbsorbed)])
+        precondition(defended.firstGuardian!.charges==0)
+        precondition(defended.firstVitals!.armor==25 &&
+                     defended.firstVitals!.hull==60)
+        defended.encounter.rocks=[]
+        _=defended.step(dt:1.3)
+        defended.encounter.first=body(640)
+        defended.encounter.rocks=[rock()]
+        let talentHit=defended.step(dt:1/120)
+        precondition(talentHit.hitOutcomes == [
+            V.TeamOutcome(player:.first,outcome:.talentAbsorbed)])
+        precondition(defended.firstVitals!.armor==0 &&
+                     defended.firstVitals!.hull==53)
+        precondition(defended.encounter.firstSurvival.lives==3)
+        precondition(talentHit.damageTransitions.isEmpty)
+
+        // The original unknown-defense contract stays unchanged by
+        // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
     }
 }
