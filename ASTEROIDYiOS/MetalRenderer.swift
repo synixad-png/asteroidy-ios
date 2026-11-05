@@ -158,6 +158,33 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private static func rotated(_ angle: Float) -> simd_float4x4 {
         simd_float4x4(columns:(SIMD4(cos(angle),sin(angle),0,0),SIMD4(-sin(angle),cos(angle),0,0),SIMD4(0,0,1,0),SIMD4(0,0,0,1)))
     }
+    private static func rotateXDegrees(_ degrees: Float) -> simd_float4x4 {
+        let a=degrees * Float.pi / 180
+        let c=cos(a), v=sin(a)
+        return simd_float4x4(columns:(
+            SIMD4(1,0,0,0),SIMD4(0,c,v,0),
+            SIMD4(0,-v,c,0),SIMD4(0,0,0,1)))
+    }
+    private static func rotateYDegrees(_ degrees: Float) -> simd_float4x4 {
+        let a=degrees * Float.pi / 180
+        let c=cos(a), v=sin(a)
+        return simd_float4x4(columns:(
+            SIMD4(c,0,-v,0),SIMD4(0,1,0,0),
+            SIMD4(v,0,c,0),SIMD4(0,0,0,1)))
+    }
+    private static func sphereStamp(_ point: Vec2,
+                                    angle: Float, size: Float,
+                                    lift: Float = 0) -> simd_float4x4 {
+        // GpuSphere67.StampSphere67: local X=right, local Y=forward,
+        // local Z=normal. No independent guessed renderer transform.
+        let m=SphereSurfaceStamp556(
+            point:point,angle:angle,lift:lift).columnMajor(size:size)
+        return simd_float4x4(columns:(
+            SIMD4(m[0],m[1],m[2],m[3]),
+            SIMD4(m[4],m[5],m[6],m[7]),
+            SIMD4(m[8],m[9],m[10],m[11]),
+            SIMD4(m[12],m[13],m[14],m[15])))
+    }
     private static func perspective(_ aspect: Float, spherical: Bool) -> simd_float4x4 {
         // Original GpuIntro41.IntroProjection uses a .2/.4 half-height
         // frustum (vertical FOV 53.1301°) in GpuSphere67.SphereScene67.
@@ -370,27 +397,35 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             // Geodesic asteroid positions on the visible Boreas mesh.
             // Radius is translated from the original H/pi spherical atlas.
             for asteroid in sphereSector.asteroids {
-                // AmigaBounce265 / GpuSphere67: radial hop in original
-                // spherical world units. On the unit-radius Metal planet,
-                // divide source arc units by Sphere67.radius (H / PI).
-                let radialHop = sphereSector.isAmigaDemo
-                    ? asteroid.bounceHeight / Sphere67.radius : 0
-                let surface = PlanetPreview556.shipSurfacePosition(
-                    asteroid.position,altitude:0.10+radialHop)
-                let visualRadius = max(0.014, asteroid.radius / Sphere67.radius * 0.65)
-                let normal = Sphere67.normal(asteroid.position)
-                let spinAxis = SIMD3<Float>(normal.x,normal.y,normal.z)
-                let rotation = simd_float4x4(simd_quatf(angle:asteroid.angle,axis:spinAxis))
-                drawMesh(asteroidMesh,
-                         Self.translation(surface.x,surface.y,surface.z) *
-                         rotation * Self.scale(visualRadius))
+                // Windows GpuSphere67.RockSphere67: StampSphere67
+                // followed by rock.Angle*41 X and rock.Angle*23 Y.
+                // Level 25 uses Amiga263's unrotated stamp + radial hop.
+                let demo=sphereSector.isAmigaDemo
+                let stamp=Self.sphereStamp(
+                    asteroid.position,angle:asteroid.angle,
+                    size:asteroid.radius,
+                    lift:demo ? asteroid.bounceHeight : 0)
+                let model=demo ? stamp :
+                    stamp * Self.rotateXDegrees(asteroid.angle*41) *
+                            Self.rotateYDegrees(asteroid.angle*23)
+                drawMesh(asteroidMesh,model)
             }
             for bolt in sphereSector.bolts {
                 let position = PlanetPreview556.shipSurfacePosition(bolt.position,altitude:0.12)
                 drawMesh(bulletMesh,Self.translation(position.x,position.y,position.z) * Self.scale(0.014),unlit:1)
             }
-            let p = PlanetPreview556.shipSurfacePosition(sphereFlight.position)
-            drawMesh(shipMesh, Self.translation(p.x,p.y,p.z) * Self.scale(0.065))
+            // GpuSphere67.CraftSphere67: real sphere tangent basis,
+            // source world ShipContactRadius*Scale67*.65 and visual
+            // bank/pitch in DEGREES. The source Vanguard GLB exporter
+            // already projects the GLB onto local XY with Z up.
+            let craft=Self.sphereStamp(
+                sphereFlight.position,
+                angle:sphereFlight.flight.visualHeading,
+                size:SphereSurfaceStamp556.sourceCraftRadius)
+            let shipModel=craft *
+                Self.rotateYDegrees(sphereFlight.flight.visualBank) *
+                Self.rotateXDegrees(sphereFlight.flight.visualPitch)
+            drawMesh(shipMesh,shipModel)
             encoder.endEncoding()
             command.present(drawable)
             command.commit()
