@@ -66,7 +66,10 @@ import Foundation
         let bVel=Sphere67.components(staticParent.position,Sphere67.transport(
             Sphere67.vector(b.position,b.velocity),
             from:Sphere67.normal(b.position),to:Sphere67.normal(staticParent.position)))
-        near(aVel.x,80,0.15); near(bVel.x,80,0.15)
+        // ImpactRock68 transfers bullet momentum BEFORE SplitPhysical68.
+        let forwardAfterBullet = 80 + 520 * 0.055 / staticParent.mass
+        near(aVel.x,forwardAfterBullet,0.15)
+        near(bVel.x,forwardAfterBullet,0.15)
         near(abs(aVel.y),19,0.15); near(abs(bVel.y),19,0.15)
         precondition(aVel.y*bVel.y < 0)
         near(a.radius,18*1.12*0.49,0.001)
