@@ -16,8 +16,8 @@ struct CombatVerifiedEncounter556 {
     var secondVitals:CombatTalentVitals78?=nil
     // Windows/src/Coop62.cs WithSecond62 swaps ship pose and immunity,
     // but NOT Game.Lives, ShieldCharges, Hull78, Armor78 or guardian.
-    // Opt-in source-accurate shared-resource mode. The earlier independent
-    // fixture remains unchanged for diagnostic/regression compatibility.
+    // Source-accurate shared resources are DEFAULT when a partner exists.
+    // Isolated test fixtures can explicitly request independent resources.
     var sourceSharedCoopResources=false
     var headingFirst:Float = -Float.pi/2
     var headingSecond:Float = -Float.pi/2
@@ -28,8 +28,15 @@ struct CombatVerifiedEncounter556 {
     // fabricate the unverified rescue-damage values.
     private(set) var pendingRescueFailure:CombatRescue65.Event?=nil
 
-    init(encounter:CombatEncounter68) {
+    init(encounter:CombatEncounter68,independentDiagnosticCoop:Bool=false) {
         self.encounter=encounter
+        sourceSharedCoopResources=encounter.second != nil &&
+                                  !independentDiagnosticCoop
+        if sourceSharedCoopResources {
+            self.encounter.secondSurvival.lives=encounter.firstSurvival.lives
+            self.encounter.secondSurvival.shieldCharges=encounter.firstSurvival.shieldCharges
+            self.encounter.secondSurvival.playing=encounter.firstSurvival.playing
+        }
     }
 
     /// The future source-verified Game.Damage owner calls this only after
@@ -67,13 +74,24 @@ struct CombatVerifiedEncounter556 {
                 vitals:firstVitals,guardianState:firstGuardian)
         } else {
             guard encounter.second != nil else { return (nil,nil) }
-            outcome=CombatVerifiedHit556.failedRescueDamage(
-                level:encounter.level,difficulty:encounter.difficulty,
-                survival:&encounter.secondSurvival,dome:&domeSecond,
-                developerInfinite:developerInfinite,
-                guardian:guardianSecond,talent:talentSecond,
-                vitals:sourceSharedCoopResources ? firstVitals : secondVitals,
-                guardianState:sourceSharedCoopResources ? firstGuardian : secondGuardian)
+            if sourceSharedCoopResources {
+                // FailRescue65.WithSecond62(Damage) checks the SAME global
+                // Tarcza145 energy and owned Guardian37, not a second pool.
+                outcome=CombatVerifiedHit556.failedRescueDamage(
+                    level:encounter.level,difficulty:encounter.difficulty,
+                    survival:&encounter.secondSurvival,dome:&domeFirst,
+                    developerInfinite:developerInfinite,
+                    guardian:guardianSecond,talent:talentSecond,
+                    vitals:firstVitals,guardianState:firstGuardian)
+                domeSecond=domeFirst
+            } else {
+                outcome=CombatVerifiedHit556.failedRescueDamage(
+                    level:encounter.level,difficulty:encounter.difficulty,
+                    survival:&encounter.secondSurvival,dome:&domeSecond,
+                    developerInfinite:developerInfinite,
+                    guardian:guardianSecond,talent:talentSecond,
+                    vitals:secondVitals,guardianState:secondGuardian)
+            }
         }
         let tagged=CombatVerifiedHit556.TeamOutcome(player:player,
                                                      outcome:outcome)
@@ -191,8 +209,16 @@ struct CombatVerifiedEncounter556 {
         let firstDown=rescue.down(.first),secondDown=rescue.down(.second)
         domeFirst.tick(dt:dt,held:firstDomeHeld,
                        playing:encounter.firstSurvival.playing,shipDown:firstDown)
-        domeSecond.tick(dt:dt,held:secondDomeHeld,
-                        playing:encounter.secondSurvival.playing,shipDown:secondDown)
+        if sourceSharedCoopResources && encounter.second != nil {
+            // Game.Step invokes StepTarcza145 only for P1. Coop62.WithSecond62
+            // does not swap TarczaEnergy145 or TarczaActive145; the entire
+            // energy pool is shared. The second input cannot charge it twice.
+            domeSecond=domeFirst
+        } else {
+            domeSecond.tick(dt:dt,held:secondDomeHeld,
+                            playing:encounter.secondSurvival.playing,
+                            shipDown:secondDown)
+        }
 
         // Use the SAME tested Physics68 contact phase. Its unverified
         // defense mode records contact events but never subtracts lives.
@@ -211,6 +237,9 @@ struct CombatVerifiedEncounter556 {
             // against the SAME global lives, shield charges, vitals and
             // guardian, while retaining each ship's own immunity timer.
             for event in frame.contacts {
+                // WithSecond62 leaves TarczaEnergy145 global: the next
+                // collision always begins with the updated SAME dome.
+                domeSecond=domeFirst
                 survivalSecond.lives=survivalFirst.lives
                 survivalSecond.shieldCharges=survivalFirst.shieldCharges
                 survivalSecond.playing=survivalFirst.playing
@@ -228,6 +257,7 @@ struct CombatVerifiedEncounter556 {
                     guardianStateFirst:firstGuardian,
                     guardianStateSecond:firstGuardian))
                 if CombatContactRouter96.player(for:event) == .second {
+                    domeFirst=domeSecond
                     survivalFirst.lives=survivalSecond.lives
                     survivalFirst.shieldCharges=survivalSecond.shieldCharges
                     survivalFirst.playing=survivalSecond.playing
@@ -236,6 +266,7 @@ struct CombatVerifiedEncounter556 {
             survivalSecond.lives=survivalFirst.lives
             survivalSecond.shieldCharges=survivalFirst.shieldCharges
             survivalSecond.playing=survivalFirst.playing
+            domeSecond=domeFirst
         } else {
             hit=CombatVerifiedHit556.applyTeam(frame.contacts,
                 level:encounter.level,difficulty:encounter.difficulty,
