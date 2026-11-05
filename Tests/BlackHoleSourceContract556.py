@@ -62,7 +62,7 @@ for token in (
     "let layers=BlackHoleSky55.overlays(",
     "properties.reserveCapacity(1+layers.count*3)",
     "encoder.setRenderPipelineState(blackHolePipeline)",
-    "encoder.setFragmentTexture(blackHoleTextures,index:0)",
+    "encoder.setFragmentTexture(blackTextures,index:0)",
     "encoder.setFragmentTexture(sphereHaloTexture,index:1)",
     "vertexCount:layers.count*6",
     "encoder.setRenderPipelineState(nebulaOverlayPipeline)",
