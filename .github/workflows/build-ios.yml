@@ -23,6 +23,10 @@ jobs:
           /tmp/physics68-test
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift Tests/Action38SphereQuota556Tests.swift -o /tmp/action38-test
           /tmp/action38-test
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift Tests/Action38FrameOrder556Tests.swift -o /tmp/action38-phase556-test
+          /tmp/action38-phase556-test
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift Tests/AmigaBalance70Sphere556Tests.swift -o /tmp/amiga-balance70-test
+          /tmp/amiga-balance70-test
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift Tests/SphereRockContact68Tests.swift -o /tmp/contact68-test
           /tmp/contact68-test
       - name: Verify task 7 shared damage, earliest hit and v149 boss-rock order
@@ -267,4 +271,4 @@ jobs:
             ASTEROIDY_iOS_UNSIGNED.ipa
             reports/
           if-no-files-found: error
-          retention-days: 3
+          retention-days: 14
