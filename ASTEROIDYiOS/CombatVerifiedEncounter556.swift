@@ -241,6 +241,17 @@ struct CombatVerifiedEncounter556 {
                 firstFiring:firstFiring,secondFiring:secondFiring)
             second=partner
         }
+        // Windows/src/Gameplay65.cs StepRescue65 calls ResetVitals78()
+        // on successful rescue of EITHER wreck. In the optional per-player
+        // diagnostic state, reset the recovered player's actual gauge.
+        // Shared reference instances also preserve the original common
+        // gauge automatically.
+        if case let .rescued(player) = rescueEvent {
+            switch player {
+            case .first: firstVitals?.reset()
+            case .second: secondVitals?.reset()
+            }
+        }
         if case .failed = rescueEvent {
             pendingRescueFailure=rescueEvent
         }
