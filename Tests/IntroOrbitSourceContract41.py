@@ -33,7 +33,7 @@ for token in (
     '2.399963',
     'radius:Float=52+Float(rng.nextDouble())*16',
     'size:Float=0.22+Float(randomSize*randomSize*randomSize)*1.75',
-    'for sample in 0...80',
+    'static let corridorSamples:[(eye:V,line:V)] = (0...80).map { sample in',
     'static func visible(',
     'static func planetRotationDegrees(',
     'Float(level)*29+time*2.2',
@@ -92,6 +92,12 @@ painter_order=(
 indices=[intro_metal.index(token) for token in painter_order]
 ck(indices==sorted(indices) and len(set(indices))==len(indices),
    'IntroSky must draw far clouds, planets, black hole, near clouds, stars and rays in source order')
+
+ck('for (eye,line) in corridorSamples {' in intro,
+   'Original source 81 eye-to-ship segments must be reused in all 820 rock tests')
+ck(intro.index('let point=origin+planetCenter-eye') <
+   intro.index('let projection=clamped('),
+   'Flight corridor position must use source subtraction and projection')
 
 ck('@Published var introPreview41 = true' in app,
    'The new source cinematic must be initially visible, not old training arena')
