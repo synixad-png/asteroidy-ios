@@ -17,8 +17,8 @@ import Foundation
                 for r in sample.asteroids {
                     let hp=c.sphericalRockHealth(size:3,tier:r.tier)
                     precondition(r.health==hp && r.maxHealth==hp)
-                    precondition(r.originalHealth==
-                                 Rock.healthFor(size:3,tier:r.tier))
+                    let originalHP=Rock.healthFor(size:3,tier:r.tier)
+                    precondition(r.originalHealth==originalHP)
                     near(r.radius,c.sphericalRockRadius(size:3))
                     near(r.mass,8)
                     if level==25 {
@@ -84,9 +84,9 @@ import Foundation
                 let oldCount=balls[i].bounceCount
                 AmigaBounce265.step(&balls[i],dt:0.016)
                 if balls[i].bounceCount>oldCount {
-                    let denom=max(0.0001,sqrt(old.lengthSquared*
-                                             balls[i].velocity.lengthSquared))
-                    let dot=(old.x*balls[i].velocity.x+
+                    let product=old.lengthSquared*balls[i].velocity.lengthSquared
+                    let denom=max(0.0001,sqrt(product))
+                    let dot=(old.x*balls[i].velocity.x +
                              old.y*balls[i].velocity.y)/denom
                     if dot<0.99 {turns[i]+=1}
                 }
