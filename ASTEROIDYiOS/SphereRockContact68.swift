@@ -15,7 +15,13 @@ enum SphereRockContact68 {
                         restitution:Float = 0.62,
                         applyRockSpin:Bool = true) -> Bool {
         let sum = a.radius+b.radius
-        if abs(a.position.y-b.position.y) >= sum { return false }
+        // Windows/src/Physics68.cs:33-37 applies the latitude-bound
+        // fast reject ONLY to canonical [0,H] points. Uncanonical
+        // coordinates can be close after pole reflection and must enter
+        // the exact Sphere67 narrow phase instead of disappearing.
+        if a.position.y >= 0 && a.position.y <= Sphere67.height &&
+           b.position.y >= 0 && b.position.y <= Sphere67.height &&
+           abs(a.position.y-b.position.y) >= sum { return false }
         let d = Sphere67.delta(target:b.position,origin:a.position)
         let distance = sqrt(d.lengthSquared)
         if distance >= sum { return false }
