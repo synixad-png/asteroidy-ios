@@ -14,6 +14,7 @@ enum CombatSolidEvent68: Equatable {
     case bugRock(Int, Int), bugBug(Int, Int)
     case bossRock(Int), bossBug(Int)
     case shipRock(Int), shipBug(Int), shipBoss
+    case partnerRock(Int), partnerBug(Int), partnerBoss
     case coopShip
 }
 
@@ -56,8 +57,34 @@ enum CombatSolids68 {
         return true
     }
 
+    private static func resolveShipContacts(_ player:inout CombatBody68,
+                 rocks:inout [SphereAsteroid556],
+                 bugs:inout [CombatBody68],
+                 boss:inout CombatBody68?,
+                 events:inout [CombatSolidEvent68],
+                 second:Bool) {
+        for ri in rocks.indices {
+            var rock=rocks[ri]
+            if collisionWithRock(&player,&rock,restitution:0.42) {
+                rocks[ri]=rock
+                events.append(second ? .partnerRock(ri) : .shipRock(ri))
+            }
+        }
+        for bi in bugs.indices {
+            var bug=bugs[bi]
+            if contact(&player,&bug,restitution:0.35) {
+                bugs[bi]=bug
+                events.append(second ? .partnerBug(bi) : .shipBug(bi))
+            }
+        }
+        if var active=boss,contact(&player,&active,restitution:0.30) {
+            boss=active
+            events.append(second ? .partnerBoss : .shipBoss)
+        }
+    }
+
     // StepSolids68 order: rock/rock -> bug/rock -> bug/bug -> boss/rock ->
-    // boss/bug -> ship/rock -> ship/bug -> ship/boss -> partner.
+    // boss/bug -> primary ship contacts -> second ship contacts -> ship pair.
     // RobotContacts70 and SeparateBoss71 are intentionally not guessed here.
     static func step(ship:inout CombatBody68,
                      rocks:inout [SphereAsteroid556],
@@ -107,26 +134,16 @@ enum CombatSolids68 {
             boss=active
         }
         if !shipDown {
-            for ri in rocks.indices {
-                var rock=rocks[ri]
-                if collisionWithRock(&ship,&rock,restitution:0.42) {
-                    rocks[ri]=rock
-                    events.append(.shipRock(ri))
-                }
-            }
-            for bi in bugs.indices {
-                var bug=bugs[bi]
-                if contact(&ship,&bug,restitution:0.35) {
-                    bugs[bi]=bug
-                    events.append(.shipBug(bi))
-                }
-            }
-            if var active=boss {
-                if contact(&ship,&active,restitution:0.30) {
-                    boss=active
-                    events.append(.shipBoss)
-                }
-            }
+            resolveShipContacts(&ship,rocks:&rocks,bugs:&bugs,
+                                boss:&boss,events:&events,second:false)
+        }
+        // Original Physics68.StepSolids68 uses WithSecond62(ShipContacts68):
+        // the partner gets ALL asteroid, bug and boss contacts independently.
+        // It must still collide when only the first player is down.
+        if !partnerDown, var second=partner {
+            resolveShipContacts(&second,rocks:&rocks,bugs:&bugs,
+                                boss:&boss,events:&events,second:true)
+            partner=second
         }
         if !shipDown && !partnerDown, var active=partner {
             if contact(&ship,&active,restitution:0.12) {
