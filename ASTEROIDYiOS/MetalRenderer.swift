@@ -34,6 +34,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private var blackHoleTextures: MTLTexture?
     private var deepPlanetTextures: MTLTexture?
     private var nebulaLoadGate = SkyTextureGate55()
+    private var nebulaSliceCache55 = SkyTextureSliceCache55(count: SphereNebula556.orbitThemeCount)
     private var blackHoleLoadGate = SkyTextureGate55()
     private var deepPlanetLoadGate = SkyTextureGate55()
     private var deepPlanetSliceCache55 = SkyTextureSliceCache55(count: DeepSkyPlanets55.count)
@@ -355,23 +356,40 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         (0..<SphereNebula556.orbitLayerCount).map {SphereNebula556.layer($0)}
 
     private func ensureCloudTextures55(camera: SphereCamera67) -> MTLTexture? {
-        if let current=nebulaTexture { return current }
-        // GpuCosmos39.CloudLayer creates a texture only if SkyProject55
-        // projected an actual sky layer. A prebuilt 36-direction cache
-        // avoids recomputing the original sin/cos offsets every frame.
-        let hasVisibleCloud=Self.sourceCloudLayers55.contains {
-            $0.projected(camera:camera) != nil
+        // GpuCosmos39.CloudLayer caches each NebulaTexture(theme) on its
+        // own first visible use. The original sphere preview only uses
+        // themes 0 and 1 across the fixed 24+12 source cloud layers.
+        // A 36-direction cache avoids recomputing source sin/cos offsets.
+        let visibleThemes=Set(Self.sourceCloudLayers55.compactMap { layer -> Int? in
+            layer.projected(camera:camera) != nil ? layer.theme : nil
+        })
+        let texture: MTLTexture
+        if let current=nebulaTexture {
+            texture=current
+        } else {
+            guard nebulaLoadGate.shouldAllocate(visible:!visibleThemes.isEmpty)
+            else { return nil }
+            do {
+                let created=try Self.makeNebulaTextures556(device)
+                nebulaTexture=created
+                texture=created
+            } catch {
+                NSLog("ASTEROIDY iOS: źródłowe NebulaTexture: %@", String(describing:error))
+                return nil
+            }
         }
-        guard nebulaLoadGate.shouldAllocate(visible:hasVisibleCloud)
-        else { return nil }
-        do {
-            let created=try Self.makeNebulaTextures556(device)
-            nebulaTexture=created
-            return created
-        } catch {
-            NSLog("ASTEROIDY iOS: źródłowe NebulaTexture: %@", String(describing:error))
-            return nil
+        // Only the texture themes that actually project into this
+        // camera are generated/uploaded. The second theme may appear
+        // later; unseen slices are never sampled by the shader.
+        for theme in 0..<SphereNebula556.orbitThemeCount
+            where visibleThemes.contains(theme) &&
+                  nebulaSliceCache55.needsUpload(style:theme) {
+            guard Self.uploadNebulaSlice556(texture,theme:theme) else {
+                return nil
+            }
+            nebulaSliceCache55.markUploaded(style:theme)
         }
+        return texture
     }
 
     private func ensureDeepPlanetTextures55(style: Int) -> MTLTexture? {
@@ -419,7 +437,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
 
     /// Two immutable original GpuCosmos39 PArgb NebulaTexture themes
     /// used by GpuIntro41.IntroSky. Share one 2-slice texture array across
-    /// all 36 distant/near cloud layers, allocated exactly once.
+    /// all 36 distant/near cloud layers, allocated exactly once. Each
+    /// 256px CPU bitmap is generated only when its theme is visible.
     private static func makeNebulaTextures556(_ device:MTLDevice)
         throws -> MTLTexture {
         let n=SphereNebula556.imageSize
@@ -434,18 +453,25 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                  userInfo:[NSLocalizedDescriptionKey:
                     "Nie można utworzyć źródłowych NebulaTexture 256x256"])
         }
-        for theme in 0..<SphereNebula556.orbitThemeCount {
-            let texels=SphereNebula556.textureBGRA(theme:theme)
-            texels.withUnsafeBytes { raw in
-                if let p=raw.baseAddress {
-                    texture.replace(
-                        region:MTLRegionMake2D(0,0,n,n),mipmapLevel:0,
-                        slice:theme,withBytes:p,
-                        bytesPerRow:n*4,bytesPerImage:n*n*4)
-                }
+        return texture
+    }
+
+    private static func uploadNebulaSlice556(_ texture:MTLTexture,
+                                             theme:Int) -> Bool {
+        let n=SphereNebula556.imageSize
+        let texels=SphereNebula556.textureBGRA(theme:theme)
+        guard texels.count == n*n*4 else {
+            NSLog("ASTEROIDY iOS: nieprawidłowa tekstura mgławicy %ld", theme)
+            return false
+        }
+        texels.withUnsafeBytes { raw in
+            if let p=raw.baseAddress {
+                texture.replace(region:MTLRegionMake2D(0,0,n,n),
+                                mipmapLevel:0,slice:theme,withBytes:p,
+                                bytesPerRow:n*4,bytesPerImage:n*n*4)
             }
         }
-        return texture
+        return true
     }
 
     /// Original DrawDeepSpace55 emits 24 distant clouds, IntroSky adds
