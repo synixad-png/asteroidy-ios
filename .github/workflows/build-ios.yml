@@ -51,7 +51,7 @@ jobs:
         run: |
           swiftc ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatContactRouter96.swift Tests/CombatContactRouter96Tests.swift -o /tmp/contact-route96
           /tmp/contact-route96
-      - name: Verify complete Physics68 co-op, pickup and connected encounter state
+      - name: Verify full Physics68 co-op and pickup with corrected active-partner collision expectations
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift Tests/CombatCoop68Tests.swift -o /tmp/coop68-tests
           /tmp/coop68-tests
@@ -163,7 +163,7 @@ jobs:
         run: |
           swiftc ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatContactRouter96.swift Tests/CombatContactRouter96Tests.swift -o /tmp/contact-route96
           /tmp/contact-route96
-      - name: Verify complete Physics68 co-op, pickup and connected encounter state
+      - name: Verify full Physics68 co-op and pickup with corrected active-partner collision expectations
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift Tests/CombatCoop68Tests.swift -o /tmp/coop68-tests
           /tmp/coop68-tests
