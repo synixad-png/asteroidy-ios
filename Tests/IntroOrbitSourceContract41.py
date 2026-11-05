@@ -72,8 +72,12 @@ ck('Self.perspective(' in metal and
    'aspect,spherical:input.planetPreview || input.introPreview41' in metal,
    'Cinematic must share original intro frustum, not 36-degree flat arena')
 ck('for (index,rock) in IntroOrbit41.belt.enumerated()' in metal and
-   'where IntroOrbit41.visible(rock,in:frame)' in metal,
+   'where IntroOrbit41.visible(rock,time:introTime41,in:frame)' in metal,
    '820 source belt rock coordinates are not drawn with frustum culling')
+ck('IntroOrbit41.beltRotationDegrees(time:introTime41)' in metal and
+   'let beltTransform=' in metal and
+   'let translation=beltTransform *' in metal,
+   'Original 0.2-degree/second source belt transform is missing')
 ck('IntroRockGeometry41.geometry(rock)' in metal and
    'introRockMaxCached41 = 256' in metal and
    'if builtThisFrame==0' in metal and
