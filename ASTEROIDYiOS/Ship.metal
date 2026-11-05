@@ -27,12 +27,11 @@ vertex RasterOutput sceneVertex(uint vid [[vertex_id]],
     o.material = v.material;
     return o;
 }
-// GpuIntro41.IntroSky uses projected point positions, per-star pixel
-// sizes and source RGBA colors (see SphereSky207). The original IntroHalo
-// textured glow is not present in the current source assets: render a
-// circular, alpha-blended coverage for each point rather than the previous
-// opaque world-space triangle. This is an explicit port approximation,
-// NOT a claim that the 2D original halo texture has been reconstructed.
+// Exact Windows/src/GpuAmbient37.cs:5 StarTexture() is uploaded as a
+// premultiplied 64x64 BGRA texture generated at initialization. GpuIntro41
+// IntroHalo draws its pixel-accurate 10px/21px additional bright-star layer
+// BEFORE the normal 2*size-radius halo; both use the same source texture.
+// GPU point sprites are the iOS equivalent of the original 2D halo quads.
 struct SkyPointOutput {
     float4 position [[position]];
     float pointSize [[point_size]];
@@ -56,18 +55,25 @@ vertex SkyPointOutput skyPointVertex(
     // scene.lighting.x carries drawableHeight/720 for this sky-only
     // uniform. star.material.x remains the exact C# source pixel size.
     out.pointSize = max(1.0f, star.material.x * scene.lighting.x);
-    out.color = star.color;
+    // Gpu2DRenderer.Vertex2D premultiplies tint by Color.A/255.
+    // StarTexture is itself premultiplied white. Use source blend ONE,
+    // ONE_MINUS_SRC_ALPHA, not the earlier sourceAlpha convention.
+    out.color = float4(star.color.rgb*star.color.a,star.color.a);
     return out;
 }
 fragment float4 skyPointFragment(
     SkyPointFragmentInput in [[stage_in]],
-    float2 uv [[point_coord]]) {
-    float2 p = uv * 2.0f - 1.0f;
-    float radiusSquared = dot(p,p);
-    if (radiusSquared >= 1.0f) discard_fragment();
-    // Smooth pixel coverage only; no invented physical halo radius.
-    float coverage = 1.0f - smoothstep(0.0f,1.0f,radiusSquared);
-    return float4(in.color.rgb, in.color.a * coverage);
+    float2 uv [[point_coord]],
+    texture2d<float> sourceHalo [[texture(0)]]) {
+    // Exact 64x64 PArgb StarTexture from GpuAmbient37.cs. The uploaded
+    // BGRA texels have B=G=R=A=the original byte alpha and use LINEAR
+    // filtering like the original GL SetFilter(true). Vertex tint is
+    // already premultiplied by its source Color.A.
+    constexpr sampler sourceSampler(coord::normalized,
+                                    address::clamp_to_edge,
+                                    filter::linear);
+    float4 mask=sourceHalo.sample(sourceSampler,uv);
+    return in.color*mask;
 }
 
 // Single directional-light Cook-Torrance GGX BRDF, without environment IBL or
