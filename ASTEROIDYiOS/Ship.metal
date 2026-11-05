@@ -288,3 +288,68 @@ fragment float4 sceneFragment(RasterOutput in [[stage_in]]) {
     const float3 shaded = ambient + (diffuse + specular) * radiance * NdotL;
     return float4(clamp(shaded * coatAttenuation + coatSpecular * radiance * NdotL, 0.0, 1.0), in.color.a);
 }
+
+
+// Windows/src/GpuShip.cs:19-63, v491 sustained 3D twin-engine
+// plasma, rendered AFTER fighter with additive src-alpha/ONE blending.
+// Original source produces 2*3*3*16*6 = 1728 triangle vertices.
+// Positions, opacity, warm-white/orange/ember RGB and traveling sine
+// waves are calculated directly by GPU vertex_id: zero transient
+// per-frame CPU meshes or buffers, no inaccurate v490 blue wedges.
+struct FighterPlasmaUniform491 {
+    float4x4 mvp;
+    float4 engine0;
+    float4 engine1;
+    float4 frame; // time, thrust (0..1), visualSize172=1.06, unused
+};
+struct FighterPlasmaRaster491 {
+    float4 position [[position]];
+    float4 color;
+};
+
+vertex FighterPlasmaRaster491 fighterPlasmaVertex491(
+    uint vertexID [[vertex_id]],
+    constant FighterPlasmaUniform491 &source [[buffer(0)]]) {
+    uint engineIndex=vertexID/(3u*3u*16u*6u);
+    uint layer=(vertexID/(3u*16u*6u))%3u;
+    uint plane=(vertexID/(16u*6u))%3u;
+    uint i=(vertexID/6u)%16u;
+    uint corner=vertexID%6u;
+    bool atStart=(corner==0u||corner==1u||corner==4u);
+    bool positive=(corner==0u||corner==2u||corner==3u);
+    float u=float(atStart ? i : i+1u)/16.0f;
+    float3 engine=engineIndex==0u
+        ? source.engine0.xyz : source.engine1.xyz;
+    float x=engine.x,ey=engine.y,z=engine.z;
+    float t=source.frame.x;
+    float power=clamp(source.frame.y,0.0f,1.0f);
+    float sz=source.frame.z;
+    float plume=0.17f+power*1.47f;
+    float radial=layer==0u ? 0.12f : layer==1u ? 0.072f : 0.030f;
+    float alpha=layer==0u ? 0.21f : layer==1u ? 0.48f : 0.82f;
+    float angle=float(plane)*M_PI_F/3.0f;
+    float dx=cos(angle),dz=sin(angle);
+    float off=sin(u*11.0f-t*11.0f+float(plane)*1.9f+x*2.0f) *
+        u*u*0.075f*power;
+    float spread=pow(max(0.035f,1.0f-u),0.58f) *
+        (1.0f+0.11f*sin(u*28.0f-t*21.0f+float(plane)));
+    float width=sz*radial*spread;
+    float fade=alpha*(1.0f-u*u) *
+        (0.83f+0.17f*sin(t*19.0f-u*37.0f+float(plane)));
+    float side=positive ? 1.0f : -1.0f;
+    float3 pos=float3(x+off+side*dx*width,
+                      ey-plume*u,z+side*dz*width);
+    float g=layer==2u ? 0.96f-0.19f*u :
+        layer==1u ? 0.65f-0.27f*u : 0.27f-0.14f*u;
+    float b=layer==2u ? 0.49f*(1.0f-u) : 0.035f;
+    FighterPlasmaRaster491 out;
+    out.position=source.mvp*float4(pos,1.0f);
+    out.color=float4(1.0f,g,b,fade);
+    return out;
+}
+
+fragment float4 fighterPlasmaFragment491(
+    FighterPlasmaRaster491 in [[stage_in]]) {
+    // The GL GpuShip.cs line 22 uses Blend(SRC_ALPHA,ONE), no premul.
+    return in.color;
+}
