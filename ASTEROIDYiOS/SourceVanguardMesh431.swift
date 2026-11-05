@@ -22,6 +22,11 @@ struct SourceVanguardMesh431 {
     }
 
     static let magic: Int = 4311
+    // Verified against original user PC v568 glTF and runtime skin.
+    static let exactMeshSHA256 =
+        "f5d6d0107437fa54c3e8505f9adfbf6143cc877cb970eef687603609e26f9f4a"
+    static let exactBaseJPEG_SHA256 =
+        "2945f711a6b559bfb5fdfb79750a2f2f77e2071aa5f3f4173eb450bce81b8b95"
     static let floatsPerVertex: Int = 12
     static let bytesPerVertex: Int = 48
     let engines: [Socket]
