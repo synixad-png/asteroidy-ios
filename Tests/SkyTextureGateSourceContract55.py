@@ -38,7 +38,6 @@ for token in (
     "private var nebulaLoadGate = SkyTextureGate55()",
     "private var blackHoleLoadGate = SkyTextureGate55()",
     "private var deepPlanetLoadGate = SkyTextureGate55()",
-    "guard nebulaLoadGate.shouldAllocate(visible: true)",
     "guard blackHoleLoadGate.shouldAllocate(visible: true)",
     "guard deepPlanetLoadGate.shouldAllocate(visible: true)",
     "let sourceCloudTexture=ensureCloudTextures55(camera:c)",
