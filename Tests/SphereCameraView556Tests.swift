@@ -17,6 +17,21 @@ import Foundation
         near(SphereCameraView556.normalizedEyeDistance,
              310/(100*1.4419674))
 
+        // Direct original Orbit50.cs:32 column-major matrix at the
+        // equator, longitude zero; unlike self-derived assertions this
+        // explicitly catches a transpose of the Metal uniform layout.
+        let equator=SphereCameraView556(
+            camera:SphereCamera67(at:Vec2(x:0,y:360)))
+        let exact:[Float] = [
+            0,0,1,0,
+            0,-1,0,0,
+            1,0,0,0,
+            0,0,-SphereCameraView556.normalizedEyeDistance,1
+        ]
+        let raw=equator.viewColumnMajor
+        precondition(raw.count==16)
+        for i in exact.indices {near(raw[i],exact[i])}
+
         let points=[
             Vec2(x:0,y:360),Vec2(x:320,y:360),
             Vec2(x:640,y:360),Vec2(x:960,y:360),
@@ -64,6 +79,6 @@ import Foundation
         precondition(SphereVector3.dot(moved.back,Sphere67.normal(target))>0.999)
         near(moved.eye.length,SphereCameraView556.normalizedEyeDistance)
 
-        print("PASS: source GpuSphere67 310-unit orbit camera, 8 sphere positions, right/up/forward view basis and 240 tracked flight frames")
+        print("PASS: source GpuSphere67 310-unit orbit camera, 8 sphere positions, exact original Orbit50.cs matrix columns and view basis and 240 tracked flight frames")
     }
 }
