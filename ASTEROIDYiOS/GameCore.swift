@@ -215,17 +215,16 @@ struct GameCore {
     }
     private mutating func damageRock(at index: Int, amount: Int) {
         guard rocks.indices.contains(index) else { return }
-        if rocks[index].shardLife > 0 {
-            // Game.Split removes a hit cosmetic shard without score or further splitting.
-            rocks.remove(at: index)
-            return
-        }
-        rocks[index].health -= amount
-        guard rocks[index].health <= 0 else { return }
-        let destroyed = rocks.remove(at: index)
+        let rock=rocks[index]
+        let result=CombatDamage556.hitRock(
+            health:rock.health,shardLife:rock.shardLife,amount:amount,
+            size:rock.size,originalHealth:rock.originalHealth,tier:rock.tier)
+        if result.removedShard { rocks.remove(at:index); return }
+        rocks[index].health=result.health
+        guard result.destroyed else { return }
+        let destroyed=rocks.remove(at:index)
         destroyedRocks += 1
-        score += (destroyed.size == 3 ? 20 : destroyed.size == 2 ? 50 : 100)
-            + (destroyed.originalHealth - 1) * 30 + destroyed.tier * 10
+        score += result.score
         if destroyed.size > 1 { addFragments(of: destroyed) }
         else { addTerminalShards(of: destroyed) }
     }
@@ -328,23 +327,38 @@ struct GameCore {
         for i in bolts.indices { bolts[i].at = wrapped(bolts[i].at + bolts[i].motion * dt); bolts[i].life -= dt }
         var removeRocks = Set<Int>(), removeBolts = Set<Int>()
         var damageEvents: [Int: Int] = [:]
+        // Ship contacts still use the swept segment of both moving bodies.
         for i in rocks.indices {
             let rock = rocks[i]
-            if hitTimer <= 0 && Self.sweptHit(from:previousShip,to:nextShip,
+            if hitTimer <= 0 && hull > 0 && Self.sweptHit(from:previousShip,to:nextShip,
                 rockFrom:previousRocks[i],rockTo:previousRocks[i] + rock.motion*dt,
                 radius:rock.radius + 0.06,extent:extent) {
                 hull = max(0, hull - 1)
                 hitTimer = 1.3
                 velocity = velocity * -0.45
             }
-            for j in bolts.indices where bolts[j].life > 0 && !removeBolts.contains(j) {
-                if Self.sweptHit(from:previousBolts[j],to:previousBolts[j] + bolts[j].motion*dt,
-                    rockFrom:previousRocks[i],rockTo:previousRocks[i] + rock.motion*dt,
-                    radius:rock.radius + 0.014,extent:extent) {
-                    if trainingBalance != nil { damageEvents[i, default: 0] += 1 }
-                    else { removeRocks.insert(i); score += 100 }
-                    removeBolts.insert(j); break
+        }
+        // Game.cs chooses the earliest swept contact for EACH projectile,
+        // independent of Rock array ordering. A projectile hits once.
+        for j in bolts.indices where bolts[j].life > 0 {
+            var first:Float=2
+            var target:Int?=nil
+            for i in rocks.indices {
+                let t = CombatCollision556.firstPeriodicHit(
+                    from:previousBolts[j],to:previousBolts[j]+bolts[j].motion*dt,
+                    rockFrom:previousRocks[i],
+                    rockTo:previousRocks[i]+rocks[i].motion*dt,
+                    radius:rocks[i].radius+0.014,extent:extent)
+                if CombatDamage556.prefer(candidateTime:t,candidateIndex:i,
+                                           bestTime:first,bestIndex:target) {
+                    first=t
+                    target=i
                 }
+            }
+            if let i=target {
+                if trainingBalance != nil { damageEvents[i,default:0] += 1 }
+                else { removeRocks.insert(i); score += 100 }
+                removeBolts.insert(j)
             }
         }
         if trainingBalance != nil {
