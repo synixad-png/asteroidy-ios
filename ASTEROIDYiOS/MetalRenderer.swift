@@ -17,6 +17,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     let queue: MTLCommandQueue
     let pipeline: MTLRenderPipelineState
     let depthState: MTLDepthStencilState
+    let skyPointPipeline: MTLRenderPipelineState
+    let skyDepthState: MTLDepthStencilState
     private let shipMesh: GPUModel
     private let asteroidMesh: GPUModel
     private let bulletMesh: GPUModel
@@ -64,6 +66,32 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         p.colorAttachments[0].pixelFormat = .bgra8Unorm
         p.depthAttachmentPixelFormat = .depth32Float
         pipeline = try device.makeRenderPipelineState(descriptor:p)
+        // Source GpuIntro41 stars use RGBA and pixel dimensions. Keep a
+        // dedicated blended POINT pipeline, independent of the existing
+        // opaque PBR and flat training arena pipelines.
+        let skyDescriptor=MTLRenderPipelineDescriptor()
+        skyDescriptor.vertexFunction=library.makeFunction(name:"skyPointVertex")
+        skyDescriptor.fragmentFunction=library.makeFunction(name:"skyPointFragment")
+        skyDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        skyDescriptor.depthAttachmentPixelFormat = .depth32Float
+        let blend=skyDescriptor.colorAttachments[0]!
+        blend.isBlendingEnabled = true
+        blend.rgbBlendOperation = .add
+        blend.alphaBlendOperation = .add
+        blend.sourceRGBBlendFactor = .sourceAlpha
+        blend.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        blend.sourceAlphaBlendFactor = .one
+        blend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
+        skyPointPipeline=try device.makeRenderPipelineState(descriptor:skyDescriptor)
+        let skyDS=MTLDepthStencilDescriptor()
+        // Sky first, no depth writes; later real planet geometry occludes
+        // it with the unchanged .less depth test.
+        skyDS.depthCompareFunction = .always
+        skyDS.isDepthWriteEnabled = false
+        guard let skyDepth=device.makeDepthStencilState(descriptor:skyDS)
+        else {throw NSError(domain:"ASTEROIDY iOS",code:8,
+                            userInfo:[NSLocalizedDescriptionKey:"Brak sky depth state"])}
+        skyDepthState=skyDepth
         let ds = MTLDepthStencilDescriptor()
         ds.depthCompareFunction = .less
         ds.isDepthWriteEnabled = true
@@ -152,42 +180,28 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         return (vertices,indices)
     }
-    /// Windows GpuIntro41.IntroSky + GpuAmbient37.SpaceRand207 sky.
-    /// The original 1500 deterministic directions, sizes and tints are
-    /// preserved; a single static Metal buffer substitutes small triangles
-    /// for the original screen-space textured glow quads (not yet ported).
-    /// Keep the existing flat-arena stars exactly as before.
+    /// Each original GpuIntro41 star becomes ONE GPU point vertex.
+    /// The dedicated skyPointVertex reads exact source star.pixelSize,
+    /// and skyPointFragment uses the real source RGBA alpha. No more
+    /// opaque world-scale sky triangles. Original 2D IntroHalo texture
+    /// is not present and is not approximated as a fake large glow.
     private static func sphereSky207() -> ([AssetMesh.Vertex],[UInt32]) {
         var vertices:[AssetMesh.Vertex]=[]
         var indices:[UInt32]=[]
-        vertices.reserveCapacity(SphereSky207.count*3)
-        indices.reserveCapacity(SphereSky207.count*3)
+        vertices.reserveCapacity(SphereSky207.count)
+        indices.reserveCapacity(SphereSky207.count)
         let radius=SphereSky207.normalizedSkyRadius
         for i in 0..<SphereSky207.count {
             let star=SphereSky207.star(i)
-            let d=SIMD3<Float>(star.direction.x,star.direction.y,
-                                star.direction.z)
-            let reference:SIMD3<Float>=abs(d.y)<0.95
-                ? SIMD3(0,1,0) : SIMD3(1,0,0)
-            let right=simd_normalize(simd_cross(reference,d))
-            let up=simd_normalize(simd_cross(d,right))
-            let center=d*radius
-            // Original GpuIntro41 SkyProject55 uses focal=720 pixels.
-            // Local tangent triangles retain the star's angular size
-            // without per-frame rebuilds or per-star GPU draw calls.
-            let size=star.pixelSize*radius/SphereSky207.originalScreenHeight
-            let tint=SIMD4<Float>(star.red,star.green,star.blue,1)
-            let base=UInt32(vertices.count)
-            let triangle:[SIMD3<Float>]=[
-                center-right*size-up*size,
-                center+right*size-up*size,
-                center+up*size]
-            for p in triangle {
-                vertices.append(AssetMesh.Vertex(
-                    position:SIMD4(p.x,p.y,p.z,1),
-                    color:tint,normal:SIMD4(d.x,d.y,d.z,0)))
-            }
-            indices.append(contentsOf:[base,base+1,base+2])
+            let point=SIMD3<Float>(
+                star.direction.x,star.direction.y,star.direction.z)*radius
+            let sourceRGBA=SIMD4<Float>(
+                star.red,star.green,star.blue,star.alpha)
+            vertices.append(AssetMesh.Vertex(
+                position:SIMD4(point.x,point.y,point.z,1),
+                color:sourceRGBA,normal:SIMD4(0,0,1,0),
+                material:SIMD4<Float>(star.pixelSize,0,0,0)))
+            indices.append(UInt32(i))
         }
         return (vertices,indices)
     }
@@ -401,14 +415,23 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             encoder.drawIndexedPrimitives(type:.triangle,indexCount:mesh.count,indexType:.uint32,indexBuffer:mesh.indices,indexBufferOffset:0)
         }
         if input.planetPreview {
-            // Source GpuIntro41.IntroSky is a camera-relative distant sky
-            // with 1500 deterministic SpaceRand207 star directions.
-            // One static draw call; the sky tracks only the eye POSITION,
-            // while sphereView rotates with the actual planet camera.
+            // Source GpuIntro41.IntroSky uses a sky centred on the eye.
+            // Render 1500 alpha-blended screen-size points in one GPU call;
+            // none writes depth or changes the scene PBR pipeline.
             let skyEye=cameraFrame.eye
-            drawMesh(sphereSkyMesh,
-                     Self.translation(skyEye.x,skyEye.y,skyEye.z),
-                     unlit:1)
+            let skyMVP=vp*Self.translation(skyEye.x,skyEye.y,skyEye.z)
+            var skyUniform=SceneUniforms(
+                mvp:skyMVP,model:matrix_identity_float4x4,
+                lighting:SIMD4<Float>(1,0,0,0))
+            encoder.setRenderPipelineState(skyPointPipeline)
+            encoder.setDepthStencilState(skyDepthState)
+            encoder.setVertexBuffer(sphereSkyMesh.vertices,offset:0,index:0)
+            encoder.setVertexBytes(
+                &skyUniform,length:MemoryLayout<SceneUniforms>.stride,index:1)
+            encoder.drawPrimitives(
+                type:.point,vertexStart:0,vertexCount:sphereSkyMesh.count)
+            encoder.setDepthStencilState(depthState)
+            encoder.setRenderPipelineState(pipeline)
             // Triple-buffered morph uploads. Never write into a buffer referenced by
             // an outstanding GPU command, and never allocate a new MTLBuffer per morph.
             if lastPlanetMorphUpload < 0 || planetAnimationTime - lastPlanetMorphUpload >= 1.0/30.0 {
