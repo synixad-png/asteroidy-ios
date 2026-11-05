@@ -10,6 +10,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 intro=(root/'ASTEROIDYiOS/IntroOrbit41.swift').read_text()
 metal=(root/'ASTEROIDYiOS/MetalRenderer.swift').read_text()
+rockmesh=(root/'ASTEROIDYiOS/IntroRockGeometry41.swift').read_text()
 app=(root/'ASTEROIDYiOS/App.swift').read_text()
 project=(root/'project.yml').read_text()
 def ck(ok,msg):
@@ -39,6 +40,20 @@ for token in (
 ):
     ck(token in intro,'IntroScene41/OrbitWorld51 source changed: '+token)
 
+for token in (
+    'static func stone(_ direction:V,seed:Float)->V',
+    'radius+=0.065*sin(p.x*4+p.y*3+p.z*5+seed)',
+    'radius-=0.095*exp(-q*q/(0.04+f*0.014))',
+    'static func stoneNormal(_ direction:V,seed:Float)->V',
+    'let right=V.cross(p,axis).normalized',
+    'let forward=V.cross(right,p).normalized',
+    'let shade:Float=0.70+0.08*sin(seed+d.x*13+d.z*11)',
+    'red *= 1.3;green *= 1.13;blue *= 0.9',
+    'let depth=rock.size>1.15 ? 3 : 2',
+    'subdivide(ab,bc,ca,size:size,seed:seed,depth:depth-1',
+):
+    ck(token in rockmesh,'Source GpuIntro41.IntroStone mesh mismatch: '+token)
+
 ck('@Published var introPreview41 = true' in app,
    'The new source cinematic must be initially visible, not old training arena')
 ck('@Published var planetPreview = true' in app,
@@ -56,8 +71,14 @@ ck('if input.introPreview41 {' in metal and
 ck('Self.perspective(' in metal and
    'aspect,spherical:input.planetPreview || input.introPreview41' in metal,
    'Cinematic must share original intro frustum, not 36-degree flat arena')
-ck('for rock in IntroOrbit41.belt where IntroOrbit41.visible(rock,in:frame)' in metal,
+ck('for (index,rock) in IntroOrbit41.belt.enumerated()' in metal and
+   'where IntroOrbit41.visible(rock,in:frame)' in metal,
    '820 source belt rock coordinates are not drawn with frustum culling')
+ck('IntroRockGeometry41.geometry(rock)' in metal and
+   'introRockMaxCached41 = 256' in metal and
+   'if builtThisFrame==0' in metal and
+   'drawMesh(original,translation)' in metal,
+   'Actual original seed-specific asteroid geometry/lazy cache not wired')
 ck('drawMesh(mesh,planetModel)' in metal and
    'IntroOrbit41.introPlanetScale' in metal,
    'Real original planet asset absent from cinematic')
@@ -75,5 +96,6 @@ ck("TARGETED_DEVICE_FAMILY: '1,2'" in project,
    'Source project no longer supports both iPhone and iPad')
 print('PASS: original source IntroScene41 16-second camera/world/ship/belt')
 print('      connected to real Metal, visual preview isolated, iPhone+iPad')
-print('LIMITATIONS: rock octahedra and ship cinematic scale are provisional')
+print('LIMITATIONS: only not-yet-generated stones use octahedron fallback;')
+print('             NewHome290 terrain-placement and craft scale need parity audit')
 print('             and runtime Apple GPU/iPad imagery NOT verified')
