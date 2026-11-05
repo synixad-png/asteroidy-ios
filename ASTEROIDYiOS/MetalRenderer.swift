@@ -48,6 +48,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private var lastPlanetMorphUpload: Double = -1
     private let telemetry = RenderTelemetry()
     private var lastTelemetryLog: Double = 0
+    // Original IntroScene41 cinematic; not a mission or campaign unlock.
+    private var introTime41: Float = 0
+    private var wasIntroPreview41 = false
     private var sphereFlight: SphereFlight67 = {
         var f = SphereFlight67()
         f.position = Vec2(x:320,y:360) // +Z, visible from diagnostic globe camera
@@ -661,6 +664,19 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         ))
         return (view,SIMD3(b.eye.x,b.eye.y,b.eye.z))
     }
+    private static func introView41(_ time:Float)
+        -> (view: simd_float4x4, eye: SIMD3<Float>) {
+        let f=IntroOrbit41.frame(time)
+        let m=f.viewColumnMajor
+        let view=simd_float4x4(columns:(
+            SIMD4(m[0],m[1],m[2],m[3]),
+            SIMD4(m[4],m[5],m[6],m[7]),
+            SIMD4(m[8],m[9],m[10],m[11]),
+            SIMD4(m[12],m[13],m[14],m[15])
+        ))
+        let e=f.eyeNormalized
+        return (view,SIMD3(e.x,e.y,e.z))
+    }
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
     func draw(in view: MTKView) {
         let now = CACurrentMediaTime()
@@ -668,6 +684,14 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         // A bounded catch-up prevents an unbounded simulation spiral after resume.
         let elapsed = min(0.25, max(0, now - lastTime))
         lastTime = now
+        if input.introPreview41 && !wasIntroPreview41 {introTime41=0}
+        wasIntroPreview41=input.introPreview41
+        if input.introPreview41 {
+            // The unfinished port replays, rather than invents an
+            // unsupported transition into a supposedly complete mission.
+            introTime41=(introTime41+Float(elapsed))
+                .truncatingRemainder(dividingBy:IntroOrbit41.duration)
+        }
         if input.sectorTraining != previousSectorTraining {
             previousSectorTraining = input.sectorTraining
             let balance = input.sectorTraining ? CombatBalance556(level: 1, difficulty: .normal, spherical: false) : nil
@@ -696,6 +720,10 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         let command = FlightCommand(turn:input.steer,throttle:input.thrust,fire:input.shooting)
         fixedClock.advance(elapsed:elapsed) {
+            if input.introPreview41 {
+                // Source cinematic must not run either test simulation.
+                return
+            }
             if input.planetPreview {
                 planetAnimationTime += fixedClockStep
                 let canControl = !input.verifiedDamageLab || !damageLab.gameOver
@@ -768,7 +796,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         // Original Windows/src/GpuSphere67.cs:420 sets this exact
         // clearColor before drawing IntroSky and the combat planet.
         // Keep the pre-existing flat arena background unchanged.
-        if input.planetPreview {
+        if input.planetPreview || input.introPreview41 {
             view.clearColor=MTLClearColor(red:0.012,green:0.021,
                                          blue:0.04,alpha:1)
         } else {
@@ -780,11 +808,18 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let aspect = Float(view.drawableSize.width / max(view.drawableSize.height,1))
         // SphereCombat67/GpuSphere67 camera must follow SphereFlight67's
         // verified focus/up; the flat arena still uses the original view.
-        let cameraFrame = input.planetPreview
-            ? Self.sphereView(sphereFlight.camera)
-            : (view: Self.translation(0,0,-4),
-               eye: SIMD3<Float>(0,0,4))
-        let vp = Self.perspective(aspect,spherical:input.planetPreview) * cameraFrame.view
+        let cameraFrame: (view: simd_float4x4, eye: SIMD3<Float>)
+        if input.introPreview41 {
+            cameraFrame=Self.introView41(introTime41)
+        } else if input.planetPreview {
+            cameraFrame=Self.sphereView(sphereFlight.camera)
+        } else {
+            cameraFrame=(view:Self.translation(0,0,-4),
+                         eye:SIMD3<Float>(0,0,4))
+        }
+        let vp=Self.perspective(
+            aspect,spherical:input.planetPreview || input.introPreview41) *
+            cameraFrame.view
         encoder.setRenderPipelineState(pipeline)
         encoder.setDepthStencilState(depthState)
         encoder.setCullMode(.none)
