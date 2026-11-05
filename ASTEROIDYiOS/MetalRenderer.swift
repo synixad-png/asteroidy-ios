@@ -181,6 +181,10 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 planetAnimationTime += fixedClockStep
                 sphereFlight.tick(move: Vec2(x:input.steer,y:-input.thrust),
                                   aim: Vec2(x:input.steer,y:-input.thrust),dt:Float(fixedClockStep))
+                if input.shooting {
+                    let heading = Vec2(x:cos(sphereFlight.heading),y:sin(sphereFlight.heading))
+                    sphereSector.fire(from:sphereFlight.position,direction:heading)
+                }
                 sphereSector.tick(dt:Float(fixedClockStep),playerPosition:sphereFlight.position)
             } else {
                 game.tick(command,dt:Float(fixedClockStep))
@@ -188,7 +192,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         if now-lastHUDTime > 0.14 {
             lastHUDTime = now
-            let score = game.score
+            let score = input.planetPreview ? sphereSector.score : game.score
             let hull = input.planetPreview ? sphereSector.hull : game.hull
             let rockCount = input.planetPreview ? sphereSector.asteroids.count : game.rocks.count
             DispatchQueue.main.async { [weak input] in
@@ -267,6 +271,10 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 let visualRadius = max(0.014, asteroid.radius / Sphere67.radius * 0.65)
                 drawMesh(asteroidMesh,
                          Self.translation(surface.x,surface.y,surface.z) * Self.scale(visualRadius))
+            }
+            for bolt in sphereSector.bolts {
+                let position = PlanetPreview556.shipSurfacePosition(bolt.position,altitude:0.12)
+                drawMesh(bulletMesh,Self.translation(position.x,position.y,position.z) * Self.scale(0.014),unlit:1)
             }
             let p = PlanetPreview556.shipSurfacePosition(sphereFlight.position)
             drawMesh(shipMesh, Self.translation(p.x,p.y,p.z) * Self.scale(0.065))
