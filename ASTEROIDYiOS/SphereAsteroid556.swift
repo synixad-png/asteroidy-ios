@@ -142,8 +142,8 @@ enum AmigaBounce265 {
         let flight=145+min(75,Float(power)*11)
         rock.bounceVertical=max(rock.bounceVertical,flight)
         rock.bounceHeight=max(rock.bounceHeight,3.5)
-        rock.spin=max(-3,min(3,rock.spin+
-                      ((rock.shapeSeed & 1) == 0 ? 0.48 : -0.48)))
+        let spinStep:Float = (rock.shapeSeed & 1) == 0 ? 0.48 : -0.48
+        rock.spin=max(-3,min(3,rock.spin+spinStep))
         rock.health=rock.maxHealth
     }
 }
