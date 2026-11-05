@@ -97,6 +97,15 @@
 
 **Granica zadania:** nie zmieniono żadnego C# Windows/SteamOS, zasad walki, mechanik zadań 7/8, formatów GLB, źródeł planet ani oddzielnego iPhone-only workflow. Łączny 27%/73% to nadal nieprzeliczany historyczny wskaźnik portu; pozostałe 17 wartości i pełna zatwierdzona lista nie ulegają zmianie. Zadanie 2 pozostaje **otwarte**; następny etap to natywna kompilacja Apple i przegląd rzeczywistego renderingu, bez udawania testów na fizycznym iPhonie.
 
+## 05.11.2026 — iPhone + iPad, uruchamianie źródłowej sceny, audyt prawdziwej gry
+
+- **Co wykonano:** `project.yml` zachowuje oryginalne `TARGETED_DEVICE_FAMILY: '1,2'`; dodano niezależny `build-ios-iphone-ipad-manual.yml` używający macOS Intel i walidacji IPA dla obu rodzin, uruchamiany **tylko ręcznie**. Nie odpalono nowego IPA. Przejściowy iPhone-only z run `42090319849` pozostaje wyłącznie poprzednim artefaktem iPhone.
+- **Bieżące zadanie 2:** `App.swift` domyślnie kieruje do istniejącej oryginalnej sceny Boreas 3D zamiast 9-asteroidowej płaskiej areny testowej. Arena, testowe sektory 1/9/17/25, narzędzia diagnostyczne i atlas kampanii zachowano. Dwie zwarte linie przycisków ułatwiają przełączanie na obu urządzeniach. **To nadal testowa scena, a nie oryginalna pierwsza misja**.
+- **Zweryfikowano:** GitHub run [42093245632](https://github.com/synixad-png/asteroidy-ios/actions/runs/42093245632) `original-assets` PASS: oryginalne zasoby i kontrakt domyślnej sceny/obu rodzin. Po zmianie workflow Xcode uruchomiono osobną weryfikację Apple `42093300828` **bez IPA**; wynik natywnego kompilatora i renderu urządzeniowego nie był jeszcze znany.
+- **Źródła pełnej gry:** potwierdzono 150 MB archiwum użytkownika ASTEROIDY PC v568 (Windows+SteamOS). Właściwy `Game.Mode.Menu`, siedem przycisków W3 HOME, oryginalny 820-kamienny intro belt, wejście `StartCampaign/EnterOrbit50/LaunchOrbitMission50` są w C#. Repozytorium iOS ma jednak port wybranych mechanik v556; **nie utożsamiać go ze skończoną grą i nie zgadywać brakującego kontrolera misji**. Szczegóły w `AUDYT_RZECZYWISTEJ_GRY_IOS_V556_WOBEC_WINDOWS_V568.md`.
+- **Następny krok:** domknięcie trwającego zadania 2: sprawdzenie rzeczywistej geometrii i sekwencji renderingu Metal oraz stopniowe wiązanie z oryginalnym rendererem i stanami gry. Nie rozpoczynać nowego zadania 14 ani nie deklarować uruchomienia misji przed integracją wymaganych modułów.
+- **Zmiana postępu:** zadanie 1 **88% (0 pp)**, zadanie 2 **68% (0 pp)**, całość **27% (0 pp), pozostało 73%** — konfiguracja manualna i wstępny wybór sceny nie potwierdzają gotowości pełnej gry lub testu iPhone/iPad.
+
 ## Kolejność dalszej pracy
 
 1. **Zadanie 7 — zamknięte implementacyjnie (100%)**, zachować wszystkie zweryfikowane mechanizmy i regresje.
