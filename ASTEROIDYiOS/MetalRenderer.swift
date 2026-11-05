@@ -837,6 +837,78 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             encoder.setVertexBytes(&uniform,length:MemoryLayout<SceneUniforms>.stride,index:1)
             encoder.drawIndexedPrimitives(type:.triangle,indexCount:mesh.count,indexType:.uint32,indexBuffer:mesh.indices,indexBufferOffset:0)
         }
+        if input.introPreview41 {
+            // The source Windows GpuIntro41.CinematicIntro41 16-second
+            // scene, NOT the independent flat or Boreas training arena.
+            let frame=IntroOrbit41.frame(introTime41)
+            let inv=IntroOrbit41.radiusNormalization
+
+            // Exactly the 1,500 already-ported source deep-space star
+            // directions, drawn at a constant camera-relative radius.
+            let eye=cameraFrame.eye
+            let skyMVP=vp*Self.translation(eye.x,eye.y,eye.z)
+            var skyUniform=SceneUniforms(
+                mvp:skyMVP,model:matrix_identity_float4x4,
+                lighting:SIMD4<Float>(SphereSky207.drawableScale(
+                    height:Float(view.drawableSize.height)),0,0,0))
+            encoder.setRenderPipelineState(skyPointPipeline)
+            encoder.setDepthStencilState(skyDepthState)
+            encoder.setFragmentTexture(sphereHaloTexture,index:0)
+            encoder.setVertexBuffer(sphereSkyMesh.vertices,offset:0,index:0)
+            encoder.setVertexBytes(
+                &skyUniform,length:MemoryLayout<SceneUniforms>.stride,index:1)
+            encoder.drawPrimitives(
+                type:.point,vertexStart:0,vertexCount:sphereSkyMesh.count)
+            encoder.setDepthStencilState(depthState)
+            encoder.setRenderPipelineState(pipeline)
+
+            // Original source painter order: 820 Belt51 stones, then
+            // 24-unit intro planet, then the orbiting Vanguard fighter.
+            // Belt51 source placement and visibility are ported from
+            // OrbitWorld51/GpuIntro41. The octahedron mesh is still
+            // a documented temporary geometry proxy, not IntroStone.
+            for rock in IntroOrbit41.belt where IntroOrbit41.visible(rock,in:frame) {
+                let position=rock.world*inv
+                drawMesh(asteroidMesh,
+                    Self.translation(position.x,position.y,position.z) *
+                    Self.scale(rock.size*inv))
+            }
+            let center=IntroOrbit41.planetCenter*inv
+            let planetModel=Self.translation(center.x,center.y,center.z) *
+                Self.scale(IntroOrbit41.introPlanetScale) *
+                Self.rotateXDegrees(-18) *
+                Self.rotateYDegrees(IntroOrbit41.planetRotationDegrees(
+                    level:1,time:introTime41))
+            // Reuse the actual source Boreas GLB converted mesh and
+            // the existing safe triple-buffer lifetime management.
+            let slot=planetBufferSlots.retainCurrent()
+            command.addCompletedHandler { [planetBufferSlots] _ in
+                planetBufferSlots.release(slot)
+            }
+            let mesh=GPUModel(vertices:planetVertexBuffers[slot],
+                              indices:planetIndices,count:planetIndexCount)
+            drawMesh(mesh,planetModel)
+
+            // Original IntroScene41.CraftOrientation local axes.
+            let a=IntroOrbit41.craftOrientationColumns(introTime41)
+            let orientation=simd_float4x4(columns:(
+                SIMD4(a[0],a[1],a[2],a[3]),
+                SIMD4(a[4],a[5],a[6],a[7]),
+                SIMD4(a[8],a[9],a[10],a[11]),
+                SIMD4(a[12],a[13],a[14],a[15])
+            ))
+            let ship=IntroOrbit41.ship(introTime41)*inv
+            // Source combat craft radius is used as an explicitly
+            // approximate visual size until cinematic GLB scale is audited.
+            let craft=Self.translation(ship.x,ship.y,ship.z) *
+                orientation * Self.rotateYDegrees(sin(introTime41*0.8)*7) *
+                Self.scale(SphereSurfaceStamp556.sourceCraftRadius*inv)
+            drawMesh(shipMesh,craft)
+            encoder.endEncoding()
+            command.present(drawable)
+            command.commit()
+            return
+        }
         if input.planetPreview {
             // Original GpuIntro41.DrawDeepSpace55: 24 distant + 12 near
             // clouds are layered BEFORE stars and the five solar rays.
