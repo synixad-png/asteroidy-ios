@@ -279,13 +279,26 @@ struct SphereSector556 {
         sweptBoltTime(start:start,velocity:velocity,rock:rock,dt:dt) <= 1
     }
 
+    /// Integration boundary for v556 Game.Damage respawn: keep the original
+    /// projectile / asteroid arrays as one atomic replacement. Only the
+    /// verified death controller should request this; ordinary sandbox
+    /// contacts retain the old three-hit behavior unchanged.
+    mutating func installRespawnWorld(rocks:[SphereAsteroid556],
+                                     shots:[SphereBolt556]) {
+        asteroids=rocks
+        bolts=shots
+        inContact=false
+        shotCooldown=0
+    }
+
     // Provide playerVelocity to opt into the real Physics68 Contact68
     // ship/rock impulse. Existing diagnostic position-only callers preserve
     // their original entry-only hull tests.
     @discardableResult
     mutating func tick(dt:Float,playerPosition:Vec2,playerRadius:Float=26,
                        detectContacts:Bool=true,playerVelocity:Vec2?=nil,
-                       shipMass:Float=2.4) -> SphereShipContact556? {
+                       shipMass:Float=2.4,
+                       useLegacyHull:Bool=true) -> SphereShipContact556? {
         guard dt > 0 else { return nil }
         elapsed += dt
         CombatHull556.advance(cooldown:&hitCooldown,dt:dt)
@@ -358,7 +371,7 @@ struct SphereSector556 {
                 if SphereRockContact68.resolve(&ship,&rock,restitution:0.42) {
                     asteroids[i]=rock
                     contacts += 1
-                    if CombatHull556.applyContact(hull:&hull,cooldown:&hitCooldown) {
+                    if useLegacyHull && CombatHull556.applyContact(hull:&hull,cooldown:&hitCooldown) {
                         damageEvents += 1
                     }
                 }
@@ -374,7 +387,7 @@ struct SphereSector556 {
         }
         if overlap && !inContact {
             shipContacts += 1
-            if CombatHull556.applyContact(hull:&hull,cooldown:&hitCooldown) {
+            if useLegacyHull && CombatHull556.applyContact(hull:&hull,cooldown:&hitCooldown) {
                 damageEvents += 1
             }
         }
