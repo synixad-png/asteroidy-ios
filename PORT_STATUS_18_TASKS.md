@@ -4,14 +4,14 @@
 
 **Łączny postęp odniesienia: 27%; pozostało 73%.** To zachowany wynik zbiorczy, bez ponownego ważenia 18 zadań. **Zadanie 7 — Kolizje, obrażenia i zniszczenia: 100% implementacji modułu, bez zmian. Zadanie 8 — Asteroidy i fale walki: 100% implementacji modułu (poprzednio 96%, +4 pp).** W oryginalnym kodzie C# v556 zweryfikowano `Game.Wave`, `Action38`, `Balance70`, `Physics68`, `AmigaBounce265` i `Game.Step`. Przeniesiono wytrzymałość i skalę skał, w tym +1 HP dla Coop62, kolejność wygasania odłamków/ruchu/posiłków/kolizji/strzałów, ostrzeżenie o posiłkach 1.6 s, 3 fale 16-sekundowe i specyficzną niezniszczalną mechanikę odbijanych kul sektora 25. **Swift/Linux: 25/25 zestawów PASS w GitHub Actions `42049818376`, commit `74fe326e1db29daac94e93a7ef8a906d327adefb`; uwzględniono regresję sektorów 9 i 17.** Osobna kontrola natywnej kompilacji Apple w tym przebiegu **czekała w kolejce** podczas raportowania — nie wolno twierdzić, że jej wynik PASS jest znany. iOS/Metal nie zostały interaktywnie sprawdzone na rzeczywistym urządzeniu (etap 18). **Nie utworzono IPA.** Zrealizowane zadania 7 i 8 podlegają regresji, nie rozpoczynać ich od nowa. Ponadto podłączono do interfejsu testowego iPhone'a sektory 1/9/17/25 przez `App.swift` i `MetalRenderer.swift`; ich wybór resetuje odrębny sektor, lot i diagnostyczny stan obrażeń bez ingerencji w kampanię. Natywne typowanie tej rewizji przez Xcode jeszcze oczekiwało na runner macOS. AI, bossowie, wszystkie bronie, komplet misji oraz kampania nadal należą do osobnych zadań 9–13.
 
-**Aktualizacja zadania 1 — GitHub IPA:** użytkownik zlecił wygenerowanie niepodpisanego IPA. Workflow `build-ios.yml` uruchomiono poprzez commit `18e18797046dd37807650313990913dce38ab522`, [run 42051262545](https://github.com/synixad-png/asteroidy-ios/actions/runs/42051262545). Faza Swift/Linux **PASS**, natywne `compile-device` w kolejce na macOS przy ostatnim sprawdzeniu. Bez sukcesu kompilacji i opublikowanego artefaktu nie należy deklarować dostępności IPA ani podwyższać zadania 1 do 100%. Pozostaje **85%**.
+**Aktualizacja zadania 1 — GitHub IPA:** użytkownik zlecił wygenerowanie niepodpisanego IPA. Workflow `build-ios.yml` uruchomiono poprzez commit `18e18797046dd37807650313990913dce38ab522`, [run 42051262545](https://github.com/synixad-png/asteroidy-ios/actions/runs/42051262545). Faza Swift/Linux **PASS**, natywne `compile-device` w kolejce na macOS przy ostatnim sprawdzeniu. Bez sukcesu kompilacji i opublikowanego artefaktu nie należy deklarować dostępności IPA ani podwyższać zadania 1 do 100%. Po wdrożeniu i pomyślnym teście walidacji oryginalnych zasobów iOS stan zadania 1 wynosi **88% (poprzednio 85%, +3 pp)**; natywna kompilacja iOS oraz wynik IPA nadal pozostają do potwierdzenia.
 
 **Aktualizacja zadania 2 — silnik Metal: 45% (poprzednio 40%, +5 pp).** Naprawiono źródłowo potwierdzoną rozbieżność z `SphereCombat67.cs:62` i `GpuSphere67.cs:414`: kamera sferyczna była obliczana, ale `MetalRenderer` rysował ze stałej kamery. `SphereCameraView556` przenosi wektory `SphereFocus67/Right67/Up67` i źródłową odległość oka `310/144.19674` w znormalizowanej skali; `MetalRenderer` wybiera dynamiczny widok tylko dla planety, `Ship.metal` liczy wektor BRDF od rzeczywistego oka. Arena płaska bez zmian. [Run 42052748443](https://github.com/synixad-png/asteroidy-ios/actions/runs/42052748443) — test 8 pozycji i 240 kroków oraz parsing Swift **PASS**. Natywna kompilacja Xcode/Metal nowych zmian i wizualny test na urządzeniu nie zostały jeszcze wykonane. Audyt: `AUDYT_ZADANIE_2_v556_METAL_CAMERA.md`. Oddzielnie budowane IPA z `18e187970` nie zawiera tej późniejszej poprawki.
 
 
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
-| 1 | Kompilacja i infrastruktura iOS | 85% |
+| 1 | Kompilacja i infrastruktura iOS | 88% |
 | 2 | Silnik graficzny Metal | 45% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
@@ -41,6 +41,9 @@
 
 - Grywalna ścieżka Boreas: `PlanetDamageLab556` steruje oryginalnym `Tarcza145` przez przytrzymywanie w `App.swift`; `MetalRenderer` raportuje energię. Poprzednie kontrolne budowanie iPhoneOS zgłosiło `BUILD SUCCEEDED`, ale dotyczyło stanu przed zadaniem 8. Nie deklarować działania na urządzeniu bez jego testu.
 - `CombatVerifiedEncounter556`: przy `devOpen` zgodnie z `Game.cs:234` zatrzymuje całą fazę walki i odracza rozliczenie ratowania; test regresji PASS.
+
+
+**Weryfikacja źródłowych zasobów iOS:** dodano `Tools/verify_ios_inputs.py` i osobne `verify-ios-inputs.yml` (bez IPA). [Run 42053587593](https://github.com/synixad-png/asteroidy-ios/actions/runs/42053587593) — **PASS**: cztery autentyczne zasoby v556 zgodne SHA256 z historycznym manifestem, prawidłowe nagłówki `AS3D`/`ASMO`, 31 355 wierzchołków Boreas, 27 035 animowanych, 6 morph targetów i 126 klatek kluczowych, format bindingu, konfiguracja XcodeGen dla iPhone/iPad i nazwy wejść Metal. Ochrona hashy dotyczy **wyłącznie** tych czterech zasobów, nie zmieniającego się kodu Swift — nigdy nie nadpisywać manifestu bez audytu pochodzenia.
 
 ## Kolejność dalszej pracy
 
