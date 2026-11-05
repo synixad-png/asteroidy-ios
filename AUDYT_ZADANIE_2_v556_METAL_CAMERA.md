@@ -76,3 +76,18 @@ Nowe zachowanie:
 - `Tests/SphereCameraView556Tests.swift`: sprawdza niezależne wartości wejściowe PRNG i kierunek pierwszej gwiazdy, 1500 unormowanych kierunków, właściwe skale i palety. [GitHub Actions 42060152260](https://github.com/synixad-png/asteroidy-ios/actions/runs/42060152260): **Swift/Linux PASS**, w tym parsowanie aktualnych plików SwiftUI/Metal.
 
 **Świadomie nieukończone:** obecny Metal rysuje **uproszczone, nieprzezroczyste trójkąty** w oryginalnych kierunkach i kolorach RGB; to nie są jeszcze oryginalne, przezroczyste, teksturowane poświaty `IntroHalo`, nie odtworzono ich wariantów jasności ani całego `IntroSky` (mgławice i promienie). Nie twierdzić, że jest to 100% zgodności wyglądu z oryginałem, ani że przeszło test iPhone/Apple GPU. Renderowany rezultat nie został obejrzany na fizycznym urządzeniu.
+
+## Gwiazdy RGBA z oryginalnym rozmiarem pikselowym — kolejna poprawka
+
+W poprzedniej wersji z 1500 źródłowymi gwiazdami renderer rysował dla każdej gwiazdy **trzy nieprzezroczyste wierzchołki tworzące trójkąt w przestrzeni 3D**. Naruszało to dwie potwierdzone właściwości `GpuIntro41.cs:452`: `pixelSize` (0.7/1.4/2.8 piksela) i źródłową przezroczystość `RGBA` (235 lub 220 jednostek alfa).
+
+W aktualnej poprawce:
+
+- `MetalRenderer.sphereSky207()` generuje **1500 pojedynczych punktów** zamiast 4500 wierzchołków trójkątów, zachowując autentyczne kierunki `SpaceRand207`, barwy, źródłowe `pixelSize` oraz `alpha`. Dane zajmują około 102 kB zamiast około 306 kB (64 bajty/wierzchołek + 4 bajty indeksu; te wielkości są szacunkami layoutu, nie pomiarem GPU).
+- `Ship.metal`: oddzielny `skyPointVertex` ustawia `[[point_size]]` z oryginalnego `pixelSize` (dla limitu sprzętowego co najmniej 1 px), `skyPointFragment` wykorzystuje `[[point_coord]]`, maskę kołową i rzeczywistą przezroczystość źródłowego koloru. **Miękkie wygładzenie krawędzi jest jawnym przybliżeniem renderowania**, nie rekonstrukcją nieudostępnionej tekstury `IntroHalo`.
+- Shader fragmentów ma osobny `SkyPointFragmentInput`, ponieważ `[[point_size]]` jest **wyłącznie atrybutem wyjściowym shadera wierzchołków**; błędne umieszczenie go w `[[stage_in]]` jest chronione testem.
+- `MetalRenderer` tworzy oddzielny pipeline z `sourceAlpha / oneMinusSourceAlpha`, bez zapisu głębi i z jednym `drawPrimitives(type:.point,vertexCount:1500)`. Po rysowaniu przywraca poprzedni pipeline PBR i dotychczasowy depth test. Płaska arena i jej niezależne 130 gwiazd pozostają bez zmian.
+- `Tests/SkyPointSourceContract556.py` sprawdza ciągłość przekazywania rozmiaru/alfa, kontrakt dwóch shaderów, stan blend/depth i brak powrotu do trójkątów. `Tests/SphereCameraView556Tests.swift` nadal porównuje źródłowe 1500 kierunków i wartości RGBA. Te testy są **statyczne/Swift/Linux** i nie oznaczają, że kompilator Apple Metal ani prawdziwy GPU wykonały shader poprawnie.
+- Źródło techniczne API: dokumentacja Apple dla `MTLPrimitiveType.point` potwierdza konieczność `[[point_size]]` na wyjściu wierzchołka; specyfikacja Metal Shading Language definiuje rasteryzatorowe `[[point_coord]]` i rozdzielenie sygnatur etapów.
+
+**Wciąż NIE wykonano:** teksturowanych poświat `IntroHalo`, mgławic i promieni oraz natywnej kompilacji/testu na Apple GPU po tej poprawce. Nie deklarować zgodności 1:1 z oryginalnym renderingiem tła. Nie sprawdzano ani nie modyfikowano stanu IPA na życzenie użytkownika.
