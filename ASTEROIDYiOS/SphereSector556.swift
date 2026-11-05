@@ -175,13 +175,17 @@ struct SphereSector556 {
             let speed = SphereAsteroid556.incomingSpeed(
                 baseRandomSpeed:60 + random()*40,
                 dangerSpeed:Self.dangerSpeed(balance.difficulty))
-            let radius: Float = Rock.radiusFor(size:3) / Self.unit
+            let radius=balance.sphericalRockRadius(size:3)
             let angle = random()*2*Float.pi
             let spin = (random()*2-1)*0.85
-            _ = random() // original Rock.Shape random seed
-            asteroids.append(SphereAsteroid556(position:candidate,velocity:heading*speed,
-                                              radius:radius,size:3,tier:tier,
-                                              spin:spin,angle:angle))
+            let shapeSeed=Int(random()*Float(Int32.max))
+            let hp=balance.sphericalRockHealth(size:3,tier:tier,
+                                                cooperative:cooperative)
+            asteroids.append(SphereAsteroid556(position:candidate,
+                velocity:heading*speed,radius:radius,size:3,tier:tier,
+                health:hp,spin:spin,angle:angle,
+                originalHealth:Rock.healthFor(size:3,tier:tier),
+                shapeSeed:shapeSeed))
         }
         nextIncoming = elapsed + (objective == .waves ? 16 : 11)
         // Game.Step ticks NoticeTime immediately after StepAction.
@@ -208,13 +212,17 @@ struct SphereSector556 {
             let transported = Sphere67.components(position,world)
             let size = parent.size - 1
             let tier = max(0,parent.tier - 1)
-            let radius = (size == 2 ? Float(18) : Float(10)) * 1.12 *
-                SphereAsteroid556.fragmentScale(parentSize:parent.size)
-            asteroids.append(SphereAsteroid556(position:position,velocity:transported,
-                                               radius:radius,size:size,tier:tier,fragment:true,
-                                               mass:parent.mass*0.5,
-                                               spin:parent.spin+sign*0.35,
-                                               angle:parent.angle))
+            let radius=balance.sphericalRockRadius(
+                size:size,parentSize:parent.size)
+            let hp=balance.sphericalRockHealth(size:size,tier:tier,
+                                                cooperative:cooperative)
+            let shapeSeed=Int(random()*Float(Int32.max))
+            asteroids.append(SphereAsteroid556(position:position,
+                velocity:transported,radius:radius,size:size,tier:tier,
+                health:hp,fragment:true,mass:parent.mass*0.5,
+                spin:parent.spin+sign*0.35,angle:parent.angle,
+                originalHealth:Rock.healthFor(size:size,tier:tier),
+                shapeSeed:shapeSeed))
         }
     }
     private mutating func terminalShards(_ parent:SphereAsteroid556) {
@@ -224,6 +232,10 @@ struct SphereSector556 {
             let dir = Vec2(x:cos(a),y:sin(a))
             let pos = Sphere67.offset(parent.position,by:dir*(2 + random()*5))
             let speed = 42 + random()*73
+            // SpawnTerminalShards187 rolls spin, shape, scale, life in
+            // that order. Shape was previously omitted by this port.
+            let spin=(random()*2-1)*5
+            let shapeSeed=Int(random()*Float(Int32.max))
             let radius = 10*1.12*(0.10+random()*0.13)
             let life = 1.3+random()*1.2
             asteroids.append(SphereAsteroid556(position:pos,
@@ -233,9 +245,11 @@ struct SphereSector556 {
                                                     from:Sphere67.normal(parent.position),
                                                     to:Sphere67.normal(pos))),
                                               radius:radius,size:1,tier:0,
-                                              health:1,fragment:true,shardLife:life,
-                                              spin:(random()*2-1)*5,
-                                              angle:parent.angle))
+                                              health:balance.sphericalRockHealth(
+                                                size:1,tier:0,cooperative:cooperative),
+                                              fragment:true,shardLife:life,
+                                              spin:spin,angle:parent.angle,
+                                              originalHealth:1,shapeSeed:shapeSeed))
         }
     }
 
