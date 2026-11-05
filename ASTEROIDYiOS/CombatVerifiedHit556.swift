@@ -105,6 +105,68 @@ enum CombatVerifiedHit556 {
         return .applied(lost)
     }
 
+    /// Port of Windows/src/Gameplay65.cs FailRescue65 -> Game.Damage
+    /// (v556). Unlike HitByBoss/ApplyHit96 this direct call intentionally
+    /// bypasses the currentDown and 9999-second rescue immunity guards,
+    /// does NOT consume a purchased one-hit shield, and cannot call
+    /// TryDown65 again (rescueDamage65 is true in the source).
+    /// Source order: TryGuardian -> developer infinite -> Tarcza145 ->
+    /// AbsorbDamage78(default 27/32/38) -> lost life/respawn/GameOver.
+    /// Unknown external protection must still be verified, never guessed.
+    static func failedRescueDamage(level:Int,
+                  difficulty:CombatBalance556.Difficulty,
+                  survival:inout CombatSurvival96,
+                  dome:inout CombatTarcza145,
+                  developerInfinite:Bool,
+                  guardian:GuardResult,talent:GuardResult,
+                  vitals:CombatTalentVitals78?=nil,
+                  guardianState:CombatGuardian37?=nil) -> Outcome {
+        guard survival.playing && !survival.sceneBusy &&
+              !survival.bossArrival && survival.lives>0
+        else {return .ignored}
+        if let guardianState {
+            if guardianState.absorb(invincible:&survival.invincible) {
+                return .guardianAbsorbed
+            }
+        } else {
+            switch guardian {
+            case .unverified: return .requiresGuardianVerification
+            case .absorbed: return .guardianAbsorbed
+            case .clear: break
+            }
+        }
+        if developerInfinite {
+            survival.invincible=0.8
+            return .developerProtected
+        }
+        if dome.absorb(invincible:&survival.invincible) {
+            return .activeTarczaAbsorbed
+        }
+        if let vitals {
+            if vitals.absorb(damage:0,cause:"ZDERZENIE",
+                             difficulty:difficulty,
+                             invincible:&survival.invincible) {
+                return .talentAbsorbed
+            }
+        } else {
+            switch talent {
+            case .unverified: return .requiresTalentVerification
+            case .absorbed: return .talentAbsorbed
+            case .clear: break
+            }
+        }
+        let defaultDamage:Int = difficulty == .easy ? 27 :
+                                difficulty == .hard ? 38 : 32
+        let result=survival.applyUnblockedCollision(
+            level:level,difficulty:difficulty,cause:"ZDERZENIE",
+            damage:defaultDamage,allowCurrentImpact:true)
+        switch result {
+        case .lifeLost, .gameOver: vitals?.reset()
+        case .ignored, .shieldAbsorbed: break
+        }
+        return .applied(result)
+    }
+
     static func applyTeam(_ contacts:[CombatSolidEvent68],
                     level:Int,difficulty:CombatBalance556.Difficulty,
                     first:inout CombatBody68,second:inout CombatBody68?,
