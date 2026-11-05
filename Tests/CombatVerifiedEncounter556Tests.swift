@@ -681,6 +681,62 @@ import Foundation
         precondition(shieldedFailure.domeFirst.energy ==
                      shieldedFailure.domeSecond.energy)
 
+        // Direct source comparison: Windows Game.cs:234 returns before
+        // StepTarcza145, StepSolids68, immunity countdown and pickups
+        // whenever DevOpen. This must freeze the ENTIRE combat phase,
+        // not just the 12-second co-op rescue progress.
+        var developerPaused=setup()
+        developerPaused.firstGuardian=CombatGuardian37(owned:false)
+        developerPaused.firstVitals=CombatTalentVitals78()
+        developerPaused.encounter.firstSurvival.invincible=1.5
+        let originalRock=developerPaused.encounter.rocks[0].position
+        let pausedFrame=developerPaused.step(dt:2,
+            firstDomeHeld:true,devOpen:true)
+        precondition(pausedFrame.contacts.isEmpty &&
+                     pausedFrame.hitOutcomes.isEmpty &&
+                     pausedFrame.damageTransitions.isEmpty)
+        precondition(developerPaused.encounter.firstSurvival.invincible==1.5)
+        precondition(developerPaused.encounter.rocks[0].position==originalRock)
+        precondition(developerPaused.domeFirst.energy==60 &&
+                     !developerPaused.domeFirst.active)
+        precondition(developerPaused.firstVitals!.armor==25 &&
+                     developerPaused.firstVitals!.hull==60)
+        let resumedFrame=developerPaused.step(dt:1.6,
+            firstDomeHeld:false,devOpen:false)
+        precondition(resumedFrame.contacts == [.shipRock(0)])
+        precondition(resumedFrame.hitOutcomes == [
+            V.TeamOutcome(player:.first,outcome:.talentAbsorbed)])
+
+        // The same Game.Step early exit must not resolve a previously
+        // deferred FailRescue65 while the developer menu remains open.
+        var pendingMenu=setup(true)
+        var wrecked=pendingMenu.encounter.second!
+        var surviving=pendingMenu.encounter.secondSurvival
+        precondition(pendingMenu.rescue.beginDown(.second,
+            cooperative:true,playing:true,developerInfinite:false,
+            rescueDamage:false,survival:&surviving,body:&wrecked))
+        pendingMenu.encounter.second=wrecked
+        pendingMenu.encounter.secondSurvival=surviving
+        pendingMenu.encounter.rocks=[]
+        let missingDefense=pendingMenu.step(dt:12.1)
+        precondition(missingDefense.rescueEvent ==
+                     .failed(first:false,second:true))
+        precondition(missingDefense.requiresRescueDamageResolution)
+        let blockedResolution=pendingMenu.step(dt:3,
+            devOpen:true,guardianSecond:.clear,talentSecond:.clear)
+        precondition(blockedResolution.rescueDamageOutcome == nil &&
+                     blockedResolution.damageTransitions.isEmpty &&
+                     blockedResolution.requiresRescueDamageResolution)
+        precondition(pendingMenu.encounter.secondSurvival.lives==3)
+        let postMenu=pendingMenu.step(dt:1/120,
+            devOpen:false,guardianSecond:.clear,talentSecond:.clear)
+        precondition(postMenu.rescueDamageOutcome ==
+            V.TeamOutcome(player:.second,outcome:.applied(
+                .lifeLost(remaining:2,respawnProtection:3,
+                          cause:"ZDERZENIE"))))
+        precondition(!postMenu.requiresRescueDamageResolution &&
+                     pendingMenu.encounter.secondSurvival.lives==2)
+
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
