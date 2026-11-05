@@ -136,13 +136,13 @@ struct SphereSector556 {
         }
     }
 
-    private mutating func damageRock(at index:Int) {
+    private mutating func damageRock(at index:Int,amount:Int=1) {
         guard asteroids.indices.contains(index) else { return }
         if asteroids[index].shardLife > 0 {
             asteroids.remove(at:index)
             return
         }
-        asteroids[index].health -= 1
+        asteroids[index].health -= amount
         guard asteroids[index].health <= 0 else { return }
         let rock = asteroids.remove(at:index)
         destroyedRocks += 1
@@ -209,16 +209,16 @@ struct SphereSector556 {
                 rockHits[target,default:0] += 1
                 bolts.remove(at:i)
             } else {
-                bolts[i].position = Sphere67.advance(bolts[i].position,velocity:&bolts[i].velocity,dt:dt)
-                bolts[i].life -= dt
-                if bolts[i].life <= 0 { bolts.remove(at:i) }
+                var moving = bolts[i]
+                moving.position = Sphere67.advance(moving.position,velocity:&moving.velocity,dt:dt)
+                moving.life -= dt
+                if moving.life <= 0 { bolts.remove(at:i) }
+                else { bolts[i] = moving }
             }
         }
         // Descending indices prevent removal from invalidating still-pending hits.
         for idx in rockHits.keys.sorted(by:>) {
-            for _ in 0..<rockHits[idx]! {
-                if asteroids.indices.contains(idx) { damageRock(at:idx) }
-            }
+            damageRock(at:idx,amount:rockHits[idx]!)
         }
         // Shards are cosmetic and expire on their own; unlike threats, they
         // still block the diagnostic sector-clear condition until gone.
