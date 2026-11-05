@@ -47,7 +47,7 @@ import Foundation
         // first player is down; lives and invulnerability are independent.
         var coop=CombatEncounter68(
             first:body(100),second:body(640),
-            rocks:[],bugs:[body(663,radius:14,mass:3)],
+            rocks:[],bugs:[body(660,radius:14,mass:3)],
             boss:nil,pickups:[body(710,radius:6,mass:0.15)],
             firstSurvival:CombatSurvival96(),
             secondSurvival:CombatSurvival96(),
