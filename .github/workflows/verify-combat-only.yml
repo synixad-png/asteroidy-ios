@@ -22,6 +22,9 @@ on:
       - 'Tests/CombatSolids68Tests.swift'
       - 'Tests/CombatHazards68Tests.swift'
       - 'Tests/CombatDamageShared556Tests.swift'
+      - 'Tests/SphereCombatBatch556Tests.swift'
+      - 'Tests/SpherePhysicsAndMissionGate556Tests.swift'
+      - 'Tests/RockCombat556Tests.swift'
 
 jobs:
   verify-combat-no-ipa:
@@ -49,7 +52,7 @@ jobs:
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
-      - name: Full Physics68 and Damage556 regression matrix (NO IPA)
+      - name: Full Physics68/Damage556/destruction regression matrix (NO IPA)
         run: |
           set -eu
           sources="ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/CombatVerifiedEncounter556.swift ASTEROIDYiOS/CombatHazards68.swift ASTEROIDYiOS/CombatFlatShield556.swift ASTEROIDYiOS/PlanetDamageLab556.swift"
@@ -70,7 +73,12 @@ jobs:
             CombatFlatShield556Tests \
             CombatContactRouter96Tests \
             CombatVerifiedHit556Tests \
-            CombatPickupPhysics68Tests; do
+            CombatPickupPhysics68Tests \
+            SphereCombatBatch556Tests \
+            SpherePhysicsAndMissionGate556Tests \
+            RockCombat556Tests \
+            SphereSector556Tests \
+            ContinuousCollisionTests; do
             echo "Verifying $test"
             swiftc $sources "Tests/$test.swift" -o /tmp/source-physics68-test
             /tmp/source-physics68-test
