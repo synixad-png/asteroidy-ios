@@ -272,6 +272,39 @@ import Foundation
         precondition(postGame.contacts.isEmpty && postGame.hitOutcomes.isEmpty)
         precondition(campaignDeaths.encounter.firstSurvival.lives == 0)
 
+        // Cooperative hull must be exhausted before the real 12-second
+        // rescue wreck. The earlier .clear-only fixture tests routing, not
+        // an actual Talents78-backed ship. Keep both players' lives intact.
+        var cooperativeVitals=setup(true)
+        cooperativeVitals.firstGuardian=CombatGuardian37(owned:false)
+        cooperativeVitals.secondGuardian=CombatGuardian37(owned:false)
+        cooperativeVitals.firstVitals=CombatTalentVitals78()
+        cooperativeVitals.secondVitals=CombatTalentVitals78()
+        for impact in 1...3 {
+            if impact>1 {
+                cooperativeVitals.encounter.rocks=[]
+                _=cooperativeVitals.step(dt:1.1)
+                cooperativeVitals.encounter.second=body(640)
+                cooperativeVitals.encounter.rocks=[rock()]
+            }
+            let frame=cooperativeVitals.step(dt:1/120)
+            precondition(frame.contacts == [.partnerRock(0)])
+            if impact<3 {
+                precondition(frame.hitOutcomes == [
+                    V.TeamOutcome(player:.second,outcome:.talentAbsorbed)])
+                precondition(!cooperativeVitals.rescue.down(.second))
+            } else {
+                precondition(frame.hitOutcomes == [
+                    V.TeamOutcome(player:.second,outcome:.downForRescue)])
+                precondition(cooperativeVitals.rescue.down(.second))
+                precondition(cooperativeVitals.encounter.secondSurvival.currentDown)
+                precondition(cooperativeVitals.encounter.secondSurvival.lives == 3)
+            }
+            precondition(cooperativeVitals.encounter.firstSurvival.lives == 3)
+            precondition(cooperativeVitals.firstVitals!.armor == 25 &&
+                         cooperativeVitals.firstVitals!.hull == 60)
+        }
+
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
