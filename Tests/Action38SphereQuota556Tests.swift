@@ -51,7 +51,9 @@ import Foundation
             } else if expected == .waves {
                 precondition(selectable.incomingRocksLeft == 3 &&
                              selectable.objectiveWave == 1)
-                for _ in 0..<1920 {
+                // Advance slightly past 16 seconds: avoid testing
+                // Float32 clock rounding at the exact frame boundary.
+                for _ in 0..<1940 {
                     _=selectable.tick(dt:1/120,
                         playerPosition:player,
                         playerRadius:0,detectContacts:false)
