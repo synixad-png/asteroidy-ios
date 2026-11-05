@@ -139,14 +139,38 @@ struct GameCore {
         return Float(seed & 0x00FFFFFF) / Float(0x01000000)
     }
     private mutating func spawnRock() {
-        let a = random() * Float.pi * 2
-        let d = 0.6 + random() * 0.6
-        let p = Vec2(x: cos(a) * d, y: sin(a) * d)
-        let v = Vec2(x: (random() - 0.5) * 0.14, y: (random() - 0.5) * 0.14)
         let radius = 0.055 + random() * 0.055
         let phase = random() * 6.28
         let tier = trainingBalance?.tier(at: nextSpawnIndex % targetRockCount) ?? 0
         nextSpawnIndex += 1
+        let p: Vec2
+        let v: Vec2
+        if let config = trainingBalance {
+            // Game.Wave() flat sector spawning: positions sampled from the
+            // original 1280x720 arena, at least 260 px from the player.
+            // Keep the legacy nine-rock demonstration spawn unchanged.
+            let unit: Float = 2.7 / 1280
+            var candidate = Vec2(x: 0, y: 0)
+            var attempts = 0
+            repeat {
+                let x = random() * 1280
+                let y = random() * 720
+                candidate = Vec2(x: (x - 640) * unit, y: (360 - y) * unit)
+                attempts += 1
+                // Bound rejection sampling in this deterministic prototype.
+                if attempts >= 1024 { break }
+            } while (candidate - ship).lengthSquared < pow(260 * unit, 2)
+            p = candidate
+            let a = random() * 2 * Float.pi
+            let speedPx = (48 + random() * 30 + Float(min(config.level - 1, 18)) * 3.2)
+                * (tier >= 2 ? 0.88 : 1)
+            v = Vec2(x: cos(a), y: sin(a)) * (speedPx * unit)
+        } else {
+            let a = random() * Float.pi * 2
+            let d = 0.6 + random() * 0.6
+            p = Vec2(x: cos(a) * d, y: sin(a) * d)
+            v = Vec2(x: (random() - 0.5) * 0.14, y: (random() - 0.5) * 0.14)
+        }
         let size = 3
         let hp = trainingBalance == nil ? 1 : Rock.healthFor(size: size, tier: tier)
         rocks.append(Rock(at: p, motion: v, radius: trainingBalance == nil ? radius : Rock.radiusFor(size: size), phase: phase, tier: tier, size: size, health: hp, originalHealth: hp))
