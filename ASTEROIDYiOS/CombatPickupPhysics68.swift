@@ -19,7 +19,7 @@ enum CombatPickupPhysics68 {
         let range=Float(165+level*30)
         let eligible=useSecond || !playerDown
         if eligible && distance<range && distance>0.1 {
-            pickup.velocity=pickup.velocity+
+            pickup.velocity = pickup.velocity +
                 toward*(dt*Float(210+level*30)/distance)
         }
         pickup.velocity=pickup.velocity*exp(-dt*(distance<range ? 1.4 : 0.18))
