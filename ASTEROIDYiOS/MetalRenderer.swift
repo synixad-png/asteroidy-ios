@@ -210,7 +210,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 if input.verifiedDamageLab {
                     _ = damageLab.advance(dt:Float(fixedClockStep),
                         contacts:contact?.contacts ?? 0,
-                        sector:&sphereSector,flight:&sphereFlight)
+                        sector:&sphereSector,flight:&sphereFlight,
+                        tarczaHeld:input.tarczaHeld)
                 }
             } else {
                 game.tick(command,dt:Float(fixedClockStep))
@@ -226,6 +227,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             let deaths = damageLab.deathCount
             let armor = damageLab.armor
             let health = damageLab.hull
+            let domeEnergy = damageLab.tarczaEnergy
+            let domeActive = damageLab.tarczaActive
             let rockCount = input.planetPreview ? sphereSector.asteroids.count : game.rocks.count
             let sectorCleared = sphereSector.sectorCleared
             let objectiveWave = sphereSector.objectiveWave
@@ -236,6 +239,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 input?.verifiedDeaths = deaths
                 input?.verifiedArmor = armor
                 input?.verifiedHull = health
+                input?.verifiedTarczaEnergy = domeEnergy
+                input?.verifiedTarczaActive = domeActive
                 input?.trainingRockCount = rockCount
                 input?.planetSectorCleared = sectorCleared
                 input?.planetWave = objectiveWave
