@@ -17,6 +17,10 @@ on:
       - 'ASTEROIDYiOS/SourceVanguardMesh431.swift'
       - 'Tests/SourceVanguardMesh431Tests.swift'
       - 'Tests/SourceVanguardTextureContract431.py'
+      - 'Tools/verify_original_vanguard_resources.py'
+      - 'Tests/ReleaseGateVanguard431Tests.py'
+      - 'Tools/verify_ipa.py'
+      - '.github/workflows/build-ios-iphone-ipad-manual.yml'
       - 'Tests/SourceFighterToon60Tests.swift'
       - 'Tests/SourceFighterToonContract60.py'
       - 'ASTEROIDYiOS/IntroEnginePlasma491.swift'
@@ -67,3 +71,4 @@ jobs:
           python3 Tests/IntroEnginePlasmaSourceContract491.py
           python3 Tests/SourceFighterToonContract60.py
           python3 Tests/SourceVanguardTextureContract431.py
+          python3 Tests/ReleaseGateVanguard431Tests.py
