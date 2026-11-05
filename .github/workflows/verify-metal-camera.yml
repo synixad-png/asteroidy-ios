@@ -29,6 +29,13 @@ on:
       - 'Tests/SkyTextureGate55Tests.swift'
       - 'Tests/SkyTextureGateSourceContract55.py'
 
+
+# Keep only the latest Metal source-check revision in the runner queue.
+# Does not trigger, archive, sign, or upload any IPA.
+concurrency:
+  group: asteroidy-ios-metal-source-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   source-camera-linux:
     runs-on: ubuntu-latest
