@@ -399,6 +399,135 @@ enum SphereSolarOverlay556 {
     }
 }
 
+/// Original Windows/src/GpuCosmos39.cs:4–7 NebulaTexture and CloudLayer
+/// and GpuIntro41.cs:122,451 cloud placement. NOT an invented sky shader.
+/// The orbit path uses ONLY themes 0 and 1, shared by 24 far and 12 near
+/// quads. Theme generation is independent of UIKit/Metal and is cached
+/// as a real two-slice 256x256 PArgb cloud texture in MetalRenderer.
+enum SphereNebula556 {
+    static let imageSize = 256
+    static let orbitLayerCount = 36
+    static let orbitThemeCount = 2
+    static let palette:[(Float,Float,Float)]=[
+        (167,67,212),(36,139,199),(209,68,108),
+        (90,87,212),(35,162,144),(188,118,44)
+    ]
+
+    static func hash(_ x:Int,_ y:Int,_ seed:Int)->Float {
+        // C# unchecked int arithmetic in GpuCosmos39.CloudHash.
+        let n0=UInt32(truncatingIfNeeded:x) &* 374761393
+        let n1=UInt32(truncatingIfNeeded:y) &* 668265263
+        let n2=UInt32(truncatingIfNeeded:seed) &* 144269
+        var n=n0 &+ n1 &+ n2
+        n=(n ^ (n >> 13)) &* 1274126177
+        n ^= n >> 16
+        return Float(n & 65535)/65535
+    }
+    static func noise(_ x:Float,_ y:Float,_ seed:Int)->Float {
+        let ix=Int(floor(x)),iy=Int(floor(y))
+        var fx=x-Float(ix),fy=y-Float(iy)
+        fx=fx*fx*(3-2*fx)
+        fy=fy*fy*(3-2*fy)
+        let a=hash(ix,iy,seed),b=hash(ix+1,iy,seed)
+        let c=hash(ix,iy+1,seed),d=hash(ix+1,iy+1,seed)
+        return (a+(b-a)*fx)*(1-fy)+(c+(d-c)*fx)*fy
+    }
+
+    /// Exact GpuCosmos39.NebulaTexture. Generate only on initial load.
+    /// BGRA output is premultiplied, same as Format32bppPArgb.
+    static func pixel(x:Int,y:Int,theme:Int) -> (UInt8,UInt8,UInt8,UInt8) {
+        precondition(x>=0 && x<imageSize && y>=0 && y<imageSize)
+        precondition(theme>=0 && theme<palette.count)
+        let nx=Float(x)/Float(imageSize-1)
+        let ny=Float(y)/Float(imageSize-1)
+        let warp=noise(nx*3,ny*3,theme+5)*2-1
+        var value:Float=0,weight:Float=0.57,frequency:Float=3
+        for octave in 0..<5 {
+            value += noise(nx*frequency+warp*0.8,
+                           ny*frequency-warp*0.5,
+                           theme*19+octave)*weight
+            frequency *= 2.05
+            weight *= 0.48
+        }
+        // Source uses Math.Sin/Math.Pow/Math.Exp (Double).
+        let edge=pow(sin(Double(nx)*Double.pi)*
+                     sin(Double(ny)*Double.pi),0.75)
+        let ribbonAxis=Double(ny)-0.48-
+            Double(sin(nx*5+Float(theme)))*0.16-Double(warp)*0.13
+        let ribbon=exp(-pow(ribbonAxis*3.1,2))
+        let cloud=Double(max(0,value-0.34))*3.5
+        let alpha=max(0,min(190,Int(edge*ribbon*cloud*220)))
+        let hot=max(0,value-0.58)*2
+        let rgb=palette[theme]
+        let red=max(0,min(255,Int(rgb.0+hot*95)))
+        let green=max(0,min(255,Int(rgb.1+hot*110)))
+        let blue=max(0,min(255,Int(rgb.2+hot*85)))
+        return (UInt8(blue*alpha/255),UInt8(green*alpha/255),
+                UInt8(red*alpha/255),UInt8(alpha))
+    }
+    static func textureBGRA(theme:Int)->[UInt8] {
+        precondition(theme>=0 && theme<orbitThemeCount)
+        var bytes=[UInt8](repeating:0,count:imageSize*imageSize*4)
+        for y in 0..<imageSize {
+            for x in 0..<imageSize {
+                let (b,g,r,a)=pixel(x:x,y:y,theme:theme)
+                let at=(y*imageSize+x)*4
+                bytes[at]=b
+                bytes[at+1]=g
+                bytes[at+2]=r
+                bytes[at+3]=a
+            }
+        }
+        return bytes
+    }
+
+    struct Layer {
+        let direction:SphereVector3
+        let theme:Int
+        let alpha:Float
+        let near:Bool
+        func projected(camera:SphereCamera67)->(
+            center:Vec2,size:Float,width:Float,height:Float)? {
+            let f=SphereCameraView556(camera:camera)
+            let depth = -SphereVector3.dot(f.back,direction)
+            guard depth>0.4 else {return nil}
+            let x:Float=640+SphereVector3.dot(f.right,direction)*720/
+                max(0.01,depth)
+            let y:Float=360-SphereVector3.dot(f.up,direction)*720/
+                max(0.01,depth)
+            if near {
+                guard x > -900 && x < 2180 &&
+                      y > -600 && y < 1320 else {return nil}
+                let size=720*220/depth
+                return (Vec2(x:x,y:y),size,size*2,size*1.1)
+            }
+            guard x > -500 && x < 1780 &&
+                  y > -400 && y < 1120 else {return nil}
+            let size=min(650,720*190/depth)
+            return (Vec2(x:x,y:y),size,size*2,size*0.48)
+        }
+    }
+    static func layer(_ index:Int)->Layer {
+        precondition(index>=0 && index<orbitLayerCount)
+        if index<24 {
+            let a=Float(index)*Float.pi/12
+            // DrawDeepSpace55 first pass: angular ring, y*.38.
+            let d=SphereVector3(x:cos(a),y:sin(a)*0.38,
+                                z:sin(a)).normalized*900
+            return Layer(direction:d,theme:index%2,
+                         alpha:37/255,near:false)
+        }
+        let i=index-24
+        let a=Float(i)*Float.pi/6
+        // IntroSky second pass: 12 near clouds, sin(i*2.3)*90.
+        let d=SphereVector3(x:cos(a)*380,
+                            y:sin(Float(i)*2.3)*90,
+                            z:sin(a)*380)
+        return Layer(direction:d,theme:i%2,
+                     alpha:140/255,near:true)
+    }
+}
+
 /// Exact surface-local basis of Windows/src/GpuSphere67.cs:63
 /// StampSphere67(point,angle,scale,lift). Ported in dimensionless
 /// Metal units using the ORIGINAL terrain outer radius 100*1.4419674
