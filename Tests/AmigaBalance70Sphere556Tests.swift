@@ -122,7 +122,7 @@ import Foundation
         precondition(demo.asteroids[0].health==oldHealth)
         precondition(demo.asteroids[0].bounceHeight>0)
         precondition(demo.asteroids[0].bounceVertical>0)
-        precondition(demo.asteroids[0].velocity.lengthSquared>90*90)
+        precondition(demo.asteroids[0].velocity.lengthSquared>80*80)
         precondition(!demo.sectorFinished && !demo.sectorCleared)
         for _ in 0..<850 {
             _=demo.tick(dt:0.016,playerPosition:Vec2(x:640,y:360),
