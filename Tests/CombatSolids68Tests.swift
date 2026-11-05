@@ -98,7 +98,8 @@ import Foundation
             let ev=CombatSolids68.step(ship:&ship,rocks:&rocks,bugs:&bugs,
                                        boss:&boss,partner:&partner,
                                        shipDown:true,partnerDown:false)
-            precondition(ev.isEmpty)
+            // Physics68.WithSecond62 still processes the active partner.
+            precondition(ev == [.partnerRock(0)])
         }
         print("PASS: all six v556 ShipMass68 variants, seven source rigid collision categories, co-op and down guards")
     }
