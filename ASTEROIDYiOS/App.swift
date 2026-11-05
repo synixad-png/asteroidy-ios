@@ -22,6 +22,8 @@ final class FlightInput: ObservableObject {
     @Published var trainingRockCount = 9
     @Published var score = 0
     @Published var hull = 3
+    @Published var planetSectorCleared = false
+    @Published var planetWave = 1
     @Published var rendererError: String?
 }
 
@@ -54,6 +56,11 @@ struct GameView: View {
                     }
                     .padding(18)
                     HStack { Text("WYNIK: \(input.score)"); Spacer(); Text("ASTEROIDY: \(input.trainingRockCount)"); Spacer(); Text("KADŁUB: \(input.hull)") }.font(.system(size: 12, design: .monospaced)).padding(.horizontal, 18)
+                    if input.planetPreview {
+                        Text(input.planetSectorCleared ? "TEST SEKTORA UKOŃCZONY" : "BOREAS • SYMULACJA WALKI • FALA \(input.planetWave)")
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundStyle(input.planetSectorCleared ? .green : .cyan)
+                    }
                     Spacer()
                     HStack(alignment: .bottom) {
                         TouchPad(input: input)
