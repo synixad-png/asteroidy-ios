@@ -142,6 +142,65 @@ fragment float4 nebulaOverlayFragment(
     return in.color * sourceClouds.sample(sourceSampler,in.uv,slice);
 }
 
+// Windows/src/GpuIntro41.cs DrawSkyBlackHole55: three real 640px
+// PArgb image slices (back/core/front) plus 3 IntroHalo and 4 DrawRay55
+// quads. Original painter order is 10 quads / 60 vertices for glow on.
+// All dynamic ray rotation/scales are passed as one tiny uniform array:
+// 1 float4 screen projection, then 3 float4 per source layer:
+// (radiusX,radiusY,cos,sin), premultiplied tint, (textureSlice,-,-,-).
+// textureSlice=-1 uses original 64px StarTexture; 0-2 use the 640px
+// disk/core/front array. No per-frame mesh or texture regeneration.
+struct BlackHoleRaster55 {
+    float4 position [[position]];
+    float4 color;
+    float2 uv;
+    float textureSlice;
+};
+vertex BlackHoleRaster55 blackHoleVertex55(
+    uint vid [[vertex_id]],
+    constant float4 *data [[buffer(0)]]) {
+    uint layer=vid/6;
+    uint corner=vid%6;
+    const float2 unit[6]={
+        float2(-1,-1),float2(1,-1),float2(1,1),
+        float2(-1,-1),float2(1,1),float2(-1,1)
+    };
+    const float2 uv[6]={
+        float2(0,0),float2(1,0),float2(1,1),
+        float2(0,0),float2(1,1),float2(0,1)
+    };
+    float4 frame=data[0];
+    float4 shape=data[1+layer*3];
+    float4 color=data[2+layer*3];
+    float slice=data[3+layer*3].x;
+    float2 scaled=unit[corner]*shape.xy;
+    float2 rotated=float2(
+        scaled.x*shape.z-scaled.y*shape.w,
+        scaled.x*shape.w+scaled.y*shape.z);
+    BlackHoleRaster55 out;
+    out.position=float4(
+        frame.x+rotated.x*frame.z,
+        frame.y+rotated.y*frame.w,
+        0,1);
+    out.color=color;
+    out.uv=uv[corner];
+    out.textureSlice=slice;
+    return out;
+}
+fragment float4 blackHoleFragment55(
+    BlackHoleRaster55 in [[stage_in]],
+    texture2d_array<float> diskCoreFront [[texture(0)]],
+    texture2d<float> originalHalo [[texture(1)]]) {
+    constexpr sampler originalSampler(coord::normalized,
+                                      address::clamp_to_edge,
+                                      filter::linear);
+    float4 sampled=in.textureSlice<0
+       ? originalHalo.sample(originalSampler,in.uv)
+       : diskCoreFront.sample(originalSampler,in.uv,
+                              uint(in.textureSlice+0.5f));
+    return sampled*in.color;
+}
+
 // Windows GpuIntro41.cs:454 solar flare/rays are 2D AFTER SkyProject55.
 // Offset vertices were generated once by GpuCosmos39.RayVertex in source
 // 1280x720 pixel coordinates. Only the 2D solar center changes with the
