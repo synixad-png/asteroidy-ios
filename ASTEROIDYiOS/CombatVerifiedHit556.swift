@@ -32,7 +32,8 @@ enum CombatVerifiedHit556 {
                     dome:inout CombatTarcza145,
                     rescue:inout CombatRescue65,
                     cooperative:Bool,developerInfinite:Bool,
-                    guardian:GuardResult,talent:GuardResult) -> Outcome {
+                    guardian:GuardResult,talent:GuardResult,
+                    vitals:CombatTalentVitals78?=nil) -> Outcome {
         // ApplyHit96 guard precedes every defensive side effect.
         guard survival.playing && !survival.sceneBusy &&
               !survival.bossArrival && !survival.currentDown &&
@@ -64,18 +65,35 @@ enum CombatVerifiedHit556 {
         case .absorbed:return .guardianAbsorbed
         case .clear:break
         }
-        switch talent {
-        case .unverified:return .requiresTalentVerification
-        case .absorbed:return .talentAbsorbed
-        case .clear:break
+        if let vitals {
+            // v556 Game.Damage AbsorbDamage78: the actual armor/hull gauges
+            // decide whether the hit was absorbed, before TryDown65.
+            if vitals.absorb(damage:damage,cause:cause,difficulty:difficulty,
+                             invincible:&survival.invincible) {
+                return .talentAbsorbed
+            }
+        } else {
+            // If no real gauges were provided, the external Talent78 status
+            // must be verified rather than silently assumed absent.
+            switch talent {
+            case .unverified:return .requiresTalentVerification
+            case .absorbed:return .talentAbsorbed
+            case .clear:break
+            }
         }
         if rescue.beginDown(player,cooperative:cooperative,playing:survival.playing,
                             developerInfinite:developerInfinite,rescueDamage:false,
                             survival:&survival,body:&body) {
             return .downForRescue
         }
-        return .applied(survival.applyUnblockedCollision(
-            level:level,difficulty:difficulty,cause:cause,damage:damage))
+        let lost=survival.applyUnblockedCollision(
+            level:level,difficulty:difficulty,cause:cause,damage:damage)
+        // Game.Damage ResetVitals78 runs on life loss AND GameOver.
+        switch lost {
+        case .lifeLost, .gameOver: vitals?.reset()
+        case .ignored, .shieldAbsorbed: break
+        }
+        return .applied(lost)
     }
 
     static func applyTeam(_ contacts:[CombatSolidEvent68],
@@ -89,7 +107,9 @@ enum CombatVerifiedHit556 {
                     developerInfinite:Bool,
                     guardianFirst:GuardResult,guardianSecond:GuardResult,
                     talentFirst:GuardResult,talentSecond:GuardResult,
-                    isRobot:[Bool]) -> [TeamOutcome] {
+                    isRobot:[Bool],
+                    vitalsFirst:CombatTalentVitals78?=nil,
+                    vitalsSecond:CombatTalentVitals78?=nil) -> [TeamOutcome] {
         var result:[TeamOutcome]=[]
         for event in contacts {
             guard let player=CombatContactRouter96.player(for:event) else {
@@ -107,7 +127,7 @@ enum CombatVerifiedHit556 {
                     player:.first,survival:&survivalFirst,body:&first,
                     dome:&tarczaFirst,rescue:&rescue,
                     cooperative:second != nil,developerInfinite:developerInfinite,
-                    guardian:guardianFirst,talent:talentFirst)
+                    guardian:guardianFirst,talent:talentFirst,vitals:vitalsFirst)
                 result.append(TeamOutcome(player:.first,outcome:outcome))
             case .second:
                 guard var ship=second else {
@@ -119,7 +139,7 @@ enum CombatVerifiedHit556 {
                     player:.second,survival:&survivalSecond,body:&ship,
                     dome:&tarczaSecond,rescue:&rescue,cooperative:true,
                     developerInfinite:developerInfinite,
-                    guardian:guardianSecond,talent:talentSecond)
+                    guardian:guardianSecond,talent:talentSecond,vitals:vitalsSecond)
                 second=ship
                 result.append(TeamOutcome(player:.second,outcome:outcome))
             }
