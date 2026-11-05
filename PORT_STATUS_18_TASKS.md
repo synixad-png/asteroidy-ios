@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 74% |
+| 2 | Silnik graficzny Metal | 76% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -144,6 +144,16 @@ Za konkretną, wykonaną i przetestowaną geometrię indywidualnych skał postę
 **Potwierdzone testy:** [GitHub Actions 42100560721](https://github.com/synixad-png/asteroidy-ios/actions/runs/42100560721), `source-camera-linux` **SUCCESS** dla aktualnych plików kodu: matematyka kamery i obrotu, 820 pozycji, oryginalne siatki IntroStone, ochrona kolejności efektów i dotychczasowe mechanizmy sky. [GitHub Actions 42100472060](https://github.com/synixad-png/asteroidy-ios/actions/runs/42100472060) **SUCCESS**: parser Swift, autentyczne zasoby i preflight iPhone/iPad. `Xcode Metal/Swift compile verification ONLY (NO IPA)` w przebiegu 42100560721 **pozostawał w kolejce**, więc nie deklarować gotowego IPA ani testu GPU.
 
 **Pozostało w zadaniu 2:** test natywnego Xcode na aktualnym źródle, rzeczywiste efekty światła i pogody/planety, materiały/tekstury wymagające odrębnych zadań 3–5, zgodność wersji z `NewHome290.Enabled` oraz weryfikacja jakości i FPS na prawdziwych urządzeniach (zadanie 18). Niezależna scena nadal jest podglądem, nie autentyczną pełną misją. Projekt według dotychczasowego zbiorczego wskaźnika odniesienia **27%**, pozostało **73%** — bez nowego ważenia stałej listy 18 zadań. Nie uruchamiano kompilacji IPA.
+
+## 05.11.2026 — kolejna domknięta część zadania nr 2 (Metal 74→76%)
+
+**Co wykonano:** Odtworzono brakującą animację oryginalnego modelu planety w scenie `IntroOrbit41` — `GpuIntro41.CinematicIntro41` wywołuje `DrawPlanetSolid` po ustawieniu `weatherTime65=IntroTime`, a `GpuPlanetGltf463` animuje glTF. Port `MetalRenderer.swift` teraz korzysta z jednego źródłowego `BoreasMorphRenderer556` dla obu kamer (intro: `IntroTime`, walka: dotychczasowy `planetAnimationTime`), zachowując zamrożone `MorphBufferSlots`, dynamiczny zakres siatki, częstotliwość 30 Hz i nienaruszone statyczne wierzchołki. Zmiana trybu i 16-sekundowe zawinięcie zegara wymuszają właściwą klatkę morfu, bez zamrażania po wyjściu z intro. Dodatkowo niezmienne 81 segmentów kamery/lotu z `OrbitWorld51.BuildBelt51` liczone jest raz i ponownie używane przy tworzeniu 820 źródłowych pozycji skał; seedy i algorytm pozostają bez zmian.
+
+**Testy:** `source-camera-linux` [GitHub Actions 42102273792](https://github.com/synixad-png/asteroidy-ios/actions/runs/42102273792) **PASS**, w tym dodany kontrakt `Tests/IntroBoreasMorphSourceContract556.py`, test przebiegu 81 próbek i dotychczasowe testy źródłowe animacji/asteroid/rendererów; [preflight 42102273356](https://github.com/synixad-png/asteroidy-ios/actions/runs/42102273356) **PASS** dla pełnej składni Swift i zasobów. **Kompilacja Xcode/Metal nadal niepotwierdzona** — jej job w run 42102273792 pozostawał `queued`; bez IPA, bez interaktywnego testu Apple GPU i obu urządzeń.
+
+**Postęp:** zadanie 2 — **76% (+2 pp względem poprzedniego raportu 74%)** za faktyczną implementację i testy regresji; zadania 1 i 3–18 bez zmian. Łączny dotychczasowy wskaźnik odniesienia **27%, pozostało 73%**, bez sztucznego zmieniania wag. Kod nie jest jeszcze pełną oryginalną misją, a v556 Boreas nie oznacza obsługi wszystkich planet v568.
+
+**Co pozostało:** ukończenie natywnej kompilacji źródeł Xcode/Metal; następnie dalsza weryfikacja autentycznych efektów planety/atmosfery oraz skali i oświetlenia statku w cinematic, a później fizyczne testy sceny na iPhone i iPad. **Nie generować nowego IPA automatycznie** — tylko po poleceniu użytkownika i potwierdzeniu gotowości źródeł.
 
 ## Kolejność dalszej pracy
 
