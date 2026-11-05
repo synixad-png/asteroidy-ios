@@ -9,6 +9,9 @@ on:
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/IntroOrbit41.swift'
+      - 'ASTEROIDYiOS/SourceFighterToon60.swift'
+      - 'Tests/SourceFighterToon60Tests.swift'
+      - 'Tests/SourceFighterToonContract60.py'
       - 'ASTEROIDYiOS/IntroEnginePlasma491.swift'
       - 'Tests/IntroEnginePlasma491Tests.swift'
       - 'Tests/IntroEnginePlasmaSourceContract491.py'
@@ -135,6 +138,19 @@ jobs:
             -o /tmp/intro-vanguard-431
           /tmp/intro-vanguard-431
           python3 Tests/IntroVanguardSourceContract431.py
+      - name: Original GpuToon60 three-band source lighting on Vanguard (CPU math and Metal contract)
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/SourceFighterToon60.swift \
+            Tests/SourceFighterToon60Tests.swift \
+            -o /tmp/fighter-toon60
+          /tmp/fighter-toon60
+          python3 Tests/SourceFighterToonContract60.py
       - name: Original GpuShip v491 additive two-engine plasma (CPU golden tests + GPU source contract)
         run: |
           set -eu
