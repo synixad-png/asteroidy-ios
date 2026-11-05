@@ -182,6 +182,64 @@ struct SphereCameraView556 {
     }
 }
 
+/// Original Windows/src/GpuAmbient37.cs:6–7 SpaceHash207/SpaceRand207
+/// and GpuIntro41.cs:452 deterministic deep-space star distribution.
+/// The C# source draws these 1,500 stars as screen-space halos. The Metal
+/// diagnostic currently renders the SAME directions/tints as tiny 3D
+/// camera-relative triangles; full textured halos are NOT ported yet.
+struct SphereSkyStar207 {
+    let direction: SphereVector3
+    let pixelSize: Float
+    let red: Float
+    let green: Float
+    let blue: Float
+    let alpha: Float
+}
+
+enum SphereSky207 {
+    static let count = 1500
+    static let originalSkyRadius: Float = 900
+    static let originalScreenHeight: Float = 720
+    static var normalizedSkyRadius: Float {
+        originalSkyRadius / SphereCameraView556.originalPlanetOuterRadius
+    }
+
+    static func spaceHash207(_ x: UInt32) -> UInt32 {
+        var v=x
+        v ^= v >> 16
+        v = v &* 0x7feb352d
+        v ^= v >> 15
+        v = v &* 0x846ca68b
+        v ^= v >> 16
+        return v
+    }
+    static func spaceRand207(_ a: UInt32,_ b: UInt32,_ c: UInt32) -> Float {
+        let x=spaceHash207((a &* 73856093) ^
+                           (b &* 19349663) ^
+                           (c &* 83492791))
+        return Float(x & 0x00ffffff) / 16777215
+    }
+    static func star(_ i: Int) -> SphereSkyStar207 {
+        precondition(i>=0 && i<count,"Source sky star index out of range")
+        let index=UInt32(i)
+        let longitude=spaceRand207(41,index,17)*6.2831853
+        let y=spaceRand207(41,index,31)*2-1
+        let latitudeRadius=sqrt(max(0,1-y*y))
+        let brightness=spaceRand207(41,index,53)
+        let warm=spaceRand207(41,index,71)>0.9
+        return SphereSkyStar207(
+            direction:SphereVector3(x:cos(longitude)*latitudeRadius,
+                                    y:y,
+                                    z:sin(longitude)*latitudeRadius),
+            pixelSize:brightness>0.98 ? 2.8 :
+                      (brightness>0.87 ? 1.4 : 0.7),
+            red: warm ? 249/255 : 186/255,
+            green:warm ? 205/255 : 214/255,
+            blue: warm ? 161/255 : 244/255,
+            alpha:warm ? 235/255 : 220/255)
+    }
+}
+
 /// Exact surface-local basis of Windows/src/GpuSphere67.cs:63
 /// StampSphere67(point,angle,scale,lift). Ported in dimensionless
 /// Metal units using the ORIGINAL terrain outer radius 100*1.4419674
