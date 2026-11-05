@@ -145,8 +145,8 @@ enum DeepSkyPlanets55 {
         else {return nil}
         let cfg=baseColours(style)
         let z=sqrt(1-rad)
-        let lit:Float=0.10+0.90*max(0,-nx*cfg.light.0 -
-                                   ny*cfg.light.1+z*cfg.light.2)
+        let lightDot=(-nx*cfg.light.0-ny*cfg.light.1+z*cfg.light.2)
+        let lit:Float=0.10+0.90*max(0,lightDot)
         let opacity=Float(min(255,Int((1-rad)*3900)))/255
         let bands:Float
         if style==0 {
@@ -155,18 +155,20 @@ enum DeepSkyPlanets55 {
             bands=band+storm
         } else if style==1 {
             let band=0.84+0.12*sin(ny*cfg.freq+0.35*sin(nx*cfg.warp))
-            let cloud:Float=0.10*exp(-pow(ny+0.16,2)*14)+
-                            0.07*exp(-pow(ny-0.28,2)*18)
-            let cap:Float=0.16*exp(-pow(ny+0.72,2)*40)+
-                          0.10*exp(-pow(ny-0.70,2)*44)
+            let cloudA:Float=0.10*exp(-pow(ny+0.16,2)*14)
+            let cloudB:Float=0.07*exp(-pow(ny-0.28,2)*18)
+            let capA:Float=0.16*exp(-pow(ny+0.72,2)*40)
+            let capB:Float=0.10*exp(-pow(ny-0.70,2)*44)
+            let cloud=cloudA+cloudB
+            let cap=capA+capB
             bands=band+cloud+cap
         } else {
-            let lava:Float=0.12*sin(nx*9+ny*11)+
-                           0.08*sin(nx*22-ny*14)
-            let scar:Float=0.18*exp(-(pow(nx+0.22,2)+
-                                     pow(ny-0.16,2))*18)+
-                           0.12*exp(-(pow(nx-0.38,2)+
-                                      pow(ny+0.10,2))*26)
+            let lavaA:Float=0.12*sin(nx*9+ny*11)
+            let lavaB:Float=0.08*sin(nx*22-ny*14)
+            let scarA:Float=0.18*exp(-(pow(nx+0.22,2)+pow(ny-0.16,2))*18)
+            let scarB:Float=0.12*exp(-(pow(nx-0.38,2)+pow(ny+0.10,2))*26)
+            let lava=lavaA+lavaB
+            let scar=scarA+scarB
             let dust:Float=0.80+0.10*sin((nx-ny)*cfg.freq)
             bands=dust+lava+scar
         }
