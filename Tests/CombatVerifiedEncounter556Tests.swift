@@ -14,7 +14,10 @@ import Foundation
             second:partner ? body(640) : nil,rocks:[rock()],bugs:[],
             boss:nil,pickups:[],firstSurvival:CombatSurvival96(),
             secondSurvival:CombatSurvival96(),level:10,difficulty:.normal)
-        return CombatVerifiedEncounter556(encounter:scene)
+        // Historical independent diagnostics are explicit. Production
+        // two-player encounters default to source Coop62 shared resources.
+        return CombatVerifiedEncounter556(encounter:scene,
+            independentDiagnosticCoop:partner)
     }
     static func main() {
         typealias V=CombatVerifiedHit556
@@ -589,6 +592,58 @@ import Foundation
                      simultaneous.firstVitals!.hull==60)
         precondition(simultaneous.encounter.firstSurvival.lives==3 &&
                      simultaneous.encounter.secondSurvival.lives==3)
+
+        // The real co-op constructor must never create an independent
+        // duplicated shield/life pool; only the explicit diagnostic opt-out
+        // is allowed to keep the older fixture semantics.
+        let coOpDefault=CombatEncounter68(first:body(100),
+            second:body(640),rocks:[rock()],bugs:[],boss:nil,pickups:[],
+            firstSurvival:CombatSurvival96(),
+            secondSurvival:CombatSurvival96(),
+            level:10,difficulty:.normal)
+        var liveCoop=CombatVerifiedEncounter556(encounter:coOpDefault)
+        precondition(liveCoop.sourceSharedCoopResources)
+        precondition(!setup(true).sourceSharedCoopResources)
+        precondition(!setup().sourceSharedCoopResources)
+
+        // Windows Game.Step calls StepTarcza145 only ONCE for primary
+        // input; Coop62.WithSecond62 does not swap its active/energy state.
+        // Therefore the second ship's asteroid hits the SAME energy dome.
+        let activePartner=liveCoop.step(dt:1/120,firstDomeHeld:true)
+        precondition(activePartner.contacts == [.partnerRock(0)])
+        precondition(activePartner.hitOutcomes == [
+            V.TeamOutcome(player:.second,outcome:.activeTarczaAbsorbed)])
+        precondition(liveCoop.domeFirst.energy < 25.1 &&
+                     liveCoop.domeFirst.energy > 24.8)
+        precondition(liveCoop.domeFirst.energy==liveCoop.domeSecond.energy)
+        precondition(liveCoop.encounter.secondSurvival.lives==3)
+
+        // A held second-player input alone must not create a second
+        // Tarcza145: the source only ticks from P1's input.
+        var phantomDome=CombatVerifiedEncounter556(encounter:coOpDefault)
+        phantomDome.encounter.firstSurvival.shieldCharges=1
+        let noSecondDome=phantomDome.step(dt:1/120,
+            firstDomeHeld:false,secondDomeHeld:true)
+        precondition(noSecondDome.hitOutcomes == [
+            V.TeamOutcome(player:.second,outcome:.applied(
+                .shieldAbsorbed(remaining:0,cause:"ASTEROIDA")))])
+        precondition(phantomDome.domeFirst.energy==60 &&
+                     phantomDome.domeSecond.energy==60)
+
+        // Two simultaneous real ship contacts cannot multiply the
+        // one global 60-point dome pool: first spends 35, second spends
+        // remaining 25, both are intercepted without extra charges.
+        var twoDomes=CombatVerifiedEncounter556(encounter:sharedFrameScene)
+        let bothActive=twoDomes.step(dt:1/120,firstDomeHeld:true)
+        precondition(bothActive.contacts ==
+                     [.shipRock(0),.partnerRock(1)])
+        precondition(bothActive.hitOutcomes == [
+            V.TeamOutcome(player:.first,outcome:.activeTarczaAbsorbed),
+            V.TeamOutcome(player:.second,outcome:.activeTarczaAbsorbed)])
+        precondition(twoDomes.domeFirst.energy==0 &&
+                     twoDomes.domeSecond.energy==0)
+        precondition(twoDomes.encounter.firstSurvival.lives==3 &&
+                     twoDomes.encounter.secondSurvival.lives==3)
 
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
