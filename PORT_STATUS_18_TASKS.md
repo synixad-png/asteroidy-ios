@@ -2,7 +2,7 @@
 
 Źródło kolejności/nazw: zatwierdzony przez użytkownika zrzut harmonogramu 18 zadań z 2026-11-05. Nie zmieniać nazw ani zakresów bez decyzji użytkownika.
 
-**Łączny postęp odniesienia: 27%; pozostało 73%.** To zachowany wynik zbiorczy całego portu, a nie nowy pomiar ważony. **Zadanie 7: 97% (poprzednio 96%, +1 pp)** — źródłowo potwierdzona blokada całej fazy walki przy `DevOpen` (`Windows/src/Game.cs:234`) oraz połączenie oryginalnej przytrzymywanej tarczy `Tarcza145` (`Game.cs:240,248`, `Tarcza145.cs`) z **grywalnym testem obrażeń Boreas** w `PlanetDamageLab556`, `MetalRenderer` i przyciskiem SwiftUI. Testy Swift/Linux oraz parsowanie plików SwiftUI/Metal: **PASS**, run `42037997698`. Nadal **brak natywnego kompilowania Xcode, testu na fizycznym iOS i nowego IPA**, zgodnie z poleceniem użytkownika. Zadanie 8 pozostaje na 96%.
+**Łączny postęp odniesienia: 27%; pozostało 73%.** Zachowany wynik zbiorczy, bez zmiany wag innych zadań. **Zadanie 7 — Kolizje, obrażenia i zniszczenia: 100% IMPLEMENTACJI MODUŁU (poprzednio 97%, +3 pp; 0% prac implementacyjnych pozostałych w zakresie modułu)**. Kod porównano z oryginalnym `Windows/src/Physics68.cs`, `Game.cs`, `Gameplay65.cs`, `Coop62.cs`, `Tarcza145.cs`, `Talents78.cs` i `BossTunnelGame.cs` v556. Dokończono poprawki: obroty skał wyłącznie po rock/rock, brak błędnego szybkiego odrzucania niekanonicznych punktów, rozliczenie obrażeń/ratowania i wspólne zasoby kooperacji, zniszczenia i podziały skał, aktywna tarcza w grywalnej ścieżce Boreas. `42042348199`: 25/25 wykonywanych programów testowych Swift/Linux PASS (22 z macierzy + 3 już istniejące zestawy), parsowanie SwiftUI/Metal PASS. Natywny Xcode iPhoneOS **BUILD SUCCEEDED** dla aktualnego kodu Swift w `42040847979`; tamten workflow zwrócił FAIL wyłącznie przez błędną ścieżkę kontrolną `.app`, która została poprawiona w repo. Odrębna ponowna kontrola macOS była jeszcze w kolejce przy aktualizacji dokumentu. **Nie utworzono IPA.** Test interaktywny na fizycznym urządzeniu nie został wykonany i pozostaje w zadaniu 18. Wrogie AI, komplet bossów, broni i misji pozostają własnością zadań 9–13; dostępne API obrażeń przyjmuje ich obiekty, lecz nie należy deklarować implementacji tamtych systemów. **Zadanie 8: 96% bez zmian.**
 
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
@@ -12,7 +12,7 @@
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
 | 6 | Fizyka lotu i poruszanie po planetach | 35% |
-| 7 | Kolizje, obrażenia i zniszczenia | 97% |
+| 7 | Kolizje, obrażenia i zniszczenia | 100% |
 | 8 | Asteroidy i fale walki | 96% |
 | 9 | Wszystkie bronie i efekty trafień | 10% |
 | 10 | Przeciwnicy i sztuczna inteligencja | 0% |
@@ -39,9 +39,18 @@
 
 ## Kolejność dalszej pracy
 
-1. Domknąć zadanie 7 wraz z weryfikacją zintegrowanego łańcucha obrażeń i regresji; nie przypisywać niezaimplementowanej AI, broni wrogów lub bossów do działającego portu.
-2. Domknąć pozostałe 4% zadania 8 po audycie źródłowego v556 i wykonaniu testów.
-3. Dopiero później przechodzić do zadania 9. Każdy raport ma pokazywać wszystkie 18 pozycji, osobny postęp, zmianę pp, postęp globalny i % pozostały.
+1. **Zadanie 7 — zamknięte implementacyjnie (100%)**: nie rozpoczynać od nowa; przy nowych zadaniach wykonywać regresję dokładnie tych zamrożonych mechanizmów z oryginalnego v556. Test fizycznego iPhone'a to osobny etap 18, którego brak należy jawnie raportować.
+2. Następne do wykonania — **zadanie 8**, aktualnie 96%, wymaga osobnego polecenia do kontynuacji. Nie wykonywano go w tej sesji.
+3. Dopiero po zadaniu 8 przejść do zadania 9; nie zmieniać listy 18 zadań ani wartości pozostałych pozycji bez nowych prac i dowodów.
+
+## Weryfikacja zamknięcia zadania 7
+
+- Oryginalne `Physics68.cs:31–45`: odpowiedź kontaktu; `Physics68.cs:50–59`: obroty tylko rock/rock; `Physics68.cs:33–37`: odrzucenie szerokości tylko dla kanonicznych Y.
+- `SphereRockContact68`, `CombatSolids68`, `SphereSector556`: poprawiony brak spin po ship/rock, bug/rock i boss/rock; zachowany spin po rock/rock i rzeczywista fizyka sferyczna.
+- `CombatVerifiedEncounter556`, `CombatVerifiedHit556`, `CombatRescue65`, `CombatRespawn556`: życie, tarcze, guardian, opancerzenie, kolizje, coop, ratowanie i odrodzenie.
+- `PlanetDamageLab556`, `MetalRenderer`, `App.swift`: grywalna ścieżka z obrażeniami, wizualizowanym HUD kadłuba/pancerza/tarczy i momentowym wejściem tarczy.
+- `SphereSector556`: podział skał, 18 ostatnich odłamków, punktacja i bezpieczne przebiegi kolizji; funkcje AI/bossów i misji nie są tu fikcyjnie tworzone.
+- Testy Swift/Linux: GitHub Actions `42042348199`, **25/25 uruchomionych zestawów PASS**. Natywny kompilator Apple: `42040847979` zawiera `BUILD SUCCEEDED`, ale cały job FAIL wskutek niepoprawnej ścieżki testu istnienia produktu o nazwie `ASTEROIDY iOS.app` — poprawiono. Brak testu fizycznego iPhone'a i brak IPA.
 
 ## Tryb bez IPA — polecenie użytkownika
 
