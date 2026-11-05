@@ -40,11 +40,12 @@ import Foundation
         CombatHazards68.explosion(origin:origin,radius:100,impulse:80,
                                  rocks:&explodingRocks,bugs:&bugs,
                                  pickups:&pickups,boss:&boss)
-        precondition(abs(explodingRocks[0].velocity.x-8)<0.2)
+        // Sphere67 uses 720/pi radius, so 20 atlas-x units cover 22.5 arc units.
+        precondition(abs(explodingRocks[0].velocity.x-7.75)<0.15)
         precondition(explodingRocks[1].velocity.lengthSquared==0)
-        precondition(abs(bugs[0].velocity.x-28)<0.4)
-        precondition(abs(pickups[0].velocity.x-48)<0.4)
-        precondition(abs(boss!.velocity.x-0.5)<0.05)
+        precondition(abs(bugs[0].velocity.x-26.5)<0.2)
+        precondition(abs(pickups[0].velocity.x-44)<0.2)
+        precondition(abs(boss!.velocity.x-0.4375)<0.05)
         let first=explodingRocks[0].velocity
         CombatHazards68.explosion(origin:origin,radius:0,impulse:800,
                                  rocks:&explodingRocks,bugs:&bugs,
