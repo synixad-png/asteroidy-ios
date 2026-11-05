@@ -645,6 +645,42 @@ import Foundation
         precondition(twoDomes.encounter.firstSurvival.lives==3 &&
                      twoDomes.encounter.secondSurvival.lives==3)
 
+        // The original FailRescue65 calls global Game.Damage. When only
+        // P2 is wrecked and P1 activates Tarcza145 immediately before its
+        // timeout, the ONE common dome can absorb P2's failed-rescue hit.
+        // No second energy pool, invented life loss or repeated rescue.
+        var shieldedFailure=setup(true)
+        shieldedFailure.sourceSharedCoopResources=true
+        var shieldedPartner=shieldedFailure.encounter.second!
+        var shieldedSurvival=shieldedFailure.encounter.secondSurvival
+        precondition(shieldedFailure.rescue.beginDown(.second,
+            cooperative:true,playing:true,developerInfinite:false,
+            rescueDamage:false,survival:&shieldedSurvival,
+            body:&shieldedPartner))
+        shieldedFailure.encounter.second=shieldedPartner
+        shieldedFailure.encounter.secondSurvival=shieldedSurvival
+        shieldedFailure.encounter.rocks=[]
+        let nearlyExpired=shieldedFailure.step(dt:11.95,
+            firstDomeHeld:false,guardianSecond:.clear,
+            talentSecond:.clear)
+        precondition(nearlyExpired.rescueEvent == .none &&
+                     shieldedFailure.rescue.down(.second))
+        let absorbedTimeout=shieldedFailure.step(dt:0.1,
+            firstDomeHeld:true,guardianSecond:.clear,
+            talentSecond:.clear)
+        precondition(absorbedTimeout.rescueEvent ==
+                     .failed(first:false,second:true))
+        precondition(absorbedTimeout.rescueDamageOutcome ==
+            V.TeamOutcome(player:.second,outcome:.activeTarczaAbsorbed))
+        precondition(!absorbedTimeout.requiresRescueDamageResolution)
+        precondition(absorbedTimeout.damageTransitions.isEmpty)
+        precondition(shieldedFailure.encounter.firstSurvival.lives==3 &&
+                     shieldedFailure.encounter.secondSurvival.lives==3)
+        precondition(shieldedFailure.domeFirst.energy<25 &&
+                     shieldedFailure.domeFirst.energy>23)
+        precondition(shieldedFailure.domeFirst.energy ==
+                     shieldedFailure.domeSecond.energy)
+
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
