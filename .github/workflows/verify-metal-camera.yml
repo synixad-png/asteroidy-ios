@@ -36,3 +36,37 @@ jobs:
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
+
+  apple-metal-source-compile:
+    name: Xcode Metal/Swift compile verification ONLY (NO IPA)
+    # This job only checks whether genuine Apple Metal and iOS Swift
+    # compilers accept the current sources. It never archives, exports,
+    # uploads or signs an app for installation.
+    runs-on: macos-15
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record Apple tools and SDK versions
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          xcrun --find metal
+      - name: Generate native iOS app project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Compile complete iPhoneOS sources and real Metal shaders (NO IPA)
+        run: |
+          set -euo pipefail
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Debug \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath /tmp/asteroidy-ios-metal-check \
+            build 2>&1 | tee /tmp/asteroidy-ios-metal-check.log
+          test -f '/tmp/asteroidy-ios-metal-check/Build/Products/Debug-iphoneos/ASTEROIDY iOS.app/Info.plist'
+          test -f '/tmp/asteroidy-ios-metal-check/Build/Products/Debug-iphoneos/ASTEROIDY iOS.app/default.metallib'
+          echo "PASS: Apple Swift and Metal shader compile; no IPA packaged"
