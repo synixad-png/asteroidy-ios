@@ -121,6 +121,14 @@
 
 **Następnie w zadaniu 2:** port oryginalnych `IntroStone` i `StoneNormal56` dla pasa, świateł/głębi/efektów intro z rzeczywistych źródeł, zgodność nowego `NewHome290` tam, gdzie ma zastosowanie; następnie kompilacja Xcode bez IPA. Dopiero po udanym buildzie można zgłosić użytkownikowi gotowość do *zlecenia* nowego unsigned IPA iPhone+iPad. Nie twierdzić, że scena jest 1:1 ani sprawdzona na urządzeniu.
 
+## 05.11.2026 — kontynuacja zadania 2: źródłowe siatki IntroStone
+
+Do nowej sceny `IntroOrbit41` dołączono `IntroRockGeometry41.swift` z oryginalnymi funkcjami `GpuIntro41.IntroStone`, `StoneNormal56`, `StoneFace` i `StoneSubdivide56` (20 ścian ikosaedru, 320/1280 trójkątów w zależności od rozmiaru, trzy kratery i odrębne seedy, kolory i normalne źródłowe). `MetalRenderer` tworzy szczegółowy model maksymalnie **jednej nowej widocznej skały na klatkę**, zachowuje do 256 modeli GPU i używa tymczasowego oktaedru wyłącznie do momentu utworzenia danego modelu. Celem jest uniknięcie jednorazowego obciążenia CPU/RAM przez 820 pełnych modeli, lecz **faktyczny koszt FPS i pamięci nie został zmierzony**.
+
+`Tests/IntroRockGeometry41Tests.swift` sprawdza liczby wierzchołków, normalne i kolory. `Tests/IntroOrbitSourceContract41.py` pilnuje, czy renderer rzeczywiście korzysta z oryginalnej procedury i ma limit cache. Odrębny szybki preflight kodu Swift w [GitHub Actions 42098254707](https://github.com/synixad-png/asteroidy-ios/actions/runs/42098254707) zakończył się PASS, natomiast pełna weryfikacja nowego generatora `42098229568` i kompilacja Xcode/Metal **nie były zakończone podczas ostatniego sprawdzenia**. Nie wpisywać PASS w testach geometrii na podstawie wyników starszych commitów. **Nie ma nowego IPA ani testu na prawdziwym iPhonie/iPadzie.**
+
+Zmiana harmonogramu pozostaje **wyłącznie w zadaniu 2: 70% (+2 pp względem wcześniejszego 68%)**, projekt całościowo 27% (pozostało 73%). Wynik nie jest podnoszony za prace bez udanego testu geometrii. Następny krok: dokończyć aktualne testy i kompilację Xcode bez IPA, zachować oryginalne siatki oraz uzupełnić wymagane elementy wierności sceny. Powiadomienie o gotowości do zlecenia IPA jest monitorowane oddzielnie — dopiero po potwierdzonym sukcesie obu zadań CI.
+
 ## Kolejność dalszej pracy
 
 1. **Zadanie 7 — zamknięte implementacyjnie (100%)**, zachować wszystkie zweryfikowane mechanizmy i regresje.
