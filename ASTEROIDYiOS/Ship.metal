@@ -38,6 +38,14 @@ struct SkyPointOutput {
     float pointSize [[point_size]];
     float4 color;
 };
+// Metal Shading Language: [[point_size]] is a VERTEX output only,
+// and must not appear as an input to a fragment [[stage_in]] struct.
+// Fragment receives position and color, while point_coord is provided
+// separately by the rasterizer.
+struct SkyPointFragmentInput {
+    float4 position [[position]];
+    float4 color;
+};
 vertex SkyPointOutput skyPointVertex(
     uint vid [[vertex_id]],
     constant Vertex3D *vertices [[buffer(0)]],
@@ -50,7 +58,7 @@ vertex SkyPointOutput skyPointVertex(
     return out;
 }
 fragment float4 skyPointFragment(
-    SkyPointOutput in [[stage_in]],
+    SkyPointFragmentInput in [[stage_in]],
     float2 uv [[point_coord]]) {
     float2 p = uv * 2.0f - 1.0f;
     float radiusSquared = dot(p,p);
