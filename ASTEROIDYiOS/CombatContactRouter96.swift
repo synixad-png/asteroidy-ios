@@ -47,7 +47,7 @@ enum CombatContactRouter96 {
     private static func process(_ event:CombatSolidEvent68,
                         to survival:inout CombatSurvival96,
                         level:Int,difficulty:CombatBalance556.Difficulty,
-                        defense:Defense,isRobot:[Bool]) -> Outcome {
+                        defense:Defense,isRobot:[Bool],spherical:Bool) -> Outcome {
         guard let source=cause(event,isRobot:isRobot) else {
             return .requiresDefenseVerification
         }
@@ -56,14 +56,20 @@ enum CombatContactRouter96 {
         case .guardianAbsorbed, .tarczaAbsorbed, .talentAbsorbed, .coopDown:
             return .externalDefenseAbsorbed
         case .noneAbsorbed:
-            // The v556 purchased shield is only an asteroid-contact
-            // interception, not a generic defense for robots or bosses.
-            switch event {
-            case .shipRock, .partnerRock:
-                if let absorbed=survival.absorbPurchasedRockContact(cause:source) {
-                    return .applied(absorbed)
+            // The flat arena intercepts asteroid contacts first (.8s).
+            // Sphere contacts, bugs and bosses instead pass through
+            // HitByBoss(), whose shield branch provides 1s protection.
+            if !spherical {
+                switch event {
+                case .shipRock, .partnerRock:
+                    if let absorbed=survival.absorbPurchasedRockContact(cause:source) {
+                        return .applied(absorbed)
+                    }
+                default: break
                 }
-            default: break
+            }
+            if let absorbed=survival.absorbPurchasedHitByBoss(cause:source) {
+                return .applied(absorbed)
             }
             let damage=CombatSurvival96.collisionDamage(level:level,
                                                          difficulty:difficulty)
@@ -80,19 +86,19 @@ enum CombatContactRouter96 {
                           second:inout CombatSurvival96,
                           level:Int,difficulty:CombatBalance556.Difficulty,
                           defenseFirst:Defense,defenseSecond:Defense,
-                          isRobot:[Bool]) -> [TeamOutcome] {
+                          isRobot:[Bool],spherical:Bool=true) -> [TeamOutcome] {
         var result:[TeamOutcome]=[]
         for event in events {
             switch player(for:event) {
             case .first:
                 let outcome=process(event,to:&first,level:level,
                                     difficulty:difficulty,
-                                    defense:defenseFirst,isRobot:isRobot)
+                                    defense:defenseFirst,isRobot:isRobot,spherical:spherical)
                 result.append(TeamOutcome(player:.first,outcome:outcome))
             case .second:
                 let outcome=process(event,to:&second,level:level,
                                     difficulty:difficulty,
-                                    defense:defenseSecond,isRobot:isRobot)
+                                    defense:defenseSecond,isRobot:isRobot,spherical:spherical)
                 result.append(TeamOutcome(player:.second,outcome:outcome))
             case .none:
                 result.append(TeamOutcome(player:nil,outcome:.ignoredNonPlayer))
@@ -106,7 +112,7 @@ enum CombatContactRouter96 {
                       level:Int,
                       difficulty:CombatBalance556.Difficulty,
                       defense:Defense,
-                      isRobot:[Bool]) -> [Outcome] {
+                      isRobot:[Bool],spherical:Bool=true) -> [Outcome] {
         var outcomes:[Outcome]=[]
         for event in events {
             let isPlayer:Bool
@@ -130,8 +136,14 @@ enum CombatContactRouter96 {
                 // do not consume lives/shields again.
                 outcomes.append(.externalDefenseAbsorbed)
             case .noneAbsorbed:
-                if case .shipRock = event,
-                   let absorbed=survival.absorbPurchasedRockContact(cause:source) {
+                if !spherical {
+                    if case .shipRock = event,
+                       let absorbed=survival.absorbPurchasedRockContact(cause:source) {
+                        outcomes.append(.applied(absorbed))
+                        continue
+                    }
+                }
+                if let absorbed=survival.absorbPurchasedHitByBoss(cause:source) {
                     outcomes.append(.applied(absorbed))
                     continue
                 }
