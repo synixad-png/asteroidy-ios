@@ -13,11 +13,12 @@ import Foundation
         }
         // No mission complete while timed objective is running, even when
         // all asteroids have been cleared by the player.
-        for (level, duration, type): (Int, Float, GameCore.TrainingObjective) in [
+        let timedCases: [(Int, Float, GameCore.TrainingObjective)] = [
             (2, 40, .escort), (5, 50, .defend), (9, 48, .waves),
             (11, 40, .escort), (14, 50, .defend), (17, 48, .waves),
             (21, 40, .escort), (23, 50, .defend)
-        ] {
+        ]
+        for (level, duration, type) in timedCases {
             var game = GameCore()
             game.setSectorTraining(CombatBalance556(level: level, difficulty: .normal, spherical: false)!)
             precondition(game.trainingObjective == type)
