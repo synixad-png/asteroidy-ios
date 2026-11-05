@@ -4,6 +4,12 @@
 name: ASTEROIDY iOS - iPhone + iPad IPA (manual)
 on:
   workflow_dispatch:
+    inputs:
+      compatibility_old_ship:
+        description: "Tylko stary Vanguard AS3D — świadomie pomiń oryginalną teksturę"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -31,6 +37,17 @@ jobs:
           print('PASS: native project declares iPhone + iPad (UIDeviceFamily 1,2)')
           PY
           python3 Tools/verify_ios_inputs.py | tee reports/source-assets.txt
+      - name: Require original Vanguard 4311 UV + BaseColor for NEW textured release
+        shell: bash
+        env:
+          COMPAT_OLD_SHIP: ${{ inputs.compatibility_old_ship }}
+        run: |
+          set -euo pipefail
+          if [ "$COMPAT_OLD_SHIP" = "true" ]; then
+            echo "WARNING: explicitly requested v556 AS3D compatibility release; original Vanguard texture NOT bundled" | tee reports/vanguard-material.txt
+          else
+            python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets | tee reports/vanguard-material.txt
+          fi
       - name: Record native Apple compiler and source revision
         shell: bash
         run: |
@@ -62,7 +79,11 @@ jobs:
           mkdir -p distribution/Payload
           cp -R "$APP" distribution/Payload/
           (cd distribution && zip -q -r -y ../ASTEROIDY_iPhone_iPad_UNSIGNED.ipa Payload)
-          python3 Tools/verify_ipa.py ASTEROIDY_iPhone_iPad_UNSIGNED.ipa | tee reports/verification.txt
+          if [ "${{ inputs.compatibility_old_ship }}" = "true" ]; then
+            python3 Tools/verify_ipa.py ASTEROIDY_iPhone_iPad_UNSIGNED.ipa | tee reports/verification.txt
+          else
+            python3 Tools/verify_ipa.py ASTEROIDY_iPhone_iPad_UNSIGNED.ipa --require-vanguard-original | tee reports/verification.txt
+          fi
           shasum -a 256 ASTEROIDY_iPhone_iPad_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
       - name: Upload real unsigned iPhone + iPad IPA
         uses: actions/upload-artifact@v4
@@ -72,6 +93,7 @@ jobs:
             ASTEROIDY_iPhone_iPad_UNSIGNED.ipa
             reports/device-families.txt
             reports/source-assets.txt
+            reports/vanguard-material.txt
             reports/environment.txt
             reports/verification.txt
             reports/SHA256SUMS.txt
