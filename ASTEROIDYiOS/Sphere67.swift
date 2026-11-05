@@ -140,14 +140,29 @@ struct SphereCameraView556 {
         eye = back * Self.normalizedEyeDistance
     }
 
-    /// Maps a world point into the original OrbitWorld50.View camera frame.
-    /// The camera is looking toward -Z; the planet center maps to (0,0,-eye).
+    /// EXACT column-major layout of Windows/src/Orbit50.cs:32
+    /// OrbitWorld50.View(eye, origin, up). This is the shared matrix
+    /// consumed by MetalRenderer, NOT a second, untested camera formula.
+    /// Tested byte-column layout and projection on Linux.
+    var viewColumnMajor: [Float] {
+        [
+            right.x, up.x, back.x, 0,
+            right.y, up.y, back.y, 0,
+            right.z, up.z, back.z, 0,
+            -SphereVector3.dot(right,eye),
+            -SphereVector3.dot(up,eye),
+            -SphereVector3.dot(back,eye), 1
+        ]
+    }
+
+    /// Apply EXACTLY the same matrix consumed by the Metal scene.
+    /// This catches mistaken transposition and incorrect signs.
     func cameraSpace(_ world: SphereVector3) -> SphereVector3 {
-        let delta = world - eye
+        let m=viewColumnMajor
         return SphereVector3(
-            x: SphereVector3.dot(right, delta),
-            y: SphereVector3.dot(up, delta),
-            z: SphereVector3.dot(back, delta))
+            x:m[0]*world.x+m[4]*world.y+m[8]*world.z+m[12],
+            y:m[1]*world.x+m[5]*world.y+m[9]*world.z+m[13],
+            z:m[2]*world.x+m[6]*world.y+m[10]*world.z+m[14])
     }
 }
 
