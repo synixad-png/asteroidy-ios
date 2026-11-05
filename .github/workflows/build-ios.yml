@@ -73,7 +73,7 @@ jobs:
           /tmp/respawn-556
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/CombatVerifiedEncounter556.swift Tests/CombatVerifiedEncounter556Tests.swift -o /tmp/verified-encounter-556
           /tmp/verified-encounter-556
-      - name: Verify source shield priority and playable Boreas Game.Damage integration
+      - name: Verify playable Boreas lives and Game.Damage after Swift arithmetic syntax fix
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/PlanetDamageLab556.swift Tests/PlanetDamageLab556Tests.swift -o /tmp/boreas-damage-lab556
           /tmp/boreas-damage-lab556
@@ -203,7 +203,7 @@ jobs:
           /tmp/respawn-556
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/CombatVerifiedEncounter556.swift Tests/CombatVerifiedEncounter556Tests.swift -o /tmp/verified-encounter-556
           /tmp/verified-encounter-556
-      - name: Verify source shield priority and playable Boreas Game.Damage integration
+      - name: Verify playable Boreas lives and Game.Damage after Swift arithmetic syntax fix
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/PlanetDamageLab556.swift Tests/PlanetDamageLab556Tests.swift -o /tmp/boreas-damage-lab556
           /tmp/boreas-damage-lab556
