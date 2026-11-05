@@ -2,8 +2,7 @@
 
 Źródło kolejności/nazw: zatwierdzony przez użytkownika zrzut harmonogramu 18 zadań z 2026-11-05. Nie zmieniać nazw ani zakresów bez decyzji użytkownika.
 
-**Łączny postęp odniesienia: 27%; pozostało 73%.** Jest to zachowany historyczny wynik całego projektu, nie nowy pomiar po zadaniu 7. **Zadanie 7: 96% (poprzednio 94%, +2 pp). Domyślnie włączono źródłowe wspólne zasoby Coop62 dla dwóch graczy oraz jedną globalną pulę Tarcza145; zachowano niezależny tryb historycznych testów jako jawne opt-out. Z oryginalnego Windows v556 zweryfikowano kolejność FailRescue65 -> Game.Damage, wspólne życia/tarcze/opancerzenie, ResetVitals78 i brak drugiej energii Tarcza145. Ostatni test Swift/Linux bez IPA: run 42035502390 (PASS, brak artefaktów). Zadanie 8 pozostaje na 96%.
-
+**Łączny postęp odniesienia: 27%; pozostało 73%.** To zachowany wynik zbiorczy całego portu, a nie nowy pomiar ważony. **Zadanie 7: 97% (poprzednio 96%, +1 pp)** — źródłowo potwierdzona blokada całej fazy walki przy `DevOpen` (`Windows/src/Game.cs:234`) oraz połączenie oryginalnej przytrzymywanej tarczy `Tarcza145` (`Game.cs:240,248`, `Tarcza145.cs`) z **grywalnym testem obrażeń Boreas** w `PlanetDamageLab556`, `MetalRenderer` i przyciskiem SwiftUI. Testy Swift/Linux oraz parsowanie plików SwiftUI/Metal: **PASS**, run `42037997698`. Nadal **brak natywnego kompilowania Xcode, testu na fizycznym iOS i nowego IPA**, zgodnie z poleceniem użytkownika. Zadanie 8 pozostaje na 96%.
 
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
@@ -13,7 +12,7 @@
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
 | 6 | Fizyka lotu i poruszanie po planetach | 35% |
-| 7 | Kolizje, obrażenia i zniszczenia | 96% |
+| 7 | Kolizje, obrażenia i zniszczenia | 97% |
 | 8 | Asteroidy i fale walki | 96% |
 | 9 | Wszystkie bronie i efekty trafień | 10% |
 | 10 | Przeciwnicy i sztuczna inteligencja | 0% |
@@ -30,9 +29,13 @@
 
 - Zadanie 7: moduły CombatVerifiedHit556, CombatTalentVitals78, CombatGuardian37, CombatVerifiedEncounter556 i PlanetDamageLab556; testy co-op, boss-body, robot collision i sekwencja obrażeń do respawnu.
 - Testy: `Tests/CombatVerifiedEncounter556Tests.swift`, m.in. trzy życia, GameOver, dwaj gracze, obie gałęzie FailRescue, odzyskanie pełnego zdrowia po ratowaniu i dwa kontakty w jednej klatce przy wspólnych tarczach i strażniku — GitHub Actions Swift/Linux `42034275258` PASS. Nie wykonano kompilacji iOS/IPA dla tych zmian, zgodnie z poleceniem użytkownika.
-- Oryginalne źródła C# oraz decyzje portowania udokumentowano w `AUDYT_GRA_V556_FAIL_RESCUE_SOURCE.md`. Właściwy kontroler kooperacji ma użyć opcjonalnego `sourceSharedCoopResources=true` zamiast historycznego niezależnego trybu diagnostycznego.
+- Oryginalne źródła C# oraz decyzje portowania udokumentowano w `AUDYT_GRA_V556_FAIL_RESCUE_SOURCE.md`. Domyślny konstruktor dwuosobowy włącza źródłowy tryb wspólnych zasobów; dawny tryb niezależny wymaga jawnego `independentDiagnosticCoop:true` i służy wyłącznie regresjom.
 - Kompilacja iOS tworzy niepodpisany IPA; nie mylić z testem na fizycznym iPhonie/iPadzie.
 - Wydanie testowe IPA z zakończonego przebiegu 42027976783 pochodzi z commita 596767b i nie obejmuje późniejszych zmian.
+
+
+- Grywalna ścieżka Boreas: `PlanetDamageLab556` steruje oryginalnym `Tarcza145` przez dotykowe przytrzymanie w `App.swift`, `MetalRenderer` podaje stan i raportuje energię. Działanie logiki i składni zweryfikowano w no-IPA workflow `42037997698` PASS. Natywna kompilacja Xcode i interaktywna obsługa dotyku nie są jeszcze zweryfikowane; nie deklarować ukończenia tej integracji na urządzeniu.
+- `CombatVerifiedEncounter556`: przy `devOpen` zgodnie z `Game.cs:234` zatrzymuje całą fazę walki i odracza rozliczenie ratowania; test regresji PASS.
 
 ## Kolejność dalszej pracy
 
