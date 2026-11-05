@@ -1,96 +1,98 @@
 #!/usr/bin/env python3
-"""Task 2 source-contract guards for the iOS sky POINT pipeline.
-
-These are static wiring assertions, NOT Apple Metal compilation and NOT
-visual or image-fidelity tests. Original GpuIntro41 source provides
-1500 positions, pixel sizes and RGBA values; the 2D IntroHalo texture
-has not been ported and must not be claimed as complete.
+"""Source contract for original ASTEROIDY v556 GpuAmbient37 StarTexture and
+GpuIntro41 IntroHalo port. STATIC ONLY: no Apple Metal compiler or GPU.
 """
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-swift = (ROOT / "ASTEROIDYiOS" / "MetalRenderer.swift").read_text()
-metal = (ROOT / "ASTEROIDYiOS" / "Ship.metal").read_text()
-source = (ROOT / "ASTEROIDYiOS" / "Sphere67.swift").read_text()
+root=Path(__file__).resolve().parents[1]
+swift=(root/"ASTEROIDYiOS"/"MetalRenderer.swift").read_text()
+metal=(root/"ASTEROIDYiOS"/"Ship.metal").read_text()
+source=(root/"ASTEROIDYiOS"/"Sphere67.swift").read_text()
 
-def check(condition: bool, message: str) -> None:
-    if not condition:
-        raise AssertionError(message)
+def ck(ok,why):
+    if not ok:
+        raise AssertionError(why)
 
-# This is not a standalone imagined palette: preserve the original
-# source star generator already verified by SphereCameraView556Tests.
-check("static let count = 1500" in source, "Source GpuIntro41 star count changed")
-check("let warm=spaceRand207(41,index,71)>0.9" in source,
-      "Original warm/cold color distribution changed")
-check("alpha:warm ? 235/255 : 220/255" in source,
-      "Source star alpha was discarded")
-check("pixelSize:brightness>0.98 ? 2.8" in source,
-      "Original screen pixel sizes changed")
+# The only source of sky coordinates/tints is genuine C# GpuIntro41.
+for t in (
+    "static let count = 1500",
+    "let warm=spaceRand207(41,index,71)>0.9",
+    "alpha:warm ? 235/255 : 220/255",
+    "pixelSize:brightness>0.98 ? 2.8",
+    "static let haloTextureSize = 64",
+    "let dx=(Double(x)-31.5)/31.5",
+    "let dy=(Double(y)-31.5)/31.5",
+    "let value=exp(-radius*radius*4)*edge*edge*255",
+    "texels[i]=a", "texels[i+1]=a",
+    "texels[i+2]=a", "texels[i+3]=a",
+    "star.pixelSize*4",
+    "star.pixelSize==2.8 ? 42 : 20",
+):
+    ck(t in source,"Source GpuAmbient37/GpuIntro41 data changed: "+t)
 
-# One source-space point -> one vertex. No more per-star 3D triangles.
-section = swift.split("private static func sphereSky207()", 1)[1].split(
-    "private static func translation(", 1)[0]
-check("vertices.reserveCapacity(SphereSky207.count)" in section,
-      "Sky reverted to 3x-sized triangle vertices")
-check("indices.reserveCapacity(SphereSky207.count)" in section,
-      "Sky index count mismatch")
-check("indices.append(UInt32(i))" in section,
-      "Sky no longer emits one index per source star")
-check("star.alpha" in section and "star.pixelSize" in section,
-      "Source star alpha or pixel size not passed to GPU")
-check("star.red,star.green,star.blue,star.alpha" in section,
-      "Original RGBA not forwarded to Metal")
-check("drawMesh(sphereSkyMesh" not in swift,
-      "Opaque triangle sky draw returned")
-check("vertexCount:sphereSkyMesh.count" in swift,
-      "Sky no longer draws exactly its 1500 vertices")
-check("type:.point" in swift,
-      "Sky pipeline no longer uses point primitives")
-check("encoder.setRenderPipelineState(skyPointPipeline)" in swift,
-      "Missing dedicated blended sky pipeline")
-check("encoder.setRenderPipelineState(pipeline)" in swift,
-      "Main PBR pipeline not restored after sky")
-for entry in ("sceneVertex", "sceneFragment",
-              "skyPointVertex", "skyPointFragment"):
-    check(f'try requireShader("{entry}")' in swift,
-          "Native Metal pipeline entrypoint not explicitly validated: " + entry)
-check('throw NSError(domain:"ASTEROIDY iOS Metal",code:11' in swift,
-      "Missing Metal entrypoint must fail with a specific diagnostic")
-
-# Alpha compositing and depth-write isolation prevent sky stars drawing
-# over planet geometry or modifying the flat arena.
-for code in (
+# One actual 64x64 PArgb source glow texture shared by all source stars.
+ck("private let sphereHaloTexture: MTLTexture" in swift,
+   "Missing real GPU StarTexture")
+ck("sphereHaloTexture=try Self.makeSphereHaloTexture(device)" in swift,
+   "Source halo GPU texture is not created")
+ck("pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false" in swift,
+   "Source StarTexture pixel format or size changed")
+ck("texels.withUnsafeBytes" in swift and "bytesPerRow:n*4" in swift,
+   "Original 64x64 BGRA texels not uploaded")
+ck("encoder.setFragmentTexture(sphereHaloTexture,index:0)" in swift,
+   "StarTexture not bound in sky pass")
+ck("texture2d<float> sourceHalo [[texture(0)]]" in metal,
+   "Source texture not sampled in MSL")
+ck("filter::linear" in metal and "return in.color*mask;" in metal,
+   "Texture color/alpha not multiplied as original PArgb")
+ck("out.color = float4(star.color.rgb*star.color.a,star.color.a)" in metal,
+   "Gpu2DRenderer.Vertex2D premultiplication removed")
+for t in (
     "blend.isBlendingEnabled = true",
-    "blend.sourceRGBBlendFactor = .sourceAlpha",
+    "blend.sourceRGBBlendFactor = .one",
     "blend.destinationRGBBlendFactor = .oneMinusSourceAlpha",
+    "blend.sourceAlphaBlendFactor = .one",
+    "blend.destinationAlphaBlendFactor = .oneMinusSourceAlpha",
     "skyDS.isDepthWriteEnabled = false",
     "skyDS.depthCompareFunction = .always",
     "encoder.setDepthStencilState(depthState)",
-    "if input.planetPreview {",
+    "encoder.setRenderPipelineState(pipeline)",
 ):
-    check(code in swift, "Metal sky pipeline contract missing: " + code)
-check("[[point_size]]" in metal and "[[point_coord]]" in metal,
-      "Metal point sprite shader outputs or inputs missing")
-check("vertex SkyPointOutput skyPointVertex(" in metal,
-      "Source-sized sky point vertex entrypoint missing")
-check("fragment float4 skyPointFragment(" in metal,
-      "Circular source RGBA sky fragment entrypoint missing")
-check("struct SkyPointFragmentInput" in metal and
-      "SkyPointFragmentInput in [[stage_in]]" in metal,
-      "Fragment stage-in must not carry vertex-only point_size builtin")
-fragment_input=metal.split("struct SkyPointFragmentInput",1)[1].split("};",1)[0]
-check("[[point_size]]" not in fragment_input,
-      "Metal [[point_size]] is invalid as a fragment stage-in field")
-check("max(1.0f, star.material.x * scene.lighting.x)" in metal,
-      "Source pixel size / drawable height scaling not respected")
-check("SphereSky207.drawableScale(" in swift,
-      "iPhone Retina viewport scale not passed to Metal sky shader")
-check("in.color.a * coverage" in metal,
-      "Source star alpha discarded in blending")
-check("drawMesh(starMesh" in swift,
-      "Legacy 130-star flat arena removed")
-check("private static func stars()" in swift,
-      "Legacy 130-star flat generator removed")
-print("PASS: source GpuIntro41 1500 RGBA point sprites, Metal alpha blend,")
-print("      depth-write isolation, one draw and untouched flat star field")
-print("LIMITATION: static contract, not Xcode/Metal compilation or image test")
+    ck(t in swift,"Source premultiplied blend/depth contract missing: "+t)
+
+sky=swift.split("private static func sphereSky207()",1)[1].split(
+    "private static func translation(",1)[0]
+for t in (
+    "vertices.reserveCapacity(SphereSky207.count*2)",
+    "indices.reserveCapacity(SphereSky207.count*2)",
+    "indices.append(base)",
+    "SphereSky207.hasBrightHalo(star)",
+    "SphereSky207.brightHaloDiameterPixels(star)",
+    "125/255",
+    "SphereSky207.baseDiameterPixels(star)",
+    "star.alpha",
+):
+    ck(t in sky,"Source IntroHalo glow/base layer missing: "+t)
+ck(sky.index("appendHalo(SphereSky207.brightHaloDiameterPixels") <
+   sky.index("appendHalo(SphereSky207.baseDiameterPixels"),
+   "GpuIntro41 draws bright glow BEFORE base, not after")
+ck("drawMesh(sphereSkyMesh" not in swift and
+   "type:.point,vertexStart:0,vertexCount:sphereSkyMesh.count" in swift,
+   "Star quads not represented by one batched point draw")
+ck("SphereSky207.drawableScale(" in swift and
+   "star.material.x * scene.lighting.x" in metal,
+   "Source 720px reference to drawable size mapping missing")
+ck("SkyPointFragmentInput in [[stage_in]]" in metal and
+   "[[point_coord]]" in metal,"MSL point sprite fragment signature missing")
+section=metal.split("struct SkyPointFragmentInput",1)[1].split("};",1)[0]
+ck("[[point_size]]" not in section,
+   "MSL fragment stage-in must not have vertex-only point_size")
+for entry in ("sceneVertex","sceneFragment","skyPointVertex","skyPointFragment"):
+    ck(f'try requireShader("{entry}")' in swift,
+       "Metal function missing explicit init validation: "+entry)
+ck("drawMesh(starMesh" in swift and "private static func stars()" in swift,
+   "Legacy flat arena star field removed")
+print("PASS: original v556 GpuAmbient37 64x64 BGRA StarTexture and IntroHalo")
+print("      bright/base 10/21/2*size radii, premultiplied source blending,")
+print("      alpha/depth isolation, one batched point draw, flat arena retained")
+print("LIMITATION: static + Swift/Linux tests, Apple GPU not verified")
