@@ -23,6 +23,10 @@ Na wyraźne polecenie użytkownika uruchomiono **budowanie niepodpisanego IPA dl
 - **Kamera Metal:** zmiana `Sphere67.swift`, `MetalRenderer.swift` i `Ship.metal` odtwarza źródłowy `SphereCombat67.cs` i `GpuSphere67.cs`, z orbitującym widokiem nad planetą i prawidłowym wektorem kamery w oświetleniu BRDF. [GitHub Actions 42052748443 — PASS](https://github.com/synixad-png/asteroidy-ios/actions/runs/42052748443). Jest to test matematyczny oraz składni Swift, nie test Metal GPU; dokumentacja w `AUDYT_ZADANIE_2_v556_METAL_CAMERA.md`.
 - **Wersje:** IPA z uruchomionego run `42051262545` ma SHA `18e187970`. Zmiany kamery i walidatora powstały **później**, dlatego nie wchodzą do tamtej kompilacji. Nie wolno przedstawiać tego IPA jako wydania ze zmianami po tym SHA.
 
+### Niebo planety — autentyczna tekstura z oryginalnego v556
+
+Na podstawie rzeczywistych `Windows/src/GpuAmbient37.cs:5`, `GpuIntro41.cs:23,451–452` oraz `Gpu2DRenderer.cs:68,70,74` przeniesiono proceduralną `StarTexture` 64×64 BGRA PArgb i gwiezdne `IntroHalo`. Widok planetarny zachowuje 1500 kierunków, w tym 206 dodatkowych jasnych halo, w jednym buforze i jednym rysowaniu Metal. Promienie 10/21 px i podstawowe `size*2` oraz `ONE/ONE_MINUS_SRC_ALPHA` wynikają z oryginalnego kodu; nie są wymyślonymi efektami. Testy Swift/Linux i statyczna kontrola pipeline'u: [PASS, run 42065903420](https://github.com/synixad-png/asteroidy-ios/actions/runs/42065903420). **Natywna kompilacja Xcode/Apple Metal i test obrazu są nadal niepotwierdzone.** Mgławice i promienie `IntroSky` nie zostały jeszcze przeniesione. Szczegóły w [audycie zadania 2](AUDYT_ZADANIE_2_v556_METAL_CAMERA.md).
+
 ### Stan portowania
 
 Zatwierdzona, niezmienna lista 18 zadań i procenty: [PORT_STATUS_18_TASKS.md](PORT_STATUS_18_TASKS.md). Dotychczas moduły 7 i 8 zamknięto implementacyjnie, ale nadal brakuje pełnej gry i testów dotykowych/Metal na urządzeniu. Do zamknięcia całej aplikacji konieczna jest sekwencyjna realizacja pozostałych etapów, zaczynając od **zadania 1: kompilacja i infrastruktura iOS**.
