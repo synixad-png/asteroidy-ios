@@ -555,6 +555,41 @@ import Foundation
                      common.firstVitals!.armor==25)
         precondition(common.pendingRescueFailure==nil)
 
+        // Global resources must also remain coherent within the SAME
+        // Physics68 frame: P1 consumes the only purchased shield, then P2
+        // consumes the single Campaign37 guardian interception. Neither
+        // player gets a duplicate copy of either protection.
+        let separateRocks=[
+            SphereAsteroid556(position:Vec2(x:319,y:360),
+                              velocity:Vec2(x:0,y:0),radius:15,mass:8),
+            SphereAsteroid556(position:Vec2(x:659,y:360),
+                              velocity:Vec2(x:0,y:0),radius:15,mass:8)
+        ]
+        let sharedFrameScene=CombatEncounter68(first:body(300),
+            second:body(640),rocks:separateRocks,bugs:[],boss:nil,
+            pickups:[],firstSurvival:CombatSurvival96(),
+            secondSurvival:CombatSurvival96(),
+            level:10,difficulty:.normal)
+        var simultaneous=CombatVerifiedEncounter556(encounter:sharedFrameScene)
+        simultaneous.sourceSharedCoopResources=true
+        simultaneous.firstGuardian=CombatGuardian37(owned:true)
+        simultaneous.firstVitals=CombatTalentVitals78()
+        simultaneous.encounter.firstSurvival.shieldCharges=1
+        let twoImpacts=simultaneous.step(dt:1/120)
+        precondition(twoImpacts.contacts ==
+                     [.shipRock(0),.partnerRock(1)])
+        precondition(twoImpacts.hitOutcomes == [
+            V.TeamOutcome(player:.first,outcome:.applied(
+                .shieldAbsorbed(remaining:0,cause:"ASTEROIDA"))),
+            V.TeamOutcome(player:.second,outcome:.guardianAbsorbed)])
+        precondition(simultaneous.encounter.firstSurvival.shieldCharges==0 &&
+                     simultaneous.encounter.secondSurvival.shieldCharges==0)
+        precondition(simultaneous.firstGuardian!.charges==0)
+        precondition(simultaneous.firstVitals!.armor==25 &&
+                     simultaneous.firstVitals!.hull==60)
+        precondition(simultaneous.encounter.firstSurvival.lives==3 &&
+                     simultaneous.encounter.secondSurvival.lives==3)
+
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
