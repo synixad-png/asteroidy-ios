@@ -70,6 +70,23 @@ import Foundation
         near(abs(aVel.y),19,0.15); near(abs(bVel.y),19,0.15)
         precondition(aVel.y*bVel.y < 0)
         near(a.radius,18*1.12*0.49,0.001)
+        // Physics68 children inherit half mass, and opposite spin offsets.
+        near(a.mass,staticParent.mass*0.5,0.001)
+        near(b.mass,staticParent.mass*0.5,0.001)
+        near(abs(a.spin-b.spin),0.7,0.005)
+        // A nonterminal rock must receive real momentum and angular impulse
+        // before its health is reduced, without affecting the legacy arena.
+        var impact=SphereSector556(balance:cfg,diagnosticAsteroids:[
+            SphereAsteroid556(position:Vec2(x:640,y:360),
+                velocity:Vec2(x:0,y:0),radius:35,size:3,tier:1,health:3)
+        ])
+        impact.fire(from:Vec2(x:600,y:380),direction:Vec2(x:1,y:0))
+        impact.tick(dt:1/120,playerPosition:Vec2(x:600,y:380),
+                    playerRadius:0,detectContacts:false)
+        precondition(impact.asteroids.count == 1)
+        precondition(impact.asteroids[0].health == 2)
+        precondition(impact.asteroids[0].velocity.lengthSquared > 1)
+        precondition(abs(impact.asteroids[0].spin) > 0.005)
 
         let clean=SphereSector556(balance:cfg,diagnosticAsteroids:[])
         precondition(clean.sectorFinished)
