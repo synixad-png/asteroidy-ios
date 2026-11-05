@@ -20,6 +20,10 @@ final class FlightInput: ObservableObject {
     // Windows Game.Input.Tarcza145 is a momentary held input.
     @Published var tarczaHeld = false
     @Published var planetPreview = false
+    // Source-defined diagnostic cases: ordinary rocks (1), timed waves
+    // (9/17) and AmigaOnly266 perpetual bouncing balls (25).
+    // This is NOT a mission/campaign unlock selector.
+    @Published var planetTestLevel = 1
     @Published var sectorTraining = false
     @Published var verifiedDamageLab = false
     @Published var verifiedGameOver = false
@@ -80,6 +84,33 @@ struct GameView: View {
                     .font(.system(size: 12, design: .monospaced))
                     .padding(.horizontal, 18)
                     if input.planetPreview {
+                        Menu {
+                            Button("SEKTOR 01 · ASTEROIDY") {
+                                input.planetTestLevel = 1
+                                input.tarczaHeld = false
+                                input.shooting = false
+                            }
+                            Button("SEKTOR 09 · FALE WALKI") {
+                                input.planetTestLevel = 9
+                                input.tarczaHeld = false
+                                input.shooting = false
+                            }
+                            Button("SEKTOR 17 · FALE WALKI") {
+                                input.planetTestLevel = 17
+                                input.tarczaHeld = false
+                                input.shooting = false
+                            }
+                            Button("SEKTOR 25 · AMIGA / PIŁKI ODBIJANE") {
+                                input.planetTestLevel = 25
+                                input.tarczaHeld = false
+                                input.shooting = false
+                            }
+                        } label: {
+                            Text("WYBIERZ SEKTOR TESTOWY: \(input.planetTestLevel)")
+                                .font(.system(size: 11, weight: .medium,
+                                              design: .monospaced))
+                                .foregroundStyle(.cyan)
+                        }
                         HStack {
                             Button(input.verifiedDamageLab
                                    ? "TEST OBRAŻEŃ v556: WŁ." : "TEST OBRAŻEŃ v556: WYŁ.") {
