@@ -32,6 +32,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private let nebulaOverlayMesh: GPUModel
     private let nebulaTexture: MTLTexture
     private let blackHoleTextures: MTLTexture
+    private let deepPlanetTextures: MTLTexture
     private let planetVertexBuffers: [MTLBuffer]
     private let planetBufferSlots = MorphBufferSlots(count: 3)
     private let planetIndices: MTLBuffer
@@ -188,6 +189,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         nebulaOverlayMesh=try Self.makeMesh(device,cloudData.0,cloudData.1)
         nebulaTexture=try Self.makeNebulaTextures556(device)
         blackHoleTextures=try Self.makeBlackHoleTextures55(device)
+        deepPlanetTextures=try Self.makeDeepPlanetTextures55(device)
         // Only use the verified v556 Boreas GLB conversion when bundled.
         // Never silently claim that the diagnostic UV sphere is an imported asset.
         guard let planetURL = Bundle.main.url(forResource:"Boreas556",withExtension:"as3d")
@@ -434,6 +436,40 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         return tex
     }
 
+    /// Real GpuIntro41.BuildDeepPlanet55(0/1/2): all images are
+    /// 320x220 Format32bppPArgb. Allocate only ONCE in a single GPU
+    /// array. Reuse BlackHole55's generic 2D textured quad shader:
+    /// same source premultiplied blend, but this texture has 3 planet
+    /// slices; slice -1 uses the existing original StarTexture halo.
+    private static func makeDeepPlanetTextures55(_ device:MTLDevice)
+        throws -> MTLTexture {
+        let w=DeepSkyPlanets55.textureWidth
+        let h=DeepSkyPlanets55.textureHeight
+        let d=MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat:.bgra8Unorm,width:w,height:h,mipmapped:false)
+        d.textureType = .type2DArray
+        d.arrayLength = DeepSkyPlanets55.count
+        d.storageMode = .shared
+        d.usage=[.shaderRead]
+        guard let tex=device.makeTexture(descriptor:d) else {
+            throw NSError(domain:"ASTEROIDY iOS Metal",code:15,
+                userInfo:[NSLocalizedDescriptionKey:
+                    "Nie można utworzyć trzech źródłowych planet 320x220"])
+        }
+        for style in 0..<DeepSkyPlanets55.count {
+            let img=DeepSkyPlanets55.textureBGRA(style:style)
+            img.withUnsafeBytes { raw in
+                if let ptr=raw.baseAddress {
+                    tex.replace(region:MTLRegionMake2D(0,0,w,h),
+                                mipmapLevel:0,slice:style,
+                                withBytes:ptr,bytesPerRow:w*4,
+                                bytesPerImage:w*h*4)
+                }
+            }
+        }
+        return tex
+    }
+
     private static func translation(_ x: Float,_ y: Float,_ z: Float) -> simd_float4x4 {
         simd_float4x4(columns:(SIMD4(1,0,0,0),SIMD4(0,1,0,0),SIMD4(0,0,1,0),SIMD4(x,y,z,1)))
     }
@@ -666,6 +702,45 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             encoder.drawPrimitives(
                 type:.triangle,vertexStart:0,
                 vertexCount:24*6)
+
+            // C# DrawDeepSpace55 and DrawSkyPlanet55:
+            // three source planets in style order 0→1→2, each:
+            // optional source glow IntroHalo then a 320x220 texture.
+            // Reuse the existing premultiplied 2D quad shader from
+            // BlackHole55; no new MSL entrypoints or pipeline, no
+            // dynamic GPU textures. One draw PER visible source planet
+            // preserves draw order with the following black hole.
+            encoder.setRenderPipelineState(blackHolePipeline)
+            encoder.setFragmentTexture(deepPlanetTextures,index:0)
+            encoder.setFragmentTexture(sphereHaloTexture,index:1)
+            for style in 0..<DeepSkyPlanets55.count {
+                guard let projected=DeepSkyPlanets55.project(
+                    style:style,time:Float(planetAnimationTime),
+                    camera:sphereFlight.camera) else { continue }
+                let x=(projected.screen.x-640)*2/(720*aspect)
+                let y=(360-projected.screen.y)*2/720
+                let frame=SIMD4<Float>(x,y,2/(720*aspect),-2/720)
+                let layers=DeepSkyPlanets55.overlays(
+                    style:style,scale:projected.scale,glow:true)
+                var uniforms:[SIMD4<Float>]=[frame]
+                uniforms.reserveCapacity(1+layers.count*3)
+                for layer in layers {
+                    uniforms.append(SIMD4(
+                        layer.radiusX,layer.radiusY,1,0))
+                    let (r,g,b,a)=layer.rgba
+                    uniforms.append(SIMD4(r*a,g*a,b*a,a))
+                    uniforms.append(SIMD4(
+                        Float(layer.textureSlice),0,0,0))
+                }
+                uniforms.withUnsafeBytes { raw in
+                    if let ptr=raw.baseAddress {
+                        encoder.setVertexBytes(
+                            ptr,length:raw.count,index:0)
+                    }
+                }
+                encoder.drawPrimitives(type:.triangle,
+                    vertexStart:0,vertexCount:layers.count*6)
+            }
 
             // C# DrawDeepSpace55: the black hole is behind the NEAR
             // cloud layers and in front of FAR clouds. 3 source
