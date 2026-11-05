@@ -292,6 +292,113 @@ enum SphereSky207 {
     }
 }
 
+/// One original vertex of Windows/src/GpuCosmos39.cs RayVertex or
+/// GpuIntro41.cs IntroHalo. Coordinates are RELATIVE to the projected sun
+/// in source 1280x720 image pixels (Y positive downward); rgba is
+/// original unpremultiplied Color converted to Float, texture UVs as GL.
+struct SphereSolarVertex556 {
+    let offset: Vec2
+    let rgba: (Float,Float,Float,Float)
+    let uv: Vec2
+    let textured: Bool
+}
+
+/// GPU-independent source reconstruction of Windows GpuIntro41.cs:454
+/// and GpuCosmos39.cs:8–10, at the original fixed 1280x720 resolution.
+/// Source RaysEnabled/GlowEnabled default TRUE (Renderer.cs:240/25).
+/// WIP diagnostic uses those original defaults; user settings remain task14.
+enum SphereSolarOverlay556 {
+    static let rayCount = 5
+    static let columns = 6
+    static let rows = 4
+    static let haloVertexCount = 3*6
+    static let rayVertexCount = rayCount*rows*columns*6
+    static let totalVertices = haloVertexCount+rayVertexCount
+    static let rayDistances:[Float] = [0,0.12,0.35,0.72,1]
+    static let rayStrengths:[Float] = [0,1,0.72,0.31,0]
+    static let sunDirection = SphereVector3(x:0.6,y:0.8,z:0.32).normalized
+    static let sourceDistance:Float = 900
+    static let focal:Float = 720
+
+    /// Original SkyProject55: uses ORIENTATION only, not camera eye
+    /// translation. Reject rays behind eye and outside source visibility
+    /// rectangle [-400,1680]×[-400,1120] in 1280×720 image space.
+    static func project(camera:SphereCamera67) -> Vec2? {
+        let frame=SphereCameraView556(camera:camera)
+        let point=sunDirection*sourceDistance
+        let px=SphereVector3.dot(frame.right,point)
+        let py=SphereVector3.dot(frame.up,point)
+        let depth = -SphereVector3.dot(frame.back,point)
+        guard depth>0.4 else {return nil}
+        let x:Float=640+px*focal/max(0.01,depth)
+        let y:Float=360-py*focal/max(0.01,depth)
+        guard x > -400 && x < 1680 && y > -400 && y < 1120
+        else {return nil}
+        return Vec2(x:x,y:y)
+    }
+
+    static func vertex(_ x:Float,_ y:Float,
+                       _ red:Float,_ green:Float,_ blue:Float,
+                       _ alpha:Float,
+                       _ u:Float=0,_ v:Float=0,
+                       textured:Bool=false) -> SphereSolarVertex556 {
+        .init(offset:Vec2(x:x,y:y),rgba:(red/255,green/255,blue/255,alpha/255),
+              uv:Vec2(x:u,y:v),textured:textured)
+    }
+
+    /// GpuIntro41.IntroHalo => Gpu2DRenderer.Quad2D UV winding.
+    private static func appendHalo(_ target:inout [SphereSolarVertex556],
+                                   radius:Float,red:Float,green:Float,
+                                   blue:Float,alpha:Float) {
+        let tl=vertex(-radius,-radius,red,green,blue,alpha,0,0,textured:true)
+        let tr=vertex(radius,-radius,red,green,blue,alpha,1,0,textured:true)
+        let br=vertex(radius,radius,red,green,blue,alpha,1,1,textured:true)
+        let bl=vertex(-radius,radius,red,green,blue,alpha,0,1,textured:true)
+        target.append(contentsOf:[tl,tr,br,tl,br,bl])
+    }
+
+    /// GpuCosmos39.cs:9 exactly. Per-vertex alpha is TRUNCATED to
+    /// integer Color.FromArgb, not Float interpolated by the shader.
+    static func rayVertex(angle:Float,row:Int,column:Int) -> SphereSolarVertex556 {
+        precondition((0...rows).contains(row) &&
+                     (0...columns).contains(column))
+        let distance=rayDistances[row]*750
+        let side=Float(column)/3-1
+        let spread=(3+rayDistances[row]*30)*side
+        let fade=pow(cos(side*Float.pi/2),2)
+        let x=cos(angle)*distance-sin(angle)*spread
+        let y=sin(angle)*distance+cos(angle)*spread
+        let a=Float(Int(18*rayStrengths[row]*fade))
+        return vertex(x,y,255,202,139,a)
+    }
+
+    static func vertices() -> [SphereSolarVertex556] {
+        var out:[SphereSolarVertex556]=[]
+        out.reserveCapacity(totalVertices)
+        // GpuIntro41.cs:454: 2 glow layers, always-visible core, then
+        // 5 SoftRay calls. Keep original painter order in one draw.
+        appendHalo(&out,radius:130,red:255,green:199,blue:127,alpha:170)
+        appendHalo(&out,radius:55,red:255,green:217,blue:164,alpha:220)
+        appendHalo(&out,radius:15,red:255,green:245,blue:207,alpha:255)
+        for i in 0..<rayCount {
+            let angle:Float=2.5+(Float(i)-2)*0.17
+            for row in 0..<rows {
+                for col in 0..<columns {
+                    // EXACT original two triangles per 4×6 cell.
+                    out.append(rayVertex(angle:angle,row:row,column:col))
+                    out.append(rayVertex(angle:angle,row:row+1,column:col))
+                    out.append(rayVertex(angle:angle,row:row+1,column:col+1))
+                    out.append(rayVertex(angle:angle,row:row,column:col))
+                    out.append(rayVertex(angle:angle,row:row+1,column:col+1))
+                    out.append(rayVertex(angle:angle,row:row,column:col+1))
+                }
+            }
+        }
+        precondition(out.count==totalVertices)
+        return out
+    }
+}
+
 /// Exact surface-local basis of Windows/src/GpuSphere67.cs:63
 /// StampSphere67(point,angle,scale,lift). Ported in dimensionless
 /// Metal units using the ORIGINAL terrain outer radius 100*1.4419674
