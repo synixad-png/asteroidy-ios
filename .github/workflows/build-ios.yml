@@ -63,7 +63,7 @@ jobs:
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereSector556.swift Tests/SphereSector556Tests.swift -o /tmp/sphere-sector-tests
           /tmp/sphere-sector-tests
-      - name: Verify spherical combat, 48s timed clear and surviving rock guard
+      - name: Verify spherical combat, 5760-frame gate and surviving rock guard
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereSector556.swift Tests/SphereCombatBatch556Tests.swift -o /tmp/sphere-batch-tests
           /tmp/sphere-batch-tests
