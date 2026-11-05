@@ -24,7 +24,9 @@ import Foundation
         precondition(sector.destroyedRocks == 1 && sector.score == 160,
                      "v556 size-3 armored hit scoring")
         precondition(sector.asteroids.count == 2)
-        precondition(sector.asteroids.allSatisfy { $0.size == 2 && $0.tier == 1 && $0.health == 2 })
+        precondition(sector.asteroids.allSatisfy { $0.size == 2 && $0.tier == 1 &&
+                     $0.health == balance.sphericalRockHealth(size:2,tier:1) &&
+                     $0.originalHealth == Rock.healthFor(size:2,tier:1) })
         precondition(!sector.sectorFinished)
 
         var small = SphereSector556(balance:balance,diagnosticAsteroids:[
