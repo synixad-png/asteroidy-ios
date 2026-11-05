@@ -80,7 +80,8 @@ ck('var fighterEyeView=cameraFrame.view' in cinematic and
    'length:MemoryLayout<simd_float4x4>.stride,index:0' in cinematic,
    'GpuToon60 real eye-space FighterLight direction must use IntroScene41 view')
 ck('drawMesh(shipMesh,shipModel)' in renderer and
-   'drawMesh(planetModel,' in renderer,
+   'drawMesh(activeMesh, Self.scale(1.0))' in renderer and
+   'drawMesh(mesh,planetModel)' in cinematic,
    'Existing sphere combat and original planet pipeline regressed')
 ck('@Published var introPreview41 = true' in app,
    'Source cinematic must remain reachable')
