@@ -92,6 +92,19 @@ enum IntroOrbit41 {
             return V(x:V.dot(right,d),y:V.dot(up,d),z:V.dot(back,d))
         }
     }
+    // Windows GpuIntro41.IntroSky / SkyProject55 projects the same
+    // sky directions against IntroScene41.View(eye,ship), not the
+    // separate spherical-combat camera. Reuse the existing source
+    // projections/textures by supplying exact live intro axes.
+    static func skyCamera(time:Float)->SphereCamera67 {
+        let basis=frame(time)
+        var camera=SphereCamera67(at:Vec2(x:0,y:360))
+        camera.focus=basis.back * -1
+        camera.right=basis.right
+        camera.up=basis.up
+        return camera
+    }
+
     static func frame(_ time:Float)->Frame {
         let eye=camera(time)
         let f=(ship(time)-eye).normalized
