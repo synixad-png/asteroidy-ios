@@ -45,6 +45,19 @@ struct CombatSurvival96 {
         invincible=max(0,invincible-max(0,dt))
     }
 
+    /// Game.Step, flat rock collision: the purchased shield is checked
+    /// BEFORE Damage(), only for asteroid contacts. Other unblocked
+    /// damage bypasses this branch and resets shield charges on death.
+    mutating func absorbPurchasedRockContact(cause:String) -> Hit? {
+        guard lives>0 && playing && !sceneBusy && !bossArrival &&
+              !currentDown && invincible<=0 && shieldCharges>0
+        else { return nil }
+        shieldCharges -= 1
+        invincible=0.8
+        latestCause=cause
+        return .shieldAbsorbed(remaining:shieldCharges,cause:cause)
+    }
+
     /// Only for collisions not caught by guardian/Tarcza/talent/co-op guards.
     /// This function cannot silently assume those unported systems are absent.
     mutating func applyUnblockedCollision(
@@ -54,13 +67,10 @@ struct CombatSurvival96 {
               !currentDown && invincible<=0 && damage>0
         else {return .ignored}
         latestCause=cause
-        if shieldCharges>0 {
-            shieldCharges -= 1
-            invincible=1
-            return .shieldAbsorbed(remaining:shieldCharges,cause:cause)
-        }
-        lives -= 1
+        // Original Game.Damage explicitly clears shield charges on an
+        // unblocked hit. It does not automatically consume one charge.
         shieldCharges=0
+        lives -= 1
         if lives<=0 {
             playing=false  // Game.Damage transitions Mode to GameOver.
             return .gameOver(cause:cause)
