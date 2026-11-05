@@ -22,14 +22,18 @@ import Foundation
             precondition(rock.position.y >= 0 && rock.position.y <= 720)
         }
         precondition(moved == initial.count)
-        // One contact event per entry, never 120 events per second.
-        sector.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
-        precondition(sector.shipContacts == 1)
-        for _ in 0..<120 { sector.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000) }
-        precondition(sector.shipContacts == 1)
-        sector.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:0)
-        sector.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
-        precondition(sector.shipContacts == 2)
+        // A fresh simulation isolates contact transitions from the 1200-frame
+        // movement test; the moving planet may cross the player earlier.
+        var contacts = SphereSector556(balance: config)
+        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
+        precondition(contacts.shipContacts == 1)
+        for _ in 0..<120 { contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000) }
+        precondition(contacts.shipContacts == 1)
+        // North pole is outside rock radii in this deterministic test seed.
+        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0)
+        precondition(contacts.shipContacts == 1)
+        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
+        precondition(contacts.shipContacts == 2)
         // Flat GameCore remains an independent sandbox with unchanged nine-rock baseline.
         let flat = GameCore()
         precondition(flat.rocks.count == 9)
