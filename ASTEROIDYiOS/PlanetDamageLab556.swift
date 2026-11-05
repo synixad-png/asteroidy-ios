@@ -51,8 +51,8 @@ struct PlanetDamageLab556 {
             let result=CombatRespawn556.apply(hit,ship:&body,
                 heading:&direction,rocks:&rockState,shots:&shots) { _ in
                     seed=seed &* 1664525 &+ 1013904223
-                    return Float(seed & 0x00FFFFFF)/
-                        Float(0x01000000)*2*Float.pi
+                    return Float(seed & 0x00FFFFFF) /
+                        Float(0x01000000) * 2 * Float.pi
                 }
             scatterSeed=seed
             switch result {
