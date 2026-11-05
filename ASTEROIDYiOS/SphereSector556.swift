@@ -176,7 +176,8 @@ struct SphereSector556 {
                 SphereAsteroid556.fragmentScale(parentSize:parent.size)
             asteroids.append(SphereAsteroid556(position:position,velocity:transported,
                                                radius:radius,size:size,tier:tier,fragment:true,
-                                               mass:parent.mass*0.5))
+                                               mass:parent.mass*0.5,
+                                               spin:parent.spin+sign*0.35))
         }
     }
     private mutating func terminalShards(_ parent:SphereAsteroid556) {
@@ -199,6 +200,25 @@ struct SphereSector556 {
         }
     }
 
+    /// Physics68.ImpactRock68: transfer 5.5% of bullet momentum to the
+    /// impacted rock, including angular impulse around the hit lever.
+    private mutating func impactRock(at index:Int, with bolt:SphereBolt556) {
+        guard asteroids.indices.contains(index), asteroids[index].mass > 0 else { return }
+        var rock = asteroids[index]
+        let transported = Sphere67.components(rock.position,
+            Sphere67.transport(Sphere67.vector(bolt.position,bolt.velocity),
+                from:Sphere67.normal(bolt.position),
+                to:Sphere67.normal(rock.position)))
+        let impact = transported*0.055
+        let r = Sphere67.delta(target:bolt.position,origin:rock.position)
+        let distance = sqrt(r.lengthSquared)
+        let lever = distance > rock.radius ? r*(rock.radius/distance) : r
+        rock.velocity = rock.velocity+impact*(1/rock.mass)
+        let moment = lever.x*impact.y-lever.y*impact.x
+        rock.spin = max(-2.5,min(2.5,rock.spin+
+            moment/max(0.0001,0.4*rock.mass*rock.radius*rock.radius)))
+        asteroids[index] = rock
+    }
     private mutating func damageRock(at index:Int,amount:Int=1) {
         guard asteroids.indices.contains(index) else { return }
         if asteroids[index].shardLife > 0 {
@@ -258,7 +278,7 @@ struct SphereSector556 {
         // tangent plane, with native 216-cell broadphase.
         _ = SphereRockContact68.solve(&asteroids)
         // Process projectiles against the positions at the start of the step.
-        var rockHits:[Int:Int] = [:]
+        var rockHits:[Int:[SphereBolt556]] = [:]
         for i in bolts.indices.reversed() {
             if bolts[i].life <= 0 { bolts.remove(at:i); continue }
             var target:Int? = nil
@@ -272,7 +292,7 @@ struct SphereSector556 {
                 }
             }
             if let target {
-                rockHits[target,default:0] += 1
+                rockHits[target,default:[]].append(bolts[i])
                 bolts.remove(at:i)
             } else {
                 var moving = bolts[i]
@@ -284,7 +304,9 @@ struct SphereSector556 {
         }
         // Descending indices prevent removal from invalidating still-pending hits.
         for idx in rockHits.keys.sorted(by:>) {
-            damageRock(at:idx,amount:rockHits[idx]!)
+            let incoming = rockHits[idx]!
+            for bolt in incoming { impactRock(at:idx,with:bolt) }
+            damageRock(at:idx,amount:incoming.count)
         }
         // Shards are cosmetic and expire on their own; unlike threats, they
         // still block the diagnostic sector-clear condition until gone.
