@@ -1169,11 +1169,18 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 SIMD4(a[12],a[13],a[14],a[15])
             ))
             let ship=IntroOrbit41.ship(introTime41)*inv
-            // Source combat craft radius is used as an explicitly
-            // approximate visual size until cinematic GLB scale is audited.
+            // Original v568 Vanguard431 model size and Y-up GLB
+            // origin were read from actual embedded v4311 mesh +
+            // BakeInfo.json. The pre-existing iOS AS3D baked a smaller
+            // factor of 0.32 and a different Y centre. Restore the
+            // source gameplay model coordinates in LOCAL axes, then
+            // apply the exact IntroScene41 fighter orientation.
+            // Combat collision scale is independent and NOT changed.
             let craft=Self.translation(ship.x,ship.y,ship.z) *
                 orientation * Self.rotateYDegrees(sin(introTime41*0.8)*7) *
-                Self.scale(SphereSurfaceStamp556.sourceCraftRadius*inv)
+                Self.translation(0,0,
+                    IntroVanguard431.normalizedDorsalCorrection) *
+                Self.scale(IntroVanguard431.normalizedShipModelScale)
             drawMesh(shipMesh,craft)
 
             // Original GpuIntro41.cs:494 draws DrawAtmosphere47 AFTER
