@@ -9,7 +9,9 @@ on:
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/IntroOrbit41.swift'
+      - 'ASTEROIDYiOS/IntroRockGeometry41.swift'
       - 'Tests/IntroOrbit41Tests.swift'
+      - 'Tests/IntroRockGeometry41Tests.swift'
       - 'Tests/IntroOrbitSourceContract41.py'
       - 'ASTEROIDYiOS/Ship.metal'
       - 'Tests/SphereCameraView556Tests.swift'
@@ -108,6 +110,20 @@ jobs:
             -o /tmp/intro-orbit-source41
           /tmp/intro-orbit-source41
           python3 Tests/IntroOrbitSourceContract41.py
+      - name: Original GpuIntro41 seed-specific cratered rock geometry and normals
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/AssetMesh.swift \
+            ASTEROIDYiOS/IntroOrbit41.swift \
+            ASTEROIDYiOS/IntroRockGeometry41.swift \
+            Tests/IntroRockGeometry41Tests.swift \
+            -o /tmp/intro-rock-source41
+          /tmp/intro-rock-source41
       - name: Verify original RGBA sky point sprites and pipeline contract (static)
         run: python3 Tests/SkyPointSourceContract556.py
       - name: Original GpuIntro41 + GpuCosmos39 source solar ray and GPU contract
