@@ -61,7 +61,10 @@ struct CombatSurvival96 {
         }
         lives -= 1
         shieldCharges=0
-        if lives<=0 {return .gameOver(cause:cause)}
+        if lives<=0 {
+            playing=false  // Game.Damage transitions Mode to GameOver.
+            return .gameOver(cause:cause)
+        }
         let protection=Self.respawnProtection(level:level,difficulty:difficulty)
         invincible=protection
         return .lifeLost(remaining:lives,
