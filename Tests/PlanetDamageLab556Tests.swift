@@ -98,6 +98,41 @@ import Foundation
         precondition(guardLab.lives==3 && guardLab.armor==25 &&
                      guardLab.hull==60)
         precondition(guardLab.survival.invincible==1.2)
+        // Original Windows Game.cs:240: the held Tarcza145 input
+        // activates BEFORE StepSolids68. Its 12/s drain and 35-point
+        // impact cost must apply inside the already playable Boreas
+        // diagnostic, without touching lives, armor or hull.
+        var (domeSector,domeFlight)=create()
+        var domeLab=PlanetDamageLab556()
+        let domeContact=contact(&domeSector,&domeFlight)
+        precondition(domeContact==1)
+        let domeHit=domeLab.advance(dt:1/120,contacts:domeContact,
+            sector:&domeSector,flight:&domeFlight,tarczaHeld:true)
+        precondition(domeHit == .activeTarczaAbsorbed)
+        precondition(domeLab.tarczaActive)
+        precondition(abs(domeLab.tarczaEnergy-24.9)<0.002)
+        precondition(domeLab.survival.invincible >= 0.28)
+        precondition(domeLab.armor==25 && domeLab.hull==60)
+        precondition(domeLab.lives==3 && domeLab.deathCount==0)
+        _=domeLab.advance(dt:1/120,contacts:0,
+            sector:&domeSector,flight:&domeFlight,tarczaHeld:false)
+        precondition(!domeLab.tarczaActive)
+        precondition(abs(domeLab.tarczaEnergy-24.9)<0.002)
+        let stillSafe=domeLab.advance(dt:5,contacts:0,
+            sector:&domeSector,flight:&domeFlight,tarczaHeld:false)
+        precondition(stillSafe == .ignored)
+        precondition(domeLab.lives==3 && domeLab.armor==25 &&
+                     domeLab.hull==60)
+        // Held until exhausted, then no ghost interception: later real
+        // contact must fall through to original armor/hull protection.
+        _=domeLab.advance(dt:5,contacts:0,
+            sector:&domeSector,flight:&domeFlight,tarczaHeld:true)
+        precondition(domeLab.tarczaEnergy==0 && !domeLab.tarczaActive)
+        let afterExhaust=freshImpact(&domeSector,&domeFlight,&domeLab)
+        precondition(afterExhaust == .talentAbsorbed)
+        precondition(domeLab.armor==7 && domeLab.hull==60 &&
+                     domeLab.lives==3)
+
         print("PASS: Boreas live Physics68 collision -> source 25 armor/60 hull -> 3 lives -> 4.5s respawn -> game over; purchased shield")
     }
 }
