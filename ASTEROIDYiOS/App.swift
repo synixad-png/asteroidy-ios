@@ -25,6 +25,8 @@ final class FlightInput: ObservableObject {
 
 struct GameView: View {
     @StateObject private var input = FlightInput()
+    @State private var showCampaign = false
+    @State private var campaign = CampaignStore556.load()
     var body: some View {
         GeometryReader { g in
             ZStack {
@@ -33,10 +35,13 @@ struct GameView: View {
                 VStack {
                     if let error = input.rendererError { Text(error).font(.system(size: 12, weight: .bold)).foregroundStyle(.red).padding(8).background(.black.opacity(0.9)) }
                     HStack {
-                        Text("ASTEROIDY  •  iOS LAB v9")
+                        Text("ASTEROIDY  •  iOS v19")
                             .font(.system(size: 17, weight: .semibold, design: .monospaced))
                             .foregroundStyle(.cyan)
                         Spacer()
+                        Button("KAMPANIA") { showCampaign = true }
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.cyan)
                         Button(input.planetPreview ? "ARENA TESTOWA" : "BOREAS GLB • TEST") { input.planetPreview.toggle() }
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.cyan)
@@ -61,8 +66,53 @@ struct GameView: View {
                     }.padding(.horizontal, 45).padding(.bottom, 30)
                 }
                 .foregroundStyle(.white)
+                if showCampaign {
+                    CampaignAtlas556(progress: campaign, dismiss: { showCampaign = false })
+                }
             }.frame(width: g.size.width, height: g.size.height)
         }
+    }
+}
+
+// Read-only mission atlas. A mission is never claimed playable before porting.
+struct CampaignAtlas556: View {
+    let progress: CampaignProgress556
+    let dismiss: () -> Void
+    private let columns = Array(repeating: GridItem(.flexible(),spacing:8),count:7)
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment:.leading,spacing:16) {
+                HStack {
+                    Text("KAMPANIA / 26 SEKTORÓW").font(.system(.headline, design:.monospaced))
+                    Spacer()
+                    Button("ZAMKNIJ",action:dismiss).accessibilityLabel("Zamknij atlas misji")
+                }
+                Text("UKOŃCZONE: \(progress.completedCount) / 26")
+                    .font(.system(.subheadline,design:.monospaced)).foregroundStyle(.cyan)
+                LazyVGrid(columns:columns,spacing:8) {
+                    ForEach(1...CampaignProgress556.missionCount,id:\.self) { sector in
+                        let finished = progress.completed(sector)
+                        let available = progress.unlocked(sector)
+                        VStack(spacing:4) {
+                            Text(String(format:"%02d",sector)).font(.system(.headline,design:.monospaced))
+                            Image(systemName:finished ? "checkmark.circle.fill" : available ? "circle" : "lock.fill")
+                        }
+                        .foregroundStyle(finished ? Color.green : available ? Color.cyan : Color.gray)
+                        .frame(maxWidth:.infinity,minHeight:48)
+                        .background(Color.white.opacity(0.07),in:RoundedRectangle(cornerRadius:8))
+                        .accessibilityElement(children:.ignore)
+                        .accessibilityLabel("Sektor \(sector), \(finished ? "ukończony" : available ? "odblokowany" : "zablokowany")")
+                    }
+                }
+                Text("Atlas odzwierciedla zasady odblokowania z v556. Rozgrywanie misji i zaliczanie postępu zostaną uruchomione po przeniesieniu oryginalnych misji.")
+                    .font(.system(.caption,design:.monospaced)).foregroundStyle(.secondary)
+            }
+            .padding(24)
+        }
+        .frame(maxWidth:740,maxHeight:550)
+        .background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:18))
+        .padding(20)
     }
 }
 
