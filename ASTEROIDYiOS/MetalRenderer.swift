@@ -19,6 +19,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     let depthState: MTLDepthStencilState
     let skyPointPipeline: MTLRenderPipelineState
     let solarOverlayPipeline: MTLRenderPipelineState
+    let nebulaOverlayPipeline: MTLRenderPipelineState
     let skyDepthState: MTLDepthStencilState
     private let shipMesh: GPUModel
     private let asteroidMesh: GPUModel
@@ -27,6 +28,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private let sphereSkyMesh: GPUModel
     private let sphereHaloTexture: MTLTexture
     private let solarOverlayMesh: GPUModel
+    private let nebulaOverlayMesh: GPUModel
+    private let nebulaTexture: MTLTexture
     private let planetVertexBuffers: [MTLBuffer]
     private let planetBufferSlots = MorphBufferSlots(count: 3)
     private let planetIndices: MTLBuffer
@@ -80,6 +83,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let skyFragment=try requireShader("skyPointFragment")
         let solarVertex=try requireShader("solarOverlayVertex")
         let solarFragment=try requireShader("solarOverlayFragment")
+        let nebulaVertex=try requireShader("nebulaOverlayVertex")
+        let nebulaFragment=try requireShader("nebulaOverlayFragment")
         let p = MTLRenderPipelineDescriptor()
         p.vertexFunction = sceneVertex
         p.fragmentFunction = sceneFragment
@@ -118,6 +123,19 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         solarBlend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
         solarOverlayPipeline=try device.makeRenderPipelineState(
             descriptor:solarDescriptor)
+        let nebulaDescriptor=MTLRenderPipelineDescriptor()
+        nebulaDescriptor.vertexFunction=nebulaVertex
+        nebulaDescriptor.fragmentFunction=nebulaFragment
+        nebulaDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        nebulaDescriptor.depthAttachmentPixelFormat = .depth32Float
+        let nebulaBlend=nebulaDescriptor.colorAttachments[0]!
+        nebulaBlend.isBlendingEnabled=true
+        nebulaBlend.sourceRGBBlendFactor = .one
+        nebulaBlend.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        nebulaBlend.sourceAlphaBlendFactor = .one
+        nebulaBlend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
+        nebulaOverlayPipeline=try device.makeRenderPipelineState(
+            descriptor:nebulaDescriptor)
         let skyDS=MTLDepthStencilDescriptor()
         // Sky first, no depth writes; later real planet geometry occludes
         // it with the unchanged .less depth test.
@@ -147,6 +165,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         sphereHaloTexture=try Self.makeSphereHaloTexture(device)
         let overlayData=Self.solarOverlaySource556()
         solarOverlayMesh=try Self.makeMesh(device,overlayData.0,overlayData.1)
+        let cloudData=Self.nebulaSource556()
+        nebulaOverlayMesh=try Self.makeMesh(device,cloudData.0,cloudData.1)
+        nebulaTexture=try Self.makeNebulaTextures556(device)
         // Only use the verified v556 Boreas GLB conversion when bundled.
         // Never silently claim that the diagnostic UV sphere is an imported asset.
         guard let planetURL = Bundle.main.url(forResource:"Boreas556",withExtension:"as3d")
@@ -296,6 +317,68 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 material:SIMD4<Float>(v.textured ? 1:0,1,0,0)))
         }
         return (vertices,(0..<source.count).map {UInt32($0)})
+    }
+
+    /// Two immutable original GpuCosmos39 PArgb NebulaTexture themes
+    /// used by GpuIntro41.IntroSky. Share one 2-slice texture array across
+    /// all 36 distant/near cloud layers, allocated exactly once.
+    private static func makeNebulaTextures556(_ device:MTLDevice)
+        throws -> MTLTexture {
+        let n=SphereNebula556.imageSize
+        let d=MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false)
+        d.textureType = .type2DArray
+        d.arrayLength = SphereNebula556.orbitThemeCount
+        d.storageMode = .shared
+        d.usage=[.shaderRead]
+        guard let texture=device.makeTexture(descriptor:d) else {
+            throw NSError(domain:"ASTEROIDY iOS Metal",code:13,
+                 userInfo:[NSLocalizedDescriptionKey:
+                    "Nie można utworzyć źródłowych NebulaTexture 256x256"])
+        }
+        for theme in 0..<SphereNebula556.orbitThemeCount {
+            let texels=SphereNebula556.textureBGRA(theme:theme)
+            texels.withUnsafeBytes { raw in
+                if let p=raw.baseAddress {
+                    texture.replace(
+                        region:MTLRegionMake2D(0,0,n,n),mipmapLevel:0,
+                        slice:theme,withBytes:p,
+                        bytesPerRow:n*4,bytesPerImage:n*n*4)
+                }
+            }
+        }
+        return texture
+    }
+
+    /// Original DrawDeepSpace55 emits 24 distant clouds, IntroSky adds
+    /// 12 near layers. A static 216-vertex stream stores the exact
+    /// source 3D sky directions, UV, alpha, theme and layer type; the
+    /// original SkyProject55 is evaluated in the GPU vertex stage with
+    /// the LIVE camera, without rebuilding the geometry every frame.
+    private static func nebulaSource556()
+        -> ([AssetMesh.Vertex],[UInt32]) {
+        let uv:[SIMD2<Float>]=[
+            SIMD2(0,0),SIMD2(1,0),SIMD2(1,1),
+            SIMD2(0,0),SIMD2(1,1),SIMD2(0,1)
+        ]
+        var vertices:[AssetMesh.Vertex]=[]
+        vertices.reserveCapacity(SphereNebula556.orbitLayerCount*6)
+        var indices:[UInt32]=[]
+        indices.reserveCapacity(SphereNebula556.orbitLayerCount*6)
+        for i in 0..<SphereNebula556.orbitLayerCount {
+            let layer=SphereNebula556.layer(i)
+            for u in uv {
+                vertices.append(AssetMesh.Vertex(
+                    position:SIMD4(layer.direction.x,layer.direction.y,
+                                   layer.direction.z,1),
+                    color:SIMD4(1,1,1,layer.alpha),
+                    normal:SIMD4(u.x,u.y,0,0),
+                    material:SIMD4<Float>(
+                        layer.near ? 1:0,Float(layer.theme),0,0)))
+                indices.append(UInt32(indices.count))
+            }
+        }
+        return (vertices,indices)
     }
 
     private static func translation(_ x: Float,_ y: Float,_ z: Float) -> simd_float4x4 {
@@ -507,6 +590,28 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             encoder.drawIndexedPrimitives(type:.triangle,indexCount:mesh.count,indexType:.uint32,indexBuffer:mesh.indices,indexBufferOffset:0)
         }
         if input.planetPreview {
+            // Original GpuIntro41.DrawDeepSpace55: 24 distant + 12 near
+            // clouds are layered BEFORE stars and the five solar rays.
+            // One immutable 216-vertex buffer, one 2-slice 256x256
+            // NebulaTexture; camera orientation changes in a uniform.
+            let c=sphereFlight.camera
+            var nebulaUniform=(
+                SIMD4<Float>(c.right.x,c.right.y,c.right.z,0),
+                SIMD4<Float>(c.up.x,c.up.y,c.up.z,0),
+                SIMD4<Float>(c.focus.x,c.focus.y,c.focus.z,0),
+                SIMD4<Float>(2/(720*aspect),-2/720,0,0)
+            )
+            encoder.setDepthStencilState(skyDepthState)
+            encoder.setRenderPipelineState(nebulaOverlayPipeline)
+            encoder.setVertexBuffer(
+                nebulaOverlayMesh.vertices,offset:0,index:0)
+            encoder.setVertexBytes(
+                &nebulaUniform,length:MemoryLayout.size(ofValue:nebulaUniform),
+                index:1)
+            encoder.setFragmentTexture(nebulaTexture,index:0)
+            encoder.drawPrimitives(
+                type:.triangle,vertexStart:0,
+                vertexCount:nebulaOverlayMesh.count)
             // Source GpuIntro41.IntroSky uses a sky centred on the eye.
             // Render 1500 alpha-blended screen-size points in one GPU call;
             // none writes depth or changes the scene PBR pipeline.
