@@ -187,7 +187,11 @@ import Foundation
             if star.pixelSize==2.8 {large+=1}
             if star.alpha>0.9 {warm+=1}
         }
-        precondition(bright>0 && large>0 && warm>0)
+        // Original C# uint SpaceHash207 over all 1500 source indices:
+        // exactly 1294 ordinary, 172 bright, 34 very bright and
+        // 161 warm stars. With GlowEnabled=true the batched GPU points
+        // must contain 1500 main halos + 206 preceding bright halos.
+        precondition(bright==206 && large==34 && warm==161)
 
         // Independent C# GpuAmbient37.StarTexture goldens. Bitmap uses
         // 64x64 PArgb with premultiplied BGRA bytes equal to alpha.
