@@ -18,6 +18,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     let pipeline: MTLRenderPipelineState
     let depthState: MTLDepthStencilState
     let skyPointPipeline: MTLRenderPipelineState
+    let solarOverlayPipeline: MTLRenderPipelineState
     let skyDepthState: MTLDepthStencilState
     private let shipMesh: GPUModel
     private let asteroidMesh: GPUModel
@@ -25,6 +26,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private let starMesh: GPUModel
     private let sphereSkyMesh: GPUModel
     private let sphereHaloTexture: MTLTexture
+    private let solarOverlayMesh: GPUModel
     private let planetVertexBuffers: [MTLBuffer]
     private let planetBufferSlots = MorphBufferSlots(count: 3)
     private let planetIndices: MTLBuffer
@@ -76,6 +78,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let sceneFragment=try requireShader("sceneFragment")
         let skyVertex=try requireShader("skyPointVertex")
         let skyFragment=try requireShader("skyPointFragment")
+        let solarVertex=try requireShader("solarOverlayVertex")
+        let solarFragment=try requireShader("solarOverlayFragment")
         let p = MTLRenderPipelineDescriptor()
         p.vertexFunction = sceneVertex
         p.fragmentFunction = sceneFragment
@@ -101,6 +105,19 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         blend.sourceAlphaBlendFactor = .one
         blend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
         skyPointPipeline=try device.makeRenderPipelineState(descriptor:skyDescriptor)
+        let solarDescriptor=MTLRenderPipelineDescriptor()
+        solarDescriptor.vertexFunction=solarVertex
+        solarDescriptor.fragmentFunction=solarFragment
+        solarDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        solarDescriptor.depthAttachmentPixelFormat = .depth32Float
+        let solarBlend=solarDescriptor.colorAttachments[0]!
+        solarBlend.isBlendingEnabled=true
+        solarBlend.sourceRGBBlendFactor = .one
+        solarBlend.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        solarBlend.sourceAlphaBlendFactor = .one
+        solarBlend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
+        solarOverlayPipeline=try device.makeRenderPipelineState(
+            descriptor:solarDescriptor)
         let skyDS=MTLDepthStencilDescriptor()
         // Sky first, no depth writes; later real planet geometry occludes
         // it with the unchanged .less depth test.
@@ -128,6 +145,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let sphereSkyData=Self.sphereSky207()
         sphereSkyMesh=try Self.makeMesh(device,sphereSkyData.0,sphereSkyData.1)
         sphereHaloTexture=try Self.makeSphereHaloTexture(device)
+        let overlayData=Self.solarOverlaySource556()
+        solarOverlayMesh=try Self.makeMesh(device,overlayData.0,overlayData.1)
         // Only use the verified v556 Boreas GLB conversion when bundled.
         // Never silently claim that the diagnostic UV sphere is an imported asset.
         guard let planetURL = Bundle.main.url(forResource:"Boreas556",withExtension:"as3d")
@@ -257,6 +276,26 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                        star.alpha)
         }
         return (vertices,indices)
+    }
+
+    /// GpuCosmos39.SoftRay: 720 static ray-triangle vertices. GpuIntro41
+    /// solar 3 textured halos: 18 vertices. All share ONE immutable 64x64
+    /// original StarTexture and ONE GPU draw; projection changes via a
+    /// 16-byte centerScale uniform, never by rewriting this buffer.
+    private static func solarOverlaySource556()
+        -> ([AssetMesh.Vertex],[UInt32]) {
+        let source=SphereSolarOverlay556.vertices()
+        var vertices:[AssetMesh.Vertex]=[]
+        vertices.reserveCapacity(source.count)
+        for v in source {
+            let (r,g,b,a)=v.rgba
+            vertices.append(AssetMesh.Vertex(
+                position:SIMD4(v.offset.x,v.offset.y,0,1),
+                color:SIMD4(r,g,b,a),
+                normal:SIMD4(v.uv.x,v.uv.y,0,0),
+                material:SIMD4<Float>(v.textured ? 1:0,1,0,0)))
+        }
+        return (vertices,(0..<source.count).map {UInt32($0)})
     }
 
     private static func translation(_ x: Float,_ y: Float,_ z: Float) -> simd_float4x4 {
@@ -485,6 +524,26 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 &skyUniform,length:MemoryLayout<SceneUniforms>.stride,index:1)
             encoder.drawPrimitives(
                 type:.point,vertexStart:0,vertexCount:sphereSkyMesh.count)
+            // GpuIntro41.cs:454: only draw solar effects when the source
+            // 900-unit sky direction is in the original extended screen
+            // bounds. SkyProject55 uses the camera rotation, NOT its eye.
+            if let sun=SphereSolarOverlay556.project(
+                camera:sphereFlight.camera) {
+                let ndcX=(sun.x-640)*2/(720*aspect)
+                let ndcY=(360-sun.y)*2/720
+                var solarUniform=SIMD4<Float>(
+                    ndcX,ndcY,2/(720*aspect),-2/720)
+                encoder.setRenderPipelineState(solarOverlayPipeline)
+                encoder.setVertexBuffer(
+                    solarOverlayMesh.vertices,offset:0,index:0)
+                encoder.setVertexBytes(
+                    &solarUniform,
+                    length:MemoryLayout<SIMD4<Float>>.stride,index:1)
+                encoder.setFragmentTexture(sphereHaloTexture,index:0)
+                encoder.drawPrimitives(
+                    type:.triangle,vertexStart:0,
+                    vertexCount:solarOverlayMesh.count)
+            }
             encoder.setDepthStencilState(depthState)
             encoder.setRenderPipelineState(pipeline)
             // Triple-buffered morph uploads. Never write into a buffer referenced by
