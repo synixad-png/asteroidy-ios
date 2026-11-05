@@ -91,3 +91,15 @@ W aktualnej poprawce:
 - Źródło techniczne API: dokumentacja Apple dla `MTLPrimitiveType.point` potwierdza konieczność `[[point_size]]` na wyjściu wierzchołka; specyfikacja Metal Shading Language definiuje rasteryzatorowe `[[point_coord]]` i rozdzielenie sygnatur etapów.
 
 **Wciąż NIE wykonano:** teksturowanych poświat `IntroHalo`, mgławic i promieni oraz natywnej kompilacji/testu na Apple GPU po tej poprawce. Nie deklarować zgodności 1:1 z oryginalnym renderingiem tła. Nie sprawdzano ani nie modyfikowano stanu IPA na życzenie użytkownika.
+
+## Kontrola rozdzielczości ekranów Retina — 05.11.2026
+
+Źródło: `GpuIntro41.cs:25–26`, w którym funkcja `SkyProject55` przyjmuje `focal=720` i tworzy obraz referencyjny w przestrzeni 720-pikselowej. Oryginalne `pixelSize` (0.7 / 1.4 / 2.8) ma jednostkę rozmiaru ekranu w obrazie referencyjnym, podczas gdy `Metal` `[[point_size]]` opisuje piksele rzeczywistego `MTKView.drawableSize`.
+
+- `SphereSky207.drawableScale(height:)`: przenosi oryginalną skalę referencyjną do iPhone'a proporcjonalnie do wysokości bufora `height/720`, z bezpiecznym `1.0` dla niefinitywnych lub zerowych rozdzielczości.
+- `MetalRenderer.swift`: podaje tę skalę jako oddzielny parametr istniejącego uniformu sky, bez przebudowy `SceneUniforms`, ponownego tworzenia siatki ani dodatkowego rysowania.
+- `Ship.metal`: `[[point_size]]` przyjmuje `max(1,sourcePixelSize*drawableHeight/720)`, zachowując oryginalny rozmiar w 720 px i skaluje go do Retina. Dolna granica 1 px jest ograniczeniem rastryzacji punktów, a nie oryginalnym parametrem gry.
+- `Tests/SphereCameraView556Tests.swift`: punkty kontrolne 360→0.5, 720→1, 1440→2 oraz 0/NaN→1. `Tests/SkyPointSourceContract556.py` chroni przekazanie skali przez renderer i shader.
+- [GitHub Actions 42062785842](https://github.com/synixad-png/asteroidy-ios/actions/runs/42062785842) — **PASS** dla Swift/Linux, statycznego kontraktu Metal i składni SwiftUI/Metal.
+
+**Nadal nie zweryfikowano:** natywnej kompilacji shaderów Apple, obrazu na urządzeniu i dokładnej tekstury `IntroHalo`. Nie sprawdzano statusu IPA.
