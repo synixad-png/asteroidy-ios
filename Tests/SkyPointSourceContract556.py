@@ -69,6 +69,12 @@ check("vertex SkyPointOutput skyPointVertex(" in metal,
       "Source-sized sky point vertex entrypoint missing")
 check("fragment float4 skyPointFragment(" in metal,
       "Circular source RGBA sky fragment entrypoint missing")
+check("struct SkyPointFragmentInput" in metal and
+      "SkyPointFragmentInput in [[stage_in]]" in metal,
+      "Fragment stage-in must not carry vertex-only point_size builtin")
+fragment_input=metal.split("struct SkyPointFragmentInput",1)[1].split("};",1)[0]
+check("[[point_size]]" not in fragment_input,
+      "Metal [[point_size]] is invalid as a fragment stage-in field")
 check("max(1.0f, star.material.x)" in metal,
       "Source pixel size not respected")
 check("in.color.a * coverage" in metal,
