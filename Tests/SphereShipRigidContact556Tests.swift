@@ -5,7 +5,7 @@ import Foundation
         let ship=Vec2(x:640,y:360)
         let rock=SphereAsteroid556(position:Vec2(x:654,y:360),
                                    velocity:Vec2(x:-10,y:0),radius:18,
-                                   size:3,tier:0,mass:8)
+                                   size:3,tier:0,mass:8,spin:0.7)
         var sector=SphereSector556(balance:cfg,diagnosticAsteroids:[rock])
         guard let response=sector.tick(dt:1/120,playerPosition:ship,
                                       playerRadius:11.2,detectContacts:true,
@@ -15,6 +15,9 @@ import Foundation
         precondition(sector.hull==2 && sector.damageEvents==1)
         precondition(response.velocity.x<60)
         precondition(sector.asteroids[0].velocity.x > -10)
+        // Game.Physics68.Contact68 does not rotate rocks on ship impact;
+        // angular friction is exclusive to RockContacts68.
+        precondition(sector.asteroids[0].spin==0.7)
         let distance=sqrt(Sphere67.delta(target:sector.asteroids[0].position,
                                          origin:response.position).lengthSquared)
         precondition(distance>20)
