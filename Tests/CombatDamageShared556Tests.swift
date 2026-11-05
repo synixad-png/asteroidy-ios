@@ -24,6 +24,19 @@ import Foundation
             health:7,shardLife:0,amount:0,size:3,originalHealth:7,tier:3)
         precondition(noHit.health==7 && !noHit.destroyed)
 
+        var hull=3, cooldown:Float=0
+        precondition(CombatHull556.applyContact(hull:&hull,cooldown:&cooldown))
+        precondition(hull==2 && abs(cooldown-1.3)<0.0001)
+        precondition(!CombatHull556.applyContact(hull:&hull,cooldown:&cooldown))
+        CombatHull556.advance(cooldown:&cooldown,dt:0.5)
+        precondition(hull==2 && cooldown>0)
+        CombatHull556.advance(cooldown:&cooldown,dt:0.9)
+        precondition(cooldown==0)
+        precondition(CombatHull556.applyContact(hull:&hull,cooldown:&cooldown,damage:2))
+        precondition(hull==0)
+        CombatHull556.advance(cooldown:&cooldown,dt:2)
+        precondition(!CombatHull556.applyContact(hull:&hull,cooldown:&cooldown))
+        precondition(hull==0)
         // Flat: the nearer rock is at index 1, while a farther rock occupies
         // index 0. Contact selection must not depend on array iteration order.
         let a=Vec2(x:-0.9,y:0)
@@ -63,6 +76,6 @@ import Foundation
         precondition(sector.destroyedRocks == 1)
         precondition(sector.asteroids.contains { $0.size==3 && $0.health==1 &&
                                                  abs($0.position.x-695)<1.0 })
-        print("PASS: 15 shared armor/score cases, terminal shards, no-op damage, flat/sphere earliest swept contact")
+        print("PASS: 15 shared armor/score cases, no-op/shards, hull cooldown, flat/sphere earliest swept contact")
     }
 }
