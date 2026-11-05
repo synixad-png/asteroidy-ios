@@ -1023,8 +1023,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             // Meshes live in a bounded cache; only not-yet-created
             // stones temporarily use the legacy octahedral placeholder.
             let beltCenter=IntroOrbit41.planetCenter*inv
-            let beltTransform=
-                Self.translation(beltCenter.x,beltCenter.y,beltCenter.z) *
+            let beltTransform = Self.translation(
+                beltCenter.x,beltCenter.y,beltCenter.z) *
                 Self.rotateYDegrees(
                     IntroOrbit41.beltRotationDegrees(time:introTime41))
             var builtThisFrame=0
