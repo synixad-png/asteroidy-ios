@@ -26,3 +26,11 @@
 ## Granice zgodności
 
 To domknięcie logiki asteroid i fal walki. Nie deklaruje ukończenia broni wszystkich typów, sztucznej inteligencji przeciwników, bossów, misji ani pełnej kampanii (zadania 9–13). Symulator UI/Metal nie potwierdza jeszcze działania na fizycznym iPhonie (zadanie 18). **Nie utworzono IPA**, zgodnie z poleceniem.
+
+## Wynik końcowy implementacji — 05.11.2026
+
+- **100% zakresu implementacyjnego zadania 8** w istniejącym porcie Swift, bez dodawania funkcji zadania 9 (wszystkie bronie), 10–11 (AI/bossowie), 12–13 (misje/kampania) ani naruszania wykonanej logiki zadania 7.
+- **25/25 zestawów automatycznych PASS** w GitHub Actions `42048306311`, commit `07afc65a61a1fcb4efe4a2e983f2a9131a1d8f63`. Ostatnie przypadki potwierdziły właściwą kolejność zdarzeń `Game.Step`, narastanie zdrowia i wielkości asteroid we wszystkich 78 profilach, tryb coop, fizykę odbić przez 850 kroków, niezniszczalność piłek w sektorze 25 i wynik +10 za trafienie.
+- Dodatkowo przechodzi dotychczasowa regresja kolizji/obrażeń/odrodzenia i podziałów asteroid, co ogranicza ryzyko regresji zadania 7.
+- **Kompilacja kontrolna Apple iOS/Xcode bez IPA była nadal w kolejce** podczas publikacji tego wyniku; nie przedstawiać jej jako zakończonej. Wcześniejsza kompilacja `42040847979` zgłosiła `BUILD SUCCEEDED`, ale poprzedzała zmiany zadania 8; jej wynik nie dowodzi kompilacji nowej rewizji. Test na fizycznym iPhonie nie został wykonany (zadanie 18).
+- Zmieniono źródła wyłącznie osobnego repozytorium `synixad-png/asteroidy-ios`. Nie zmieniano Windows/SteamOS ani nie uruchamiano workflow generującego IPA.
