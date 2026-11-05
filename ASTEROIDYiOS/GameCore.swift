@@ -60,6 +60,16 @@ struct GameCore {
     enum TrainingObjective: Equatable { case clear, waves, escort, defend }
     private(set) var trainingObjective: TrainingObjective = .clear
     private(set) var objectiveWave = 1
+    // Gameplay65.ResetObjective65 starts the flat arena escort at 180,530.
+    // Pixel-space coordinates are transformed into this sandbox's world units.
+    private(set) var objectivePosition = Vec2(x: (180 - 640) * 2.7 / 1280, y: (360 - 530) * 2.7 / 1280)
+    static func escortPosition(at elapsed: Float) -> Vec2 {
+        let t = min(1, max(0, elapsed / 40))
+        let x = 180 + 920 * t
+        let y = 530 - 310 * t + sin(t * .pi) * 45
+        let scale: Float = 2.7 / 1280
+        return Vec2(x: (x - 640) * scale, y: (360 - y) * scale)
+    }
 
     // Gameplay65.cs: level-specific objective types; no assumptions about
     // missing boss logic, escorts, or objective collision beyond the timer.
@@ -94,6 +104,9 @@ struct GameCore {
         trainingBalance = balance
         trainingObjective = objective ?? balance.map { Self.objectiveFor(level: $0.level) } ?? .clear
         objectiveWave = 1
+        objectivePosition = trainingObjective == .defend
+            ? Vec2(x: 0, y: (360 - 420) * 2.7 / 1280)
+            : Self.escortPosition(at: 0)
         nextSpawnIndex = 0
         sectorElapsed = 0
         sectorCleared = false
@@ -234,13 +247,17 @@ struct GameCore {
     private mutating func stepTrainingSector(dt: Float) {
         guard trainingBalance != nil else { return }
         sectorElapsed += dt
+        // Gameplay65.StepObjective65: escort follows the original flat 40s route.
+        // SphereActive67 would use MoveObjective68; do not use this curve for
+        // a future spherical mission until that system is implemented.
+        if trainingObjective == .escort { objectivePosition = Self.escortPosition(at: sectorElapsed) }
         // Gameplay65.StepObjective65: three 16-second intervals, capped at wave 3.
         if trainingObjective == .waves {
             objectiveWave = min(3, 1 + Int(sectorElapsed / 16))
         }
         // Sector training remains separate from unported real mission transitions.
         if incomingRocksLeft > 0 && (sectorElapsed >= nextIncoming ||
-           (trainingObjective != .waves && activeThreatCount <= 4)) { spawnIncoming() }
+           (trainingObjective != .waves && rocks.count <= 4)) { spawnIncoming() }
         if sectorFinished { sectorCleared = true }
     }
     // Swept segment-circle collision on the periodic arena. Both bodies move
