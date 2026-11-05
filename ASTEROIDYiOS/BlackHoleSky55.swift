@@ -43,40 +43,30 @@ enum BlackHoleSky55 {
         let u=ca*dx+sa*dy,v = -sa*dx+ca*dy
         let eu=u/214,ev=v/54
         let er=sqrt(eu*eu+ev*ev),ang=atan2(v,u)
-        let feather=gaussian(max(0,r-165)/97) *
-            (1-smooth((r-284)/37))
+        let feather=gaussian(max(0,r-165)/97)*(1-smooth((r-284)/37))
         let disk=gaussian((er-1)/0.22)
         let leftFade=smooth((u+270)/110)
         let rightFade=smooth((196-u)/88)
-        let stream=exp(-v*v/(2*34*34)) * leftFade * rightFade *
-            (0.48+0.52*smooth((-u+130)/350))
+        let stream=exp(-v*v/(2*34*34))*leftFade*rightFade*(0.48+0.52*smooth((-u+130)/350))
         let asym=0.55+0.45*(1-smooth((u+120)/340))
         let swirl=0.5+0.5*sin(ang*2.6+er*10)
-        let whiteHot=gaussian((er-0.92)/0.12) *
-            smooth((-u+120)/260)
-        let blueArc=gaussian((er-1.02)/0.16) *
-            smooth((u+70)/250)
+        let whiteHot=gaussian((er-0.92)/0.12)*smooth((-u+120)/260)
+        let blueArc=gaussian((er-1.02)/0.16)*smooth((u+70)/250)
         let halo=exp(-(r*r)/(2*114*114))
         let lens=gaussian((r-80)/7)
-        let lensLeft=gaussian((r-87)/13) *
-            (0.60+0.40*smooth(-dx/135))
+        let lensLeft=gaussian((r-87)/13)*(0.60+0.40*smooth(-dx/135))
         let layerMask=front
             ? smooth((v+9)/18) : (1-smooth((v+9)/18))
         let rearGap=front ? Float(1) : smooth((r-76)/10)
-        let alpha=min(Float(1),disk*0.95+stream*0.90+
-                      halo*0.075+lens*0.78+lensLeft*0.32) *
-            feather*layerMask*rearGap
+        let blendedAlpha=disk*0.95+stream*0.90+halo*0.075+lens*0.78+lensLeft*0.32
+        let alpha=min(Float(1),blendedAlpha)*feather*layerMask*rearGap
         if alpha<0.001 {return (0,0,0,0)}
-        let red=255*(disk*(0.18+0.64*asym+0.22*swirl)+
-                     stream*0.55+whiteHot*0.70+halo*0.045+
-                     lens*0.78+lensLeft*0.62)*layerMask*rearGap
-        let green=255*(disk*(0.08+0.30*asym+0.10*swirl)+
-                       stream*0.20+whiteHot*0.62+
-                       blueArc*0.08+halo*0.055+
-                       lens*0.72+lensLeft*0.38)*layerMask*rearGap
-        let blue=255*(disk*(0.02+0.09*asym)+whiteHot*0.66+
-                      blueArc*0.85+halo*0.18+
-                      lens*0.69+lensLeft*0.50)*layerMask*rearGap
+        let redTerm=disk*(0.18+0.64*asym+0.22*swirl)+stream*0.55+whiteHot*0.70+halo*0.045+lens*0.78+lensLeft*0.62
+        let red=255*redTerm*layerMask*rearGap
+        let greenTerm=disk*(0.08+0.30*asym+0.10*swirl)+stream*0.20+whiteHot*0.62+blueArc*0.08+halo*0.055+lens*0.72+lensLeft*0.38
+        let green=255*greenTerm*layerMask*rearGap
+        let blueTerm=disk*(0.02+0.09*asym)+whiteHot*0.66+blueArc*0.85+halo*0.18+lens*0.69+lensLeft*0.50
+        let blue=255*blueTerm*layerMask*rearGap
         return bgra(min(255,red),min(255,green),min(255,blue),
                     min(255,alpha*255))
     }
@@ -89,8 +79,7 @@ enum BlackHoleSky55 {
         let r=sqrt(dx*dx+dy*dy)
         let core=1-smooth((r-69)/4)
         let rim=gaussian((r-80)/6)
-        let rimBlue=gaussian((r-86)/10) *
-            (0.35+0.65*smooth((dx+10)/120))
+        let rimBlue=gaussian((r-86)/10)*(0.35+0.65*smooth((dx+10)/120))
         let alpha=max(core,max(rim*0.78,rimBlue*0.32))
         if alpha<0.001 {return (0,0,0,0)}
         let red=255*(rim*0.82+rimBlue*0.20)*(1-core)
@@ -192,8 +181,8 @@ enum BlackHoleSky55 {
         }
         ray(spin,sourceRadius*2.10*scale*pulse,
             sourceRadius*0.20*scale,44,255,184,98)
-        ray(spin+1.5708,sourceRadius*1.74*scale*
-            (0.95+0.05*cos(time*0.8)),
+        let secondRayLength=sourceRadius*1.74*scale*(0.95+0.05*cos(time*0.8))
+        ray(spin+1.5708,secondRayLength,
             sourceRadius*0.14*scale,30,110,176,255)
         ray(spin+0.66,sourceRadius*1.48*scale,
             sourceRadius*0.08*scale,22,255,238,180)
