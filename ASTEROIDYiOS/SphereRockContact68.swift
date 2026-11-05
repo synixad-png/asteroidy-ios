@@ -27,11 +27,13 @@ enum SphereRockContact68 {
         let ib:Float = b.mass > 0 ? 1/b.mass : 0
         let total = ia+ib
         guard total > 0 else { return false }
+        var contactFriction:Float = 0
         if closing < 0 {
             let impulse = -(1+restitution)*closing/total
             let tangent = Vec2(x:-n.y,y:n.x)
             let tangentSpeed = relative.x*tangent.x+relative.y*tangent.y
             let friction = max(-impulse*0.12,min(impulse*0.12,-tangentSpeed/total))
+            contactFriction = friction
             let direction = n*impulse+tangent*friction
             own = own-direction*ia
             other = other+direction*ib
@@ -44,6 +46,13 @@ enum SphereRockContact68 {
             transported(n,from:oldA,to:oldB)*(push*ib/total))
         a.velocity = transported(own,from:oldA,to:a.position)
         b.velocity = transported(b.velocity,from:oldB,to:b.position)
+        // RockContacts68 transfers the tangential contact friction into spin.
+        if a.mass > 0 && a.radius > 0 {
+            a.spin = max(-2,min(2,a.spin-contactFriction/(0.4*a.mass*a.radius)))
+        }
+        if b.mass > 0 && b.radius > 0 {
+            b.spin = max(-2,min(2,b.spin-contactFriction/(0.4*b.mass*b.radius)))
+        }
         return true
     }
 
