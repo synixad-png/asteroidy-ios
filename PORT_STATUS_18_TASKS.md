@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 72% |
+| 2 | Silnik graficzny Metal | 74% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -134,6 +134,16 @@ Zmiana harmonogramu pozostaje **wyłącznie w zadaniu 2: 70% (+2 pp względem wc
 W [GitHub Actions 42098229568](https://github.com/synixad-png/asteroidy-ios/actions/runs/42098229568) zadanie `source-camera-linux` zakończyło się **PASS** po dodaniu szczegółowych asteroid: oryginalna geometria `IntroRockGeometry41` (320/1280 trójkątów), normalne, seedy, projekcja kamery, pas 820 skał oraz regresje dotychczasowych shaderów i geometrii. To weryfikacja wykonania kodu Swift na Linux, **nie** na GPU Apple. Drugi job `Xcode Metal/Swift compile verification ONLY (NO IPA)` w tym samym przebiegu nadal czekał na runner macOS. Szybki parser plików Swift i kontrola oryginalnych zasobów [42098254707](https://github.com/synixad-png/asteroidy-ios/actions/runs/42098254707) również PASS. Brak testu iPhone/iPad oraz nowego IPA.
 
 Za konkretną, wykonaną i przetestowaną geometrię indywidualnych skał postęp **zadania nr 2 wzrósł z 70% do 72% (+2 pp)**; od poprzedniej sesji raportowanej użytkownikowi 68% to łącznie **+4 pp**. Łączny historyczny postęp projektu nadal 27% (pozostało 73%), ponieważ nie przeważano zatwierdzonej listy zadań. Następna zależność: ukończenie kompilacji Apple Metal i weryfikacja pełnego 3D iOS przed świadomą próbą nowego IPA iPhone+iPad; stare IPA nie zawiera tej sceny.
+
+## 05.11.2026 — kolejne funkcje i testy Metal, zadanie nr 2
+
+**Zmiana zadania 2: 72% → 74% (+2 pp).** Wykonano i potwierdzono testami źródłowymi dwa konkretne elementy oryginalnego przelotu:
+1. `GpuIntro41.CinematicIntro41`: pierścień 820 asteroid obraca się z dokładnym źródłowym `time*0.2°` wokół `IntroScene41.PlanetCenter`. Odcinanie niewidocznych skał używa pozycji **po** obrocie, zgodnej z macierzą Metal `T(center)*Ry(angle)*T(local)`. Nie zmieniono geometrii/kolizji trybu Boreas ani płaskiej areny.
+2. Kompozycja źródłowego `GpuIntro41.IntroSky` w scenie orbitalnej: 24 dalekie chmury, 3 teksturowane planety, oryginalne dyski czarnej dziury, 12 bliskich chmur, 1500 gwiazd i 5 promieni słonecznych, w poprawnej kolejności. Wykorzystano istniejące zasoby/PSO i lazy texture cache z oryginalnego trybu sferycznego, lecz projekcję podłączono do `IntroScene41.View`, nie kamery walki.
+
+**Potwierdzone testy:** [GitHub Actions 42100560721](https://github.com/synixad-png/asteroidy-ios/actions/runs/42100560721), `source-camera-linux` **SUCCESS** dla aktualnych plików kodu: matematyka kamery i obrotu, 820 pozycji, oryginalne siatki IntroStone, ochrona kolejności efektów i dotychczasowe mechanizmy sky. [GitHub Actions 42100472060](https://github.com/synixad-png/asteroidy-ios/actions/runs/42100472060) **SUCCESS**: parser Swift, autentyczne zasoby i preflight iPhone/iPad. `Xcode Metal/Swift compile verification ONLY (NO IPA)` w przebiegu 42100560721 **pozostawał w kolejce**, więc nie deklarować gotowego IPA ani testu GPU.
+
+**Pozostało w zadaniu 2:** test natywnego Xcode na aktualnym źródle, rzeczywiste efekty światła i pogody/planety, materiały/tekstury wymagające odrębnych zadań 3–5, zgodność wersji z `NewHome290.Enabled` oraz weryfikacja jakości i FPS na prawdziwych urządzeniach (zadanie 18). Niezależna scena nadal jest podglądem, nie autentyczną pełną misją. Projekt według dotychczasowego zbiorczego wskaźnika odniesienia **27%**, pozostało **73%** — bez nowego ważenia stałej listy 18 zadań. Nie uruchamiano kompilacji IPA.
 
 ## Kolejność dalszej pracy
 
