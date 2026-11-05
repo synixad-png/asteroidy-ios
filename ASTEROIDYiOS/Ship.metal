@@ -407,7 +407,7 @@ struct FighterSourceRaster431 {
 };
 vertex FighterSourceRaster431 sourceVanguardVertex431(
     uint vertexID [[vertex_id]],
-    constant float *packed [[buffer(0)]],
+    device const float *packed [[buffer(0)]],
     constant FighterSourceUniform431 &scene [[buffer(1)]]) {
     uint i=vertexID*12u;
     float4 p=float4(packed[i],packed[i+1u],packed[i+2u],1.0f);
