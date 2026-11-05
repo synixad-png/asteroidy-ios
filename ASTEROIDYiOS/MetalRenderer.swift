@@ -852,10 +852,135 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             let frame=IntroOrbit41.frame(introTime41)
             let inv=IntroOrbit41.radiusNormalization
 
-            // Exactly the 1,500 already-ported source deep-space star
-            // directions, drawn at a constant camera-relative radius.
-            let eye=cameraFrame.eye
-            let skyMVP=vp*Self.translation(eye.x,eye.y,eye.z)
+            // CinematicIntro41 IntroSky painter order, using the exact
+            // cinematic camera axes (not the sphere-combat camera):
+            // 24 FAR clouds, 3 planets, black hole, 12 NEAR clouds,
+            // 1500 stars and 5 solar rays, all original source layers.
+            // clouds are layered BEFORE stars and the five solar rays.
+            // One immutable 216-vertex buffer, one 2-slice 256x256
+            // NebulaTexture; camera orientation changes in a uniform.
+            let c=IntroOrbit41.skyCamera(time:introTime41)
+            var nebulaUniform=(
+                SIMD4<Float>(c.right.x,c.right.y,c.right.z,0),
+                SIMD4<Float>(c.up.x,c.up.y,c.up.z,0),
+                SIMD4<Float>(c.focus.x,c.focus.y,c.focus.z,0),
+                SIMD4<Float>(2/(720*aspect),-2/720,0,0)
+            )
+            encoder.setDepthStencilState(skyDepthState)
+            let sourceCloudTexture=ensureCloudTextures55(camera:c)
+            if let clouds=sourceCloudTexture {
+                encoder.setRenderPipelineState(nebulaOverlayPipeline)
+                encoder.setVertexBuffer(
+                    nebulaOverlayMesh.vertices,offset:0,index:0)
+                encoder.setVertexBytes(
+                    &nebulaUniform,length:MemoryLayout.size(ofValue:nebulaUniform),
+                    index:1)
+                encoder.setFragmentTexture(clouds,index:0)
+                // C# DrawDeepSpace55: 24 FAR cloud layers first.
+                encoder.drawPrimitives(
+                    type:.triangle,vertexStart:0,
+                    vertexCount:24*6)
+            }
+
+            // C# DrawDeepSpace55 and DrawSkyPlanet55:
+            // three source planets in style order 0→1→2, each:
+            // optional source glow IntroHalo then a 320x220 texture.
+            // Reuse the existing premultiplied 2D quad shader from
+            // BlackHole55; no new MSL entrypoints or pipeline, no
+            // dynamic GPU textures. One draw PER visible source planet
+            // preserves draw order with the following black hole.
+            for style in 0..<DeepSkyPlanets55.count {
+                guard let projected=DeepSkyPlanets55.project(
+                    style:style,time:introTime41,
+                    camera:c) else { continue }
+                // Source GpuIntro41: only build any planet Bitmap
+                // AFTER SkyProject55 confirms visibility.
+                guard let planets=ensureDeepPlanetTextures55(style:style)
+                else { break }
+                encoder.setRenderPipelineState(blackHolePipeline)
+                encoder.setFragmentTexture(planets,index:0)
+                encoder.setFragmentTexture(sphereHaloTexture,index:1)
+                let x=(projected.screen.x-640)*2/(720*aspect)
+                let y=(360-projected.screen.y)*2/720
+                let frame=SIMD4<Float>(x,y,2/(720*aspect),-2/720)
+                let layers=DeepSkyPlanets55.overlays(
+                    style:style,scale:projected.scale,glow:true)
+                var uniforms:[SIMD4<Float>]=[frame]
+                uniforms.reserveCapacity(1+layers.count*3)
+                for layer in layers {
+                    uniforms.append(SIMD4(
+                        layer.radiusX,layer.radiusY,1,0))
+                    let (r,g,b,a)=layer.rgba
+                    uniforms.append(SIMD4(r*a,g*a,b*a,a))
+                    uniforms.append(SIMD4(
+                        Float(layer.textureSlice),0,0,0))
+                }
+                uniforms.withUnsafeBytes { raw in
+                    if let ptr=raw.baseAddress {
+                        encoder.setVertexBytes(
+                            ptr,length:raw.count,index:0)
+                    }
+                }
+                encoder.drawPrimitives(type:.triangle,
+                    vertexStart:0,vertexCount:layers.count*6)
+            }
+
+            // C# DrawDeepSpace55: the black hole is behind the NEAR
+            // cloud layers and in front of FAR clouds. 3 source
+            // StarTexture halos, 4 moving rays, then rear disk/core/
+            // front disk in the exact original 2D painter order.
+            if let blackProjection=BlackHoleSky55.project(
+                camera:c,time:introTime41),
+                let blackTextures=ensureBlackHoleTextures55() {
+                let bx=(blackProjection.screen.x-640)*2/(720*aspect)
+                let by=(360-blackProjection.screen.y)*2/720
+                let screen=SIMD4<Float>(bx,by,2/(720*aspect),-2/720)
+                let layers=BlackHoleSky55.overlays(
+                    time:introTime41,
+                    scale:blackProjection.scale,glow:true)
+                var properties:[SIMD4<Float>]=[screen]
+                properties.reserveCapacity(1+layers.count*3)
+                for layer in layers {
+                    properties.append(SIMD4(
+                        layer.radiusX,layer.radiusY,
+                        cos(layer.angle),sin(layer.angle)))
+                    let (r,g,b,a)=layer.rgba
+                    properties.append(SIMD4(r*a,g*a,b*a,a))
+                    properties.append(SIMD4(
+                        layer.isTexture ? Float(layer.layer) : -1,
+                        0,0,0))
+                }
+                encoder.setRenderPipelineState(blackHolePipeline)
+                properties.withUnsafeBytes { raw in
+                    if let ptr=raw.baseAddress {
+                        encoder.setVertexBytes(
+                            ptr,length:raw.count,index:0)
+                    }
+                }
+                encoder.setFragmentTexture(blackTextures,index:0)
+                encoder.setFragmentTexture(sphereHaloTexture,index:1)
+                encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                    vertexCount:layers.count*6)
+            }
+            // C# IntroSky: 12 NEAR clouds come AFTER all background
+            // space objects. Reuse the SAME immutable buffer and
+            // two-texture-array; no new geometry or texture uploads.
+            if let clouds=sourceCloudTexture {
+                encoder.setRenderPipelineState(nebulaOverlayPipeline)
+                encoder.setVertexBuffer(
+                    nebulaOverlayMesh.vertices,offset:0,index:0)
+                encoder.setVertexBytes(
+                    &nebulaUniform,length:MemoryLayout.size(ofValue:nebulaUniform),
+                    index:1)
+                encoder.setFragmentTexture(clouds,index:0)
+                encoder.drawPrimitives(type:.triangle,
+                    vertexStart:24*6,vertexCount:12*6)
+            }
+            // Source GpuIntro41.IntroSky uses a sky centred on the eye.
+            // Render 1500 alpha-blended screen-size points in one GPU call;
+            // none writes depth or changes the scene PBR pipeline.
+            let skyEye=cameraFrame.eye
+            let skyMVP=vp*Self.translation(skyEye.x,skyEye.y,skyEye.z)
             var skyUniform=SceneUniforms(
                 mvp:skyMVP,model:matrix_identity_float4x4,
                 lighting:SIMD4<Float>(SphereSky207.drawableScale(
@@ -868,6 +993,26 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 &skyUniform,length:MemoryLayout<SceneUniforms>.stride,index:1)
             encoder.drawPrimitives(
                 type:.point,vertexStart:0,vertexCount:sphereSkyMesh.count)
+            // GpuIntro41.cs:454: only draw solar effects when the source
+            // 900-unit sky direction is in the original extended screen
+            // bounds. SkyProject55 uses the camera rotation, NOT its eye.
+            if let sun=SphereSolarOverlay556.project(
+                camera:c) {
+                let ndcX=(sun.x-640)*2/(720*aspect)
+                let ndcY=(360-sun.y)*2/720
+                var solarUniform=SIMD4<Float>(
+                    ndcX,ndcY,2/(720*aspect),-2/720)
+                encoder.setRenderPipelineState(solarOverlayPipeline)
+                encoder.setVertexBuffer(
+                    solarOverlayMesh.vertices,offset:0,index:0)
+                encoder.setVertexBytes(
+                    &solarUniform,
+                    length:MemoryLayout<SIMD4<Float>>.stride,index:1)
+                encoder.setFragmentTexture(sphereHaloTexture,index:0)
+                encoder.drawPrimitives(
+                    type:.triangle,vertexStart:0,
+                    vertexCount:solarOverlayMesh.count)
+            }
             encoder.setDepthStencilState(depthState)
             encoder.setRenderPipelineState(pipeline)
 
