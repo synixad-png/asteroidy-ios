@@ -161,6 +161,11 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
 
   apple-metal-source-compile:
+    # Push commits continuously during the port. Previously, branch
+    # concurrency cancelled the queued Apple job on every source change.
+    # Keep automatic Linux checks; request Apple compile explicitly
+    # through workflow_dispatch or the independent one-shot check.
+    if: github.event_name == 'workflow_dispatch'
     name: Xcode Metal/Swift compile verification ONLY (NO IPA)
     # This job only checks whether genuine Apple Metal and iOS Swift
     # compilers accept the current sources. It never archives, exports,
