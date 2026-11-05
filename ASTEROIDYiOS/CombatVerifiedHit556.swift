@@ -1,8 +1,9 @@
 import Foundation
 
 /// Verified orchestration of the Windows v556 ApplyHit96 -> HitByBoss ->
-/// Game.Damage sequence. Guardian298 and AbsorbDamage78 remain owned by
-/// separate modules: callers must explicitly state their verified result.
+/// Game.Damage sequence. Source Campaign37 guardian interception and
+/// Talents78 gauges may be supplied as real state by the owning controller.
+/// The drone's active AI and other unported defenses remain external.
 /// No unknown defense is silently interpreted as inactive.
 enum CombatVerifiedHit556 {
     enum GuardResult:Equatable {
@@ -33,7 +34,8 @@ enum CombatVerifiedHit556 {
                     rescue:inout CombatRescue65,
                     cooperative:Bool,developerInfinite:Bool,
                     guardian:GuardResult,talent:GuardResult,
-                    vitals:CombatTalentVitals78?=nil) -> Outcome {
+                    vitals:CombatTalentVitals78?=nil,
+                    guardianState:CombatGuardian37?=nil) -> Outcome {
         // ApplyHit96 guard precedes every defensive side effect.
         guard survival.playing && !survival.sceneBusy &&
               !survival.bossArrival && !survival.currentDown &&
@@ -60,10 +62,16 @@ enum CombatVerifiedHit556 {
         // Game.Damage checks guardian, then talents, then TryDown65.
         // Tarcza145 has just been checked by HitByBoss, so with no state
         // mutation between the calls its second check cannot succeed.
-        switch guardian {
-        case .unverified:return .requiresGuardianVerification
-        case .absorbed:return .guardianAbsorbed
-        case .clear:break
+        if let guardianState {
+            if guardianState.absorb(invincible:&survival.invincible) {
+                return .guardianAbsorbed
+            }
+        } else {
+            switch guardian {
+            case .unverified:return .requiresGuardianVerification
+            case .absorbed:return .guardianAbsorbed
+            case .clear:break
+            }
         }
         if let vitals {
             // v556 Game.Damage AbsorbDamage78: the actual armor/hull gauges
@@ -110,7 +118,9 @@ enum CombatVerifiedHit556 {
                     talentFirst:GuardResult,talentSecond:GuardResult,
                     isRobot:[Bool],
                     vitalsFirst:CombatTalentVitals78?=nil,
-                    vitalsSecond:CombatTalentVitals78?=nil) -> [TeamOutcome] {
+                    vitalsSecond:CombatTalentVitals78?=nil,
+                    guardianStateFirst:CombatGuardian37?=nil,
+                    guardianStateSecond:CombatGuardian37?=nil) -> [TeamOutcome] {
         var result:[TeamOutcome]=[]
         for event in contacts {
             guard let player=CombatContactRouter96.player(for:event) else {
@@ -128,7 +138,8 @@ enum CombatVerifiedHit556 {
                     player:.first,survival:&survivalFirst,body:&first,
                     dome:&tarczaFirst,rescue:&rescue,
                     cooperative:second != nil,developerInfinite:developerInfinite,
-                    guardian:guardianFirst,talent:talentFirst,vitals:vitalsFirst)
+                    guardian:guardianFirst,talent:talentFirst,vitals:vitalsFirst,
+                    guardianState:guardianStateFirst)
                 result.append(TeamOutcome(player:.first,outcome:outcome))
             case .second:
                 guard var ship=second else {
@@ -140,7 +151,8 @@ enum CombatVerifiedHit556 {
                     player:.second,survival:&survivalSecond,body:&ship,
                     dome:&tarczaSecond,rescue:&rescue,cooperative:true,
                     developerInfinite:developerInfinite,
-                    guardian:guardianSecond,talent:talentSecond,vitals:vitalsSecond)
+                    guardian:guardianSecond,talent:talentSecond,vitals:vitalsSecond,
+                    guardianState:guardianStateSecond)
                 second=ship
                 result.append(TeamOutcome(player:.second,outcome:outcome))
             }
