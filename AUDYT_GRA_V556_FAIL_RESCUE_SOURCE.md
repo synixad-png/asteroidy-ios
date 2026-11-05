@@ -18,9 +18,17 @@ Sprawdzono pliki `Windows/src/Gameplay65.cs`, `Windows/src/Game.cs`, `Windows/sr
 
 - `CombatVerifiedHit556.failedRescueDamage`: bezpośrednia ścieżka `Damage()` z powyższą kolejnością, bez pasywnego przechwytywania `HitByBoss` i bez ponownego `TryDown65`.
 - `CombatVerifiedEncounter556`: natychmiastowe rozliczenie `FailRescue65` z opcją bezpiecznego oczekiwania na niezweryfikowaną ochronę; respawn / GameOver przez `CombatRespawn556`; dla obu wraków przestawienie drugiego statku.
-- `CombatVerifiedEncounter556.sourceSharedCoopResources`: opcjonalny tryb wspólnych żyć, pasywnych tarcz, opancerzenia i strażnika. Stary niezależny tryb diagnostyczny pozostaje dostępny, aby nie wprowadzić regresji do wcześniejszych testów; właściwy kontroler misji powinien użyć trybu współdzielonego.
+- `CombatVerifiedEncounter556.sourceSharedCoopResources`: automatycznie włączony dla każdego spotkania z drugim statkiem. Wspólne życia, zakupione tarcze, opancerzenie, strażnik oraz energia/aktywność `Tarcza145`. Niezależny tryb jest dostępny wyłącznie przez jawny argument `independentDiagnosticCoop:true`, do regresji historycznych fixture'ów. Domyślna kooperacja nie powiela zasobów.
 - `Tests/CombatVerifiedEncounter556Tests.swift`: testy utraty 3 żyć, pojedynczego i podwójnego nieudanego ratowania, pasywnej tarczy, wspólnej kooperacji oraz odnowienia zdrowia po udanym ratowaniu.
 
 ## Zakres niepotwierdzony
 
 Nie wykonano testu interaktywnego na fizycznym iPhonie/iPadzie. Testy Swift/Linux nie zastępują GPU Metal ani natywnego Xcode. Wariant diagnostyczny z niezależnymi zasobami pozostaje mechanizmem testowym, nie należy opisywać go jako źródłowej semantyki kooperacji.
+
+## Uzupełnienie audytu: globalna tarcza Tarcza145 i domyślny Coop62
+
+- `Windows/src/Tarcza145.cs:5–20` deklaruje **jeden** `TarczaEnergy145`, `TarczaActive145` i `TarczaFlash145` w klasie `Game`; aktywacja zależy od `StepTarcza145(dt, hold)`.
+- `Windows/src/Game.cs`, `Step(dt, first)`, wywołuje `StepTarcza145(dt,input.Tarcza145)` raz. `Windows/src/Coop62.cs:9` w `WithSecond62` wymienia parametry statków, ale **nie** wymienia energii ani aktywności `Tarcza145`. `Coop62.cs:17` wywołuje `Step(dt,first)`. Zatem drugi gracz nie ma niezależnej energii kopuły ani osobnego wejścia do jej aktywacji w tej ścieżce.
+- Port Swift: w źródłowym trybie kooperacji `domeFirst` jest jedyną zmienianą pulą, `domeSecond` jest wyłącznie lustrzanym widokiem wspólnego stanu. Trafienie P2 i `FailRescue65` P2 zmieniają ten sam stan, co trafienie P1. Historyczne testy z niezależnymi zasobami zostały utrzymane po jawnym `independentDiagnosticCoop:true`.
+- Test regresji: `Tests/CombatVerifiedEncounter556Tests.swift`, wejście P2 nie uruchamia osobnej kopuły, trafienie P2 zużywa kopułę P1, dwa równoczesne kontakty razem zużywają nie więcej niż 60 jednostek, `FailRescue65` P2 korzysta z tej samej energii.
+- Wynik: Swift/Linux GitHub Actions `42035502390`, **PASS**, brak artefaktów IPA. Nie przeprowadzono testu natywnego iOS/Metal.
