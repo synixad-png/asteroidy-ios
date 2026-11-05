@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 70% |
+| 2 | Silnik graficzny Metal | 72% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -128,6 +128,12 @@ Do nowej sceny `IntroOrbit41` dołączono `IntroRockGeometry41.swift` z oryginal
 `Tests/IntroRockGeometry41Tests.swift` sprawdza liczby wierzchołków, normalne i kolory. `Tests/IntroOrbitSourceContract41.py` pilnuje, czy renderer rzeczywiście korzysta z oryginalnej procedury i ma limit cache. Odrębny szybki preflight kodu Swift w [GitHub Actions 42098254707](https://github.com/synixad-png/asteroidy-ios/actions/runs/42098254707) zakończył się PASS, natomiast pełna weryfikacja nowego generatora `42098229568` i kompilacja Xcode/Metal **nie były zakończone podczas ostatniego sprawdzenia**. Nie wpisywać PASS w testach geometrii na podstawie wyników starszych commitów. **Nie ma nowego IPA ani testu na prawdziwym iPhonie/iPadzie.**
 
 Zmiana harmonogramu pozostaje **wyłącznie w zadaniu 2: 70% (+2 pp względem wcześniejszego 68%)**, projekt całościowo 27% (pozostało 73%). Wynik nie jest podnoszony za prace bez udanego testu geometrii. Następny krok: dokończyć aktualne testy i kompilację Xcode bez IPA, zachować oryginalne siatki oraz uzupełnić wymagane elementy wierności sceny. Powiadomienie o gotowości do zlecenia IPA jest monitorowane oddzielnie — dopiero po potwierdzonym sukcesie obu zadań CI.
+
+## 05.11.2026 — wynik pełnego testu geometrii przelotu
+
+W [GitHub Actions 42098229568](https://github.com/synixad-png/asteroidy-ios/actions/runs/42098229568) zadanie `source-camera-linux` zakończyło się **PASS** po dodaniu szczegółowych asteroid: oryginalna geometria `IntroRockGeometry41` (320/1280 trójkątów), normalne, seedy, projekcja kamery, pas 820 skał oraz regresje dotychczasowych shaderów i geometrii. To weryfikacja wykonania kodu Swift na Linux, **nie** na GPU Apple. Drugi job `Xcode Metal/Swift compile verification ONLY (NO IPA)` w tym samym przebiegu nadal czekał na runner macOS. Szybki parser plików Swift i kontrola oryginalnych zasobów [42098254707](https://github.com/synixad-png/asteroidy-ios/actions/runs/42098254707) również PASS. Brak testu iPhone/iPad oraz nowego IPA.
+
+Za konkretną, wykonaną i przetestowaną geometrię indywidualnych skał postęp **zadania nr 2 wzrósł z 70% do 72% (+2 pp)**; od poprzedniej sesji raportowanej użytkownikowi 68% to łącznie **+4 pp**. Łączny historyczny postęp projektu nadal 27% (pozostało 73%), ponieważ nie przeważano zatwierdzonej listy zadań. Następna zależność: ukończenie kompilacji Apple Metal i weryfikacja pełnego 3D iOS przed świadomą próbą nowego IPA iPhone+iPad; stare IPA nie zawiera tej sceny.
 
 ## Kolejność dalszej pracy
 
