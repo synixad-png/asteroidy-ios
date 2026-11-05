@@ -9,6 +9,9 @@ on:
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/IntroOrbit41.swift'
+      - 'ASTEROIDYiOS/IntroAtmosphere47.swift'
+      - 'Tests/IntroAtmosphere47Tests.swift'
+      - 'Tests/IntroAtmosphereSourceContract47.py'
       - 'ASTEROIDYiOS/IntroRockGeometry41.swift'
       - 'Tests/IntroOrbit41Tests.swift'
       - 'Tests/IntroRockGeometry41Tests.swift'
@@ -126,6 +129,20 @@ jobs:
             Tests/IntroRockGeometry41Tests.swift \
             -o /tmp/intro-rock-source41
           /tmp/intro-rock-source41
+      - name: Original 3D Boreas atmosphere 24x96 cap and camera-facing source basis
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/AssetMesh.swift \
+            ASTEROIDYiOS/IntroAtmosphere47.swift \
+            Tests/IntroAtmosphere47Tests.swift \
+            -o /tmp/intro-atmosphere47
+          /tmp/intro-atmosphere47
+          python3 Tests/IntroAtmosphereSourceContract47.py
       - name: Verify original RGBA sky point sprites and pipeline contract (static)
         run: python3 Tests/SkyPointSourceContract556.py
       - name: Original GpuIntro41 + GpuCosmos39 source solar ray and GPU contract
