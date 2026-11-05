@@ -63,13 +63,19 @@ stages=(
     'encoder.setRenderPipelineState(sourceFighterToonPipeline60)',
     'encoder.setFragmentBytes(&fighterEyeView,',
     'drawMesh(shipMesh,craft)',
-    'encoder.setRenderPipelineState(pipeline)',
     'encoder.setRenderPipelineState(fighterPlasmaPipeline491)',
     'encoder.setRenderPipelineState(atmospherePipeline)',
 )
 indices=[cinematic.index(t) for t in stages]
 ck(indices==sorted(indices) and len(set(indices))==len(indices),
    'Original fighter-only toon lighting must wrap ship draw, not planet/plasma/atmosphere')
+# This scene legitimately resets the opaque pipeline after IntroSky,
+# BEFORE rendering the planet. The *fighter-local* reset must also
+# happen after the Vanguard draw and before the separate plasma PSO.
+post_ship=cinematic[cinematic.index('drawMesh(shipMesh,craft)'):]
+ck(post_ship.index('encoder.setRenderPipelineState(pipeline)') <
+   post_ship.index('encoder.setRenderPipelineState(fighterPlasmaPipeline491)'),
+   'Default PBR pipeline must be restored before painting the plasma')
 ck('var fighterEyeView=cameraFrame.view' in cinematic and
    'length:MemoryLayout<simd_float4x4>.stride,index:0' in cinematic,
    'GpuToon60 real eye-space FighterLight direction must use IntroScene41 view')
