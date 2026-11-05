@@ -72,6 +72,7 @@ import Foundation
         for order in orders {
             var slices=SkyTextureSliceCache55(count:3)
             precondition(slices.uploadedCount == 0)
+            precondition(!slices.allUploaded)
             precondition(!slices.needsUpload(style:-1))
             precondition(!slices.needsUpload(style:3))
             for (n,style) in order.enumerated() {
@@ -83,12 +84,14 @@ import Foundation
                 }
                 slices.markUploaded(style:style)
                 precondition(slices.uploadedCount == n+1)
+                precondition(slices.allUploaded == (n+1 == 3))
                 // Future rendered frames reuse the source bitmap.
                 for _ in 0..<240 {
                     precondition(!slices.needsUpload(style:style))
                 }
             }
             precondition(slices.uploadedCount == 3)
+            precondition(slices.allUploaded)
         }
         // A texture allocation and pixel generation are different
         // gates: even with an array allocated, two hidden styles remain
@@ -109,16 +112,19 @@ import Foundation
             let later=1-first
             var themes=SkyTextureSliceCache55(count:2)
             precondition(themes.uploadedCount == 0)
+            precondition(!themes.allUploaded)
             precondition(themes.needsUpload(style:first))
             precondition(themes.needsUpload(style:later))
             themes.markUploaded(style:first)
             for _ in 0..<720 {
                 precondition(themes.uploadedCount == 1)
+                precondition(!themes.allUploaded)
                 precondition(!themes.needsUpload(style:first))
                 precondition(themes.needsUpload(style:later))
             }
             themes.markUploaded(style:later)
             precondition(themes.uploadedCount == 2)
+            precondition(themes.allUploaded)
             for _ in 0..<720 {
                 precondition(!themes.needsUpload(style:first))
                 precondition(!themes.needsUpload(style:later))
