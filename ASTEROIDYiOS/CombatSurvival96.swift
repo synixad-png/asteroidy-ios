@@ -76,9 +76,12 @@ struct CombatSurvival96 {
     /// This function cannot silently assume those unported systems are absent.
     mutating func applyUnblockedCollision(
         level:Int,difficulty:CombatBalance556.Difficulty,
-        cause:String,damage:Int) -> Hit {
+        cause:String,damage:Int,allowCurrentImpact:Bool=false) -> Hit {
+        // AbsorbDamage78 sets .85s immunity while still resolving THIS hit.
+        // Only the verified calling sequence may bypass that freshly set
+        // timer; unrelated later collisions remain blocked.
         guard lives>0 && playing && !sceneBusy && !bossArrival &&
-              !currentDown && invincible<=0 && damage>0
+              !currentDown && (allowCurrentImpact || invincible<=0) && damage>0
         else {return .ignored}
         latestCause=cause
         // Original Game.Damage explicitly clears shield charges on an
