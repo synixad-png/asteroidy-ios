@@ -33,6 +33,7 @@ final class FlightInput: ObservableObject {
     @Published var hull = 3
     @Published var planetSectorCleared = false
     @Published var planetWave = 1
+    @Published var planetIncomingNotice = false
     @Published var rendererError: String?
 }
 
@@ -101,9 +102,14 @@ struct GameView: View {
                                 .font(.system(size: 11, design: .monospaced))
                                 .foregroundStyle(input.verifiedTarczaActive ? .cyan : .gray)
                         }
-                        Text(input.planetSectorCleared ? "TEST SEKTORA UKOŃCZONY" : "BOREAS • SYMULACJA WALKI • FALA \(input.planetWave)")
+                        Text(input.planetSectorCleared
+                             ? "TEST SEKTORA UKOŃCZONY"
+                             : input.planetIncomingNotice
+                             ? "NOWE ASTEROIDY NA ORBICIE"
+                             : "BOREAS • SYMULACJA WALKI • FALA \(input.planetWave)")
                             .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundStyle(input.planetSectorCleared ? .green : .cyan)
+                            .foregroundStyle(input.planetSectorCleared ? .green :
+                                             input.planetIncomingNotice ? .orange : .cyan)
                     }
                     Spacer()
                     HStack(alignment: .bottom) {
