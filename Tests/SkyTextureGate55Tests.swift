@@ -102,6 +102,29 @@ import Foundation
             precondition(!onlyOne.needsUpload(style:1))
         }
 
+        // GpuCosmos39.CloudLayer keeps NebulaTexture(theme) in a
+        // separate lazy cache. The shared Metal texture2DArray is not
+        // a reason to generate the other, invisible 256px theme.
+        for first in 0..<2 {
+            let later=1-first
+            var themes=SkyTextureSliceCache55(count:2)
+            precondition(themes.uploadedCount == 0)
+            precondition(themes.needsUpload(style:first))
+            precondition(themes.needsUpload(style:later))
+            themes.markUploaded(style:first)
+            for _ in 0..<720 {
+                precondition(themes.uploadedCount == 1)
+                precondition(!themes.needsUpload(style:first))
+                precondition(themes.needsUpload(style:later))
+            }
+            themes.markUploaded(style:later)
+            precondition(themes.uploadedCount == 2)
+            for _ in 0..<720 {
+                precondition(!themes.needsUpload(style:first))
+                precondition(!themes.needsUpload(style:later))
+            }
+        }
+
         print("PASS: source v556 lazy GPU texture gate: flat mode zero loads,")
         print("      source SkyProject55 visibility first, no per-frame retries,")
         print("      deferred 6,284,288 bytes of uncompressed GPU textures")
