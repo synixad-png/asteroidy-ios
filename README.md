@@ -1,12 +1,27 @@
-# ASTEROIDY iOS — port Swift/Metal (projekt w trakcie rozwoju)
+# ASTEROIDY iOS — natywny port Swift/Metal (projekt w trakcie rozwoju)
 
-## Stan bieżący — 5 listopada 2026
+## Aktualna kompilacja IPA — 5 listopada 2026
 
-Pełny, stały harmonogram 18 zadań i status prac: [PORT_STATUS_18_TASKS.md](PORT_STATUS_18_TASKS.md).
+Na wyraźne polecenie użytkownika uruchomiono **budowanie niepodpisanego IPA dla fizycznego iPhone'a/iPada** z commita `18e18797046dd37807650313990913dce38ab522`:
 
-W repozytorium działa workflow GitHub Actions `.github/workflows/build-ios.yml` dla testów Swift/Linux oraz kompilacji Xcode/ARM64 na iPhone/iPad. **Rzeczywista kompilacja i udany upload niepodpisanego IPA** zostały potwierdzone dla commita `596767b`, w [przebiegu 42027976783](https://github.com/synixad-png/asteroidy-ios/actions/runs/42027976783). Artefakt jest niepodpisany i wymaga podpisania przed instalacją przez Sideloadly; nie przeprowadzono testu na fizycznym urządzeniu.
+- [GitHub Actions — build iOS IPA, run 42051262545](https://github.com/synixad-png/asteroidy-ios/actions/runs/42051262545).
+- Workflow: `.github/workflows/build-ios.yml` (uruchomiony przez zmianę tego pliku na gałęzi `main`).
+- W pierwszej fazie Swift/Linux sprawdza regresje oryginalnego v556. Na macOS kompilowane są źródła przez XcodeGen i Xcode dla **iphoneos arm64**. Dopiero po udanej kompilacji tworzony jest `ASTEROIDY_iOS_UNSIGNED.ipa`, sprawdzany CRC/Info.plist/Mach-O oraz zasoby.
+- Artefakt GitHub ma nazwę **`ASTEROIDY-iOS-device-unsigned-ipa`** i jest przechowywany **14 dni**; zawiera niepodpisany IPA, środowisko budowania, sumę SHA256 oraz wynik walidacji.
+- **Nie deklarować, że IPA już istnieje, dopóki przebieg nie jest zakończony z wynikiem SUCCESS, a artefakt nie został opublikowany.** Kompilacja to nie test uruchomienia na fizycznym iPhonie.
 
-Późniejsze commity rozwijają zadanie 7: kolejność ochrony, rzeczywisty Guardian37, Talents78, tryb kooperacji, kolizje robotów i bryły bossa oraz regresję wielu trafień. **Nie należy utożsamiać wyników starszego udanego buildu z wynikami dla późniejszych commitów**; obowiązuje kontrola statusu GitHub Actions konkretnego SHA. Port nie jest ukończoną wersją gry Windows/SteamOS.
+### Jak pobrać i zainstalować po sukcesie workflow
+
+1. Otwórz [przebieg kompilacji](https://github.com/synixad-png/asteroidy-ios/actions/runs/42051262545) i poczekaj, aż pokaże **Success**.
+2. W dolnej części strony, w sekcji **Artifacts**, wybierz `ASTEROIDY-iOS-device-unsigned-ipa`. GitHub pobierze ZIP zawierający `ASTEROIDY_iOS_UNSIGNED.ipa` oraz raporty.
+3. Rozpakuj ZIP i wybierz plik IPA w Sideloadly na Windows. **To IPA jest niepodpisane** — instalacja na iPhonie wymaga poprawnego podpisania przy użyciu odpowiedniej metody; sam ZIP nie instaluje gry.
+4. Jeśli kompilacja zakończy się błędem, czytaj błąd na poziomie konkretnego zadania, nie traktuj poprzednich udanych buildów jako potwierdzenia tej rewizji.
+
+### Stan portowania
+
+Zatwierdzona, niezmienna lista 18 zadań i procenty: [PORT_STATUS_18_TASKS.md](PORT_STATUS_18_TASKS.md). Dotychczas moduły 7 i 8 zamknięto implementacyjnie, ale nadal brakuje pełnej gry i testów dotykowych/Metal na urządzeniu. Do zamknięcia całej aplikacji konieczna jest sekwencyjna realizacja pozostałych etapów, zaczynając od **zadania 1: kompilacja i infrastruktura iOS**.
+
+Pełen wynik poprzedniej udanej kompilacji IPA jest udokumentowany dla commita `596767b`, [run 42027976783](https://github.com/synixad-png/asteroidy-ios/actions/runs/42027976783). **Ten stary IPA nie zawiera obecnych zmian.**
 
 ## Historia bazowego portu v18
 
