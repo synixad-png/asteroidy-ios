@@ -10,6 +10,8 @@ on:
       - 'ASTEROIDYiOS/Ship.metal'
       - 'Tests/SphereCameraView556Tests.swift'
       - 'Tests/SkyPointSourceContract556.py'
+      - 'Tests/SphereSolarOverlay556Tests.swift'
+      - 'Tests/SolarOverlaySourceContract556.py'
 
 jobs:
   source-camera-linux:
@@ -30,8 +32,18 @@ jobs:
             Tests/SphereCameraView556Tests.swift \
             -o /tmp/sphere-camera-556
           /tmp/sphere-camera-556
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            Tests/SphereSolarOverlay556Tests.swift \
+            -o /tmp/sphere-solar-overlay-556
+          /tmp/sphere-solar-overlay-556
       - name: Verify original RGBA sky point sprites and pipeline contract (static)
         run: python3 Tests/SkyPointSourceContract556.py
+      - name: Original GpuIntro41 + GpuCosmos39 source solar ray and GPU contract
+        run: python3 Tests/SolarOverlaySourceContract556.py
       - name: Parse Metal renderer Swift sources (not an Xcode compile)
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
