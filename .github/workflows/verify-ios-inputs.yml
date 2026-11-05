@@ -1,0 +1,23 @@
+name: ASTEROIDY iOS - Source assets and XcodeGen preflight (NO IPA)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-ios-inputs.yml'
+      - 'Tools/verify_ios_inputs.py'
+      - 'SOURCES_SHA256SUMS.txt'
+      - 'project.yml'
+      - 'ASTEROIDYiOS/Assets/**'
+      - 'ASTEROIDYiOS/Ship.metal'
+
+jobs:
+  original-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact original v556 SHA256 and binary resource formats
+        run: python3 Tools/verify_ios_inputs.py
