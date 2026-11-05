@@ -54,6 +54,45 @@ for token in (
 ):
     ck(token in rockmesh,'Source GpuIntro41.IntroStone mesh mismatch: '+token)
 
+# Cinematic sky must reuse genuine GpuIntro41 source shaders
+# with the ORIGINAL IntroScene41.View right/up/forward basis.
+ck('static func skyCamera(time:Float)->SphereCamera67' in intro and
+   'camera.focus=basis.back * -1' in intro and
+   'camera.right=basis.right' in intro and
+   'camera.up=basis.up' in intro,
+   'IntroSky projection basis differs from IntroScene41 camera')
+intro_metal=metal.split(
+    '        if input.introPreview41 {\\n            // The source Windows GpuIntro41.CinematicIntro41',1)[1].split(
+    '\\n        if input.planetPreview {\\n            // Original GpuIntro41.DrawDeepSpace55',1)[0]
+# Prevent interpreting the still-intact Boreas diagnostic sky as proof
+# that the separate cinematic actually displays that sky.
+for token in (
+    'let c=IntroOrbit41.skyCamera(time:introTime41)',
+    'let sourceCloudTexture=ensureCloudTextures55(camera:c)',
+    'for style in 0..<DeepSkyPlanets55.count',
+    'style:style,time:introTime41,',
+    'if let blackProjection=BlackHoleSky55.project(',
+    'camera:c,time:introTime41)',
+    'if let sun=SphereSolarOverlay556.project(',
+    'camera:c)',
+    'encoder.setRenderPipelineState(nebulaOverlayPipeline)',
+    'encoder.setRenderPipelineState(blackHolePipeline)',
+    'encoder.setRenderPipelineState(skyPointPipeline)',
+    'encoder.setRenderPipelineState(solarOverlayPipeline)',
+):
+    ck(token in intro_metal,'Missing original IntroSky effect: '+token)
+painter_order=(
+    'vertexCount:24*6',
+    'for style in 0..<DeepSkyPlanets55.count',
+    'if let blackProjection=BlackHoleSky55.project(',
+    'vertexStart:24*6,vertexCount:12*6',
+    'encoder.setRenderPipelineState(skyPointPipeline)',
+    'if let sun=SphereSolarOverlay556.project(',
+)
+indices=[intro_metal.index(token) for token in painter_order]
+ck(indices==sorted(indices) and len(set(indices))==len(indices),
+   'IntroSky must draw far clouds, planets, black hole, near clouds, stars and rays in source order')
+
 ck('@Published var introPreview41 = true' in app,
    'The new source cinematic must be initially visible, not old training arena')
 ck('@Published var planetPreview = true' in app,
