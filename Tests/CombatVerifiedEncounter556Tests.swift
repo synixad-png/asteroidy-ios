@@ -156,6 +156,37 @@ import Foundation
                      twoPlayers.encounter.secondSurvival.lives == 3)
         precondition(secondVitalsHit.damageTransitions.isEmpty)
 
+        // Real actor-body collisions, without pretending enemy AI is ported.
+        // Physics68 must classify a verified robot contact and a boss-body
+        // contact, preserve the correct original cause, and apply the
+        // already-verified armor/hull reducer independently of weapon AI.
+        var robotContact=setup()
+        robotContact.encounter.rocks=[]
+        robotContact.encounter.bugs=[body(659)]
+        robotContact.firstGuardian=CombatGuardian37(owned:false)
+        robotContact.firstVitals=CombatTalentVitals78()
+        let robotHit=robotContact.step(dt:1/120,robotFlags:[true])
+        precondition(robotHit.contacts == [.shipBug(0)])
+        precondition(robotHit.hitOutcomes == [
+            V.TeamOutcome(player:.first,outcome:.talentAbsorbed)])
+        precondition(robotContact.firstVitals!.armor == 0 &&
+                     robotContact.firstVitals!.hull == 53)
+        precondition(robotContact.encounter.firstSurvival.lives == 3)
+
+        var bossContact=setup()
+        bossContact.encounter.rocks=[]
+        bossContact.encounter.boss=body(659)
+        bossContact.firstGuardian=CombatGuardian37(owned:true)
+        bossContact.firstVitals=CombatTalentVitals78()
+        let bossHit=bossContact.step(dt:1/120)
+        precondition(bossHit.contacts == [.shipBoss])
+        precondition(bossHit.hitOutcomes == [
+            V.TeamOutcome(player:.first,outcome:.guardianAbsorbed)])
+        precondition(bossContact.firstGuardian!.charges == 0)
+        precondition(bossContact.firstVitals!.armor == 25 &&
+                     bossContact.firstVitals!.hull == 60)
+        precondition(bossContact.encounter.firstSurvival.lives == 3)
+
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
