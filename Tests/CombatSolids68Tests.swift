@@ -101,6 +101,31 @@ import Foundation
             // Physics68.WithSecond62 still processes the active partner.
             precondition(ev == [.partnerRock(0)])
         }
+        // Physics68.cs:31-45 Contact68 computes friction but never
+        // applies it to angular velocity. ONLY RockContacts68:57 does.
+        // Ship/rock, bug/rock and boss/rock must preserve rock.spin.
+        do {
+            var ship=CombatBody68(position:Vec2(x:640,y:360),
+                velocity:Vec2(x:75,y:23),mass:2.4,radius:11)
+            var rockState=SphereAsteroid556(position:Vec2(x:659,y:360),
+                velocity:Vec2(x:-40,y:0),radius:15,mass:8,spin:0.7)
+            precondition(CombatSolids68.collisionWithRock(
+                &ship,&rockState,restitution:0.42))
+            precondition(rockState.spin==0.7)
+        }
+        do {
+            var bug=CombatBody68(position:Vec2(x:640,y:360),
+                velocity:Vec2(x:75,y:23),mass:3,radius:15)
+            var rocks=[SphereAsteroid556(position:Vec2(x:661,y:360),
+                velocity:Vec2(x:-40,y:0),radius:15,mass:8,spin:0.7)]
+            var ship=body(100),bugs=[bug],
+                boss:CombatBody68?=nil,partner:CombatBody68?=nil
+            let events=CombatSolids68.step(ship:&ship,rocks:&rocks,
+                bugs:&bugs,boss:&boss,partner:&partner)
+            precondition(events.contains(.bugRock(0,0)))
+            precondition(rocks[0].spin==0.7)
+        }
+
         print("PASS: all six v556 ShipMass68 variants, seven source rigid collision categories, co-op and down guards")
     }
 }
