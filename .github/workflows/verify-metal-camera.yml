@@ -7,6 +7,7 @@ on:
       - '.github/workflows/verify-metal-camera.yml'
       - 'ASTEROIDYiOS/Sphere67.swift'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
+      - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/Ship.metal'
       - 'Tests/SphereCameraView556Tests.swift'
       - 'Tests/SphereProjectionSourceContract556.py'
@@ -106,7 +107,9 @@ jobs:
     # This job only checks whether genuine Apple Metal and iOS Swift
     # compilers accept the current sources. It never archives, exports,
     # uploads or signs an app for installation.
-    runs-on: macos-15
+    # Proven available in successful device IPA build 42090319849;
+    # still compiles original arm64 iPhoneOS + Metal, but NEVER creates IPA.
+    runs-on: macos-15-intel
     timeout-minutes: 25
     permissions:
       contents: read
