@@ -35,7 +35,7 @@ import Foundation
         precondition(V.hit(cause:"ASTEROIDA",level:9,difficulty:.normal,
             player:.first,survival:&survival,body:&ship,dome:&dome,
             rescue:&rescue,cooperative:false,developerInfinite:false,
-            guardian:.unverified,talent:.unverified)==
+            guardian:.unverified,talent:.unverified) ==
             .applied(.shieldAbsorbed(remaining:1,cause:"ASTEROIDA")))
         precondition(survival.shieldCharges==1 && survival.invincible==1)
         survival.invincible=0
@@ -53,7 +53,7 @@ import Foundation
         precondition(V.hit(cause:"ASTEROIDA",level:9,difficulty:.normal,
             player:.first,survival:&survival,body:&ship,dome:&dome,
             rescue:&rescue,cooperative:false,developerInfinite:false,
-            guardian:.clear,talent:.clear)==
+            guardian:.clear,talent:.clear) ==
             .applied(.lifeLost(remaining:2,respawnProtection:3,cause:"ASTEROIDA")))
         precondition(survival.invincible==3)
         precondition(V.hit(cause:"ASTEROIDA",level:9,difficulty:.normal,
