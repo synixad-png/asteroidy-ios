@@ -32,7 +32,7 @@ import Foundation
 
         var downFirst=item(700)
         precondition(CombatPickupPhysics68.advance(&downFirst,dt:0.1,
-            player:player,secondPlayer:Vec2(x:900,y:360),coopEnabled:true,
+            player:player,secondPlayer:Vec2(x:880,y:360),coopEnabled:true,
             playerDown:true,secondDown:false,collectorLevel:2,rocks:&rocks))
         precondition(downFirst.velocity.x>0)
 
