@@ -17,6 +17,7 @@ on:
       - 'Tests/IntroRockGeometry41Tests.swift'
       - 'Tests/IntroOrbit41Tests.swift'
       - 'Tests/IntroOrbitSourceContract41.py'
+      - 'Tests/IntroBoreasMorphSourceContract556.py'
       - 'Tests/SourceSceneStartupContract556.py'
       - '.github/workflows/build-ios-iphone-ipad-manual.yml'
       - 'Tools/verify_ipa.py'
@@ -40,3 +41,4 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/IntroOrbit41.swift
           swiftc -frontend -parse ASTEROIDYiOS/IntroRockGeometry41.swift
           python3 Tests/IntroOrbitSourceContract41.py
+          python3 Tests/IntroBoreasMorphSourceContract556.py
