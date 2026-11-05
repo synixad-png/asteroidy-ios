@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 68% |
+| 2 | Silnik graficzny Metal | 70% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -105,6 +105,21 @@
 - **Źródła pełnej gry:** potwierdzono 150 MB archiwum użytkownika ASTEROIDY PC v568 (Windows+SteamOS). Właściwy `Game.Mode.Menu`, siedem przycisków W3 HOME, oryginalny 820-kamienny intro belt, wejście `StartCampaign/EnterOrbit50/LaunchOrbitMission50` są w C#. Repozytorium iOS ma jednak port wybranych mechanik v556; **nie utożsamiać go ze skończoną grą i nie zgadywać brakującego kontrolera misji**. Szczegóły w `AUDYT_RZECZYWISTEJ_GRY_IOS_V556_WOBEC_WINDOWS_V568.md`.
 - **Następny krok:** domknięcie trwającego zadania 2: sprawdzenie rzeczywistej geometrii i sekwencji renderingu Metal oraz stopniowe wiązanie z oryginalnym rendererem i stanami gry. Nie rozpoczynać nowego zadania 14 ani nie deklarować uruchomienia misji przed integracją wymaganych modułów.
 - **Zmiana postępu:** zadanie 1 **88% (0 pp)**, zadanie 2 **68% (0 pp)**, całość **27% (0 pp), pozostało 73%** — konfiguracja manualna i wstępny wybór sceny nie potwierdzają gotowości pełnej gry lub testu iPhone/iPad.
+
+## 05.11.2026 — zadanie 2, NOWA SCENA: źródłowy przelot orbitalny 3D
+
+**Postęp implementacyjny zadania 2: 70% (+2 pp wobec 68%).** Łączny wskaźnik odniesienia 27% (pozostało 73%) pozostaje bez zmian, ponieważ brak ponownego ważenia wszystkich zadań. Wszystkie pozostałe pozycje harmonogramu są bez zmian. Nowa scena nie oznacza ukończenia zadania 2 ani kompletnych misji.
+
+**Wykonano rzeczywisty kod:**
+- Nowy czysty Swift `ASTEROIDYiOS/IntroOrbit41.swift`: original `Windows/src/Intro41.cs:50–81`, 16 s, dokładny przebieg `Ship(t)`, `Camera(t)`, `CraftOrientation(t)`, `View`, oryginalny obrót planety 29+time*2.2°, źródłowa skala `MissionPlanetScale523(24)` normalizowana do 0,24.
+- `OrbitWorld51.cs`: deterministyczny generator źródłowych **820 pozycji pasa asteroid**, seeded `Random(4109)`, wielkości, seed, kontrole wolnego korytarza kamery (4×81 próbek), reguły source cull. Uwzględniono **legacy** wariant pasa; gałąź `NewHome290.Enabled` w v568 zmienia położenia zgodnie z faktyczną geometrią terenu i nadal wymaga osobnego, zweryfikowanego portu. Nie udawać, że stary wariant = nowy teren.
+- `MetalRenderer.swift` pokazuje inną, rozłączną scenę: źródłowy ruch kamery, 1 500 już przeniesionych gwiazd, oryginalny mesh Vanguard, prawdziwy model Boreas GLB w rozmiarze oryginalnego intro (a nie nowa kula), orbitalny pas 820 pozycji z frustum-cullingiem. W tej fazie siatki asteroid są tymczasowymi **oktaedrami** z portu, a wizualna skala statku oparta jest na sprawdzonym promieniu rzemiosła z walki; **oryginalne seed-specific `IntroStone`, `StoneNormal56`, pełne tło i efekty, oryginalny terrain-enabled belt wymagają jeszcze portu**.
+- `App.swift` domyślnie pokazuje "PRZELOT ORBITALNY / ŹRÓDŁOWA KAMERA" z etykietą "SCENA ROBOCZA • NIE JEST PEŁNĄ MISJĄ", zegarem 0–16 s i przełącznikiem "BOREAS 3D"/"PRZELOT 3D". Istniejące testy sferyczne, osobna płaska arena, atlas 26 misji, zapis maski, mechaniki 7/8 zostały pozostawione; przelot **nie zalicza misji** i nie uruchamia sztucznej kampanii. Ponieważ prawdziwy kontroler misji nie istnieje, po 16 s przelot zapętla się jako podgląd.
+- Konfiguracja `project.yml` i ręczny workflow `build-ios-iphone-ipad-manual.yml` nadal obsługują **oba urządzenia**, ARM64, iOS 17+, bez uruchamiania nowego IPA.
+
+**Weryfikacja:** [GitHub Actions 42097505146](https://github.com/synixad-png/asteroidy-ios/actions/runs/42097505146), `source-camera-linux` PASS na źródłowej osi IntroScene41, 820 Belt51, kontraktach astronomii, kalibracji projekcji i kontroli regressions. [GitHub Actions 42097618493](https://github.com/synixad-png/asteroidy-ios/actions/runs/42097618493) PASS weryfikacji autentycznych zasobów, konfiguracji i parsowania zmienionego Swifta. `Xcode Metal/Swift compile verification ONLY (NO IPA)` dla najnowszego commita **nie zakończył się podczas raportowania**; nie ma dowodu pełnej kompilacji iOS ani testu Apple GPU. **Nowego IPA nie wygenerowano.**
+
+**Następnie w zadaniu 2:** port oryginalnych `IntroStone` i `StoneNormal56` dla pasa, świateł/głębi/efektów intro z rzeczywistych źródeł, zgodność nowego `NewHome290` tam, gdzie ma zastosowanie; następnie kompilacja Xcode bez IPA. Dopiero po udanym buildzie można zgłosić użytkownikowi gotowość do *zlecenia* nowego unsigned IPA iPhone+iPad. Nie twierdzić, że scena jest 1:1 ani sprawdzona na urządzeniu.
 
 ## Kolejność dalszej pracy
 
