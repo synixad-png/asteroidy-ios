@@ -44,8 +44,9 @@ struct CombatBalance556 {
                         difficulty == .hard ? 5 : 4
         default: basis = difficulty == .hard ? 3 : 2
         }
-        return basis+max(0,tier)+(level>=13 ? 1 : 0)+
-               (cooperative && size>=2 ? 1 : 0)
+        let levelBonus = level>=13 ? 1 : 0
+        let coopBonus = cooperative && size>=2 ? 1 : 0
+        return basis + max(0,tier) + levelBonus + coopBonus
     }
 
     /// Balance70.PrepareRock70 and Game.AddFragment77. Source rock
