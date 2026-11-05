@@ -337,9 +337,10 @@ import Foundation
         precondition(menuRescued && !menuGate.rescue.down(.second))
         precondition(menuGate.encounter.secondSurvival.lives == 3)
 
-        // A failed 12-second rescue is not an ordinary ignored event.
-        // It must remain pending until the verified Game.Damage owner has
-        // resolved life loss; no invented damage is applied here.
+        // Original Gameplay65.FailRescue65 directly calls Game.Damage,
+        // bypassing ApplyHit96/HitByBoss and the wreck's immunity timer.
+        // With unknown guard/talent owners, the exact transition stays
+        // pending rather than guessing that no protection exists.
         var failedRescue=setup(true)
         let failedStart=failedRescue.step(dt:1/120,
             guardianFirst:.clear,guardianSecond:.clear,
@@ -347,21 +348,87 @@ import Foundation
         precondition(failedStart.hitOutcomes == [
             V.TeamOutcome(player:.second,outcome:.downForRescue)])
         failedRescue.encounter.rocks=[]
-        let expired=failedRescue.step(dt:12.1,
-            guardianFirst:.clear,guardianSecond:.clear,
-            talentFirst:.clear,talentSecond:.clear)
+        let expired=failedRescue.step(dt:12.1)
         precondition(expired.rescueEvent == .failed(first:false,second:true))
         precondition(expired.requiresRescueDamageResolution)
+        precondition(expired.rescueDamageOutcome ==
+                     V.TeamOutcome(player:.second,
+                        outcome:.requiresGuardianVerification))
         precondition(failedRescue.pendingRescueFailure ==
                      .failed(first:false,second:true))
         precondition(failedRescue.encounter.secondSurvival.lives==3)
-        let paused=failedRescue.step(dt:0)
-        precondition(paused.requiresRescueDamageResolution)
-        precondition(failedRescue.pendingRescueFailure != nil)
-        failedRescue.acknowledgeResolvedRescueFailure()
+        let blocked=failedRescue.step(dt:1/60)
+        precondition(blocked.contacts.isEmpty && blocked.hitOutcomes.isEmpty)
+        precondition(blocked.requiresRescueDamageResolution)
+        // The source's direct Damage() path does NOT spend the bought
+        // HitByBoss shield; an unblocked fatal hit instead clears charges.
+        failedRescue.encounter.secondSurvival.shieldCharges=1
+        let resolved=failedRescue.step(dt:1/60,
+            guardianSecond:.clear,talentSecond:.clear)
+        precondition(resolved.rescueDamageOutcome ==
+            V.TeamOutcome(player:.second,outcome:.applied(
+                .lifeLost(remaining:2,respawnProtection:3,
+                          cause:"ZDERZENIE"))))
+        precondition(resolved.damageTransitions == [
+            .respawned(removedShots:0,relocatedRocks:0)])
+        precondition(!resolved.requiresRescueDamageResolution)
         precondition(failedRescue.pendingRescueFailure == nil)
-        precondition(!failedRescue.step(dt:0)
-                      .requiresRescueDamageResolution)
+        precondition(failedRescue.encounter.secondSurvival.lives == 2)
+        precondition(failedRescue.encounter.secondSurvival.shieldCharges == 0)
+        precondition(failedRescue.encounter.secondSurvival.invincible == 3)
+
+        // Real co-op armor/hull already exhausted on the third contact:
+        // a timed-out wreck invokes the same Damage() controller and
+        // resets exactly the affected player's vitals after life loss.
+        cooperativeVitals.encounter.rocks=[]
+        let actualFailure=cooperativeVitals.step(dt:12.1)
+        precondition(actualFailure.rescueEvent ==
+                     .failed(first:false,second:true))
+        precondition(actualFailure.rescueDamageOutcome ==
+            V.TeamOutcome(player:.second,outcome:.applied(
+                .lifeLost(remaining:2,respawnProtection:3,
+                          cause:"ZDERZENIE"))))
+        precondition(actualFailure.damageTransitions == [
+            .respawned(removedShots:0,relocatedRocks:0)])
+        precondition(!actualFailure.requiresRescueDamageResolution)
+        precondition(cooperativeVitals.secondVitals!.armor == 25 &&
+                     cooperativeVitals.secondVitals!.hull == 60)
+        precondition(cooperativeVitals.encounter.secondSurvival.lives == 2)
+        precondition(cooperativeVitals.encounter.firstSurvival.lives == 3)
+
+        // Original FailRescue65(true,true) calls Damage() ONCE for
+        // player 1, then moves player 2 by +85 and grants 3 s immunity.
+        var doubleWreck=setup(true)
+        var firstWreck=doubleWreck.encounter.first
+        var firstSurvival=doubleWreck.encounter.firstSurvival
+        precondition(doubleWreck.rescue.beginDown(.first,cooperative:true,
+            playing:true,developerInfinite:false,rescueDamage:false,
+            survival:&firstSurvival,body:&firstWreck))
+        doubleWreck.encounter.first=firstWreck
+        doubleWreck.encounter.firstSurvival=firstSurvival
+        var secondWreck=doubleWreck.encounter.second!
+        var secondSurvival=doubleWreck.encounter.secondSurvival
+        precondition(doubleWreck.rescue.beginDown(.second,cooperative:true,
+            playing:true,developerInfinite:false,rescueDamage:false,
+            survival:&secondSurvival,body:&secondWreck))
+        doubleWreck.encounter.second=secondWreck
+        doubleWreck.encounter.secondSurvival=secondSurvival
+        doubleWreck.encounter.rocks=[]
+        let bothFailed=doubleWreck.step(dt:1/60,
+            guardianFirst:.clear,talentFirst:.clear)
+        precondition(bothFailed.rescueEvent == .failed(first:true,second:true))
+        precondition(bothFailed.rescueDamageOutcome ==
+            V.TeamOutcome(player:.first,outcome:.applied(
+                .lifeLost(remaining:2,respawnProtection:3,
+                          cause:"ZDERZENIE"))))
+        precondition(doubleWreck.encounter.firstSurvival.lives == 2)
+        precondition(doubleWreck.encounter.secondSurvival.lives == 3)
+        precondition(doubleWreck.encounter.secondSurvival.invincible == 3)
+        precondition(doubleWreck.encounter.second!.velocity.lengthSquared == 0)
+        let partnerGap=Sphere67.delta(
+            target:doubleWreck.encounter.second!.position,
+            origin:doubleWreck.encounter.first.position)
+        precondition(abs(sqrt(partnerGap.lengthSquared)-85)<0.6)
 
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
