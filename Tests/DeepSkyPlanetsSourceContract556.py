@@ -70,12 +70,12 @@ for term in (
     "for style in 0..<DeepSkyPlanets55.count",
     "guard let projected=DeepSkyPlanets55.project(",
     "let layers=DeepSkyPlanets55.overlays(",
-    "encoder.setFragmentTexture(deepPlanetTextures,index:0)",
+    "encoder.setFragmentTexture(planets,index:0)",
     "encoder.setFragmentTexture(sphereHaloTexture,index:1)",
     "encoder.drawPrimitives(type:.triangle,",
     "vertexStart:0,vertexCount:layers.count*6",
     "encoder.setRenderPipelineState(blackHolePipeline)",
-    "encoder.setFragmentTexture(blackHoleTextures,index:0)",
+    "encoder.setFragmentTexture(blackTextures,index:0)",
 ):
     ck(term in renderer,"Three source DeepPlanet55 textures/draw missing: "+term)
 ck("vertex BlackHoleRaster55 blackHoleVertex55(" in shader and
