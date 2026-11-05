@@ -66,6 +66,37 @@ import Foundation
             precondition(s.seed.isFinite)
             near(s.seed,Float(i)*0.73,0.0002)
         }
+        // Windows GpuIntro41.CinematicIntro41: whole belt rotates at
+        // exactly time*0.2 degrees around the original planet center.
+        near(IntroOrbit41.beltRotationDegrees(time:0),0)
+        near(IntroOrbit41.beltRotationDegrees(time:10),2)
+        near(IntroOrbit41.beltRotationDegrees(time:16),3.2)
+        let reference=belt[0]
+        near3(IntroOrbit41.beltWorldPosition(reference,time:0),
+              IntroOrbit41.planetCenter+reference.center,0.00005)
+        let theta=Float.pi*2/180
+        let referenceAt10=IntroOrbit41.beltWorldPosition(reference,time:10)
+        near(referenceAt10.x,
+             IntroOrbit41.planetCenter.x+
+             cos(theta)*reference.center.x+sin(theta)*reference.center.z,
+             0.00005)
+        near(referenceAt10.y,
+             IntroOrbit41.planetCenter.y+reference.center.y,0.00005)
+        near(referenceAt10.z,
+             IntroOrbit41.planetCenter.z-
+             sin(theta)*reference.center.x+cos(theta)*reference.center.z,
+             0.00005)
+        precondition((referenceAt10-reference.world).length>0.05)
+        // Consistent camera-space culling must use the rotated center,
+        // never the stationary original world position.
+        for moment in [Float(0),4,8,12,16] {
+            let frame=IntroOrbit41.frame(moment)
+            for stone in belt.prefix(30) {
+                let world=IntroOrbit41.beltWorldPosition(stone,time:moment)
+                precondition((world-IntroOrbit41.planetCenter).length.isFinite)
+                _ = IntroOrbit41.visible(stone,time:moment,in:frame)
+            }
+        }
         near(IntroOrbit41.planetRotationDegrees(level:1,time:0),29)
         near(IntroOrbit41.planetRotationDegrees(level:1,time:10),51)
         // The legacy flat arena and its physics do not appear in this pure scene.
