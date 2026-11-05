@@ -739,17 +739,20 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 SIMD4<Float>(2/(720*aspect),-2/720,0,0)
             )
             encoder.setDepthStencilState(skyDepthState)
-            encoder.setRenderPipelineState(nebulaOverlayPipeline)
-            encoder.setVertexBuffer(
-                nebulaOverlayMesh.vertices,offset:0,index:0)
-            encoder.setVertexBytes(
-                &nebulaUniform,length:MemoryLayout.size(ofValue:nebulaUniform),
-                index:1)
-            encoder.setFragmentTexture(nebulaTexture,index:0)
-            // C# DrawDeepSpace55: 24 FAR cloud layers first.
-            encoder.drawPrimitives(
-                type:.triangle,vertexStart:0,
-                vertexCount:24*6)
+            let sourceCloudTexture=ensureCloudTextures55()
+            if let clouds=sourceCloudTexture {
+                encoder.setRenderPipelineState(nebulaOverlayPipeline)
+                encoder.setVertexBuffer(
+                    nebulaOverlayMesh.vertices,offset:0,index:0)
+                encoder.setVertexBytes(
+                    &nebulaUniform,length:MemoryLayout.size(ofValue:nebulaUniform),
+                    index:1)
+                encoder.setFragmentTexture(clouds,index:0)
+                // C# DrawDeepSpace55: 24 FAR cloud layers first.
+                encoder.drawPrimitives(
+                    type:.triangle,vertexStart:0,
+                    vertexCount:24*6)
+            }
 
             // C# DrawDeepSpace55 and DrawSkyPlanet55:
             // three source planets in style order 0→1→2, each:
@@ -758,13 +761,17 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             // BlackHole55; no new MSL entrypoints or pipeline, no
             // dynamic GPU textures. One draw PER visible source planet
             // preserves draw order with the following black hole.
-            encoder.setRenderPipelineState(blackHolePipeline)
-            encoder.setFragmentTexture(deepPlanetTextures,index:0)
-            encoder.setFragmentTexture(sphereHaloTexture,index:1)
             for style in 0..<DeepSkyPlanets55.count {
                 guard let projected=DeepSkyPlanets55.project(
                     style:style,time:Float(planetAnimationTime),
                     camera:sphereFlight.camera) else { continue }
+                // Source GpuIntro41: only build any planet Bitmap
+                // AFTER SkyProject55 confirms visibility.
+                guard let planets=ensureDeepPlanetTextures55()
+                else { break }
+                encoder.setRenderPipelineState(blackHolePipeline)
+                encoder.setFragmentTexture(planets,index:0)
+                encoder.setFragmentTexture(sphereHaloTexture,index:1)
                 let x=(projected.screen.x-640)*2/(720*aspect)
                 let y=(360-projected.screen.y)*2/720
                 let frame=SIMD4<Float>(x,y,2/(720*aspect),-2/720)
@@ -795,7 +802,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             // StarTexture halos, 4 moving rays, then rear disk/core/
             // front disk in the exact original 2D painter order.
             if let blackProjection=BlackHoleSky55.project(
-                camera:sphereFlight.camera,time:Float(planetAnimationTime)) {
+                camera:sphereFlight.camera,time:Float(planetAnimationTime)),
+                let blackTextures=ensureBlackHoleTextures55() {
                 let bx=(blackProjection.screen.x-640)*2/(720*aspect)
                 let by=(360-blackProjection.screen.y)*2/720
                 let screen=SIMD4<Float>(bx,by,2/(720*aspect),-2/720)
@@ -821,7 +829,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                             ptr,length:raw.count,index:0)
                     }
                 }
-                encoder.setFragmentTexture(blackHoleTextures,index:0)
+                encoder.setFragmentTexture(blackTextures,index:0)
                 encoder.setFragmentTexture(sphereHaloTexture,index:1)
                 encoder.drawPrimitives(type:.triangle,vertexStart:0,
                     vertexCount:layers.count*6)
@@ -829,15 +837,17 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             // C# IntroSky: 12 NEAR clouds come AFTER all background
             // space objects. Reuse the SAME immutable buffer and
             // two-texture-array; no new geometry or texture uploads.
-            encoder.setRenderPipelineState(nebulaOverlayPipeline)
-            encoder.setVertexBuffer(
-                nebulaOverlayMesh.vertices,offset:0,index:0)
-            encoder.setVertexBytes(
-                &nebulaUniform,length:MemoryLayout.size(ofValue:nebulaUniform),
-                index:1)
-            encoder.setFragmentTexture(nebulaTexture,index:0)
-            encoder.drawPrimitives(type:.triangle,
-                vertexStart:24*6,vertexCount:12*6)
+            if let clouds=sourceCloudTexture {
+                encoder.setRenderPipelineState(nebulaOverlayPipeline)
+                encoder.setVertexBuffer(
+                    nebulaOverlayMesh.vertices,offset:0,index:0)
+                encoder.setVertexBytes(
+                    &nebulaUniform,length:MemoryLayout.size(ofValue:nebulaUniform),
+                    index:1)
+                encoder.setFragmentTexture(clouds,index:0)
+                encoder.drawPrimitives(type:.triangle,
+                    vertexStart:24*6,vertexCount:12*6)
+            }
             // Source GpuIntro41.IntroSky uses a sky centred on the eye.
             // Render 1500 alpha-blended screen-size points in one GPU call;
             // none writes depth or changes the scene PBR pipeline.
