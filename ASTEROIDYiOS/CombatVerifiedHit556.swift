@@ -87,7 +87,8 @@ enum CombatVerifiedHit556 {
             return .downForRescue
         }
         let lost=survival.applyUnblockedCollision(
-            level:level,difficulty:difficulty,cause:cause,damage:damage)
+            level:level,difficulty:difficulty,cause:cause,damage:damage,
+            allowCurrentImpact:vitals != nil)
         // Game.Damage ResetVitals78 runs on life loss AND GameOver.
         switch lost {
         case .lifeLost, .gameOver: vitals?.reset()
