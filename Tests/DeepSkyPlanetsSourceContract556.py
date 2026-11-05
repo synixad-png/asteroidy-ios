@@ -59,8 +59,8 @@ ck("DrawEllipse" in source and "DrawArc" in source,
    "Source order behind body/front rings+glints missing")
 
 for term in (
-    "private let deepPlanetTextures: MTLTexture",
-    "deepPlanetTextures=try Self.makeDeepPlanetTextures55(device)",
+    "private var deepPlanetTextures: MTLTexture?",
+    "let created=try Self.makeDeepPlanetTextures55(device)",
     "makeDeepPlanetTextures55(_ device:MTLDevice)",
     "d.textureType = .type2DArray",
     "d.arrayLength = DeepSkyPlanets55.count",
