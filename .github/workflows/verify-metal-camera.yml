@@ -17,6 +17,9 @@ on:
       - 'ASTEROIDYiOS/BlackHoleSky55.swift'
       - 'Tests/BlackHoleSky55Tests.swift'
       - 'Tests/BlackHoleSourceContract556.py'
+      - 'ASTEROIDYiOS/DeepSkyPlanets55.swift'
+      - 'Tests/DeepSkyPlanets55Tests.swift'
+      - 'Tests/DeepSkyPlanetsSourceContract556.py'
 
 jobs:
   source-camera-linux:
@@ -62,6 +65,15 @@ jobs:
             Tests/BlackHoleSky55Tests.swift \
             -o /tmp/black-hole-55
           /tmp/black-hole-55
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/DeepSkyPlanets55.swift \
+            Tests/DeepSkyPlanets55Tests.swift \
+            -o /tmp/deep-planets-55
+          /tmp/deep-planets-55
       - name: Verify original RGBA sky point sprites and pipeline contract (static)
         run: python3 Tests/SkyPointSourceContract556.py
       - name: Original GpuIntro41 + GpuCosmos39 source solar ray and GPU contract
@@ -70,6 +82,8 @@ jobs:
         run: python3 Tests/NebulaSourceContract556.py
       - name: BlackHole55 source GPU blend and 3-layer render contract
         run: python3 Tests/BlackHoleSourceContract556.py
+      - name: Verify three source BuildDeepPlanet55 bodies and Metal painter order
+        run: python3 Tests/DeepSkyPlanetsSourceContract556.py
       - name: Parse Metal renderer Swift sources (not an Xcode compile)
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
