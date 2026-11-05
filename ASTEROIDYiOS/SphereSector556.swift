@@ -273,7 +273,7 @@ struct SphereSector556 {
         asteroids[index] = rock
     }
     private mutating func damageRock(at index:Int,amount:Int=1) {
-        guard asteroids.indices.contains(index) else { return }
+        guard asteroids.indices.contains(index), !isAmigaDemo else {return}
         let rock=asteroids[index]
         let result=CombatDamage556.hitRock(
             health:rock.health,shardLife:rock.shardLife,amount:amount,
@@ -353,7 +353,10 @@ struct SphereSector556 {
         }
 
         var previousRockPositions = asteroids.map { $0.position }
-        for i in asteroids.indices { asteroids[i].advance(dt:dt) }
+        for i in asteroids.indices {
+            if isAmigaDemo { AmigaBounce265.step(&asteroids[i],dt:dt) }
+            asteroids[i].advance(dt:dt)
+        }
 
         // Windows Game.Step: rock advance -> Action38.StepAction ->
         // Physics68.StepSolids68 -> projectile hits. In particular, rocks
@@ -451,8 +454,20 @@ struct SphereSector556 {
         // Descending indices prevent removal from invalidating still-pending hits.
         for idx in rockHits.keys.sorted(by:>) {
             let incoming = rockHits[idx]!
-            for bolt in incoming { impactRock(at:idx,with:bolt) }
-            damageRock(at:idx,amount:incoming.count)
+            if isAmigaDemo {
+                // AmigaBounce265.ImpulseAmiga266: persistent balls,
+                // every direct projectile scores +10 and adds a hop.
+                // Never run ImpactRock68 or Split() on level 25.
+                for bolt in incoming {
+                    AmigaBounce265.impact(&asteroids[idx],
+                        origin:bolt.position,projectileVelocity:bolt.velocity)
+                    amigaHits += 1
+                    score += 10
+                }
+            } else {
+                for bolt in incoming { impactRock(at:idx,with:bolt) }
+                damageRock(at:idx,amount:incoming.count)
+            }
         }
         if sectorFinished { sectorCleared = true }
         return shipContact
