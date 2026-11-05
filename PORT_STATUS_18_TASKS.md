@@ -2,7 +2,7 @@
 
 Źródło kolejności/nazw: zatwierdzony przez użytkownika zrzut harmonogramu 18 zadań z 2026-11-05. Nie zmieniać nazw ani zakresów bez decyzji użytkownika.
 
-**Łączny postęp odniesienia: 27%; pozostało 73%.** Jest to zachowany historyczny wynik całego projektu, nie nowy pomiar po zadaniu 7. **Zadanie 7: 94% (poprzednio 89%, +5 pp)**. Z oryginalnego archiwum Windows v556 (sprawdzony SHA-256) zweryfikowano kolejność `FailRescue65 -> Game.Damage`, bezpośrednie rozliczanie utraty życia/respawnu, odnowienie opancerzenia po ratowaniu oraz wspólne zasoby oryginalnej kooperacji `WithSecond62`. Osobny Swift/Linux workflow zakończył się **PASS** dla commita `45cee28a` (run `42034275258`). **Nie budowano ani nie generowano IPA w tej sesji.** Zadanie 8 pozostaje na 96%.
+**Łączny postęp odniesienia: 27%; pozostało 73%.** Jest to zachowany historyczny wynik całego projektu, nie nowy pomiar po zadaniu 7. **Zadanie 7: 96% (poprzednio 94%, +2 pp). Domyślnie włączono źródłowe wspólne zasoby Coop62 dla dwóch graczy oraz jedną globalną pulę Tarcza145; zachowano niezależny tryb historycznych testów jako jawne opt-out. Z oryginalnego Windows v556 zweryfikowano kolejność FailRescue65 -> Game.Damage, wspólne życia/tarcze/opancerzenie, ResetVitals78 i brak drugiej energii Tarcza145. Ostatni test Swift/Linux bez IPA: run 42035502390 (PASS, brak artefaktów). Zadanie 8 pozostaje na 96%.
 
 
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
@@ -13,7 +13,7 @@
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
 | 6 | Fizyka lotu i poruszanie po planetach | 35% |
-| 7 | Kolizje, obrażenia i zniszczenia | 94% |
+| 7 | Kolizje, obrażenia i zniszczenia | 96% |
 | 8 | Asteroidy i fale walki | 96% |
 | 9 | Wszystkie bronie i efekty trafień | 10% |
 | 10 | Przeciwnicy i sztuczna inteligencja | 0% |
