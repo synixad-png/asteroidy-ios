@@ -57,12 +57,10 @@ import Foundation
         // Source PC IntroScene41 / ShipMesh axes remain unchanged:
         // right X, nose Y, dorsal Z. No extra axes swap or negative
         // determinant may be introduced into the live scene.
-        let axisX=IntroVanguard431.sourceLocalPosition(V(x:1,y:0,z:0))-
-                  IntroVanguard431.sourceLocalPosition(V(x:0,y:0,z:0))
-        let axisY=IntroVanguard431.sourceLocalPosition(V(x:0,y:1,z:0))-
-                  IntroVanguard431.sourceLocalPosition(V(x:0,y:0,z:0))
-        let axisZ=IntroVanguard431.sourceLocalPosition(V(x:0,y:0,z:1))-
-                  IntroVanguard431.sourceLocalPosition(V(x:0,y:0,z:0))
+        let origin=IntroVanguard431.sourceLocalPosition(V(x:0,y:0,z:0))
+        let axisX=IntroVanguard431.sourceLocalPosition(V(x:1,y:0,z:0)) - origin
+        let axisY=IntroVanguard431.sourceLocalPosition(V(x:0,y:1,z:0)) - origin
+        let axisZ=IntroVanguard431.sourceLocalPosition(V(x:0,y:0,z:1)) - origin
         nearV(axisX,V(x:pcScale/0.32,y:0,z:0))
         nearV(axisY,V(x:0,y:pcScale/0.32,z:0))
         nearV(axisZ,V(x:0,y:0,z:pcScale/0.32))
