@@ -74,18 +74,32 @@ struct SphereSector556 {
             // Explicit fixtures represent a test with no scheduled arrivals.
             incomingRocksLeft = 0
         } else {
+            // Game.Wave() samples the ORIGINAL 1280x720 atlas and rejects
+            // positions closer than 260 via WorldDelta67 (spherical geodesic).
+            // Flat-rock coordinate rejection is not equivalent on a globe.
+            let player = Vec2(x:640,y:360)
+            for i in 0..<balance.sectorRockCount {
+                let tier = balance.tier(at:i)!
+                var position = Vec2(x:0,y:0)
+                repeat {
+                    position = Vec2(x:random()*1280,y:random()*720)
+                } while Sphere67.delta(target:position,origin:player).lengthSquared < 260*260
+                let heading = random()*2*Float.pi
+                let initialSpeed = SphereAsteroid556.startingSpeed(
+                    baseRandomSpeed:48+random()*30,
+                    level:balance.level,tier:tier,
+                    dangerSpeed:Self.dangerSpeed(balance.difficulty))
+                asteroids.append(SphereAsteroid556(
+                    position:position,
+                    velocity:Vec2(x:cos(heading),y:sin(heading))*initialSpeed,
+                    radius:Rock.radiusFor(size:3)/Self.unit,
+                    size:3,tier:tier))
+                // The source also consumes RNG for angle, spin and mesh seed;
+                // mesh RNG is intentionally not modeled by this test sector.
+                _ = random()
+            }
             var flat = GameCore()
             flat.setSectorTraining(balance)
-            asteroids = flat.rocks.map { rock in
-                let p = Vec2(x: 640 + rock.at.x / Self.unit,
-                             y: 360 - rock.at.y / Self.unit)
-                let v = Vec2(x: rock.motion.x / Self.unit,
-                             y: -rock.motion.y / Self.unit) *
-                        (0.55 * Self.dangerSpeed(balance.difficulty))
-                return SphereAsteroid556(position:p, velocity:v,
-                                         radius:rock.radius / Self.unit,
-                                         size:rock.size,tier:rock.tier,health:rock.health)
-            }
             incomingRocksLeft = flat.incomingRocksLeft
             nextIncoming = objective == .waves ? 16 : 12
         }
