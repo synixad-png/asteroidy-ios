@@ -186,10 +186,33 @@ enum IntroOrbit41 {
         }
         return rocks
     }()
-    static func visible(_ rock:Stone,in f:Frame)->Bool {
-        let p=f.cameraSpace(rock.world)
+    // Windows/src/GpuIntro41.cs:491: the source belt is local to
+    // PlanetCenter and rotates with shipRotate(time*.2f,0,1,0).
+    // Rotate the COMPLETE rock, not its origin alone; the matching
+    // GPU model matrix is T(PlanetCenter) * Ry(degrees) * T(local).
+    static func beltRotationDegrees(time:Float)->Float { time*0.2 }
+
+    static func rotatedLocalBeltPosition(_ local:V,time:Float)->V {
+        let angle=beltRotationDegrees(time:time)*Float.pi/180
+        let cosine=cos(angle),sine=sin(angle)
+        // Matches OpenGL's positive right-handed Y rotation.
+        return V(x:cosine*local.x+sine*local.z,
+                 y:local.y,
+                 z:-sine*local.x+cosine*local.z)
+    }
+
+    static func beltWorldPosition(_ rock:Stone,time:Float)->V {
+        planetCenter+rotatedLocalBeltPosition(rock.center,time:time)
+    }
+
+    // Original CinematicIntro41 draws the whole belt without an
+    // orbital-only MultiDrawIntro135 frustum optimization. Mobile
+    // culling here is deliberately conservative (expanded bounds)
+    // and MUST use the same animated world position as the GPU.
+    static func visible(_ rock:Stone,time:Float,in f:Frame)->Bool {
+        let p=f.cameraSpace(beltWorldPosition(rock,time:time))
         let depth = -p.z
-        let radius=rock.size*1.9+1 // same source conservative sphere, without orbit x3.2
+        let radius=rock.size*1.9+1
         if depth+radius<0.4 || depth-radius>1600 {return false}
         let limit=max(depth,0.4)+radius
         return abs(p.x)<=limit*0.888889+radius &&
