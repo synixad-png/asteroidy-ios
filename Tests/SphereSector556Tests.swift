@@ -7,16 +7,21 @@ import Foundation
         precondition(sector.asteroids.count == config.sectorRockCount)
         precondition(sector.shipContacts == 0 && sector.elapsed == 0)
         let initial = sector.asteroids.map { $0.position }
-        let speeds = sector.asteroids.map { sqrt($0.velocity.lengthSquared) }
+        // Sphere physics can exchange momentum when rocks collide; unlike
+        // free flight, individual asteroid speeds are not conserved.
+        var repeatSector=sector
         for _ in 0..<1200 {
             sector.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:0)
+            repeatSector.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:0)
         }
         precondition(abs(sector.elapsed - 10) < 0.001)
         precondition(sector.asteroids.count == initial.count)
         var moved = 0
         for (i, rock) in sector.asteroids.enumerated() {
             let speed = sqrt(rock.velocity.lengthSquared)
-            precondition(abs(speed-speeds[i]) < 0.03, "Sphere tangent speed drift")
+            precondition(speed.isFinite && speed < 500, "Sphere rigid contact velocity invalid")
+            precondition(rock.position == repeatSector.asteroids[i].position)
+            precondition(rock.velocity == repeatSector.asteroids[i].velocity)
             if sqrt(Sphere67.delta(target:rock.position,origin:initial[i]).lengthSquared) > 1 { moved += 1 }
             precondition(rock.position.x >= 0 && rock.position.x < 1280)
             precondition(rock.position.y >= 0 && rock.position.y <= 720)
@@ -56,6 +61,6 @@ import Foundation
         // Flat GameCore remains an independent sandbox with unchanged nine-rock baseline.
         let flat = GameCore()
         precondition(flat.rocks.count == 9)
-        print("PASS: 1200 sphere frames, contact transitions, three-hit hull, cooldown, no repeat damage, and legacy flat arena")
+        print("PASS: 1200 deterministic rigid-contact sphere frames, hull/cooldown, flat arena isolation")
     }
 }
