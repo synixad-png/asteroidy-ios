@@ -34,11 +34,100 @@ struct CombatVerifiedEncounter556 {
         pendingRescueFailure=nil
     }
 
+    /// Synchronous v556 FailRescue65 semantics, kept separate from the
+    /// ApplyHit96 / HitByBoss route. A failed rescue calls Damage() for
+    /// the first player when both are down, otherwise WithSecond62(Damage)
+    /// for the second. An unknown defense is never treated as inactive.
+    private mutating func resolvePendingRescueDamage(
+        developerInfinite:Bool,
+        guardianFirst:CombatVerifiedHit556.GuardResult,
+        guardianSecond:CombatVerifiedHit556.GuardResult,
+        talentFirst:CombatVerifiedHit556.GuardResult,
+        talentSecond:CombatVerifiedHit556.GuardResult
+    ) -> (outcome:CombatVerifiedHit556.TeamOutcome?,
+          transition:CombatRespawn556.Action?) {
+        guard case let .failed(first,second) = pendingRescueFailure else {
+            return (nil,nil)
+        }
+        guard first || second else { return (nil,nil) }
+        let player:CombatContactRouter96.Player=first ? .first : .second
+        let outcome:CombatVerifiedHit556.Outcome
+        if first {
+            outcome=CombatVerifiedHit556.failedRescueDamage(
+                level:encounter.level,difficulty:encounter.difficulty,
+                survival:&encounter.firstSurvival,dome:&domeFirst,
+                developerInfinite:developerInfinite,
+                guardian:guardianFirst,talent:talentFirst,
+                vitals:firstVitals,guardianState:firstGuardian)
+        } else {
+            guard encounter.second != nil else { return (nil,nil) }
+            outcome=CombatVerifiedHit556.failedRescueDamage(
+                level:encounter.level,difficulty:encounter.difficulty,
+                survival:&encounter.secondSurvival,dome:&domeSecond,
+                developerInfinite:developerInfinite,
+                guardian:guardianSecond,talent:talentSecond,
+                vitals:secondVitals,guardianState:secondGuardian)
+        }
+        let tagged=CombatVerifiedHit556.TeamOutcome(player:player,
+                                                     outcome:outcome)
+        switch outcome {
+        case .requiresGuardianVerification, .requiresTalentVerification,
+             .ignored:
+            // This branch remains unresolved; do not run more contact frames.
+            return (tagged,nil)
+        default: break
+        }
+        pendingRescueFailure=nil
+        var transition:CombatRespawn556.Action?=nil
+        if case let .applied(hit) = outcome {
+            var rocks=encounter.rocks
+            var shotsState=shots
+            var seed=scatterSeed
+            if first {
+                var ship=encounter.first
+                var heading=headingFirst
+                transition=CombatRespawn556.apply(
+                    hit,ship:&ship,heading:&heading,
+                    rocks:&rocks,shots:&shotsState) { _ in
+                        seed=seed &* 1664525 &+ 1013904223
+                        return Float(seed & 0x00FFFFFF)/Float(0x01000000)*2*Float.pi
+                    }
+                encounter.first=ship
+                headingFirst=heading
+            } else if var ship=encounter.second {
+                var heading=headingSecond
+                transition=CombatRespawn556.apply(
+                    hit,ship:&ship,heading:&heading,
+                    rocks:&rocks,shots:&shotsState) { _ in
+                        seed=seed &* 1664525 &+ 1013904223
+                        return Float(seed & 0x00FFFFFF)/Float(0x01000000)*2*Float.pi
+                    }
+                encounter.second=ship
+                headingSecond=heading
+            }
+            scatterSeed=seed
+            encounter.rocks=rocks
+            shots=shotsState
+            if transition == .none {transition=nil}
+        }
+        // Windows Gameplay65.FailRescue65 repositions player 2 at +85
+        // after applying a single Damage() to player 1 when BOTH are down.
+        if first && second, var partner=encounter.second {
+            partner.position=Sphere67.offset(encounter.first.position,
+                                             by:Vec2(x:85,y:0))
+            partner.velocity=Vec2(x:0,y:0)
+            encounter.second=partner
+            encounter.secondSurvival.invincible=3
+        }
+        return (tagged,transition)
+    }
+
     struct Result {
         let contacts:[CombatSolidEvent68]
         let hitOutcomes:[CombatVerifiedHit556.TeamOutcome]
         let damageTransitions:[CombatRespawn556.Action]
         let rescueEvent:CombatRescue65.Event
+        let rescueDamageOutcome:CombatVerifiedHit556.TeamOutcome?
         let requiresRescueDamageResolution:Bool
         let pickupsTrackingSecond:Int
     }
@@ -53,9 +142,26 @@ struct CombatVerifiedEncounter556 {
                        talentFirst:CombatVerifiedHit556.GuardResult = .unverified,
                        talentSecond:CombatVerifiedHit556.GuardResult = .unverified) -> Result {
         let noRescue:CombatRescue65.Event = .none
+        // A previous unresolved FailRescue65 must be applied or explicitly
+        // verified before stepping more contact physics. Otherwise the
+        // player could receive an unrelated hit while rescue-damage is
+        // pending, unlike the synchronous original C# Damage() call.
+        if pendingRescueFailure != nil {
+            let resolution=resolvePendingRescueDamage(
+                developerInfinite:developerInfinite,
+                guardianFirst:guardianFirst,guardianSecond:guardianSecond,
+                talentFirst:talentFirst,talentSecond:talentSecond)
+            return Result(contacts:[],hitOutcomes:[],
+                          damageTransitions:resolution.transition.map { [$0] } ?? [],
+                          rescueEvent:noRescue,
+                          rescueDamageOutcome:resolution.outcome,
+                          requiresRescueDamageResolution:pendingRescueFailure != nil,
+                          pickupsTrackingSecond:0)
+        }
         guard dt>0 else {
             return Result(contacts:[],hitOutcomes:[],damageTransitions:[],
                           rescueEvent:noRescue,
+                          rescueDamageOutcome:nil,
                           requiresRescueDamageResolution:pendingRescueFailure != nil,
                           pickupsTrackingSecond:0)
         }
@@ -141,8 +247,14 @@ struct CombatVerifiedEncounter556 {
         encounter.second=second
         encounter.firstSurvival=survivalFirst
         encounter.secondSurvival=survivalSecond
+        let resolution=resolvePendingRescueDamage(
+            developerInfinite:developerInfinite,
+            guardianFirst:guardianFirst,guardianSecond:guardianSecond,
+            talentFirst:talentFirst,talentSecond:talentSecond)
+        if let action=resolution.transition { transitions.append(action) }
         return Result(contacts:frame.contacts,hitOutcomes:hit,
                       damageTransitions:transitions,rescueEvent:rescueEvent,
+                      rescueDamageOutcome:resolution.outcome,
                       requiresRescueDamageResolution:pendingRescueFailure != nil,
                       pickupsTrackingSecond:frame.pickupsTrackingSecond)
     }
