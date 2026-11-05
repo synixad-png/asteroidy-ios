@@ -28,6 +28,37 @@ import Foundation
         near(SphereProjection556.horizontalFocal(aspect:4/3),
              1.5)
 
+        // Original GpuIntro41.cs:455 not only fixes FOV; it fixes
+        // near=.4 and far=1600 in the ORIGINAL world coordinate frame.
+        // The iOS model/eye uses outer-radius-normalized coordinates.
+        // Check the two boundaries independently of the renderer's
+        // depth matrix and protect the separate old flat camera.
+        near(SphereProjection556.sourceNear,0.4)
+        near(SphereProjection556.sourceFar,1600)
+        let sourceRadius: Float = 100*1.4419674
+        let sphereClip=SphereProjection556.clipPlanes(spherical:true)
+        near(sphereClip.near,0.4/sourceRadius,tolerance:0.000001)
+        near(sphereClip.far,1600/sourceRadius,tolerance:0.00001)
+        near(SphereProjection556.normalizedNear,
+             sphereClip.near,tolerance:0.000001)
+        near(SphereProjection556.normalizedFar,
+             sphereClip.far,tolerance:0.00001)
+        let flatClip=SphereProjection556.clipPlanes(spherical:false)
+        near(flatClip.near,0.1)
+        near(flatClip.far,20)
+        precondition(sphereClip.near>0 && sphereClip.far>sphereClip.near)
+        // Metal perspective uses z=A*zView+B, w=-zView.
+        // Source near must map to NDC z=0, source far to NDC z=1.
+        func depthNDC(_ distance:Float,_ clip:(near:Float,far:Float))->Float {
+            let a=clip.far/(clip.near-clip.far)
+            let b=clip.near*clip.far/(clip.near-clip.far)
+            return (a * -distance + b) / distance
+        }
+        near(depthNDC(sphereClip.near,sphereClip),0,tolerance:0.00001)
+        near(depthNDC(sphereClip.far,sphereClip),1,tolerance:0.00001)
+        near(depthNDC(flatClip.near,flatClip),0,tolerance:0.00001)
+        near(depthNDC(flatClip.far,flatClip),1,tolerance:0.00001)
+
         // Direct original Orbit50.cs:32 column-major matrix at the
         // equator, longitude zero; unlike self-derived assertions this
         // explicitly catches a transpose of the Metal uniform layout.
