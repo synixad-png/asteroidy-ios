@@ -67,7 +67,7 @@ ck('drawMesh(shipMesh,craft)' in metal and
 ck('vertexCount:sphereSkyMesh.count)' in metal and
    'encoder.setRenderPipelineState(skyPointPipeline)' in metal,
    'Original deep-space stars missing')
-ck('if input.introPreview41 {\n                // No sandbox simulation' in metal,
+ck('if input.introPreview41 {\n                // Source cinematic must not run either test simulation.' in metal,
    'Cinematic is incorrectly advancing training gameplay')
 ck('return\n        }\n        if input.planetPreview {' in metal,
    'Cinematic draw is not separate from diagnostic planet mode')
