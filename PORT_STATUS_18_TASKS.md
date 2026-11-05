@@ -166,6 +166,12 @@ Za konkretną, wykonaną i przetestowaną geometrię indywidualnych skał postę
 
 **Nadal pozostało:** natywna kompilacja Xcode/Metal na Apple, wierny dobór i dopasowanie geometrii/skali/tekstur statku i pozostałych światów z oryginału, pomiary wydajności GPU oraz testy interaktywne na iPhonie i iPadzie. Dla nowszych map nie udawać zgodności samej Boreas. Nowe IPA nie było budowane, a poprzedni artefakt iPhone-only nie zawiera najnowszej sceny.
 
+## 05.11.2026 — testy i uporządkowanie kompilacji Apple, bez nowego IPA
+
+Po zamknięciu implementacji atmosfery potwierdzono pełny `source-camera-linux` **SUCCESS** w [GitHub Actions 42105841484](https://github.com/synixad-png/asteroidy-ios/actions/runs/42105841484) oraz `original-assets` **SUCCESS** w [42105503401](https://github.com/synixad-png/asteroidy-ios/actions/runs/42105503401); oba testują aktualną scenę orbitalną i mają źródłowe kontrakty `IntroAtmosphere47`. Poprzednio każdy commit weryfikacji `verify-metal-camera.yml` z `cancel-in-progress=true` anulował oczekujący w tym samym workflow job macOS. Oddzielono automatyczne source-only testy Linux od ręcznego Apple job, zachowując oryginalny `workflow_dispatch`. Aby realnie sprawdzić najnowszą źródłową scenę na kompilatorze Apple bez generowania IPA, uruchomiono jednorazowy niezależny workflow [42105890080](https://github.com/synixad-png/asteroidy-ios/actions/runs/42105890080) dla `iPhone+iPad ARM64`, wyłącznie Swift/Metal. Ten job **nadal był queued** podczas ostatniego odczytu. Nie deklarować PASS Xcode, gotowego IPA ani testu na Apple GPU.
+
+Stała lista 18 zadań i ich procenty bez zmian: zadanie 2 **78%**, łączny historyczny postęp **27%, pozostało 73%**. Następnie: wynik trwałego joba Xcode, audyt geometrii/tekstur/światła oryginalnego statku GLB z osobnym eksportem `Tools/export_vanguard.py` (ta konwersja nie jest wiernością materiałów PBR), sprawdzenie obrazów fizycznych urządzeń, a potem dalszy brakujący renderer bez przechodzenia do zadania 3 przed domknięciem 2. Nie generować IPA bez polecenia użytkownika.
+
 ## Kolejność dalszej pracy
 
 1. **Zadanie 7 — zamknięte implementacyjnie (100%)**, zachować wszystkie zweryfikowane mechanizmy i regresje.
