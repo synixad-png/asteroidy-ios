@@ -671,6 +671,50 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         ))
         return (view,SIMD3(b.eye.x,b.eye.y,b.eye.z))
     }
+    // Windows GpuIntro41.DrawPlanetSolid -> DrawReplacedPlanet463(time,true):
+    // the original Boreas glTF morph plays in BOTH cinematic and combat.
+    // The ring and dynamic-range upload are the existing, proven mechanism.
+    // Only the timeline source differs (IntroTime vs planetAnimationTime).
+    private func uploadBoreasMorphIfNeeded(seconds: Double) {
+        guard seconds.isFinite, seconds >= 0 else { return }
+        guard lastPlanetMorphUpload < 0 ||
+              seconds < lastPlanetMorphUpload ||
+              seconds - lastPlanetMorphUpload >= 1.0/30.0
+        else { return }
+        guard let slot = planetBufferSlots.reserveWrite() else {
+            telemetry.noteUpload(success: false)
+            return
+        }
+        let morphStarted = ProcessInfo.processInfo.systemUptime
+        planetAnimator.updateVertices(seconds: seconds, into: &planetMorphScratch)
+        telemetry.record(.morphCPU,
+            seconds: ProcessInfo.processInfo.systemUptime - morphStarted)
+        let range = planetAnimator.dynamicVertexRange
+        let strideBytes = MemoryLayout<AssetMesh.Vertex>.stride
+        let startByte = range.lowerBound * strideBytes
+        let dynamicBytes = range.count * strideBytes
+        let target = planetVertexBuffers[slot]
+        guard startByte <= target.length &&
+              dynamicBytes <= target.length - startByte else {
+            telemetry.noteUpload(success: false)
+            planetBufferSlots.cancelWrite(slot)
+            return
+        }
+        // Preserve immutable source vertices and the GPU in-flight lifetime.
+        let copyStarted = ProcessInfo.processInfo.systemUptime
+        planetMorphScratch.withUnsafeBytes { bytes in
+            if let p = bytes.baseAddress {
+                memcpy(target.contents().advanced(by:startByte),
+                       p.advanced(by:startByte),dynamicBytes)
+            }
+        }
+        telemetry.record(.uploadCPU,
+            seconds: ProcessInfo.processInfo.systemUptime - copyStarted)
+        telemetry.noteUpload(success: true)
+        planetBufferSlots.publish(slot)
+        lastPlanetMorphUpload = seconds
+    }
+
     private static func introView41(_ time:Float)
         -> (view: simd_float4x4, eye: SIMD3<Float>) {
         let f=IntroOrbit41.frame(time)
@@ -691,7 +735,12 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         // A bounded catch-up prevents an unbounded simulation spiral after resume.
         let elapsed = min(0.25, max(0, now - lastTime))
         lastTime = now
-        if input.introPreview41 && !wasIntroPreview41 {introTime41=0}
+        if input.introPreview41 != wasIntroPreview41 {
+            // Different source clocks: always refresh the first GLB
+            // morph frame when switching cinematic <-> Boreas combat.
+            lastPlanetMorphUpload = -1
+            if input.introPreview41 {introTime41=0}
+        }
         wasIntroPreview41=input.introPreview41
         if input.introPreview41 {
             // The unfinished port replays, rather than invents an
@@ -1066,6 +1115,10 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 Self.rotateXDegrees(-18) *
                 Self.rotateYDegrees(IntroOrbit41.planetRotationDegrees(
                     level:1,time:introTime41))
+            // IntroScene41 sets weatherTime65=time before DrawPlanetSolid.
+            // The real GLB morph was previously frozen in this preview.
+            // On wrap (16 -> 0) the upload scheduler detects the rewind.
+            uploadBoreasMorphIfNeeded(seconds:Double(introTime41))
             // Reuse the actual source Boreas GLB converted mesh and
             // the existing safe triple-buffer lifetime management.
             let slot=planetBufferSlots.retainCurrent()
@@ -1259,37 +1312,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             encoder.setRenderPipelineState(pipeline)
             // Triple-buffered morph uploads. Never write into a buffer referenced by
             // an outstanding GPU command, and never allocate a new MTLBuffer per morph.
-            if lastPlanetMorphUpload < 0 || planetAnimationTime - lastPlanetMorphUpload >= 1.0/30.0 {
-                if let slot = planetBufferSlots.reserveWrite() {
-                    let morphStarted = ProcessInfo.processInfo.systemUptime
-                    planetAnimator.updateVertices(seconds: planetAnimationTime, into: &planetMorphScratch)
-                    telemetry.record(.morphCPU, seconds: ProcessInfo.processInfo.systemUptime - morphStarted)
-                    let range = planetAnimator.dynamicVertexRange
-                    let strideBytes = MemoryLayout<AssetMesh.Vertex>.stride
-                    let startByte = range.lowerBound * strideBytes
-                    let dynamicBytes = range.count * strideBytes
-                    let target = planetVertexBuffers[slot]
-                    if startByte <= target.length && dynamicBytes <= target.length - startByte {
-                        // Every ring buffer already contains identical immutable vertices.
-                        // Upload only the morphed tail; do not copy the 4,320 static vertices.
-                        let copyStarted = ProcessInfo.processInfo.systemUptime
-                        planetMorphScratch.withUnsafeBytes { bytes in
-                            if let p = bytes.baseAddress {
-                                memcpy(target.contents().advanced(by:startByte), p.advanced(by:startByte), dynamicBytes)
-                            }
-                        }
-                        telemetry.record(.uploadCPU, seconds: ProcessInfo.processInfo.systemUptime - copyStarted)
-                        telemetry.noteUpload(success: true)
-                        planetBufferSlots.publish(slot)
-                        lastPlanetMorphUpload = planetAnimationTime
-                    } else {
-                        telemetry.noteUpload(success: false)
-                        planetBufferSlots.cancelWrite(slot)
-                    }
-                } else {
-                    telemetry.noteUpload(success: false)
-                }
-            }
+            // Same source-mesh morph update and ring buffering as before,
+            // now also shared with the original cinematic clock.
+            uploadBoreasMorphIfNeeded(seconds:planetAnimationTime)
             let slot = planetBufferSlots.retainCurrent()
             command.addCompletedHandler { [planetBufferSlots, telemetry] finished in
                 planetBufferSlots.release(slot)
