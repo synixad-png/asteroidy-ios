@@ -1,0 +1,24 @@
+ASTEROIDY iOS — v12 GLTF CLEARCOAT WORK — 2026-11-05
+
+BAZA: niezależna kopia v11; wejściowe źródło autentycznej planety: ZIP ASTEROIDY v556.
+
+ZREALIZOWANE:
+1. Tools/audit_gltf.py: walidator struktury GLB 2.0 oraz audyt liczby tekstur, obrazów, UV, animacji, morph target i clearcoat.
+2. Potwierdzono w boreas_ferrofluid.glb: 49 node, 3 mesh i 3 primitive, 0 obrazów, 0 tekstur, 0 primitive z TEXCOORD_0, 1 primitive z 6 morph target, 1 animacja oraz 2 materiały z KHR_materials_clearcoat.
+3. Tools/export_boreas.py: AS3D v3 (ciągle 48 bajtów / wierzchołek) zapisuje metallic, roughness oraz autentyczne clearcoat factor/roughness, bez zgadywania. Metaliczne fragmenty: 27035 wierzchołków z (1.0,0.058), 4320 z (0.96,0.043); clearcoat = (0.86,0.048).
+4. AssetMesh.swift: kompatybilny parser AS3D v1/v2/v3 ze ścisłą walidacją pól.
+5. Ship.metal: uproszczona, osobna warstwa odbicia clearcoat w kierunkowym shaderze GGX (niepełny glTF clearcoat i bez IBL).
+6. PBRFactorsTests.swift i GitHub Actions: kontrola v3, danych clearcoat i wstecznej zgodności ze starszym statkiem.
+
+ZWERYFIKOWANO LOKALNIE (Swift 6.2.1 Linux):
+PASS AssetMeshTests, Boreas556Tests, PBRFactorsTests, LightingNormalsTests, GameCoreTests, ContinuousCollisionTests, FixedStepClockTests, FlightDynamics556Tests, CombatCollision556Tests, Sphere67Tests, PlanetPreview556Tests.
+Model Boreas 31355 wierzchołków i 61554 trójkąty; Vanguard 50026 wierzchołków i 64809 trójkątów.
+
+OGRANICZENIA:
+- Brak oryginalnych tekstur UV w tym konkretnym Boreas GLB. Nie wygenerowano fikcyjnych map.
+- Materiały bez IBL, normal maps; morph targets i animacja nadal nieobsługiwane w mobilnym rendererze.
+- Metal shader NIE SKOMPILOWANY tutaj; brak macOS/Xcode i testu GPU na iPhone/iPad; nie wiadomo, czy wizualny efekt jest prawidłowy.
+- Scena iOS jest diagnostyczna, a mechanika gry nie odpowiada jeszcze pełnej ASTEROIDY v556.
+- Windows/SteamOS i źródło ZIP v556 są nietknięte. Nie utworzono IPA ani paczki wydaniowej.
+
+CO DALEJ: przed pracami nad teksturami wybrać z v556 model posiadający prawdziwe obrazy/UV; dodać bezpieczną obsługę samplerów i map, potem przenieść morph targets Boreas oraz zweryfikować shader na rzeczywistym Metal GPU.

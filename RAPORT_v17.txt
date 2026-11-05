@@ -1,0 +1,23 @@
+ASTEROIDY iOS v17 — ROBOCZY RAPORT TECHNICZNY
+Data: 2026-11-05
+Baza: ASTEROIDY iOS v16 (źródła desktopowe ASTEROIDY v556 tylko do odczytu)
+
+WPROWADZONE ZMIANY
+1. BoreasMorphRenderer556.updateVertices(seconds:into:) wykonuje deformację i przelicza normalne w ponownie wykorzystywanej tablicy. Nie inicjuje nowej tablicy pełnego modelu przy każdej aktualizacji.
+2. makeScratchVertices() inicjuje tę tablicę jednokrotnie. animatedVertices(seconds:) pozostaje jako zgodny wstecznie interfejs dla istniejących testów.
+3. dynamicVertexRange określa ciągły segment geometrii animowanej.
+4. MetalRenderer przechowuje planetMorphScratch i kopiuje do wolnego bufora GPU tylko ten segment, pozostawiając bez zmian statyczne 4320 wierzchołków.
+5. Potrójne buforowanie i ochrona przed nadpisaniem danych GPU z v16 pozostają zachowane.
+
+WERYFIKACJA
+- swiftc -frontend -parse wszystkie pliki aplikacji i testów: PASS.
+- Uruchomiony test Swift/Linux kompilowany z optymalizacją -O: PASS.
+  Porównanie 10 punktów czasowych (w tym po przewinięciu cyklu): identyczne pozycje i normalne wszystkich 31355 wierzchołków.
+- Zgodność zakresu 4320..<31355 z wiązaniem modelu: PASS.
+- Rozmiar kopiowanego segmentu: 1730240 bajtów wobec 2006720 bajtów całego modelu, mniej o 13.78% (model wyliczeniowy dla stride=64 B).
+
+OGRANICZENIA
+- Nie zmierzono rzeczywistej zmiany FPS ani czasu uploadu na urządzeniu Apple.
+- MetalRenderer wymaga natywnej kompilacji Xcode i testów GPU; swiftc -parse nie jest weryfikacją typu ani działania Metal.
+- Brak wdrożenia transformacji animowanych w innych GLB; nie ma jeszcze pełnego portu gry.
+- Nie publikowano ZIP ani IPA i nie zmieniano źródeł Windows / SteamOS.

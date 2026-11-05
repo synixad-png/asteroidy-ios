@@ -1,0 +1,26 @@
+ASTEROIDY iOS — v4 WORK, 2026-11-05
+BAZA: wyłącznie ASTEROIDY iOS v3 + oryginalne źródła PC v556 jako materiał referencyjny.
+BRAK ZMIAN W: ASTEROIDY Windows, ASTEROIDY SteamOS, inne projekty i repozytoria.
+
+ZMIANY IMPLEMENTACYJNE
+- stały takt logiki 120 Hz niezależny od odświeżania ekranu (60/120 Hz);
+- ograniczenie nadrabiania opóźnionych klatek do 8 aktualizacji;
+- detekcja ciągła kolizji pocisk/asteroida i statek/asteroida;
+- uwzględnienie przesuwania celu i okresowych granic areny;
+- test odtwarzalności 12 000 kroków symulacji;
+- test porównujący identyczną symulację przy 60 Hz i 120 Hz.
+
+TESTY LOKALNE (SWIFT NA LINUX)
+PASS — GameCoreTests: 3120 kroków
+PASS — ContinuousCollisionTests: trafienia szybkie, seam, cele w ruchu, brak fałszywych trafień, 12000 kroków
+PASS — FixedStepClockTests: deterministyczna zgodność 60/120 Hz, ochrona przed długim zawieszeniem i NaN
+PASS — AssetMeshTests: 50026 wierzchołków, 64809 trójkątów, uszkodzone indeksy i ucięty plik
+PASS — lokalny parser Swift dla plików aplikacji (bez frameworków iOS)
+
+NIE WYKONANO
+- kompilacji / linkowania Xcode na macOS;
+- testów GPU Metal, testów na iPhone 15 Pro Max oraz iPad Pro M2;
+- integracji rzeczywistej fizyki i walki ASTEROIDY v556; logika pozostaje prototypowa;
+- przygotowania i podpisania IPA.
+
+STATUS: wersja robocza bez wydania archiwum na życzenie użytkownika.

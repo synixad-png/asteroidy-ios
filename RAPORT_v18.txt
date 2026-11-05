@@ -1,0 +1,25 @@
+ASTEROIDY iOS v18 — roboczy raport techniczny, 2026-11-05
+Baza: ASTEROIDY_iOS_v17_MORPH_UPLOAD_WORK; referencja: desktopowa ASTEROIDY v556 (tylko odczyt).
+
+ZMIANY
+- Nowy RenderTelemetry.swift, zbieranie ograniczone do 240 ostatnich próbek na etap.
+- Osobne pomiary morphCPU, uploadCPU i gpuExecution (jeżeli MTLCommandBuffer dostarcza GPU timestamps).
+- Licznik udanych i pominiętych uploadów animowanej geometrii.
+- Bezpieczny wątkowo odczyt wyników, średnia, P95, maksimum.
+- Opcjonalny log co 5 sekund w trybie planetarnym, jeśli ASTEROIDY_IOS_PROFILE=1.
+- RenderTelemetryTests.swift: test zakresu, niefinitych wartości, P95 i 8000 współbieżnych zapisów.
+
+TESTY FAKTYCZNIE WYKONANE
+- swiftc RenderTelemetry.swift + RenderTelemetryTests.swift i uruchomienie: PASS.
+- swiftc -frontend -parse wszystkie źródła Swift aplikacji i testów: PASS.
+- python Tests/test_morph_export.py <oryginalne źródła v556.zip> Assets/Boreas556.asmo: PASS.
+- python Tests/test_binding_export.py: PASS.
+
+OGRANICZENIA I ZASTRZEŻENIA
+- System Linux nie ma Xcode, Metal ani SDK iOS: NIE wykonano kompilacji aplikacji i uruchomienia GPU.
+- Przeprowadzono wyłącznie parserowe sprawdzenie pliku MetalRenderer.swift; brak walidacji typów z frameworkiem MetalKit.
+- Metryka GPU dotyczy trwania całego command buffera, nie samego shadera morph lub jednej operacji draw.
+- Nie dokonano jeszcze profilowania na rzeczywistym sprzęcie ani nie zmierzono FPS.
+- Nie uruchomiono zunifikowanego test runnera unittest: test_morph_export.py wymaga dwóch argumentów CLI; uruchomiono go poprawnie osobno.
+- Nie wdrażano jeszcze animowanych transformacji pozostałych węzłów glTF.
+- Nie publikowano ZIP/IPA i nie zmieniano Windows, SteamOS ani innych projektów.

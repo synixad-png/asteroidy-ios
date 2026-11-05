@@ -1,0 +1,21 @@
+ASTEROIDY iOS v14 — MORPH -> Metal, robocza gałąź, bez wydania/IPA.
+Baza: ASTEROIDY v556, katalog iOS v13. Komputerowe gałęzie Windows/SteamOS bez zmian.
+
+WYKONANO:
+1. Potwierdzono dokładne mapowanie glTF node0/mesh0 do ostatnich 27035 spośród 31355 wierzchołków AS3D Boreas.
+2. Wygenerowano BoreasMorphBinding556.json z walidacją kolejności pozycji po normalizacji sceny.
+3. Dodatkowy dekoder/adapter Swift BoreasMorphRenderer556 kontroluje zgodność danych i odrzuca niepasujące siatki.
+4. Deformacja CPU 6 morph targetów z LINEAR/loop 5s, przeliczenie normalnych animowanej siatki.
+5. W trybie planetarnym MetalRenderer aktualizuje bufor wierzchołków maksymalnie 30 razy na sekundę; gra nadal używa osobnego zegara fizyki 120Hz.
+6. Bufor indeksów jest współdzielony bez modyfikowania, natomiast nowy MTLBuffer wierzchołków jest tworzony przy aktualizacji, by uniknąć nadpisania danych rysowanych przez GPU.
+
+TESTY:
+PASS: Reprodukcja JSON binding z autentycznego GLB v556 i porównanie wszystkich pozycji węzła.
+PASS: Źródłowe 27035 pozycji, 6 targetów i 126 klatek = ASMO 1:1.
+PASS: swiftc -frontend -parse wszystkich plików Swift.
+PASS: uruchomiony kod Swift (Linux), 31355 wierzchołków, 27035 deformowanych i identyczne wyniki po pełnym cyklu 5s.
+BRAK: kompilacji Xcode/iOS, uruchomienia shaderów na GPU Metal, potwierdzenia wyglądu animacji i zmierzonego FPS.
+BRAK: morph normal glTF i niezależnych animacji TRS pozostałych obiektów Boreas; obecnie normalne siatki są przeliczane CPU.
+
+UWAGA O ZAKRESIE: jest to integracja danych prawdziwej animacji glTF z kodem renderującym Metal, nie dowód, że gra jest uruchamialna na iPhonie. Dynamiczne bufory i przeliczanie normalnych mogą wymagać optymalizacji wydajnościowej po realnym teście Apple GPU.
+Pliki robocze pozostają w /mnt/data/ASTEROIDY_iOS_v14_MORPH_METAL_WORK. Nie utworzono ZIP/IPA.

@@ -1,0 +1,20 @@
+ASTEROIDY iOS v15 — prace robocze, bez wydania
+Baza: ASTEROIDY iOS v14, referencja gry desktopowej v556.
+Optymalizacja: przy każdej deformacji Boreas zmieniają się tylko normalne
+27 035 wierzchołków w obrębie 54 066 trójkątów morph. Statyczna część
+4 320 wierzchołków / 7 488 trójkątów zachowuje wcześniej wyliczone normalne.
+Walidacja odrzuca modele, w których statyczne i animowane trójkąty
+współdzielą wierzchołki, aby nie dopuścić do błędnego oświetlenia.
+Dodano test porównujący pełne przeliczenie normalnych ze zoptymalizowanym
+wynikiem dla sześciu chwil cyklu animacji.
+NIE wykonano testu na rzeczywistym GPU Apple, kompilacji Xcode ani IPA.
+Nie zmieniono źródeł Windows i SteamOS. Nie publikowano paczki ZIP.
+WERYFIKACJA 05.11.2026:
+- swiftc -parse dla zmienionego źródła i testu: PASS.
+- rzeczywiste wczytanie Boreas556.as3d i Boreas556.asmo oraz JSON: PASS.
+- normalne zoptymalizowane vs pełna metoda w 6 punktach cyklu:
+  t=0.0,0.125,1.25,2.5,4.99,5.0: max różnica 0.0, PASS.
+- orientacyjny pomiar Linux/swiftc -O: deformacja+normalne ~1.36 ms/klatkę;
+  pełne normalne statycznej próbki ~0.74 ms/klatkę. Są to
+  RÓŻNE obciążenia, więc nie jest to dowód procentowego przyspieszenia.
+- iOS/Xcode/GPU Metal: NIE TESTOWANO.

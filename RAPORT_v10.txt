@@ -1,0 +1,9 @@
+ASTEROIDY iOS v10 — ROBOCZY, BEZ WYDANIA
+Baza iOS: v9; referencja Windows/SteamOS: v556 (oryginały nietknięte).
+Zmieniono: AssetMesh.swift, Ship.metal, MetalRenderer.swift, PlanetPreview556.swift.
+Dodano: Tests/LightingNormalsTests.swift.
+Cel: normalne powierzchni i podstawowe światło kierunkowe w Metal.
+Nie zaimplementowano pełnych materiałów glTF PBR/tekstur.
+PASS (Linux Swift): normalne, Vanguard, Boreas, fizyka i walka prototypowa, sfera/planeta, 60/120 Hz.
+NIE WYKONANO: Xcode, Metal GPU, testy iPhone/iPad, IPA.
+Brak paczki do pobrania zgodnie z życzeniem użytkownika.

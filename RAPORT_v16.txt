@@ -1,0 +1,13 @@
+ASTEROIDY iOS v16 — RAPORT ROBOCZY, 05.11.2026
+Baza: v15; ASTEROIDY v556 — wyłącznie referencja.
+ZMIANY: MorphBufferSlots.swift — blokada NSLock, rezerwacja wolnego
+bufora, aktualny bufor i liczba użyć przez niezakończone polecenia GPU.
+MetalRenderer.swift — stała pula 3 buforów zamiast alokacji MTLBuffer
+przy każdej animacji; kopiowanie danych tylko do wolnego bufora;
+zwalnianie referencji po zakończeniu polecenia Metal.
+Kontrola rozmiaru danych przed memcpy; przy braku slotu nie blokuje CPU.
+TESTY: kompilacja i wykonanie testu stanów slotów Swift/Linux PASS;
+parse wszystkich plików Swift PASS.
+NIEWYKONANE: test Xcode, uruchomienie GPU Metal, FPS na iPhone/iPad,
+przeniesienie animacji transformacji GLB.
+Brak paczki wydaniowej / IPA; desktopowe Windows/SteamOS niezmienione.

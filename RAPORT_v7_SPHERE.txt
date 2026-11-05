@@ -1,0 +1,9 @@
+ASTEROIDY iOS v7 WORK — PORT SPHERE67
+Źródło: Asteroidy v556, Windows/src/SphereCombat67.cs
+Zmiana: Sphere67.swift + Tests/Sphere67Tests.swift; brak zmian źródeł Windows/SteamOS.
+Zachowano dotychczasowy GameCore i MetalRenderer.
+PASS: testy modułu Sphere67 + 12000 kroków lotu sferycznego.
+PASS: regresje GameCore/kolizje/zegar/fizyka/mesh Swift Linux.
+NIEWYKONANE: macOS Xcode, GPU Metal, urządzenia iOS.
+BRAK: pełnego podłączenia sfery do renderera i systemu misji, oryginalnych parametrów masy/uzbrojenia.
+Nie publikowano ZIP ani IPA zgodnie z dyspozycją użytkownika.

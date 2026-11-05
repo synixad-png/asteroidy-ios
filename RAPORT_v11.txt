@@ -1,0 +1,5 @@
+ASTEROIDY iOS v11 WORK — 2026-11-05
+Zrealizowano: AS3D v2 metallic/roughness z oryginalnego Boreas GLB v556; zgodnosc AS3D v1; wstepny shader GGX Metal; testy PBRFactorsTests.swift.
+PASS: walidacja Vanguard i Boreas, format v1/v2, odrzucanie blednych metadanych, regresje mechaniki i geometrii Sphere67.
+NIE WYKONANO: kompilacji iOS/Xcode, testu shadera Metal na GPU, testu na iPhonie/iPadzie.
+Brak ZIP/IPA; brak zmian Windows/SteamOS.

@@ -1,0 +1,22 @@
+ASTEROIDY iOS — RAPORT IZOLACJI I AUDYT BAZY v556
+Baza: Asteroidy_v556_ZRODLA_Windows_SteamOS_BEZ_EXE_BEZ_HANGARU.zip
+Rozmiar: 149872818 bajtów
+SHA256: d0f6b83659d080fcd9084a0d1618ef53feb29c51aeea476feb90457030787d08
+Kontrola ZIP CRC: PASS (testzip bez błędów)
+Liczba pozycji: 1712
+Liczba plików C#: 757
+Windows/src: 313
+SteamOS/src: 286
+
+Fakty potwierdzone w kodzie:
+- Windows/src/Program.cs: System.Windows.Forms oraz System.Drawing.
+- Windows/src/WindowsGl.cs: Win32 P/Invoke user32.dll, gdi32.dll i opengl32.dll.
+- Windows/src/Game.cs: logika rozgrywki i struktury stanu w C#.
+- Windows/build.bat: .NET Framework 4 kompilowany csc.exe do EXE.
+- Raport v556: optymalizacje H55 i istniejący renderer OpenGL.
+- Hangar GLB jest wyłączony z tej paczki (BEZ_HANGARU).
+
+Decyzja: natywna aplikacja SwiftUI + Metal jako osobna platforma demonstracyjna.
+Nie twierdzimy, że logika v556 została już przeniesiona.
+Zachowane: brak zmian w oryginale, oddzielny katalog, brak importu zmian z innych wersji.
+Test kompilacji dla iOS: NIE WYKONANO (brak Xcode/macOS w bieżącym środowisku).

@@ -1,0 +1,64 @@
+name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
+on:
+  workflow_dispatch:
+
+jobs:
+  compile-device:
+    if: ${{ github.event.repository.private == false }}
+    runs-on: macos-15
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record build environment
+        run: |
+          mkdir -p reports
+          { sw_vers; xcodebuild -version; swift --version; echo "Commit $GITHUB_SHA"; } | tee reports/environment.txt
+      - name: Verify gameplay core (all required dependencies)
+        run: |
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift Tests/GameCoreTests.swift -o /tmp/ios-gamecore-tests
+          /tmp/ios-gamecore-tests
+      - name: Verify telemetry module
+        run: |
+          swiftc ASTEROIDYiOS/RenderTelemetry.swift Tests/RenderTelemetryTests.swift -o /tmp/ios-telemetry-tests
+          /tmp/ios-telemetry-tests
+      - name: Verify original 3D Vanguard resource
+        run: |
+          swiftc ASTEROIDYiOS/AssetMesh.swift Tests/AssetMeshTests.swift -o /tmp/ios-asset-tests
+          /tmp/ios-asset-tests ASTEROIDYiOS/Assets/Vanguard556.as3d
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate native Xcode project
+        run: xcodegen generate
+      - name: Compile iPhone/iPad device build (unsigned)
+        run: |
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath build build
+      - name: Package unsigned IPA for Sideloadly signing
+        run: |
+          set -euo pipefail
+          APP='build/Build/Products/Release-iphoneos/ASTEROIDY iOS.app'
+          test -d "$APP"
+          test -f "$APP/Info.plist"
+          mkdir -p distribution/Payload
+          cp -R "$APP" distribution/Payload/
+          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_UNSIGNED.ipa Payload)
+          unzip -t ASTEROIDY_iOS_UNSIGNED.ipa | tail -1
+          python3 Tools/verify_ipa.py ASTEROIDY_iOS_UNSIGNED.ipa | tee reports/ipa-verification.txt
+          shasum -a 256 ASTEROIDY_iOS_UNSIGNED.ipa > reports/SHA256SUMS.txt
+      - name: Upload unsigned device IPA (not signed)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-iOS-device-unsigned-ipa
+          path: |
+            ASTEROIDY_iOS_UNSIGNED.ipa
+            reports/
+          if-no-files-found: error
+          retention-days: 3

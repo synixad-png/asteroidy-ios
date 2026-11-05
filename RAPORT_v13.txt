@@ -1,0 +1,8 @@
+ASTEROIDY iOS v13 — 2026-11-05
+Status: KOD ROBOCZY, BEZ WYDANIA, BEZ IPA.
+Zmiany: importer autentycznych morph target POSITION v556 Boreas, osobny ASMO v1, Swift decoder/LINEAR loop, testy.
+Źródło: oryginalne Shared/assets/planets/boreas_ferrofluid.glb z v556.
+Parametry: 27035 wierzchołków bazowych, 6 morph targetów, 126 klatek kluczowych, 5 sekund.
+PASS: eksport źródło→ASMO 1:1 dla danych po znormalizowaniu glTF BYTE; Swift jednostkowe i regresyjne.
+BRAK: wizualnego podłączenia morph do Metal, morph NORMAL, animacji node TRS, testu Xcode/GPU.
+Izolacja: Windows/SteamOS bez modyfikacji; brak ZIP i IPA do pobrania.

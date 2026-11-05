@@ -1,0 +1,15 @@
+ASTEROIDY iOS v5/v6 WORK — audyt 2026-11-05
+Zrodlo: ASTEROIDY v556 (Biblioteka)
+Izolacja: kopia v4 WORK; nie modyfikowano Windows/SteamOS.
+Kod portowany/adaptowany: FlightDynamics298.DirectMotion298, DirectAttitude298; Physics68.SegmentHit68.
+Testy Swift Linux:
+- GameCoreTests: PASS (3120)
+- ContinuousCollisionTests: PASS (12000 krokow + seam)
+- FixedStepClockTests: PASS (60/120 Hz)
+- FlightDynamics556Tests: PASS (bezwladnosc, coasting, lag kadluba)
+- CombatCollision556Tests: PASS (czas trafienia, poruszajacy sie cel)
+- AssetMeshTests: PASS (50026 wierzcholkow, 64809 trojkatow)
+Kompilacja Xcode/iOS: NIE PRZEPROWADZONO
+Test urzadzenie / Metal GPU: NIE PRZEPROWADZONO
+Prawdziwa gra v556: NIE PRZENIESIONA W CALOSCI
+Wydanie ZIP/IPA: NIE PRZYGOTOWANO zgodnie z poleceniem uzytkownika.

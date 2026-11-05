@@ -1,41 +1,32 @@
-# ASTEROIDY iOS v18 — raport techniczny stanu wykonania
+# ASTEROIDY iOS v18 — przekazanie źródeł do kompilacji
 
 Data: 2026-11-05
-Status: ZABLOKOWANE — brak dostępnych źródeł v18. IPA nie powstało.
 
-## Repozytorium
+Status: źródła przygotowane w repozytorium; kompilacji Xcode i IPA nie wykonano.
 
-Utworzono https://github.com/synixad-png/asteroidy-ios jako publiczne (visibility=public potwierdzone przez API GitHub oraz oznaczenie Public w interfejsie). Gałąź main. Początkowy commit: e0a599f22f1f2097ad409d216a44c90dedb69eb6.
-Repozytorium zawiera dokumentację; nie zawiera źródeł aplikacji v18 ani workflow budującego aplikację.
+## Przesłany projekt
 
-## Poszukiwanie źródeł
+Repozytorium: https://github.com/synixad-png/asteroidy-ios, publiczne, gałąź `main`.
 
-Poszukiwany projekt: ASTEROIDY_iOS_v18_PROFILE_WORK.
-Sprawdzono bieżący katalog Work, dostępne katalogi /workspace (w tym pozostałe katalogi scratch) i /tmp, nazwy plików oraz katalogów. /mnt/data nie istnieje w tym środowisku. Nie odnaleziono poszukiwanego projektu ani archiwum iOS v18.
-W Bibliotece ChatGPT wykonano wyszukiwanie dokładnej nazwy, wariantów ASTEROIDY iOS v18, PROFILE_WORK oraz ASTEROIDY_iOS; sprawdzono również kompletny wykaz archiwów utworzonych 2026-11-05 (brak kolejnej strony).
-Znalezione archiwa iOS:
-- ASTEROIDY_iOS_v1_START.zip — 5821 B
-- ASTEROIDY_iOS_v2_METAL_GRA_TESTOWA.zip — 8348 B
-- ASTEROIDY_iOS_v3_METAL_VANGUARD_3D.zip — 1126766 B
-Nie odnaleziono v18. Wyszukiwanie wcześniejszego kontekstu nie dostarczyło lokalizacji ani identyfikatora pliku v18.
-Starszych archiwów nie użyto jako zamiennika. Nie utworzono projektu demonstracyjnego.
+Przeniesiono pełną zawartość `ASTEROIDY_iOS_v18_GITHUB_HANDOFF.zip`: 60 plików z katalogu `ASTEROIDY_iOS_v18_PROFILE_WORK`. Projekt znajduje się w korzeniu repozytorium. Zawiera 13 plików Swift aplikacji, shader Metal, cztery zasoby, testy, narzędzia, `project.yml` i `.github/workflows/build-ios.yml`.
 
-## Kompilacja i testy
+Kod gry, testy, narzędzia, konfigurację i zasoby zachowano bajt w bajt z paczki przekazania. Zaktualizowano README i instrukcję drugiego czatu, zastąpiono nieaktualny raport o braku źródeł. `SOURCES_SHA256SUMS.txt` dokumentuje sumy kontrolne wszystkich plików paczki poza dwiema zaktualizowanymi instrukcjami.
 
-- Audyt konfiguracji Xcode v18: niewykonany, brak źródeł.
-- GitHub Actions macOS / xcodebuild iphoneos: nie uruchomiono, brak źródeł.
-- Błędy kompilatora: brak logów; kompilacja nie została rozpoczęta.
-- Testy automatyczne aplikacji: niewykonane.
-- IPA / Payload / .app / Info.plist: brak paczki do sprawdzenia.
-- Mach-O arm64 i platforma iPhoneOS: nieweryfikowane.
-- Podpisywanie Sideloadly: nieweryfikowane.
-- Uruchomienie na fizycznym iPhonie: niewykonane.
-Nie pobrano artefaktu Actions, ponieważ żaden build v18 nie powstał. Nie ma podstaw do deklarowania działającej aplikacji.
+## Sprawdzenia przygotowania
 
-## Niezbędny warunek kontynuacji
+- Porównano kompletność i bajty skopiowanych plików ze wskazaną paczką ZIP.
+- Sprawdzono składnię YAML konfiguracji projektu i workflow.
+- Workflow ma wyłącznie `workflow_dispatch`; samo wgranie kodu nie uruchamia kompilacji.
+- Job wymaga publicznego repozytorium, standardowego `macos-15` i ma limit 45 minut.
+- Konfiguracja obejmuje iPhone i iPad, iOS 17.0, build urządzenia `iphoneos`, architekturę arm64 i wyłączone podpisywanie w poleceniu Xcode.
+- Zasoby Vanguard i Boreas są binarnymi plikami projektu, nie odsyłaczami ani plikami zastępczymi. Ich sumy znajdują się w wykazie SHA-256.
 
-Udostępnienie rzeczywistego katalogu ASTEROIDY_iOS_v18_PROFILE_WORK jako pełnego ZIP ze źródłami, zasobami i konfiguracją projektu (lub konkretnego dostępnego pliku Biblioteki / repozytorium zawierającego tę wersję). Po uzyskaniu źródeł należy sprawdzić pochodzenie wersji, wgrać je wyłącznie do asteroidy-ios, dodać public-only workflow na standardowym macOS, wykonać build dla fizycznych urządzeń iOS z wyłączonym podpisywaniem, pobrać IPA i przeprowadzić kontrole struktury, Info.plist i binariów.
+Są to sprawdzenia przygotowania i integralności. Nie dowodzą poprawnej kompilacji ani działania gry.
 
-## Zakres zmian i koszty
+## Dalszy etap
 
-W tej realizacji utworzono wyłącznie nowe publiczne repozytorium asteroidy-ios oraz niniejszy raport. Nie zmodyfikowano iphone-ipa-test ani projektów ASTEROIDY Windows/SteamOS. Nie uruchomiono płatnych usług, nie dokonano zakupu i nie uruchomiono żadnego joba macOS.
+Drugi czat może pobrać repozytorium i wykonać instrukcję `START_DRUGI_CZAT.md`: ręcznie uruchomić workflow, przeanalizować logi, naprawić ujawnione błędy, pobrać IPA i zweryfikować je za pomocą `Tools/verify_ipa.py`.
+
+W tym etapie nie uruchamiano workflow, Xcode ani testów Swift. Nie utworzono IPA, nie sprawdzono podpisywania Sideloadly ani działania na fizycznym urządzeniu. Historyczne raporty testów zachowano jako dokumentację wcześniejszych prac.
+
+Nie zmieniano `iphone-ipa-test` ani projektów Windows/SteamOS. Nie uruchamiano płatnych usług ani runnerów.

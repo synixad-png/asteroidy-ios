@@ -1,0 +1,8 @@
+ASTEROIDY iOS v3 | 2026-11-05
+BAZA REFERENCYJNA: Asteroidy_v556_ZRODLA_Windows_SteamOS_BEZ_EXE_BEZ_HANGARU.zip
+WERSJE PC: NIE ZMIENIONO.
+MODEL: Shared/assets/vanguard431/Vanguard_551_SOURCE.glb z v556.
+PO KONWERSJI: 50026 wierzcholkow, 64809 trojkatow; kolor uproszczony.
+STATUS: natywna scena 3D Metal, ale rozgrywka nadal demonstracyjna (nie port v556).
+TESTY: Swift GameCore 3120 krokow PASS; AS3D load i bledne indeksy/uciety plik PASS; Swift parse PASS.
+NIE WYKONANO: kompilacja iOS/Xcode, GPU Metal, instalacja IPA, iPhone/iPad, pomiary FPS.
