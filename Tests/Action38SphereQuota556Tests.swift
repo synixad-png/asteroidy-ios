@@ -32,6 +32,36 @@ import Foundation
         timed.tick(dt:1/120,playerPosition:player,playerRadius:0,detectContacts:false)
         precondition(timed.incomingRocksLeft==3 && !timed.sectorFinished,
                      "Wave objective must not apply Clear early-quota cancellation")
+        // The actual SwiftUI/Metal diagnostic selector deliberately offers
+        // only known source variants. Validate the original Gameplay65
+        // objective per level without unlocking any campaign mission.
+        for (level,expected) in [
+            (1,GameCore.TrainingObjective.clear),
+            (9,GameCore.TrainingObjective.waves),
+            (17,GameCore.TrainingObjective.waves),
+            (25,GameCore.TrainingObjective.clear)] {
+            let c=CombatBalance556(level:level,difficulty:.normal,spherical:true)!
+            var selectable=SphereSector556(balance:c)
+            precondition(selectable.objective == expected)
+            precondition(selectable.asteroids.count == c.sectorRockCount)
+            if level==25 {
+                precondition(selectable.isAmigaDemo &&
+                             selectable.incomingRocksLeft==0 &&
+                             !selectable.sectorFinished)
+            } else if expected == .waves {
+                precondition(selectable.incomingRocksLeft == 3 &&
+                             selectable.objectiveWave == 1)
+                for _ in 0..<1920 {
+                    _=selectable.tick(dt:1/120,
+                        playerPosition:player,
+                        playerRadius:0,detectContacts:false)
+                }
+                precondition(selectable.objectiveWave==2 &&
+                             selectable.incomingRocksLeft==1)
+            } else {
+                precondition(!selectable.isAmigaDemo)
+            }
+        }
         print("PASS: Action38 260px safe arrival, pair edges, unknown/enemy/zero verified status and timed-wave isolation")
     }
 }
