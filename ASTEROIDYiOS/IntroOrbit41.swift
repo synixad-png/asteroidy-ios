@@ -55,6 +55,19 @@ enum IntroOrbit41 {
         let follow=forward(t)*(-11)+up*4
         return ship(t)+orbit*(1-blend)+follow*blend
     }
+    // Windows/src/Intro41.cs:77–80 — craft orientation with local
+    // X=right, local Y=forward, local Z=up (the source 3D mesh convention).
+    static func craftOrientationColumns(_ time:Float)->[Float] {
+        let f=forward(time)
+        let r=V.cross(f,V(x:0,y:1,z:0)).normalized
+        let u=V.cross(r,f).normalized
+        return [
+            r.x,r.y,r.z,0,
+            f.x,f.y,f.z,0,
+            u.x,u.y,u.z,0,
+            0,0,0,1
+        ]
+    }
     struct Frame {
         let eye: V
         let right: V
