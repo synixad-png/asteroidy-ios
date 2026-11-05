@@ -17,6 +17,12 @@ Na wyraźne polecenie użytkownika uruchomiono **budowanie niepodpisanego IPA dl
 3. Rozpakuj ZIP i wybierz plik IPA w Sideloadly na Windows. **To IPA jest niepodpisane** — instalacja na iPhonie wymaga poprawnego podpisania przy użyciu odpowiedniej metody; sam ZIP nie instaluje gry.
 4. Jeśli kompilacja zakończy się błędem, czytaj błąd na poziomie konkretnego zadania, nie traktuj poprzednich udanych buildów jako potwierdzenia tej rewizji.
 
+### Osobne kontrole infrastruktury i renderera
+
+- **Zasoby oryginalnego v556:** `python3 Tools/verify_ios_inputs.py` sprawdza cztery referencyjne SHA-256, formaty AS3D/ASMO, powiązanie animacji z geometrią, `project.yml` i wejścia `Ship.metal`. [GitHub Actions 42053587593 — PASS](https://github.com/synixad-png/asteroidy-ios/actions/runs/42053587593). Nie używa zewnętrznych bibliotek.
+- **Kamera Metal:** zmiana `Sphere67.swift`, `MetalRenderer.swift` i `Ship.metal` odtwarza źródłowy `SphereCombat67.cs` i `GpuSphere67.cs`, z orbitującym widokiem nad planetą i prawidłowym wektorem kamery w oświetleniu BRDF. [GitHub Actions 42052748443 — PASS](https://github.com/synixad-png/asteroidy-ios/actions/runs/42052748443). Jest to test matematyczny oraz składni Swift, nie test Metal GPU; dokumentacja w `AUDYT_ZADANIE_2_v556_METAL_CAMERA.md`.
+- **Wersje:** IPA z uruchomionego run `42051262545` ma SHA `18e187970`. Zmiany kamery i walidatora powstały **później**, dlatego nie wchodzą do tamtej kompilacji. Nie wolno przedstawiać tego IPA jako wydania ze zmianami po tym SHA.
+
 ### Stan portowania
 
 Zatwierdzona, niezmienna lista 18 zadań i procenty: [PORT_STATUS_18_TASKS.md](PORT_STATUS_18_TASKS.md). Dotychczas moduły 7 i 8 zamknięto implementacyjnie, ale nadal brakuje pełnej gry i testów dotykowych/Metal na urządzeniu. Do zamknięcia całej aplikacji konieczna jest sekwencyjna realizacja pozostałych etapów, zaczynając od **zadania 1: kompilacja i infrastruktura iOS**.
