@@ -28,6 +28,8 @@ struct SphereSector556 {
     private(set) var elapsed: Float = 0
     private(set) var incomingRocksLeft = 0
     private(set) var nextIncoming: Float = 0
+    // Action38.SpawnIncoming: NoticeTime=1.6 and a visible new-rock alert.
+    private(set) var arrivalNoticeRemaining: Float = 0
     private(set) var objectiveWave = 1
     private(set) var sectorCleared = false
     let balance: CombatBalance556
@@ -122,7 +124,7 @@ struct SphereSector556 {
         seed = seed &* 1664525 &+ 1013904223
         return Float(seed & 0x00FFFFFF) / Float(0x01000000)
     }
-    private mutating func spawnArrivals(near player:Vec2) {
+    private mutating func spawnArrivals(near player:Vec2,stepDt:Float) {
         guard incomingRocksLeft > 0 else { return }
         let n = min(2,incomingRocksLeft)
         incomingRocksLeft -= n
@@ -162,6 +164,10 @@ struct SphereSector556 {
                                               spin:spin,angle:angle))
         }
         nextIncoming = elapsed + (objective == .waves ? 16 : 11)
+        // Game.Step ticks NoticeTime immediately after StepAction.
+        // Keep the source's 1.6 s HUD notification without inventing
+        // a mission-complete or enemy event.
+        arrivalNoticeRemaining=max(0,1.6-stepDt)
     }
 
     /// Physics68.SplitPhysical68: spherical fragments inherit parent motion
@@ -303,6 +309,7 @@ struct SphereSector556 {
         elapsed += dt
         CombatHull556.advance(cooldown:&hitCooldown,dt:dt)
         shotCooldown = max(0,shotCooldown-dt)
+        arrivalNoticeRemaining=max(0,arrivalNoticeRemaining-dt)
         // Windows Game.Step removes expired ShardLife187 BEFORE advancing
         // rocks, StepAction and projectile impacts. An expired shard must
         // never intercept a projectile in the same frame.
@@ -326,7 +333,7 @@ struct SphereSector556 {
         }
         if incomingRocksLeft > 0 &&
            (elapsed >= nextIncoming || (objective != .waves && asteroids.count <= 4)) {
-            spawnArrivals(near:playerPosition)
+            spawnArrivals(near:playerPosition,stepDt:dt)
         }
         // A newly spawned rock starts its sweep at its spawn point;
         // only pre-existing rocks have traveled during this step.
