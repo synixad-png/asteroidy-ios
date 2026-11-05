@@ -305,6 +305,38 @@ import Foundation
                          cooperativeVitals.firstVitals!.hull == 60)
         }
 
+        // Gameplay65 explicitly disables rescue progress while the developer
+        // menu is open. The encounter must forward the real flag instead of
+        // hardcoding false, then resume the original two-second requirement.
+        var menuGate=setup(true)
+        let menuWreck=menuGate.step(dt:1/120,
+            guardianFirst:.clear,guardianSecond:.clear,
+            talentFirst:.clear,talentSecond:.clear)
+        precondition(menuWreck.hitOutcomes == [
+            V.TeamOutcome(player:.second,outcome:.downForRescue)])
+        menuGate.encounter.rocks=[]
+        menuGate.encounter.first=body(675)
+        for _ in 0..<150 {
+            let blocked=menuGate.step(dt:1/60,firstFiring:true,
+                devOpen:true,guardianFirst:.clear,guardianSecond:.clear,
+                talentFirst:.clear,talentSecond:.clear)
+            precondition(blocked.rescueEvent == .none)
+        }
+        precondition(menuGate.rescue.down(.second))
+        precondition(menuGate.rescue.progress == 0)
+        var menuRescued=false
+        for _ in 0..<150 {
+            let frame=menuGate.step(dt:1/60,firstFiring:true,
+                devOpen:false,guardianFirst:.clear,guardianSecond:.clear,
+                talentFirst:.clear,talentSecond:.clear)
+            if frame.rescueEvent == .rescued(.second) {
+                menuRescued=true
+                break
+            }
+        }
+        precondition(menuRescued && !menuGate.rescue.down(.second))
+        precondition(menuGate.encounter.secondSurvival.lives == 3)
+
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
