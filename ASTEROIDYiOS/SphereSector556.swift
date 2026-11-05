@@ -253,6 +253,9 @@ struct SphereSector556 {
 
         let previousRockPositions = asteroids.map { $0.position }
         for i in asteroids.indices { asteroids[i].advance(dt:dt) }
+        // Physics68.StepSolids68: real rock/rock response in the spherical
+        // tangent plane, with native 216-cell broadphase.
+        _ = SphereRockContact68.solve(&asteroids)
         // Process projectiles against the positions at the start of the step.
         var rockHits:[Int:Int] = [:]
         for i in bolts.indices.reversed() {
