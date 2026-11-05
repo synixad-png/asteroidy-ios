@@ -14,7 +14,9 @@ permissions:
 jobs:
   iphone-only:
     name: Build iPhone arm64 only, verify and upload unsigned IPA
-    runs-on: macos-15
+    # Same verified runner as successful IPA build in iphone-ipa-test.
+    # Intel host compiles an ARM64 iPhone target with Xcode's iphoneos SDK.
+    runs-on: macos-15-intel
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
