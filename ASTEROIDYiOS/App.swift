@@ -18,6 +18,8 @@ final class FlightInput: ObservableObject {
     @Published var steer: Float = 0
     @Published var shooting = false
     @Published var planetPreview = false
+    @Published var sectorTraining = false
+    @Published var trainingRockCount = 9
     @Published var score = 0
     @Published var hull = 3
     @Published var rendererError: String?
@@ -35,11 +37,14 @@ struct GameView: View {
                 VStack {
                     if let error = input.rendererError { Text(error).font(.system(size: 12, weight: .bold)).foregroundStyle(.red).padding(8).background(.black.opacity(0.9)) }
                     HStack {
-                        Text("ASTEROIDY  •  iOS v19")
+                        Text("ASTEROIDY  •  iOS v21")
                             .font(.system(size: 17, weight: .semibold, design: .monospaced))
                             .foregroundStyle(.cyan)
                         Spacer()
                         Button("KAMPANIA") { showCampaign = true }
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.cyan)
+                        Button(input.sectorTraining ? "SEKTOR 01 • TEST" : "9 ASTEROID • TEST") { input.sectorTraining.toggle() }
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.cyan)
                         Button(input.planetPreview ? "ARENA TESTOWA" : "BOREAS GLB • TEST") { input.planetPreview.toggle() }
@@ -48,7 +53,7 @@ struct GameView: View {
                             .font(.system(size: 10, design: .monospaced))
                     }
                     .padding(18)
-                    HStack { Text("WYNIK: \(input.score)"); Spacer(); Text("KADŁUB: \(input.hull)") }.font(.system(size: 12, design: .monospaced)).padding(.horizontal, 18)
+                    HStack { Text("WYNIK: \(input.score)"); Spacer(); Text("ASTEROIDY: \(input.trainingRockCount)"); Spacer(); Text("KADŁUB: \(input.hull)") }.font(.system(size: 12, design: .monospaced)).padding(.horizontal, 18)
                     Spacer()
                     HStack(alignment: .bottom) {
                         TouchPad(input: input)
