@@ -22,6 +22,8 @@ final class FlightInput: ObservableObject {
     @Published var verifiedDamageLab = false
     @Published var verifiedGameOver = false
     @Published var verifiedDeaths = 0
+    @Published var verifiedArmor = 25
+    @Published var verifiedHull = 60
     @Published var trainingRockCount = 9
     @Published var score = 0
     @Published var hull = 3
@@ -78,10 +80,15 @@ struct GameView: View {
                             if input.verifiedDamageLab {
                                 Text(input.verifiedGameOver
                                      ? "KONIEC GRY • TEST" :
-                                     "BEZ STRAŻNIKA I TALENTÓW • UTRATY ŻYCIA: \(input.verifiedDeaths)")
+                                     "BEZ STRAŻNIKA • UTRATY ŻYCIA: \(input.verifiedDeaths)")
                                     .font(.system(size: 10, design: .monospaced))
                                     .foregroundStyle(input.verifiedGameOver ? .red : .yellow)
                             }
+                        }
+                        if input.verifiedDamageLab {
+                            Text("PANCERZ: \(input.verifiedArmor)/25 · KADŁUB: \(input.verifiedHull)/60")
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(.yellow)
                         }
                         Text(input.planetSectorCleared ? "TEST SEKTORA UKOŃCZONY" : "BOREAS • SYMULACJA WALKI • FALA \(input.planetWave)")
                             .font(.system(size: 11, weight: .medium, design: .monospaced))
