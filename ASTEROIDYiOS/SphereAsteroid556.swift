@@ -143,7 +143,7 @@ enum AmigaBounce265 {
         rock.bounceVertical=max(rock.bounceVertical,flight)
         rock.bounceHeight=max(rock.bounceHeight,3.5)
         rock.spin=max(-3,min(3,rock.spin+
-                      (rock.shapeSeed & 1 == 0 ? 0.48 : -0.48)))
+                      ((rock.shapeSeed & 1) == 0 ? 0.48 : -0.48)))
         rock.health=rock.maxHealth
     }
 }
