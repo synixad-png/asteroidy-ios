@@ -1,9 +1,9 @@
 import Foundation
 
 /// Explicit, playable Boreas diagnostic for the verified v556 ship-hit
-/// transition. Guardian298 and AbsorbDamage78 have NOT been ported: this
-/// isolated test opts into a known no-guardian, no-talent configuration.
-/// It never marks campaign sectors completed or replaces the normal arena.
+/// transition. It uses the source-verified Guardian37, Talents78,
+/// Tarcza145 and Damage/respawn modules. This diagnostic does not
+/// complete campaign missions or replace the full planetary controller.
 struct PlanetDamageLab556 {
     private(set) var survival=CombatSurvival96()
     private(set) var dome=CombatTarcza145()
@@ -23,6 +23,8 @@ struct PlanetDamageLab556 {
     var lives:Int {survival.lives}
     var hull:Int {vitals.hull}
     var armor:Int {vitals.armor}
+    var tarczaEnergy:Float {dome.energy}
+    var tarczaActive:Bool {dome.active}
     var gameOver:Bool {!survival.playing}
 
     /// Ship/rock impulses have already been resolved by SphereSector556;
@@ -31,13 +33,18 @@ struct PlanetDamageLab556 {
     mutating func advance(dt:Float,contacts:Int,
                           sector:inout SphereSector556,
                           flight:inout SphereFlight67,
+                          tarczaHeld:Bool=false,
                           level:Int=1,
                           difficulty:CombatBalance556.Difficulty = .normal)
                           -> CombatVerifiedHit556.Outcome {
         guard dt>0 else {return .ignored}
         survival.advance(dt:dt)
         vitals.advance(dt:dt)
-        dome.tick(dt:dt,held:false,playing:survival.playing,shipDown:false)
+        // Windows/src/Game.cs:240 StepTarcza145(dt,input.Tarcza145)
+        // precedes player collision (Game.cs:248). The held input is
+        // momentary and consumes original 12 energy/s + 35/impact.
+        dome.tick(dt:dt,held:tarczaHeld,
+                  playing:survival.playing,shipDown:false)
         guard contacts>0 && survival.playing else {
             lastOutcome = .ignored
             return .ignored
