@@ -25,7 +25,7 @@ jobs:
           /tmp/action38-test
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift Tests/SphereRockContact68Tests.swift -o /tmp/contact68-test
           /tmp/contact68-test
-      - name: Verify shared collision damage and nearest swept impact - task 7
+      - name: Verify task 7 shared damage, earliest hit and v149 boss-rock order
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift Tests/CombatDamageShared556Tests.swift -o /tmp/combat-shared-556
           /tmp/combat-shared-556
@@ -111,7 +111,7 @@ jobs:
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift Tests/SphereRockContact68Tests.swift -o /tmp/rock-contact-68
           /tmp/rock-contact-68
-      - name: Verify shared collision damage and nearest swept impact - task 7
+      - name: Verify task 7 shared damage, earliest hit and v149 boss-rock order
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift Tests/CombatDamageShared556Tests.swift -o /tmp/combat-shared-556
           /tmp/combat-shared-556
