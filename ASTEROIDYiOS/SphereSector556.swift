@@ -175,7 +175,8 @@ struct SphereSector556 {
             let radius = (size == 2 ? Float(18) : Float(10)) * 1.12 *
                 SphereAsteroid556.fragmentScale(parentSize:parent.size)
             asteroids.append(SphereAsteroid556(position:position,velocity:transported,
-                                               radius:radius,size:size,tier:tier,fragment:true))
+                                               radius:radius,size:size,tier:tier,fragment:true,
+                                               mass:parent.mass*0.5))
         }
     }
     private mutating func terminalShards(_ parent:SphereAsteroid556) {
