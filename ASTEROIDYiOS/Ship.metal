@@ -384,3 +384,61 @@ fragment float4 sourceFighterToonFragment60(
     return float4(clamp(in.color.rgb*(band+rim),0.0f,1.0f),
                   in.color.a);
 }
+
+
+// Original Windows/src/Vanguard431.cs 4311 GPU vertex stream
+// (x,y,z,nx,ny,nz,r,g,b,a,u,v), 12 float32 per triangle corner,
+// with original 2048x2048 BaseColor JPEG, not generated vertex colour.
+// Positions are already in native PC scene units (unlike old AS3D
+// with *0.32 factor), so apply only source 1/144.19674 world scale.
+// This renderer is selected ONLY when both authentic resource files
+// are present; preexisting v556 AS3D/toon pipeline remains the fallback.
+struct FighterSourceUniform431 {
+    float4x4 mvp;
+    float4x4 model;
+    float4x4 eyeView;
+};
+struct FighterSourceRaster431 {
+    float4 position [[position]];
+    float3 eyePosition;
+    float3 eyeNormal;
+    float2 uv;
+    float4 color;
+};
+vertex FighterSourceRaster431 sourceVanguardVertex431(
+    uint vertexID [[vertex_id]],
+    constant float *packed [[buffer(0)]],
+    constant FighterSourceUniform431 &scene [[buffer(1)]]) {
+    uint i=vertexID*12u;
+    float4 p=float4(packed[i],packed[i+1u],packed[i+2u],1.0f);
+    float3 n=float3(packed[i+3u],packed[i+4u],packed[i+5u]);
+    FighterSourceRaster431 out;
+    out.position=scene.mvp*p;
+    out.eyePosition=(scene.eyeView*scene.model*p).xyz;
+    out.eyeNormal=normalize(
+        (scene.eyeView*scene.model*float4(n,0.0f)).xyz);
+    out.color=float4(packed[i+6u],packed[i+7u],
+                     packed[i+8u],packed[i+9u]);
+    out.uv=float2(packed[i+10u],packed[i+11u]);
+    return out;
+}
+fragment float4 sourceVanguardTexturedToonFragment431(
+    FighterSourceRaster431 in [[stage_in]],
+    texture2d<float> originalBaseColor [[texture(0)]]) {
+    // Windows GpuToon60.cs uses glTexCoord0 (NO UV vertical flip)
+    // and repeats UVs according to the GLB's embedded sampler.
+    constexpr sampler sourceUV(address::repeat,filter::linear,
+                               mip_filter::linear);
+    float4 base=in.color*originalBaseColor.sample(sourceUV,in.uv);
+    const float3 key=normalize(float3(-0.6f,0.8f,1.4f));
+    float3 n=normalize(in.eyeNormal);
+    float d=max(0.0f,dot(n,key));
+    float band=0.25f+
+        0.33f*smoothstep(0.30f,0.32f,d)+
+        0.40f*smoothstep(0.70f,0.72f,d);
+    float3 v=normalize(-in.eyePosition);
+    float edge=1.0f-max(0.0f,dot(n,v));
+    float rim=0.10f*smoothstep(0.72f,0.86f,edge)*
+              smoothstep(0.10f,0.30f,d);
+    return float4(clamp(base.rgb*(band+rim),0.0f,1.0f),base.a);
+}
