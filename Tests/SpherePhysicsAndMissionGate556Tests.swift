@@ -13,8 +13,10 @@ import Foundation
         near(speed[0],0.86,0.0001)
         near(speed[1],1.10,0.0001)
         near(speed[2],1.32,0.0001)
-        for (difficulty, factor) in zip(CombatBalance556.Difficulty.allCases,speed) {
-            let config=CombatBalance556(level:1,difficulty:difficulty,spherical:true)!
+        var checkedProfiles = 0
+        for level in 1...26 {
+          for (difficulty, factor) in zip(CombatBalance556.Difficulty.allCases,speed) {
+            let config=CombatBalance556(level:level,difficulty:difficulty,spherical:true)!
             let sim=SphereSector556(balance:config)
             precondition(sim.asteroids.count == config.sectorRockCount)
             for (idx, rock) in sim.asteroids.enumerated() {
@@ -27,7 +29,10 @@ import Foundation
                 precondition(Sphere67.delta(target:rock.position,
                     origin:Vec2(x:640,y:360)).lengthSquared >= 260*260-0.1)
             }
+            checkedProfiles += 1
+          }
         }
+        precondition(checkedProfiles == 78)
         let cfg=CombatBalance556(level:1,difficulty:.normal,spherical:true)!
         let parent=SphereAsteroid556(position:Vec2(x:1279,y:355),
                                     velocity:Vec2(x:80,y:0),
