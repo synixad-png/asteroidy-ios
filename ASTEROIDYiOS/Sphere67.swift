@@ -200,6 +200,15 @@ enum SphereSky207 {
     static let count = 1500
     static let originalSkyRadius: Float = 900
     static let originalScreenHeight: Float = 720
+    /// Original SkyProject55 uses a 720-pixel reference image. iOS
+    /// Metal point sizes are drawable PIXELS, not the C# virtual pixels.
+    /// Scale source sizes by the drawable height so a 2.8px star retains
+    /// its angular size on Retina resolutions. A real pixel cannot be
+    /// smaller than 1px, which the Metal vertex shader clamps.
+    static func drawableScale(height: Float) -> Float {
+        guard height.isFinite && height > 0 else { return 1 }
+        return height/originalScreenHeight
+    }
     static var normalizedSkyRadius: Float {
         originalSkyRadius / SphereCameraView556.originalPlanetOuterRadius
     }
