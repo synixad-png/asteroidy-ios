@@ -9,6 +9,7 @@ from pathlib import Path
 r=Path(__file__).resolve().parents[1]
 reader=(r/'ASTEROIDYiOS/SourceVanguardMesh431.swift').read_text()
 renderer=(r/'ASTEROIDYiOS/MetalRenderer.swift').read_text()
+importer=(r/'Tools/import_original_vanguard431.py').read_text()
 shader=(r/'ASTEROIDYiOS/Ship.metal').read_text()
 project=(r/'project.yml').read_text()
 
@@ -80,6 +81,23 @@ check('drawMesh(shipMesh,shipModel)' in renderer,
       'Working previous sphere combat ship modified')
 check("TARGETED_DEVICE_FAMILY: '1,2'" in project,
       'iPad support disappeared')
+for token in (
+    'import CryptoKit',
+    'sourceSHA256(sourceBytes) == SourceVanguardMesh431.exactMeshSHA256',
+    'sourceSHA256(imageBytes) == SourceVanguardMesh431.exactBaseJPEG_SHA256',
+):
+    check(token in renderer,'Source mesh + JPEG SHA256 verification missing: '+token)
+for token in (
+    'f5d6d0107437fa54c3e8505f9adfbf6143cc877cb970eef687603609e26f9f4a',
+    '2945f711a6b559bfb5fdfb79750a2f2f77e2071aa5f3f4173eb450bce81b8b95',
+):
+    check(token in reader and token in importer,
+          'Actual user v568 source hash changed or differs from importer')
+check('base_from_glb(archive.read(GLB_PATH))' in importer and
+      'if jpeg != original_jpeg:' in importer and
+      'float_count != 194427 * 12' in importer and
+      'if cpu_faces != 10802' in importer,
+      'Source import no longer proves original runtime binary/glTF match')
 print('PASS: source 4311 mesh normals and UV+original JPEG shader,')
 print('      exact source 3-band toon, paired assets and v556 fallback')
 print('LIMIT: binary assets not in GitHub yet; regular IPA remains')
