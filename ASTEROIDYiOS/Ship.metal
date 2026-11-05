@@ -353,3 +353,34 @@ fragment float4 fighterPlasmaFragment491(
     // The GL GpuShip.cs line 22 uses Blend(SRC_ALPHA,ONE), no premul.
     return in.color;
 }
+
+// Original GpuShip.cs:FighterLight(false) + GpuToon60.cs:64,279.
+// For the actual Vanguard431 slot 0, ToonEnabled60 defaults true:
+// BeginToon60(true,true) binds this 3-step key-lit toon response.
+// The actual source uses gl_LightSource[0].position (-.6,.8,1.4,0)
+// in CAMERA space; pass the real IntroScene41.View to reproduce it.
+// Source UV + baseColor textures are still absent from AS3D v1.
+// IMPORTANT: this pipeline is ONLY for the cinematic Vanguard; the
+// existing sphere-combat PBR, planets, sky and atmosphere are unchanged.
+fragment float4 sourceFighterToonFragment60(
+    RasterOutput in [[stage_in]],
+    constant float4x4 &cameraView [[buffer(0)]]) {
+    if (in.unlit > 0.5f) return in.color;
+    float3 eyeNormal=normalize(
+        (cameraView*float4(in.normal,0.0f)).xyz);
+    float3 eyePosition=(
+        cameraView*float4(in.worldPosition,1.0f)).xyz;
+    const float3 key=normalize(float3(-0.6f,0.8f,1.4f));
+    float d=max(0.0f,dot(eyeNormal,key));
+    float band=0.25f+
+        0.33f*smoothstep(0.30f,0.32f,d)+
+        0.40f*smoothstep(0.70f,0.72f,d);
+    // Original source local view, GpuToon60.fs:
+    // view=normalize(-position60); rim=.10*edge*lightingMask.
+    float3 viewDir=normalize(-eyePosition);
+    float edge=1.0f-max(0.0f,dot(eyeNormal,viewDir));
+    float rim=0.10f*smoothstep(0.72f,0.86f,edge)*
+              smoothstep(0.10f,0.30f,d);
+    return float4(clamp(in.color.rgb*(band+rim),0.0f,1.0f),
+                  in.color.a);
+}
