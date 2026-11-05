@@ -28,6 +28,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     // Windows GpuShip.cs v491 twin-engine additive flame triangles:
     // entirely source-defined and GPU procedural, 1728 vertices.
     let fighterPlasmaPipeline491: MTLRenderPipelineState
+    // Original GpuToon60 default key-light bands, solely the
+    // Vanguard431 during cinematic. No sphere/PBR changes.
+    let sourceFighterToonPipeline60: MTLRenderPipelineState
     let atmosphereDepthState: MTLDepthStencilState
     private let atmosphereMesh: GPUModel
     private let shipMesh: GPUModel
@@ -105,6 +108,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         let sceneVertex=try requireShader("sceneVertex")
         let sceneFragment=try requireShader("sceneFragment")
+        let fighterToonFragment=try requireShader("sourceFighterToonFragment60")
         let fighterPlasmaVertex=try requireShader("fighterPlasmaVertex491")
         let fighterPlasmaFragment=try requireShader("fighterPlasmaFragment491")
         let skyVertex=try requireShader("skyPointVertex")
@@ -121,6 +125,13 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         p.colorAttachments[0].pixelFormat = .bgra8Unorm
         p.depthAttachmentPixelFormat = .depth32Float
         pipeline = try device.makeRenderPipelineState(descriptor:p)
+        let fighterToonDesc=MTLRenderPipelineDescriptor()
+        fighterToonDesc.vertexFunction=sceneVertex
+        fighterToonDesc.fragmentFunction=fighterToonFragment
+        fighterToonDesc.colorAttachments[0].pixelFormat = .bgra8Unorm
+        fighterToonDesc.depthAttachmentPixelFormat = .depth32Float
+        sourceFighterToonPipeline60=try device.makeRenderPipelineState(
+            descriptor:fighterToonDesc)
         let atmosphereDesc=MTLRenderPipelineDescriptor()
         atmosphereDesc.vertexFunction=sceneVertex
         atmosphereDesc.fragmentFunction=sceneFragment
@@ -1208,7 +1219,16 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 Self.translation(0,0,
                     IntroVanguard431.normalizedDorsalCorrection) *
                 Self.scale(IntroVanguard431.normalizedShipModelScale)
+            // The real PC default binds GpuToon60 for this
+            // Vanguard material 0. Its directional FighterLight
+            // coordinates are EYE-SPACE and remain fixed to the
+            // actual IntroScene41 camera, not a made-up world sun.
+            encoder.setRenderPipelineState(sourceFighterToonPipeline60)
+            var fighterEyeView=cameraFrame.view
+            encoder.setFragmentBytes(&fighterEyeView,
+                length:MemoryLayout<simd_float4x4>.stride,index:0)
             drawMesh(shipMesh,craft)
+            encoder.setRenderPipelineState(pipeline)
 
             // GpuIntro41.cs:493 calls DrawFighterMesh(time,1,0,false).
             // GpuShip.cs:19–63: after opaque Vanguard, the original
