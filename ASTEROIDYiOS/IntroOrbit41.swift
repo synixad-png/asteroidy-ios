@@ -11,6 +11,10 @@ enum IntroOrbit41 {
     static let arrivalTime: Float = 15.2
     static let arrivalRadius: Float = 34
     static let planetCenter = V(x:-38,y:4,z:-56)
+    // Windows/src/GpuPlanetGltf463.cs:18 loads the genuine Boreas GLB
+    // only when game.Level==5, corroborated by PlanetBiomes.ForLevel.
+    // Level 1 would rotate a different world and is not source parity.
+    static let boreasSourceLevel = 5
     static let arrivalNormal = V(x:0.62,y:0.18,z:0.765).normalized
     static let arrivalPoint = planetCenter + arrivalNormal * arrivalRadius
 
