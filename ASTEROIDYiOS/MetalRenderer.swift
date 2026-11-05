@@ -36,6 +36,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private var nebulaLoadGate = SkyTextureGate55()
     private var blackHoleLoadGate = SkyTextureGate55()
     private var deepPlanetLoadGate = SkyTextureGate55()
+    private var deepPlanetSliceCache55 = SkyTextureSliceCache55(count: DeepSkyPlanets55.count)
     private let planetVertexBuffers: [MTLBuffer]
     private let planetBufferSlots = MorphBufferSlots(count: 3)
     private let planetIndices: MTLBuffer
@@ -373,17 +374,34 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
     }
 
-    private func ensureDeepPlanetTextures55() -> MTLTexture? {
-        if let current=deepPlanetTextures { return current }
-        guard deepPlanetLoadGate.shouldAllocate(visible: true) else { return nil }
-        do {
-            let created=try Self.makeDeepPlanetTextures55(device)
-            deepPlanetTextures=created
-            return created
-        } catch {
-            NSLog("ASTEROIDY iOS: źródłowe planety 320px: %@", String(describing:error))
-            return nil
+    private func ensureDeepPlanetTextures55(style: Int) -> MTLTexture? {
+        guard (0..<DeepSkyPlanets55.count).contains(style) else { return nil }
+        // The original GpuIntro41.DrawSkyPlanet55 builds each style's
+        // Bitmap only AFTER its own SkyProject55 visibility check.
+        // Share one GPU array but generate/upload CPU pixels one slice
+        // at a time, never for off-screen planet styles.
+        let texture: MTLTexture
+        if let current=deepPlanetTextures {
+            texture=current
+        } else {
+            guard deepPlanetLoadGate.shouldAllocate(visible: true)
+            else { return nil }
+            do {
+                let created=try Self.makeDeepPlanetTextures55(device)
+                deepPlanetTextures=created
+                texture=created
+            } catch {
+                NSLog("ASTEROIDY iOS: źródłowe planety 320px: %@", String(describing:error))
+                return nil
+            }
         }
+        if deepPlanetSliceCache55.needsUpload(style:style) {
+            guard Self.uploadDeepPlanetSlice55(texture,style:style) else {
+                return nil
+            }
+            deepPlanetSliceCache55.markUploaded(style:style)
+        }
+        return texture
     }
 
     private func ensureBlackHoleTextures55() -> MTLTexture? {
@@ -496,9 +514,10 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
 
     /// Real GpuIntro41.BuildDeepPlanet55(0/1/2): all images are
     /// 320x220 Format32bppPArgb. Allocate only ONCE in a single GPU
-    /// array. Reuse BlackHole55's generic 2D textured quad shader:
-    /// same source premultiplied blend, but this texture has 3 planet
-    /// slices; slice -1 uses the existing original StarTexture halo.
+    /// array. The array is allocated once at first visible planet; each
+    /// actual CPU image/slice is uploaded only when THAT style is visible.
+    /// Reuse BlackHole55's generic premultiplied 2D shader: texture slice
+    /// -1 uses the original shared StarTexture halo.
     private static func makeDeepPlanetTextures55(_ device:MTLDevice)
         throws -> MTLTexture {
         let w=DeepSkyPlanets55.textureWidth
@@ -514,18 +533,29 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 userInfo:[NSLocalizedDescriptionKey:
                     "Nie można utworzyć trzech źródłowych planet 320x220"])
         }
-        for style in 0..<DeepSkyPlanets55.count {
-            let img=DeepSkyPlanets55.textureBGRA(style:style)
-            img.withUnsafeBytes { raw in
-                if let ptr=raw.baseAddress {
-                    tex.replace(region:MTLRegionMake2D(0,0,w,h),
-                                mipmapLevel:0,slice:style,
-                                withBytes:ptr,bytesPerRow:w*4,
-                                bytesPerImage:w*h*4)
-                }
+        // Deliberately leave unseen slices uninitialized; the renderer
+        // never samples a planet until uploadDeepPlanetSlice55 succeeds.
+        return tex
+    }
+
+    private static func uploadDeepPlanetSlice55(_ tex:MTLTexture,
+                                                style:Int) -> Bool {
+        let w=DeepSkyPlanets55.textureWidth
+        let h=DeepSkyPlanets55.textureHeight
+        let img=DeepSkyPlanets55.textureBGRA(style:style)
+        guard img.count == w*h*4 else {
+            NSLog("ASTEROIDY iOS: nieprawidłowy rozmiar tekstury planety %ld", style)
+            return false
+        }
+        img.withUnsafeBytes { raw in
+            if let ptr=raw.baseAddress {
+                tex.replace(region:MTLRegionMake2D(0,0,w,h),
+                            mipmapLevel:0,slice:style,
+                            withBytes:ptr,bytesPerRow:w*4,
+                            bytesPerImage:w*h*4)
             }
         }
-        return tex
+        return true
     }
 
     private static func translation(_ x: Float,_ y: Float,_ z: Float) -> simd_float4x4 {
@@ -777,7 +807,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                     camera:sphereFlight.camera) else { continue }
                 // Source GpuIntro41: only build any planet Bitmap
                 // AFTER SkyProject55 confirms visibility.
-                guard let planets=ensureDeepPlanetTextures55()
+                guard let planets=ensureDeepPlanetTextures55(style:style)
                 else { break }
                 encoder.setRenderPipelineState(blackHolePipeline)
                 encoder.setFragmentTexture(planets,index:0)
