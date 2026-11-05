@@ -69,10 +69,15 @@ for token in (
     "vertexStart:24*6,vertexCount:12*6",
 ):
     check(token in render,"Original black-hole Metal draw contract missing: "+token)
-check(render.index("vertexCount:24*6") <
-      render.index("encoder.setRenderPipelineState(blackHolePipeline)") <
-      render.index("vertexStart:24*6,vertexCount:12*6") <
-      render.index("encoder.setRenderPipelineState(skyPointPipeline)"),
+# The separate cinematic now has its own initial sky point draw;
+# check the original v556 sphere compositor in isolation, not the
+# first occurrence of a sky stage in an unrelated scene.
+sphere_render=render.split(
+    "if input.planetPreview {\n            // Original GpuIntro41.DrawDeepSpace55",1)[1]
+check(sphere_render.index("vertexCount:24*6") <
+      sphere_render.index("encoder.setRenderPipelineState(blackHolePipeline)") <
+      sphere_render.index("vertexStart:24*6,vertexCount:12*6") <
+      sphere_render.index("encoder.setRenderPipelineState(skyPointPipeline)"),
       "Black hole painter order must be far clouds then rear/core/front, then near clouds")
 for token in (
     "vertex BlackHoleRaster55 blackHoleVertex55(",
