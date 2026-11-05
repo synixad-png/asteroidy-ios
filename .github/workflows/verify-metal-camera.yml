@@ -9,6 +9,7 @@ on:
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/Ship.metal'
       - 'Tests/SphereCameraView556Tests.swift'
+      - 'Tests/SkyPointSourceContract556.py'
 
 jobs:
   source-camera-linux:
@@ -29,6 +30,8 @@ jobs:
             Tests/SphereCameraView556Tests.swift \
             -o /tmp/sphere-camera-556
           /tmp/sphere-camera-556
+      - name: Verify original RGBA sky point sprites and pipeline contract (static)
+        run: python3 Tests/SkyPointSourceContract556.py
       - name: Parse Metal renderer Swift sources (not an Xcode compile)
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
