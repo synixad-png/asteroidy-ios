@@ -13,6 +13,9 @@ on:
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/IntroOrbit41.swift'
+      - 'ASTEROIDYiOS/IntroVanguard431.swift'
+      - 'Tests/IntroVanguard431Tests.swift'
+      - 'Tests/IntroVanguardSourceContract431.py'
       - 'ASTEROIDYiOS/IntroAtmosphere47.swift'
       - 'Tests/IntroAtmosphere47Tests.swift'
       - 'Tests/IntroAtmosphereSourceContract47.py'
@@ -42,8 +45,10 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
           swiftc -frontend -parse ASTEROIDYiOS/IntroOrbit41.swift
+          swiftc -frontend -parse ASTEROIDYiOS/IntroVanguard431.swift
           swiftc -frontend -parse ASTEROIDYiOS/IntroRockGeometry41.swift
           swiftc -frontend -parse ASTEROIDYiOS/IntroAtmosphere47.swift
           python3 Tests/IntroOrbitSourceContract41.py
           python3 Tests/IntroBoreasMorphSourceContract556.py
           python3 Tests/IntroAtmosphereSourceContract47.py
+          python3 Tests/IntroVanguardSourceContract431.py
