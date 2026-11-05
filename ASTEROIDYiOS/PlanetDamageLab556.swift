@@ -8,14 +8,16 @@ struct PlanetDamageLab556 {
     private(set) var survival=CombatSurvival96()
     private(set) var dome=CombatTarcza145()
     private(set) var vitals=CombatTalentVitals78()
+    private(set) var guardian:CombatGuardian37
     private var rescue=CombatRescue65()
     private var scatterSeed:UInt32=0x556A9805
     private(set) var lastOutcome:CombatVerifiedHit556.Outcome = .ignored
     private(set) var relocatedRocks=0
     private(set) var deathCount=0
 
-    init(startingShieldCharges:Int=0) {
+    init(startingShieldCharges:Int=0,guardianOwned:Bool=false) {
         survival.shieldCharges=max(0,startingShieldCharges)
+        guardian=CombatGuardian37(owned:guardianOwned)
     }
 
     var lives:Int {survival.lives}
@@ -46,7 +48,8 @@ struct PlanetDamageLab556 {
             level:level,difficulty:difficulty,player:.first,
             survival:&survival,body:&body,dome:&dome,rescue:&rescue,
             cooperative:false,developerInfinite:false,
-            guardian:.clear,talent:.clear,vitals:vitals)
+            guardian:.unverified,talent:.unverified,vitals:vitals,
+            guardianState:guardian)
         if case .applied(let hit)=outcome {
             var rockState=sector.asteroids
             var shots=sector.bolts
