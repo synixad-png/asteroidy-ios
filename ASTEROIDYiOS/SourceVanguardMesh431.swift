@@ -1,0 +1,76 @@
+import Foundation
+
+/// Lossless runtime reader for the ACTUAL original PC v568 Vanguard431
+/// GPU asset *after gzip decompression* (vanguard431.mesh.gz).
+///
+/// Windows/src/Vanguard431.cs:12-23 uses:
+///   Int32 4311, Int32 engineCount=2, 2*vec3 float32,
+///   Int32 gpuFloatCount, float32[12] per shader vertex,
+///   Int32 CPU faceCount, 3*vec3 float32 per preview face.
+/// GPU floats: [x,y,z,nx,ny,nz,r,g,b,a,u,v]. Original UV are
+/// NOT V-flipped; normals and tint are from the game, not rebuilt.
+/// This type loads no arbitrary GLB / no fabricated PBR materials.
+/// A separate source JPEG must be present for textured rendering.
+struct SourceVanguardMesh431 {
+    enum FormatError: Error {
+        case truncated, badMagic, badEngines, badGPUCount, badCPUCount, nonFinite
+    }
+    struct Socket {
+        let x: Float
+        let y: Float
+        let z: Float
+    }
+
+    static let magic: Int = 4311
+    static let floatsPerVertex: Int = 12
+    static let bytesPerVertex: Int = 48
+    let engines: [Socket]
+    let vertices: Data
+    let vertexCount: Int
+    let cpuFaceCount: Int
+
+    init(data: Data) throws {
+        var offset=0
+        func word() throws -> UInt32 {
+            guard offset <= data.count-4 else { throw FormatError.truncated }
+            let a=UInt32(data[offset])
+            let b=UInt32(data[offset+1]) << 8
+            let c=UInt32(data[offset+2]) << 16
+            let d=UInt32(data[offset+3]) << 24
+            offset += 4
+            return a|b|c|d
+        }
+        func f32() throws -> Float {
+            let f=Float(bitPattern:try word())
+            guard f.isFinite else { throw FormatError.nonFinite }
+            return f
+        }
+        guard Int(try word()) == Self.magic else { throw FormatError.badMagic }
+        guard Int(try word()) == 2 else { throw FormatError.badEngines }
+        var sockets:[Socket]=[]
+        for _ in 0..<2 {
+            sockets.append(Socket(x:try f32(),y:try f32(),z:try f32()))
+        }
+        let floatCount=Int(try word())
+        guard floatCount>0 && floatCount<=3_500_000 &&
+              floatCount%Self.floatsPerVertex==0 else {
+            throw FormatError.badGPUCount
+        }
+        let byteCount=floatCount*MemoryLayout<Float>.size
+        guard offset <= data.count-byteCount else { throw FormatError.truncated }
+        let packed=Data(data[offset..<(offset+byteCount)])
+        offset += byteCount
+        let count=Int(try word())
+        guard count>0 && count<=13_000 else { throw FormatError.badCPUCount }
+        let remaining=count*9*MemoryLayout<Float>.size
+        guard offset <= data.count-remaining &&
+              offset+remaining==data.count else { throw FormatError.truncated }
+
+        // No CPU or GPU position/normal/UV remapping and no reindexing:
+        // each original triangle corner has its own 12-float packet.
+        engines=sockets
+        vertices=packed
+        vertexCount=floatCount/Self.floatsPerVertex
+        cpuFaceCount=count
+    }
+}
