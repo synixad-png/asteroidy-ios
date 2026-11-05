@@ -45,6 +45,14 @@
 
 **Weryfikacja źródłowych zasobów iOS:** dodano `Tools/verify_ios_inputs.py` i osobne `verify-ios-inputs.yml` (bez IPA). [Run 42053587593](https://github.com/synixad-png/asteroidy-ios/actions/runs/42053587593) — **PASS**: cztery autentyczne zasoby v556 zgodne SHA256 z historycznym manifestem, prawidłowe nagłówki `AS3D`/`ASMO`, 31 355 wierzchołków Boreas, 27 035 animowanych, 6 morph targetów i 126 klatek kluczowych, format bindingu, konfiguracja XcodeGen dla iPhone/iPad i nazwy wejść Metal. Ochrona hashy dotyczy **wyłącznie** tych czterech zasobów, nie zmieniającego się kodu Swift — nigdy nie nadpisywać manifestu bez audytu pochodzenia.
 
+## Kontrola bieżąca — 05.11.2026
+
+**Zadanie 1: 88% (bez zmiany).** Workflow publikacji niepodpisanego IPA `42051262545` przeszedł testy Swift/Linux, lecz pierwsza próba `compile-device` została **anulowana przed przydzieleniem runnera macOS**, bez kroków i bez logów kompilatora. Nie ma dowodów na błąd kodu; przyczyna anulowania nie jest potwierdzona. Ponowiono **wyłącznie anulowany job** przez GitHub Actions, co utworzyło próbę `run_attempt=2` tego samego przebiegu. Podczas ostatniego sprawdzenia `compile-device` nadal **queued**; opublikowane artefakty: **0**, IPA **niegotowe**. Nie uruchomiono nowego `build-ios.yml` na późniejszych commitach.
+
+**Zadanie 2: 45% (bez zmiany postępu do czasu weryfikacji Apple Metal).** Po audycie oryginalnych `Orbit50.cs:32`, `GpuSphere67.cs:420` i `GpuIntro41.cs:455` wyeliminowano drugi problem renderera: duplikat macierzy widoku oraz błędne pionowe FOV `36°` w widoku planety zamiast źródłowych `53.1301°`. `SphereCameraView556.viewColumnMajor` jest wspólnym źródłem macierzy dla Swift/Linux i Metal; `SphereProjection556` wyznacza źródłowe pionowe FOV dla planety, bez zmiany płaskiej areny. [Run 42055630937](https://github.com/synixad-png/asteroidy-ios/actions/runs/42055630937): test macierzy, perspektywy i parsing Swift **PASS**. Xcode/Metal GPU po tych poprawkach nadal **niezweryfikowane**; nie deklarować kompletu iOS ani zwiększenia zadania 2 bez takiego testu. Audyt: `AUDYT_ZADANIE_2_v556_METAL_CAMERA.md`.
+
+**Kontrola IPA co godzinę:** utworzono automat warunkowy, który sprawdza rzeczywiste artefakty i wysyła wiadomość tylko po publikacji IPA albo po błędzie/odwołaniu kompilacji. Nie zastępuje on samodzielnie testu ani nie zmienia kodu.
+
 ## Kolejność dalszej pracy
 
 1. **Zadanie 7 — zamknięte implementacyjnie (100%)**, zachować wszystkie zweryfikowane mechanizmy i regresje.
