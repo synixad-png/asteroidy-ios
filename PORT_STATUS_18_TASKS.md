@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 76% |
+| 2 | Silnik graficzny Metal | 78% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -154,6 +154,17 @@ Za konkretną, wykonaną i przetestowaną geometrię indywidualnych skał postę
 **Postęp:** zadanie 2 — **76% (+2 pp względem poprzedniego raportu 74%)** za faktyczną implementację i testy regresji; zadania 1 i 3–18 bez zmian. Łączny dotychczasowy wskaźnik odniesienia **27%, pozostało 73%**, bez sztucznego zmieniania wag. Kod nie jest jeszcze pełną oryginalną misją, a v556 Boreas nie oznacza obsługi wszystkich planet v568.
 
 **Co pozostało:** ukończenie natywnej kompilacji źródeł Xcode/Metal; następnie dalsza weryfikacja autentycznych efektów planety/atmosfery oraz skali i oświetlenia statku w cinematic, a później fizyczne testy sceny na iPhone i iPad. **Nie generować nowego IPA automatycznie** — tylko po poleceniu użytkownika i potwierdzeniu gotowości źródeł.
+
+## 05.11.2026 — zadanie 2: oryginalna atmosfera 3D Boreas (76→78%)
+
+**Wykonano i potwierdzono testami:**
+- Port `Windows/src/GpuPlanet.cs:9–36`, źródłowa funkcja `AtmosphereVertex` i `DrawAtmosphere47`: **24 pierścienie × 96 segmentów × 2 trójkąty = 4608 trójkątów / 13824 wierzchołków**. Zachowano radialny profil `.058+.33*exp(-((r-1.055)/.125)^2)`, stopniowe wygaszenie przy promieniu 1,34, łuk 3D, skierowanie do prawdziwej kamery `IntroScene41` i kolory RGBA. Dla rzeczywistej `PlanetBoreas463` poziomu 5 użyto autentycznego `PlanetBiomes.cs:12` `Glow=0x95DBFF`; nie stosować tego koloru bez weryfikacji dla innych planet.
+- `MetalRenderer.swift` rysuje teraz `IntroAtmosphere47.geometry()` **po GLB planety i po statku**, zgodnie z `Windows/src/GpuIntro41.cs:494`. Osobna konfiguracja blend `SRC_ALPHA,ONE_MINUS_SRC_ALPHA`, depth-test `.less`, **depth writes OFF**, brak PBR na tej półprzezroczystej powłoce. Nie zmieniono istniejącego opaque PBR, shaderów, animacji planety, pasa 820 asteroid ani trybów sferycznej i płaskiej walki.
+- `Tests/IntroAtmosphere47Tests.swift` numerycznie sprawdza siatkę 13 824 wierzchołków, punkty kopuły, poziom alfa, profil jasności oraz bazę ortonormalną kamery (również bieguny). `Tests/IntroAtmosphereSourceContract47.py` pilnuje połączenia z prawdziwym Metal, kolejności planet→statek→atmosfera i stanu blend/depth.
+- [GitHub Actions 42105492701](https://github.com/synixad-png/asteroidy-ios/actions/runs/42105492701) `source-camera-linux` **SUCCESS**, w tym dwa nowe testy oraz wcześniejsza matematyka przelotu, siatki skał i animacja morfów. [GitHub Actions 42105503401](https://github.com/synixad-png/asteroidy-ios/actions/runs/42105503401) `original-assets` **SUCCESS** (zasoby, Swift frontend, kontrakty). Wyniki obowiązują tylko dla kodu, nie są potwierdzeniem wyglądu na iPhonie.
+- **Aktualizacja zadania 2: 78% (+2 pp wobec 76%).** Pozostałe 17 zadań bez zmian; łączny dotychczasowy wskaźnik odniesienia **27%, pozostało 73%** (bez ponownego ważenia wszystkich zadań).
+
+**Nadal pozostało:** natywna kompilacja Xcode/Metal na Apple, wierny dobór i dopasowanie geometrii/skali/tekstur statku i pozostałych światów z oryginału, pomiary wydajności GPU oraz testy interaktywne na iPhonie i iPadzie. Dla nowszych map nie udawać zgodności samej Boreas. Nowe IPA nie było budowane, a poprzedni artefakt iPhone-only nie zawiera najnowszej sceny.
 
 ## Kolejność dalszej pracy
 
