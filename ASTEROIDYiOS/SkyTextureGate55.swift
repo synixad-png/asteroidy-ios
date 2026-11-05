@@ -41,6 +41,12 @@ struct SkyTextureSliceCache55 {
 
     var uploadedCount: Int { uploaded.filter { $0 }.count }
 
+    /// True only after every source image has been uploaded. Once both
+    /// nebula motifs exist, there is no reason to project 36 cloud
+    /// directions on the CPU each frame: the existing Metal shader
+    /// performs the current visibility checks for every layer.
+    var allUploaded: Bool { uploaded.allSatisfy { $0 } }
+
     func needsUpload(style: Int) -> Bool {
         (0..<uploaded.count).contains(style) && !uploaded[style]
     }
