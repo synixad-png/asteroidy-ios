@@ -1,6 +1,16 @@
-# ASTEROIDY iOS v18 — źródła portu Swift/Metal
+# ASTEROIDY iOS — port Swift/Metal (projekt w trakcie rozwoju)
 
-Projekt jest przygotowany do późniejszej, ręcznej kompilacji na GitHub Actions. Instrukcja: [START_DRUGI_CZAT.md](START_DRUGI_CZAT.md). W tym etapie nie uruchomiono Xcode ani nie utworzono IPA. Aktualny stan: [ASTEROIDY_iOS_v18_RAPORT.md](ASTEROIDY_iOS_v18_RAPORT.md).
+## Stan bieżący — 5 listopada 2026
+
+Pełny, stały harmonogram 18 zadań i status prac: [PORT_STATUS_18_TASKS.md](PORT_STATUS_18_TASKS.md).
+
+W repozytorium działa workflow GitHub Actions `.github/workflows/build-ios.yml` dla testów Swift/Linux oraz kompilacji Xcode/ARM64 na iPhone/iPad. **Rzeczywista kompilacja i udany upload niepodpisanego IPA** zostały potwierdzone dla commita `596767b`, w [przebiegu 42027976783](https://github.com/synixad-png/asteroidy-ios/actions/runs/42027976783). Artefakt jest niepodpisany i wymaga podpisania przed instalacją przez Sideloadly; nie przeprowadzono testu na fizycznym urządzeniu.
+
+Późniejsze commity rozwijają zadanie 7: kolejność ochrony, rzeczywisty Guardian37, Talents78, tryb kooperacji, kolizje robotów i bryły bossa oraz regresję wielu trafień. **Nie należy utożsamiać wyników starszego udanego buildu z wynikami dla późniejszych commitów**; obowiązuje kontrola statusu GitHub Actions konkretnego SHA. Port nie jest ukończoną wersją gry Windows/SteamOS.
+
+## Historia bazowego portu v18
+
+Instrukcja historycznego przekazania: [START_DRUGI_CZAT.md](START_DRUGI_CZAT.md). Raport ówczesnego stanu: [ASTEROIDY_iOS_v18_RAPORT.md](ASTEROIDY_iOS_v18_RAPORT.md). Poniższy opis dotyczy historycznych etapów v14–v18 i nie jest aktualną informacją o stanie kompilacji.
 
 Poniżej zachowano historyczny opis rozwoju v14–v18.
 
