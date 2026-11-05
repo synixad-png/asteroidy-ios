@@ -19,6 +19,9 @@ final class FlightInput: ObservableObject {
     @Published var shooting = false
     @Published var planetPreview = false
     @Published var sectorTraining = false
+    @Published var verifiedDamageLab = false
+    @Published var verifiedGameOver = false
+    @Published var verifiedDeaths = 0
     @Published var trainingRockCount = 9
     @Published var score = 0
     @Published var hull = 3
@@ -52,11 +55,34 @@ struct GameView: View {
                         Button(input.planetPreview ? "ARENA TESTOWA" : "BOREAS GLB • TEST") { input.planetPreview.toggle() }
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.cyan)
-                            .font(.system(size: 10, design: .monospaced))
                     }
                     .padding(18)
-                    HStack { Text("WYNIK: \(input.score)"); Spacer(); Text("ASTEROIDY: \(input.trainingRockCount)"); Spacer(); Text("KADŁUB: \(input.hull)") }.font(.system(size: 12, design: .monospaced)).padding(.horizontal, 18)
+                    HStack {
+                        Text("WYNIK: \(input.score)")
+                        Spacer()
+                        Text("ASTEROIDY: \(input.trainingRockCount)")
+                        Spacer()
+                        Text(input.planetPreview && input.verifiedDamageLab
+                             ? "ŻYCIA V556: \(input.hull)" : "KADŁUB: \(input.hull)")
+                    }
+                    .font(.system(size: 12, design: .monospaced))
+                    .padding(.horizontal, 18)
                     if input.planetPreview {
+                        HStack {
+                            Button(input.verifiedDamageLab
+                                   ? "TEST OBRAŻEŃ v556: WŁ." : "TEST OBRAŻEŃ v556: WYŁ.") {
+                                input.verifiedDamageLab.toggle()
+                            }
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.orange)
+                            if input.verifiedDamageLab {
+                                Text(input.verifiedGameOver
+                                     ? "KONIEC GRY • TEST" :
+                                     "BEZ STRAŻNIKA I TALENTÓW • UTRATY ŻYCIA: \(input.verifiedDeaths)")
+                                    .font(.system(size: 10, design: .monospaced))
+                                    .foregroundStyle(input.verifiedGameOver ? .red : .yellow)
+                            }
+                        }
                         Text(input.planetSectorCleared ? "TEST SEKTORA UKOŃCZONY" : "BOREAS • SYMULACJA WALKI • FALA \(input.planetWave)")
                             .font(.system(size: 11, weight: .medium, design: .monospaced))
                             .foregroundStyle(input.planetSectorCleared ? .green : .cyan)
