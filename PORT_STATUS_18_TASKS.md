@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 67% |
+| 2 | Silnik graficzny Metal | 68% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -83,6 +83,19 @@
 - **Niepotwierdzone:** GitHub Actions `source-camera-linux` dla najnowszego commita oczekuje na runner; nie wolno przedstawiać go jako PASS. Natywna kompilacja Apple/Xcode/Metal, prawdziwe GPU, wizualna zgodność 1:1, FPS, VRAM oraz test na iPhone 15 Pro Max/iPad Pro M2 są nadal do wykonania. Nie uruchomiono kolejnego builda IPA ani nie sprawdzano jego wyniku.
 
 **Łączny port: 27% (historyczny niezmieniony wskaźnik), pozostało 73%.** Zadanie 1: 88%, zadania 7 i 8: 100% implementacji każdego modułu, pozostałe zadania i stała lista 18 pozycji bez zmian. Następny zakres w otwartym zadaniu 2: doprowadzenie źródeł do natywnej kompilacji Apple, weryfikacja prawdziwego renderingu i pomiar GPU oraz naprawa wyłącznie potwierdzonych rozbieżności z v556.
+
+## Aktualizacja zadania 2 — oryginalne near/far kamery Metal, 05.11.2026
+
+**Zadanie 2: 68% (poprzednio 67%, +1 pp).** Kolejna bezpośrednio potwierdzona rozbieżność z kodem v556: `Windows/src/GpuIntro41.cs:455` i `GpuSphere67.cs:420` używają frustum `near=0.4`, `far=1600` w źródłowych jednostkach, a `Windows/src/GpuPlanetGltf463.cs` definiuje znormalizowaną skalę planety `100*1.4419674`. Poprzedni `MetalRenderer.perspective` używał dla **obu** kamer wartości `near=0.1,far=20` (ustawienie istniejącej płaskiej areny). To nie był oryginalny zakres depth clip dla sfery.
+
+**Wdrożono wyłącznie w zadaniu 2:**
+- `SphereProjection556.sourceFar=1600`, `normalizedNear=0.4/(100*1.4419674)`, `normalizedFar=1600/(100*1.4419674)` i `clipPlanes(spherical:)`. `MetalRenderer.perspective` pobiera obie płaszczyzny z tego samego źródła co znormalizowane modele i oko. Oryginalne 53.1301° FOV pozostaje, a płaska arena zachowuje **dokładnie** swoje dotychczasowe 0.1/20.
+- `Tests/SphereCameraView556Tests.swift` sprawdza obie normalizacje, niezależny flat fallback, poprawne NDC z=0 na near i z=1 na far. Dodano `Tests/SphereProjectionSourceContract556.py` i test w workflow `verify-metal-camera.yml` **bez IPA**.
+- Naprawiono wykryty błąd testu `Tests/SkyTextureGateSourceContract55.py`: kontrola porządku `project` przed `ensureDeepPlanetTextures55` wskazywała starą sygnaturę bez `style:`, mimo poprawnie zaktualizowanej implementacji. Dzięki temu test może realnie sprawdzać nową funkcję.
+
+**Weryfikacja dostępna:** skompilowano i uruchomiono izolowany wycinek rzeczywistego nowego wzoru na Swift/Linux: znormalizowana sfera `near=0.002773988, far=11.095952`, płaska arena `near=0.1, far=20.0`, cztery granice NDC — **PASS**. Dodatkowe warunki źródłowe sprawdzono przez bezpośredni odczyt aktualnych plików GitHub. Natywna kompilacja Xcode/Metal, render na Apple GPU oraz test urządzeniowy **nie zostały potwierdzone**; nowe GitHub Actions mogą czekać w kolejce. Nie przedstawiać wycinka jako pełnego testu projektu.
+
+**Granica zadania:** nie zmieniono żadnego C# Windows/SteamOS, zasad walki, mechanik zadań 7/8, formatów GLB, źródeł planet ani oddzielnego iPhone-only workflow. Łączny 27%/73% to nadal nieprzeliczany historyczny wskaźnik portu; pozostałe 17 wartości i pełna zatwierdzona lista nie ulegają zmianie. Zadanie 2 pozostaje **otwarte**; następny etap to natywna kompilacja Apple i przegląd rzeczywistego renderingu, bez udawania testów na fizycznym iPhonie.
 
 ## Kolejność dalszej pracy
 
