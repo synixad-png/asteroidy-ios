@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 85% |
+| 2 | Silnik graficzny Metal | 86% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -211,6 +211,18 @@ Stała lista 18 zadań i ich procenty bez zmian: zadanie 2 **78%**, łączny his
 **Testy:** [GitHub Actions 42120727178](https://github.com/synixad-png/asteroidy-ios/actions/runs/42120727178) Swift/Linux **SUCCESS** (parser i źródłowe kontrakty), [42120727204](https://github.com/synixad-png/asteroidy-ios/actions/runs/42120727204) preflight Swift/źródeł **SUCCESS**. Oddzielna, niezależna kompilacja natywna Apple [42121018526](https://github.com/synixad-png/asteroidy-ios/actions/runs/42121018526) **SUCCESS**, iPhone+iPad ARM64 i rzeczywiste shadery Metal; **bez nowego IPA, bez testu GPU na sprzęcie i bez zasobów źródłowych w repo**.
 
 **Uzasadnienie wyniku:** zadanie 2 wzrosło **84%→85% (+1 pp)** wyłącznie za rzeczywistą kodową obsługę pierwotnej siatki i testy parsera/kompilacji; nie zaliczono importu tekstury w wydanej aplikacji. Pozostałe zadania 1 i 3–18 bez zmian; historyczny łączny wskaźnik odniesienia **27%, pozostało 73%**, bez przeważania listy. Dalej: rzeczywiste dodanie zweryfikowanych binarek do repo i ich runtime validation, porównanie GPU/JPEG na iPhonie/iPadzie, następnie brakujące efekty i dokończenie zadania 2, bez budowania niezmienionego IPA.
+
+## 05.11.2026 — zadanie nr 2: potwierdzenie samplera źródłowego i bramka przyszłego wydania (85→86%)
+
+**Co wykonano:** bezpośrednio porównano `Windows/src/GpuRenderer.cs:144–146` oryginalnego PC v568 z iOS. Potwierdzono `GL_RGBA8/GL_BGRA` (surowe UNORM, bez sprzętowego sRGB decode), `GL_CLAMP_TO_EDGE` i oba filtry `GL_LINEAR`, bez mipmap. W `Ship.metal` oraz `MetalRenderer.swift` poprawiono błędne `address::repeat`, `.SRGB:true` i `.generateMipmaps:true`; oryginalne UV bez V-flip pozostają. Odpowiada to źródłowemu samplingowi, nie obietnicy wizualnego 1:1.
+
+**Przygotowano autentyczną paczkę aktywacji:** `Tools/prepare_vanguard431_assets.py` zna dokładną kompaktową paczkę `AssetsCompressed/Vanguard431_ORYGINALNE_UV_TEKSTURA_ZASOBY.zip` z tej rozmowy, a także odrzuca niekompletne/podmienione źródła, zanim zapisze jakąkolwiek binarkę aplikacji. Oryginalny ZIP użytkownika przechodzi CRC, SHA256, kontrolę formatu v4311 (194427 wierzchołków), 10802 trójkątów CPU i JPEG 2048² w lokalnym środowisku. `Tools/verify_original_vanguard_resources.py` wymusza te same prawdziwe dane przy standardowym przyszłym wydaniu. `Tools/verify_ipa.py` ma opcjonalną kontrolę rzeczywistej zawartości IPA `--require-vanguard-original`. Ręczny workflow `build-ios-iphone-ipad-manual.yml` wykonuje import i obie kontrole, domyślnie **odrzuca** nowe IPA pozbawione oryginalnego Vanguard. Starszy `AS3D` jest dostępny wyłącznie jako jawny wariant `compatibility_old_ship=true`. Poprzedni działający IPA pozostaje niezmieniony.
+
+**Testy:** [42125357275](https://github.com/synixad-png/asteroidy-ios/actions/runs/42125357275) Swift/Linux wszystkie testy źródłowe, w tym odrzucenie podmienionej/niepełnej paczki, **SUCCESS**; [42125348782](https://github.com/synixad-png/asteroidy-ios/actions/runs/42125348782) Swift source/asset preflight **SUCCESS**; [42124960734](https://github.com/synixad-png/asteroidy-ios/actions/runs/42124960734) natywny Xcode Swift+Metal iPhone+iPad ARM64 z nowym samplerem **SUCCESS**. **Nie** przeprowadzono natywnego interaktywnego testu GPU/tekstury na fizycznych urządzeniach.
+
+**Nierozwiązana zależność:** paczka binarna jest rzeczywiście w tej rozmowie, **ale nie jest obecna w publicznym repozytorium GitHub**. Testy źródłowe i Xcode kompilowały więc opcjonalną ścieżkę, lecz nie rysowały jeszcze rzeczywistej tekstury na iPhonie. Nie wolno deklarować pełnej funkcji ani budować nowego 'teksturami' IPA bez bezpośredniej integracji obu zweryfikowanych binarek. Dalszy krok: dodać kompaktową 3,53MB paczkę do `AssetsCompressed/` lub parę oryginalnych binarek do `ASTEROIDYiOS/Assets`, uruchomić realny build, zweryfikować zawartość IPA i potem test wyglądu i FPS.
+
+**Postęp zadania 2:** **85% → 86% (+1 pp)** tylko za źródłową poprawkę i rygorystyczny, przetestowany proces wydawania; pozostałe pozycje 1 i 3–18 bez zmian. Łączny historyczny wskaźnik projektu **27%, pozostało 73%**, bez zmiany wag i bez naciągania gotowości.
 
 ## Kolejność dalszej pracy
 
