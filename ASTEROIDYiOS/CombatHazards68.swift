@@ -68,7 +68,7 @@ enum CombatHazards68 {
             guard r.distance<radius && rocks[i].mass>0 else {continue}
             let d=transported(origin:origin,target:rocks[i].position,
                                radial:r.direction)
-            rocks[i].velocity=rocks[i].velocity+
+            rocks[i].velocity=rocks[i].velocity +
                 d*(impulse*(1-r.distance/radius)/rocks[i].mass)
         }
         for i in bugs.indices {
@@ -76,7 +76,7 @@ enum CombatHazards68 {
             guard r.distance<radius else {continue}
             let d=transported(origin:origin,target:bugs[i].position,
                                radial:r.direction)
-            bugs[i].velocity=bugs[i].velocity+
+            bugs[i].velocity=bugs[i].velocity +
                 d*(impulse*(1-r.distance/radius)/2)
         }
         for i in pickups.indices {
@@ -84,7 +84,7 @@ enum CombatHazards68 {
             guard r.distance<radius else {continue}
             let d=transported(origin:origin,target:pickups[i].position,
                                radial:r.direction)
-            pickups[i].velocity=pickups[i].velocity+
+            pickups[i].velocity=pickups[i].velocity +
                 d*(impulse*(1-r.distance/radius))
         }
         if var target=boss {
@@ -92,7 +92,7 @@ enum CombatHazards68 {
             if r.distance<radius {
                 let d=transported(origin:origin,target:target.position,
                                   radial:r.direction)
-                target.velocity=target.velocity+
+                target.velocity=target.velocity +
                     d*(impulse*(1-r.distance/radius)/80)
                 boss=target
             }
