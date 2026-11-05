@@ -192,18 +192,40 @@ struct GameCore {
         guard let config = trainingBalance, incomingRocksLeft > 0 else { return }
         let n = min(2, incomingRocksLeft)
         incomingRocksLeft -= n
-        for _ in 0..<n {
+        let unit: Float = 2.7 / 1280
+        for i in 0..<n {
             let tier: Int
             if config.level >= 13 { tier = 2 + Int(random() * 3) }
             else { tier = config.level >= 10 ? 2 : config.level >= 5 ? 1 : 0 }
-            // The source uses alternating arena edges; normalized to sandbox bounds.
-            let leftSide = incomingRocksLeft % 2 == 0
-            let p = Vec2(x: leftSide ? -extent + 0.04 : extent - 0.04,
-                         y: -extent + 0.3 + random() * (2 * extent - 0.45))
-            let a = random() * .pi * 2
-            let speed = (60 + random() * 40) * 2.7 / 1280
+            // Action38.SpawnIncoming: alternate the left/right boundary
+            // within EACH two-rock batch and keep away from the player.
+            let x = i % 2 == 0 ? Float(20) : Float(1260)
+            var p = Vec2(x: (x - 640) * unit, y: 0)
+            var attempts = 0
+            repeat {
+                let y = Float(140) + random() * Float(520)
+                p = Vec2(x: (x - 640) * unit, y: (360 - y) * unit)
+                attempts += 1
+                if attempts > 20 {
+                    let a = random() * .pi * 2
+                    p = wrapped(ship + Vec2(x: cos(a), y: sin(a)) * (340 * unit))
+                    break
+                }
+            } while (p - ship).lengthSquared < (260 * unit) * (260 * unit)
+            // Gameplay65: Defend rocks steer to the original objective
+            // at (640,420); others receive a random heading.
+            let heading: Vec2
+            if trainingObjective == .defend {
+                let delta = Vec2(x: 0, y: (360 - 420) * unit) - p
+                let length = sqrt(delta.lengthSquared)
+                heading = delta * (1 / max(1e-6, length))
+            } else {
+                let a = random() * .pi * 2
+                heading = Vec2(x: cos(a), y: sin(a))
+            }
+            let speed = (60 + random() * 40) * unit
             let hp = Rock.healthFor(size: 3, tier: tier)
-            rocks.append(Rock(at: p, motion: Vec2(x: cos(a), y: sin(a)) * speed,
+            rocks.append(Rock(at: p, motion: heading * speed,
                               radius: Rock.radiusFor(size: 3), phase: random() * 6.28,
                               tier: tier, size: 3, health: hp, originalHealth: hp))
         }
