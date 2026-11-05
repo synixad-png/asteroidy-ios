@@ -54,7 +54,8 @@ for t in (
     "encoder.setVertexBuffer(",
     "nebulaOverlayMesh.vertices,offset:0,index:0)",
     "encoder.setFragmentTexture(nebulaTexture,index:0)",
-    "vertexCount:nebulaOverlayMesh.count",
+    "vertexCount:24*6",
+    "vertexStart:24*6,vertexCount:12*6",
     "encoder.setDepthStencilState(depthState)",
     "encoder.setRenderPipelineState(pipeline)",
 ):
@@ -63,8 +64,13 @@ check(render.index("encoder.setRenderPipelineState(nebulaOverlayPipeline)") <
       render.index("encoder.setRenderPipelineState(skyPointPipeline)") <
       render.index("encoder.setRenderPipelineState(solarOverlayPipeline)"),
       "IntroSky must draw source clouds before stars and solar rays")
-check(render.count("encoder.setRenderPipelineState(nebulaOverlayPipeline)")==1,
-      "Nebula should be one GPU draw per frame")
+check(render.count("encoder.setRenderPipelineState(nebulaOverlayPipeline)")==2,
+      "Source draws 24 far clouds before deep objects and 12 near clouds afterward")
+check(render.index("vertexCount:24*6") <
+      render.index("encoder.setRenderPipelineState(blackHolePipeline)") <
+      render.index("vertexStart:24*6,vertexCount:12*6") <
+      render.index("encoder.setRenderPipelineState(skyPointPipeline)"),
+      "Original DrawDeepSpace55 / IntroSky far-deep-near-stars order must survive")
 check("if input.planetPreview {" in render,
       "Cloud pipeline must not change independent flat sandbox")
 
@@ -85,5 +91,5 @@ for t in (
     check(t in shader,"GpuCosmos39 cloud Metal shader contract: "+t)
 print("PASS: v556 GpuCosmos39 two 256px PArgb textures,")
 print("      source GpuIntro41 24+12 layers, GPU SkyProject55,")
-print("      one draw, shared 2D array and original premultiplied alpha")
+print("      two correctly ordered draws, one shared 2D array, premultiplied alpha")
 print("LIMITATION: static contract only, native Apple GPU unverified")
