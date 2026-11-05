@@ -32,12 +32,14 @@ struct SphereSector556 {
     // The player position comes from real SphereFlight67, not the flat arena.
     // Contact is reported only on entry to the collision region, avoiding
     // artificially accumulating damage every 120-Hz frame.
-    mutating func tick(dt: Float, playerPosition: Vec2, playerRadius: Float = 26) {
+    mutating func tick(dt: Float, playerPosition: Vec2, playerRadius: Float = 26,
+                       detectContacts: Bool = true) {
         guard dt > 0 else { return }
         elapsed += dt
         hitCooldown = max(0, hitCooldown - dt)
         for i in asteroids.indices { asteroids[i].advance(dt: dt) }
-        let anyContact = asteroids.contains { $0.touches(playerPosition, otherRadius: playerRadius) }
+        let anyContact = detectContacts &&
+            asteroids.contains { $0.touches(playerPosition, otherRadius: playerRadius) }
         if anyContact && !inContact {
             shipContacts += 1
             if hitCooldown <= 0 && hull > 0 {
