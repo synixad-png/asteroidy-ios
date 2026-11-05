@@ -86,8 +86,7 @@ import Foundation
                 if balls[i].bounceCount>oldCount {
                     let product=old.lengthSquared*balls[i].velocity.lengthSquared
                     let denom=max(0.0001,sqrt(product))
-                    let dot=(old.x*balls[i].velocity.x +
-                             old.y*balls[i].velocity.y)/denom
+                    let dot=(old.x*balls[i].velocity.x + old.y*balls[i].velocity.y)/denom
                     if dot<0.99 {turns[i]+=1}
                 }
                 balls[i].advance(dt:0.016)
