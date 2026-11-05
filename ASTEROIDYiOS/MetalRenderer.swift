@@ -760,6 +760,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         if now-lastHUDTime > 0.14 {
             lastHUDTime = now
+            let introElapsed41=introTime41
             let score = input.planetPreview ? sphereSector.score : game.score
             let hull = input.planetPreview
                 ? (input.verifiedDamageLab ? damageLab.lives : sphereSector.hull)
@@ -777,6 +778,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             let amigaDemo=sphereSector.isAmigaDemo
             let amigaHits=sphereSector.amigaHits
             DispatchQueue.main.async { [weak input] in
+                input?.introProgress41 = introElapsed41
                 input?.score = score
                 input?.hull = hull
                 input?.verifiedGameOver = gameOver
