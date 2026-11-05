@@ -67,7 +67,7 @@ jobs:
           /tmp/rescue-65
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift Tests/CombatVerifiedHit556Tests.swift -o /tmp/verified-hit-556
           /tmp/verified-hit-556
-      - name: Verify three-life armor-hull-GameOver and co-op/robot/boss regressions
+      - name: Verify three-life GameOver plus co-op real vitals rescue wreck and boss regressions
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatRespawn556.swift Tests/CombatRespawn556Tests.swift -o /tmp/respawn-556
           /tmp/respawn-556
@@ -205,7 +205,7 @@ jobs:
           /tmp/rescue-65
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift Tests/CombatVerifiedHit556Tests.swift -o /tmp/verified-hit-556
           /tmp/verified-hit-556
-      - name: Verify three-life armor-hull-GameOver and co-op/robot/boss regressions
+      - name: Verify three-life GameOver plus co-op real vitals rescue wreck and boss regressions
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatRespawn556.swift Tests/CombatRespawn556Tests.swift -o /tmp/respawn-556
           /tmp/respawn-556
