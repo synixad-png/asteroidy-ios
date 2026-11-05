@@ -23,13 +23,73 @@ enum CombatContactRouter96 {
     static func cause(_ event: CombatSolidEvent68,
                       isRobot:[Bool]) -> String? {
         switch event {
-        case .shipRock: return "ASTEROIDA"
-        case .shipBug(let index):
+        case .shipRock, .partnerRock: return "ASTEROIDA"
+        case .shipBug(let index), .partnerBug(let index):
             guard isRobot.indices.contains(index) else { return nil }
             return isRobot[index] ? "ROBOTYCZNY WAZ" : "KOLIZJA ZE STATKIEM"
-        case .shipBoss: return "ZDERZENIE Z BOSSEM"
+        case .shipBoss, .partnerBoss: return "ZDERZENIE Z BOSSEM"
         default: return nil
         }
+    }
+
+    enum Player: Equatable { case first, second }
+    struct TeamOutcome: Equatable {
+        let player:Player?
+        let outcome:Outcome
+    }
+    static func player(for event:CombatSolidEvent68) -> Player? {
+        switch event {
+        case .shipRock, .shipBug, .shipBoss: return .first
+        case .partnerRock, .partnerBug, .partnerBoss: return .second
+        default: return nil
+        }
+    }
+    private static func process(_ event:CombatSolidEvent68,
+                        to survival:inout CombatSurvival96,
+                        level:Int,difficulty:CombatBalance556.Difficulty,
+                        defense:Defense,isRobot:[Bool]) -> Outcome {
+        guard let source=cause(event,isRobot:isRobot) else {
+            return .requiresDefenseVerification
+        }
+        switch defense {
+        case .unverified: return .requiresDefenseVerification
+        case .guardianAbsorbed, .tarczaAbsorbed, .talentAbsorbed, .coopDown:
+            return .externalDefenseAbsorbed
+        case .noneAbsorbed:
+            let damage=CombatSurvival96.collisionDamage(level:level,
+                                                         difficulty:difficulty)
+            return .applied(survival.applyUnblockedCollision(
+                level:level,difficulty:difficulty,cause:source,damage:damage))
+        }
+    }
+
+    /// Physics68.WithSecond62 invokes ApplyHit96 with the second player's
+    /// state. Keep lives, charges and respawn immunity isolated per player;
+    /// no external defense is silently treated as inactive.
+    static func applyTeam(_ events:[CombatSolidEvent68],
+                          first:inout CombatSurvival96,
+                          second:inout CombatSurvival96,
+                          level:Int,difficulty:CombatBalance556.Difficulty,
+                          defenseFirst:Defense,defenseSecond:Defense,
+                          isRobot:[Bool]) -> [TeamOutcome] {
+        var result:[TeamOutcome]=[]
+        for event in events {
+            switch player(for:event) {
+            case .first:
+                let outcome=process(event,to:&first,level:level,
+                                    difficulty:difficulty,
+                                    defense:defenseFirst,isRobot:isRobot)
+                result.append(TeamOutcome(player:.first,outcome:outcome))
+            case .second:
+                let outcome=process(event,to:&second,level:level,
+                                    difficulty:difficulty,
+                                    defense:defenseSecond,isRobot:isRobot)
+                result.append(TeamOutcome(player:.second,outcome:outcome))
+            case .none:
+                result.append(TeamOutcome(player:nil,outcome:.ignoredNonPlayer))
+            }
+        }
+        return result
     }
 
     static func apply(_ events:[CombatSolidEvent68],
