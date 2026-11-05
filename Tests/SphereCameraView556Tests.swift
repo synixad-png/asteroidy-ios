@@ -78,6 +78,69 @@ import Foundation
             near(viewPoint.z,-1.25)
         }
 
+        // GpuSphere67.cs:4,63,133,368 source StampSphere67. The
+        // original planet outer radius is 100*1.4419674, shell adds
+        // exactly 15 source units, and tangent axes are right/forward/up.
+        near(SphereSurfaceStamp556.sourceShellRadius,
+             100*1.4419674+15)
+        near(SphereSurfaceStamp556.normalizedShellRadius,
+             1+15/(100*1.4419674))
+        near(SphereSurfaceStamp556.normalizedScalePerArcUnit,
+             SphereSurfaceStamp556.normalizedShellRadius/Sphere67.radius)
+        near(SphereSurfaceStamp556.sourceCraftRadius,10*1.12*0.65)
+
+        // Standalone fixed reference, not derived from the tested helper:
+        // at lon=0/equator, forward points +Z; right=forward×normal=+Y.
+        let fixedStamp=SphereSurfaceStamp556(
+            point:Vec2(x:0,y:360),angle:0)
+        let scale:Float=10*SphereSurfaceStamp556.normalizedScalePerArcUnit
+        let fixed:[Float]=[
+            0,scale,0,0,
+            0,0,scale,0,
+            scale,0,0,0,
+            1+15/(100*1.4419674),0,0,1
+        ]
+        let columns=fixedStamp.columnMajor(size:10)
+        precondition(columns.count==16)
+        for i in fixed.indices {near(columns[i],fixed[i])}
+
+        // Source heading must really rotate the whole local craft
+        // basis, not just spin a sprite in the camera plane.
+        let north=SphereSurfaceStamp556(
+            point:Vec2(x:0,y:360),angle:Float.pi/2)
+        near(north.forward.x,0)
+        near(north.forward.y,-1)
+        near(north.forward.z,0)
+        near(north.right.x,0)
+        near(north.right.y,0)
+        near(north.right.z,1)
+
+        for point in points {
+            for angle:Float in [0,Float.pi/2,Float.pi,5.2] {
+                let stamp=SphereSurfaceStamp556(
+                    point:point,angle:angle,lift:35)
+                near(stamp.normal.length,1)
+                near(stamp.right.length,1)
+                near(stamp.forward.length,1)
+                near(SphereVector3.dot(stamp.right,stamp.forward),0)
+                near(SphereVector3.dot(stamp.right,stamp.normal),0)
+                near(SphereVector3.dot(stamp.forward,stamp.normal),0)
+                near(stamp.position.length,
+                     SphereSurfaceStamp556.normalizedShellRadius+
+                     35*SphereSurfaceStamp556.normalizedScalePerArcUnit)
+                let m=stamp.columnMajor(size:31)
+                near(sqrt(m[0]*m[0]+m[1]*m[1]+m[2]*m[2]),
+                     31*SphereSurfaceStamp556.normalizedScalePerArcUnit)
+                near(sqrt(m[4]*m[4]+m[5]*m[5]+m[6]*m[6]),
+                     31*SphereSurfaceStamp556.normalizedScalePerArcUnit)
+                near(sqrt(m[8]*m[8]+m[9]*m[9]+m[10]*m[10]),
+                     31*SphereSurfaceStamp556.normalizedScalePerArcUnit)
+                near(m[12],stamp.position.x)
+                near(m[13],stamp.position.y)
+                near(m[14],stamp.position.z)
+            }
+        }
+
         // The camera MUST follow ship flight across the globe. Previously
         // MetalRenderer displayed the whole planet from a fixed (0,0,4)
         // viewpoint despite SphereCamera67 being updated every physics tick.
@@ -90,6 +153,6 @@ import Foundation
         precondition(SphereVector3.dot(moved.back,Sphere67.normal(target))>0.999)
         near(moved.eye.length,SphereCameraView556.normalizedEyeDistance)
 
-        print("PASS: source GpuIntro41 53.13-degree planet frustum + GpuSphere67 310-unit orbit camera, 8 sphere positions, exact original Orbit50.cs matrix columns and view basis and 240 tracked flight frames")
+        print("PASS: source GpuIntro41 53.13-degree planet frustum + GpuSphere67 310-unit orbit camera, 8 sphere positions, exact original Orbit50.cs view columns, GpuSphere67 surface stamp basis/scale and 240 tracked flight frames")
     }
 }
