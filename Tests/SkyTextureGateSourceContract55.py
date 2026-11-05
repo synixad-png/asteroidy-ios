@@ -46,6 +46,7 @@ for token in (
     "guard deepPlanetLoadGate.shouldAllocate(visible: true)",
     "let sourceCloudTexture=ensureCloudTextures55(camera:c)",
     "private static let sourceCloudLayers55: [SphereNebula556.Layer]",
+    "if let cached=nebulaTexture, nebulaSliceCache55.allUploaded {",
     "let visibleThemes=Set(Self.sourceCloudLayers55.compactMap",
     "layer.projected(camera:camera) != nil ? layer.theme : nil",
     "guard nebulaLoadGate.shouldAllocate(visible:!visibleThemes.isEmpty)",
@@ -67,6 +68,12 @@ for token in (
     "vertexStart:24*6,vertexCount:12*6",
 ):
     ck(token in src, "Visible-only source texture path missing: "+token)
+
+ck(src.index("if let cached=nebulaTexture, nebulaSliceCache55.allUploaded {") <
+   src.index("let visibleThemes=Set(Self.sourceCloudLayers55.compactMap"),
+   "Cached cloud images must skip CPU projection after first complete upload")
+ck("var allUploaded: Bool { uploaded.allSatisfy { $0 } }" in gate,
+   "Complete source texture cache must have a fast successful path")
 
 ck(src.index("if input.planetPreview {\n            // Original GpuIntro41.DrawDeepSpace55") <
    src.index("let sourceCloudTexture=ensureCloudTextures55(camera:c)"),
