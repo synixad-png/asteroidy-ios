@@ -55,11 +55,11 @@ import Foundation
                 cooperative:false,developerInfinite:false,
                 guardian:.clear,talent:.unverified,vitals:gauge)
         }
-        precondition(collide()==.applied(.shieldAbsorbed(
+        precondition(collide() == .applied(.shieldAbsorbed(
             remaining:0,cause:"ASTEROIDA")))
         precondition(gauge.armor==25 && gauge.hull==60)
         survival.advance(dt:1)
-        precondition(collide()==.talentAbsorbed)
+        precondition(collide() == .talentAbsorbed)
         precondition(gauge.armor==7 && gauge.hull==60)
         // This hit starts after the .85s of protection expires.
         for hit in 2...5 {
