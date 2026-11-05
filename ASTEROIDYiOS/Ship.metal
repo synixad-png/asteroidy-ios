@@ -425,10 +425,13 @@ vertex FighterSourceRaster431 sourceVanguardVertex431(
 fragment float4 sourceVanguardTexturedToonFragment431(
     FighterSourceRaster431 in [[stage_in]],
     texture2d<float> originalBaseColor [[texture(0)]]) {
-    // Windows GpuToon60.cs uses glTexCoord0 (NO UV vertical flip)
-    // and repeats UVs according to the GLB's embedded sampler.
-    constexpr sampler sourceUV(address::repeat,filter::linear,
-                               mip_filter::linear);
+    // Actual Windows/src/GpuRenderer.cs:144-146 sets
+    // GL_TEXTURE_WRAP_S/T=GL_CLAMP_TO_EDGE and GL_MIN/MAG_FILTER=GL_LINEAR
+    // without mipmaps; glTexImage2D(...GL_RGBA8,...GL_BGRA) does not
+    // sRGB-decode the original 32-bit Bitmap. Do not reinterpret
+    // glTF sampler defaults: game runtime settings are authoritative.
+    // No UV V-flip: the original OpenGL uploads the top-down bitmap.
+    constexpr sampler sourceUV(address::clamp_to_edge,filter::linear);
     float4 base=in.color*originalBaseColor.sample(sourceUV,in.uv);
     const float3 key=normalize(float3(-0.6f,0.8f,1.4f));
     float3 n=normalize(in.eyeNormal);
