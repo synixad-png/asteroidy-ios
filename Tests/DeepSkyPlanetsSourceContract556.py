@@ -65,6 +65,11 @@ for term in (
     "d.textureType = .type2DArray",
     "d.arrayLength = DeepSkyPlanets55.count",
     "pixelFormat:.bgra8Unorm,width:w,height:h,mipmapped:false",
+    "private static func uploadDeepPlanetSlice55(",
+    "private var deepPlanetSliceCache55 = SkyTextureSliceCache55(count: DeepSkyPlanets55.count)",
+    "if deepPlanetSliceCache55.needsUpload(style:style)",
+    "deepPlanetSliceCache55.markUploaded(style:style)",
+    "guard let planets=ensureDeepPlanetTextures55(style:style)",
     "let img=DeepSkyPlanets55.textureBGRA(style:style)",
     "bytesPerRow:w*4",
     "for style in 0..<DeepSkyPlanets55.count",
@@ -93,5 +98,5 @@ ck("blackBlend.sourceRGBBlendFactor = .one" in renderer and
    "Source PArgb blending removed")
 print("PASS: GpuIntro41 source 3x320x220 planet themes & real RGB formulas,")
 print("      3 AnimatedSkyDirection profiles, glow→textured quad order,")
-print("      one 3-slice texture array, reused premultiplied Metal quad")
+print("      one 3-slice array, individual visible-style uploads, reused Metal quad")
 print("LIMITATION: GDI+ strokes approximated, native Apple Metal GPU unverified")
