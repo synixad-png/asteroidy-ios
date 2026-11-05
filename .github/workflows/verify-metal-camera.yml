@@ -20,6 +20,9 @@ on:
       - 'ASTEROIDYiOS/DeepSkyPlanets55.swift'
       - 'Tests/DeepSkyPlanets55Tests.swift'
       - 'Tests/DeepSkyPlanetsSourceContract556.py'
+      - 'ASTEROIDYiOS/SkyTextureGate55.swift'
+      - 'Tests/SkyTextureGate55Tests.swift'
+      - 'Tests/SkyTextureGateSourceContract55.py'
 
 jobs:
   source-camera-linux:
@@ -74,6 +77,10 @@ jobs:
             Tests/DeepSkyPlanets55Tests.swift \
             -o /tmp/deep-planets-55
           /tmp/deep-planets-55
+          swiftc ASTEROIDYiOS/SkyTextureGate55.swift \
+            Tests/SkyTextureGate55Tests.swift \
+            -o /tmp/sky-texture-gate55
+          /tmp/sky-texture-gate55
       - name: Verify original RGBA sky point sprites and pipeline contract (static)
         run: python3 Tests/SkyPointSourceContract556.py
       - name: Original GpuIntro41 + GpuCosmos39 source solar ray and GPU contract
@@ -84,6 +91,8 @@ jobs:
         run: python3 Tests/BlackHoleSourceContract556.py
       - name: Verify three source BuildDeepPlanet55 bodies and Metal painter order
         run: python3 Tests/DeepSkyPlanetsSourceContract556.py
+      - name: Confirm lazy visible-only source PArgb sky GPU allocations
+        run: python3 Tests/SkyTextureGateSourceContract55.py
       - name: Parse Metal renderer Swift sources (not an Xcode compile)
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
