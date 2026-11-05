@@ -99,6 +99,11 @@ ck(intro.index('let point=origin+planetCenter-eye') <
    intro.index('let projection=clamped('),
    'Flight corridor position must use source subtraction and projection')
 
+ck('static let boreasSourceLevel = 5' in intro and
+   'level:IntroOrbit41.boreasSourceLevel,' in metal,
+   'Real PlanetAssetBytes463 loads Boreas at original game.Level=5, not 1')
+ck('level:1,time:introTime41' not in metal,
+   'Hard-coded level=1 incorrectly rotates the Boreas GLB in cinematic')
 ck('@Published var introPreview41 = true' in app,
    'The new source cinematic must be initially visible, not old training arena')
 ck('@Published var planetPreview = true' in app,
