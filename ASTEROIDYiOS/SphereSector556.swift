@@ -277,7 +277,7 @@ struct SphereSector556 {
                        detectContacts:Bool=true) {
         guard dt > 0 else { return }
         elapsed += dt
-        hitCooldown = max(0,hitCooldown-dt)
+        CombatHull556.advance(cooldown:&hitCooldown,dt:dt)
         shotCooldown = max(0,shotCooldown-dt)
         if objective == .waves { objectiveWave = min(3,1+Int(elapsed/16)) }
 
@@ -341,10 +341,8 @@ struct SphereSector556 {
         }
         if overlap && !inContact {
             shipContacts += 1
-            if hitCooldown <= 0 && hull > 0 {
-                hull -= 1
+            if CombatHull556.applyContact(hull:&hull,cooldown:&hitCooldown) {
                 damageEvents += 1
-                hitCooldown = 1.3
             }
         }
         inContact = overlap
