@@ -14,6 +14,11 @@ struct CombatVerifiedEncounter556 {
     var secondGuardian:CombatGuardian37?=nil
     var firstVitals:CombatTalentVitals78?=nil
     var secondVitals:CombatTalentVitals78?=nil
+    // Windows/src/Coop62.cs WithSecond62 swaps ship pose and immunity,
+    // but NOT Game.Lives, ShieldCharges, Hull78, Armor78 or guardian.
+    // Opt-in source-accurate shared-resource mode. The earlier independent
+    // fixture remains unchanged for diagnostic/regression compatibility.
+    var sourceSharedCoopResources=false
     var headingFirst:Float = -Float.pi/2
     var headingSecond:Float = -Float.pi/2
     var shots:[SphereBolt556]=[]
@@ -67,7 +72,8 @@ struct CombatVerifiedEncounter556 {
                 survival:&encounter.secondSurvival,dome:&domeSecond,
                 developerInfinite:developerInfinite,
                 guardian:guardianSecond,talent:talentSecond,
-                vitals:secondVitals,guardianState:secondGuardian)
+                vitals:sourceSharedCoopResources ? firstVitals : secondVitals,
+                guardianState:sourceSharedCoopResources ? firstGuardian : secondGuardian)
         }
         let tagged=CombatVerifiedHit556.TeamOutcome(player:player,
                                                      outcome:outcome)
@@ -120,6 +126,18 @@ struct CombatVerifiedEncounter556 {
             encounter.second=partner
             encounter.secondSurvival.invincible=3
         }
+        // WithSecond62 writes Damage() into shared Lives/ShieldCharges/
+        // Game.Mode. Preserve only each player's local invulnerability.
+        if sourceSharedCoopResources && encounter.second != nil {
+            if !first {
+                encounter.firstSurvival.lives=encounter.secondSurvival.lives
+                encounter.firstSurvival.shieldCharges=encounter.secondSurvival.shieldCharges
+                encounter.firstSurvival.playing=encounter.secondSurvival.playing
+            }
+            encounter.secondSurvival.lives=encounter.firstSurvival.lives
+            encounter.secondSurvival.shieldCharges=encounter.firstSurvival.shieldCharges
+            encounter.secondSurvival.playing=encounter.firstSurvival.playing
+        }
         return (tagged,transition)
     }
 
@@ -167,7 +185,9 @@ struct CombatVerifiedEncounter556 {
                           pickupsTrackingSecond:0)
         }
         firstVitals?.advance(dt:dt)
-        secondVitals?.advance(dt:dt)
+        if !sourceSharedCoopResources || encounter.second == nil {
+            secondVitals?.advance(dt:dt)
+        }
         let firstDown=rescue.down(.first),secondDown=rescue.down(.second)
         domeFirst.tick(dt:dt,held:firstDomeHeld,
                        playing:encounter.firstSurvival.playing,shipDown:firstDown)
@@ -184,17 +204,51 @@ struct CombatVerifiedEncounter556 {
         var first=encounter.first, second=encounter.second
         var survivalFirst=encounter.firstSurvival
         var survivalSecond=encounter.secondSurvival
-        let hit=CombatVerifiedHit556.applyTeam(frame.contacts,
-            level:encounter.level,difficulty:encounter.difficulty,
-            first:&first,second:&second,
-            survivalFirst:&survivalFirst,survivalSecond:&survivalSecond,
-            tarczaFirst:&domeFirst,tarczaSecond:&domeSecond,
-            rescue:&rescue,developerInfinite:developerInfinite,
-            guardianFirst:guardianFirst,guardianSecond:guardianSecond,
-            talentFirst:talentFirst,talentSecond:talentSecond,
-            isRobot:robotFlags,
-            vitalsFirst:firstVitals,vitalsSecond:secondVitals,
-            guardianStateFirst:firstGuardian,guardianStateSecond:secondGuardian)
+        let shared=sourceSharedCoopResources && second != nil
+        var hit:[CombatVerifiedHit556.TeamOutcome]=[]
+        if shared {
+            // The original WithSecond62 executes one collision at a time
+            // against the SAME global lives, shield charges, vitals and
+            // guardian, while retaining each ship's own immunity timer.
+            for event in frame.contacts {
+                survivalSecond.lives=survivalFirst.lives
+                survivalSecond.shieldCharges=survivalFirst.shieldCharges
+                survivalSecond.playing=survivalFirst.playing
+                hit.append(contentsOf:CombatVerifiedHit556.applyTeam(
+                    [event],level:encounter.level,
+                    difficulty:encounter.difficulty,
+                    first:&first,second:&second,
+                    survivalFirst:&survivalFirst,survivalSecond:&survivalSecond,
+                    tarczaFirst:&domeFirst,tarczaSecond:&domeSecond,
+                    rescue:&rescue,developerInfinite:developerInfinite,
+                    guardianFirst:guardianFirst,guardianSecond:guardianSecond,
+                    talentFirst:talentFirst,talentSecond:talentSecond,
+                    isRobot:robotFlags,
+                    vitalsFirst:firstVitals,vitalsSecond:firstVitals,
+                    guardianStateFirst:firstGuardian,
+                    guardianStateSecond:firstGuardian))
+                if CombatContactRouter96.player(for:event) == .second {
+                    survivalFirst.lives=survivalSecond.lives
+                    survivalFirst.shieldCharges=survivalSecond.shieldCharges
+                    survivalFirst.playing=survivalSecond.playing
+                }
+            }
+            survivalSecond.lives=survivalFirst.lives
+            survivalSecond.shieldCharges=survivalFirst.shieldCharges
+            survivalSecond.playing=survivalFirst.playing
+        } else {
+            hit=CombatVerifiedHit556.applyTeam(frame.contacts,
+                level:encounter.level,difficulty:encounter.difficulty,
+                first:&first,second:&second,
+                survivalFirst:&survivalFirst,survivalSecond:&survivalSecond,
+                tarczaFirst:&domeFirst,tarczaSecond:&domeSecond,
+                rescue:&rescue,developerInfinite:developerInfinite,
+                guardianFirst:guardianFirst,guardianSecond:guardianSecond,
+                talentFirst:talentFirst,talentSecond:talentSecond,
+                isRobot:robotFlags,
+                vitalsFirst:firstVitals,vitalsSecond:secondVitals,
+                guardianStateFirst:firstGuardian,guardianStateSecond:secondGuardian)
+        }
 
         // CombatVerifiedHit556 resets actual gauges on life loss/game over;
         // rendered explosions and weapons remain external to this harness.
@@ -249,7 +303,9 @@ struct CombatVerifiedEncounter556 {
         if case let .rescued(player) = rescueEvent {
             switch player {
             case .first: firstVitals?.reset()
-            case .second: secondVitals?.reset()
+            case .second:
+                if shared { firstVitals?.reset() }
+                else { secondVitals?.reset() }
             }
         }
         if case .failed = rescueEvent {
