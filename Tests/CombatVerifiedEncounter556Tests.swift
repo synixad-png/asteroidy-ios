@@ -225,6 +225,53 @@ import Foundation
             }
         }
 
+        // Three consecutive source lives in the *real* Physics68 encounter
+        // are lost only after three armor/hull impacts each. Fatal contacts
+        // reset vitals and the final contact transitions to GameOver, not a
+        // fourth respawn. Unknown defenses remain explicitly opt-in.
+        var campaignDeaths=setup()
+        campaignDeaths.firstGuardian=CombatGuardian37(owned:false)
+        campaignDeaths.firstVitals=CombatTalentVitals78()
+        for life in 1...3 {
+            for hitNo in 1...3 {
+                if life>1 || hitNo>1 {
+                    campaignDeaths.encounter.rocks=[]
+                    _=campaignDeaths.step(dt:3.2)
+                    campaignDeaths.encounter.first=body(640)
+                    campaignDeaths.encounter.rocks=[rock()]
+                }
+                let frame=campaignDeaths.step(dt:1/120)
+                precondition(frame.contacts == [.shipRock(0)])
+                if hitNo<3 {
+                    precondition(frame.hitOutcomes == [
+                        V.TeamOutcome(player:.first,outcome:.talentAbsorbed)])
+                    precondition(frame.damageTransitions.isEmpty)
+                } else if life<3 {
+                    precondition(frame.hitOutcomes == [
+                        V.TeamOutcome(player:.first,outcome:.applied(
+                            .lifeLost(remaining:3-life,
+                                      respawnProtection:3,
+                                      cause:"ASTEROIDA")))])
+                    precondition(frame.damageTransitions == [
+                        .respawned(removedShots:0,relocatedRocks:1)])
+                    precondition(campaignDeaths.encounter.firstSurvival.playing)
+                } else {
+                    precondition(frame.hitOutcomes == [
+                        V.TeamOutcome(player:.first,outcome:.applied(
+                            .gameOver(cause:"ASTEROIDA")))])
+                    precondition(frame.damageTransitions == [
+                        .gameOver(removedShots:0)])
+                    precondition(!campaignDeaths.encounter.firstSurvival.playing)
+                }
+            }
+            precondition(campaignDeaths.encounter.firstSurvival.lives == 3-life)
+            precondition(campaignDeaths.firstVitals!.armor == 25 &&
+                         campaignDeaths.firstVitals!.hull == 60)
+        }
+        let postGame=campaignDeaths.step(dt:1/120)
+        precondition(postGame.contacts.isEmpty && postGame.hitOutcomes.isEmpty)
+        precondition(campaignDeaths.encounter.firstSurvival.lives == 0)
+
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
