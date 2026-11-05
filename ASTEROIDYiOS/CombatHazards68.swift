@@ -46,7 +46,7 @@ enum CombatHazards68 {
     private static func radial(origin:Vec2,target:Vec2) -> (direction:Vec2,distance:Float) {
         let d=Sphere67.delta(target:target,origin:origin)
         let distance=sqrt(d.lengthSquared)
-        return (distance>0.00001 ? d*(1/distance) : Vec2(x:0,y:0),distance)
+        return (distance>0.00001 ? d*(1/distance) : Vec2(x:1,y:0),distance)
     }
     private static func transported(origin:Vec2,target:Vec2,radial:Vec2) -> Vec2 {
         Sphere67.components(target,Sphere67.transport(
