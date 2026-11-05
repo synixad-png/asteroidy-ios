@@ -116,7 +116,7 @@ import Foundation
         near(north.right.z,1)
 
         for point in points {
-            for angle:Float in [0,Float.pi/2,Float.pi,5.2] {
+            for angle in [Float(0),Float.pi/2,Float.pi,Float(5.2)] {
                 let stamp=SphereSurfaceStamp556(
                     point:point,angle:angle,lift:35)
                 near(stamp.normal.length,1)
@@ -125,9 +125,8 @@ import Foundation
                 near(SphereVector3.dot(stamp.right,stamp.forward),0)
                 near(SphereVector3.dot(stamp.right,stamp.normal),0)
                 near(SphereVector3.dot(stamp.forward,stamp.normal),0)
-                near(stamp.position.length,
-                     SphereSurfaceStamp556.normalizedShellRadius+
-                     35*SphereSurfaceStamp556.normalizedScalePerArcUnit)
+                let expectedLift=SphereSurfaceStamp556.normalizedShellRadius + 35*SphereSurfaceStamp556.normalizedScalePerArcUnit
+                near(stamp.position.length,expectedLift)
                 let m=stamp.columnMajor(size:31)
                 near(sqrt(m[0]*m[0]+m[1]*m[1]+m[2]*m[2]),
                      31*SphereSurfaceStamp556.normalizedScalePerArcUnit)
