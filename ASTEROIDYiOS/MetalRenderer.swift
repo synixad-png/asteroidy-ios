@@ -422,7 +422,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             let skyMVP=vp*Self.translation(skyEye.x,skyEye.y,skyEye.z)
             var skyUniform=SceneUniforms(
                 mvp:skyMVP,model:matrix_identity_float4x4,
-                lighting:SIMD4<Float>(1,0,0,0))
+                lighting:SIMD4<Float>(SphereSky207.drawableScale(
+                    height:Float(view.drawableSize.height)),0,0,0))
             encoder.setRenderPipelineState(skyPointPipeline)
             encoder.setDepthStencilState(skyDepthState)
             encoder.setVertexBuffer(sphereSkyMesh.vertices,offset:0,index:0)
