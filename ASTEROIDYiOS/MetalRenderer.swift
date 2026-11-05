@@ -621,11 +621,13 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             SIMD4(m[12],m[13],m[14],m[15])))
     }
     private static func perspective(_ aspect: Float, spherical: Bool) -> simd_float4x4 {
-        // Original GpuIntro41.IntroProjection uses a .2/.4 half-height
-        // frustum (vertical FOV 53.1301°) in GpuSphere67.SphereScene67.
-        // The previous port wrongly used 36° in the planet view. The
-        // independent flat training arena retains its prior projection.
-        let near: Float = 0.1, far: Float = 20
+        // Original GpuIntro41.IntroProjection uses near=.4, far=1600,
+        // half-height=.2 (vertical FOV 53.1301°). In sphere mode
+        // normalize BOTH clip planes by original Boreas outer radius,
+        // just like the view eye and all model positions. Keep the
+        // independent flat arena's unchanged .1/20 clipping planes.
+        let clip = SphereProjection556.clipPlanes(spherical:spherical)
+        let near = clip.near, far = clip.far
         let y: Float = spherical
             ? SphereProjection556.sourceVerticalFocal
             : 1 / tan(Float.pi/5.0 / 2)
