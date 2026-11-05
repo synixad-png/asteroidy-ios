@@ -30,9 +30,12 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private let sphereHaloTexture: MTLTexture
     private let solarOverlayMesh: GPUModel
     private let nebulaOverlayMesh: GPUModel
-    private let nebulaTexture: MTLTexture
-    private let blackHoleTextures: MTLTexture
-    private let deepPlanetTextures: MTLTexture
+    private var nebulaTexture: MTLTexture?
+    private var blackHoleTextures: MTLTexture?
+    private var deepPlanetTextures: MTLTexture?
+    private var nebulaLoadGate = SkyTextureGate55()
+    private var blackHoleLoadGate = SkyTextureGate55()
+    private var deepPlanetLoadGate = SkyTextureGate55()
     private let planetVertexBuffers: [MTLBuffer]
     private let planetBufferSlots = MorphBufferSlots(count: 3)
     private let planetIndices: MTLBuffer
@@ -187,9 +190,10 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         solarOverlayMesh=try Self.makeMesh(device,overlayData.0,overlayData.1)
         let cloudData=Self.nebulaSource556()
         nebulaOverlayMesh=try Self.makeMesh(device,cloudData.0,cloudData.1)
-        nebulaTexture=try Self.makeNebulaTextures556(device)
-        blackHoleTextures=try Self.makeBlackHoleTextures55(device)
-        deepPlanetTextures=try Self.makeDeepPlanetTextures55(device)
+        // Source GpuIntro41.cs generates large sky Bitmaps only after
+        // their first visible SkyProject55. Do not eagerly allocate
+        // 5.76MB of mostly unseen textures in the flat training arena.
+        // MTLTexture resources are loaded on their first visible use.
         // Only use the verified v556 Boreas GLB conversion when bundled.
         // Never silently claim that the diagnostic UV sphere is an imported asset.
         guard let planetURL = Bundle.main.url(forResource:"Boreas556",withExtension:"as3d")
@@ -339,6 +343,50 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 material:SIMD4<Float>(v.textured ? 1:0,1,0,0)))
         }
         return (vertices,(0..<source.count).map {UInt32($0)})
+    }
+
+    /// The original GpuCosmos39.CloudLayer and GpuIntro41.DrawSkyPlanet55/
+    /// DrawSkyBlackHole55 allocate their images only on first visible use.
+    /// All three texture arrays remain cached within this renderer for
+    /// the rest of the session, regardless of flat/sphere toggling.
+    /// Errors log once, and gameplay continues without that sky layer.
+    private func ensureCloudTextures55() -> MTLTexture? {
+        if let current=nebulaTexture { return current }
+        guard nebulaLoadGate.shouldAllocate(visible: true) else { return nil }
+        do {
+            let created=try Self.makeNebulaTextures556(device)
+            nebulaTexture=created
+            return created
+        } catch {
+            NSLog("ASTEROIDY iOS: źródłowe NebulaTexture: %@", String(describing:error))
+            return nil
+        }
+    }
+
+    private func ensureDeepPlanetTextures55() -> MTLTexture? {
+        if let current=deepPlanetTextures { return current }
+        guard deepPlanetLoadGate.shouldAllocate(visible: true) else { return nil }
+        do {
+            let created=try Self.makeDeepPlanetTextures55(device)
+            deepPlanetTextures=created
+            return created
+        } catch {
+            NSLog("ASTEROIDY iOS: źródłowe planety 320px: %@", String(describing:error))
+            return nil
+        }
+    }
+
+    private func ensureBlackHoleTextures55() -> MTLTexture? {
+        if let current=blackHoleTextures { return current }
+        guard blackHoleLoadGate.shouldAllocate(visible: true) else { return nil }
+        do {
+            let created=try Self.makeBlackHoleTextures55(device)
+            blackHoleTextures=created
+            return created
+        } catch {
+            NSLog("ASTEROIDY iOS: źródłowa czarna dziura 640px: %@", String(describing:error))
+            return nil
+        }
     }
 
     /// Two immutable original GpuCosmos39 PArgb NebulaTexture themes
