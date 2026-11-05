@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 80% |
+| 2 | Silnik graficzny Metal | 82% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -181,6 +181,16 @@ Stała lista 18 zadań i ich procenty bez zmian: zadanie 2 **78%**, łączny his
 **Weryfikacja:** [GitHub Actions 42108063917](https://github.com/synixad-png/asteroidy-ios/actions/runs/42108063917) `source-camera-linux` zakończył się **SUCCESS** dla najnowszych testów numerycznych autentycznej geometrii/rozmiaru Vanguard, testów `Boreas level5` i wszystkich wcześniejszych testów skał, atmosfery, animacji, sky/PBR. [GitHub Actions 42108063893](https://github.com/synixad-png/asteroidy-ios/actions/runs/42108063893) `original-assets` **SUCCESS**; dodatkowo wcześniejsza kompletna natywna kompilacja Apple [42105890080](https://github.com/synixad-png/asteroidy-ios/actions/runs/42105890080) **SUCCESS** dotyczyła poprzedniej rewizji, a **nie** tych zmian. Dla obecnego kodu wykonano **nieanulowalne jednorazowe uruchomienie** [GitHub Actions 42108222094](https://github.com/synixad-png/asteroidy-ios/actions/runs/42108222094), które testuje Xcode/Metal iPhone+iPad ARM64 bez IPA — `queued` podczas zapisu raportu. Nie deklarować natywnego PASS bieżącej rewizji przed jego rzeczywistym zakończeniem.
 
 **Postęp zadania 2: 78% → 80% (+2 pp)** za konkretną korektę autentycznego modelu i prawidłowy obrót GLB z testami źródłowymi. Pozostałe 17 zadań i ich procenty niezmienione; historyczny wskaźnik całego projektu nadal **27%**, pozostało **73%** (wagi nie są przeliczane). **Braki wciąż istotne:** oryginalne UV/BaseColor/PBR modelu i źródłowe oświetlenie `FighterLight`, rzeczywisty wygląd na fizycznym iPhonie/iPadzie, optymalizacja pamięci/klatek, pełny kontroler misji/kampanii. IPA nadal nie zbudowano; status iOS powinien być potwierdzany z nowego przebiegu Xcode.
+
+## 05.11.2026 — zadanie nr 2: plazma obu silników Vanguard v491 (80→82%)
+
+**Co wdrożono:** prawdziwy `GpuShip.cs:19–63` z oryginalnej gry PC v568, dwie dysze ze źródłowego `vanguard431.mesh.gz` (wersja 4311), 3 warstwy × 3 płaszczyzny × 16 segmentów × 6 wierzchołków × 2 dysze = **1728 wierzchołków / 576 trójkątów**; oryginalne barwy biały–pomarańczowy–czerwony, okresowe fale, długość zależna od mocy silnika i przenikanie zgodne z `SRC_ALPHA,ONE`. Efekt liczony jest w osobnym shaderze `fighterPlasmaVertex491` przez `vertex_id`, bez nowego bufora geometrii per-frame. `MetalRenderer.swift`: statek GLB → 3D plazma obu dysz → źródłowa atmosfera 3D; zachowane oddzielne tryby gry, kolizje i trwałość buforów Boreas. Bez zgadywania położenia dysz.
+
+**Testy źródłowe:** [42110230250](https://github.com/synixad-png/asteroidy-ios/actions/runs/42110230250) `source-camera-linux` **PASS** oraz [42110230316](https://github.com/synixad-png/asteroidy-ios/actions/runs/42110230316) preflight Swift/oryginalne zasoby **PASS**. `Tests/IntroEnginePlasma491Tests.swift` sprawdza 1728 wierzchołków, numeryczne stany czasu i mocy, oba rzeczywiste wyloty; `Tests/IntroEnginePlasmaSourceContract491.py` wiąże wszystkie wzory z shaderem i źródłową kolejnością rysowania. Starsze kontrakty nie mylą się już na współdzielonym depth state i wcześniejszych źródłowych overlayach Sky. 
+
+**Natywny Apple:** dla dokładnego kodu z plazmą uruchomiono niezależny Xcode iPhone+iPad arm64 [42110465213](https://github.com/synixad-png/asteroidy-ios/actions/runs/42110465213); ostatnio **queued**, brak kompletnej kompilacji w chwili zapisu raportu. Poprzedni PASS Xcode [42108222094](https://github.com/synixad-png/asteroidy-ios/actions/runs/42108222094) obejmuje starszą rewizję BEZ tego nowego shadera — nie przedstawiać go jako potwierdzenia najnowszych zmian. Nowego IPA nie tworzono.
+
+**Postęp:** zadanie 2 **82% (+2 pp)**; zadania pozostałe bez zmian, poprzedni historyczny całościowy wskaźnik **27%, pozostało 73%**, bez nieuzasadnionego przeważania. **Co pozostaje:** natywny PASS shadera Metal, źródłowe UV/tekstury/baseColor i `FighterLight(false)` Vanguard, następnie rzeczywisty test wyglądu i wydajności na iPhone + iPad, a później odtwarzanie całej misji. Nie deklarować ukończonej gry ani 100% zgodności.
 
 ## Kolejność dalszej pracy
 
