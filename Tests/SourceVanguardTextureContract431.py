@@ -31,7 +31,7 @@ for token in (
     check(token in reader,'Actual PC Vanguard431 packet parser changed: '+token)
 for token in (
     'vertex FighterSourceRaster431 sourceVanguardVertex431(',
-    'constant float *packed [[buffer(0)]]',
+    'device const float *packed [[buffer(0)]]',
     'uint i=vertexID*12u;',
     'float2(packed[i+10u],packed[i+11u])',
     'float3 n=float3(packed[i+3u],packed[i+4u],packed[i+5u])',
