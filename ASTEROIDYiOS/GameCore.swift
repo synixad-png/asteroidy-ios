@@ -139,12 +139,12 @@ struct GameCore {
         return Float(seed & 0x00FFFFFF) / Float(0x01000000)
     }
     private mutating func spawnRock() {
-        let radius = 0.055 + random() * 0.055
-        let phase = random() * 6.28
         let tier = trainingBalance?.tier(at: nextSpawnIndex % targetRockCount) ?? 0
         nextSpawnIndex += 1
         let p: Vec2
         let v: Vec2
+        let radius: Float
+        let phase: Float
         if let config = trainingBalance {
             // Game.Wave() flat sector spawning: positions sampled from the
             // original 1280x720 arena, at least 260 px from the player.
@@ -165,15 +165,19 @@ struct GameCore {
             let speedPx = (48 + random() * 30 + Float(min(config.level - 1, 18)) * 3.2)
                 * (tier >= 2 ? 0.88 : 1)
             v = Vec2(x: cos(a), y: sin(a)) * (speedPx * unit)
+            radius = Rock.radiusFor(size: 3)
+            phase = random() * 6.28
         } else {
             let a = random() * Float.pi * 2
             let d = 0.6 + random() * 0.6
             p = Vec2(x: cos(a) * d, y: sin(a) * d)
             v = Vec2(x: (random() - 0.5) * 0.14, y: (random() - 0.5) * 0.14)
+            radius = 0.055 + random() * 0.055
+            phase = random() * 6.28
         }
         let size = 3
         let hp = trainingBalance == nil ? 1 : Rock.healthFor(size: size, tier: tier)
-        rocks.append(Rock(at: p, motion: v, radius: trainingBalance == nil ? radius : Rock.radiusFor(size: size), phase: phase, tier: tier, size: size, health: hp, originalHealth: hp))
+        rocks.append(Rock(at: p, motion: v, radius: radius, phase: phase, tier: tier, size: size, health: hp, originalHealth: hp))
     }
     private mutating func addFragments(of parent: Rock) {
         guard parent.size > 1 else { return }
