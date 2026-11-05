@@ -188,7 +188,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         if now-lastHUDTime > 0.14 {
             lastHUDTime = now
-            let score = game.score, hull = game.hull
+            let score = game.score
+            let hull = input.planetPreview ? sphereSector.hull : game.hull
             let rockCount = input.planetPreview ? sphereSector.asteroids.count : game.rocks.count
             DispatchQueue.main.async { [weak input] in
                 input?.score = score
