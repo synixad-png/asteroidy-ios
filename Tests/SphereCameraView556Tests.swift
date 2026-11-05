@@ -189,6 +189,45 @@ import Foundation
         }
         precondition(bright>0 && large>0 && warm>0)
 
+        // Independent C# GpuAmbient37.StarTexture goldens. Bitmap uses
+        // 64x64 PArgb with premultiplied BGRA bytes equal to alpha.
+        let sourceTexels=SphereSky207.haloTexelsBGRA()
+        precondition(sourceTexels.count==64*64*4)
+        let golden:[(Int,Int,UInt8)]=[
+            (0,0,0),(31,31,243),(32,32,243),
+            (31,0,0),(31,10,3),(31,16,24),(31,20,60),
+            (31,24,117),(31,28,191),(35,35,164)
+        ]
+        for (x,y,a) in golden {
+            precondition(SphereSky207.haloAlpha(x:x,y:y)==a)
+            let base=(y*64+x)*4
+            for c in 0..<4 { precondition(sourceTexels[base+c]==a) }
+        }
+        // GpuIntro41.cs:452: base IntroHalo(radius:size*2)
+        // => 4*size diameter; for glow && bright a preceding 10 or
+        // 21 radius halo with tint alpha 125/255. Original default
+        // Renderer.GlowEnabled is true.
+        let sourceSmall=SphereSkyStar207(
+            direction:star0.direction,pixelSize:0.7,
+            red:star0.red,green:star0.green,
+            blue:star0.blue,alpha:star0.alpha)
+        let sourceMedium=SphereSkyStar207(
+            direction:star0.direction,pixelSize:1.4,
+            red:star0.red,green:star0.green,
+            blue:star0.blue,alpha:star0.alpha)
+        let sourceLarge=SphereSkyStar207(
+            direction:star0.direction,pixelSize:2.8,
+            red:star0.red,green:star0.green,
+            blue:star0.blue,alpha:star0.alpha)
+        near(SphereSky207.baseDiameterPixels(sourceSmall),2.8)
+        near(SphereSky207.baseDiameterPixels(sourceMedium),5.6)
+        near(SphereSky207.baseDiameterPixels(sourceLarge),11.2)
+        precondition(!SphereSky207.hasBrightHalo(sourceSmall))
+        precondition(SphereSky207.hasBrightHalo(sourceMedium))
+        precondition(SphereSky207.hasBrightHalo(sourceLarge))
+        near(SphereSky207.brightHaloDiameterPixels(sourceMedium),20)
+        near(SphereSky207.brightHaloDiameterPixels(sourceLarge),42)
+
         // The camera MUST follow ship flight across the globe. Previously
         // MetalRenderer displayed the whole planet from a fixed (0,0,4)
         // viewpoint despite SphereCamera67 being updated every physics tick.
