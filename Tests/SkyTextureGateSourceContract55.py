@@ -22,8 +22,9 @@ for kind,field,method,call in (
      "Self.makeBlackHoleTextures55(device)")):
     ck(f"private var {field}: MTLTexture?" in src,
        kind+": source texture no longer lazily optional")
-    ck(f"private func {method}() -> MTLTexture?" in src,
-       kind+": missing one-time resource getter")
+    signature=(f"private func {method}(camera: SphereCamera67) -> MTLTexture?"
+               if kind=="cloud" else f"private func {method}() -> MTLTexture?")
+    ck(signature in src,kind+": missing one-time resource getter")
     ck(f"let created=try {call}" in src,
        kind+": source GPU array construction missing")
     ck(f"let created=try {call}" not in src.split("init(device: MTLDevice",1)[1].split(
