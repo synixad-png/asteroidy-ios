@@ -1,0 +1,77 @@
+# One durable native Apple check of the current real ASTEROIDY iOS source.
+# Triggered once by committing this new workflow file (or explicitly from
+# Actions). Does not get cancelled by later source pushes and NEVER makes IPA.
+name: ASTEROIDY iOS - native Xcode Metal CHECK once (NO IPA)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-apple-metal-20261105-once.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apple-compile:
+    name: Compile real Metal + Swift for iPhone and iPad ARM64 (NO IPA)
+    runs-on: macos-15-intel
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record native toolchain and source
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          xcrun --find metal
+          echo "Revision: $GITHUB_SHA"
+      - name: Generate exact existing Xcode project
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+          xcodegen generate --spec project.yml
+      - name: Compile physical iPhone + iPad ARM64 Swift and Metal (unsigned, NO IPA)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Debug \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/MetalCheck" \
+            build > diagnostics/xcodebuild.log 2>&1 || {
+              tail -n 180 diagnostics/xcodebuild.log
+              exit 1
+            }
+          python3 - <<'PY' | tee diagnostics/source-validation.txt
+          from pathlib import Path
+          import plistlib
+          base=Path("build/MetalCheck/Build/Products/Debug-iphoneos")
+          apps=list(base.glob("*.app"))
+          assert len(apps)==1, f"Expected one compiled .app; found {apps}"
+          app=apps[0]
+          with (app/"Info.plist").open("rb") as fd:
+              info=plistlib.load(fd)
+          assert set(info.get("UIDeviceFamily",[]))=={1,2}, (
+              "Expected iPhone and iPad device families, got "
+              f"{info.get('UIDeviceFamily')}"
+          )
+          assert (app/"default.metallib").is_file(), "Actual Metal shader library not compiled"
+          print("PASS: native Swift + Metal compiled for iPhone/iPad ARM64")
+          print("No IPA was packaged or signed")
+          PY
+      - name: Diagnostic logs only — never upload app or IPA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-iOS-Xcode-Metal-source-compile-diagnostics
+          path: diagnostics/
+          if-no-files-found: ignore
+          retention-days: 7
