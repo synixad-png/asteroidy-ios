@@ -24,6 +24,9 @@ on:
       - 'Tests/CombatDamageShared556Tests.swift'
       - 'Tests/SphereCombatBatch556Tests.swift'
       - 'Tests/Action38FrameOrder556Tests.swift'
+      - 'Tests/AmigaBalance70Sphere556Tests.swift'
+      - 'ASTEROIDYiOS/CombatBalance556.swift'
+      - 'ASTEROIDYiOS/SphereAsteroid556.swift'
       - 'Tests/SpherePhysicsAndMissionGate556Tests.swift'
       - 'Tests/RockCombat556Tests.swift'
 
@@ -81,7 +84,8 @@ jobs:
             SphereSector556Tests \
             ContinuousCollisionTests \
             Action38SphereQuota556Tests \
-            Action38FrameOrder556Tests; do
+            Action38FrameOrder556Tests \
+            AmigaBalance70Sphere556Tests; do
             echo "Verifying $test"
             swiftc $sources "Tests/$test.swift" -o /tmp/source-physics68-test
             /tmp/source-physics68-test
