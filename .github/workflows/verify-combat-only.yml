@@ -24,6 +24,7 @@ on:
       - 'Tests/CombatDamageShared556Tests.swift'
       - 'Tests/SphereCombatBatch556Tests.swift'
       - 'Tests/Action38FrameOrder556Tests.swift'
+      - 'Tests/Action38SphereQuota556Tests.swift'
       - 'Tests/AmigaBalance70Sphere556Tests.swift'
       - 'ASTEROIDYiOS/CombatBalance556.swift'
       - 'ASTEROIDYiOS/SphereAsteroid556.swift'
