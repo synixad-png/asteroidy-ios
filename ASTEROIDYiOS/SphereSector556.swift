@@ -368,7 +368,9 @@ struct SphereSector556 {
             var contacts=0
             for i in asteroids.indices where asteroids[i].shardLife <= 0 {
                 var rock=asteroids[i]
-                if SphereRockContact68.resolve(&ship,&rock,restitution:0.42) {
+                if SphereRockContact68.resolve(&ship,&rock,
+                                               restitution:0.42,
+                                               applyRockSpin:false) {
                     asteroids[i]=rock
                     contacts += 1
                     if useLegacyHull && CombatHull556.applyContact(hull:&hull,cooldown:&hitCooldown) {
