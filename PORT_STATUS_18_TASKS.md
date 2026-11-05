@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 82% |
+| 2 | Silnik graficzny Metal | 84% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -191,6 +191,16 @@ Stała lista 18 zadań i ich procenty bez zmian: zadanie 2 **78%**, łączny his
 **Natywny Apple:** dla dokładnego kodu z plazmą uruchomiono niezależny Xcode iPhone+iPad arm64 [42110465213](https://github.com/synixad-png/asteroidy-ios/actions/runs/42110465213); ostatnio **queued**, brak kompletnej kompilacji w chwili zapisu raportu. Poprzedni PASS Xcode [42108222094](https://github.com/synixad-png/asteroidy-ios/actions/runs/42108222094) obejmuje starszą rewizję BEZ tego nowego shadera — nie przedstawiać go jako potwierdzenia najnowszych zmian. Nowego IPA nie tworzono.
 
 **Postęp:** zadanie 2 **82% (+2 pp)**; zadania pozostałe bez zmian, poprzedni historyczny całościowy wskaźnik **27%, pozostało 73%**, bez nieuzasadnionego przeważania. **Co pozostaje:** natywny PASS shadera Metal, źródłowe UV/tekstury/baseColor i `FighterLight(false)` Vanguard, następnie rzeczywisty test wyglądu i wydajności na iPhone + iPad, a później odtwarzanie całej misji. Nie deklarować ukończonej gry ani 100% zgodności.
+
+## 05.11.2026 — kolejny zweryfikowany etap: źródłowe oświetlenie GpuToon60 (82→84%)
+
+**Wykonano:** z bezpośredniego porównania `Windows/src/GpuShip.cs:10–16` i `Windows/src/GpuToon60.cs:29,34,64,279` w oryginalnym PC v568 ustalono, że Vanguard431 domyślnie korzysta z trzystopniowego shaderowego oświetlenia `BeginToon60(true,true)` przy `ToonEnabled60=true`, a nie z uproszczonego jednokierunkowego Cook–Torrance ani z dwuświatełkowego fixed-function fallback. Kierunek głównej lampy z `FighterLight(false)` to `(-.6,.8,1.4,w=0)` w eye-space. Dokładne źródłowe progi `0.25+0.33*smoothstep(.30,.32,d)+0.40*smoothstep(.70,.72,d)` i rim `.10*smoothstep(.72,.86,1-max(0,dot(N,V)))*smoothstep(.10,.30,d)` przeniesiono w `SourceFighterToon60.swift` i dedykowanym `sourceFighterToonFragment60` w `Ship.metal`. `MetalRenderer.swift` podaje rzeczywistą macierz `IntroScene41.View`, włącza ten PSO **tylko przy rysowaniu Vanguard**, a przed plazmą przywraca oryginalny pipeline. Bez ingerencji w planetę PBR, atmosferę, obie areny testowe i kolizje.
+
+**Testy:** Swift/Linux `source-camera-linux` [42113405688](https://github.com/synixad-png/asteroidy-ios/actions/runs/42113405688) **PASS**, preflight zasobów i składni [42113405405](https://github.com/synixad-png/asteroidy-ios/actions/runs/42113405405) **PASS**. Testy obejmują numeryczne wartości progów i rim, eye-space `FighterLight`, ograniczenie PSO do statku i zachowanie pierwotnego PBR. Odrębna autentyczna kompilacja Apple [42113629084](https://github.com/synixad-png/asteroidy-ios/actions/runs/42113629084) **SUCCESS**: Xcode Swift+Metal dla ARM64, `UIDeviceFamily={1,2}`, obecna domyślna scena przelotu z nowym shaderem i autentycznymi zasobami, `default.metallib` jest zbudowane. **Nie** wykonano fizycznego interaktywnego testu iPhone/iPad ani pomiaru GPU/FPS. **Nie tworzono IPA.**
+
+**Uczciwy stan:** zadanie nr 2 **84% (+2 pp)**; inne 17 zadań bez zmian. Łączny dotychczasowy wskaźnik referencyjny **27%, pozostało 73%** (bez sztucznego przeliczania wag). Ponieważ kompilacja aktualnego źródła zakończyła się PASS, można na osobne polecenie uruchomić próbę ręcznego **unsigned IPA iPhone+iPad**, które wreszcie zawrze inną scenę niż płaska arena 9 asteroid. NIE nazywać jej skończoną pierwszą misją ani pełną grą.
+
+**Wciąż brakuje** oryginalnych UV, tekstury `BaseColor` i pełnego materiału PC Vanguard. Obecne AS3D v1 zachowuje przybliżone kolory wierzchołków z wcześniejszym oświetleniem bake; nowe źródłowe pasma i rim są zgodne, ale obraz kadłuba nie jest 1:1. Konieczne są dalszy port realnych zasobów i weryfikacja na urządzeniach, później domknięcie zadania 2 przed przechodzeniem do 3–18.
 
 ## Kolejność dalszej pracy
 
