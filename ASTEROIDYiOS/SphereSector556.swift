@@ -28,7 +28,7 @@ struct SphereSector556 {
     let objective: GameCore.TrainingObjective
     private var shotCooldown: Float = 0
     private var seed: UInt32 = 0x556A57E
-    private var spawnSequence = 0
+    private var verifiedEnemyCount: Int? = nil
     private static let unit: Float = 2.7 / 1280
 
     // Game.DangerSpeed; spherical Game.Wave and Action38 multiply by 0.55.
@@ -48,6 +48,12 @@ struct SphereSector556 {
         var requiredBossDefeated: Bool
         var verified: Bool
     }
+    // The enemy controller will provide a verified value when it is ported.
+    // nil means unknown and must never be interpreted as no enemies.
+    mutating func setVerifiedEnemyCount(_ count:Int?) {
+        verifiedEnemyCount = count.map { max(0,$0) }
+    }
+
     func canFinishRealMission(_ threats:MissionThreats) -> Bool {
         sectorFinished && threats.verified && threats.enemyCount == 0 &&
         !threats.bossActive && threats.requiredBossDefeated && hull > 0
@@ -66,13 +72,15 @@ struct SphereSector556 {
         objectiveTimerComplete && incomingRocksLeft == 0 && asteroids.isEmpty
     }
 
-    init(balance: CombatBalance556, diagnosticAsteroids: [SphereAsteroid556]? = nil) {
+    init(balance: CombatBalance556, diagnosticAsteroids: [SphereAsteroid556]? = nil,
+         diagnosticIncomingQuota:Int? = nil) {
         self.balance = balance
         self.objective = GameCore.objectiveFor(level:balance.level)
         if let diagnosticAsteroids {
             asteroids = diagnosticAsteroids
             // Explicit fixtures represent a test with no scheduled arrivals.
-            incomingRocksLeft = 0
+            incomingRocksLeft = max(0,diagnosticIncomingQuota ?? 0)
+            nextIncoming = objective == .waves ? 16 : 12
         } else {
             // Game.Wave() samples the ORIGINAL 1280x720 atlas and rejects
             // positions closer than 260 via WorldDelta67 (spherical geodesic).
@@ -112,17 +120,22 @@ struct SphereSector556 {
         guard incomingRocksLeft > 0 else { return }
         let n = min(2,incomingRocksLeft)
         incomingRocksLeft -= n
-        for _ in 0..<n {
+        for i in 0..<n {
             let tier: Int
             if balance.level >= 13 { tier = 2 + Int(random() * 3) }
             else { tier = balance.level >= 10 ? 2 : balance.level >= 5 ? 1 : 0 }
-            let side: Float = spawnSequence % 2 == 0 ? 20 : 1260
-            spawnSequence += 1
+            let side: Float = i % 2 == 0 ? 20 : 1260
             var candidate = Vec2(x:side,y:360)
-            for _ in 0..<128 {
+            var attempts = 0
+            repeat {
                 candidate = Vec2(x:side,y:140 + random() * 520)
-                if sqrt(Sphere67.delta(target:candidate,origin:player).lengthSquared) >= 260 { break }
-            }
+                attempts += 1
+                if attempts > 20 {
+                    let angle = random() * 2 * Float.pi
+                    candidate = Sphere67.offset(player,by:Vec2(x:cos(angle),y:sin(angle))*340)
+                    break
+                }
+            } while Sphere67.delta(target:candidate,origin:player).lengthSquared < 260*260
             let heading: Vec2
             if objective == .defend {
                 let toTarget = Sphere67.delta(target:Vec2(x:640,y:420),origin:candidate)
@@ -275,10 +288,12 @@ struct SphereSector556 {
             asteroids[i].shardLife -= dt
             if asteroids[i].shardLife <= 0 { asteroids.remove(at:i) }
         }
-        // Action38.StepAction: on a spherical Clear sector, the arrival
-        // quota is cancelled once all rocks AND enemies have been cleared.
-        // This diagnostic has no enemies; the full mission controller must
-        // supply that state before enabling automatic cancellation.
+        // Action38.StepAction: spherical Clear cancels arrivals only when
+        // Rocks.Count==0 AND the *verified* enemy count is zero.
+        // With an unported enemy controller, count remains unknown (nil).
+        if objective == .clear && asteroids.isEmpty && verifiedEnemyCount == 0 {
+            incomingRocksLeft = 0
+        }
         if incomingRocksLeft > 0 &&
            (elapsed >= nextIncoming || (objective != .waves && asteroids.count <= 4)) {
             spawnArrivals(near:playerPosition)
