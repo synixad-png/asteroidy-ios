@@ -59,6 +59,14 @@ Zachowano istniejące dwie tablice tekstur Metal (3 i 2 warstwy), palety i geome
 
 Doprecyzowano testy 6 kolejności planet i obu motywów mgławic. Izolowany test cache w Swift/Linux i 14 kontroli statycznych na aktualnych źródłach zakończyły się **PASS**; pełne źródłowe testy GitHub Actions najnowszego commita oraz natywne kompilacje Apple/Xcode/Metal **nie mają jeszcze potwierdzonego wyniku**. Rzeczywisty obraz i wydajność na iPhone/iPad **nie były zweryfikowane**. Nie zlecano kolejnego IPA. [Raport z 18 zadaniami](PORT_STATUS_18_TASKS.md) i [pełny audyt](AUDYT_ZADANIE_2_v556_METAL_CAMERA.md).
 
+### Zgodność płaszczyzn odcinania Metal z GpuIntro41 v556 (zadanie 2 — 68%)
+
+Oryginalna sferyczna kamera v556 używa `IntroProjection` z near=0.4 i far=1600, ale port iOS dotąd korzystał z płaszczyzn 0.1/20 skopiowanych z płaskiej areny. `SphereProjection556.clipPlanes(spherical:)` normalizuje wartości C# przez źródłowy promień Boreas 100×1.4419674; renderer Metal zachowuje płaski zakres bez zmiany. Rozszerzono test kamery o NDC-depth oraz dodano statyczny kontrakt `SphereProjectionSourceContract556.py`, uruchamiany na Linux. Poprawiono też przestarzałe odwołanie w teście `SkyTextureGateSourceContract55.py`.
+
+Przy kompletnych dwóch motywach mgławic `ensureCloudTextures55` korzysta teraz z `SkyTextureSliceCache55.allUploaded` i rezygnuje ze zbędnych **36 CPU-projekcji oraz tworzenia Set co klatkę**. Bieżącą widoczność nadal prawidłowo projektuje istniejący shader GPU. Testy kolejności pierwszych załadowań zachowano. Nie wykonano pomiarów FPS ani natywnego testu Apple Metal/iPhone; oszczędności wydajności nie deklarujemy.
+
+Wynik potwierdzonych wcześniejszych testów regresji Swift/Linux: [GitHub Actions 42086918193](https://github.com/synixad-png/asteroidy-ios/actions/runs/42086918193), job `source-camera-linux` PASS. Natywny job macOS pozostaje niepotwierdzony. Aktualizacja cache ma oddzielny, późniejszy przebieg CI; dopiero jego wynik potwierdzi cały nowy zestaw. Jednorazowy IPA tylko dla iPhone'a pochodzi z wcześniejszego commita `e00e716` i **nie obejmuje** tych późniejszych zmian, jeśli się zbuduje. Żadnej kolejnej kompilacji IPA nie uruchamiano.
+
 ### Stan portowania
 
 Zatwierdzona, niezmienna lista 18 zadań i procenty: [PORT_STATUS_18_TASKS.md](PORT_STATUS_18_TASKS.md). Dotychczas moduły 7 i 8 zamknięto implementacyjnie, ale nadal brakuje pełnej gry i testów dotykowych/Metal na urządzeniu. Do zamknięcia całej aplikacji konieczna jest sekwencyjna realizacja pozostałych etapów, zaczynając od **zadania 1: kompilacja i infrastruktura iOS**.
