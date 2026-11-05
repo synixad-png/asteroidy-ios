@@ -17,7 +17,8 @@ import Foundation
             playerRadius:0,detectContacts:false)
         precondition(preview.asteroids.count==1)
         let arrival=preview.asteroids[0]
-        precondition(arrival.size==3 && arrival.tier==0 && arrival.health==1)
+        precondition(arrival.size==3 && arrival.tier==0 &&
+                     arrival.health==config.sphericalRockHealth(size:3,tier:0))
         precondition(preview.incomingRocksLeft==0)
         precondition(preview.arrivalNoticeRemaining > 1.58 &&
                      preview.arrivalNoticeRemaining < 1.6)
@@ -40,11 +41,12 @@ import Foundation
         _=incoming.tick(dt:1/120,playerPosition:player,
             playerRadius:0,detectContacts:false)
         precondition(incoming.incomingRocksLeft==0)
-        precondition(incoming.destroyedRocks==1 &&
-                     incoming.score==20,
+        precondition(incoming.destroyedRocks==0 && incoming.score==0,
+                     "Original Balance70 spherical armor survives one shot")
+        precondition(incoming.asteroids.count==1 &&
+                     incoming.asteroids[0].health==
+                     config.sphericalRockHealth(size:3,tier:0)-1,
                      "New Action38 asteroid must accept a same-frame shot")
-        precondition(incoming.asteroids.count==2 &&
-                     incoming.asteroids.allSatisfy { $0.size==2 })
         precondition(incoming.bolts.isEmpty)
         precondition(incoming.arrivalNoticeRemaining > 1.58)
 
