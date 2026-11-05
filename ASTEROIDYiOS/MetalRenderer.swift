@@ -51,6 +51,13 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     // Original IntroScene41 cinematic; not a mission or campaign unlock.
     private var introTime41: Float = 0
     private var wasIntroPreview41 = false
+    // Lazy, bounded cache of real GpuIntro41 seed-specific stone meshes.
+    // The old octahedron is retained ONLY as the loading placeholder.
+    // Generating at most one new mesh per frame bounds CPU frame spikes.
+    private var introRockMeshes41: [Int:GPUModel] = [:]
+    private var introRockLoadOrder41: [Int] = []
+    private var introRockFailed41: Set<Int> = []
+    private let introRockMaxCached41 = 256
     private var sphereFlight: SphereFlight67 = {
         var f = SphereFlight67()
         f.position = Vec2(x:320,y:360) // +Z, visible from diagnostic globe camera
@@ -864,16 +871,43 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             encoder.setDepthStencilState(depthState)
             encoder.setRenderPipelineState(pipeline)
 
-            // Original source painter order: 820 Belt51 stones, then
-            // 24-unit intro planet, then the orbiting Vanguard fighter.
-            // Belt51 source placement and visibility are ported from
-            // OrbitWorld51/GpuIntro41. The octahedron mesh is still
-            // a documented temporary geometry proxy, not IntroStone.
-            for rock in IntroOrbit41.belt where IntroOrbit41.visible(rock,in:frame) {
+            // Original source painter order: Belt51 rocks, 24-unit
+            // intro planet, orbiting Vanguard. Exact IntroStone +
+            // StoneNormal56 per-seed geometry is built ONLY on first
+            // visibility, at most one stone per frame (mobile budget).
+            // Meshes live in a bounded cache; only not-yet-created
+            // stones temporarily use the legacy octahedral placeholder.
+            var builtThisFrame=0
+            for (index,rock) in IntroOrbit41.belt.enumerated()
+                where IntroOrbit41.visible(rock,in:frame) {
                 let position=rock.world*inv
+                let translation=Self.translation(position.x,position.y,position.z)
+                if let original=introRockMeshes41[index] {
+                    drawMesh(original,translation)
+                    continue
+                }
+                if builtThisFrame==0 && !introRockFailed41.contains(index) {
+                    builtThisFrame=1
+                    do {
+                        let source=IntroRockGeometry41.geometry(rock)
+                        let model=try Self.makeMesh(device,source.vertices,source.indices)
+                        if introRockMeshes41.count >= introRockMaxCached41,
+                           !introRockLoadOrder41.isEmpty {
+                            let oldest=introRockLoadOrder41.removeFirst()
+                            introRockMeshes41.removeValue(forKey:oldest)
+                        }
+                        introRockMeshes41[index]=model
+                        introRockLoadOrder41.append(index)
+                        drawMesh(model,translation)
+                        continue
+                    } catch {
+                        introRockFailed41.insert(index)
+                        NSLog("ASTEROIDY iOS IntroStone source rock %ld: %@",
+                              index,String(describing:error))
+                    }
+                }
                 drawMesh(asteroidMesh,
-                    Self.translation(position.x,position.y,position.z) *
-                    Self.scale(rock.size*inv))
+                    translation*Self.scale(rock.size*inv))
             }
             let center=IntroOrbit41.planetCenter*inv
             let planetModel=Self.translation(center.x,center.y,center.z) *
