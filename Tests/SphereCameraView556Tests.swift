@@ -45,8 +45,7 @@ import Foundation
                  1.09-SphereCameraView556.normalizedEyeDistance)
             // The orbit camera's +right, +up and -forward basis must
             // survive the view transformation without sign inversions.
-            let offAxis=frame.eye + frame.right*0.31 +
-                        frame.up*0.42 - frame.back*1.25
+            let offAxis=frame.eye + frame.right*0.31 + frame.up*0.42 - frame.back*1.25
             let viewPoint=frame.cameraSpace(offAxis)
             near(viewPoint.x,0.31)
             near(viewPoint.y,0.42)
