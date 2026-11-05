@@ -42,6 +42,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     // Does not claim to run a real v556 planet mission.
     private var sphereSector = SphereSector556(
         balance: CombatBalance556(level: 1, difficulty: .normal, spherical: true)!)
+    private var damageLab = PlanetDamageLab556()
+    private var previousDamageLabEnabled = false
     private var previousSectorTraining = false
     private var lastTime = CACurrentMediaTime()
     private var fixedClock = FixedStepClock()
@@ -175,25 +177,40 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             let balance = input.sectorTraining ? CombatBalance556(level: 1, difficulty: .normal, spherical: false) : nil
             game.setSectorTraining(balance)
         }
+        if input.verifiedDamageLab != previousDamageLabEnabled {
+            previousDamageLabEnabled=input.verifiedDamageLab
+            damageLab=PlanetDamageLab556()
+        }
         let command = FlightCommand(turn:input.steer,throttle:input.thrust,fire:input.shooting)
         fixedClock.advance(elapsed:elapsed) {
             if input.planetPreview {
                 planetAnimationTime += fixedClockStep
-                sphereFlight.tick(move: Vec2(x:input.steer,y:-input.thrust),
-                                  aim: Vec2(x:input.steer,y:-input.thrust),dt:Float(fixedClockStep))
-                if input.shooting {
-                    let heading = Vec2(x:cos(sphereFlight.heading),y:sin(sphereFlight.heading))
-                    sphereSector.fire(from:sphereFlight.position,direction:heading)
+                let canControl = !input.verifiedDamageLab || !damageLab.gameOver
+                if canControl {
+                    sphereFlight.tick(move: Vec2(x:input.steer,y:-input.thrust),
+                                      aim: Vec2(x:input.steer,y:-input.thrust),dt:Float(fixedClockStep))
+                    if input.shooting {
+                        let heading = Vec2(x:cos(sphereFlight.heading),y:sin(sphereFlight.heading))
+                        sphereSector.fire(from:sphereFlight.position,direction:heading)
+                    }
                 }
-                if let shipContact=sphereSector.tick(
+                let contact=sphereSector.tick(
                     dt:Float(fixedClockStep),playerPosition:sphereFlight.position,
-                    playerRadius:11.2,playerVelocity:sphereFlight.velocity,shipMass:2.4) {
+                    playerRadius:11.2,detectContacts:canControl,
+                    playerVelocity:canControl ? sphereFlight.velocity : nil,
+                    shipMass:2.4,useLegacyHull:!input.verifiedDamageLab)
+                if let shipContact=contact {
                     sphereFlight.position=shipContact.position
                     sphereFlight.velocity=shipContact.velocity
                     if shipContact.contacts>0 {
                         sphereFlight.camera.update(target:shipContact.position,
                                                    dt:Float(fixedClockStep))
                     }
+                }
+                if input.verifiedDamageLab {
+                    _ = damageLab.advance(dt:Float(fixedClockStep),
+                        contacts:contact?.contacts ?? 0,
+                        sector:&sphereSector,flight:&sphereFlight)
                 }
             } else {
                 game.tick(command,dt:Float(fixedClockStep))
@@ -202,13 +219,19 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         if now-lastHUDTime > 0.14 {
             lastHUDTime = now
             let score = input.planetPreview ? sphereSector.score : game.score
-            let hull = input.planetPreview ? sphereSector.hull : game.hull
+            let hull = input.planetPreview
+                ? (input.verifiedDamageLab ? damageLab.lives : sphereSector.hull)
+                : game.hull
+            let gameOver = input.planetPreview && input.verifiedDamageLab && damageLab.gameOver
+            let deaths = damageLab.deathCount
             let rockCount = input.planetPreview ? sphereSector.asteroids.count : game.rocks.count
             let sectorCleared = sphereSector.sectorCleared
             let objectiveWave = sphereSector.objectiveWave
             DispatchQueue.main.async { [weak input] in
                 input?.score = score
                 input?.hull = hull
+                input?.verifiedGameOver = gameOver
+                input?.verifiedDeaths = deaths
                 input?.trainingRockCount = rockCount
                 input?.planetSectorCleared = sectorCleared
                 input?.planetWave = objectiveWave
