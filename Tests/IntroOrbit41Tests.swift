@@ -114,6 +114,13 @@ import Foundation
                 _ = IntroOrbit41.visible(stone,time:moment,in:frame)
             }
         }
+        precondition(IntroOrbit41.boreasSourceLevel==5)
+        // Original PlanetAssetBytes463(level==5) selects embedded GLB.
+        // PlanetRotation(level,time,true)=29*level+2.2*time.
+        near(IntroOrbit41.planetRotationDegrees(
+            level:IntroOrbit41.boreasSourceLevel,time:0),145)
+        near(IntroOrbit41.planetRotationDegrees(
+            level:IntroOrbit41.boreasSourceLevel,time:10),167)
         near(IntroOrbit41.planetRotationDegrees(level:1,time:0),29)
         near(IntroOrbit41.planetRotationDegrees(level:1,time:10),51)
         // The legacy flat arena and its physics do not appear in this pure scene.
