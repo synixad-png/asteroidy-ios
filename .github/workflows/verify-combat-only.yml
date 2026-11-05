@@ -75,3 +75,32 @@ jobs:
             swiftc $sources "Tests/$test.swift" -o /tmp/source-physics68-test
             /tmp/source-physics68-test
           done
+
+  compile-ios-no-ipa:
+    name: Compile iOS source only (NO IPA / NO artifact)
+    runs-on: macos-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Xcode compiler
+        run: xcodebuild -version
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate native Xcode project from verified project.yml
+        run: xcodegen generate
+      - name: Typecheck and compile all native iOS Swift/Metal sources (unsigned, NO IPA)
+        run: |
+          set -euo pipefail
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS \
+            -configuration Debug \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath /tmp/asteroidy-ios-verify-only build \
+            2>&1 | tee /tmp/asteroidy-ios-compile-only.log
+          test -f /tmp/asteroidy-ios-verify-only/Build/Products/Debug-iphoneos/ASTEROIDYiOS.app/Info.plist
+          echo "PASS: native iOS project compiles; no package, IPA, or artifact created."
