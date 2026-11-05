@@ -13,6 +13,10 @@ struct CombatVerifiedEncounter556 {
     var shots:[SphereBolt556]=[]
     private var scatterSeed:UInt32=0x55600007
 
+    init(encounter:CombatEncounter68) {
+        self.encounter=encounter
+    }
+
     struct Result {
         let contacts:[CombatSolidEvent68]
         let hitOutcomes:[CombatVerifiedHit556.TeamOutcome]
