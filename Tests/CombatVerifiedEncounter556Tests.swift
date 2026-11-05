@@ -430,6 +430,67 @@ import Foundation
             origin:doubleWreck.encounter.first.position)
         precondition(abs(sqrt(partnerGap.lengthSquared)-85)<0.6)
 
+        // Windows Gameplay65.StepRescue65: after real armor/hull wreck,
+        // a two-second partner rescue restores ResetVitals78 for either
+        // rescued ship, not merely the 3-second immunity and velocity.
+        for wreckFirst in [false,true] {
+            var restored=setup(true)
+            restored.firstGuardian=CombatGuardian37(owned:false)
+            restored.secondGuardian=CombatGuardian37(owned:false)
+            restored.firstVitals=CombatTalentVitals78()
+            restored.secondVitals=CombatTalentVitals78()
+            restored.encounter.first=body(wreckFirst ? 640 : 100)
+            restored.encounter.second=body(wreckFirst ? 100 : 640)
+            for impact in 1...3 {
+                if impact>1 {
+                    restored.encounter.rocks=[]
+                    _=restored.step(dt:1.1)
+                    if wreckFirst {
+                        restored.encounter.first=body(640)
+                    } else {
+                        restored.encounter.second=body(640)
+                    }
+                    restored.encounter.rocks=[rock()]
+                }
+                let frame=restored.step(dt:1/120)
+                let expected:CombatSolidEvent68 =
+                    wreckFirst ? .shipRock(0) : .partnerRock(0)
+                precondition(frame.contacts == [expected])
+                let hit=frame.hitOutcomes
+                let player:CombatContactRouter96.Player =
+                    wreckFirst ? .first : .second
+                precondition(hit == [
+                    V.TeamOutcome(player:player,outcome:
+                        impact<3 ? .talentAbsorbed : .downForRescue)])
+            }
+            let gauge=wreckFirst ? restored.firstVitals! :
+                                  restored.secondVitals!
+            precondition(gauge.armor==0 && gauge.hull==0)
+            let who:CombatRescue65.Player =
+                wreckFirst ? .first : .second
+            precondition(restored.rescue.down(who))
+            restored.encounter.rocks=[]
+            if wreckFirst {
+                restored.encounter.second=body(675)
+            } else {
+                restored.encounter.first=body(675)
+            }
+            var saved=false
+            for _ in 0..<150 {
+                let frame=restored.step(dt:1/60,
+                    firstFiring:!wreckFirst,secondFiring:wreckFirst)
+                if frame.rescueEvent == .rescued(who) {
+                    saved=true
+                    break
+                }
+            }
+            precondition(saved && !restored.rescue.down(who))
+            precondition(gauge.armor==25 && gauge.hull==60)
+            precondition(restored.encounter.firstSurvival.lives==3 &&
+                         restored.encounter.secondSurvival.lives==3)
+            precondition(restored.pendingRescueFailure == nil)
+        }
+
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
