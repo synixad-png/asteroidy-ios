@@ -273,8 +273,12 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             for asteroid in sphereSector.asteroids {
                 let surface = PlanetPreview556.shipSurfacePosition(asteroid.position, altitude: 0.10)
                 let visualRadius = max(0.014, asteroid.radius / Sphere67.radius * 0.65)
+                let normal = Sphere67.normal(asteroid.position)
+                let spinAxis = SIMD3<Float>(normal.x,normal.y,normal.z)
+                let rotation = simd_float4x4(simd_quatf(angle:asteroid.angle,axis:spinAxis))
                 drawMesh(asteroidMesh,
-                         Self.translation(surface.x,surface.y,surface.z) * Self.scale(visualRadius))
+                         Self.translation(surface.x,surface.y,surface.z) *
+                         rotation * Self.scale(visualRadius))
             }
             for bolt in sphereSector.bolts {
                 let position = PlanetPreview556.shipSurfacePosition(bolt.position,altitude:0.12)
