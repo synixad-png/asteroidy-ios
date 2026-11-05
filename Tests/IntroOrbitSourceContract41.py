@@ -62,8 +62,8 @@ ck('static func skyCamera(time:Float)->SphereCamera67' in intro and
    'camera.up=basis.up' in intro,
    'IntroSky projection basis differs from IntroScene41 camera')
 intro_metal=metal.split(
-    '        if input.introPreview41 {\\n            // The source Windows GpuIntro41.CinematicIntro41',1)[1].split(
-    '\\n        if input.planetPreview {\\n            // Original GpuIntro41.DrawDeepSpace55',1)[0]
+    '        if input.introPreview41 {\n            // The source Windows GpuIntro41.CinematicIntro41',1)[1].split(
+    '\n        if input.planetPreview {\n            // Original GpuIntro41.DrawDeepSpace55',1)[0]
 # Prevent interpreting the still-intact Boreas diagnostic sky as proof
 # that the separate cinematic actually displays that sky.
 for token in (
