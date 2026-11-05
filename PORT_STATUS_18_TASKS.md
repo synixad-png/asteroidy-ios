@@ -2,7 +2,8 @@
 
 Źródło kolejności/nazw: zatwierdzony przez użytkownika zrzut harmonogramu 18 zadań z 2026-11-05. Nie zmieniać nazw ani zakresów bez decyzji użytkownika.
 
-**Łączny postęp odniesienia: 27%; pozostało 73%.** To historyczny, zatwierdzony wynik raportu, a nie świeży pomiar obliczony z kodu. Zadanie 7 ma roboczą ocenę implementacji 89% (poprzednio 88%; +1 pp). Zapisano i przetestowano utrwalanie zdarzenia FailRescue65 jako oczekującego rozliczenia przez źródłową procedurę Game.Damage. Linux-only Swift regression PASS: GitHub Actions run 42031591201; nie generowano IPA. Dokładnych zasad usuwania życia przy FailRescue65 jeszcze nie zweryfikowano w oryginalnych źródłach v556. Zadanie 8 ma 96% według ostatniego harmonogramu.
+**Łączny postęp odniesienia: 27%; pozostało 73%.** Jest to zachowany historyczny wynik całego projektu, nie nowy pomiar po zadaniu 7. **Zadanie 7: 94% (poprzednio 89%, +5 pp)**. Z oryginalnego archiwum Windows v556 (sprawdzony SHA-256) zweryfikowano kolejność `FailRescue65 -> Game.Damage`, bezpośrednie rozliczanie utraty życia/respawnu, odnowienie opancerzenia po ratowaniu oraz wspólne zasoby oryginalnej kooperacji `WithSecond62`. Osobny Swift/Linux workflow zakończył się **PASS** dla commita `45cee28a` (run `42034275258`). **Nie budowano ani nie generowano IPA w tej sesji.** Zadanie 8 pozostaje na 96%.
+
 
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
@@ -12,7 +13,7 @@
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
 | 6 | Fizyka lotu i poruszanie po planetach | 35% |
-| 7 | Kolizje, obrażenia i zniszczenia | 89% |
+| 7 | Kolizje, obrażenia i zniszczenia | 94% |
 | 8 | Asteroidy i fale walki | 96% |
 | 9 | Wszystkie bronie i efekty trafień | 10% |
 | 10 | Przeciwnicy i sztuczna inteligencja | 0% |
@@ -28,7 +29,8 @@
 ## Weryfikacja
 
 - Zadanie 7: moduły CombatVerifiedHit556, CombatTalentVitals78, CombatGuardian37, CombatVerifiedEncounter556 i PlanetDamageLab556; testy co-op, boss-body, robot collision i sekwencja obrażeń do respawnu.
-- Nowe testy zapisane w Tests/CombatVerifiedEncounter556Tests.swift; wynik należy sprawdzić dla aktualnego SHA poprzez GitHub Actions, osobno Linux i macOS.
+- Testy: `Tests/CombatVerifiedEncounter556Tests.swift`, m.in. trzy życia, GameOver, dwaj gracze, obie gałęzie FailRescue, odzyskanie pełnego zdrowia po ratowaniu i dwa kontakty w jednej klatce przy wspólnych tarczach i strażniku — GitHub Actions Swift/Linux `42034275258` PASS. Nie wykonano kompilacji iOS/IPA dla tych zmian, zgodnie z poleceniem użytkownika.
+- Oryginalne źródła C# oraz decyzje portowania udokumentowano w `AUDYT_GRA_V556_FAIL_RESCUE_SOURCE.md`. Właściwy kontroler kooperacji ma użyć opcjonalnego `sourceSharedCoopResources=true` zamiast historycznego niezależnego trybu diagnostycznego.
 - Kompilacja iOS tworzy niepodpisany IPA; nie mylić z testem na fizycznym iPhonie/iPadzie.
 - Wydanie testowe IPA z zakończonego przebiegu 42027976783 pochodzi z commita 596767b i nie obejmuje późniejszych zmian.
 
