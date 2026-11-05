@@ -69,12 +69,20 @@ for token in (
 stages=['drawMesh(mesh,planetModel)',
         'drawMesh(shipMesh,craft)',
         'encoder.setRenderPipelineState(atmospherePipeline)',
-        'encoder.setDepthStencilState(atmosphereDepthState)',
         'drawMesh(atmosphereMesh,atmoModel,unlit:1)',
         'encoder.endEncoding()']
 positions=[cinematic.index(t) for t in stages]
 check(positions==sorted(positions) and len(set(positions))==len(positions),
       'Source GpuIntro41 must draw atmosphere after planet and craft, before presentation')
+# Shared no-write depth state is also used by the NEW additive engine
+# flames before the atmosphere. Its first occurrence is therefore
+# legitimately before the atmosphere pipeline. The atmosphere-specific
+# depth binding must still come AFTER selecting atmospherePipeline.
+atmosphere_stage=cinematic[cinematic.index(
+    'encoder.setRenderPipelineState(atmospherePipeline)'):]
+check(atmosphere_stage.index('encoder.setDepthStencilState(atmosphereDepthState)') <
+      atmosphere_stage.index('drawMesh(atmosphereMesh,atmoModel,unlit:1)'),
+      'Atmosphere must depth-test without writing AFTER plasma rendering')
 check('if (in.unlit > 0.5) return in.color;' in shader,
       'Atmosphere must preserve original unlit source RGBA, not opaque PBR')
 sphere=renderer.split(
