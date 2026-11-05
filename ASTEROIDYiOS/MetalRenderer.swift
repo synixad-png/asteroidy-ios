@@ -303,12 +303,16 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                     userInfo:[NSLocalizedDescriptionKey:
                         "Brak GPU bufora oryginalnej siatki Vanguard431"])
             }
-            // Actual glTF JPEG is linear filtered, with generated
-            // mipmaps and source GL UVs (no vertical flip).
+            // Windows/src/GpuRenderer.cs:144-146 uses GL_RGBA8
+            // with GL_BGRA bytes, not SRGB8_ALPHA8. GLSL receives
+            // raw UNORM channels (no hardware sRGB decode), with
+            // GL_LINEAR and GL_CLAMP_TO_EDGE, no mipmap generation.
+            // Preserve the top-left uploaded Bitmap ordering and
+            // the source glTexCoord0 UVs without an invented V-flip.
             let skin=try MTKTextureLoader(device:device).newTexture(
                 URL:jpegURL,options:[
-                    .SRGB:true,
-                    .generateMipmaps:true,
+                    .SRGB:false,
+                    .generateMipmaps:false,
                     .origin:MTKTextureLoader.Origin.topLeft
                 ])
             sourceVanguard431=(
