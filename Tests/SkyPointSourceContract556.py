@@ -75,8 +75,10 @@ check("struct SkyPointFragmentInput" in metal and
 fragment_input=metal.split("struct SkyPointFragmentInput",1)[1].split("};",1)[0]
 check("[[point_size]]" not in fragment_input,
       "Metal [[point_size]] is invalid as a fragment stage-in field")
-check("max(1.0f, star.material.x)" in metal,
-      "Source pixel size not respected")
+check("max(1.0f, star.material.x * scene.lighting.x)" in metal,
+      "Source pixel size / drawable height scaling not respected")
+check("SphereSky207.drawableScale(" in swift,
+      "iPhone Retina viewport scale not passed to Metal sky shader")
 check("in.color.a * coverage" in metal,
       "Source star alpha discarded in blending")
 check("drawMesh(starMesh" in swift,
