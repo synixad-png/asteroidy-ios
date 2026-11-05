@@ -356,6 +356,14 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         (0..<SphereNebula556.orbitLayerCount).map {SphereNebula556.layer($0)}
 
     private func ensureCloudTextures55(camera: SphereCamera67) -> MTLTexture? {
+        // Both original GpuCosmos39.NebulaTexture themes are cached now:
+        // preserve the current GPU texture array, and let its existing
+        // vertex shader project all 36 layers per current camera frame.
+        // Recomputing 36 Swift projections + a Set here every frame
+        // cannot change which texture is sampled once both exist.
+        if let cached=nebulaTexture, nebulaSliceCache55.allUploaded {
+            return cached
+        }
         // GpuCosmos39.CloudLayer caches each NebulaTexture(theme) on its
         // own first visible use. The original sphere preview only uses
         // themes 0 and 1 across the fixed 24+12 source cloud layers.
