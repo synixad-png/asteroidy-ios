@@ -32,6 +32,38 @@ struct CombatBalance556 {
         return min(5, 2 + level / 8) + (difficulty == .hard ? 1 : 0)
     }
 
+    /// Windows/src/Balance70.cs RockHealth70: spherical asteroid HP
+    /// differs from the flat Rock constructor's one-hit baseline.
+    /// Co-op adds exactly ONE HP for size 2/3; size 1 is unchanged.
+    func sphericalRockHealth(size:Int,tier:Int,cooperative:Bool=false) -> Int {
+        let basis:Int
+        switch size {
+        case 3: basis = difficulty == .easy ? 4 :
+                        difficulty == .hard ? 8 : 6
+        case 2: basis = difficulty == .easy ? 3 :
+                        difficulty == .hard ? 5 : 4
+        default: basis = difficulty == .hard ? 3 : 2
+        }
+        return basis+max(0,tier)+(level>=13 ? 1 : 0)+
+               (cooperative && size>=2 ? 1 : 0)
+    }
+
+    /// Balance70.PrepareRock70 and Game.AddFragment77. Source rock
+    /// outline scaling belongs to the spherical scene, not GameCore.
+    func sphericalRockScale(size:Int,parentSize:Int?=nil) -> Float {
+        if let parentSize {
+            return parentSize==3 ? 0.49 : 0.39
+        }
+        if level==25 { return size==3 ? 0.41 :
+                               size==2 ? 0.57 : 0.76 }
+        return size==3 ? 0.52 : 0.75
+    }
+
+    func sphericalRockRadius(size:Int,parentSize:Int?=nil) -> Float {
+        let base:Float = size==3 ? 31 : size==2 ? 18 : 10
+        return base*1.12*sphericalRockScale(size:size,parentSize:parentSize)
+    }
+
     func tier(at index: Int) -> Int? {
         let count = sectorRockCount
         guard (0..<count).contains(index) else { return nil }
