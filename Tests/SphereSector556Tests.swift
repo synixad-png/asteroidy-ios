@@ -31,13 +31,13 @@ import Foundation
         for _ in 0..<120 { contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000) }
         precondition(contacts.shipContacts == 1 && contacts.hull == 2)
         // North pole is outside rock radii in this deterministic test seed.
-        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0)
+        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0,detectContacts:false)
         precondition(contacts.shipContacts == 1)
         contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
         precondition(contacts.shipContacts == 2)
         precondition(contacts.hull == 2 && contacts.damageEvents == 1,
                      "Second contact within invulnerability must not damage")
-        for _ in 0..<165 { contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0) }
+        for _ in 0..<165 { contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0,detectContacts:false) }
         precondition(contacts.hitCooldown == 0)
         contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
         precondition(contacts.shipContacts == 3)
@@ -46,11 +46,11 @@ import Foundation
         // continuous overlap; only a new entry can trigger another hit.
         for _ in 0..<200 { contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000) }
         precondition(contacts.hull == 1)
-        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0)
+        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0,detectContacts:false)
         contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
         precondition(contacts.hull == 0 && contacts.damageEvents == 3)
-        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0)
-        for _ in 0..<200 { contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0) }
+        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0,detectContacts:false)
+        for _ in 0..<200 { contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0,detectContacts:false) }
         contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
         precondition(contacts.hull == 0 && contacts.damageEvents == 3)
         // Flat GameCore remains an independent sandbox with unchanged nine-rock baseline.
