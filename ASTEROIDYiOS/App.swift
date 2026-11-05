@@ -17,6 +17,8 @@ final class FlightInput: ObservableObject {
     @Published var thrust: Float = 0
     @Published var steer: Float = 0
     @Published var shooting = false
+    // Windows Game.Input.Tarcza145 is a momentary held input.
+    @Published var tarczaHeld = false
     @Published var planetPreview = false
     @Published var sectorTraining = false
     @Published var verifiedDamageLab = false
@@ -24,6 +26,8 @@ final class FlightInput: ObservableObject {
     @Published var verifiedDeaths = 0
     @Published var verifiedArmor = 25
     @Published var verifiedHull = 60
+    @Published var verifiedTarczaEnergy: Float = 60
+    @Published var verifiedTarczaActive = false
     @Published var trainingRockCount = 9
     @Published var score = 0
     @Published var hull = 3
@@ -54,7 +58,10 @@ struct GameView: View {
                         Button(input.sectorTraining ? "SEKTOR 01 • TEST" : "9 ASTEROID • TEST") { input.sectorTraining.toggle() }
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.cyan)
-                        Button(input.planetPreview ? "ARENA TESTOWA" : "BOREAS GLB • TEST") { input.planetPreview.toggle() }
+                        Button(input.planetPreview ? "ARENA TESTOWA" : "BOREAS GLB • TEST") {
+                            input.planetPreview.toggle()
+                            input.tarczaHeld = false
+                        }
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.cyan)
                     }
@@ -74,6 +81,7 @@ struct GameView: View {
                             Button(input.verifiedDamageLab
                                    ? "TEST OBRAŻEŃ v556: WŁ." : "TEST OBRAŻEŃ v556: WYŁ.") {
                                 input.verifiedDamageLab.toggle()
+                                input.tarczaHeld = false
                             }
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.orange)
@@ -89,6 +97,9 @@ struct GameView: View {
                             Text("PANCERZ: \(input.verifiedArmor)/25 · KADŁUB: \(input.verifiedHull)/60")
                                 .font(.system(size: 11, design: .monospaced))
                                 .foregroundStyle(.yellow)
+                            Text("TARCZA v556: \(Int(input.verifiedTarczaEnergy.rounded()))/100")
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(input.verifiedTarczaActive ? .cyan : .gray)
                         }
                         Text(input.planetSectorCleared ? "TEST SEKTORA UKOŃCZONY" : "BOREAS • SYMULACJA WALKI • FALA \(input.planetWave)")
                             .font(.system(size: 11, weight: .medium, design: .monospaced))
@@ -97,18 +108,39 @@ struct GameView: View {
                     Spacer()
                     HStack(alignment: .bottom) {
                         TouchPad(input: input)
-                            .frame(width: 150, height: 150)
-                        Spacer()
+                            .frame(width: input.planetPreview && input.verifiedDamageLab
+                                   ? min(120, max(95, g.size.width * 0.28)) : 150,
+                                   height: input.planetPreview && input.verifiedDamageLab
+                                   ? min(120, max(95, g.size.width * 0.28)) : 150)
+                        Spacer(minLength: 4)
+                        if input.planetPreview && input.verifiedDamageLab {
+                            Text("TARCZA")
+                                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                .frame(width: 68, height: 68)
+                                .background(input.tarczaHeld
+                                    ? Color.cyan.opacity(0.65) : Color.cyan.opacity(0.2),
+                                    in: Circle())
+                                .overlay(Circle().stroke(.cyan, lineWidth: 2))
+                                .gesture(DragGesture(minimumDistance: 0)
+                                    .onChanged { _ in input.tarczaHeld = true }
+                                    .onEnded { _ in input.tarczaHeld = false })
+                                .accessibilityLabel("Przytrzymaj tarczę v556")
+                        }
                         Text("OGIEŃ")
                             .font(.system(.headline, design: .monospaced))
-                            .frame(width: 100, height: 100)
+                            .frame(width: input.planetPreview && input.verifiedDamageLab
+                                   ? min(86, max(72, g.size.width * 0.22)) : 100,
+                                   height: input.planetPreview && input.verifiedDamageLab
+                                   ? min(86, max(72, g.size.width * 0.22)) : 100)
                             .background(input.shooting ? Color.orange.opacity(0.8) : Color.orange.opacity(0.25), in: Circle())
                             .overlay(Circle().stroke(.orange, lineWidth: 2))
                             .gesture(DragGesture(minimumDistance: 0)
                                 .onChanged { _ in input.shooting = true }
                                 .onEnded { _ in input.shooting = false })
                             .accessibilityLabel("Strzelaj")
-                    }.padding(.horizontal, 45).padding(.bottom, 30)
+                    }.padding(.horizontal,
+                               input.planetPreview && input.verifiedDamageLab ? 16 : 45)
+                     .padding(.bottom, 30)
                 }
                 .foregroundStyle(.white)
                 if showCampaign {
