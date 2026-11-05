@@ -113,6 +113,22 @@ struct SphereCamera67 {
     }
 }
 
+/// Exact perspective slope from Windows/src/GpuIntro41.cs:455:
+/// frustum(-.35555556,.35555556,-.2,.2,.4,1600).
+/// In GpuSphere67.cs:420 the same IntroProjection() is used for planet mode.
+/// For a normalized iOS aspect ratio, retain vertical 2*atan(.2/.4)
+/// and use current drawable aspect for the horizontal frustum.
+enum SphereProjection556 {
+    static let sourceHalfHeight: Float = 0.2
+    static let sourceNear: Float = 0.4
+    static let sourceVerticalFocal: Float = sourceNear/sourceHalfHeight
+    static let sourceVerticalFOV: Float = 2*atan(sourceHalfHeight/sourceNear)
+
+    static func horizontalFocal(aspect:Float) -> Float {
+        sourceVerticalFocal / max(aspect,0.1)
+    }
+}
+
 /// Source-verified camera frame for the existing spherical diagnostic.
 /// Windows/src/SphereCombat67.cs:62 updates SphereFocus67 / Right67 / Up67.
 /// Windows/src/GpuSphere67.cs:414 puts the view eye 310 original world units
