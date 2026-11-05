@@ -13,6 +13,10 @@ struct PlanetDamageLab556 {
     private(set) var relocatedRocks=0
     private(set) var deathCount=0
 
+    init(startingShieldCharges:Int=0) {
+        survival.shieldCharges=max(0,startingShieldCharges)
+    }
+
     var lives:Int {survival.lives}
     var gameOver:Bool {!survival.playing}
 
