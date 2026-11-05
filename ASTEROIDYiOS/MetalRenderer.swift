@@ -158,9 +158,15 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private static func rotated(_ angle: Float) -> simd_float4x4 {
         simd_float4x4(columns:(SIMD4(cos(angle),sin(angle),0,0),SIMD4(-sin(angle),cos(angle),0,0),SIMD4(0,0,1,0),SIMD4(0,0,0,1)))
     }
-    private static func perspective(_ aspect: Float) -> simd_float4x4 {
+    private static func perspective(_ aspect: Float, spherical: Bool) -> simd_float4x4 {
+        // Original GpuIntro41.IntroProjection uses a .2/.4 half-height
+        // frustum (vertical FOV 53.1301°) in GpuSphere67.SphereScene67.
+        // The previous port wrongly used 36° in the planet view. The
+        // independent flat training arena retains its prior projection.
         let near: Float = 0.1, far: Float = 20
-        let y: Float = 1 / tan(Float.pi/5.0 / 2)
+        let y: Float = spherical
+            ? SphereProjection556.sourceVerticalFocal
+            : 1 / tan(Float.pi/5.0 / 2)
         let x = y / max(aspect,0.1)
         return simd_float4x4(columns:(SIMD4(x,0,0,0),SIMD4(0,y,0,0),
                                         SIMD4(0,0,far/(near-far),-1),
@@ -296,7 +302,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             ? Self.sphereView(sphereFlight.camera)
             : (view: Self.translation(0,0,-4),
                eye: SIMD3<Float>(0,0,4))
-        let vp = Self.perspective(aspect) * cameraFrame.view
+        let vp = Self.perspective(aspect,spherical:input.planetPreview) * cameraFrame.view
         encoder.setRenderPipelineState(pipeline)
         encoder.setDepthStencilState(depthState)
         encoder.setCullMode(.none)
