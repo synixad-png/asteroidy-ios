@@ -27,6 +27,39 @@ vertex RasterOutput sceneVertex(uint vid [[vertex_id]],
     o.material = v.material;
     return o;
 }
+// GpuIntro41.IntroSky uses projected point positions, per-star pixel
+// sizes and source RGBA colors (see SphereSky207). The original IntroHalo
+// textured glow is not present in the current source assets: render a
+// circular, alpha-blended coverage for each point rather than the previous
+// opaque world-space triangle. This is an explicit port approximation,
+// NOT a claim that the 2D original halo texture has been reconstructed.
+struct SkyPointOutput {
+    float4 position [[position]];
+    float pointSize [[point_size]];
+    float4 color;
+};
+vertex SkyPointOutput skyPointVertex(
+    uint vid [[vertex_id]],
+    constant Vertex3D *vertices [[buffer(0)]],
+    constant SceneUniforms &scene [[buffer(1)]]) {
+    Vertex3D star = vertices[vid];
+    SkyPointOutput out;
+    out.position = scene.mvp * star.position;
+    out.pointSize = max(1.0f, star.material.x);
+    out.color = star.color;
+    return out;
+}
+fragment float4 skyPointFragment(
+    SkyPointOutput in [[stage_in]],
+    float2 uv [[point_coord]]) {
+    float2 p = uv * 2.0f - 1.0f;
+    float radiusSquared = dot(p,p);
+    if (radiusSquared >= 1.0f) discard_fragment();
+    // Smooth pixel coverage only; no invented physical halo radius.
+    float coverage = 1.0f - smoothstep(0.0f,1.0f,radiusSquared);
+    return float4(in.color.rgb, in.color.a * coverage);
+}
+
 // Single directional-light Cook-Torrance GGX BRDF, without environment IBL or
 // texture maps. Metallic/roughness values are sourced from original glTF factors.
 fragment float4 sceneFragment(RasterOutput in [[stage_in]]) {
