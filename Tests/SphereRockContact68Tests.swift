@@ -25,6 +25,15 @@ import Foundation
         let bv=sqrt(b.velocity.lengthSquared)
         precondition(av.isFinite && bv.isFinite)
 
+        // Physics68 RockContacts68: friction rotates both rocks on oblique
+        // impact; it is clamped to [-2,2] and is not purely linear motion.
+        var obliqueA=SphereAsteroid556(position:Vec2(x:640,y:360),
+                                      velocity:Vec2(x:50,y:20),radius:18,size:3)
+        var obliqueB=SphereAsteroid556(position:Vec2(x:670,y:360),
+                                      velocity:Vec2(x:-50,y:0),radius:18,size:3)
+        precondition(SphereRockContact68.resolve(&obliqueA,&obliqueB))
+        precondition(abs(obliqueA.spin)>0.005 && abs(obliqueB.spin)>0.005)
+        precondition(abs(obliqueA.spin)<=2 && abs(obliqueB.spin)<=2)
         let far=SphereAsteroid556(position:Vec2(x:640,y:360),
                                  velocity:Vec2(x:0,y:0),radius:5)
         let nearA=SphereAsteroid556(position:aPos,velocity:Vec2(x:0,y:0),radius:18)
@@ -37,6 +46,6 @@ import Foundation
         var distant=[far,SphereAsteroid556(position:Vec2(x:0,y:360),
                                           velocity:Vec2(x:0,y:0),radius:8)]
         precondition(SphereRockContact68.solve(&distant)==0)
-        print("PASS: source Physics68 masses, geodesic seam impulse, restitution .62, displacement, 216-cell pair broadphase")
+        print("PASS: Physics68 masses, seam impulse, oblique spin friction, restitution .62 and 216-cell broadphase")
     }
 }
