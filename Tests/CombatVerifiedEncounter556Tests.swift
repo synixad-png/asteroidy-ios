@@ -187,6 +187,44 @@ import Foundation
                      bossContact.firstVitals!.hull == 60)
         precondition(bossContact.encounter.firstSurvival.lives == 3)
 
+        // End-to-end collision harness: repeated real Physics68 contacts
+        // drain armor -> hull, then cost exactly one life and reset gauges.
+        // Every impact is separated by the actual immunity interval; no
+        // synthetic .lifeLost outcome is injected into this test.
+        var fatal=setup()
+        fatal.firstGuardian=CombatGuardian37(owned:false)
+        fatal.firstVitals=CombatTalentVitals78()
+        for impact in 1...3 {
+            if impact>1 {
+                fatal.encounter.rocks=[]
+                _=fatal.step(dt:3.2)
+                fatal.encounter.first=body(640)
+                fatal.encounter.rocks=[rock()]
+            }
+            let frame=fatal.step(dt:1/120)
+            precondition(frame.contacts == [.shipRock(0)])
+            if impact<3 {
+                precondition(frame.hitOutcomes == [
+                    V.TeamOutcome(player:.first,outcome:.talentAbsorbed)])
+                precondition(frame.damageTransitions.isEmpty)
+                let expectedHull=impact==1 ? 53 : 21
+                precondition(fatal.firstVitals!.hull==expectedHull)
+                precondition(fatal.firstVitals!.armor==0)
+                precondition(fatal.encounter.firstSurvival.lives==3)
+            } else {
+                precondition(frame.hitOutcomes == [
+                    V.TeamOutcome(player:.first,outcome:.applied(
+                        .lifeLost(remaining:2,respawnProtection:3,
+                                  cause:"ASTEROIDA")))])
+                precondition(frame.damageTransitions == [
+                    .respawned(removedShots:0,relocatedRocks:1)])
+                precondition(fatal.encounter.firstSurvival.lives==2)
+                precondition(fatal.firstVitals!.hull==60 &&
+                             fatal.firstVitals!.armor==25)
+                precondition(fatal.encounter.first.position==Vec2(x:640,y:360))
+            }
+        }
+
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
