@@ -51,8 +51,12 @@ check("SphereProjection556.sourceVerticalFocal" in perspective,
       "Original 53.13-degree sphere FOV was lost")
 check("let near: Float = 0.1, far: Float = 20" not in perspective,
       "Old flat camera depth planes accidentally applied to sphere")
-check("Self.perspective(aspect,spherical:input.planetPreview)" in renderer,
-      "The real sphere/flat selection no longer reaches Metal")
+check("aspect,spherical:input.planetPreview || input.introPreview41" in renderer,
+      "The actual three-way intro/sphere/flat selection no longer reaches Metal")
+check("cameraFrame=Self.introView41(introTime41)" in renderer and
+      "cameraFrame=Self.sphereView(sphereFlight.camera)" in renderer and
+      "cameraFrame=(view:Self.translation(0,0,-4)" in renderer,
+      "The three independent original camera paths no longer reach Metal")
 print("PASS: v556 GpuIntro41 frustum 0.4..1600, unit-radius clip conversion,")
 print("      original 53.13-degree sphere FOV, independent 0.1..20 flat arena,")
 print("      source camera-to-Boreas normalization and Metal depth binding")
