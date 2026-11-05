@@ -34,3 +34,12 @@ To domknięcie logiki asteroid i fal walki. Nie deklaruje ukończenia broni wszy
 - Dodatkowo przechodzi dotychczasowa regresja kolizji/obrażeń/odrodzenia i podziałów asteroid, co ogranicza ryzyko regresji zadania 7.
 - **Kompilacja kontrolna Apple iOS/Xcode bez IPA była nadal w kolejce** podczas publikacji tego wyniku; nie przedstawiać jej jako zakończonej. Wcześniejsza kompilacja `42040847979` zgłosiła `BUILD SUCCEEDED`, ale poprzedzała zmiany zadania 8; jej wynik nie dowodzi kompilacji nowej rewizji. Test na fizycznym iPhonie nie został wykonany (zadanie 18).
 - Zmieniono źródła wyłącznie osobnego repozytorium `synixad-png/asteroidy-ios`. Nie zmieniano Windows/SteamOS ani nie uruchamiano workflow generującego IPA.
+
+## Dodatkowa integracja interaktywna sektorów — bez ingerencji w kampanię
+
+Weryfikacja `MetalRenderer.swift` wykazała, że mimo kompletnego i przetestowanego `SphereSector556` renderer uruchamiał wyłącznie źródłowy test **sektora 1**. Po audycie doprowadzono zadanie 8 do rzeczywistej dostępności w testowej aplikacji:
+
+- `App.swift`: w widoku Boreas jest wybór `SEKTOR 01 · ASTEROIDY`, `SEKTOR 09 · FALE WALKI`, `SEKTOR 17 · FALE WALKI` i `SEKTOR 25 · AMIGA / PIŁKI ODBIJANE`. Są to wyłącznie **testy mechaniki asteroid**, nie odblokowanie pełnych misji.
+- `MetalRenderer.swift`: zmiana `planetTestLevel` tworzy nowy `SphereSector556` z właściwym `CombatBalance556`, resetuje podgląd lotu i `PlanetDamageLab556`, nie dotykając poprzedniej areny `GameCore` i nie zmieniając kampanii.
+- `Action38SphereQuota556Tests.swift`: sprawdza inicjalizację 1/9/17/25 i rzeczywiste dojście do drugiej fali po upływie 16 sekund w sektorach 9 i 17 (z buforem na precyzję `Float32`).
+- Brak natywnego testu dotyku na iPhonie jest wciąż otwartą weryfikacją zadania 18. Zmiana nie zawiera IPA i nie wywołuje workflow generującego IPA.
