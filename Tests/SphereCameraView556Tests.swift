@@ -140,6 +140,47 @@ import Foundation
             }
         }
 
+        // Windows GpuAmbient37.cs SpaceHash207 / SpaceRand207 and
+        // GpuIntro41.cs:452. Fixed independent hash/coordinate fixtures
+        // were computed from the original C# uint-overflow formula, not
+        // from the Swift helper itself. Star array is never randomized
+        // from a different LCG (the old flat arena still keeps its LCG).
+        precondition(SphereSky207.count==1500)
+        near(SphereSky207.normalizedSkyRadius,
+             900/(100*1.4419674))
+        near(SphereSky207.spaceRand207(41,0,17),0.890627497,
+             tolerance:0.000002)
+        near(SphereSky207.spaceRand207(41,0,31),0.323639829,
+             tolerance:0.000002)
+        near(SphereSky207.spaceRand207(41,1,17),0.155577550,
+             tolerance:0.000002)
+        near(SphereSky207.spaceRand207(41,1499,53),0.362408600,
+             tolerance:0.000002)
+        let star0=SphereSky207.star(0)
+        near(star0.direction.x,0.72333744,tolerance:0.00002)
+        near(star0.direction.y,-0.35272034,tolerance:0.00002)
+        near(star0.direction.z,-0.59360871,tolerance:0.00002)
+        near(star0.pixelSize,0.7)
+        near(star0.red,186/255)
+        near(star0.green,214/255)
+        near(star0.blue,244/255)
+        near(star0.alpha,220/255)
+        var bright=0,large=0,warm=0
+        for i in 0..<SphereSky207.count {
+            let star=SphereSky207.star(i)
+            near(star.direction.length,1,tolerance:0.00002)
+            precondition(star.red>=0 && star.red<=1)
+            precondition(star.green>=0 && star.green<=1)
+            precondition(star.blue>=0 && star.blue<=1)
+            precondition(star.pixelSize==0.7 ||
+                         star.pixelSize==1.4 ||
+                         star.pixelSize==2.8)
+            if star.pixelSize>0.7 {bright+=1}
+            if star.pixelSize==2.8 {large+=1}
+            if star.alpha>0.9 {warm+=1}
+        }
+        precondition(bright>0 && large>0 && warm>0)
+
         // The camera MUST follow ship flight across the globe. Previously
         // MetalRenderer displayed the whole planet from a fixed (0,0,4)
         // viewpoint despite SphereCamera67 being updated every physics tick.
