@@ -46,6 +46,18 @@ import Foundation
         var distant=[far,SphereAsteroid556(position:Vec2(x:0,y:360),
                                           velocity:Vec2(x:0,y:0),radius:8)]
         precondition(SphereRockContact68.solve(&distant)==0)
+        // Physics68.cs:33-37 forbids fast latitude rejection on
+        // uncanonical positions. Pole-reflected aliases at (640,360)
+        // and (0,1080) map to the same physical place. The original
+        // Contact68 must reach geodesic narrow phase rather than miss it.
+        var aliasA=SphereAsteroid556(position:Vec2(x:640,y:360),
+            velocity:Vec2(x:0,y:0),radius:18,size:3,mass:8)
+        var aliasB=SphereAsteroid556(position:Vec2(x:0,y:360),
+            velocity:Vec2(x:0,y:0),radius:18,size:3,mass:8)
+        aliasB.position=Vec2(x:0,y:1080)
+        precondition(SphereRockContact68.resolve(&aliasA,&aliasB))
+        precondition(aliasA.position.x.isFinite && aliasB.position.y.isFinite)
+
         print("PASS: Physics68 masses, seam impulse, oblique spin friction, restitution .62 and 216-cell broadphase")
     }
 }
