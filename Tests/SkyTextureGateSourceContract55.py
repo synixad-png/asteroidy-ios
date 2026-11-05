@@ -75,9 +75,9 @@ ck(src.index("if let cached=nebulaTexture, nebulaSliceCache55.allUploaded {") <
 ck("var allUploaded: Bool { uploaded.allSatisfy { $0 } }" in gate,
    "Complete source texture cache must have a fast successful path")
 
-ck(src.index("if input.planetPreview {\n            // Original GpuIntro41.DrawDeepSpace55") <
-   src.index("let sourceCloudTexture=ensureCloudTextures55(camera:c)"),
-   "GpuCosmos39 clouds should not allocate in flat arena")
+sphere_start=src.index("if input.planetPreview {\n            // Original GpuIntro41.DrawDeepSpace55")
+ck(sphere_start < src.index("let sourceCloudTexture=ensureCloudTextures55(camera:c)",sphere_start),
+   "GpuCosmos39 source clouds must stay inside actual sphere rendering (not flat arena)")
 ck(src.index("guard let projected=DeepSkyPlanets55.project(") <
    src.index("guard let planets=ensureDeepPlanetTextures55(style:style)"),
    "GpuIntro41 planets must project before texture generation")
