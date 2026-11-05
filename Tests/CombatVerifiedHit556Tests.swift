@@ -27,7 +27,7 @@ import Foundation
         precondition(V.hit(cause:"ASTEROIDA",level:9,difficulty:.normal,
             player:.first,survival:&survival,body:&ship,dome:&dome,
             rescue:&rescue,cooperative:false,developerInfinite:false,
-            guardian:.unverified,talent:.unverified)==.activeTarczaAbsorbed)
+            guardian:.unverified,talent:.unverified) == .activeTarczaAbsorbed)
         precondition(survival.shieldCharges==2)
         precondition(survival.lives==3 && survival.invincible>=0.28)
         survival.invincible=0
@@ -43,12 +43,12 @@ import Foundation
         precondition(V.hit(cause:"ASTEROIDA",level:9,difficulty:.normal,
             player:.first,survival:&survival,body:&ship,dome:&dome,
             rescue:&rescue,cooperative:false,developerInfinite:false,
-            guardian:.absorbed,talent:.unverified)==.guardianAbsorbed)
+            guardian:.absorbed,talent:.unverified) == .guardianAbsorbed)
         precondition(survival.lives==3)
         precondition(V.hit(cause:"ASTEROIDA",level:9,difficulty:.normal,
             player:.first,survival:&survival,body:&ship,dome:&dome,
             rescue:&rescue,cooperative:false,developerInfinite:false,
-            guardian:.clear,talent:.absorbed)==.talentAbsorbed)
+            guardian:.clear,talent:.absorbed) == .talentAbsorbed)
         precondition(survival.lives==3)
         precondition(V.hit(cause:"ASTEROIDA",level:9,difficulty:.normal,
             player:.first,survival:&survival,body:&ship,dome:&dome,
@@ -59,7 +59,7 @@ import Foundation
         precondition(V.hit(cause:"ASTEROIDA",level:9,difficulty:.normal,
             player:.first,survival:&survival,body:&ship,dome:&dome,
             rescue:&rescue,cooperative:false,developerInfinite:false,
-            guardian:.clear,talent:.clear)==.ignored)
+            guardian:.clear,talent:.clear) == .ignored)
 
         // Co-op: verified lack of guardian and talents must wreck (12 s)
         // instead of consuming a life. The second contact is ignored.
@@ -87,7 +87,7 @@ import Foundation
         precondition(V.hit(cause:"ASTEROIDA",level:3,difficulty:.hard,
             player:.first,survival:&dev,body:&devShip,dome:&devT,
             rescue:&devR,cooperative:false,developerInfinite:true,
-            guardian:.unverified,talent:.unverified)==.developerProtected)
+            guardian:.unverified,talent:.unverified) == .developerProtected)
         precondition(dev.lives==3 && dev.invincible==0.8)
         print("PASS: v556 hit ordering active Tarcza -> legacy shield -> guardian -> talents -> rescue -> lives; co-op/game guards")
     }
