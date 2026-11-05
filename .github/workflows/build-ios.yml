@@ -51,6 +51,10 @@ jobs:
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift Tests/FlatEscort556Tests.swift -o /tmp/flat-escort-tests
           /tmp/flat-escort-tests
+      - name: Verify v556 initial asteroid positions and velocities
+        run: |
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift Tests/SectorSpawn556Tests.swift -o /tmp/sector-spawns
+          /tmp/sector-spawns
       - name: Verify telemetry module
         run: |
           swiftc ASTEROIDYiOS/RenderTelemetry.swift Tests/RenderTelemetryTests.swift -o /tmp/ios-telemetry-tests
