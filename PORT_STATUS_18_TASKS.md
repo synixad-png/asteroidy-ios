@@ -2,7 +2,7 @@
 
 Źródło kolejności/nazw: zatwierdzony przez użytkownika zrzut harmonogramu 18 zadań z 2026-11-05. Nie zmieniać nazw ani zakresów bez decyzji użytkownika.
 
-**Łączny postęp odniesienia: 27%; pozostało 73%.** To historyczny, zatwierdzony wynik raportu, a nie świeży pomiar obliczony z kodu. Zadanie 7 ma nowszą roboczą ocenę implementacji 87%, podlegającą końcowym testom. Zadanie 8 ma 96% według ostatniego harmonogramu.
+**Łączny postęp odniesienia: 27%; pozostało 73%.** To historyczny, zatwierdzony wynik raportu, a nie świeży pomiar obliczony z kodu. Zadanie 7 ma nowszą roboczą ocenę implementacji 88% (poprzednio 87%; +1 pp), po potwierdzeniu Linux PASS dla nowego przekazywania devOpen do Gameplay65 i regresji ratowania. Kompilacja Xcode dla tej zmiany może nadal trwać; jej status należy sprawdzić osobno. Zadanie 8 ma 96% według ostatniego harmonogramu.
 
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
@@ -12,7 +12,7 @@
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
 | 6 | Fizyka lotu i poruszanie po planetach | 35% |
-| 7 | Kolizje, obrażenia i zniszczenia | 87% |
+| 7 | Kolizje, obrażenia i zniszczenia | 88% |
 | 8 | Asteroidy i fale walki | 96% |
 | 9 | Wszystkie bronie i efekty trafień | 10% |
 | 10 | Przeciwnicy i sztuczna inteligencja | 0% |
