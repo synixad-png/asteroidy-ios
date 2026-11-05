@@ -5,6 +5,12 @@ import Foundation
 struct SphereSector556 {
     private(set) var asteroids: [SphereAsteroid556] = []
     private(set) var shipContacts = 0
+    // The planetary test HUD has an independent hull. This intentionally
+    // mirrors the current iOS arena's three-hit/1.3s response rather than
+    // claiming the complete v556 planet damage system is implemented.
+    private(set) var hull = 3
+    private(set) var hitCooldown: Float = 0
+    private(set) var damageEvents = 0
     private var inContact = false
     private(set) var elapsed: Float = 0
     private static let unit: Float = 2.7 / 1280
@@ -29,9 +35,17 @@ struct SphereSector556 {
     mutating func tick(dt: Float, playerPosition: Vec2, playerRadius: Float = 26) {
         guard dt > 0 else { return }
         elapsed += dt
+        hitCooldown = max(0, hitCooldown - dt)
         for i in asteroids.indices { asteroids[i].advance(dt: dt) }
         let anyContact = asteroids.contains { $0.touches(playerPosition, otherRadius: playerRadius) }
-        if anyContact && !inContact { shipContacts += 1 }
+        if anyContact && !inContact {
+            shipContacts += 1
+            if hitCooldown <= 0 && hull > 0 {
+                hull -= 1
+                damageEvents += 1
+                hitCooldown = 1.3
+            }
+        }
         inContact = anyContact
     }
 }
