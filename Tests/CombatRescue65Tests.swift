@@ -42,7 +42,7 @@ import Foundation
         // A slow helper cannot rescue; progress decays at twice the speed
         // until the 12-second down timer triggers an explicit failure action.
         a.velocity=Vec2(x:180,y:0)
-        precondition(rescue.beginDown(.second),cooperative:true,playing:true,
+        precondition(rescue.beginDown(.second,cooperative:true,playing:true,
                     developerInfinite:false,rescueDamage:false,
                     survival:&s2,body:&b))
         // Failure is a requested Damage() action, not an automatic life loss
