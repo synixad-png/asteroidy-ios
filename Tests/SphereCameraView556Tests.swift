@@ -17,6 +17,17 @@ import Foundation
         near(SphereCameraView556.normalizedEyeDistance,
              310/(100*1.4419674))
 
+        // Source GpuIntro41.cs:455 frustum(...,-.2,.2,.4,1600)
+        // and GpuSphere67.cs:420 IntroProjection() for spherical scenes.
+        // Guard against regression to the previously invented 36-degree FOV.
+        near(SphereProjection556.sourceVerticalFocal,2)
+        near(SphereProjection556.sourceVerticalFOV,
+             2*atan(Float(0.5)))
+        near(SphereProjection556.horizontalFocal(aspect:16/9),
+             2/(Float(16)/9))
+        near(SphereProjection556.horizontalFocal(aspect:4/3),
+             1.5)
+
         // Direct original Orbit50.cs:32 column-major matrix at the
         // equator, longitude zero; unlike self-derived assertions this
         // explicitly catches a transpose of the Metal uniform layout.
@@ -79,6 +90,6 @@ import Foundation
         precondition(SphereVector3.dot(moved.back,Sphere67.normal(target))>0.999)
         near(moved.eye.length,SphereCameraView556.normalizedEyeDistance)
 
-        print("PASS: source GpuSphere67 310-unit orbit camera, 8 sphere positions, exact original Orbit50.cs matrix columns and view basis and 240 tracked flight frames")
+        print("PASS: source GpuIntro41 53.13-degree planet frustum + GpuSphere67 310-unit orbit camera, 8 sphere positions, exact original Orbit50.cs matrix columns and view basis and 240 tracked flight frames")
     }
 }
