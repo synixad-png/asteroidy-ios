@@ -37,6 +37,17 @@ import Foundation
         CombatHull556.advance(cooldown:&cooldown,dt:2)
         precondition(!CombatHull556.applyContact(hull:&hull,cooldown:&cooldown))
         precondition(hull==0)
+        // Windows Game.cs v149 rock/boss ordering and source preemption.
+        typealias Order=CombatTargetOrder556
+        precondition(Order.impacts(rockIndex:3,rockTime:0.25,bossTime:0.8)==[.rock(3)])
+        precondition(Order.impacts(rockIndex:3,rockTime:0.8,bossTime:0.25)==[.boss])
+        precondition(Order.impacts(rockIndex:3,rockTime:0.5,bossTime:0.5)==[.rock(3)])
+        precondition(Order.impacts(rockIndex:3,rockTime:0.5,bossTime:0.5,pierce:2)==[.rock(3),.boss])
+        precondition(Order.impacts(rockIndex:nil,rockTime:2,bossTime:0.3)==[.boss])
+        precondition(Order.impacts(rockIndex:0,rockTime:2,bossTime:2).isEmpty)
+        precondition(Order.impacts(robotHit:true,rockIndex:3,rockTime:0.1,bossTime:0.9)==[.robot])
+        precondition(Order.impacts(bugHit:true,rockIndex:3,rockTime:0.1,bossTime:0.9)==[.bug])
+        precondition(Order.impacts(bossHazardHit:true,rockIndex:3,rockTime:0.1,bossTime:0.9)==[.bossHazard])
         // Flat: the nearer rock is at index 1, while a farther rock occupies
         // index 0. Contact selection must not depend on array iteration order.
         let a=Vec2(x:-0.9,y:0)
@@ -76,6 +87,6 @@ import Foundation
         precondition(sector.destroyedRocks == 1)
         precondition(sector.asteroids.contains { $0.size==3 && $0.health==1 &&
                                                  abs($0.position.x-695)<1.0 })
-        print("PASS: 15 shared armor/score cases, no-op/shards, hull cooldown, flat/sphere earliest swept contact")
+        print("PASS: shared armor/score, hull cooldown, v149 boss/rock priority, flat/sphere earliest contacts")
     }
 }
