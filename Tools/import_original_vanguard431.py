@@ -40,7 +40,7 @@ def base_from_glb(blob):
         pos += 8
         if kind == b"JSON":
             js = json.loads(blob[pos:pos+length])
-        elif kind == b"BIN\\0".replace(b"\\0",b"\x00"):
+        elif kind == bytes((66,73,78,0)):
             bin_chunk = memoryview(blob)[pos:pos+length]
         pos += length
     if js is None or bin_chunk is None:
