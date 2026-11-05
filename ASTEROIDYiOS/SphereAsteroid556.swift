@@ -8,10 +8,25 @@ struct SphereAsteroid556 {
     var position: Vec2
     var velocity: Vec2
     var radius: Float
-    init(position: Vec2, velocity: Vec2, radius: Float) {
+    var size: Int
+    var tier: Int
+    var health: Int
+    var originalHealth: Int
+    var fragment: Bool
+    var shardLife: Float
+    init(position: Vec2, velocity: Vec2, radius: Float,
+         size: Int = 3, tier: Int = 0, health: Int? = nil,
+         fragment: Bool = false, shardLife: Float = 0) {
         self.position = Sphere67.canonical(position)
         self.velocity = velocity
         self.radius = radius
+        self.size = size
+        self.tier = tier
+        let hp = health ?? Rock.healthFor(size:size,tier:tier)
+        self.health = hp
+        self.originalHealth = hp
+        self.fragment = fragment
+        self.shardLife = shardLife
     }
     // Game.cs r.P = WorldAdvance67(..., dt * (SphereActive67 ? 1 : DangerSpeed))
     mutating func advance(dt: Float) {
