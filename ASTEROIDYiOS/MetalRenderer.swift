@@ -662,9 +662,59 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 &nebulaUniform,length:MemoryLayout.size(ofValue:nebulaUniform),
                 index:1)
             encoder.setFragmentTexture(nebulaTexture,index:0)
+            // C# DrawDeepSpace55: 24 FAR cloud layers first.
             encoder.drawPrimitives(
                 type:.triangle,vertexStart:0,
-                vertexCount:nebulaOverlayMesh.count)
+                vertexCount:24*6)
+
+            // C# DrawDeepSpace55: the black hole is behind the NEAR
+            // cloud layers and in front of FAR clouds. 3 source
+            // StarTexture halos, 4 moving rays, then rear disk/core/
+            // front disk in the exact original 2D painter order.
+            if let blackProjection=BlackHoleSky55.project(
+                camera:sphereFlight.camera,time:Float(planetAnimationTime)) {
+                let bx=(blackProjection.screen.x-640)*2/(720*aspect)
+                let by=(360-blackProjection.screen.y)*2/720
+                let screen=SIMD4<Float>(bx,by,2/(720*aspect),-2/720)
+                let layers=BlackHoleSky55.overlays(
+                    time:Float(planetAnimationTime),
+                    scale:blackProjection.scale,glow:true)
+                var properties:[SIMD4<Float>]=[screen]
+                properties.reserveCapacity(1+layers.count*3)
+                for layer in layers {
+                    properties.append(SIMD4(
+                        layer.radiusX,layer.radiusY,
+                        cos(layer.angle),sin(layer.angle)))
+                    let (r,g,b,a)=layer.rgba
+                    properties.append(SIMD4(r*a,g*a,b*a,a))
+                    properties.append(SIMD4(
+                        layer.isTexture ? Float(layer.layer) : -1,
+                        0,0,0))
+                }
+                encoder.setRenderPipelineState(blackHolePipeline)
+                properties.withUnsafeBytes { raw in
+                    if let ptr=raw.baseAddress {
+                        encoder.setVertexBytes(
+                            ptr,length:raw.count,index:0)
+                    }
+                }
+                encoder.setFragmentTexture(blackHoleTextures,index:0)
+                encoder.setFragmentTexture(sphereHaloTexture,index:1)
+                encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                    vertexCount:layers.count*6)
+            }
+            // C# IntroSky: 12 NEAR clouds come AFTER all background
+            // space objects. Reuse the SAME immutable buffer and
+            // two-texture-array; no new geometry or texture uploads.
+            encoder.setRenderPipelineState(nebulaOverlayPipeline)
+            encoder.setVertexBuffer(
+                nebulaOverlayMesh.vertices,offset:0,index:0)
+            encoder.setVertexBytes(
+                &nebulaUniform,length:MemoryLayout.size(ofValue:nebulaUniform),
+                index:1)
+            encoder.setFragmentTexture(nebulaTexture,index:0)
+            encoder.drawPrimitives(type:.triangle,
+                vertexStart:24*6,vertexCount:12*6)
             // Source GpuIntro41.IntroSky uses a sky centred on the eye.
             // Render 1500 alpha-blended screen-size points in one GPU call;
             // none writes depth or changes the scene PBR pipeline.
