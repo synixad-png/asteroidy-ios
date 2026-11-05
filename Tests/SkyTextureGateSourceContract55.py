@@ -57,7 +57,7 @@ for token in (
     ck(token in src, "Visible-only source texture path missing: "+token)
 
 ck(src.index("if input.planetPreview {\n            // Original GpuIntro41.DrawDeepSpace55") <
-   src.index("let sourceCloudTexture=ensureCloudTextures55()"),
+   src.index("let sourceCloudTexture=ensureCloudTextures55(camera:c)"),
    "GpuCosmos39 clouds should not allocate in flat arena")
 ck(src.index("guard let projected=DeepSkyPlanets55.project(") <
    src.index("guard let planets=ensureDeepPlanetTextures55()"),
