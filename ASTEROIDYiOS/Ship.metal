@@ -7,6 +7,7 @@ struct RasterOutput {
     float4 color;
     float3 normal;
     float3 worldPosition;
+    float3 cameraEye;
     float unlit;
     float4 material;
 };
@@ -17,6 +18,7 @@ vertex RasterOutput sceneVertex(uint vid [[vertex_id]],
     Vertex3D v = vertices[vid];
     o.position = scene.mvp * v.position;
     o.worldPosition = (scene.model * v.position).xyz;
+    o.cameraEye = scene.lighting.yzw;
     // The current renderer uses uniform scales only, hence transformed normals
     // can be normalized in the fragment stage without inverse-transpose.
     o.normal = (scene.model * float4(v.normal.xyz, 0.0)).xyz;
@@ -30,7 +32,9 @@ vertex RasterOutput sceneVertex(uint vid [[vertex_id]],
 fragment float4 sceneFragment(RasterOutput in [[stage_in]]) {
     if (in.unlit > 0.5) return in.color;
     const float3 L = normalize(float3(0.48, 0.68, 0.56));
-    const float3 V = normalize(float3(0.0, 0.0, 4.0) - in.worldPosition); // diagnostic camera
+    // v556 SphereCombat67/GpuSphere67 orbits the combat planet. The
+    // fragment view vector must use the same camera as MetalRenderer's MVP.
+    const float3 V = normalize(in.cameraEye - in.worldPosition);
     const float3 N = normalize(in.normal);
     const float3 H = normalize(V + L);
     const float metallic = clamp(in.material.x, 0.0, 1.0);
