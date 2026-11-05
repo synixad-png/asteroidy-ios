@@ -46,7 +46,8 @@ struct CombatVerifiedEncounter556 {
         talentSecond:CombatVerifiedHit556.GuardResult
     ) -> (outcome:CombatVerifiedHit556.TeamOutcome?,
           transition:CombatRespawn556.Action?) {
-        guard case let .failed(first,second) = pendingRescueFailure else {
+        guard let failure=pendingRescueFailure,
+              case let .failed(first,second)=failure else {
             return (nil,nil)
         }
         guard first || second else { return (nil,nil) }
@@ -108,7 +109,7 @@ struct CombatVerifiedEncounter556 {
             scatterSeed=seed
             encounter.rocks=rocks
             shots=shotsState
-            if transition == .none {transition=nil}
+            if let action=transition, action == .none {transition=nil}
         }
         // Windows Gameplay65.FailRescue65 repositions player 2 at +85
         // after applying a single Damage() to player 1 when BOTH are down.
