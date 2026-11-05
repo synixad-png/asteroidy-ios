@@ -63,6 +63,19 @@ import Foundation
         precondition(wave.objectiveWave == 2 && wave.incomingRocksLeft == 1)
         precondition(wave.asteroids.count == waveBalance.sectorRockCount+2)
         precondition(!wave.objectiveTimerComplete && !wave.sectorFinished)
+        // Timed objective alone cannot clear a sector with surviving rocks.
+        var timed = SphereSector556(balance:waveBalance,diagnosticAsteroids:[])
+        precondition(timed.objective == .waves && !timed.sectorFinished)
+        move(&timed,count:5750,player:Vec2(x:320,y:360))
+        precondition(timed.objectiveWave == 3)
+        precondition(timed.objectiveTimerComplete && timed.sectorFinished && timed.sectorCleared)
+        var defended = SphereSector556(
+            balance:CombatBalance556(level:5,difficulty:.normal,spherical:true)!,
+            diagnosticAsteroids:[SphereAsteroid556(position:Vec2(x:640,y:360),
+                                velocity:Vec2(x:0,y:0),radius:12,size:1,tier:0)])
+        move(&defended,count:6200,player:Vec2(x:320,y:360))
+        precondition(defended.objectiveTimerComplete && !defended.sectorFinished)
+        precondition(!defended.sectorCleared && defended.asteroids.count == 1)
         for level in 1...26 {
             for d in CombatBalance556.Difficulty.allCases {
                 let cfg=CombatBalance556(level:level,difficulty:d,spherical:true)!
@@ -71,6 +84,6 @@ import Foundation
                 precondition(sample.objective == GameCore.objectiveFor(level:level))
             }
         }
-        print("PASS: spherical armor multi-hit, 2-way splits, 18 terminal shards, scoring, seam shooting, 16s waves, 78 sector configs")
+        print("PASS: spherical armor, splits, shards, scoring, seam bullets, waves, timed sector-clear gates and 78 configurations")
     }
 }
