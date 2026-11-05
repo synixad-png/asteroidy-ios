@@ -195,10 +195,14 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             let score = input.planetPreview ? sphereSector.score : game.score
             let hull = input.planetPreview ? sphereSector.hull : game.hull
             let rockCount = input.planetPreview ? sphereSector.asteroids.count : game.rocks.count
+            let sectorCleared = sphereSector.sectorCleared
+            let objectiveWave = sphereSector.objectiveWave
             DispatchQueue.main.async { [weak input] in
                 input?.score = score
                 input?.hull = hull
                 input?.trainingRockCount = rockCount
+                input?.planetSectorCleared = sectorCleared
+                input?.planetWave = objectiveWave
             }
         }
         guard let pass = view.currentRenderPassDescriptor, let drawable = view.currentDrawable,
