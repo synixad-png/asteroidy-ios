@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 45% |
+| 2 | Silnik graficzny Metal | 47% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -54,6 +54,8 @@
 **Kontrola IPA tylko na polecenie użytkownika:** użytkownik odwołał automatyczne sprawdzanie; harmonogram monitorowania IPA został **wyłączony**. Stan GitHub Actions i dostępność pliku należy sprawdzać wyłącznie po jego nowym, wyraźnym poleceniu. Nie ingeruje to w trwające zadania GitHub ani w sam projekt.
 
 **Dalszy rozwój zadania 2 (45%, bez zawyżania):** w oparciu o bezpośrednie porównanie oryginalnego `Windows/src/GpuSphere67.cs:4,63,133–134,368` poprawiono modelowe osie statku i asteroid w `MetalRenderer`. `SphereSurfaceStamp556` odwzorowuje prawa/przód/normalna, przesunięcie `Shell67=HomeWorldOuterRadius523+15`, współczynnik `Scale67=Shell67/Sphere67.Radius`; modele dostają źródłowy `angle`, przechył i pochylenie, a sektor 25 radialny podskok. **PASS**: [GitHub Actions 42057687378](https://github.com/synixad-png/asteroidy-ios/actions/runs/42057687378), testy stempla w 8 punktach × 4 kierunkach, razem z kamerą i parsowaniem Swift. Nie twierdzić, że zmiana była już testowana w prawdziwym rendererze iPhone/Apple GPU. Wszystkie dane modeli, fizyka, kooperacja i kampania są nietknięte. Szczegóły: `AUDYT_ZADANIE_2_v556_METAL_CAMERA.md`. `Zadanie 1: 88%` i `zadanie 2: 45%` pozostają bez zwiększenia do czasu kolejnego potwierdzonego etapu.
+
+**Aktualizacja najnowsza zadania 2 — niebo źródłowe, 05.11.2026:** **47% (poprzednio 45%, +2 pp)**. Na podstawie rzeczywistych `Windows/src/GpuAmbient37.cs:6–7` i `GpuIntro41.cs:25–26,452` odtworzono deterministyczny `SpaceHash207/SpaceRand207`, 1500 kierunków, wielkości i barw gwiazd oraz niebo związane z pozycją kamery w `MetalRenderer`; jeden statyczny bufor GPU zastępuje 1500 pojedynczych zgłoszeń. Odtworzono źródłowy `GpuSphere67.cs:420` kolor czyszczenia planety `(.012,.021,.04)`; płaska arena i jej wcześniejsze 130 gwiazd nie zostały zmienione. `Tests/SphereCameraView556Tests.swift` sprawdza niezależne, obliczone z oryginalnego uint-hash wartości i 1500 unormowanych kierunków. [GitHub Actions 42060152260](https://github.com/synixad-png/asteroidy-ios/actions/runs/42060152260) — **PASS** (Swift/Linux, parsing SwiftUI/Metal). Oryginalny `IntroHalo` z teksturowaną i przezroczystą poświatą, mgławice i promienie **NIE są jeszcze odtworzone**; GPU iPhone/Xcode nowych zmian **NIE testowano**. 47% jest oceną częściowej implementacji zgodnej z danymi źródłowymi, **nie** potwierdzeniem jakości grafiki na urządzeniu. Audyt: `AUDYT_ZADANIE_2_v556_METAL_CAMERA.md`.
 
 ## Kolejność dalszej pracy
 
