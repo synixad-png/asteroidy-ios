@@ -46,9 +46,14 @@ for token in (
     "guard deepPlanetLoadGate.shouldAllocate(visible: true)",
     "let sourceCloudTexture=ensureCloudTextures55(camera:c)",
     "private static let sourceCloudLayers55: [SphereNebula556.Layer]",
-    "let hasVisibleCloud=Self.sourceCloudLayers55.contains",
-    "$0.projected(camera:camera) != nil",
-    "guard nebulaLoadGate.shouldAllocate(visible:hasVisibleCloud)",
+    "let visibleThemes=Set(Self.sourceCloudLayers55.compactMap",
+    "layer.projected(camera:camera) != nil ? layer.theme : nil",
+    "guard nebulaLoadGate.shouldAllocate(visible:!visibleThemes.isEmpty)",
+    "private var nebulaSliceCache55 = SkyTextureSliceCache55(count: SphereNebula556.orbitThemeCount)",
+    "where visibleThemes.contains(theme)",
+    "nebulaSliceCache55.needsUpload(style:theme)",
+    "guard Self.uploadNebulaSlice556(texture,theme:theme)",
+    "nebulaSliceCache55.markUploaded(style:theme)",
     "if let clouds=sourceCloudTexture",
     "guard let planets=ensureDeepPlanetTextures55(style:style)",
     "private var deepPlanetSliceCache55 = SkyTextureSliceCache55(count: DeepSkyPlanets55.count)",
@@ -87,6 +92,6 @@ for token in (
 ):
     ck(token in gate,"Resource gate/size regression: "+token)
 print("PASS: original source GpuIntro41 / GpuCosmos39 lazy image creation,")
-print("      no 6.28MB sky textures in flat mode, max one attempt each,")
+print("      no 6.28MB sky textures in flat mode, per-visible planet/cloud slice,")
 print("      preserved far worlds / black hole / near clouds painter order")
 print("LIMITATION: static contract, not native Apple Metal GPU execution")
