@@ -25,3 +25,29 @@ struct SkyTextureGate55 {
     static let deferredTotalBytes =
         blackHoleBytes + threePlanetsBytes + nebulaBytes
 }
+
+/// Tracks the individual source GpuIntro41.BuildDeepPlanet55 bitmaps.
+/// The Metal array is shared for efficient sampling, but producing the
+/// CPU pixels for an off-screen planet is delayed until that style
+/// actually passes DrawSkyPlanet55/SkyProject55. Unlike the array's
+/// allocation gate, every slice is marked only AFTER its upload succeeds.
+struct SkyTextureSliceCache55 {
+    private var uploaded: [Bool]
+
+    init(count: Int) {
+        precondition(count > 0)
+        uploaded = Array(repeating: false, count: count)
+    }
+
+    var uploadedCount: Int { uploaded.filter { $0 }.count }
+
+    func needsUpload(style: Int) -> Bool {
+        (0..<uploaded.count).contains(style) && !uploaded[style]
+    }
+
+    mutating func markUploaded(style: Int) {
+        precondition((0..<uploaded.count).contains(style))
+        uploaded[style] = true
+    }
+}
+
