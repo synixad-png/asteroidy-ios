@@ -23,6 +23,10 @@ jobs:
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift Tests/GameCoreTests.swift -o /tmp/ios-gamecore-tests
           /tmp/ios-gamecore-tests
+      - name: Verify v556 campaign progress rules
+        run: |
+          swiftc ASTEROIDYiOS/CampaignProgress556.swift Tests/CampaignProgress556Tests.swift -o /tmp/ios-campaign-tests
+          /tmp/ios-campaign-tests
       - name: Verify telemetry module
         run: |
           swiftc ASTEROIDYiOS/RenderTelemetry.swift Tests/RenderTelemetryTests.swift -o /tmp/ios-telemetry-tests
