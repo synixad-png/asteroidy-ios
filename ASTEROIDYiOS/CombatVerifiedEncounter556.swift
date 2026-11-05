@@ -179,6 +179,16 @@ struct CombatVerifiedEncounter556 {
                        talentFirst:CombatVerifiedHit556.GuardResult = .unverified,
                        talentSecond:CombatVerifiedHit556.GuardResult = .unverified) -> Result {
         let noRescue:CombatRescue65.Event = .none
+        // Windows/src/Game.cs:234 exits Step immediately when DevOpen.
+        // Windows/src/Gameplay65.cs:30 also blocks StepRescue65.
+        // Do NOT tick immunity, Talents78, Tarcza145, Physics68 or
+        // resolve a pending rescue-damage action while this menu is open.
+        if devOpen {
+            return Result(contacts:[],hitOutcomes:[],damageTransitions:[],
+                          rescueEvent:noRescue,rescueDamageOutcome:nil,
+                          requiresRescueDamageResolution:pendingRescueFailure != nil,
+                          pickupsTrackingSecond:0)
+        }
         // A previous unresolved FailRescue65 must be applied or explicitly
         // verified before stepping more contact physics. Otherwise the
         // player could receive an unrelated hit while rescue-damage is
