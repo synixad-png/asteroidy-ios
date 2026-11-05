@@ -303,13 +303,82 @@ struct SphereSector556 {
         elapsed += dt
         CombatHull556.advance(cooldown:&hitCooldown,dt:dt)
         shotCooldown = max(0,shotCooldown-dt)
-        if objective == .waves { objectiveWave = min(3,1+Int(elapsed/16)) }
+        // Windows Game.Step removes expired ShardLife187 BEFORE advancing
+        // rocks, StepAction and projectile impacts. An expired shard must
+        // never intercept a projectile in the same frame.
+        for i in asteroids.indices.reversed() where asteroids[i].shardLife > 0 {
+            asteroids[i].shardLife -= dt
+            if asteroids[i].shardLife <= 0 { asteroids.remove(at:i) }
+        }
 
-        let previousRockPositions = asteroids.map { $0.position }
+        var previousRockPositions = asteroids.map { $0.position }
         for i in asteroids.indices { asteroids[i].advance(dt:dt) }
+
+        // Windows Game.Step: rock advance -> Action38.StepAction ->
+        // Physics68.StepSolids68 -> projectile hits. In particular, rocks
+        // spawned THIS frame can already collide with the ship and bullets.
+        // Previous Swift ordering added incoming rocks AFTER bullet hits.
+        if objective == .waves { objectiveWave = min(3,1+Int(elapsed/16)) }
+        // Only original verified Bugs.Count==0 cancels the Clear quota.
+        // Nil means no enemy-controller evidence, not zero enemies.
+        if objective == .clear && asteroids.isEmpty && verifiedEnemyCount == 0 {
+            incomingRocksLeft = 0
+        }
+        if incomingRocksLeft > 0 &&
+           (elapsed >= nextIncoming || (objective != .waves && asteroids.count <= 4)) {
+            spawnArrivals(near:playerPosition)
+        }
+        // A newly spawned rock starts its sweep at its spawn point;
+        // only pre-existing rocks have traveled during this step.
+        if asteroids.count > previousRockPositions.count {
+            previousRockPositions.append(contentsOf:
+                asteroids[previousRockPositions.count...].map { $0.position })
+        }
         // Physics68.StepSolids68: real rock/rock response in the spherical
         // tangent plane, with native 216-cell broadphase.
         _ = SphereRockContact68.solve(&asteroids)
+
+        // Physics68.StepSolids68 resolves ship contacts BEFORE Game.Step
+        // checks projectile impacts. Preserve the ship result until the
+        // sector-clear flag has been evaluated after the projectile pass.
+        let shipContact:SphereShipContact556?
+        if detectContacts, let velocity=playerVelocity {
+            var ship=SphereAsteroid556(position:playerPosition,velocity:velocity,
+                                       radius:playerRadius,mass:shipMass)
+            var contacts=0
+            for i in asteroids.indices where asteroids[i].shardLife <= 0 {
+                var rock=asteroids[i]
+                if SphereRockContact68.resolve(&ship,&rock,
+                                               restitution:0.42,
+                                               applyRockSpin:false) {
+                    asteroids[i]=rock
+                    contacts += 1
+                    if useLegacyHull &&
+                        CombatHull556.applyContact(hull:&hull,cooldown:&hitCooldown) {
+                        damageEvents += 1
+                    }
+                }
+            }
+            if contacts>0 && !inContact { shipContacts += 1 }
+            inContact=contacts>0
+            shipContact=SphereShipContact556(position:ship.position,
+                                             velocity:ship.velocity,
+                                             contacts:contacts)
+        } else {
+            let overlap = detectContacts && asteroids.contains {
+                $0.shardLife <= 0 && $0.touches(playerPosition,otherRadius:playerRadius)
+            }
+            if overlap && !inContact {
+                shipContacts += 1
+                if useLegacyHull &&
+                    CombatHull556.applyContact(hull:&hull,cooldown:&hitCooldown) {
+                    damageEvents += 1
+                }
+            }
+            inContact=overlap
+            shipContact=nil
+        }
+
         // Process projectiles against the positions at the start of the step.
         var rockHits:[Int:[SphereBolt556]] = [:]
         for i in bolts.indices.reversed() {
@@ -344,57 +413,7 @@ struct SphereSector556 {
             for bolt in incoming { impactRock(at:idx,with:bolt) }
             damageRock(at:idx,amount:incoming.count)
         }
-        // Shards are cosmetic and expire on their own; unlike threats, they
-        // still block the diagnostic sector-clear condition until gone.
-        for i in asteroids.indices.reversed() where asteroids[i].shardLife > 0 {
-            asteroids[i].shardLife -= dt
-            if asteroids[i].shardLife <= 0 { asteroids.remove(at:i) }
-        }
-        // Action38.StepAction: spherical Clear cancels arrivals only when
-        // Rocks.Count==0 AND the *verified* enemy count is zero.
-        // With an unported enemy controller, count remains unknown (nil).
-        if objective == .clear && asteroids.isEmpty && verifiedEnemyCount == 0 {
-            incomingRocksLeft = 0
-        }
-        if incomingRocksLeft > 0 &&
-           (elapsed >= nextIncoming || (objective != .waves && asteroids.count <= 4)) {
-            spawnArrivals(near:playerPosition)
-        }
-        // In live Boreas flight, collide the ship using Contact68's real
-        // .42 restitution, ship mass and parallel-transported velocities.
-        if detectContacts,let velocity=playerVelocity {
-            var ship=SphereAsteroid556(position:playerPosition,velocity:velocity,
-                                        radius:playerRadius,mass:shipMass)
-            var contacts=0
-            for i in asteroids.indices where asteroids[i].shardLife <= 0 {
-                var rock=asteroids[i]
-                if SphereRockContact68.resolve(&ship,&rock,
-                                               restitution:0.42,
-                                               applyRockSpin:false) {
-                    asteroids[i]=rock
-                    contacts += 1
-                    if useLegacyHull && CombatHull556.applyContact(hull:&hull,cooldown:&hitCooldown) {
-                        damageEvents += 1
-                    }
-                }
-            }
-            if contacts>0 && !inContact { shipContacts += 1 }
-            inContact=contacts>0
-            if sectorFinished { sectorCleared=true }
-            return SphereShipContact556(position:ship.position,
-                                        velocity:ship.velocity,contacts:contacts)
-        }
-        let overlap = detectContacts && asteroids.contains {
-            $0.shardLife <= 0 && $0.touches(playerPosition,otherRadius:playerRadius)
-        }
-        if overlap && !inContact {
-            shipContacts += 1
-            if useLegacyHull && CombatHull556.applyContact(hull:&hull,cooldown:&hitCooldown) {
-                damageEvents += 1
-            }
-        }
-        inContact = overlap
         if sectorFinished { sectorCleared = true }
-        return nil
+        return shipContact
     }
 }
