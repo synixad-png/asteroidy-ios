@@ -61,6 +61,47 @@ import Foundation
             precondition(!failed.shouldAllocate(visible:true))
         }
 
+        // The original GpuIntro41.BuildDeepPlanet55 produces a 320x220
+        // Bitmap separately for every visible planet style. A shared
+        // three-slice MTLTexture must not imply generating all three CPU
+        // images at the first visible planet. Test every visible order.
+        let orders: [[Int]] = [
+            [0,1,2], [0,2,1], [1,0,2],
+            [1,2,0], [2,0,1], [2,1,0]
+        ]
+        for order in orders {
+            var slices=SkyTextureSliceCache55(count:3)
+            precondition(slices.uploadedCount == 0)
+            precondition(!slices.needsUpload(style:-1))
+            precondition(!slices.needsUpload(style:3))
+            for (n,style) in order.enumerated() {
+                // A newly encountered source planet can generate pixels.
+                precondition(slices.needsUpload(style:style))
+                // Other hidden styles remain deferred.
+                for hidden in order.dropFirst(n+1) {
+                    precondition(slices.needsUpload(style:hidden))
+                }
+                slices.markUploaded(style:style)
+                precondition(slices.uploadedCount == n+1)
+                // Future rendered frames reuse the source bitmap.
+                for _ in 0..<240 {
+                    precondition(!slices.needsUpload(style:style))
+                }
+            }
+            precondition(slices.uploadedCount == 3)
+        }
+        // A texture allocation and pixel generation are different
+        // gates: even with an array allocated, two hidden styles remain
+        // ungenerated until individually visible in SkyProject55.
+        var onlyOne=SkyTextureSliceCache55(count:3)
+        onlyOne.markUploaded(style:1)
+        for _ in 0..<600 {
+            precondition(onlyOne.uploadedCount == 1)
+            precondition(onlyOne.needsUpload(style:0))
+            precondition(onlyOne.needsUpload(style:2))
+            precondition(!onlyOne.needsUpload(style:1))
+        }
+
         print("PASS: source v556 lazy GPU texture gate: flat mode zero loads,")
         print("      source SkyProject55 visibility first, no per-frame retries,")
         print("      deferred 6,284,288 bytes of uncompressed GPU textures")
