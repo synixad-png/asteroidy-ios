@@ -12,7 +12,8 @@ enum SphereRockContact68 {
     @discardableResult
     static func resolve(_ a:inout SphereAsteroid556,
                         _ b:inout SphereAsteroid556,
-                        restitution:Float = 0.62) -> Bool {
+                        restitution:Float = 0.62,
+                        applyRockSpin:Bool = true) -> Bool {
         let sum = a.radius+b.radius
         if abs(a.position.y-b.position.y) >= sum { return false }
         let d = Sphere67.delta(target:b.position,origin:a.position)
@@ -46,11 +47,13 @@ enum SphereRockContact68 {
             transported(n,from:oldA,to:oldB)*(push*ib/total))
         a.velocity = transported(own,from:oldA,to:a.position)
         b.velocity = transported(b.velocity,from:oldB,to:b.position)
-        // RockContacts68 transfers the tangential contact friction into spin.
-        if a.mass > 0 && a.radius > 0 {
+        // Original Physics68.Contact68 does NOT change angular momentum.
+        // Only RockContacts68 (rock/rock) applies contactFriction68 to spin.
+        // Ship/rock, bug/rock and boss/rock call Contact68 without this step.
+        if applyRockSpin && a.mass > 0 && a.radius > 0 {
             a.spin = max(-2,min(2,a.spin-contactFriction/(0.4*a.mass*a.radius)))
         }
-        if b.mass > 0 && b.radius > 0 {
+        if applyRockSpin && b.mass > 0 && b.radius > 0 {
             b.spin = max(-2,min(2,b.spin-contactFriction/(0.4*b.mass*b.radius)))
         }
         return true
