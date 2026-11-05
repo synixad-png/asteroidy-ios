@@ -63,6 +63,17 @@ import Foundation
             near3(sky.up,frame.up,0.00001)
             near(SphereVector3.dot(sky.right,sky.focus),0,0.0002)
         }
+        // Source 0..16s corridor is sampled 81 times at exactly
+        // 0.2s. Its precomputed pairs must be numerically identical
+        // to the original repeated Camera/Ship evaluations.
+        let cachedSamples=IntroOrbit41.corridorSamples
+        precondition(cachedSamples.count==81)
+        for index in [0,1,10,40,60,80] {
+            let t=Float(index)*0.2
+            near3(cachedSamples[index].eye,IntroOrbit41.camera(t),0.00001)
+            near3(cachedSamples[index].line,
+                  IntroOrbit41.ship(t)-IntroOrbit41.camera(t),0.00001)
+        }
         let belt=IntroOrbit41.belt
         precondition(belt.count==820)
         near(belt[0].seed,0)
