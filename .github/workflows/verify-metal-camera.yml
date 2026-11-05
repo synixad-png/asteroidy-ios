@@ -1,0 +1,35 @@
+name: ASTEROIDY iOS - Source orbit camera tests (NO IPA)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-metal-camera.yml'
+      - 'ASTEROIDYiOS/Sphere67.swift'
+      - 'ASTEROIDYiOS/MetalRenderer.swift'
+      - 'ASTEROIDYiOS/Ship.metal'
+      - 'Tests/SphereCameraView556Tests.swift'
+
+jobs:
+  source-camera-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Original C# v556 camera orbit and right/up/forward projection
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            Tests/SphereCameraView556Tests.swift \
+            -o /tmp/sphere-camera-556
+          /tmp/sphere-camera-556
+      - name: Parse Metal renderer Swift sources (not an Xcode compile)
+        run: |
+          swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
+          swiftc -frontend -parse ASTEROIDYiOS/App.swift
