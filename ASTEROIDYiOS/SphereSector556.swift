@@ -31,6 +31,28 @@ struct SphereSector556 {
     private var spawnSequence = 0
     private static let unit: Float = 2.7 / 1280
 
+    // Game.DangerSpeed; spherical Game.Wave and Action38 multiply by 0.55.
+    static func dangerSpeed(_ difficulty:CombatBalance556.Difficulty) -> Float {
+        switch difficulty {
+        case .easy: return 0.86
+        case .normal: return 1.10
+        case .hard: return 1.32
+        }
+    }
+
+    /// True only after the future mission controller explicitly verifies
+    /// enemy and boss state; diagnostic sectorCleared never unlocks missions.
+    struct MissionThreats {
+        var enemyCount: Int
+        var bossActive: Bool
+        var requiredBossDefeated: Bool
+        var verified: Bool
+    }
+    func canFinishRealMission(_ threats:MissionThreats) -> Bool {
+        sectorFinished && threats.verified && threats.enemyCount == 0 &&
+        !threats.bossActive && threats.requiredBossDefeated && hull > 0
+    }
+
     var objectiveDuration: Float {
         switch objective {
         case .clear: return 0
@@ -58,7 +80,8 @@ struct SphereSector556 {
                 let p = Vec2(x: 640 + rock.at.x / Self.unit,
                              y: 360 - rock.at.y / Self.unit)
                 let v = Vec2(x: rock.motion.x / Self.unit,
-                             y: -rock.motion.y / Self.unit) * 0.55
+                             y: -rock.motion.y / Self.unit) *
+                        (0.55 * Self.dangerSpeed(balance.difficulty))
                 return SphereAsteroid556(position:p, velocity:v,
                                          radius:rock.radius / Self.unit,
                                          size:rock.size,tier:rock.tier,health:rock.health)
@@ -94,7 +117,9 @@ struct SphereSector556 {
                 let a = random() * 2 * Float.pi
                 heading = Vec2(x:cos(a),y:sin(a))
             }
-            let speed = SphereAsteroid556.incomingSpeed(baseRandomSpeed:60 + random()*40,dangerSpeed:1)
+            let speed = SphereAsteroid556.incomingSpeed(
+                baseRandomSpeed:60 + random()*40,
+                dangerSpeed:Self.dangerSpeed(balance.difficulty))
             let radius: Float = Rock.radiusFor(size:3) / Self.unit
             asteroids.append(SphereAsteroid556(position:candidate,velocity:heading*speed,
                                               radius:radius,size:3,tier:tier))
@@ -102,22 +127,28 @@ struct SphereSector556 {
         nextIncoming = elapsed + (objective == .waves ? 16 : 11)
     }
 
+    /// Physics68.SplitPhysical68: spherical fragments inherit parent motion
+    /// plus a perpendicular +/-19 impulse, not the flat 0.75-radian split.
     private mutating func splitRock(_ parent:SphereAsteroid556) {
         guard parent.size > 1 else { return }
-        let angle = atan2(parent.velocity.y,parent.velocity.x)
-        let originalSpeed = sqrt(parent.velocity.lengthSquared)
-        for side: Float in [-1,1] {
-            let offsetAngle = angle + side * .pi/2
-            let offset = Vec2(x:cos(offsetAngle),y:sin(offsetAngle)) * 8
-            let childPosition = Sphere67.offset(parent.position,by:offset)
-            let motionAngle = angle + side * 0.75
-            let speed = min(175,originalSpeed * 1.17 + 9)
-            let tier = max(0,parent.tier-1), size = parent.size-1
-            let radius = (size == 2 ? 18 : 10) * 1.12 *
-                         SphereAsteroid556.fragmentScale(parentSize:parent.size)
-            asteroids.append(SphereAsteroid556(position:childPosition,
-                                              velocity:Vec2(x:cos(motionAngle),y:sin(motionAngle))*speed,
-                                              radius:radius,size:size,tier:tier,fragment:true))
+        let speed = sqrt(parent.velocity.lengthSquared)
+        let side = speed > 0.00001
+            ? Vec2(x:-parent.velocity.y/speed,y:parent.velocity.x/speed)
+            : Vec2(x:0,y:0)
+        let separation = (parent.size == 3 ? Float(18) : Float(10)) * 1.12 * 0.75 + 1
+        for sign:Float in [-1,1] {
+            let position = Sphere67.offset(parent.position,by:side*(sign*separation))
+            let local = parent.velocity + side*(sign*19)
+            let world = Sphere67.transport(Sphere67.vector(parent.position,local),
+                                           from:Sphere67.normal(parent.position),
+                                           to:Sphere67.normal(position))
+            let transported = Sphere67.components(position,world)
+            let size = parent.size - 1
+            let tier = max(0,parent.tier - 1)
+            let radius = (size == 2 ? Float(18) : Float(10)) * 1.12 *
+                SphereAsteroid556.fragmentScale(parentSize:parent.size)
+            asteroids.append(SphereAsteroid556(position:position,velocity:transported,
+                                               radius:radius,size:size,tier:tier,fragment:true))
         }
     }
     private mutating func terminalShards(_ parent:SphereAsteroid556) {
@@ -130,7 +161,11 @@ struct SphereSector556 {
             let radius = 10*1.12*(0.10+random()*0.13)
             let life = 1.3+random()*1.2
             asteroids.append(SphereAsteroid556(position:pos,
-                                              velocity:parent.velocity+dir*speed,
+                                              velocity:Sphere67.components(pos,
+                                                  Sphere67.transport(
+                                                    Sphere67.vector(parent.position,parent.velocity+dir*speed),
+                                                    from:Sphere67.normal(parent.position),
+                                                    to:Sphere67.normal(pos))),
                                               radius:radius,size:1,tier:0,
                                               health:1,fragment:true,shardLife:life))
         }
@@ -226,6 +261,10 @@ struct SphereSector556 {
             asteroids[i].shardLife -= dt
             if asteroids[i].shardLife <= 0 { asteroids.remove(at:i) }
         }
+        // Action38.StepAction: on a spherical Clear sector, the arrival
+        // quota is cancelled once all rocks AND enemies have been cleared.
+        // This diagnostic has no enemies; the full mission controller must
+        // supply that state before enabling automatic cancellation.
         if incomingRocksLeft > 0 &&
            (elapsed >= nextIncoming || (objective != .waves && asteroids.count <= 4)) {
             spawnArrivals(near:playerPosition)
