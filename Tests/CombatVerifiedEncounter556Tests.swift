@@ -491,6 +491,70 @@ import Foundation
             precondition(restored.pendingRescueFailure == nil)
         }
 
+        // Source Coop62.WithSecond62 deliberately shares Game.Lives,
+        // ShieldCharges, GuardianCharges, Hull78 and Armor78, but keeps
+        // the two ships' immunity timers distinct. This opt-in verified
+        // mode must NOT give the second ship extra lives/shields/armor.
+        var common=setup(true)
+        common.sourceSharedCoopResources=true
+        common.firstGuardian=CombatGuardian37(owned:false)
+        common.firstVitals=CombatTalentVitals78()
+        common.encounter.firstSurvival.shieldCharges=1
+        let bought=common.step(dt:1/120)
+        precondition(bought.hitOutcomes == [
+            V.TeamOutcome(player:.second,outcome:.applied(
+                .shieldAbsorbed(remaining:0,cause:"ASTEROIDA")))])
+        precondition(common.encounter.firstSurvival.shieldCharges==0 &&
+                     common.encounter.secondSurvival.shieldCharges==0)
+        precondition(common.encounter.firstSurvival.invincible==0 &&
+                     common.encounter.secondSurvival.invincible==1)
+        precondition(common.firstVitals!.armor==25 &&
+                     common.firstVitals!.hull==60)
+        // P1 hits the rock while P2 still has personal immunity. The
+        // globally purchased shield is already gone, so armor is damaged.
+        common.encounter.rocks=[]
+        common.encounter.first=body(640)
+        common.encounter.second=body(100)
+        common.encounter.rocks=[rock()]
+        let p1Damage=common.step(dt:1/120)
+        precondition(p1Damage.hitOutcomes == [
+            V.TeamOutcome(player:.first,outcome:.talentAbsorbed)])
+        precondition(common.firstVitals!.armor==0 &&
+                     common.firstVitals!.hull==53)
+        common.encounter.rocks=[]
+        _=common.step(dt:1.1)
+        common.encounter.first=body(100)
+        common.encounter.second=body(640)
+        common.encounter.rocks=[rock()]
+        let p2Damage=common.step(dt:1/120)
+        precondition(p2Damage.hitOutcomes == [
+            V.TeamOutcome(player:.second,outcome:.talentAbsorbed)])
+        precondition(common.firstVitals!.armor==0 &&
+                     common.firstVitals!.hull==21)
+        common.encounter.rocks=[]
+        _=common.step(dt:1.1)
+        common.encounter.first=body(640)
+        common.encounter.second=body(100)
+        common.encounter.rocks=[rock()]
+        let p1Wreck=common.step(dt:1/120)
+        precondition(p1Wreck.hitOutcomes == [
+            V.TeamOutcome(player:.first,outcome:.downForRescue)])
+        precondition(common.rescue.down(.first))
+        precondition(common.firstVitals!.hull==0)
+        common.encounter.rocks=[]
+        let sharedFail=common.step(dt:12.1)
+        precondition(sharedFail.rescueEvent ==
+                     .failed(first:true,second:false))
+        precondition(sharedFail.rescueDamageOutcome ==
+            V.TeamOutcome(player:.first,outcome:.applied(
+                .lifeLost(remaining:2,respawnProtection:3,
+                          cause:"ZDERZENIE"))))
+        precondition(common.encounter.firstSurvival.lives==2 &&
+                     common.encounter.secondSurvival.lives==2)
+        precondition(common.firstVitals!.hull==60 &&
+                     common.firstVitals!.armor==25)
+        precondition(common.pendingRescueFailure==nil)
+
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
