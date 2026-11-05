@@ -166,6 +166,23 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                                         SIMD4(0,0,far/(near-far),-1),
                                         SIMD4(0,0,near*far/(near-far),0)))
     }
+    // Source GpuSphere67.SphereScene67 -> OrbitWorld50.View(eye, 0, up).
+    // The pure frame is tested on Linux in SphereCameraView556Tests.
+    // Keep our original flat arena's fixed (0,0,4) view unchanged.
+    private static func sphereView(_ camera: SphereCamera67)
+        -> (view: simd_float4x4, eye: SIMD3<Float>) {
+        let b = SphereCameraView556(camera: camera)
+        let r = b.right, u = b.up, k = b.back, e = b.eye
+        let view = simd_float4x4(columns:(
+            SIMD4(r.x,u.x,k.x,0),
+            SIMD4(r.y,u.y,k.y,0),
+            SIMD4(r.z,u.z,k.z,0),
+            SIMD4(-SphereVector3.dot(r,e),
+                  -SphereVector3.dot(u,e),
+                  -SphereVector3.dot(k,e),1)
+        ))
+        return (view,SIMD3(e.x,e.y,e.z))
+    }
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
     func draw(in view: MTKView) {
         let now = CACurrentMediaTime()
@@ -273,15 +290,26 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         guard let pass = view.currentRenderPassDescriptor, let drawable = view.currentDrawable,
               let command = queue.makeCommandBuffer(), let encoder = command.makeRenderCommandEncoder(descriptor:pass) else { return }
         let aspect = Float(view.drawableSize.width / max(view.drawableSize.height,1))
-        let vp = Self.perspective(aspect) * Self.translation(0,0,-4)
+        // SphereCombat67/GpuSphere67 camera must follow SphereFlight67's
+        // verified focus/up; the flat arena still uses the original view.
+        let cameraFrame = input.planetPreview
+            ? Self.sphereView(sphereFlight.camera)
+            : (view: Self.translation(0,0,-4),
+               eye: SIMD3<Float>(0,0,4))
+        let vp = Self.perspective(aspect) * cameraFrame.view
         encoder.setRenderPipelineState(pipeline)
         encoder.setDepthStencilState(depthState)
         encoder.setCullMode(.none)
         func drawMesh(_ mesh: GPUModel, _ model: simd_float4x4, unlit: Float = 0) {
             // The model transform carries the normal direction. All current scene
             // transforms are uniform scales plus rigid motions (no shear).
-            var uniform = SceneUniforms(mvp: vp * model, model: model,
-                                        lighting: SIMD4<Float>(unlit, 0, 0, 0))
+            // Pass the physical camera eye in spare uniform components.
+            // PBR's view vector must rotate with the camera rather than
+            // always pretending the camera is at flat-mode (0,0,4).
+            var uniform = SceneUniforms(
+                mvp: vp * model, model: model,
+                lighting: SIMD4<Float>(unlit,
+                    cameraFrame.eye.x,cameraFrame.eye.y,cameraFrame.eye.z))
             encoder.setVertexBuffer(mesh.vertices,offset:0,index:0)
             encoder.setVertexBytes(&uniform,length:MemoryLayout<SceneUniforms>.stride,index:1)
             encoder.drawIndexedPrimitives(type:.triangle,indexCount:mesh.count,indexType:.uint32,indexBuffer:mesh.indices,indexBufferOffset:0)
