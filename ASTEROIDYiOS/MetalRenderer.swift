@@ -2,6 +2,7 @@ import Foundation
 import MetalKit
 import simd
 import QuartzCore
+import CryptoKit
 
 private struct GPUModel {
     let vertices: MTLBuffer
@@ -278,8 +279,20 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             ?? Bundle.main.url(forResource:"Vanguard431Base",
                 withExtension:"jpg",subdirectory:"Assets")
         if let meshURL=originalMeshURL,let jpegURL=originalSkinURL {
+            let sourceBytes=try Data(contentsOf:meshURL)
+            let imageBytes=try Data(contentsOf:jpegURL)
+            func sourceSHA256(_ data:Data)->String {
+                SHA256.hash(data:data).map { String(format:"%02x",$0) }.joined()
+            }
+            // Never silently load a different ship or recoloured skin.
+            guard sourceSHA256(sourceBytes) == SourceVanguardMesh431.exactMeshSHA256,
+                  sourceSHA256(imageBytes) == SourceVanguardMesh431.exactBaseJPEG_SHA256 else {
+                throw NSError(domain:"ASTEROIDY iOS",code:433,
+                    userInfo:[NSLocalizedDescriptionKey:
+                        "Oryginalny PC Vanguard431: błędny SHA256 modelu lub tekstury"])
+            }
             let native=try SourceVanguardMesh431(
-                data:Data(contentsOf:meshURL))
+                data:sourceBytes)
             guard let sourceVB=native.vertices.withUnsafeBytes({
                 $0.baseAddress.map {
                     device.makeBuffer(bytes:$0,length:native.vertices.count,
