@@ -20,6 +20,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     let skyPointPipeline: MTLRenderPipelineState
     let solarOverlayPipeline: MTLRenderPipelineState
     let nebulaOverlayPipeline: MTLRenderPipelineState
+    let blackHolePipeline: MTLRenderPipelineState
     let skyDepthState: MTLDepthStencilState
     private let shipMesh: GPUModel
     private let asteroidMesh: GPUModel
@@ -30,6 +31,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private let solarOverlayMesh: GPUModel
     private let nebulaOverlayMesh: GPUModel
     private let nebulaTexture: MTLTexture
+    private let blackHoleTextures: MTLTexture
     private let planetVertexBuffers: [MTLBuffer]
     private let planetBufferSlots = MorphBufferSlots(count: 3)
     private let planetIndices: MTLBuffer
@@ -85,6 +87,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let solarFragment=try requireShader("solarOverlayFragment")
         let nebulaVertex=try requireShader("nebulaOverlayVertex")
         let nebulaFragment=try requireShader("nebulaOverlayFragment")
+        let blackHoleVertex=try requireShader("blackHoleVertex55")
+        let blackHoleFragment=try requireShader("blackHoleFragment55")
         let p = MTLRenderPipelineDescriptor()
         p.vertexFunction = sceneVertex
         p.fragmentFunction = sceneFragment
@@ -136,6 +140,21 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         nebulaBlend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
         nebulaOverlayPipeline=try device.makeRenderPipelineState(
             descriptor:nebulaDescriptor)
+        // Source GpuIntro41 DrawSkyBlackHole55 uses the same
+        // premultiplied Blend(ONE,ONE_MINUS_SRC_ALPHA) as IntroSky.
+        let blackDesc=MTLRenderPipelineDescriptor()
+        blackDesc.vertexFunction=blackHoleVertex
+        blackDesc.fragmentFunction=blackHoleFragment
+        blackDesc.colorAttachments[0].pixelFormat = .bgra8Unorm
+        blackDesc.depthAttachmentPixelFormat = .depth32Float
+        let blackBlend=blackDesc.colorAttachments[0]!
+        blackBlend.isBlendingEnabled = true
+        blackBlend.sourceRGBBlendFactor = .one
+        blackBlend.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        blackBlend.sourceAlphaBlendFactor = .one
+        blackBlend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
+        blackHolePipeline=try device.makeRenderPipelineState(
+            descriptor:blackDesc)
         let skyDS=MTLDepthStencilDescriptor()
         // Sky first, no depth writes; later real planet geometry occludes
         // it with the unchanged .less depth test.
@@ -168,6 +187,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let cloudData=Self.nebulaSource556()
         nebulaOverlayMesh=try Self.makeMesh(device,cloudData.0,cloudData.1)
         nebulaTexture=try Self.makeNebulaTextures556(device)
+        blackHoleTextures=try Self.makeBlackHoleTextures55(device)
         // Only use the verified v556 Boreas GLB conversion when bundled.
         // Never silently claim that the diagnostic UV sphere is an imported asset.
         guard let planetURL = Bundle.main.url(forResource:"Boreas556",withExtension:"as3d")
@@ -379,6 +399,39 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             }
         }
         return (vertices,indices)
+    }
+
+    /// Original BuildBlackHoleDisk55(false), BuildBlackHoleCore55(),
+    /// BuildBlackHoleDisk55(true) from actual v556 GpuIntro41.cs. One
+    /// three-slice GPU texture shared by all 3 black-hole image passes.
+    /// Source GpuRenderer.Texture(Bitmap) uploads Format32bppPArgb.
+    /// Never flatten the original rear/core/front ordering.
+    private static func makeBlackHoleTextures55(_ device:MTLDevice)
+        throws -> MTLTexture {
+        let n=BlackHoleSky55.imageSize
+        let desc=MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false)
+        desc.textureType = .type2DArray
+        desc.arrayLength = 3
+        desc.storageMode = .shared
+        desc.usage=[.shaderRead]
+        guard let tex=device.makeTexture(descriptor:desc) else {
+            throw NSError(domain:"ASTEROIDY iOS Metal",code:14,
+                          userInfo:[NSLocalizedDescriptionKey:
+                           "Nie można utworzyć trzech źródłowych warstw czarnej dziury 640px"])
+        }
+        for slice in 0..<3 {
+            let image=BlackHoleSky55.textureBGRA(slice:slice)
+            image.withUnsafeBytes { bytes in
+                if let p=bytes.baseAddress {
+                    tex.replace(region:MTLRegionMake2D(0,0,n,n),
+                                mipmapLevel:0,slice:slice,
+                                withBytes:p,bytesPerRow:n*4,
+                                bytesPerImage:n*n*4)
+                }
+            }
+        }
+        return tex
     }
 
     private static func translation(_ x: Float,_ y: Float,_ z: Float) -> simd_float4x4 {
