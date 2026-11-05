@@ -228,19 +228,21 @@ struct SphereSector556 {
     }
     private mutating func damageRock(at index:Int,amount:Int=1) {
         guard asteroids.indices.contains(index) else { return }
-        if asteroids[index].shardLife > 0 {
-            asteroids.remove(at:index)
-            return
-        }
-        asteroids[index].health -= amount
-        guard asteroids[index].health <= 0 else { return }
-        let rock = asteroids.remove(at:index)
+        let rock=asteroids[index]
+        let result=CombatDamage556.hitRock(
+            health:rock.health,shardLife:rock.shardLife,amount:amount,
+            size:rock.size,originalHealth:rock.originalHealth,tier:rock.tier)
+        if result.removedShard { asteroids.remove(at:index); return }
+        asteroids[index].health=result.health
+        guard result.destroyed else { return }
+        let destroyed=asteroids.remove(at:index)
         destroyedRocks += 1
-        score += (rock.size == 3 ? 20 : rock.size == 2 ? 50 : 100) +
-                 (rock.originalHealth-1)*30 + rock.tier*10
-        if rock.size > 1 { splitRock(rock) }
-        else { terminalShards(rock) }
+        score += result.score
+        if destroyed.size > 1 { splitRock(destroyed) }
+        else { terminalShards(destroyed) }
     }
+
+
 
     /// Spherical aim is in the ship's own tangent plane; separate from flat
     /// arena controls. Shot radius and speed are explicit testbed values.
@@ -255,20 +257,20 @@ struct SphereSector556 {
     /// Moving geodesic collision: use the shortest arc at the beginning of
     /// the step and compare relative tangent velocities to avoid tunneling.
     /// The geometry is the Sphere67 local tangent approximation over <=1/60s.
+    static func sweptBoltTime(start:Vec2,velocity:Vec2,rock:SphereAsteroid556,dt:Float) -> Float {
+        let separation=Sphere67.delta(target:rock.position,origin:start)
+        let transported=Sphere67.transport(Sphere67.vector(rock.position,rock.velocity),
+                                            from:Sphere67.normal(rock.position),
+                                            to:Sphere67.normal(start))
+        let localRockVelocity=Sphere67.components(start,transported)
+        let relative=(velocity-localRockVelocity)*dt
+        // Same quadratic as source Physics68.SegmentHit68. Zero-time
+        // overlap takes precedence over any later surface intersection.
+        return CombatCollision556.segmentHit(delta:separation,travel:relative,
+                                             radius:rock.radius+7)
+    }
     static func sweptBoltHit(start:Vec2,velocity:Vec2,rock:SphereAsteroid556,dt:Float) -> Bool {
-        let separation = Sphere67.delta(target:rock.position,origin:start)
-        let transported = Sphere67.transport(Sphere67.vector(rock.position,rock.velocity),
-                                               from:Sphere67.normal(rock.position),
-                                               to:Sphere67.normal(start))
-        let localRockVelocity = Sphere67.components(start,transported)
-        let relative = (velocity-localRockVelocity)*dt
-        let radius = rock.radius + 7
-        let a = relative.lengthSquared
-        if separation.lengthSquared <= radius*radius { return true }
-        if a <= 1e-9 { return false }
-        let t = max(0,min(1,(separation.x*relative.x+separation.y*relative.y)/a))
-        let distance = separation-relative*t
-        return distance.lengthSquared <= radius*radius
+        sweptBoltTime(start:start,velocity:velocity,rock:rock,dt:dt) <= 1
     }
 
     mutating func tick(dt:Float,playerPosition:Vec2,playerRadius:Float=26,
@@ -289,13 +291,16 @@ struct SphereSector556 {
         for i in bolts.indices.reversed() {
             if bolts[i].life <= 0 { bolts.remove(at:i); continue }
             var target:Int? = nil
+            var first:Float = 2
             for j in asteroids.indices {
                 var previous = asteroids[j]
                 previous.position = previousRockPositions[j]
-                if Self.sweptBoltHit(start:bolts[i].position,velocity:bolts[i].velocity,
-                                    rock:previous,dt:dt) {
-                    target = j
-                    break
+                let t=Self.sweptBoltTime(start:bolts[i].position,
+                                         velocity:bolts[i].velocity,rock:previous,dt:dt)
+                if CombatDamage556.prefer(candidateTime:t,candidateIndex:j,
+                                           bestTime:first,bestIndex:target) {
+                    first=t
+                    target=j
                 }
             }
             if let target {
