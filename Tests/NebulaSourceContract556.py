@@ -68,16 +68,22 @@ for t in (
     "encoder.setRenderPipelineState(pipeline)",
 ):
     check(t in render,"C# nebula Metal pipeline wiring missing: "+t)
-check(render.index("encoder.setRenderPipelineState(nebulaOverlayPipeline)") <
-      render.index("encoder.setRenderPipelineState(skyPointPipeline)") <
-      render.index("encoder.setRenderPipelineState(solarOverlayPipeline)"),
+# The source sphere pipeline must preserve its own painter order.
+# The separate orbital IntroScene41 scene deliberately draws its stars
+# earlier; checking the first skyPoint occurrence across both scenes
+# would be a false cross-scene regression.
+sphere_render=render.split(
+    "if input.planetPreview {\n            // Original GpuIntro41.DrawDeepSpace55",1)[1]
+check(sphere_render.index("encoder.setRenderPipelineState(nebulaOverlayPipeline)") <
+      sphere_render.index("encoder.setRenderPipelineState(skyPointPipeline)") <
+      sphere_render.index("encoder.setRenderPipelineState(solarOverlayPipeline)"),
       "IntroSky must draw source clouds before stars and solar rays")
-check(render.count("encoder.setRenderPipelineState(nebulaOverlayPipeline)")==2,
+check(sphere_render.count("encoder.setRenderPipelineState(nebulaOverlayPipeline)")==2,
       "Source draws 24 far clouds before deep objects and 12 near clouds afterward")
-check(render.index("vertexCount:24*6") <
-      render.index("encoder.setRenderPipelineState(blackHolePipeline)") <
-      render.index("vertexStart:24*6,vertexCount:12*6") <
-      render.index("encoder.setRenderPipelineState(skyPointPipeline)"),
+check(sphere_render.index("vertexCount:24*6") <
+      sphere_render.index("encoder.setRenderPipelineState(blackHolePipeline)") <
+      sphere_render.index("vertexStart:24*6,vertexCount:12*6") <
+      sphere_render.index("encoder.setRenderPipelineState(skyPointPipeline)"),
       "Original DrawDeepSpace55 / IntroSky far-deep-near-stars order must survive")
 check("if input.planetPreview {" in render,
       "Cloud pipeline must not change independent flat sandbox")
