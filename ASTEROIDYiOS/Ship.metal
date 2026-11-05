@@ -76,6 +76,44 @@ fragment float4 skyPointFragment(
     return in.color*mask;
 }
 
+// Windows GpuIntro41.cs:454 solar flare/rays are 2D AFTER SkyProject55.
+// Offset vertices were generated once by GpuCosmos39.RayVertex in source
+// 1280x720 pixel coordinates. Only the 2D solar center changes with the
+// sphere camera; no GPU model-space approximation or per-frame rebuild.
+// centerScale=(sun NDC x, sun NDC y, 2/(720*aspect), -2/720).
+struct SolarOverlayUniforms { float4 centerScale; };
+struct SolarOverlayRaster {
+    float4 position [[position]];
+    float4 color;
+    float2 uv;
+    float textured;
+};
+vertex SolarOverlayRaster solarOverlayVertex(
+    uint vid [[vertex_id]],
+    constant Vertex3D *vertices [[buffer(0)]],
+    constant SolarOverlayUniforms &info [[buffer(1)]]) {
+    Vertex3D v=vertices[vid];
+    SolarOverlayRaster out;
+    out.position=float4(
+        info.centerScale.x+v.position.x*info.centerScale.z,
+        info.centerScale.y+v.position.y*info.centerScale.w,
+        0.0,1.0);
+    // C# Gpu2DRenderer.Vertex2D premultiplies all RGB by source alpha.
+    out.color=float4(v.color.rgb*v.color.a,v.color.a);
+    out.uv=v.normal.xy;
+    out.textured=v.material.x;
+    return out;
+}
+fragment float4 solarOverlayFragment(
+    SolarOverlayRaster in [[stage_in]],
+    texture2d<float> sourceHalo [[texture(0)]]) {
+    if (in.textured < 0.5) return in.color;
+    constexpr sampler originalHalo(coord::normalized,
+                                   address::clamp_to_edge,
+                                   filter::linear);
+    return in.color*sourceHalo.sample(originalHalo,in.uv);
+}
+
 // Single directional-light Cook-Torrance GGX BRDF, without environment IBL or
 // texture maps. Metallic/roughness values are sourced from original glTF factors.
 fragment float4 sceneFragment(RasterOutput in [[stage_in]]) {
