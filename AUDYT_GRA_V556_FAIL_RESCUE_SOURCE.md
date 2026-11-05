@@ -32,3 +32,19 @@ Nie wykonano testu interaktywnego na fizycznym iPhonie/iPadzie. Testy Swift/Linu
 - Port Swift: w źródłowym trybie kooperacji `domeFirst` jest jedyną zmienianą pulą, `domeSecond` jest wyłącznie lustrzanym widokiem wspólnego stanu. Trafienie P2 i `FailRescue65` P2 zmieniają ten sam stan, co trafienie P1. Historyczne testy z niezależnymi zasobami zostały utrzymane po jawnym `independentDiagnosticCoop:true`.
 - Test regresji: `Tests/CombatVerifiedEncounter556Tests.swift`, wejście P2 nie uruchamia osobnej kopuły, trafienie P2 zużywa kopułę P1, dwa równoczesne kontakty razem zużywają nie więcej niż 60 jednostek, `FailRescue65` P2 korzysta z tej samej energii.
 - Wynik: Swift/Linux GitHub Actions `42035502390`, **PASS**, brak artefaktów IPA. Nie przeprowadzono testu natywnego iOS/Metal.
+
+## 2026-11-05 — integracja do grywalnego testu Boreas (bez IPA)
+
+**Ściśle sprawdzone podstawy w oryginalnym archiwum Windows v556:**
+- `Windows/src/Game.cs:234` — `if(DevOpen)return;` następuje przed tyknięciem tarczy i kolizjami. `Gameplay65.cs:30` zatrzymuje również fazę ratowania przy `DevOpen`.
+- `Windows/src/Game.cs:240,248` — `StepTarcza145(dt,input.Tarcza145)` przed `StepSolids68(dt)`; dotychczasowa gra na iOS nie przekazywała wejścia tarczy do grywalnego testu Boreas.
+- `Windows/src/Tarcza145.cs:5–21` — jedna ręcznie przytrzymywana tarcza, początkowo energia 60, zużycie 12/s przy aktywności, 35 na przechwycone trafienie, brak automatycznego doładowania.
+
+**Zmiany:**
+- `CombatVerifiedEncounter556.step` zatrzymuje całą fazę przy `devOpen=true`, również rozliczanie oczekującego nieudanego ratowania — nie tylko licznik ratowania.
+- `PlanetDamageLab556.advance` przyjmuje `tarczaHeld` (domyślnie `false`, aby nie zmieniać starych wywołań), steruje rzeczywistym `CombatTarcza145` i ujawnia wartości energii oraz aktywności.
+- `MetalRenderer.draw` przekazuje rzeczywisty stan dotykowy `input.tarczaHeld` i aktualizuje HUD energii tarczy.
+- `App.swift` ma przytrzymywany przycisk `TARCZA` w grywalnym **teście obrażeń v556 na Boreas**, bez zmian w innych trybach i bez ogłaszania pełnej misji jako gotowej. Zwolnienie palca natychmiast wyłącza wejście tarczy; zmiana trybu resetuje stan przycisku.
+- Testy: `CombatVerifiedEncounter556Tests.swift` dla blokady `DevOpen` i `PlanetDamageLab556Tests.swift` dla aktywacji, zużycia energii, przechwycenia trafienia, wyczerpania i powrotu do uszkodzeń pancerza/kadłuba.
+
+**Weryfikacja:** GitHub Actions `42037997698` — wszystkie etapy **PASS** (Swift/Linux testy i składniowe parsowanie `App.swift`, `MetalRenderer.swift`); **bez budowania iOS, bez IPA, bez testu na fizycznym iPhonie**. Parsowanie plików SwiftUI/Metal nie jest równoważne z natywnym sprawdzeniem typów przez Xcode.
