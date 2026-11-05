@@ -233,6 +233,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             let sectorCleared = sphereSector.sectorCleared
             let objectiveWave = sphereSector.objectiveWave
             let incomingNotice = sphereSector.arrivalNoticeRemaining > 0
+            let amigaDemo=sphereSector.isAmigaDemo
+            let amigaHits=sphereSector.amigaHits
             DispatchQueue.main.async { [weak input] in
                 input?.score = score
                 input?.hull = hull
@@ -246,6 +248,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 input?.planetSectorCleared = sectorCleared
                 input?.planetWave = objectiveWave
                 input?.planetIncomingNotice = incomingNotice
+                input?.planetAmigaDemo = amigaDemo
+                input?.planetAmigaHits = amigaHits
             }
         }
         guard let pass = view.currentRenderPassDescriptor, let drawable = view.currentDrawable,
