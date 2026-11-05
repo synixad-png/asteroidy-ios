@@ -182,6 +182,52 @@ struct SphereCameraView556 {
     }
 }
 
+/// Exact surface-local basis of Windows/src/GpuSphere67.cs:63
+/// StampSphere67(point,angle,scale,lift). Ported in dimensionless
+/// Metal units using the ORIGINAL terrain outer radius 100*1.4419674
+/// from GpuPlanetGltf463.cs and Shell67 = outer+15.
+/// Local X=right, local Y=forward, local Z=surface normal. The static
+/// Vanguard556 exporter explicitly maps the source GLB into this XY plane.
+struct SphereSurfaceStamp556 {
+    static let sourceShellRadius: Float =
+        SphereCameraView556.originalPlanetOuterRadius + 15
+    static let normalizedShellRadius: Float =
+        sourceShellRadius / SphereCameraView556.originalPlanetOuterRadius
+    static let normalizedScalePerArcUnit: Float =
+        normalizedShellRadius / Sphere67.radius
+    static let sourceShipContactRadius: Float = 10 * 1.12
+    static let sourceCraftRadius: Float =
+        sourceShipContactRadius * 0.65
+
+    let right: SphereVector3
+    let forward: SphereVector3
+    let normal: SphereVector3
+    let position: SphereVector3
+
+    init(point: Vec2, angle: Float, lift: Float = 0) {
+        normal = Sphere67.normal(point)
+        // Original Game.Direction(angle) -> Sphere67.Vector().
+        forward = Sphere67.vector(
+            point,Vec2(x:cos(angle),y:sin(angle))).normalized
+        right = SphereVector3.cross(forward,normal).normalized
+        position = normal * (Self.normalizedShellRadius +
+                            lift*Self.normalizedScalePerArcUnit)
+    }
+
+    /// Matrix identical in axis order to original StampSphere67, after
+    /// division by outer terrain radius. "size" is a source world
+    /// radius or unit size, never an arbitrary visual percentage.
+    func columnMajor(size: Float) -> [Float] {
+        let s = size*Self.normalizedScalePerArcUnit
+        return [
+            right.x*s,right.y*s,right.z*s,0,
+            forward.x*s,forward.y*s,forward.z*s,0,
+            normal.x*s,normal.y*s,normal.z*s,0,
+            position.x,position.y,position.z,1
+        ]
+    }
+}
+
 // Independent v556 spherical flight testbed. Do not replace GameCore until
 // platform render projection and v556 combat units have been calibrated.
 struct SphereFlight67 {
