@@ -38,6 +38,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         return f
     }()
     var game = GameCore()
+    private var previousSectorTraining = false
     private var lastTime = CACurrentMediaTime()
     private var fixedClock = FixedStepClock()
     private let fixedClockStep: Double = 1.0 / 120.0
@@ -165,6 +166,11 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         // A bounded catch-up prevents an unbounded simulation spiral after resume.
         let elapsed = min(0.25, max(0, now - lastTime))
         lastTime = now
+        if input.sectorTraining != previousSectorTraining {
+            previousSectorTraining = input.sectorTraining
+            let balance = input.sectorTraining ? CombatBalance556(level: 1, difficulty: .normal, spherical: false) : nil
+            game.setSectorTraining(balance)
+        }
         let command = FlightCommand(turn:input.steer,throttle:input.thrust,fire:input.shooting)
         fixedClock.advance(elapsed:elapsed) {
             if input.planetPreview {
@@ -177,8 +183,12 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         if now-lastHUDTime > 0.14 {
             lastHUDTime = now
-            let score = game.score, hull = game.hull
-            DispatchQueue.main.async { [weak input] in input?.score = score; input?.hull = hull }
+            let score = game.score, hull = game.hull, rockCount = game.rocks.count
+            DispatchQueue.main.async { [weak input] in
+                input?.score = score
+                input?.hull = hull
+                input?.trainingRockCount = rockCount
+            }
         }
         guard let pass = view.currentRenderPassDescriptor, let drawable = view.currentDrawable,
               let command = queue.makeCommandBuffer(), let encoder = command.makeRenderCommandEncoder(descriptor:pass) else { return }
