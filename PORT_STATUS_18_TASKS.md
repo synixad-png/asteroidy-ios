@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 78% |
+| 2 | Silnik graficzny Metal | 80% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -171,6 +171,16 @@ Za konkretną, wykonaną i przetestowaną geometrię indywidualnych skał postę
 Po zamknięciu implementacji atmosfery potwierdzono pełny `source-camera-linux` **SUCCESS** w [GitHub Actions 42105841484](https://github.com/synixad-png/asteroidy-ios/actions/runs/42105841484) oraz `original-assets` **SUCCESS** w [42105503401](https://github.com/synixad-png/asteroidy-ios/actions/runs/42105503401); oba testują aktualną scenę orbitalną i mają źródłowe kontrakty `IntroAtmosphere47`. Poprzednio każdy commit weryfikacji `verify-metal-camera.yml` z `cancel-in-progress=true` anulował oczekujący w tym samym workflow job macOS. Oddzielono automatyczne source-only testy Linux od ręcznego Apple job, zachowując oryginalny `workflow_dispatch`. Aby realnie sprawdzić najnowszą źródłową scenę na kompilatorze Apple bez generowania IPA, uruchomiono jednorazowy niezależny workflow [42105890080](https://github.com/synixad-png/asteroidy-ios/actions/runs/42105890080) dla `iPhone+iPad ARM64`, wyłącznie Swift/Metal. Ten job **nadal był queued** podczas ostatniego odczytu. Nie deklarować PASS Xcode, gotowego IPA ani testu na Apple GPU.
 
 Stała lista 18 zadań i ich procenty bez zmian: zadanie 2 **78%**, łączny historyczny postęp **27%, pozostało 73%**. Następnie: wynik trwałego joba Xcode, audyt geometrii/tekstur/światła oryginalnego statku GLB z osobnym eksportem `Tools/export_vanguard.py` (ta konwersja nie jest wiernością materiałów PBR), sprawdzenie obrazów fizycznych urządzeń, a potem dalszy brakujący renderer bez przechodzenia do zadania 3 przed domknięciem 2. Nie generować IPA bez polecenia użytkownika.
+
+## 05.11.2026 — kontynuacja zadania 2: Vanguard v4311 i źródłowa rotacja planety poziomu 5
+
+**Realne wdrożenie:** `IntroVanguard431.swift` odtwarza lokalną skalę i środek modelu Vanguard na podstawie faktycznie wbudowanego w oryginalną grę PC `vanguard431.mesh.gz` (nagłówek `4311`, 194427 GPU wierzchołków) oraz `BakeInfo.json` i źródłowego GLB. Współczynniki *faktycznie używanego* modelu wynoszą `scale=3.265866381849069`, `center_glb.y=.18199390172958374`, podczas gdy zachowany `Vanguard556.as3d` eksportowano ze współczynnikiem `.32` i `centerY=.18`; dlatego przelot wykonuje `scale=(3.265866381849069/.32)/144.19674` oraz lokalne przesunięcie osi Z `(.18-.18199390172958374)*3.265866381849069/144.19674`. **Nie wymyślano nowego modelu i nie zmieniano źródłowego AS3D ani rozmiaru kolizji statku w trybie walki.** Zapis `Tools/bake_vanguard431.py` ma starszy współczynnik 2.88/0.12 i jest rozbieżny z *rzeczywistym* zasobem v568 — szczegóły w audycie.
+
+**Druga źródłowa poprawka:** komputerowy `GpuPlanetGltf463.PlanetAssetBytes463` wczytuje Boreas wyłącznie przy `game.Level==5`. Wcześniejszy iOS obracał ten konkretny GLB według `PlanetRotation(level=1,t)`. Nowy `IntroOrbit41.boreasSourceLevel=5`, czyli rotacja `145+2.2*t` stopni, przy niezmienionych animacjach morfu i reszcie renderera.
+
+**Weryfikacja:** [GitHub Actions 42108063917](https://github.com/synixad-png/asteroidy-ios/actions/runs/42108063917) `source-camera-linux` zakończył się **SUCCESS** dla najnowszych testów numerycznych autentycznej geometrii/rozmiaru Vanguard, testów `Boreas level5` i wszystkich wcześniejszych testów skał, atmosfery, animacji, sky/PBR. [GitHub Actions 42108063893](https://github.com/synixad-png/asteroidy-ios/actions/runs/42108063893) `original-assets` **SUCCESS**; dodatkowo wcześniejsza kompletna natywna kompilacja Apple [42105890080](https://github.com/synixad-png/asteroidy-ios/actions/runs/42105890080) **SUCCESS** dotyczyła poprzedniej rewizji, a **nie** tych zmian. Dla obecnego kodu wykonano **nieanulowalne jednorazowe uruchomienie** [GitHub Actions 42108222094](https://github.com/synixad-png/asteroidy-ios/actions/runs/42108222094), które testuje Xcode/Metal iPhone+iPad ARM64 bez IPA — `queued` podczas zapisu raportu. Nie deklarować natywnego PASS bieżącej rewizji przed jego rzeczywistym zakończeniem.
+
+**Postęp zadania 2: 78% → 80% (+2 pp)** za konkretną korektę autentycznego modelu i prawidłowy obrót GLB z testami źródłowymi. Pozostałe 17 zadań i ich procenty niezmienione; historyczny wskaźnik całego projektu nadal **27%**, pozostało **73%** (wagi nie są przeliczane). **Braki wciąż istotne:** oryginalne UV/BaseColor/PBR modelu i źródłowe oświetlenie `FighterLight`, rzeczywisty wygląd na fizycznym iPhonie/iPadzie, optymalizacja pamięci/klatek, pełny kontroler misji/kampanii. IPA nadal nie zbudowano; status iOS powinien być potwierdzany z nowego przebiegu Xcode.
 
 ## Kolejność dalszej pracy
 
