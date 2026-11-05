@@ -72,7 +72,7 @@ ck(src.index("if input.planetPreview {\n            // Original GpuIntro41.DrawD
    src.index("let sourceCloudTexture=ensureCloudTextures55(camera:c)"),
    "GpuCosmos39 clouds should not allocate in flat arena")
 ck(src.index("guard let projected=DeepSkyPlanets55.project(") <
-   src.index("guard let planets=ensureDeepPlanetTextures55()"),
+   src.index("guard let planets=ensureDeepPlanetTextures55(style:style)"),
    "GpuIntro41 planets must project before texture generation")
 ck(src.index("if let blackProjection=BlackHoleSky55.project(") <
    src.index("let blackTextures=ensureBlackHoleTextures55()"),
