@@ -59,6 +59,14 @@ jobs:
           /tmp/pickup68-tests
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift Tests/CombatEncounter68Tests.swift -o /tmp/encounter68-tests
           /tmp/encounter68-tests
+      - name: Verify source Tarcza145, co-op rescue65 and full verified hit priority
+        run: |
+          swiftc ASTEROIDYiOS/CombatTarcza145.swift Tests/CombatTarcza145Tests.swift -o /tmp/tarcza-145
+          /tmp/tarcza-145
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatRescue65.swift Tests/CombatRescue65Tests.swift -o /tmp/rescue-65
+          /tmp/rescue-65
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatVerifiedHit556.swift Tests/CombatVerifiedHit556Tests.swift -o /tmp/verified-hit-556
+          /tmp/verified-hit-556
       - name: Verify complete spherical combat regressions without macOS
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift Tests/SphereSector556Tests.swift -o /tmp/sphere-sector-full
@@ -171,6 +179,14 @@ jobs:
           /tmp/pickup68-tests
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift Tests/CombatEncounter68Tests.swift -o /tmp/encounter68-tests
           /tmp/encounter68-tests
+      - name: Verify source Tarcza145, co-op rescue65 and full verified hit priority
+        run: |
+          swiftc ASTEROIDYiOS/CombatTarcza145.swift Tests/CombatTarcza145Tests.swift -o /tmp/tarcza-145
+          /tmp/tarcza-145
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatRescue65.swift Tests/CombatRescue65Tests.swift -o /tmp/rescue-65
+          /tmp/rescue-65
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatVerifiedHit556.swift Tests/CombatVerifiedHit556Tests.swift -o /tmp/verified-hit-556
+          /tmp/verified-hit-556
       - name: Verify telemetry module
         run: |
           swiftc ASTEROIDYiOS/RenderTelemetry.swift Tests/RenderTelemetryTests.swift -o /tmp/ios-telemetry-tests
