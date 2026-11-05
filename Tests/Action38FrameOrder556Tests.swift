@@ -19,6 +19,14 @@ import Foundation
         let arrival=preview.asteroids[0]
         precondition(arrival.size==3 && arrival.tier==0 && arrival.health==1)
         precondition(preview.incomingRocksLeft==0)
+        precondition(preview.arrivalNoticeRemaining > 1.58 &&
+                     preview.arrivalNoticeRemaining < 1.6)
+        for _ in 0..<200 {
+            _=preview.tick(dt:1/120,playerPosition:player,
+                playerRadius:0,detectContacts:false)
+        }
+        precondition(preview.arrivalNoticeRemaining==0,
+                     "Original Action38 notice should expire after 1.6s")
 
         // A bullet that is present at the rock's spawn point must hit
         // a rock arriving IN THE SAME FRAME. The old Swift ordering
@@ -38,6 +46,7 @@ import Foundation
         precondition(incoming.asteroids.count==2 &&
                      incoming.asteroids.allSatisfy { $0.size==2 })
         precondition(incoming.bolts.isEmpty)
+        precondition(incoming.arrivalNoticeRemaining > 1.58)
 
         // StepSolids68 sees newly spawned rocks before the bullet phase.
         var ship=SphereSector556(balance:config,
