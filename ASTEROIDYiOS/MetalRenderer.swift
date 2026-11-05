@@ -1145,7 +1145,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 Self.scale(IntroOrbit41.introPlanetScale) *
                 Self.rotateXDegrees(-18) *
                 Self.rotateYDegrees(IntroOrbit41.planetRotationDegrees(
-                    level:1,time:introTime41))
+                    level:IntroOrbit41.boreasSourceLevel,
+                    time:introTime41))
             // IntroScene41 sets weatherTime65=time before DrawPlanetSolid.
             // The real GLB morph was previously frozen in this preview.
             // On wrap (16 -> 0) the upload scheduler detects the rewind.
