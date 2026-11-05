@@ -60,9 +60,24 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         guard let q = device.makeCommandQueue() else { throw NSError(domain:"ASTEROIDY iOS",code:1) }
         queue = q
         let library = try device.makeDefaultLibrary(bundle: .main)
+        // Fail with the exact missing entrypoint instead of returning a
+        // generic pipeline error. The source stars use a separate Metal
+        // shader program but must never silently replace the PBR pipeline.
+        func requireShader(_ name:String) throws -> MTLFunction {
+            guard let fn=library.makeFunction(name:name) else {
+                throw NSError(domain:"ASTEROIDY iOS Metal",code:11,
+                              userInfo:[NSLocalizedDescriptionKey:
+                                "Brak funkcji Metal: \(name)"])
+            }
+            return fn
+        }
+        let sceneVertex=try requireShader("sceneVertex")
+        let sceneFragment=try requireShader("sceneFragment")
+        let skyVertex=try requireShader("skyPointVertex")
+        let skyFragment=try requireShader("skyPointFragment")
         let p = MTLRenderPipelineDescriptor()
-        p.vertexFunction = library.makeFunction(name:"sceneVertex")
-        p.fragmentFunction = library.makeFunction(name:"sceneFragment")
+        p.vertexFunction = sceneVertex
+        p.fragmentFunction = sceneFragment
         p.colorAttachments[0].pixelFormat = .bgra8Unorm
         p.depthAttachmentPixelFormat = .depth32Float
         pipeline = try device.makeRenderPipelineState(descriptor:p)
@@ -70,8 +85,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         // dedicated blended POINT pipeline, independent of the existing
         // opaque PBR and flat training arena pipelines.
         let skyDescriptor=MTLRenderPipelineDescriptor()
-        skyDescriptor.vertexFunction=library.makeFunction(name:"skyPointVertex")
-        skyDescriptor.fragmentFunction=library.makeFunction(name:"skyPointFragment")
+        skyDescriptor.vertexFunction=skyVertex
+        skyDescriptor.fragmentFunction=skyFragment
         skyDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
         skyDescriptor.depthAttachmentPixelFormat = .depth32Float
         let blend=skyDescriptor.colorAttachments[0]!
