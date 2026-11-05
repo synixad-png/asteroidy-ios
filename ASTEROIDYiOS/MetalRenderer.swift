@@ -172,16 +172,16 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private static func sphereView(_ camera: SphereCamera67)
         -> (view: simd_float4x4, eye: SIMD3<Float>) {
         let b = SphereCameraView556(camera: camera)
-        let r = b.right, u = b.up, k = b.back, e = b.eye
+        let m = b.viewColumnMajor
+        // One source of truth: OrbitWorld50.View column-major values are
+        // verified by SphereCameraView556Tests and used directly by Metal.
         let view = simd_float4x4(columns:(
-            SIMD4(r.x,u.x,k.x,0),
-            SIMD4(r.y,u.y,k.y,0),
-            SIMD4(r.z,u.z,k.z,0),
-            SIMD4(-SphereVector3.dot(r,e),
-                  -SphereVector3.dot(u,e),
-                  -SphereVector3.dot(k,e),1)
+            SIMD4(m[0],m[1],m[2],m[3]),
+            SIMD4(m[4],m[5],m[6],m[7]),
+            SIMD4(m[8],m[9],m[10],m[11]),
+            SIMD4(m[12],m[13],m[14],m[15])
         ))
-        return (view,SIMD3(e.x,e.y,e.z))
+        return (view,SIMD3(b.eye.x,b.eye.y,b.eye.z))
     }
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
     func draw(in view: MTKView) {
