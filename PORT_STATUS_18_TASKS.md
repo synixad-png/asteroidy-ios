@@ -2,7 +2,7 @@
 
 Źródło kolejności/nazw: zatwierdzony przez użytkownika zrzut harmonogramu 18 zadań z 2026-11-05. Nie zmieniać nazw ani zakresów bez decyzji użytkownika.
 
-**Łączny postęp odniesienia: 27%; pozostało 73%.** To historyczny, zatwierdzony wynik raportu, a nie świeży pomiar obliczony z kodu. Zadanie 7 ma nowszą roboczą ocenę implementacji 88% (poprzednio 87%; +1 pp), po potwierdzeniu Linux PASS dla nowego przekazywania devOpen do Gameplay65 i regresji ratowania. Kompilacja Xcode dla tej zmiany może nadal trwać; jej status należy sprawdzić osobno. Zadanie 8 ma 96% według ostatniego harmonogramu.
+**Łączny postęp odniesienia: 27%; pozostało 73%.** To historyczny, zatwierdzony wynik raportu, a nie świeży pomiar obliczony z kodu. Zadanie 7 ma roboczą ocenę implementacji 89% (poprzednio 88%; +1 pp). Zapisano i przetestowano utrwalanie zdarzenia FailRescue65 jako oczekującego rozliczenia przez źródłową procedurę Game.Damage. Linux-only Swift regression PASS: GitHub Actions run 42031591201; nie generowano IPA. Dokładnych zasad usuwania życia przy FailRescue65 jeszcze nie zweryfikowano w oryginalnych źródłach v556. Zadanie 8 ma 96% według ostatniego harmonogramu.
 
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
@@ -12,7 +12,7 @@
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
 | 6 | Fizyka lotu i poruszanie po planetach | 35% |
-| 7 | Kolizje, obrażenia i zniszczenia | 88% |
+| 7 | Kolizje, obrażenia i zniszczenia | 89% |
 | 8 | Asteroidy i fale walki | 96% |
 | 9 | Wszystkie bronie i efekty trafień | 10% |
 | 10 | Przeciwnicy i sztuczna inteligencja | 0% |
@@ -37,3 +37,7 @@
 1. Domknąć zadanie 7 wraz z weryfikacją zintegrowanego łańcucha obrażeń i regresji; nie przypisywać niezaimplementowanej AI, broni wrogów lub bossów do działającego portu.
 2. Domknąć pozostałe 4% zadania 8 po audycie źródłowego v556 i wykonaniu testów.
 3. Dopiero później przechodzić do zadania 9. Każdy raport ma pokazywać wszystkie 18 pozycji, osobny postęp, zmianę pp, postęp globalny i % pozostały.
+
+## Tryb bez IPA — polecenie użytkownika
+
+Do kolejnej wyraźnej zgody użytkownika kontynuować tylko implementację i testy Swift/Linux. Workflow `.github/workflows/verify-combat-only.yml` nie kompiluje Xcode, nie pakuje ani nie przesyła IPA. Nie uruchamiać `build-ios.yml`, które tworzy IPA.
