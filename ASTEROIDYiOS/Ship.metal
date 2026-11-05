@@ -76,6 +76,72 @@ fragment float4 skyPointFragment(
     return in.color*mask;
 }
 
+// Original GpuCosmos39.NebulaTexture (two 256px array slices) and
+// GpuIntro41 IntroSky clouds. Each of 36 quads carries its original
+// 3D sky direction and 2D UVs; shader projects SkyProject55 at draw
+// time, preserving camera-only orientation and exact per-layer bounds.
+// Color RGB is white with source CloudLayer alpha, PArgb premultiplied.
+struct NebulaOverlayUniforms {
+    float4 right;
+    float4 up;
+    float4 back;
+    float4 ndc; // 2/(720*aspect), -2/720, unused, unused
+};
+struct NebulaOverlayRaster {
+    float4 position [[position]];
+    float4 color;
+    float2 uv;
+    float theme;
+};
+vertex NebulaOverlayRaster nebulaOverlayVertex(
+    uint vid [[vertex_id]],
+    constant Vertex3D *vertices [[buffer(0)]],
+    constant NebulaOverlayUniforms &camera [[buffer(1)]]) {
+    Vertex3D v=vertices[vid];
+    NebulaOverlayRaster out;
+    out.uv=v.normal.xy;
+    out.color=float4(v.color.rgb*v.color.a,v.color.a);
+    out.theme=v.material.y;
+    bool nearLayer=v.material.x>0.5f;
+    float3 d=v.position.xyz;
+    float depth=-dot(camera.back.xyz,d);
+    float sourceX=dot(camera.right.xyz,d)*720.0f/max(0.01f,depth);
+    float sourceY=-dot(camera.up.xyz,d)*720.0f/max(0.01f,depth);
+    bool visible=depth>0.4f;
+    float x=sourceX+640.0f;
+    float y=sourceY+360.0f;
+    if (nearLayer) {
+        visible = visible && x>-900.0f && x<2180.0f &&
+                  y>-600.0f && y<1320.0f;
+    } else {
+        visible = visible && x>-500.0f && x<1780.0f &&
+                  y>-400.0f && y<1120.0f;
+    }
+    if (!visible) {
+        out.position=float4(2.0f,2.0f,0.0f,1.0f);
+        return out;
+    }
+    float size=nearLayer
+        ? 720.0f*220.0f/depth
+        : min(650.0f,720.0f*190.0f/depth);
+    float px=sourceX+(v.normal.x*2.0f-1.0f)*size;
+    float py=sourceY+(v.normal.y*2.0f-1.0f)*size*
+                     (nearLayer ? 0.55f : 0.24f);
+    out.position=float4(px*camera.ndc.x,py*camera.ndc.y,0.0f,1.0f);
+    return out;
+}
+fragment float4 nebulaOverlayFragment(
+    NebulaOverlayRaster in [[stage_in]],
+    texture2d_array<float> sourceClouds [[texture(0)]]) {
+    constexpr sampler sourceSampler(coord::normalized,
+                                    address::clamp_to_edge,
+                                    filter::linear);
+    uint slice=uint(in.theme+0.5f);
+    // Original GpuCosmos39 uses PArgb BGRA. Multiply the stored
+    // premultiplied cloud alpha/color by source white-layer alpha.
+    return in.color * sourceClouds.sample(sourceSampler,in.uv,slice);
+}
+
 // Windows GpuIntro41.cs:454 solar flare/rays are 2D AFTER SkyProject55.
 // Offset vertices were generated once by GpuCosmos39.RayVertex in source
 // 1280x720 pixel coordinates. Only the 2D solar center changes with the
