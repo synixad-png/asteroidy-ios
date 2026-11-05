@@ -24,6 +24,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private let bulletMesh: GPUModel
     private let starMesh: GPUModel
     private let sphereSkyMesh: GPUModel
+    private let sphereHaloTexture: MTLTexture
     private let planetVertexBuffers: [MTLBuffer]
     private let planetBufferSlots = MorphBufferSlots(count: 3)
     private let planetIndices: MTLBuffer
@@ -93,7 +94,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         blend.isBlendingEnabled = true
         blend.rgbBlendOperation = .add
         blend.alphaBlendOperation = .add
-        blend.sourceRGBBlendFactor = .sourceAlpha
+        // Windows/src/Gpu2DRenderer.cs:68,70: premultiplied
+        // glBlendFunc(ONE,ONE_MINUS_SRC_ALPHA).
+        blend.sourceRGBBlendFactor = .one
         blend.destinationRGBBlendFactor = .oneMinusSourceAlpha
         blend.sourceAlphaBlendFactor = .one
         blend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
@@ -124,6 +127,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         starMesh = try Self.makeMesh(device, starData.0, starData.1)
         let sphereSkyData=Self.sphereSky207()
         sphereSkyMesh=try Self.makeMesh(device,sphereSkyData.0,sphereSkyData.1)
+        sphereHaloTexture=try Self.makeSphereHaloTexture(device)
         // Only use the verified v556 Boreas GLB conversion when bundled.
         // Never silently claim that the diagnostic UV sphere is an imported asset.
         guard let planetURL = Bundle.main.url(forResource:"Boreas556",withExtension:"as3d")
@@ -195,28 +199,62 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         return (vertices,indices)
     }
-    /// Each original GpuIntro41 star becomes ONE GPU point vertex.
-    /// The dedicated skyPointVertex reads exact source star.pixelSize,
-    /// and skyPointFragment uses the real source RGBA alpha. No more
-    /// opaque world-scale sky triangles. Original 2D IntroHalo texture
-    /// is not present and is not approximated as a fake large glow.
+    /// Windows/src/GpuAmbient37.cs:5 uses 64x64 premultiplied white
+    /// pixels BGRA=(a,a,a,a). A single immutable texture is created at
+    /// startup and sampled linearly, exactly like GL SetFilter(true).
+    private static func makeSphereHaloTexture(_ device: MTLDevice)
+        throws -> MTLTexture {
+        let n=SphereSky207.haloTextureSize
+        let descriptor=MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false)
+        descriptor.usage=[.shaderRead]
+        descriptor.storageMode = .shared
+        guard let texture=device.makeTexture(descriptor:descriptor) else {
+            throw NSError(domain:"ASTEROIDY iOS Metal",code:12,
+                          userInfo:[NSLocalizedDescriptionKey:
+                            "Nie można utworzyć oryginalnej StarTexture 64x64"])
+        }
+        let texels=SphereSky207.haloTexelsBGRA()
+        texels.withUnsafeBytes { raw in
+            if let p=raw.baseAddress {
+                texture.replace(region:MTLRegionMake2D(0,0,n,n),
+                                mipmapLevel:0,withBytes:p,bytesPerRow:n*4)
+            }
+        }
+        return texture
+    }
+
+    /// Original GpuIntro41.IntroSky draws the *bright* halo FIRST, then
+    /// IntroHalo(p,size*2) for every visible source star. Each sprite
+    /// uses the exact 64x64 mask and premultiplied source alpha.
+    /// A single static point buffer avoids 1500 separate draws.
     private static func sphereSky207() -> ([AssetMesh.Vertex],[UInt32]) {
         var vertices:[AssetMesh.Vertex]=[]
         var indices:[UInt32]=[]
-        vertices.reserveCapacity(SphereSky207.count)
-        indices.reserveCapacity(SphereSky207.count)
+        vertices.reserveCapacity(SphereSky207.count*2)
+        indices.reserveCapacity(SphereSky207.count*2)
         let radius=SphereSky207.normalizedSkyRadius
         for i in 0..<SphereSky207.count {
             let star=SphereSky207.star(i)
             let point=SIMD3<Float>(
                 star.direction.x,star.direction.y,star.direction.z)*radius
-            let sourceRGBA=SIMD4<Float>(
-                star.red,star.green,star.blue,star.alpha)
-            vertices.append(AssetMesh.Vertex(
-                position:SIMD4(point.x,point.y,point.z,1),
-                color:sourceRGBA,normal:SIMD4(0,0,1,0),
-                material:SIMD4<Float>(star.pixelSize,0,0,0)))
-            indices.append(UInt32(i))
+            func appendHalo(_ diameter:Float,_ alpha:Float) {
+                let base=UInt32(vertices.count)
+                vertices.append(AssetMesh.Vertex(
+                    position:SIMD4(point.x,point.y,point.z,1),
+                    color:SIMD4(star.red,star.green,star.blue,alpha),
+                    normal:SIMD4(0,0,1,0),
+                    material:SIMD4<Float>(diameter,0,0,0)))
+                indices.append(base)
+            }
+            // Renderer.GlowEnabled defaults to true in original
+            // Windows/src/Renderer.cs:25. Glow UI option is not ported.
+            if SphereSky207.hasBrightHalo(star) {
+                appendHalo(SphereSky207.brightHaloDiameterPixels(star),
+                           125/255)
+            }
+            appendHalo(SphereSky207.baseDiameterPixels(star),
+                       star.alpha)
         }
         return (vertices,indices)
     }
@@ -441,6 +479,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                     height:Float(view.drawableSize.height)),0,0,0))
             encoder.setRenderPipelineState(skyPointPipeline)
             encoder.setDepthStencilState(skyDepthState)
+            encoder.setFragmentTexture(sphereHaloTexture,index:0)
             encoder.setVertexBuffer(sphereSkyMesh.vertices,offset:0,index:0)
             encoder.setVertexBytes(
                 &skyUniform,length:MemoryLayout<SceneUniforms>.stride,index:1)
