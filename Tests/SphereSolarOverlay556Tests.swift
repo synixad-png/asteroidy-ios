@@ -96,13 +96,13 @@ import Foundation
         let frame=SphereCamera67(at:opposite)
         guard let projected=SphereSolarOverlay556.project(camera:frame)
         else {fatalError("Original sky sun should be visible at antipode")}
-        near(projected.x,640,tolerance:0.02)
-        near(projected.y,360,tolerance:0.02)
+        near(projected.x,640,0.02)
+        near(projected.y,360,0.02)
         let toward=SphereCamera67(at:Sphere67.coordinates(sun))
         precondition(SphereSolarOverlay556.project(camera:toward)==nil)
         // GpuIntro41 screen centre maps to the same Metal NDC centre for
         // any aspect ratio, and offsets preserve the source 720px basis.
-        for aspect:Float in [4/3,16/9,19.5/9] {
+        for aspect in [Float(4)/3,Float(16)/9,Float(19.5)/9] {
             let ndcX=(projected.x-640)*2/(720*aspect)
             let ndcY=(360-projected.y)*2/720
             near(ndcX,0)
