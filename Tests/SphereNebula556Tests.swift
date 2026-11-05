@@ -18,7 +18,7 @@ import Foundation
             (0,0,0,0),(12,-7,5,45748),(255,255,1,5606),
             (-4,9,19,47861),(21,88,7,13439)] {
             near(SphereNebula556.hash(x,y,seed),
-                 Float(bits)/65535,tolerance:0.0000005)
+                 Float(bits)/65535,0.0000005)
         }
         let golden:[(Int,Int,Int,[Int])]=[
             (0,127,127,[68,21,53,82]),
