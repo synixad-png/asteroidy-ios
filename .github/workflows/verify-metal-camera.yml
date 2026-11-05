@@ -9,6 +9,7 @@ on:
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/Ship.metal'
       - 'Tests/SphereCameraView556Tests.swift'
+      - 'Tests/SphereProjectionSourceContract556.py'
       - 'Tests/SkyPointSourceContract556.py'
       - 'Tests/SphereSolarOverlay556Tests.swift'
       - 'Tests/SolarOverlaySourceContract556.py'
@@ -81,6 +82,8 @@ jobs:
             Tests/SkyTextureGate55Tests.swift \
             -o /tmp/sky-texture-gate55
           /tmp/sky-texture-gate55
+      - name: Verify original v556 .4/1600 spherical camera clip planes in Metal
+        run: python3 Tests/SphereProjectionSourceContract556.py
       - name: Verify original RGBA sky point sprites and pipeline contract (static)
         run: python3 Tests/SkyPointSourceContract556.py
       - name: Original GpuIntro41 + GpuCosmos39 source solar ray and GPU contract
