@@ -89,6 +89,49 @@ import Foundation
             rescue:&devR,cooperative:false,developerInfinite:true,
             guardian:.unverified,talent:.unverified) == .developerProtected)
         precondition(dev.lives==3 && dev.invincible==0.8)
+        // Simultaneous collision events in one Physics68 contact frame:
+        // only the first impact may spend armor/hull; the second is
+        // suppressed by 0.85s invulnerability from AbsorbDamage78.
+        var burstFirst=body(),burstSecond:CombatBody68?=nil
+        var burstSurvival=CombatSurvival96(),spareSurvival=CombatSurvival96()
+        var burstDome=CombatTarcza145(),spareDome=CombatTarcza145()
+        var burstRescue=CombatRescue65()
+        let burstVitals=CombatTalentVitals78()
+        let burstGuardian=CombatGuardian37(owned:false)
+        let burst=V.applyTeam([.shipRock(0),.shipRock(1)],
+            level:10,difficulty:.normal,
+            first:&burstFirst,second:&burstSecond,
+            survivalFirst:&burstSurvival,survivalSecond:&spareSurvival,
+            tarczaFirst:&burstDome,tarczaSecond:&spareDome,
+            rescue:&burstRescue,developerInfinite:false,
+            guardianFirst:.unverified,guardianSecond:.unverified,
+            talentFirst:.unverified,talentSecond:.unverified,
+            isRobot:[],
+            vitalsFirst:burstVitals,guardianStateFirst:burstGuardian)
+        precondition(burst == [
+            V.TeamOutcome(player:.first,outcome:.talentAbsorbed),
+            V.TeamOutcome(player:.first,outcome:.ignored)])
+        precondition(burstVitals.armor==0 && burstVitals.hull==53)
+        precondition(burstSurvival.lives==3 &&
+                     burstSurvival.invincible==0.85)
+        burstSurvival.advance(dt:0.84)
+        let stillProtected=V.hit(cause:"ASTEROIDA",level:10,
+            difficulty:.normal,player:.first,survival:&burstSurvival,
+            body:&burstFirst,dome:&burstDome,rescue:&burstRescue,
+            cooperative:false,developerInfinite:false,
+            guardian:.unverified,talent:.unverified,
+            vitals:burstVitals,guardianState:burstGuardian)
+        precondition(stillProtected == .ignored)
+        burstSurvival.advance(dt:0.02)
+        let nextContact=V.hit(cause:"ASTEROIDA",level:10,
+            difficulty:.normal,player:.first,survival:&burstSurvival,
+            body:&burstFirst,dome:&burstDome,rescue:&burstRescue,
+            cooperative:false,developerInfinite:false,
+            guardian:.unverified,talent:.unverified,
+            vitals:burstVitals,guardianState:burstGuardian)
+        precondition(nextContact == .talentAbsorbed)
+        precondition(burstVitals.hull==21 &&
+                     burstSurvival.lives==3)
         print("PASS: v556 hit ordering active Tarcza -> legacy shield -> guardian -> talents -> rescue -> lives; co-op/game guards")
     }
 }
