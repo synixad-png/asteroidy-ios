@@ -121,8 +121,23 @@ struct SphereCamera67 {
 enum SphereProjection556 {
     static let sourceHalfHeight: Float = 0.2
     static let sourceNear: Float = 0.4
+    static let sourceFar: Float = 1600
     static let sourceVerticalFocal: Float = sourceNear/sourceHalfHeight
     static let sourceVerticalFOV: Float = 2*atan(sourceHalfHeight/sourceNear)
+
+    // Windows/src/GpuIntro41.cs:455 actually uses .4/1600 as its
+    // near/far planes. The Boreas mesh and orbit eye in Metal are
+    // scaled by HomeWorldOuterRadius523 = 100*1.4419674, so its
+    // frustum MUST receive the very same normalization. Previously
+    // Metal used its flat-arena .1/20 planes for both modes.
+    static let normalizedNear: Float =
+        sourceNear / SphereCameraView556.originalPlanetOuterRadius
+    static let normalizedFar: Float =
+        sourceFar / SphereCameraView556.originalPlanetOuterRadius
+
+    static func clipPlanes(spherical: Bool) -> (near: Float, far: Float) {
+        spherical ? (normalizedNear, normalizedFar) : (0.1, 20)
+    }
 
     static func horizontalFocal(aspect:Float) -> Float {
         sourceVerticalFocal / max(aspect,0.1)
