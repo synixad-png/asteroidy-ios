@@ -15,7 +15,9 @@ import Foundation
                 precondition(respawn==expectedProtection)
             }
         }
-        var survival=CombatSurvival96(lives:3,shieldCharges:2)
+        var survival=CombatSurvival96()
+        survival.lives=3
+        survival.shieldCharges=2
         let cause="ASTEROIDA"
         let damage=CombatSurvival96.collisionDamage(level:10,difficulty:.normal)
         precondition(survival.applyUnblockedCollision(level:10,difficulty:.normal,cause:cause,
