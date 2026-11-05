@@ -9,6 +9,12 @@ struct SphereBolt556 {
     var life: Float
 }
 
+struct SphereShipContact556 {
+    var position: Vec2
+    var velocity: Vec2
+    var contacts: Int
+}
+
 struct SphereSector556 {
     private(set) var asteroids: [SphereAsteroid556] = []
     private(set) var bolts: [SphereBolt556] = []
@@ -273,9 +279,14 @@ struct SphereSector556 {
         sweptBoltTime(start:start,velocity:velocity,rock:rock,dt:dt) <= 1
     }
 
+    // Provide playerVelocity to opt into the real Physics68 Contact68
+    // ship/rock impulse. Existing diagnostic position-only callers preserve
+    // their original entry-only hull tests.
+    @discardableResult
     mutating func tick(dt:Float,playerPosition:Vec2,playerRadius:Float=26,
-                       detectContacts:Bool=true) {
-        guard dt > 0 else { return }
+                       detectContacts:Bool=true,playerVelocity:Vec2?=nil,
+                       shipMass:Float=2.4) -> SphereShipContact556? {
+        guard dt > 0 else { return nil }
         elapsed += dt
         CombatHull556.advance(cooldown:&hitCooldown,dt:dt)
         shotCooldown = max(0,shotCooldown-dt)
@@ -336,6 +347,28 @@ struct SphereSector556 {
            (elapsed >= nextIncoming || (objective != .waves && asteroids.count <= 4)) {
             spawnArrivals(near:playerPosition)
         }
+        // In live Boreas flight, collide the ship using Contact68's real
+        // .42 restitution, ship mass and parallel-transported velocities.
+        if detectContacts,let velocity=playerVelocity {
+            var ship=SphereAsteroid556(position:playerPosition,velocity:velocity,
+                                        radius:playerRadius,mass:shipMass)
+            var contacts=0
+            for i in asteroids.indices where asteroids[i].shardLife <= 0 {
+                var rock=asteroids[i]
+                if SphereRockContact68.resolve(&ship,&rock,restitution:0.42) {
+                    asteroids[i]=rock
+                    contacts += 1
+                    if CombatHull556.applyContact(hull:&hull,cooldown:&hitCooldown) {
+                        damageEvents += 1
+                    }
+                }
+            }
+            if contacts>0 && !inContact { shipContacts += 1 }
+            inContact=contacts>0
+            if sectorFinished { sectorCleared=true }
+            return SphereShipContact556(position:ship.position,
+                                        velocity:ship.velocity,contacts:contacts)
+        }
         let overlap = detectContacts && asteroids.contains {
             $0.shardLife <= 0 && $0.touches(playerPosition,otherRadius:playerRadius)
         }
@@ -347,5 +380,6 @@ struct SphereSector556 {
         }
         inContact = overlap
         if sectorFinished { sectorCleared = true }
+        return nil
     }
 }
