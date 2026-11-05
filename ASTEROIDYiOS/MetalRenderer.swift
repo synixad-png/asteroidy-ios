@@ -31,6 +31,10 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     // Original GpuToon60 default key-light bands, solely the
     // Vanguard431 during cinematic. No sphere/PBR changes.
     let sourceFighterToonPipeline60: MTLRenderPipelineState
+    // Genuine v568 vanguard431.mesh + base.jpg, used only when
+    // BOTH source resources are bundled. Previous v556 AS3D stays.
+    let sourceFighterTexturedPipeline431: MTLRenderPipelineState
+    private let sourceVanguard431: (buffer:MTLBuffer,count:Int,skin:MTLTexture)?
     let atmosphereDepthState: MTLDepthStencilState
     private let atmosphereMesh: GPUModel
     private let shipMesh: GPUModel
@@ -109,6 +113,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let sceneVertex=try requireShader("sceneVertex")
         let sceneFragment=try requireShader("sceneFragment")
         let fighterToonFragment=try requireShader("sourceFighterToonFragment60")
+        let originalFighterVertex=try requireShader("sourceVanguardVertex431")
+        let originalFighterFragment=try requireShader(
+            "sourceVanguardTexturedToonFragment431")
         let fighterPlasmaVertex=try requireShader("fighterPlasmaVertex491")
         let fighterPlasmaFragment=try requireShader("fighterPlasmaFragment491")
         let skyVertex=try requireShader("skyPointVertex")
@@ -132,6 +139,13 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         fighterToonDesc.depthAttachmentPixelFormat = .depth32Float
         sourceFighterToonPipeline60=try device.makeRenderPipelineState(
             descriptor:fighterToonDesc)
+        let fighterTexturedDesc=MTLRenderPipelineDescriptor()
+        fighterTexturedDesc.vertexFunction=originalFighterVertex
+        fighterTexturedDesc.fragmentFunction=originalFighterFragment
+        fighterTexturedDesc.colorAttachments[0].pixelFormat = .bgra8Unorm
+        fighterTexturedDesc.depthAttachmentPixelFormat = .depth32Float
+        sourceFighterTexturedPipeline431=try device.makeRenderPipelineState(
+            descriptor:fighterTexturedDesc)
         let atmosphereDesc=MTLRenderPipelineDescriptor()
         atmosphereDesc.vertexFunction=sceneVertex
         atmosphereDesc.fragmentFunction=sceneFragment
@@ -252,6 +266,51 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         let asset = try AssetMesh(data: Data(contentsOf:url))
         shipMesh = try Self.makeMesh(device, asset.vertices, asset.indices)
+
+        // Source-faithful path is optional until the exact PC resource
+        // pack is committed. NEVER silently substitute other textures.
+        let originalMeshURL=Bundle.main.url(
+            forResource:"Vanguard431Source",withExtension:"mesh")
+            ?? Bundle.main.url(forResource:"Vanguard431Source",
+                withExtension:"mesh",subdirectory:"Assets")
+        let originalSkinURL=Bundle.main.url(
+            forResource:"Vanguard431Base",withExtension:"jpg")
+            ?? Bundle.main.url(forResource:"Vanguard431Base",
+                withExtension:"jpg",subdirectory:"Assets")
+        if let meshURL=originalMeshURL,let jpegURL=originalSkinURL {
+            let native=try SourceVanguardMesh431(
+                data:Data(contentsOf:meshURL))
+            guard let sourceVB=native.vertices.withUnsafeBytes({
+                $0.baseAddress.map {
+                    device.makeBuffer(bytes:$0,length:native.vertices.count,
+                                      options:[])
+                } ?? nil
+            }) else {
+                throw NSError(domain:"ASTEROIDY iOS",code:431,
+                    userInfo:[NSLocalizedDescriptionKey:
+                        "Brak GPU bufora oryginalnej siatki Vanguard431"])
+            }
+            // Actual glTF JPEG is linear filtered, with generated
+            // mipmaps and source GL UVs (no vertical flip).
+            let skin=try MTKTextureLoader(device:device).newTexture(
+                URL:jpegURL,options:[
+                    .SRGB:true,
+                    .generateMipmaps:true,
+                    .origin:MTKTextureLoader.Origin.topLeft
+                ])
+            sourceVanguard431=(
+                buffer:sourceVB,count:native.vertexCount,skin:skin)
+            NSLog("ASTEROIDY: real PC Vanguard431 UV/BaseColor active: %d vertices",
+                  native.vertexCount)
+        } else if originalMeshURL != nil || originalSkinURL != nil {
+            throw NSError(domain:"ASTEROIDY iOS",code:432,
+                userInfo:[NSLocalizedDescriptionKey:
+                    "Niekompletne oryginalne zasoby Vanguard431 — potrzebne mesh i jpg"])
+        } else {
+            sourceVanguard431=nil
+            NSLog("ASTEROIDY: original Vanguard431 texture assets not in app;"
+                + " using previous v556 AS3D model, no texture fidelity claim")
+        }
         asteroidMesh = try Self.makeMesh(device, Self.asteroidVertices(), Self.octahedronIndices())
         bulletMesh = try Self.makeMesh(device, Self.bulletVertices(), Self.octahedronIndices())
         let starData = Self.stars()
@@ -309,6 +368,11 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         var mvp: simd_float4x4
         var model: simd_float4x4
         var lighting: SIMD4<Float>
+    }
+    private struct FighterSourceUniform431 {
+        var mvp:simd_float4x4
+        var model:simd_float4x4
+        var eyeView:simd_float4x4
     }
     private struct FighterPlasmaUniforms491 {
         var mvp: simd_float4x4
@@ -1219,15 +1283,40 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 Self.translation(0,0,
                     IntroVanguard431.normalizedDorsalCorrection) *
                 Self.scale(IntroVanguard431.normalizedShipModelScale)
-            // The real PC default binds GpuToon60 for this
-            // Vanguard material 0. Its directional FighterLight
-            // coordinates are EYE-SPACE and remain fixed to the
-            // actual IntroScene41 camera, not a made-up world sun.
-            encoder.setRenderPipelineState(sourceFighterToonPipeline60)
-            var fighterEyeView=cameraFrame.view
-            encoder.setFragmentBytes(&fighterEyeView,
-                length:MemoryLayout<simd_float4x4>.stride,index:0)
-            drawMesh(shipMesh,craft)
+            // When source PC vertex packets and the original JPEG
+            // are both present, draw true 4311 mesh/UV/skin. Otherwise
+            // preserve the VERIFIED v556 approximate-AS3D pipeline.
+            if let native=sourceVanguard431 {
+                // PC GPU vertex positions already include the original
+                // v4311 bake scale and centre, so do NOT apply AS3D
+                // scale/translation correction a second time.
+                let originalCraft=Self.translation(
+                    ship.x,ship.y,ship.z) *
+                    orientation * Self.rotateYDegrees(
+                        sin(introTime41*0.8)*7) * Self.scale(inv)
+                var originalUniform=FighterSourceUniform431(
+                    mvp:vp * originalCraft,
+                    model:originalCraft,eyeView:cameraFrame.view)
+                encoder.setRenderPipelineState(
+                    sourceFighterTexturedPipeline431)
+                encoder.setVertexBuffer(native.buffer,offset:0,index:0)
+                encoder.setVertexBytes(&originalUniform,
+                    length:MemoryLayout<FighterSourceUniform431>.stride,
+                    index:1)
+                encoder.setFragmentTexture(native.skin,index:0)
+                encoder.drawPrimitives(
+                    type:.triangle,vertexStart:0,vertexCount:native.count)
+            } else {
+                // The real PC default binds GpuToon60 for this
+                // Vanguard material 0. Its directional FighterLight
+                // coordinates are EYE-SPACE and remain fixed to the
+                // actual IntroScene41 camera, not a made-up world sun.
+                encoder.setRenderPipelineState(sourceFighterToonPipeline60)
+                var fighterEyeView=cameraFrame.view
+                encoder.setFragmentBytes(&fighterEyeView,
+                    length:MemoryLayout<simd_float4x4>.stride,index:0)
+                drawMesh(shipMesh,craft)
+            }
             encoder.setRenderPipelineState(pipeline)
 
             // GpuIntro41.cs:493 calls DrawFighterMesh(time,1,0,false).
