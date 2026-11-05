@@ -27,16 +27,35 @@ import Foundation
         var contacts = SphereSector556(balance: config)
         contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
         precondition(contacts.shipContacts == 1)
+        precondition(contacts.hull == 2 && contacts.damageEvents == 1)
         for _ in 0..<120 { contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000) }
-        precondition(contacts.shipContacts == 1)
+        precondition(contacts.shipContacts == 1 && contacts.hull == 2)
         // North pole is outside rock radii in this deterministic test seed.
         contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0)
         precondition(contacts.shipContacts == 1)
         contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
         precondition(contacts.shipContacts == 2)
+        precondition(contacts.hull == 2 && contacts.damageEvents == 1,
+                     "Second contact within invulnerability must not damage")
+        for _ in 0..<165 { contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0) }
+        precondition(contacts.hitCooldown == 0)
+        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
+        precondition(contacts.shipContacts == 3)
+        precondition(contacts.hull == 1 && contacts.damageEvents == 2)
+        // Hold the contact longer than the cooldown: no repeated damage on a
+        // continuous overlap; only a new entry can trigger another hit.
+        for _ in 0..<200 { contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000) }
+        precondition(contacts.hull == 1)
+        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0)
+        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
+        precondition(contacts.hull == 0 && contacts.damageEvents == 3)
+        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0)
+        for _ in 0..<200 { contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:0),playerRadius:0) }
+        contacts.tick(dt:1/120,playerPosition:Vec2(x:0,y:360),playerRadius:1000)
+        precondition(contacts.hull == 0 && contacts.damageEvents == 3)
         // Flat GameCore remains an independent sandbox with unchanged nine-rock baseline.
         let flat = GameCore()
         precondition(flat.rocks.count == 9)
-        print("PASS: spherical sector asteroid count, 1200 frames, tangent speed, movement, contact de-bounce and legacy flat arena")
+        print("PASS: 1200 sphere frames, contact transitions, three-hit hull, cooldown, no repeat damage, and legacy flat arena")
     }
 }
