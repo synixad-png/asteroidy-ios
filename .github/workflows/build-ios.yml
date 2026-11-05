@@ -27,6 +27,10 @@ jobs:
         run: |
           swiftc ASTEROIDYiOS/CampaignProgress556.swift Tests/CampaignProgress556Tests.swift -o /tmp/ios-campaign-tests
           /tmp/ios-campaign-tests
+      - name: Verify combat balancing from ASTEROIDY v556
+        run: |
+          swiftc ASTEROIDYiOS/CombatBalance556.swift Tests/CombatBalance556Tests.swift -o /tmp/ios-combat-balance-tests
+          /tmp/ios-combat-balance-tests
       - name: Verify telemetry module
         run: |
           swiftc ASTEROIDYiOS/RenderTelemetry.swift Tests/RenderTelemetryTests.swift -o /tmp/ios-telemetry-tests
