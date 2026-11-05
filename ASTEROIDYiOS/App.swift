@@ -23,6 +23,11 @@ final class FlightInput: ObservableObject {
     // independent 9-rock flat diagnostic arena. This is still a
     // test sector, NOT a port of the complete original mission.
     @Published var planetPreview = true
+    // Real IntroScene41 camera/planet/ship positions, but cinematic
+    // GPU rock meshes still need source-specific geometric detail.
+    // An explicit rendering preview, NEVER a mission completion.
+    @Published var introPreview41 = true
+    @Published var introProgress41: Float = 0
     // Source-defined diagnostic cases: ordinary rocks (1), timed waves
     // (9/17) and AmigaOnly266 perpetual bouncing balls (25).
     // This is NOT a mission/campaign unlock selector.
@@ -64,26 +69,47 @@ struct GameView: View {
                             .font(.system(size: 17, weight: .semibold, design: .monospaced))
                             .foregroundStyle(.cyan)
                         Spacer(minLength: 8)
+                        Button(input.introPreview41 ? "BOREAS 3D" : "PRZELOT 3D") {
+                            input.introPreview41.toggle()
+                            input.planetPreview = true
+                            input.tarczaHeld = false
+                            input.shooting = false
+                        }
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.cyan)
                         Button("KAMPANIA") { showCampaign = true }
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.cyan)
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, 12)
-                    HStack(spacing: 12) {
-                        Button(input.planetPreview ? "ARENA • DIAGNOSTYKA" : "BOREAS GLB • TEST") {
-                            input.planetPreview.toggle()
-                            input.tarczaHeld = false
-                            input.shooting = false
+                    if !input.introPreview41 {
+                        HStack(spacing: 12) {
+                            Button(input.planetPreview ? "ARENA • DIAGNOSTYKA" : "BOREAS GLB • TEST") {
+                                input.planetPreview.toggle()
+                                input.tarczaHeld = false
+                                input.shooting = false
+                            }
+                            Spacer(minLength: 4)
+                            Button(input.sectorTraining ? "SEKTOR 01 • TEST" : "9 ASTEROID • TEST") {
+                                input.sectorTraining.toggle()
+                            }
                         }
-                        Spacer(minLength: 4)
-                        Button(input.sectorTraining ? "SEKTOR 01 • TEST" : "9 ASTEROID • TEST") {
-                            input.sectorTraining.toggle()
-                        }
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.cyan)
+                        .padding(.horizontal, 18)
                     }
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.cyan)
-                    .padding(.horizontal, 18)
+                    if input.introPreview41 {
+                        Text("PRZELOT ORBITALNY / ŹRÓDŁOWA KAMERA • \(Int(input.introProgress41)) / 16 s")
+                            .font(.system(size: 11, weight: .medium,
+                                          design: .monospaced))
+                            .foregroundStyle(.cyan)
+                            .padding(.horizontal, 18)
+                        Text("SCENA ROBOCZA • NIE JEST PEŁNĄ MISJĄ")
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(.orange)
+                            .padding(.horizontal, 18)
+                    } else {
                     HStack {
                         Text("WYNIK: \(input.score)")
                         Spacer()
@@ -201,6 +227,7 @@ struct GameView: View {
                     }.padding(.horizontal,
                                input.planetPreview && input.verifiedDamageLab ? 16 : 45)
                      .padding(.bottom, 30)
+                    }
                 }
                 .foregroundStyle(.white)
                 if showCampaign {
