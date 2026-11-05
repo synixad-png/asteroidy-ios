@@ -30,6 +30,12 @@ import Foundation
         close(SphereAsteroid556.startingSpeed(baseRandomSpeed:48,level:1,tier:0,dangerSpeed:1),26.4,tol:0.001)
         close(SphereAsteroid556.startingSpeed(baseRandomSpeed:78,level:26,tier:3,dangerSpeed:1),(78+18*3.2)*0.88*0.55,tol:0.003)
         close(SphereAsteroid556.incomingSpeed(baseRandomSpeed:100,dangerSpeed:1.25),68.75,tol:0.001)
+        var rotating = SphereAsteroid556(
+            position:Vec2(x:640,y:360),velocity:Vec2(x:0,y:0),
+            radius:10,size:2,spin:1.25,angle:0.5)
+        rotating.advance(dt:2)
+        close(rotating.angle,3.0,tol:0.0001)
+        close(rotating.spin,1.25,tol:0.0001)
         close(SphereAsteroid556.fragmentScale(parentSize:3),0.49,tol:0.0001)
         close(SphereAsteroid556.fragmentScale(parentSize:2),0.39,tol:0.0001)
         print("PASS: 1200 spherical asteroid frames, tangent-speed conservation, geodesic seam/pole tests, v556 speed and fragment multipliers")
