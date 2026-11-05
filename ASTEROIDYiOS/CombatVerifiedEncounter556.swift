@@ -35,7 +35,7 @@ struct CombatVerifiedEncounter556 {
                        secondDomeHeld:Bool=false,
                        firstFiring:Bool=false,secondFiring:Bool=false,
                        collectorLevel:Int=0,robotFlags:[Bool]=[],
-                       developerInfinite:Bool=false,
+                       developerInfinite:Bool=false,devOpen:Bool=false,
                        guardianFirst:CombatVerifiedHit556.GuardResult = .unverified,
                        guardianSecond:CombatVerifiedHit556.GuardResult = .unverified,
                        talentFirst:CombatVerifiedHit556.GuardResult = .unverified,
@@ -113,7 +113,7 @@ struct CombatVerifiedEncounter556 {
         var rescueEvent:CombatRescue65.Event = .none
         if var partner=second {
             rescueEvent=rescue.tick(dt:dt,playing:survivalFirst.playing,
-                sceneBusy:survivalFirst.sceneBusy,devOpen:false,
+                sceneBusy:survivalFirst.sceneBusy,devOpen:devOpen,
                 bossArrival:survivalFirst.bossArrival,cooperative:true,
                 first:&first,second:&partner,firstSurvival:&survivalFirst,
                 secondSurvival:&survivalSecond,
