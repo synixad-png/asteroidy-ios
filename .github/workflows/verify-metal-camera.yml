@@ -10,6 +10,9 @@ on:
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/IntroOrbit41.swift'
       - 'ASTEROIDYiOS/SourceFighterToon60.swift'
+      - 'ASTEROIDYiOS/SourceVanguardMesh431.swift'
+      - 'Tests/SourceVanguardMesh431Tests.swift'
+      - 'Tests/SourceVanguardTextureContract431.py'
       - 'Tests/SourceFighterToon60Tests.swift'
       - 'Tests/SourceFighterToonContract60.py'
       - 'ASTEROIDYiOS/IntroEnginePlasma491.swift'
@@ -138,6 +141,14 @@ jobs:
             -o /tmp/intro-vanguard-431
           /tmp/intro-vanguard-431
           python3 Tests/IntroVanguardSourceContract431.py
+      - name: Source Vanguard v4311 exact UV stream parser and optional original JPEG material
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/SourceVanguardMesh431.swift \
+            Tests/SourceVanguardMesh431Tests.swift \
+            -o /tmp/source-vanguard-uv431
+          /tmp/source-vanguard-uv431
+          python3 Tests/SourceVanguardTextureContract431.py
       - name: Original GpuToon60 three-band source lighting on Vanguard (CPU math and Metal contract)
         run: |
           set -eu
