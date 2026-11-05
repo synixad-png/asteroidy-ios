@@ -363,6 +363,16 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 input?.planetAmigaHits = amigaHits
             }
         }
+        // Original Windows/src/GpuSphere67.cs:420 sets this exact
+        // clearColor before drawing IntroSky and the combat planet.
+        // Keep the pre-existing flat arena background unchanged.
+        if input.planetPreview {
+            view.clearColor=MTLClearColor(red:0.012,green:0.021,
+                                         blue:0.04,alpha:1)
+        } else {
+            view.clearColor=MTLClearColor(red:0.01,green:0.025,
+                                         blue:0.07,alpha:1)
+        }
         guard let pass = view.currentRenderPassDescriptor, let drawable = view.currentDrawable,
               let command = queue.makeCommandBuffer(), let encoder = command.makeRenderCommandEncoder(descriptor:pass) else { return }
         let aspect = Float(view.drawableSize.width / max(view.drawableSize.height,1))
