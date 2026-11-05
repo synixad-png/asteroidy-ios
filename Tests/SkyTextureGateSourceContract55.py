@@ -23,7 +23,10 @@ for kind,field,method,call in (
     ck(f"private var {field}: MTLTexture?" in src,
        kind+": source texture no longer lazily optional")
     signature=(f"private func {method}(camera: SphereCamera67) -> MTLTexture?"
-               if kind=="cloud" else f"private func {method}() -> MTLTexture?")
+               if kind=="cloud" else
+               f"private func {method}(style: Int) -> MTLTexture?"
+               if kind=="planet" else
+               f"private func {method}() -> MTLTexture?")
     ck(signature in src,kind+": missing one-time resource getter")
     ck(f"let created=try {call}" in src,
        kind+": source GPU array construction missing")
@@ -47,7 +50,11 @@ for token in (
     "$0.projected(camera:camera) != nil",
     "guard nebulaLoadGate.shouldAllocate(visible:hasVisibleCloud)",
     "if let clouds=sourceCloudTexture",
-    "guard let planets=ensureDeepPlanetTextures55()",
+    "guard let planets=ensureDeepPlanetTextures55(style:style)",
+    "private var deepPlanetSliceCache55 = SkyTextureSliceCache55(count: DeepSkyPlanets55.count)",
+    "if deepPlanetSliceCache55.needsUpload(style:style)",
+    "deepPlanetSliceCache55.markUploaded(style:style)",
+    "guard Self.uploadDeepPlanetSlice55(texture,style:style)",
     "let blackTextures=ensureBlackHoleTextures55()",
     "encoder.setFragmentTexture(clouds,index:0)",
     "encoder.setFragmentTexture(planets,index:0)",
