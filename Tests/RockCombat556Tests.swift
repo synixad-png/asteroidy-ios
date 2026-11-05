@@ -51,6 +51,18 @@ import Foundation
         precondition(wave.incomingRocksLeft == 1 && wave.rocks.count >= start+2)
         wave.setSectorTraining(nil)
         precondition(wave.trainingBalance == nil && wave.rocks.count == 9 && wave.incomingRocksLeft == 0)
-        print("PASS: 15 rock HP cases, nine pulse hits, splits/score, waves and arena restoration")
+        // Terminal size-1 rock creates 18 bounded short-lived fragments.
+        var terminal = GameCore()
+        terminal.setSectorTraining(CombatBalance556(level:1,difficulty:.normal,spherical:false)!)
+        terminal.rocks.removeAll()
+        terminal.rocks.append(Rock(at:Vec2(x:0.8,y:0.8),motion:Vec2(x:0,y:0),
+                                   radius:Rock.radiusFor(size:1),phase:0,tier:0,size:1))
+        terminal.bolts.append(Bolt(at:Vec2(x:0.8,y:0.8),motion:Vec2(x:0,y:0),life:1))
+        terminal.tick(FlightCommand(),dt:1.0/120)
+        precondition(terminal.destroyedRocks == 1 && terminal.rocks.count == 18)
+        precondition(terminal.rocks.allSatisfy { $0.shardLife > 0 } && terminal.score == 100)
+        for _ in 0..<210 { terminal.tick(FlightCommand(),dt:1.0/60) }
+        precondition(terminal.rocks.isEmpty && terminal.score == 100)
+        print("PASS: 15 HP cases, armored splits/score, timed waves, 18 terminal shards and arena restoration")
     }
 }
