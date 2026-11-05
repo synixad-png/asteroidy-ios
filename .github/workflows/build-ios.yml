@@ -55,6 +55,10 @@ jobs:
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift Tests/SectorSpawn556Tests.swift -o /tmp/sector-spawns
           /tmp/sector-spawns
+      - name: Verify spherical asteroid geodesic physics from v556
+        run: |
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift Tests/SphereAsteroids556Tests.swift -o /tmp/sphere-asteroid-tests
+          /tmp/sphere-asteroid-tests
       - name: Verify telemetry module
         run: |
           swiftc ASTEROIDYiOS/RenderTelemetry.swift Tests/RenderTelemetryTests.swift -o /tmp/ios-telemetry-tests
