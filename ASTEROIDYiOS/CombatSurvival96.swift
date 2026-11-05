@@ -58,6 +58,20 @@ struct CombatSurvival96 {
         return .shieldAbsorbed(remaining:shieldCharges,cause:cause)
     }
 
+    /// BossTunnelGame.HitByBoss(): when an incoming ApplyHit96 event
+    /// reaches this branch, ANY damage cause may consume a purchased shield.
+    /// This grants 1s immunity. It is different from the flat-only asteroid
+    /// contact interception (.8s and different physical knockback).
+    mutating func absorbPurchasedHitByBoss(cause:String) -> Hit? {
+        guard lives>0 && playing && !sceneBusy && !bossArrival &&
+              !currentDown && invincible<=0 && shieldCharges>0
+        else { return nil }
+        shieldCharges -= 1
+        invincible=1
+        latestCause=cause
+        return .shieldAbsorbed(remaining:shieldCharges,cause:cause)
+    }
+
     /// Only for collisions not caught by guardian/Tarcza/talent/co-op guards.
     /// This function cannot silently assume those unported systems are absent.
     mutating func applyUnblockedCollision(
