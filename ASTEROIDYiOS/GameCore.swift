@@ -146,7 +146,12 @@ struct GameCore {
         }
     }
     private mutating func damageRock(at index: Int, amount: Int) {
-        guard rocks.indices.contains(index), rocks[index].shardLife <= 0 else { return }
+        guard rocks.indices.contains(index) else { return }
+        if rocks[index].shardLife > 0 {
+            // Game.Split removes a hit cosmetic shard without score or further splitting.
+            rocks.remove(at: index)
+            return
+        }
         rocks[index].health -= amount
         guard rocks[index].health <= 0 else { return }
         let destroyed = rocks.remove(at: index)
