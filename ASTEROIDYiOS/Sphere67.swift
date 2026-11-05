@@ -200,6 +200,49 @@ enum SphereSky207 {
     static let count = 1500
     static let originalSkyRadius: Float = 900
     static let originalScreenHeight: Float = 720
+    /// Direct Windows/src/GpuAmbient37.cs:5 StarTexture(), NOT a made-up
+    /// radial shader. Format32bppPArgb stores all BGRA bytes as the same
+    /// pre-multiplied white alpha. Original GL Texture() samples linearly.
+    static let haloTextureSize = 64
+    static func haloAlpha(x:Int,y:Int) -> UInt8 {
+        precondition((0..<haloTextureSize).contains(x) &&
+                     (0..<haloTextureSize).contains(y))
+        let dx=(Double(x)-31.5)/31.5
+        let dy=(Double(y)-31.5)/31.5
+        let radius=sqrt(dx*dx+dy*dy)
+        let edge=max(0,1-radius)
+        let value=exp(-radius*radius*4)*edge*edge*255
+        return UInt8(max(0,min(255,Int(value))))
+    }
+    static func haloTexelsBGRA() -> [UInt8] {
+        let dim=haloTextureSize
+        var texels=[UInt8](repeating:0,count:dim*dim*4)
+        for y in 0..<dim {
+            for x in 0..<dim {
+                let a=haloAlpha(x:x,y:y)
+                let i=(y*dim+x)*4
+                texels[i]=a
+                texels[i+1]=a
+                texels[i+2]=a
+                texels[i+3]=a
+            }
+        }
+        return texels
+    }
+
+    /// GpuIntro41.cs:452 IntroHalo(p,size*2,tint,halo) constructs
+    /// a quad spanning [-radius,+radius], so pixel DIAMETER = size*4.
+    /// For GlowEnabled (default true in Windows/Renderer.cs:25), bright
+    /// stars also draw a preceding 10px/21px-radius halo with alpha 125.
+    static func baseDiameterPixels(_ star:SphereSkyStar207) -> Float {
+        star.pixelSize*4
+    }
+    static func hasBrightHalo(_ star:SphereSkyStar207) -> Bool {
+        star.pixelSize>0.7
+    }
+    static func brightHaloDiameterPixels(_ star:SphereSkyStar207) -> Float {
+        star.pixelSize==2.8 ? 42 : 20
+    }
     /// Original SkyProject55 uses a 720-pixel reference image. iOS
     /// Metal point sizes are drawable PIXELS, not the C# virtual pixels.
     /// Scale source sizes by the drawable height so a 2.8px star retains
