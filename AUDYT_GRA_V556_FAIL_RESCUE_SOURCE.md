@@ -48,3 +48,15 @@ Nie wykonano testu interaktywnego na fizycznym iPhonie/iPadzie. Testy Swift/Linu
 - Testy: `CombatVerifiedEncounter556Tests.swift` dla blokady `DevOpen` i `PlanetDamageLab556Tests.swift` dla aktywacji, zużycia energii, przechwycenia trafienia, wyczerpania i powrotu do uszkodzeń pancerza/kadłuba.
 
 **Weryfikacja:** GitHub Actions `42037997698` — wszystkie etapy **PASS** (Swift/Linux testy i składniowe parsowanie `App.swift`, `MetalRenderer.swift`); **bez budowania iOS, bez IPA, bez testu na fizycznym iPhonie**. Parsowanie plików SwiftUI/Metal nie jest równoważne z natywnym sprawdzeniem typów przez Xcode.
+
+## Domknięcie zadania 7 — fizyczne kontakty i zniszczenia, 05.11.2026
+
+**Źródło prawdy:** `Windows/src/Physics68.cs:31–45,50–59,62–75` oraz `Windows/src/Game.cs:188–193,224–230` z oryginalnego archiwum v556.
+
+- `Contact68` oblicza liniowy impuls, tarcie styczne oraz korektę pozycji. **Nie dodaje obrotu** skałom. W oryginale `RockContacts68` osobno dodaje `contactFriction68` do `Spin` przy **kontakcie dwóch skał** (Physics68.cs:57). Poprzedni port `SphereRockContact68.resolve` stosował obrót także przy ship/rock, bug/rock i boss/rock. Poprawiono poprzez `applyRockSpin:false` w `CombatSolids68` i grywalnym `SphereSector556`, zachowując `true` dla rock/rock. Dodano regresje z niezerową styczną prędkością i zachowaniem początkowego `Spin` skały.
+- W `Physics68.cs:33–37` wczesne odrzucenie na podstawie różnicy szerokości działa tylko dla **kanonicznych** współrzędnych `0≤Y≤H`. Port bezwarunkowo odrzucał różne wartości Y. Poprawiono warunek i dodano test równoważnych po odbiciu biegunowym współrzędnych.
+- Oryginalne `Game.cs:224–230` i `Physics68.cs:77–80`: zniszczenie skały respektuje punkty życia, pancerz, wielkość, przyznaje punkty, dzieli większą skałę fizycznie i emituje 18 nietrwałych odłamków przy ostatnim rozmiarze. W istniejącym porcie odpowiadają za to `CombatDamage556` i `SphereSector556`. Kontrolę zniszczeń, fal i 78 konfiguracji planet dodano do pełnej macierzy testów.
+- Obrażenia, pasywne tarcze, aktywne `Tarcza145`, `Guardian37`, `Talents78`, utrata żyć i ratowanie kooperacyjne są testowane razem w `CombatVerifiedEncounter556Tests` oraz grywalnym teście `PlanetDamageLab556Tests`.
+- CI `.github/workflows/verify-combat-only.yml` ma także osobną kompilację natywnych źródeł iOS za pomocą Xcode, **bez** przygotowania i przesyłania IPA. Sprawdzenie uruchomienia na fizycznym iPhonie wymaga późniejszego testu urządzenia; samo `BUILD SUCCEEDED` nie jest testem interaktywnym.
+
+**Granice odpowiedzialności:** Zadanie 7 obejmuje gotowe procedury fizyki, kontaktów i zniszczeń oraz ich połączenie z aktualnie grywalnym Boreas. Przeciwnicy, komplet bossów, wszystkie bronie i pełne misje mają własne etapy 9–13; nie należy deklarować ich jako gotowych tylko z powodu działania API kolizji. Rzeczywisty test iPhone/SteamOS nie jest częścią automatycznego testu Swift/Linux.
