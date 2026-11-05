@@ -66,6 +66,27 @@ import Foundation
         precondition(shards.bolts.count==1,
                      "Expired shard must not absorb a source projectile")
 
+        // Action38.StepAction checks the Clear cancellation BEFORE
+        // bullets destroy rocks (Game.cs:240 before Game.cs:251-270).
+        // The final rock destroyed during this frame must NOT erase the
+        // quota already eligible for an incoming pair in this frame.
+        let lastRock=SphereAsteroid556(position:Vec2(x:640,y:360),
+            velocity:Vec2(x:0,y:0),radius:25,size:1,tier:0,
+            health:1)
+        var lastInFrame=SphereSector556(balance:config,
+            diagnosticAsteroids:[lastRock],diagnosticIncomingQuota:3)
+        lastInFrame.setVerifiedEnemyCount(0)
+        lastInFrame.fire(from:Vec2(x:605,y:360),
+                         direction:Vec2(x:1,y:0))
+        _=lastInFrame.tick(dt:1/120,playerPosition:player,
+            playerRadius:0,detectContacts:false)
+        precondition(lastInFrame.destroyedRocks==1 &&
+                     lastInFrame.score==100)
+        precondition(lastInFrame.incomingRocksLeft==1,
+                     "StepAction cannot retroactively cancel arrivals when a bullet destroys the last old rock")
+        precondition(lastInFrame.asteroids.count==20,
+                     "Two arrivals plus 18 terminal shards after last-rock hit")
+
         // Source Game.Action38 does not cancel the timed-wave quota
         // when its rock field happens to be empty.
         let waveConfig=CombatBalance556(level:9,difficulty:.normal,
