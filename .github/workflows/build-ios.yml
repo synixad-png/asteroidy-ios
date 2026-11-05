@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Swift Linux availability
         run: swift --version
-      - name: Verify Physics68 impact momentum, oblique contact spin and inherited fragment mass
+      - name: Verify original Physics68 impulse, spin, rock fragment and geodesic mission gates
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift Tests/SpherePhysicsAndMissionGate556Tests.swift -o /tmp/physics68-test
           /tmp/physics68-test
