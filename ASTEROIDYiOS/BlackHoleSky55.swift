@@ -38,9 +38,22 @@ enum BlackHoleSky55 {
         precondition(x>=0 && x<imageSize && y>=0 && y<imageSize)
         let dx=Float(x)-319.5,dy=Float(y)-319.5
         let r=sqrt(dx*dx+dy*dy)
+        // GpuIntro41: feather = exp(...) * (1-Smooth((r-284)/37)).
+        // For r>=321 the clamp is exactly 1 => alpha exactly ZERO.
+        // This identical short-circuit avoids expensive CPU Math.Pow
+        // work for the transparent corners of 3 source 640px images.
+        if r>=321 {return (0,0,0,0)}
         // Source inclination: 25 degrees.
         let ca:Float=0.9063078,sa:Float=0.4226183
         let u=ca*dx+sa*dy,v = -sa*dx+ca*dy
+        // GpuIntro41 rear/front masks are exact zero on opposite
+        // halves of the rotated accretion plane. Preserve the same
+        // pixels while skipping expensive exponentials.
+        if (front && v<=-9) || (!front && v>=9) {
+            return (0,0,0,0)
+        }
+        // The rear disk also has an exact transparent core gap.
+        if !front && r<=76 {return (0,0,0,0)}
         let eu=u/214,ev=v/54
         let er=sqrt(eu*eu+ev*ev),ang=atan2(v,u)
         let feather=gaussian(max(0,r-165)/97)*(1-smooth((r-284)/37))
@@ -77,6 +90,10 @@ enum BlackHoleSky55 {
         precondition(x>=0 && x<imageSize && y>=0 && y<imageSize)
         let dx=Float(x)-319.5,dy=Float(y)-319.5
         let r=sqrt(dx*dx+dy*dy)
+        // At r>=120 core=0; rim and blue rim both have alpha
+        // strictly below original 0.001 threshold. Avoid generating
+        // the mathematically transparent 93% of core image pixels.
+        if r>=120 {return (0,0,0,0)}
         let core=1-smooth((r-69)/4)
         let rim=gaussian((r-80)/6)
         let rimBlue=gaussian((r-86)/10)*(0.35+0.65*smooth((dx+10)/120))
