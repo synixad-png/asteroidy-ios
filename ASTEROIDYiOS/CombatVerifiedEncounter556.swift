@@ -18,9 +18,20 @@ struct CombatVerifiedEncounter556 {
     var headingSecond:Float = -Float.pi/2
     var shots:[SphereBolt556]=[]
     private var scatterSeed:UInt32=0x55600007
+    // Fatal co-op wreck resolution belongs to the original Game.Damage
+    // controller. Never silently discard an expired/failed rescue or
+    // fabricate the unverified rescue-damage values.
+    private(set) var pendingRescueFailure:CombatRescue65.Event?=nil
 
     init(encounter:CombatEncounter68) {
         self.encounter=encounter
+    }
+
+    /// The future source-verified Game.Damage owner calls this only after
+    /// applying the original FailRescue65 life/respawn transition. The
+    /// collision harness itself must never invent that transition.
+    mutating func acknowledgeResolvedRescueFailure() {
+        pendingRescueFailure=nil
     }
 
     struct Result {
@@ -28,6 +39,7 @@ struct CombatVerifiedEncounter556 {
         let hitOutcomes:[CombatVerifiedHit556.TeamOutcome]
         let damageTransitions:[CombatRespawn556.Action]
         let rescueEvent:CombatRescue65.Event
+        let requiresRescueDamageResolution:Bool
         let pickupsTrackingSecond:Int
     }
 
@@ -43,7 +55,9 @@ struct CombatVerifiedEncounter556 {
         let noRescue:CombatRescue65.Event = .none
         guard dt>0 else {
             return Result(contacts:[],hitOutcomes:[],damageTransitions:[],
-                          rescueEvent:noRescue,pickupsTrackingSecond:0)
+                          rescueEvent:noRescue,
+                          requiresRescueDamageResolution:pendingRescueFailure != nil,
+                          pickupsTrackingSecond:0)
         }
         firstVitals?.advance(dt:dt)
         secondVitals?.advance(dt:dt)
@@ -120,12 +134,16 @@ struct CombatVerifiedEncounter556 {
                 firstFiring:firstFiring,secondFiring:secondFiring)
             second=partner
         }
+        if case .failed = rescueEvent {
+            pendingRescueFailure=rescueEvent
+        }
         encounter.first=first
         encounter.second=second
         encounter.firstSurvival=survivalFirst
         encounter.secondSurvival=survivalSecond
         return Result(contacts:frame.contacts,hitOutcomes:hit,
                       damageTransitions:transitions,rescueEvent:rescueEvent,
+                      requiresRescueDamageResolution:pendingRescueFailure != nil,
                       pickupsTrackingSecond:frame.pickupsTrackingSecond)
     }
 }
