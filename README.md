@@ -45,6 +45,12 @@ Port ma teraz także wszystkie trzy planety 320×220 z `GpuIntro41.cs:27–63`: 
 
 **Ograniczenia:** pikselowa antyaliasingowa rasteryzacja łuków i pierścieni Windows GDI+ jest przybliżeniem; nie jest gwarantowany wygląd 1:1. Natywna kompilacja aktualnych shaderów Apple Metal i uruchomienie na fizycznym iPhonie **nie zostały jeszcze potwierdzone**. Procent zadania 2 wynosi **64%**, nie 100%. [Pełny audyt](AUDYT_ZADANIE_2_v556_METAL_CAMERA.md) i [harmonogram](PORT_STATUS_18_TASKS.md).
 
+### Optymalizacja widoczności nieba iOS (aktualny stan zadania 2 — 65%)
+
+Zgodnie z oryginalnym `GpuIntro41.DrawSkyPlanet55/DrawSkyBlackHole55` i `GpuCosmos39.CloudLayer` duże obrazy proceduralne są teraz alokowane w Metal **dopiero przy pierwszym rzeczywistym pojawieniu się obiektu na ekranie**, nie w konstruktorze renderera. `SkyTextureGate55` zapobiega wielokrotnym alokacjom w każdej klatce, zachowując źródłową kolejność 24 dalekich chmur → 3 planety → czarna dziura → 12 bliskich chmur. W trybie płaskiej areny tworzenie **6 284 288 B nieskompresowanych danych tekstur BGRA8** zostaje odroczone. To wyliczenie rozmiaru danych, **nie wynik pomiaru VRAM lub FPS**. [Pełny Swift/Linux i statyczny kontrakt Metal — PASS, run 42081362292](https://github.com/synixad-png/asteroidy-ios/actions/runs/42081362292). Natywne Xcode/Apple Metal i ekran fizycznego iPhone'a **niepotwierdzone**.
+
+**Jednorazowa kompilacja IPA na polecenie użytkownika:** [GitHub Actions 42078976090](https://github.com/synixad-png/asteroidy-ios/actions/runs/42078976090) została zlecona **przed** tą optymalizacją, na commicie `d475b114`, a późniejsze commity nie są częścią jej snapshotu. Nie uruchamiano drugiego builda IPA i nie prowadzono automatycznego sprawdzania jego statusu. Plik IPA można uznać za gotowy dopiero po udanym zakończeniu workflow i opublikowaniu prawdziwego artefaktu.
+
 ### Stan portowania
 
 Zatwierdzona, niezmienna lista 18 zadań i procenty: [PORT_STATUS_18_TASKS.md](PORT_STATUS_18_TASKS.md). Dotychczas moduły 7 i 8 zamknięto implementacyjnie, ale nadal brakuje pełnej gry i testów dotykowych/Metal na urządzeniu. Do zamknięcia całej aplikacji konieczna jest sekwencyjna realizacja pozostałych etapów, zaczynając od **zadania 1: kompilacja i infrastruktura iOS**.
