@@ -8,6 +8,10 @@ on:
       - 'ASTEROIDYiOS/CombatVerifiedEncounter556.swift'
       - 'ASTEROIDYiOS/CombatRescue65.swift'
       - 'Tests/CombatVerifiedEncounter556Tests.swift'
+      - 'ASTEROIDYiOS/PlanetDamageLab556.swift'
+      - 'Tests/PlanetDamageLab556Tests.swift'
+      - 'ASTEROIDYiOS/App.swift'
+      - 'ASTEROIDYiOS/MetalRenderer.swift'
 
 jobs:
   verify-combat-no-ipa:
@@ -27,3 +31,11 @@ jobs:
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatRescue65.swift Tests/CombatRescue65Tests.swift -o /tmp/rescue-65
           /tmp/rescue-65
+      - name: Verify playable Boreas armor, hull and held Tarcza145
+        run: |
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/PlanetDamageLab556.swift Tests/PlanetDamageLab556Tests.swift -o /tmp/boreas-damage-lab556
+          /tmp/boreas-damage-lab556
+      - name: Syntax-parse active SwiftUI and Metal renderer (NO iOS build or IPA)
+        run: |
+          swiftc -frontend -parse ASTEROIDYiOS/App.swift
+          swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
