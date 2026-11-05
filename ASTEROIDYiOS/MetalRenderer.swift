@@ -45,6 +45,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private var damageLab = PlanetDamageLab556()
     private var previousDamageLabEnabled = false
     private var previousSectorTraining = false
+    private var activePlanetTestLevel = 1
     private var lastTime = CACurrentMediaTime()
     private var fixedClock = FixedStepClock()
     private let fixedClockStep: Double = 1.0 / 120.0
@@ -180,6 +181,23 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         if input.verifiedDamageLab != previousDamageLabEnabled {
             previousDamageLabEnabled=input.verifiedDamageLab
             damageLab=PlanetDamageLab556()
+        }
+        // The native playable Boreas diagnostic was previously hardwired
+        // to level 1. Switch only among source-audited test sectors:
+        // Gameplay65 waves 9/17 and AmigaOnly266 level 25.
+        // Do not claim campaign progress or reset unrelated flat GameCore.
+        let selected=input.planetTestLevel
+        if selected != activePlanetTestLevel &&
+           [1,9,17,25].contains(selected),
+           let balance=CombatBalance556(level:selected,difficulty:.normal,
+                                         spherical:true) {
+            sphereSector=SphereSector556(balance:balance)
+            var freshFlight=SphereFlight67()
+            freshFlight.position=Vec2(x:320,y:360)
+            freshFlight.camera=SphereCamera67(at:freshFlight.position)
+            sphereFlight=freshFlight
+            damageLab=PlanetDamageLab556()
+            activePlanetTestLevel=selected
         }
         let command = FlightCommand(turn:input.steer,throttle:input.thrust,fire:input.shooting)
         fixedClock.advance(elapsed:elapsed) {
