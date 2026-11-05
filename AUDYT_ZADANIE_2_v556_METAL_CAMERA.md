@@ -57,3 +57,22 @@ Zmiany wdrożone:
 - [GitHub Actions 42057687378](https://github.com/synixad-png/asteroidy-ios/actions/runs/42057687378): **PASS** dla testów źródłowego stempla, kamery i parsowania Swift. Nie jest to natywne renderowanie Metal/GPU ani dowód wizualny.
 
 Ograniczenia: szkicowa siatka asteroid i uproszczony, nierigowany eksport Vanguard nie są jeszcze wierną, kompletną rekonstrukcją źródłowych shaderów, tekstur, animacji GLB ani wszystkich efektów graficznych. Te braki wymagają dalszych etapów 2–5, bez przedstawiania ich jako zakończonych. Nie zmieniano workflow ani stanu IPA.
+
+## Niebo z oryginalnego ASTEROIDY v556 — weryfikacja i ograniczenia
+
+Oryginalne źródła z `Asteroidy_v556_ZRODLA_Windows_SteamOS_BEZ_EXE_BEZ_HANGARU.zip`:
+
+1. `Windows/src/GpuAmbient37.cs:6–7`: `SpaceHash207` i `SpaceRand207` — 32-bitowe mnożenie z przepełnieniem przez stałe `0x7feb352d` i `0x846ca68b`; wejście seed/index/salt miesza przez 73856093, 19349663, 83492791.
+2. `Windows/src/GpuIntro41.cs:452`: **1500** gwiazd, losowania `SpaceRand207(41,i,17/31/53/71)`; współrzędne kierunkowe `(cos(a)*sqrt(1-y²),y,sin(a)*sqrt(1-y²))`, `a=rx*6.2831853`, `y=ry*2-1`; rozmiar 0.7/1.4/2.8 piksela, dwa oryginalne odcienie: ciepły `RGBA(249,205,161,235)`, zimny `RGBA(186,214,244,220)`. Oryginał rysuje poświaty za pomocą `IntroHalo` na płaszczyźnie 2D.
+3. `Windows/src/GpuIntro41.cs:25–26`: `SkyProject55` wyświetla pozycję `direction*900` w orientacji `introView`, bez translacji oka, `focal=720`. `GpuSphere67.cs:420` rysuje niebo `IntroSky` **przed** planetą i obiektami, a scenę czyści kolorem `(.012,.021,.04,1)`.
+
+Przed zmianą `MetalRenderer.swift` rysował **zero** źródłowych gwiazd w podglądzie planety; jedyne `starMesh` było odrębną, 130-elementową dekoracją płaskiej areny.
+
+Nowe zachowanie:
+
+- `Sphere67.swift`: `SphereSky207` odtwarza dokładny hash i 1500 kierunków, wielkości oraz kolorów z C#. Źródłowy promień 900 jednostek dzielony jest przez `100*1.4419674` do skali importowanej planety.
+- `MetalRenderer.swift`: tworzy **raz** dodatkowy, statyczny bufor trójkątów oraz indeksów, umieszczony względem bieżącej pozycji kamery, nie zaś względem obracającego się statku. Wszystkie gwiazdy podlegają tej samej macierzy kamery i są emitowane **jednym rysowaniem GPU** przed planetą. Nie zmienia to LCG ani widoku płaskiej areny.
+- `MetalRenderer.swift`: w widoku planety wybiera dokładnie źródłowe `clearColor(.012,.021,.04,1)`, poza nim zachowuje wcześniejsze `(.01,.025,.07,1)`.
+- `Tests/SphereCameraView556Tests.swift`: sprawdza niezależne wartości wejściowe PRNG i kierunek pierwszej gwiazdy, 1500 unormowanych kierunków, właściwe skale i palety. [GitHub Actions 42060152260](https://github.com/synixad-png/asteroidy-ios/actions/runs/42060152260): **Swift/Linux PASS**, w tym parsowanie aktualnych plików SwiftUI/Metal.
+
+**Świadomie nieukończone:** obecny Metal rysuje **uproszczone, nieprzezroczyste trójkąty** w oryginalnych kierunkach i kolorach RGB; to nie są jeszcze oryginalne, przezroczyste, teksturowane poświaty `IntroHalo`, nie odtworzono ich wariantów jasności ani całego `IntroSky` (mgławice i promienie). Nie twierdzić, że jest to 100% zgodności wyglądu z oryginałem, ani że przeszło test iPhone/Apple GPU. Renderowany rezultat nie został obejrzany na fizycznym urządzeniu.
