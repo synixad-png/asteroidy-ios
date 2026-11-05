@@ -91,3 +91,28 @@ enum CombatHull556 {
         cooldown=max(0,cooldown-max(0,dt))
     }
 }
+
+
+// Game.cs v149 projectile arbitration contract. Robot, bug and boss-hazard
+// handlers preempt the rock/boss sweep in the ORIGINAL game. When both a
+// rock and boss could be hit, the first contact in time wins; at exactly the
+// same time a piercing projectile may affect both in source order.
+enum CombatTargetOrder556 {
+    enum Impact: Equatable { case robot, bug, bossHazard, rock(Int), boss }
+    static func impacts(robotHit:Bool=false,bugHit:Bool=false,
+                        bossHazardHit:Bool=false,
+                        rockIndex:Int?,rockTime:Float,
+                        bossTime:Float,pierce:Int=1) -> [Impact] {
+        if robotHit { return [.robot] }
+        if bugHit { return [.bug] }
+        if bossHazardHit { return [.bossHazard] }
+        let hasRock=rockIndex != nil && rockTime>=0 && rockTime<=1
+        let hasBoss=bossTime>=0 && bossTime<2
+        if hasRock && (!hasBoss || rockTime<=bossTime) {
+            var events:[Impact] = [.rock(rockIndex!)]
+            if pierce>1 && hasBoss && bossTime<=rockTime { events.append(.boss) }
+            return events
+        }
+        return hasBoss ? [.boss] : []
+    }
+}
