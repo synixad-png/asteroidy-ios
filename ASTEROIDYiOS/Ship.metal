@@ -53,7 +53,9 @@ vertex SkyPointOutput skyPointVertex(
     Vertex3D star = vertices[vid];
     SkyPointOutput out;
     out.position = scene.mvp * star.position;
-    out.pointSize = max(1.0f, star.material.x);
+    // scene.lighting.x carries drawableHeight/720 for this sky-only
+    // uniform. star.material.x remains the exact C# source pixel size.
+    out.pointSize = max(1.0f, star.material.x * scene.lighting.x);
     out.color = star.color;
     return out;
 }
