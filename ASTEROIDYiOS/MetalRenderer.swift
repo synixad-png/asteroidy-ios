@@ -25,6 +25,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     // Source GpuPlanet.DrawAtmosphere47 uses SRC_ALPHA/ONE_MINUS_SRC_ALPHA,
     // depth test ON, depth writes OFF, with no PBR illumination.
     let atmospherePipeline: MTLRenderPipelineState
+    // Windows GpuShip.cs v491 twin-engine additive flame triangles:
+    // entirely source-defined and GPU procedural, 1728 vertices.
+    let fighterPlasmaPipeline491: MTLRenderPipelineState
     let atmosphereDepthState: MTLDepthStencilState
     private let atmosphereMesh: GPUModel
     private let shipMesh: GPUModel
@@ -102,6 +105,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         let sceneVertex=try requireShader("sceneVertex")
         let sceneFragment=try requireShader("sceneFragment")
+        let fighterPlasmaVertex=try requireShader("fighterPlasmaVertex491")
+        let fighterPlasmaFragment=try requireShader("fighterPlasmaFragment491")
         let skyVertex=try requireShader("skyPointVertex")
         let skyFragment=try requireShader("skyPointFragment")
         let solarVertex=try requireShader("solarOverlayVertex")
@@ -129,6 +134,20 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         atmosphereBlend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
         atmospherePipeline=try device.makeRenderPipelineState(
             descriptor:atmosphereDesc)
+        let plasmaDescriptor=MTLRenderPipelineDescriptor()
+        plasmaDescriptor.vertexFunction=fighterPlasmaVertex
+        plasmaDescriptor.fragmentFunction=fighterPlasmaFragment
+        plasmaDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        plasmaDescriptor.depthAttachmentPixelFormat = .depth32Float
+        let plasmaBlend=plasmaDescriptor.colorAttachments[0]!
+        plasmaBlend.isBlendingEnabled=true
+        // Original GpuShip.cs:22 glBlendFunc(GL_SRC_ALPHA,GL_ONE).
+        plasmaBlend.sourceRGBBlendFactor = .sourceAlpha
+        plasmaBlend.destinationRGBBlendFactor = .one
+        plasmaBlend.sourceAlphaBlendFactor = .sourceAlpha
+        plasmaBlend.destinationAlphaBlendFactor = .one
+        fighterPlasmaPipeline491=try device.makeRenderPipelineState(
+            descriptor:plasmaDescriptor)
         // Source GpuIntro41 stars use RGBA and pixel dimensions. Keep a
         // dedicated blended POINT pipeline, independent of the existing
         // opaque PBR and flat training arena pipelines.
@@ -279,6 +298,13 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         var mvp: simd_float4x4
         var model: simd_float4x4
         var lighting: SIMD4<Float>
+    }
+    private struct FighterPlasmaUniforms491 {
+        var mvp: simd_float4x4
+        var engine0: SIMD4<Float>
+        var engine1: SIMD4<Float>
+        // Original GpuShip.DrawFighterMesh(time,power=1,side=0).
+        var frame: SIMD4<Float>
     }
     private static func octahedronIndices() -> [UInt32] { [0,2,4, 2,1,4, 1,3,4, 3,0,4, 2,0,5, 1,2,5, 3,1,5, 0,3,5] }
     private static func asteroidVertices() -> [AssetMesh.Vertex] {
@@ -1183,6 +1209,32 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                     IntroVanguard431.normalizedDorsalCorrection) *
                 Self.scale(IntroVanguard431.normalizedShipModelScale)
             drawMesh(shipMesh,craft)
+
+            // GpuIntro41.cs:493 calls DrawFighterMesh(time,1,0,false).
+            // GpuShip.cs:19–63: after opaque Vanguard, the original
+            // draws additive, unlit three-layer exhaust from the two
+            // actual v4311 binary nozzle positions. The procedural
+            // shader uses 1728 vertex_id calls, no per-frame CPU mesh.
+            // Plasma positions are ALREADY in original PC local units,
+            // so unlike the AS3D fighter we only apply world /144.19674.
+            let plasmaModel=Self.translation(ship.x,ship.y,ship.z) *
+                orientation * Self.rotateYDegrees(sin(introTime41*0.8)*7) *
+                Self.scale(inv)
+            let engineCenters=IntroEnginePlasma491.engineCenters
+            var plasmaUniform=FighterPlasmaUniforms491(
+                mvp:vp * plasmaModel,
+                engine0:SIMD4<Float>(engineCenters[0].x,
+                    engineCenters[0].y,engineCenters[0].z,0),
+                engine1:SIMD4<Float>(engineCenters[1].x,
+                    engineCenters[1].y,engineCenters[1].z,0),
+                frame:SIMD4<Float>(introTime41,1,
+                    IntroEnginePlasma491.visualSize,0))
+            encoder.setRenderPipelineState(fighterPlasmaPipeline491)
+            encoder.setDepthStencilState(atmosphereDepthState)
+            encoder.setVertexBytes(&plasmaUniform,
+                length:MemoryLayout<FighterPlasmaUniforms491>.stride,index:0)
+            encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                vertexCount:IntroEnginePlasma491.vertexCount)
 
             // Original GpuIntro41.cs:494 draws DrawAtmosphere47 AFTER
             // the planet AND fighter. It is a 3D dome facing the true
