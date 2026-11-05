@@ -307,7 +307,7 @@ struct GameCore {
         guard dt > 0 else { return }
         time += dt
         shotTimer -= dt
-        hitTimer = max(0, hitTimer - dt)
+        CombatHull556.advance(cooldown:&hitTimer,dt:dt)
         angle -= max(-1, min(1, command.turn)) * 3.4 * dt
         let forward = Vec2(x: -sin(angle), y: cos(angle))
         let thrust = max(0, min(1, command.throttle))
@@ -330,11 +330,10 @@ struct GameCore {
         // Ship contacts still use the swept segment of both moving bodies.
         for i in rocks.indices {
             let rock = rocks[i]
-            if hitTimer <= 0 && hull > 0 && Self.sweptHit(from:previousShip,to:nextShip,
+            if Self.sweptHit(from:previousShip,to:nextShip,
                 rockFrom:previousRocks[i],rockTo:previousRocks[i] + rock.motion*dt,
-                radius:rock.radius + 0.06,extent:extent) {
-                hull = max(0, hull - 1)
-                hitTimer = 1.3
+                radius:rock.radius + 0.06,extent:extent) &&
+               CombatHull556.applyContact(hull:&hull,cooldown:&hitTimer) {
                 velocity = velocity * -0.45
             }
         }
@@ -357,7 +356,7 @@ struct GameCore {
             }
             if let i=target {
                 if trainingBalance != nil { damageEvents[i,default:0] += 1 }
-                else { removeRocks.insert(i); score += 100 }
+                else if removeRocks.insert(i).inserted { score += 100 }
                 removeBolts.insert(j)
             }
         }
