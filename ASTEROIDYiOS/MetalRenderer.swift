@@ -22,6 +22,11 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     let nebulaOverlayPipeline: MTLRenderPipelineState
     let blackHolePipeline: MTLRenderPipelineState
     let skyDepthState: MTLDepthStencilState
+    // Source GpuPlanet.DrawAtmosphere47 uses SRC_ALPHA/ONE_MINUS_SRC_ALPHA,
+    // depth test ON, depth writes OFF, with no PBR illumination.
+    let atmospherePipeline: MTLRenderPipelineState
+    let atmosphereDepthState: MTLDepthStencilState
+    private let atmosphereMesh: GPUModel
     private let shipMesh: GPUModel
     private let asteroidMesh: GPUModel
     private let bulletMesh: GPUModel
@@ -111,6 +116,19 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         p.colorAttachments[0].pixelFormat = .bgra8Unorm
         p.depthAttachmentPixelFormat = .depth32Float
         pipeline = try device.makeRenderPipelineState(descriptor:p)
+        let atmosphereDesc=MTLRenderPipelineDescriptor()
+        atmosphereDesc.vertexFunction=sceneVertex
+        atmosphereDesc.fragmentFunction=sceneFragment
+        atmosphereDesc.colorAttachments[0].pixelFormat = .bgra8Unorm
+        atmosphereDesc.depthAttachmentPixelFormat = .depth32Float
+        let atmosphereBlend=atmosphereDesc.colorAttachments[0]!
+        atmosphereBlend.isBlendingEnabled=true
+        atmosphereBlend.sourceRGBBlendFactor = .sourceAlpha
+        atmosphereBlend.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        atmosphereBlend.sourceAlphaBlendFactor = .sourceAlpha
+        atmosphereBlend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
+        atmospherePipeline=try device.makeRenderPipelineState(
+            descriptor:atmosphereDesc)
         // Source GpuIntro41 stars use RGBA and pixel dimensions. Keep a
         // dedicated blended POINT pipeline, independent of the existing
         // opaque PBR and flat training arena pipelines.
@@ -185,6 +203,19 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         ds.isDepthWriteEnabled = true
         guard let depth = device.makeDepthStencilState(descriptor:ds) else { throw NSError(domain:"ASTEROIDY iOS",code:2) }
         depthState = depth
+        let atmoDepth=MTLDepthStencilDescriptor()
+        atmoDepth.depthCompareFunction = .less
+        atmoDepth.isDepthWriteEnabled = false
+        guard let atmosphericState=device.makeDepthStencilState(
+            descriptor:atmoDepth) else {
+            throw NSError(domain:"ASTEROIDY iOS",code:18,
+                userInfo:[NSLocalizedDescriptionKey:
+                    "Brak prawidłowego depth state atmosfery Boreas"])
+        }
+        atmosphereDepthState=atmosphericState
+        let atmosphericSource=IntroAtmosphere47.geometry()
+        atmosphereMesh=try Self.makeMesh(
+            device,atmosphericSource.vertices,atmosphericSource.indices)
         guard let url = Bundle.main.url(forResource:"Vanguard556",withExtension:"as3d")
             ?? Bundle.main.url(forResource:"Vanguard556",withExtension:"as3d",subdirectory:"Assets") else {
             throw NSError(domain:"ASTEROIDY iOS",code:3,userInfo:[NSLocalizedDescriptionKey:"Brak autentycznego modelu Vanguard556.as3d w aplikacji"])
@@ -1144,6 +1175,31 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 orientation * Self.rotateYDegrees(sin(introTime41*0.8)*7) *
                 Self.scale(SphereSurfaceStamp556.sourceCraftRadius*inv)
             drawMesh(shipMesh,craft)
+
+            // Original GpuIntro41.cs:494 draws DrawAtmosphere47 AFTER
+            // the planet AND fighter. It is a 3D dome facing the true
+            // source camera, depth-tested with depth writes disabled.
+            // This is the level-5 Boreas preview: use its verified
+            // PlanetBiome.Glow (#95DBFF), not a fabricated colour.
+            let atmoAxes=IntroAtmosphere47.basis(
+                center:IntroOrbit41.planetCenter,
+                eye:IntroOrbit41.frame(introTime41).eye)
+            let atmoScale=IntroOrbit41.introPlanetScale
+            let atmoModel=simd_float4x4(columns:(
+                SIMD4<Float>(atmoAxes.x.x*atmoScale,
+                             atmoAxes.x.y*atmoScale,
+                             atmoAxes.x.z*atmoScale,0),
+                SIMD4<Float>(atmoAxes.y.x*atmoScale,
+                             atmoAxes.y.y*atmoScale,
+                             atmoAxes.y.z*atmoScale,0),
+                SIMD4<Float>(atmoAxes.z.x*atmoScale,
+                             atmoAxes.z.y*atmoScale,
+                             atmoAxes.z.z*atmoScale,0),
+                SIMD4<Float>(center.x,center.y,center.z,1)
+            ))
+            encoder.setRenderPipelineState(atmospherePipeline)
+            encoder.setDepthStencilState(atmosphereDepthState)
+            drawMesh(atmosphereMesh,atmoModel,unlit:1)
             encoder.endEncoding()
             command.present(drawable)
             command.commit()
