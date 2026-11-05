@@ -28,7 +28,7 @@ import Foundation
         precondition(shield.remainingCharges==0)
         precondition(CombatFlatShield556.collide(
             ship:ship,angle:0,rockPosition:r,rockVelocity:v,rockRadius:31,
-            purchasedShieldCharges:0,tarczaAbsorbed:false)==.applyDamage)
+            purchasedShieldCharges:0,tarczaAbsorbed:false) == .applyDamage)
         // Directly overlapping ship/rock invokes Direction(angle+PI).
         let overlap=CombatFlatShield556.collide(
             ship:ship,angle:0,rockPosition:ship,
