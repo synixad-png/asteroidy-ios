@@ -15,10 +15,11 @@ struct SphereAsteroid556 {
     var fragment: Bool
     var shardLife: Float
     var mass: Float
+    var spin: Float
     init(position: Vec2, velocity: Vec2, radius: Float,
          size: Int = 3, tier: Int = 0, health: Int? = nil,
          fragment: Bool = false, shardLife: Float = 0,
-         mass: Float? = nil) {
+         mass: Float? = nil, spin: Float = 0) {
         self.position = Sphere67.canonical(position)
         self.velocity = velocity
         self.radius = radius
@@ -30,6 +31,7 @@ struct SphereAsteroid556 {
         self.fragment = fragment
         self.shardLife = shardLife
         self.mass = mass ?? (shardLife > 0 ? 0.09 : size == 3 ? 8 : size == 2 ? 4 : 2)
+        self.spin = spin
     }
     // Game.cs r.P = WorldAdvance67(..., dt * (SphereActive67 ? 1 : DangerSpeed))
     mutating func advance(dt: Float) {
