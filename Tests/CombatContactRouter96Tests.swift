@@ -46,6 +46,42 @@ import Foundation
             .applied(.lifeLost(remaining:1,respawnProtection:3,
                                cause:"ZDERZENIE Z BOSSEM"))
         ])
+        // HitByBoss shields all ApplyHit96 causes for one second,
+        // whereas the flat asteroid interception grants only .8 seconds.
+        var bossShield=CombatSurvival96()
+        bossShield.shieldCharges=2
+        let bossResult=Router.apply([.shipBoss],to:&bossShield,
+            level:10,difficulty:.normal,defense:.noneAbsorbed,isRobot:[])
+        precondition(bossResult == [
+            .applied(.shieldAbsorbed(remaining:1,cause:"ZDERZENIE Z BOSSEM"))
+        ])
+        precondition(bossShield.lives==3 && bossShield.invincible==1)
+        var sphereShield=CombatSurvival96()
+        sphereShield.shieldCharges=1
+        let sphereRock=Router.apply([.shipRock(0)],to:&sphereShield,
+            level:10,difficulty:.normal,defense:.noneAbsorbed,isRobot:[],
+            spherical:true)
+        precondition(sphereRock == [
+            .applied(.shieldAbsorbed(remaining:0,cause:"ASTEROIDA"))
+        ])
+        precondition(sphereShield.invincible==1)
+        var flatShield=CombatSurvival96()
+        flatShield.shieldCharges=1
+        let flatRock=Router.apply([.shipRock(0)],to:&flatShield,
+            level:10,difficulty:.normal,defense:.noneAbsorbed,isRobot:[],
+            spherical:false)
+        precondition(flatRock == [
+            .applied(.shieldAbsorbed(remaining:0,cause:"ASTEROIDA"))
+        ])
+        precondition(abs(flatShield.invincible-0.8)<0.0001)
+        var unshielded=CombatSurvival96()
+        unshielded.shieldCharges=2
+        let damageOnly=unshielded.applyUnblockedCollision(
+            level:10,difficulty:.normal,cause:"BOSS",damage:32)
+        precondition(damageOnly == .lifeLost(
+            remaining:2,respawnProtection:3,cause:"BOSS"))
+        precondition(unshielded.shieldCharges==0)
+
         var missing=CombatSurvival96()
         let noClassification=Router.apply([.shipBug(2)],to:&missing,
             level:1,difficulty:.easy,defense:.noneAbsorbed,isRobot:[false])
