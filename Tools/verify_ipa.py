@@ -3,6 +3,7 @@ import plistlib
 import struct
 import sys
 import zipfile
+from pathlib import Path
 
 with zipfile.ZipFile(sys.argv[1]) as archive:
     assert archive.testzip() is None, 'ZIP CRC error'
@@ -34,4 +35,16 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
     for name in ('Vanguard556.as3d', 'Boreas556.as3d', 'Boreas556.asmo', 'BoreasMorphBinding556.json', 'default.metallib'):
         assert any(p.startswith(root + '/') and p.endswith('/' + name) for p in paths), f'Missing resource: {name}'
     print(f'PASS: Payload, application, Info.plist, arm64, physical iOS, iOS 17.0, iPhone/iPad, bundled assets, ZIP CRC. Bundle: {info["CFBundleIdentifier"]}')
+    # Future truly-textured releases require both exact source assets.
+    # Existing historical unsigned IPA remains structurally valid when
+    # this optional flag is omitted: no retroactive breaking change.
+    if '--require-vanguard-original' in sys.argv[2:]:
+        import importlib.util
+        source=Path(__file__).with_name('verify_original_vanguard_resources.py')
+        spec=importlib.util.spec_from_file_location('source_vanguard_verify',source)
+        assert spec and spec.loader
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        module.inspect_assets(module.read_app_ipa(sys.argv[1]))
+        print('PASS: IPA contains ORIGINAL Vanguard431 12-float GPU UV mesh and 2048 JPEG')
     print('Not a signature or runtime test. Physical device and Sideloadly installation remain untested.')
