@@ -337,6 +337,32 @@ import Foundation
         precondition(menuRescued && !menuGate.rescue.down(.second))
         precondition(menuGate.encounter.secondSurvival.lives == 3)
 
+        // A failed 12-second rescue is not an ordinary ignored event.
+        // It must remain pending until the verified Game.Damage owner has
+        // resolved life loss; no invented damage is applied here.
+        var failedRescue=setup(true)
+        let failedStart=failedRescue.step(dt:1/120,
+            guardianFirst:.clear,guardianSecond:.clear,
+            talentFirst:.clear,talentSecond:.clear)
+        precondition(failedStart.hitOutcomes == [
+            V.TeamOutcome(player:.second,outcome:.downForRescue)])
+        failedRescue.encounter.rocks=[]
+        let expired=failedRescue.step(dt:12.1,
+            guardianFirst:.clear,guardianSecond:.clear,
+            talentFirst:.clear,talentSecond:.clear)
+        precondition(expired.rescueEvent == .failed(first:false,second:true))
+        precondition(expired.requiresRescueDamageResolution)
+        precondition(failedRescue.pendingRescueFailure ==
+                     .failed(first:false,second:true))
+        precondition(failedRescue.encounter.secondSurvival.lives==3)
+        let paused=failedRescue.step(dt:0)
+        precondition(paused.requiresRescueDamageResolution)
+        precondition(failedRescue.pendingRescueFailure != nil)
+        failedRescue.acknowledgeResolvedRescueFailure()
+        precondition(failedRescue.pendingRescueFailure == nil)
+        precondition(!failedRescue.step(dt:0)
+                      .requiresRescueDamageResolution)
+
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
