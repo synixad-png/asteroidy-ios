@@ -74,3 +74,20 @@ enum CombatDamage556 {
         (bestIndex == nil || candidateTime < bestTime)
     }
 }
+
+
+// Shared collision-damage response for the two iOS diagnostic arenas.
+// The full Game.ApplyHit96 armor/shield/co-op pipeline is a separate port.
+// This reducer deliberately never heals or restarts the player.
+enum CombatHull556 {
+    static func applyContact(hull:inout Int,cooldown:inout Float,
+                             damage:Int=1,invulnerability:Float=1.3) -> Bool {
+        guard hull>0 && cooldown<=0 && damage>0 else { return false }
+        hull=max(0,hull-damage)
+        cooldown=invulnerability
+        return true
+    }
+    static func advance(cooldown:inout Float,dt:Float) {
+        cooldown=max(0,cooldown-max(0,dt))
+    }
+}
