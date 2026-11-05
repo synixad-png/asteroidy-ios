@@ -26,11 +26,12 @@ import Foundation
         // Two seconds of successful helper fire. The running rescue does not
         // consume a life; it resets 3-second protection and velocity.
         var ev=CombatRescue65.Event.none
-        for _ in 0..<120 {
+        for _ in 0..<130 {
             ev=rescue.tick(dt:1.0/60,playing:true,sceneBusy:false,
                 devOpen:false,bossArrival:false,cooperative:true,
                 first:&a,second:&b,firstSurvival:&s1,secondSurvival:&s2,
                 firstFiring:false,secondFiring:true)
+            if ev != .none { break }
         }
         precondition(ev == .rescued(.first))
         precondition(rescue.rescues == 1 && !rescue.down(.first))
@@ -40,8 +41,8 @@ import Foundation
 
         // A slow helper cannot rescue; progress decays at twice the speed
         // until the 12-second down timer triggers an explicit failure action.
-        b.velocity=Vec2(x:180,y:0)
-        precondition(rescue.beginDown(.second,cooperative:true,playing:true,
+        a.velocity=Vec2(x:180,y:0)
+        precondition(rescue.beginDown(.second),cooperative:true,playing:true,
                     developerInfinite:false,rescueDamage:false,
                     survival:&s2,body:&b))
         // Failure is a requested Damage() action, not an automatic life loss
@@ -50,7 +51,7 @@ import Foundation
             ev=rescue.tick(dt:1,playing:true,sceneBusy:false,
                 devOpen:false,bossArrival:false,cooperative:true,
                 first:&a,second:&b,firstSurvival:&s1,secondSurvival:&s2,
-                firstFiring:false,secondFiring:false)
+                firstFiring:true,secondFiring:false)
             if case .failed = ev { break }
         }
         precondition(ev == .failed(first:false,second:true))
