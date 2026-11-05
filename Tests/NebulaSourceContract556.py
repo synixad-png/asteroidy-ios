@@ -37,7 +37,7 @@ for t in (
 
 for t in (
     "private let nebulaOverlayMesh: GPUModel",
-    "private let nebulaTexture: MTLTexture",
+    "private var nebulaTexture: MTLTexture?",
     "let nebulaVertex=try requireShader(\"nebulaOverlayVertex\")",
     "let nebulaFragment=try requireShader(\"nebulaOverlayFragment\")",
     "nebulaDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm",
@@ -49,7 +49,7 @@ for t in (
     "bytesPerRow:n*4,bytesPerImage:n*n*4",
     "let cloudData=Self.nebulaSource556()",
     "nebulaOverlayMesh=try Self.makeMesh(device,cloudData.0,cloudData.1)",
-    "nebulaTexture=try Self.makeNebulaTextures556(device)",
+    "let created=try Self.makeNebulaTextures556(device)",
     "vertices.reserveCapacity(SphereNebula556.orbitLayerCount*6)",
     "encoder.setVertexBuffer(",
     "nebulaOverlayMesh.vertices,offset:0,index:0)",
