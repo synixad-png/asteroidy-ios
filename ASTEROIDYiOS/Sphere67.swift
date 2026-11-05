@@ -113,6 +113,44 @@ struct SphereCamera67 {
     }
 }
 
+/// Source-verified camera frame for the existing spherical diagnostic.
+/// Windows/src/SphereCombat67.cs:62 updates SphereFocus67 / Right67 / Up67.
+/// Windows/src/GpuSphere67.cs:414 puts the view eye 310 original world units
+/// away from the center and looks back to the origin with SphereUp67.
+/// Windows/src/GpuPlanetGltf463.cs defines the original planet outer radius
+/// as 100 * 1.4419674. Our Metal Boreas is normalized to a unit outer radius.
+///
+/// This is a CAMERA transform only. It never mutates flight, collision,
+/// missions, asteroid positions, or the independent flat-space camera.
+struct SphereCameraView556 {
+    static let originalPlanetOuterRadius: Float = 100 * 1.4419674
+    static let originalCameraRadius: Float = 310
+    static let normalizedEyeDistance: Float =
+        originalCameraRadius / originalPlanetOuterRadius
+
+    let eye: SphereVector3
+    let right: SphereVector3
+    let up: SphereVector3
+    let back: SphereVector3
+
+    init(camera: SphereCamera67) {
+        back = camera.focus.normalized
+        right = camera.right.normalized
+        up = SphereVector3.cross(back, right).normalized
+        eye = back * Self.normalizedEyeDistance
+    }
+
+    /// Maps a world point into the original OrbitWorld50.View camera frame.
+    /// The camera is looking toward -Z; the planet center maps to (0,0,-eye).
+    func cameraSpace(_ world: SphereVector3) -> SphereVector3 {
+        let delta = world - eye
+        return SphereVector3(
+            x: SphereVector3.dot(right, delta),
+            y: SphereVector3.dot(up, delta),
+            z: SphereVector3.dot(back, delta))
+    }
+}
+
 // Independent v556 spherical flight testbed. Do not replace GameCore until
 // platform render projection and v556 combat units have been calibrated.
 struct SphereFlight67 {
