@@ -87,6 +87,17 @@ import Foundation
         precondition(shieldLab.lives==3 && shieldLab.deathCount==0)
         precondition(shieldLab.survival.invincible==1)
         precondition(shieldLab.armor==25 && shieldLab.hull==60)
+        var (guardSector,guardFlight)=create()
+        var guardLab=PlanetDamageLab556(guardianOwned:true)
+        let guardContact=contact(&guardSector,&guardFlight)
+        precondition(guardContact==1)
+        let intercepted=guardLab.advance(dt:1/120,contacts:guardContact,
+            sector:&guardSector,flight:&guardFlight)
+        precondition(intercepted == .guardianAbsorbed)
+        precondition(guardLab.guardian.charges==0)
+        precondition(guardLab.lives==3 && guardLab.armor==25 &&
+                     guardLab.hull==60)
+        precondition(guardLab.survival.invincible==1.2)
         print("PASS: Boreas live Physics68 collision -> source 25 armor/60 hull -> 3 lives -> 4.5s respawn -> game over; purchased shield")
     }
 }
