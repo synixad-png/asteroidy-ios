@@ -21,6 +21,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private let asteroidMesh: GPUModel
     private let bulletMesh: GPUModel
     private let starMesh: GPUModel
+    private let sphereSkyMesh: GPUModel
     private let planetVertexBuffers: [MTLBuffer]
     private let planetBufferSlots = MorphBufferSlots(count: 3)
     private let planetIndices: MTLBuffer
@@ -78,6 +79,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         bulletMesh = try Self.makeMesh(device, Self.bulletVertices(), Self.octahedronIndices())
         let starData = Self.stars()
         starMesh = try Self.makeMesh(device, starData.0, starData.1)
+        let sphereSkyData=Self.sphereSky207()
+        sphereSkyMesh=try Self.makeMesh(device,sphereSkyData.0,sphereSkyData.1)
         // Only use the verified v556 Boreas GLB conversion when bundled.
         // Never silently claim that the diagnostic UV sphere is an imported asset.
         guard let planetURL = Bundle.main.url(forResource:"Boreas556",withExtension:"as3d")
@@ -149,6 +152,46 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         return (vertices,indices)
     }
+    /// Windows GpuIntro41.IntroSky + GpuAmbient37.SpaceRand207 sky.
+    /// The original 1500 deterministic directions, sizes and tints are
+    /// preserved; a single static Metal buffer substitutes small triangles
+    /// for the original screen-space textured glow quads (not yet ported).
+    /// Keep the existing flat-arena stars exactly as before.
+    private static func sphereSky207() -> ([AssetMesh.Vertex],[UInt32]) {
+        var vertices:[AssetMesh.Vertex]=[]
+        var indices:[UInt32]=[]
+        vertices.reserveCapacity(SphereSky207.count*3)
+        indices.reserveCapacity(SphereSky207.count*3)
+        let radius=SphereSky207.normalizedSkyRadius
+        for i in 0..<SphereSky207.count {
+            let star=SphereSky207.star(i)
+            let d=SIMD3<Float>(star.direction.x,star.direction.y,
+                                star.direction.z)
+            let reference:SIMD3<Float>=abs(d.y)<0.95
+                ? SIMD3(0,1,0) : SIMD3(1,0,0)
+            let right=simd_normalize(simd_cross(reference,d))
+            let up=simd_normalize(simd_cross(d,right))
+            let center=d*radius
+            // Original GpuIntro41 SkyProject55 uses focal=720 pixels.
+            // Local tangent triangles retain the star's angular size
+            // without per-frame rebuilds or per-star GPU draw calls.
+            let size=star.pixelSize*radius/SphereSky207.originalScreenHeight
+            let tint=SIMD4<Float>(star.red,star.green,star.blue,1)
+            let base=UInt32(vertices.count)
+            let triangle:[SIMD3<Float>]=[
+                center-right*size-up*size,
+                center+right*size-up*size,
+                center+up*size]
+            for p in triangle {
+                vertices.append(AssetMesh.Vertex(
+                    position:SIMD4(p.x,p.y,p.z,1),
+                    color:tint,normal:SIMD4(d.x,d.y,d.z,0)))
+            }
+            indices.append(contentsOf:[base,base+1,base+2])
+        }
+        return (vertices,indices)
+    }
+
     private static func translation(_ x: Float,_ y: Float,_ z: Float) -> simd_float4x4 {
         simd_float4x4(columns:(SIMD4(1,0,0,0),SIMD4(0,1,0,0),SIMD4(0,0,1,0),SIMD4(x,y,z,1)))
     }
@@ -348,6 +391,14 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             encoder.drawIndexedPrimitives(type:.triangle,indexCount:mesh.count,indexType:.uint32,indexBuffer:mesh.indices,indexBufferOffset:0)
         }
         if input.planetPreview {
+            // Source GpuIntro41.IntroSky is a camera-relative distant sky
+            // with 1500 deterministic SpaceRand207 star directions.
+            // One static draw call; the sky tracks only the eye POSITION,
+            // while sphereView rotates with the actual planet camera.
+            let skyEye=cameraFrame.eye
+            drawMesh(sphereSkyMesh,
+                     Self.translation(skyEye.x,skyEye.y,skyEye.z),
+                     unlit:1)
             // Triple-buffered morph uploads. Never write into a buffer referenced by
             // an outstanding GPU command, and never allocate a new MTLBuffer per morph.
             if lastPlanetMorphUpload < 0 || planetAnimationTime - lastPlanetMorphUpload >= 1.0/30.0 {
