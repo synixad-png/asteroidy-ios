@@ -185,7 +185,16 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                     let heading = Vec2(x:cos(sphereFlight.heading),y:sin(sphereFlight.heading))
                     sphereSector.fire(from:sphereFlight.position,direction:heading)
                 }
-                sphereSector.tick(dt:Float(fixedClockStep),playerPosition:sphereFlight.position)
+                if let shipContact=sphereSector.tick(
+                    dt:Float(fixedClockStep),playerPosition:sphereFlight.position,
+                    playerRadius:11.2,playerVelocity:sphereFlight.velocity,shipMass:2.4) {
+                    sphereFlight.position=shipContact.position
+                    sphereFlight.velocity=shipContact.velocity
+                    if shipContact.contacts>0 {
+                        sphereFlight.camera.update(target:shipContact.position,
+                                                   dt:Float(fixedClockStep))
+                    }
+                }
             } else {
                 game.tick(command,dt:Float(fixedClockStep))
             }
