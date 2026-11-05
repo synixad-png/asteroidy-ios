@@ -102,5 +102,5 @@ jobs:
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
             -derivedDataPath /tmp/asteroidy-ios-verify-only build \
             2>&1 | tee /tmp/asteroidy-ios-compile-only.log
-          test -f /tmp/asteroidy-ios-verify-only/Build/Products/Debug-iphoneos/ASTEROIDYiOS.app/Info.plist
+          test -f '/tmp/asteroidy-ios-verify-only/Build/Products/Debug-iphoneos/ASTEROIDY iOS.app/Info.plist'
           echo "PASS: native iOS project compiles; no package, IPA, or artifact created."
