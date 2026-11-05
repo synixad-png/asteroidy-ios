@@ -8,6 +8,12 @@ struct CombatVerifiedEncounter556 {
     var domeFirst=CombatTarcza145()
     var domeSecond=CombatTarcza145()
     var rescue=CombatRescue65()
+    // Optional real v556 defensive state. Nil preserves the older
+    // explicitly-unverified collision harness, never inventing ownership.
+    var firstGuardian:CombatGuardian37?=nil
+    var secondGuardian:CombatGuardian37?=nil
+    var firstVitals:CombatTalentVitals78?=nil
+    var secondVitals:CombatTalentVitals78?=nil
     var headingFirst:Float = -Float.pi/2
     var headingSecond:Float = -Float.pi/2
     var shots:[SphereBolt556]=[]
@@ -39,6 +45,8 @@ struct CombatVerifiedEncounter556 {
             return Result(contacts:[],hitOutcomes:[],damageTransitions:[],
                           rescueEvent:noRescue,pickupsTrackingSecond:0)
         }
+        firstVitals?.advance(dt:dt)
+        secondVitals?.advance(dt:dt)
         let firstDown=rescue.down(.first),secondDown=rescue.down(.second)
         domeFirst.tick(dt:dt,held:firstDomeHeld,
                        playing:encounter.firstSurvival.playing,shipDown:firstDown)
@@ -63,10 +71,12 @@ struct CombatVerifiedEncounter556 {
             rescue:&rescue,developerInfinite:developerInfinite,
             guardianFirst:guardianFirst,guardianSecond:guardianSecond,
             talentFirst:talentFirst,talentSecond:talentSecond,
-            isRobot:robotFlags)
+            isRobot:robotFlags,
+            vitalsFirst:firstVitals,vitalsSecond:secondVitals,
+            guardianStateFirst:firstGuardian,guardianStateSecond:secondGuardian)
 
-        // The scene still owns ResetVitals78, rendered explosions and
-        // bullets outside this collision harness. Report exact transitions.
+        // CombatVerifiedHit556 resets actual gauges on life loss/game over;
+        // rendered explosions and weapons remain external to this harness.
         var transitions:[CombatRespawn556.Action]=[]
         var rocks=encounter.rocks
         var projectiles=shots
