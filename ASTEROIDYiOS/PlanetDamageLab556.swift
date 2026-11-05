@@ -7,6 +7,7 @@ import Foundation
 struct PlanetDamageLab556 {
     private(set) var survival=CombatSurvival96()
     private(set) var dome=CombatTarcza145()
+    private(set) var vitals=CombatTalentVitals78()
     private var rescue=CombatRescue65()
     private var scatterSeed:UInt32=0x556A9805
     private(set) var lastOutcome:CombatVerifiedHit556.Outcome = .ignored
@@ -18,6 +19,8 @@ struct PlanetDamageLab556 {
     }
 
     var lives:Int {survival.lives}
+    var hull:Int {vitals.hull}
+    var armor:Int {vitals.armor}
     var gameOver:Bool {!survival.playing}
 
     /// Ship/rock impulses have already been resolved by SphereSector556;
@@ -31,6 +34,7 @@ struct PlanetDamageLab556 {
                           -> CombatVerifiedHit556.Outcome {
         guard dt>0 else {return .ignored}
         survival.advance(dt:dt)
+        vitals.advance(dt:dt)
         dome.tick(dt:dt,held:false,playing:survival.playing,shipDown:false)
         guard contacts>0 && survival.playing else {
             lastOutcome = .ignored
@@ -42,7 +46,7 @@ struct PlanetDamageLab556 {
             level:level,difficulty:difficulty,player:.first,
             survival:&survival,body:&body,dome:&dome,rescue:&rescue,
             cooperative:false,developerInfinite:false,
-            guardian:.clear,talent:.clear)
+            guardian:.clear,talent:.clear,vitals:vitals)
         if case .applied(let hit)=outcome {
             var rockState=sector.asteroids
             var shots=sector.bolts
