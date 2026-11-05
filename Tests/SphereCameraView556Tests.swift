@@ -146,6 +146,14 @@ import Foundation
         // from the Swift helper itself. Star array is never randomized
         // from a different LCG (the old flat arena still keeps its LCG).
         precondition(SphereSky207.count==1500)
+        // Source SkyProject55 assumes a 720 px projection; Metal uses
+        // native drawable pixels. Retina scaling preserves angular size
+        // without changing original 0.7/1.4/2.8px source attributes.
+        near(SphereSky207.drawableScale(height:720),1)
+        near(SphereSky207.drawableScale(height:1440),2)
+        near(SphereSky207.drawableScale(height:360),0.5)
+        near(SphereSky207.drawableScale(height:0),1)
+        near(SphereSky207.drawableScale(height:.nan),1)
         near(SphereSky207.normalizedSkyRadius,
              900/(100*1.4419674))
         near(SphereSky207.spaceRand207(41,0,17),0.890627497,
