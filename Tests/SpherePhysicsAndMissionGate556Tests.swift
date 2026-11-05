@@ -55,6 +55,8 @@ import Foundation
         precondition(physical.destroyedRocks == 1 && physical.asteroids.count == 2)
         let a=physical.asteroids[0],b=physical.asteroids[1]
         precondition(a.size==2 && b.size==2 && a.tier==2 && b.tier==2)
+        near(a.mass, staticParent.mass*0.5, 0.001)
+        near(b.mass, staticParent.mass*0.5, 0.001)
         let sep:Float=18*1.12*0.75 + 1
         near(sqrt(Sphere67.delta(target:a.position,origin:staticParent.position).lengthSquared),sep,0.15)
         near(sqrt(Sphere67.delta(target:b.position,origin:staticParent.position).lengthSquared),sep,0.15)
@@ -82,6 +84,6 @@ import Foundation
         ] {
             precondition(!clean.canFinishRealMission(threats))
         }
-        print("PASS: 78 geodesic spawn profiles, difficulty speed, physical split, tangent transport, and enemy/boss gate")
+        print("PASS: 78 geodesic profiles, physical split, inherited child mass, tangent transport and mission gate")
     }
 }
