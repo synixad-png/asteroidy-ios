@@ -24,7 +24,7 @@ enum CombatFlatShield556 {
         guard let tarczaAbsorbed else { return .defenseUnverified }
         let delta=rockPosition-ship
         let distance=sqrt(delta.lengthSquared)
-        let backwards=Vec2(x:cos(angle+.pi),y:sin(angle+.pi))
+        let backwards=Vec2(x:cos(angle + .pi),y:sin(angle + .pi))
         let direction=distance>0.1 ? delta*(1/distance) : backwards
         let speed=sqrt(rockVelocity.lengthSquared)
         if tarczaAbsorbed {
