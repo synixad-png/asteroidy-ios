@@ -53,7 +53,7 @@ for t in (
     "vertices.reserveCapacity(SphereNebula556.orbitLayerCount*6)",
     "encoder.setVertexBuffer(",
     "nebulaOverlayMesh.vertices,offset:0,index:0)",
-    "encoder.setFragmentTexture(nebulaTexture,index:0)",
+    "encoder.setFragmentTexture(clouds,index:0)",
     "vertexCount:24*6",
     "vertexStart:24*6,vertexCount:12*6",
     "encoder.setDepthStencilState(depthState)",
