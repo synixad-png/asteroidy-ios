@@ -45,11 +45,19 @@ Port ma teraz także wszystkie trzy planety 320×220 z `GpuIntro41.cs:27–63`: 
 
 **Ograniczenia:** pikselowa antyaliasingowa rasteryzacja łuków i pierścieni Windows GDI+ jest przybliżeniem; nie jest gwarantowany wygląd 1:1. Natywna kompilacja aktualnych shaderów Apple Metal i uruchomienie na fizycznym iPhonie **nie zostały jeszcze potwierdzone**. Procent zadania 2 wynosi **64%**, nie 100%. [Pełny audyt](AUDYT_ZADANIE_2_v556_METAL_CAMERA.md) i [harmonogram](PORT_STATUS_18_TASKS.md).
 
-### Optymalizacja widoczności nieba iOS (aktualny stan zadania 2 — 65%)
+### Optymalizacja widoczności nieba iOS (poprzedni etap zadania 2 — 65%)
 
 Zgodnie z oryginalnym `GpuIntro41.DrawSkyPlanet55/DrawSkyBlackHole55` i `GpuCosmos39.CloudLayer` duże obrazy proceduralne są teraz alokowane w Metal **dopiero przy pierwszym rzeczywistym pojawieniu się obiektu na ekranie**, nie w konstruktorze renderera. `SkyTextureGate55` zapobiega wielokrotnym alokacjom w każdej klatce, zachowując źródłową kolejność 24 dalekich chmur → 3 planety → czarna dziura → 12 bliskich chmur. W trybie płaskiej areny tworzenie **6 284 288 B nieskompresowanych danych tekstur BGRA8** zostaje odroczone. To wyliczenie rozmiaru danych, **nie wynik pomiaru VRAM lub FPS**. [Pełny Swift/Linux i statyczny kontrakt Metal — PASS, run 42081362292](https://github.com/synixad-png/asteroidy-ios/actions/runs/42081362292). Natywne Xcode/Apple Metal i ekran fizycznego iPhone'a **niepotwierdzone**.
 
 **Jednorazowa kompilacja IPA na polecenie użytkownika:** [GitHub Actions 42078976090](https://github.com/synixad-png/asteroidy-ios/actions/runs/42078976090) została zlecona **przed** tą optymalizacją, na commicie `d475b114`, a późniejsze commity nie są częścią jej snapshotu. Nie uruchamiano drugiego builda IPA i nie prowadzono automatycznego sprawdzania jego statusu. Plik IPA można uznać za gotowy dopiero po udanym zakończeniu workflow i opublikowaniu prawdziwego artefaktu.
+
+### Ładowanie oryginalnych planet i mgławic dopiero przy widoczności (aktualny etap — 67%)
+
+Zgodnie z prawdziwym `Windows/src/GpuIntro41.cs` i `GpuCosmos39.cs` generowanie bitmap jest teraz osobne dla **każdego** z 3 stylów planet tła i 2 motywów mgławic. Wcześniej pierwsza widoczna planeta/chmura wyzwalała obliczenie wszystkich odpowiednich obrazów; obecnie `SkyTextureSliceCache55` i `MetalRenderer.ensureDeepPlanetTextures55(style:)` / `ensureCloudTextures55(camera:)` odraczają obliczenie i przesłanie każdej bitmapy do pierwszej widoczności jej własnego stylu/motywu. Każdy już przesłany obraz jest współdzielony i nie powstaje od nowa w każdej klatce.
+
+Zachowano istniejące dwie tablice tekstur Metal (3 i 2 warstwy), palety i geometrię oryginału, projekcję, shadery, mieszanie PArgb oraz kolejność 24 dalekie chmury → planety → czarna dziura → 12 bliskich chmur → gwiazdy i słońce. **To nie oznacza zmierzonego wzrostu FPS ani oszczędności VRAM:** rozmiar tablic GPU jest niezmieniony; odroczono pracę CPU i upload niewidocznych obrazów.
+
+Doprecyzowano testy 6 kolejności planet i obu motywów mgławic. Izolowany test cache w Swift/Linux i 14 kontroli statycznych na aktualnych źródłach zakończyły się **PASS**; pełne źródłowe testy GitHub Actions najnowszego commita oraz natywne kompilacje Apple/Xcode/Metal **nie mają jeszcze potwierdzonego wyniku**. Rzeczywisty obraz i wydajność na iPhone/iPad **nie były zweryfikowane**. Nie zlecano kolejnego IPA. [Raport z 18 zadaniami](PORT_STATUS_18_TASKS.md) i [pełny audyt](AUDYT_ZADANIE_2_v556_METAL_CAMERA.md).
 
 ### Stan portowania
 
