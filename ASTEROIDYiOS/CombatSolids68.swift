@@ -37,7 +37,9 @@ enum CombatSolids68 {
                                     radius:a.radius,mass:a.mass)
         var rockB=SphereAsteroid556(position:b.position,velocity:b.velocity,
                                     radius:b.radius,mass:b.mass)
-        guard SphereRockContact68.resolve(&rockA,&rockB,restitution:restitution)
+        guard SphereRockContact68.resolve(&rockA,&rockB,
+                                          restitution:restitution,
+                                          applyRockSpin:false)
         else {return false}
         a.position=rockA.position
         a.velocity=rockA.velocity
@@ -50,7 +52,9 @@ enum CombatSolids68 {
                                   restitution:Float) -> Bool {
         var rockA=SphereAsteroid556(position:a.position,velocity:a.velocity,
                                     radius:a.radius,mass:a.mass)
-        guard SphereRockContact68.resolve(&rockA,&r,restitution:restitution)
+        guard SphereRockContact68.resolve(&rockA,&r,
+                                          restitution:restitution,
+                                          applyRockSpin:false)
         else { return false }
         a.position=rockA.position
         a.velocity=rockA.velocity
