@@ -23,6 +23,7 @@ on:
       - 'Tests/CombatHazards68Tests.swift'
       - 'Tests/CombatDamageShared556Tests.swift'
       - 'Tests/SphereCombatBatch556Tests.swift'
+      - 'Tests/Action38FrameOrder556Tests.swift'
       - 'Tests/SpherePhysicsAndMissionGate556Tests.swift'
       - 'Tests/RockCombat556Tests.swift'
 
@@ -78,7 +79,9 @@ jobs:
             SpherePhysicsAndMissionGate556Tests \
             RockCombat556Tests \
             SphereSector556Tests \
-            ContinuousCollisionTests; do
+            ContinuousCollisionTests \
+            Action38SphereQuota556Tests \
+            Action38FrameOrder556Tests; do
             echo "Verifying $test"
             swiftc $sources "Tests/$test.swift" -o /tmp/source-physics68-test
             /tmp/source-physics68-test
