@@ -2,7 +2,7 @@
 
 Źródło kolejności/nazw: zatwierdzony przez użytkownika zrzut harmonogramu 18 zadań z 2026-11-05. Nie zmieniać nazw ani zakresów bez decyzji użytkownika.
 
-**Łączny postęp odniesienia: 27%; pozostało 73%.** Zachowany wynik zbiorczy, bez zmiany wag innych zadań. **Zadanie 7 — Kolizje, obrażenia i zniszczenia: 100% IMPLEMENTACJI MODUŁU (poprzednio 97%, +3 pp; 0% prac implementacyjnych pozostałych w zakresie modułu)**. Kod porównano z oryginalnym `Windows/src/Physics68.cs`, `Game.cs`, `Gameplay65.cs`, `Coop62.cs`, `Tarcza145.cs`, `Talents78.cs` i `BossTunnelGame.cs` v556. Dokończono poprawki: obroty skał wyłącznie po rock/rock, brak błędnego szybkiego odrzucania niekanonicznych punktów, rozliczenie obrażeń/ratowania i wspólne zasoby kooperacji, zniszczenia i podziały skał, aktywna tarcza w grywalnej ścieżce Boreas. `42042348199`: 25/25 wykonywanych programów testowych Swift/Linux PASS (22 z macierzy + 3 już istniejące zestawy), parsowanie SwiftUI/Metal PASS. Natywny Xcode iPhoneOS **BUILD SUCCEEDED** dla aktualnego kodu Swift w `42040847979`; tamten workflow zwrócił FAIL wyłącznie przez błędną ścieżkę kontrolną `.app`, która została poprawiona w repo. Odrębna ponowna kontrola macOS była jeszcze w kolejce przy aktualizacji dokumentu. **Nie utworzono IPA.** Test interaktywny na fizycznym urządzeniu nie został wykonany i pozostaje w zadaniu 18. Wrogie AI, komplet bossów, broni i misji pozostają własnością zadań 9–13; dostępne API obrażeń przyjmuje ich obiekty, lecz nie należy deklarować implementacji tamtych systemów. **Zadanie 8: 96% bez zmian.**
+**Łączny postęp odniesienia: 27%; pozostało 73%.** To zachowany wynik zbiorczy, bez ponownego ważenia 18 zadań. **Zadanie 7 — Kolizje, obrażenia i zniszczenia: 100% implementacji modułu, bez zmian. Zadanie 8 — Asteroidy i fale walki: 100% implementacji modułu (poprzednio 96%, +4 pp).** W oryginalnym kodzie C# v556 zweryfikowano `Game.Wave`, `Action38`, `Balance70`, `Physics68`, `AmigaBounce265` i `Game.Step`. Przeniesiono wytrzymałość i skalę skał, w tym +1 HP dla Coop62, kolejność wygasania odłamków/ruchu/posiłków/kolizji/strzałów, ostrzeżenie o posiłkach 1.6 s, 3 fale 16-sekundowe i specyficzną niezniszczalną mechanikę odbijanych kul sektora 25. **Swift/Linux: 25/25 zestawów PASS w GitHub Actions `42048306311`, commit `07afc65a61a1fcb4efe4a2e983f2a9131a1d8f63`.** Osobna kontrola natywnej kompilacji Apple w tym przebiegu **czekała w kolejce** podczas raportowania — nie wolno twierdzić, że jej wynik PASS jest znany. iOS/Metal nie zostały interaktywnie sprawdzone na rzeczywistym urządzeniu (etap 18). **Nie utworzono IPA.** Zrealizowane zadania 7 i 8 podlegają regresji, nie rozpoczynać ich od nowa. AI, bossowie, wszystkie bronie, komplet misji oraz kampania nadal należą do osobnych zadań 9–13.
 
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
@@ -13,7 +13,7 @@
 | 5 | Animacje modeli GLB | 35% |
 | 6 | Fizyka lotu i poruszanie po planetach | 35% |
 | 7 | Kolizje, obrażenia i zniszczenia | 100% |
-| 8 | Asteroidy i fale walki | 96% |
+| 8 | Asteroidy i fale walki | 100% |
 | 9 | Wszystkie bronie i efekty trafień | 10% |
 | 10 | Przeciwnicy i sztuczna inteligencja | 0% |
 | 11 | Bossowie i ich mechaniki | 0% |
@@ -30,18 +30,19 @@
 - Zadanie 7: moduły CombatVerifiedHit556, CombatTalentVitals78, CombatGuardian37, CombatVerifiedEncounter556 i PlanetDamageLab556; testy co-op, boss-body, robot collision i sekwencja obrażeń do respawnu.
 - Testy: `Tests/CombatVerifiedEncounter556Tests.swift`, m.in. trzy życia, GameOver, dwaj gracze, obie gałęzie FailRescue, odzyskanie pełnego zdrowia po ratowaniu i dwa kontakty w jednej klatce przy wspólnych tarczach i strażniku — GitHub Actions Swift/Linux `42034275258` PASS. Nie wykonano kompilacji iOS/IPA dla tych zmian, zgodnie z poleceniem użytkownika.
 - Oryginalne źródła C# oraz decyzje portowania udokumentowano w `AUDYT_GRA_V556_FAIL_RESCUE_SOURCE.md`. Domyślny konstruktor dwuosobowy włącza źródłowy tryb wspólnych zasobów; dawny tryb niezależny wymaga jawnego `independentDiagnosticCoop:true` i służy wyłącznie regresjom.
-- Kompilacja iOS tworzy niepodpisany IPA; nie mylić z testem na fizycznym iPhonie/iPadzie.
+- Kompilacja kontrolna Xcode `build` w workflow `verify-combat-only.yml` sprawdza natywne źródła, ale **nie tworzy IPA**. Inny, celowo nieuruchamiany workflow `build-ios.yml` kompiluje oraz pakuje IPA.
 - Wydanie testowe IPA z zakończonego przebiegu 42027976783 pochodzi z commita 596767b i nie obejmuje późniejszych zmian.
 
 
-- Grywalna ścieżka Boreas: `PlanetDamageLab556` steruje oryginalnym `Tarcza145` przez dotykowe przytrzymanie w `App.swift`, `MetalRenderer` podaje stan i raportuje energię. Działanie logiki i składni zweryfikowano w no-IPA workflow `42037997698` PASS. Natywna kompilacja Xcode i interaktywna obsługa dotyku nie są jeszcze zweryfikowane; nie deklarować ukończenia tej integracji na urządzeniu.
+- Grywalna ścieżka Boreas: `PlanetDamageLab556` steruje oryginalnym `Tarcza145` przez przytrzymywanie w `App.swift`; `MetalRenderer` raportuje energię. Poprzednie kontrolne budowanie iPhoneOS zgłosiło `BUILD SUCCEEDED`, ale dotyczyło stanu przed zadaniem 8. Nie deklarować działania na urządzeniu bez jego testu.
 - `CombatVerifiedEncounter556`: przy `devOpen` zgodnie z `Game.cs:234` zatrzymuje całą fazę walki i odracza rozliczenie ratowania; test regresji PASS.
 
 ## Kolejność dalszej pracy
 
-1. **Zadanie 7 — zamknięte implementacyjnie (100%)**: nie rozpoczynać od nowa; przy nowych zadaniach wykonywać regresję dokładnie tych zamrożonych mechanizmów z oryginalnego v556. Test fizycznego iPhone'a to osobny etap 18, którego brak należy jawnie raportować.
-2. Następne do wykonania — **zadanie 8**, aktualnie 96%, wymaga osobnego polecenia do kontynuacji. Nie wykonywano go w tej sesji.
-3. Dopiero po zadaniu 8 przejść do zadania 9; nie zmieniać listy 18 zadań ani wartości pozostałych pozycji bez nowych prac i dowodów.
+1. **Zadanie 7 — zamknięte implementacyjnie (100%)**, zachować wszystkie zweryfikowane mechanizmy i regresje.
+2. **Zadanie 8 — zamknięte implementacyjnie (100%)**, nie zmieniać źródłowej fizyki asteroid, `Balance70`, `Action38`, sterowania falami i `AmigaBounce265` bez konkretnej, zweryfikowanej rozbieżności. Audyt: `AUDYT_ZADANIE_8_v556_ASTEROIDY.md`.
+3. Następne w harmonogramie jest **zadanie 9 — Wszystkie bronie i efekty trafień (10%)**. Nie wykonywano go w tej sesji.
+4. Natywne testy dotykowe, wydajności i obrazu na fizycznym iPhone/iPad pozostają częścią zadania 18; bieżące 100% zadań 7 i 8 odnosi się do kodu oraz przeprowadzonych testów automatycznych, nie do pełnego testu produktu na urządzeniu.
 
 ## Weryfikacja zamknięcia zadania 7
 
@@ -54,4 +55,4 @@
 
 ## Tryb bez IPA — polecenie użytkownika
 
-Do kolejnej wyraźnej zgody użytkownika kontynuować tylko implementację i testy Swift/Linux. Workflow `.github/workflows/verify-combat-only.yml` nie kompiluje Xcode, nie pakuje ani nie przesyła IPA. Nie uruchamiać `build-ios.yml`, które tworzy IPA.
+Do kolejnej wyraźnej zgody użytkownika nie tworzyć, nie pakować ani nie udostępniać IPA. Workflow `.github/workflows/verify-combat-only.yml` przeprowadza testy Swift/Linux i osobną, kontrolną kompilację natywnych źródeł przez Xcode **bez archiwizacji, IPA i przesyłania artefaktów**. Workflow `build-ios.yml` generuje IPA i nie może być uruchamiany bez polecenia użytkownika.
