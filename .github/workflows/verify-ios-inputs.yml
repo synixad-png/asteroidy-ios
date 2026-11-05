@@ -10,6 +10,11 @@ on:
       - 'project.yml'
       - 'ASTEROIDYiOS/Assets/**'
       - 'ASTEROIDYiOS/Ship.metal'
+      - 'ASTEROIDYiOS/App.swift'
+      - 'ASTEROIDYiOS/MetalRenderer.swift'
+      - 'Tests/SourceSceneStartupContract556.py'
+      - '.github/workflows/build-ios-iphone-ipad-manual.yml'
+      - 'Tools/verify_ipa.py'
 
 jobs:
   original-assets:
@@ -21,3 +26,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify exact original v556 SHA256 and binary resource formats
         run: python3 Tools/verify_ios_inputs.py
+      - name: Guard v556 Boreas default scene, flat diagnostic and both iOS device families
+        run: python3 Tests/SourceSceneStartupContract556.py
