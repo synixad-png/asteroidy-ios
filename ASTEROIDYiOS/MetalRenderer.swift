@@ -877,11 +877,17 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             // visibility, at most one stone per frame (mobile budget).
             // Meshes live in a bounded cache; only not-yet-created
             // stones temporarily use the legacy octahedral placeholder.
+            let beltCenter=IntroOrbit41.planetCenter*inv
+            let beltTransform=
+                Self.translation(beltCenter.x,beltCenter.y,beltCenter.z) *
+                Self.rotateYDegrees(
+                    IntroOrbit41.beltRotationDegrees(time:introTime41))
             var builtThisFrame=0
             for (index,rock) in IntroOrbit41.belt.enumerated()
-                where IntroOrbit41.visible(rock,in:frame) {
-                let position=rock.world*inv
-                let translation=Self.translation(position.x,position.y,position.z)
+                where IntroOrbit41.visible(rock,time:introTime41,in:frame) {
+                let local=rock.center*inv
+                let translation=beltTransform *
+                    Self.translation(local.x,local.y,local.z)
                 if let original=introRockMeshes41[index] {
                     drawMesh(original,translation)
                     continue
