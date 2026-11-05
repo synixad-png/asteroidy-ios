@@ -12,6 +12,16 @@ on:
       - 'Tests/PlanetDamageLab556Tests.swift'
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
+      - 'ASTEROIDYiOS/SphereRockContact68.swift'
+      - 'ASTEROIDYiOS/SphereSector556.swift'
+      - 'ASTEROIDYiOS/CombatSolids68.swift'
+      - 'ASTEROIDYiOS/CombatHazards68.swift'
+      - 'ASTEROIDYiOS/CombatCollision556.swift'
+      - 'Tests/SphereRockContact68Tests.swift'
+      - 'Tests/SphereShipRigidContact556Tests.swift'
+      - 'Tests/CombatSolids68Tests.swift'
+      - 'Tests/CombatHazards68Tests.swift'
+      - 'Tests/CombatDamageShared556Tests.swift'
 
 jobs:
   verify-combat-no-ipa:
@@ -39,3 +49,29 @@ jobs:
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
+      - name: Full Physics68 and Damage556 regression matrix (NO IPA)
+        run: |
+          set -eu
+          sources="ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/CombatVerifiedEncounter556.swift ASTEROIDYiOS/CombatHazards68.swift ASTEROIDYiOS/CombatFlatShield556.swift ASTEROIDYiOS/PlanetDamageLab556.swift"
+          for test in \
+            SphereRockContact68Tests \
+            SphereShipRigidContact556Tests \
+            CombatSolids68Tests \
+            CombatCoop68Tests \
+            CombatEncounter68Tests \
+            CombatHazards68Tests \
+            CombatDamageShared556Tests \
+            CombatCollision556Tests \
+            CombatRespawn556Tests \
+            CombatSurvival96Tests \
+            CombatTalentVitals78Tests \
+            CombatGuardian37Tests \
+            CombatTarcza145Tests \
+            CombatFlatShield556Tests \
+            CombatContactRouter96Tests \
+            CombatVerifiedHit556Tests \
+            CombatPickupPhysics68Tests; do
+            echo "Verifying $test"
+            swiftc $sources "Tests/$test.swift" -o /tmp/source-physics68-test
+            /tmp/source-physics68-test
+          done
