@@ -34,6 +34,8 @@ final class FlightInput: ObservableObject {
     @Published var planetSectorCleared = false
     @Published var planetWave = 1
     @Published var planetIncomingNotice = false
+    @Published var planetAmigaDemo = false
+    @Published var planetAmigaHits = 0
     @Published var rendererError: String?
 }
 
@@ -102,14 +104,24 @@ struct GameView: View {
                                 .font(.system(size: 11, design: .monospaced))
                                 .foregroundStyle(input.verifiedTarczaActive ? .cyan : .gray)
                         }
-                        Text(input.planetSectorCleared
-                             ? "TEST SEKTORA UKOŃCZONY"
-                             : input.planetIncomingNotice
-                             ? "NOWE ASTEROIDY NA ORBICIE"
-                             : "BOREAS • SYMULACJA WALKI • FALA \(input.planetWave)")
+                        if input.planetAmigaDemo {
+                            Text("AMIGA / PIŁKI ODBIJANE")
+                                .font(.system(size: 11, weight: .medium,
+                                              design: .monospaced))
+                                .foregroundStyle(.cyan)
+                            Text("TRAFIENIA: \(input.planetAmigaHits) · POKAZ DEMO · STRZELAJ, ABY NADAĆ PĘD")
+                                .font(.system(size: 10,design:.monospaced))
+                                .foregroundStyle(.white)
+                        } else {
+                            Text(input.planetSectorCleared
+                                 ? "TEST SEKTORA UKOŃCZONY"
+                                 : input.planetIncomingNotice
+                                 ? "NOWE ASTEROIDY NA ORBICIE"
+                                 : "BOREAS • SYMULACJA WALKI • FALA \(input.planetWave)")
                             .font(.system(size: 11, weight: .medium, design: .monospaced))
                             .foregroundStyle(input.planetSectorCleared ? .green :
                                              input.planetIncomingNotice ? .orange : .cyan)
+                        }
                     }
                     Spacer()
                     HStack(alignment: .bottom) {
