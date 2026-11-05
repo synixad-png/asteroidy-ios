@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 84% |
+| 2 | Silnik graficzny Metal | 85% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -201,6 +201,16 @@ Stała lista 18 zadań i ich procenty bez zmian: zadanie 2 **78%**, łączny his
 **Uczciwy stan:** zadanie nr 2 **84% (+2 pp)**; inne 17 zadań bez zmian. Łączny dotychczasowy wskaźnik referencyjny **27%, pozostało 73%** (bez sztucznego przeliczania wag). Ponieważ kompilacja aktualnego źródła zakończyła się PASS, można na osobne polecenie uruchomić próbę ręcznego **unsigned IPA iPhone+iPad**, które wreszcie zawrze inną scenę niż płaska arena 9 asteroid. NIE nazywać jej skończoną pierwszą misją ani pełną grą.
 
 **Wciąż brakuje** oryginalnych UV, tekstury `BaseColor` i pełnego materiału PC Vanguard. Obecne AS3D v1 zachowuje przybliżone kolory wierzchołków z wcześniejszym oświetleniem bake; nowe źródłowe pasma i rim są zgodne, ale obraz kadłuba nie jest 1:1. Konieczne są dalszy port realnych zasobów i weryfikacja na urządzeniach, później domknięcie zadania 2 przed przechodzeniem do 3–18.
+
+## 05.11.2026 — zadanie nr 2: oryginalne UV i JPEG Vanguard, etap infrastruktury 84→85%
+
+**Wykonano:** nowy parser `SourceVanguardMesh431.swift` dla autentycznego binarnego strumienia wersji 4311 `(x,y,z,nx,ny,nz,r,g,b,a,u,v)`; oryginalna siatka 194427 wierzchołków/64809 trójkątów w źródłowym układzie współrzędnych oraz rzeczywista mapa BaseColor 2048×2048 JPEG. Dodatkowy shader `sourceVanguardVertex431` + `sourceVanguardTexturedToonFragment431` w `Ship.metal` używa autentycznych UV bez V-flip, oryginalnego key light/GpuToon60, liniowej filtracji, mipmap i większej pamięci GPU `device`. `MetalRenderer.swift` wykrywa parę plików `Vanguard431Source.mesh` + `Vanguard431Base.jpg`, sprawdza ich SHA256 CryptoKit i rysuje źródłową, teksturowaną siatkę; **gdy binarek nie ma, dokładnie zachowuje poprzednią ścieżkę AS3D**. Zmiany nie dotykają kolizji, planet, plazmy, atmosfery i sterowania.
+
+**Zasoby:** rzeczywiste dwa pliki binarne wyodrębniono z własnego ZIP PC v568 użytkownika, zweryfikowano sumy SHA256, oryginalną strukturę 4311, 194427 wierzchołków i fakt, że JPEG z runtime jest bajtowo identyczny z oryginalnym GLB. Udostępniono w rozmowie osobny ZIP zawierający dokładne bajty do `ASTEROIDYiOS/Assets`. Repozytorium GitHub **nie zawiera jeszcze tych dużych binarek** — funkcja materiałów jest więc gotowa w kodzie, lecz **nie będzie aktywna w nowym IPA bez dołączenia źródeł**. Pełne wymagania i importer `Tools/import_original_vanguard431.py`: [VANGUARD431_ORYGINALNE_ZASOBY_IOS.md](VANGUARD431_ORYGINALNE_ZASOBY_IOS.md). Nie udawać pełnej integracji.
+
+**Testy:** [GitHub Actions 42120727178](https://github.com/synixad-png/asteroidy-ios/actions/runs/42120727178) Swift/Linux **SUCCESS** (parser i źródłowe kontrakty), [42120727204](https://github.com/synixad-png/asteroidy-ios/actions/runs/42120727204) preflight Swift/źródeł **SUCCESS**. Oddzielna, niezależna kompilacja natywna Apple [42121018526](https://github.com/synixad-png/asteroidy-ios/actions/runs/42121018526) **SUCCESS**, iPhone+iPad ARM64 i rzeczywiste shadery Metal; **bez nowego IPA, bez testu GPU na sprzęcie i bez zasobów źródłowych w repo**.
+
+**Uzasadnienie wyniku:** zadanie 2 wzrosło **84%→85% (+1 pp)** wyłącznie za rzeczywistą kodową obsługę pierwotnej siatki i testy parsera/kompilacji; nie zaliczono importu tekstury w wydanej aplikacji. Pozostałe zadania 1 i 3–18 bez zmian; historyczny łączny wskaźnik odniesienia **27%, pozostało 73%**, bez przeważania listy. Dalej: rzeczywiste dodanie zweryfikowanych binarek do repo i ich runtime validation, porównanie GPU/JPEG na iPhonie/iPadzie, następnie brakujące efekty i dokończenie zadania 2, bez budowania niezmienionego IPA.
 
 ## Kolejność dalszej pracy
 
