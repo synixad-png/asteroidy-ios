@@ -224,6 +224,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 : game.hull
             let gameOver = input.planetPreview && input.verifiedDamageLab && damageLab.gameOver
             let deaths = damageLab.deathCount
+            let armor = damageLab.armor
+            let health = damageLab.hull
             let rockCount = input.planetPreview ? sphereSector.asteroids.count : game.rocks.count
             let sectorCleared = sphereSector.sectorCleared
             let objectiveWave = sphereSector.objectiveWave
@@ -232,6 +234,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 input?.hull = hull
                 input?.verifiedGameOver = gameOver
                 input?.verifiedDeaths = deaths
+                input?.verifiedArmor = armor
+                input?.verifiedHull = health
                 input?.trainingRockCount = rockCount
                 input?.planetSectorCleared = sectorCleared
                 input?.planetWave = objectiveWave
