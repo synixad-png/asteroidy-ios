@@ -59,6 +59,14 @@ import Foundation
                                  rocks:&seamRocks,bugs:&noBugs,
                                  pickups:&noPickups,boss:&noBoss)
         precondition(seamRocks[0].velocity.lengthSquared>1)
+        // Source Physics68.Unit68 chooses +X when blast and actor occupy
+        // the same surface position; no zero-vector dead zone.
+        var centeredRocks=[rock(640)]
+        CombatHazards68.explosion(origin:origin,radius:80,impulse:80,
+                                  rocks:&centeredRocks,bugs:&noBugs,
+                                  pickups:&noPickups,boss:&noBoss)
+        precondition(abs(centeredRocks[0].velocity.x-10)<0.01)
+        precondition(abs(centeredRocks[0].velocity.y)<0.01)
         print("PASS: Physics68 nearest hostile cover, player preemption/tie, meridian, 2.5% rock impulse, explosion mass falloff for all actor types")
     }
 }
