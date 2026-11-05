@@ -28,7 +28,7 @@ for kind,field,method,call in (
     ck(f"let created=try {call}" in src,
        kind+": source GPU array construction missing")
     ck(f"let created=try {call}" not in src.split("init(device: MTLDevice",1)[1].split(
-        "private func ensureCloudTextures55()",1)[0],
+        "private static let sourceCloudLayers55:",1)[0],
        kind+": attempted eager resource creation at renderer init")
     ck(f"if let current={field}" in src,
        kind+": texture cache not returned on subsequent frames")
