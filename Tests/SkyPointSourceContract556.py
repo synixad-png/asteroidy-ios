@@ -50,6 +50,12 @@ check("encoder.setRenderPipelineState(skyPointPipeline)" in swift,
       "Missing dedicated blended sky pipeline")
 check("encoder.setRenderPipelineState(pipeline)" in swift,
       "Main PBR pipeline not restored after sky")
+for entry in ("sceneVertex", "sceneFragment",
+              "skyPointVertex", "skyPointFragment"):
+    check(f'try requireShader("{entry}")' in swift,
+          "Native Metal pipeline entrypoint not explicitly validated: " + entry)
+check('throw NSError(domain:"ASTEROIDY iOS Metal",code:11' in swift,
+      "Missing Metal entrypoint must fail with a specific diagnostic")
 
 # Alpha compositing and depth-write isolation prevent sky stars drawing
 # over planet geometry or modifying the flat arena.
