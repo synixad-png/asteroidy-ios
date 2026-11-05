@@ -48,7 +48,7 @@ for token in (
 ):
     check(token in model,"Original BuildBlackHole/DrawSkyBlackHole source changed: "+token)
 for token in (
-    "private let blackHoleTextures: MTLTexture",
+    "private var blackHoleTextures: MTLTexture?",
     "let blackHoleVertex=try requireShader(\"blackHoleVertex55\")",
     "let blackHoleFragment=try requireShader(\"blackHoleFragment55\")",
     "blackHolePipeline=try device.makeRenderPipelineState(",
@@ -57,7 +57,7 @@ for token in (
     "pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false",
     "let image=BlackHoleSky55.textureBGRA(slice:slice)",
     "bytesPerRow:n*4",
-    "blackHoleTextures=try Self.makeBlackHoleTextures55(device)",
+    "let created=try Self.makeBlackHoleTextures55(device)",
     "BlackHoleSky55.project(",
     "let layers=BlackHoleSky55.overlays(",
     "properties.reserveCapacity(1+layers.count*3)",
