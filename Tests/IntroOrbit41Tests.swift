@@ -84,16 +84,14 @@ import Foundation
               IntroOrbit41.planetCenter+reference.center,0.00005)
         let theta=Float.pi*2/180
         let referenceAt10=IntroOrbit41.beltWorldPosition(reference,time:10)
-        near(referenceAt10.x,
-             IntroOrbit41.planetCenter.x+
-             cos(theta)*reference.center.x+sin(theta)*reference.center.z,
-             0.00005)
-        near(referenceAt10.y,
-             IntroOrbit41.planetCenter.y+reference.center.y,0.00005)
-        near(referenceAt10.z,
-             IntroOrbit41.planetCenter.z-
-             sin(theta)*reference.center.x+cos(theta)*reference.center.z,
-             0.00005)
+        let expectedX = IntroOrbit41.planetCenter.x +
+            cos(theta)*reference.center.x + sin(theta)*reference.center.z
+        let expectedY = IntroOrbit41.planetCenter.y + reference.center.y
+        let expectedZ = IntroOrbit41.planetCenter.z -
+            sin(theta)*reference.center.x + cos(theta)*reference.center.z
+        near(referenceAt10.x,expectedX,0.00005)
+        near(referenceAt10.y,expectedY,0.00005)
+        near(referenceAt10.z,expectedZ,0.00005)
         precondition((referenceAt10-reference.world).length>0.05)
         // Consistent camera-space culling must use the rotated center,
         // never the stationary original world position.
