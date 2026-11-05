@@ -121,6 +121,41 @@ import Foundation
         precondition(defended.encounter.firstSurvival.lives==3)
         precondition(talentHit.damageTransitions.isEmpty)
 
+        // Independent player defense state in a real co-op Physics68 event.
+        // The second player receives the collision; the first player's
+        // guardian, armor and hull must remain entirely untouched.
+        var twoPlayers=setup(true)
+        twoPlayers.firstGuardian=CombatGuardian37(owned:true)
+        twoPlayers.secondGuardian=CombatGuardian37(owned:true)
+        twoPlayers.firstVitals=CombatTalentVitals78()
+        twoPlayers.secondVitals=CombatTalentVitals78()
+        let secondIntercept=twoPlayers.step(dt:1/120)
+        precondition(secondIntercept.hitOutcomes == [
+            V.TeamOutcome(player:.second,outcome:.guardianAbsorbed)])
+        precondition(twoPlayers.firstGuardian!.charges == 1)
+        precondition(twoPlayers.secondGuardian!.charges == 0)
+        precondition(twoPlayers.firstVitals!.armor == 25 &&
+                     twoPlayers.firstVitals!.hull == 60)
+        precondition(twoPlayers.secondVitals!.armor == 25 &&
+                     twoPlayers.secondVitals!.hull == 60)
+        precondition(twoPlayers.encounter.firstSurvival.lives == 3 &&
+                     twoPlayers.encounter.secondSurvival.lives == 3)
+        twoPlayers.encounter.rocks=[]
+        _=twoPlayers.step(dt:1.3)
+        twoPlayers.encounter.second=body(640)
+        twoPlayers.encounter.rocks=[rock()]
+        let secondVitalsHit=twoPlayers.step(dt:1/120)
+        precondition(secondVitalsHit.hitOutcomes == [
+            V.TeamOutcome(player:.second,outcome:.talentAbsorbed)])
+        precondition(twoPlayers.secondVitals!.armor == 0 &&
+                     twoPlayers.secondVitals!.hull == 53)
+        precondition(twoPlayers.firstVitals!.armor == 25 &&
+                     twoPlayers.firstVitals!.hull == 60)
+        precondition(twoPlayers.firstGuardian!.charges == 1)
+        precondition(twoPlayers.encounter.firstSurvival.lives == 3 &&
+                     twoPlayers.encounter.secondSurvival.lives == 3)
+        precondition(secondVitalsHit.damageTransitions.isEmpty)
+
         // The original unknown-defense contract stays unchanged by
         // the optional integration; nil states still require verification.
         print("PASS: integrated Physics68 -> Tarcza145 -> verified damage -> 160/220 respawn and Gameplay65 2s co-op rescue")
