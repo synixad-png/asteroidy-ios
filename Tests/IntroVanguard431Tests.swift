@@ -47,12 +47,12 @@ import Foundation
         // GLB bounds before baking:
         // x[-.44092435,+.44092435], y[0,.3639878],
         // z[-.4888971,+.4888971].
-        let negative=V(x:-.44092435,y:0,z:-.4888971)
-        let positive=V(x:.44092435,y:.3639878,z:.4888971)
+        let negative=V(x:-0.44092435,y:0,z:-0.4888971)
+        let positive=V(x:0.44092435,y:0.3639878,z:0.4888971)
         let low=IntroVanguard431.sourceLocalFromGLB(negative)
         let high=IntroVanguard431.sourceLocalFromGLB(positive)
-        nearV(low,V(x:-1.43999994,y:-1.59667253,z:-.59436774),0.00002)
-        nearV(high,V(x:1.43999994,y:1.59667253,z:.59436774),0.00002)
+        nearV(low,V(x:-1.43999994,y:-1.59667253,z:-0.59436774),0.00002)
+        nearV(high,V(x:1.43999994,y:1.59667253,z:0.59436774),0.00002)
 
         // Source PC IntroScene41 / ShipMesh axes remain unchanged:
         // right X, nose Y, dorsal Z. No extra axes swap or negative
