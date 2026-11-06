@@ -84,6 +84,8 @@ final class OriginalAudioAV568: ObservableObject {
     private var settings = OriginalAudioSettings568.load()
     private var music: AVAudioPlayer?
     private var effects: [AVAudioPlayer] = []
+    private var prewarmedEffects: [String:[AVAudioPlayer]] = [:]
+    private var prewarmedMusic: [Int:AVAudioPlayer] = [:]
     private let enginePlayback52=OriginalEnginePlayback52()
     private var engineLevel52:Float=0
     private var variant = 0
@@ -138,9 +140,26 @@ final class OriginalAudioAV568: ObservableObject {
                     found[stem] = file
                 } else { missing.append(stem) }
             }
+            // Original CombatSound.Prepare creates the entire SFX bank
+            // BEFORE menu music. Warm two voices per variant so rapid
+            // pulses, overlapping impacts and sounds don't read from
+            // disk inside touch/render/shot callbacks.
+            var prepared: [String:[AVAudioPlayer]] = [:]
+            for (stem,file) in found {
+                var voices:[AVAudioPlayer]=[]
+                for _ in 0..<2 {
+                    if let p=try? AVAudioPlayer(contentsOf:file) {
+                        p.prepareToPlay()
+                        voices.append(p)
+                    }
+                }
+                if voices.isEmpty { missing.append(stem) }
+                prepared[stem]=voices
+            }
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 self.sounds = found
+                self.prewarmedEffects = prepared
                 self.stage = 1
                 self.sourceStatus = "ASTRAL GATE — PIERWSZY UTWÓR MENU"
             }
@@ -152,8 +171,14 @@ final class OriginalAudioAV568: ObservableObject {
                 let completed = index+1
                 let readyCount = menu.count
                 let menuSnapshot = menu
+                let preparedTrack=menu[index].flatMap { url in
+                    try? AVAudioPlayer(contentsOf:url)
+                }
+                preparedTrack?.numberOfLoops = -1
+                preparedTrack?.prepareToPlay()
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
+                    if let preparedTrack { self.prewarmedMusic[index]=preparedTrack }
                     self.readyMenuTracks = readyCount
                     self.urls.merge(menuSnapshot, uniquingKeysWith: { _, new in new })
                     self.stage = completed+1
@@ -182,9 +207,15 @@ final class OriginalAudioAV568: ObservableObject {
             for index in 2..<OriginalAudioCatalog568.names.count {
                 guard let file = OriginalAudioCatalog568.resource("Music\(index)")
                 else { continue }
+                // This work runs on the background audio queue after W3
+                // has opened: prebuffer track, not just save its URL.
+                let preparedTrack=try? AVAudioPlayer(contentsOf:file)
+                preparedTrack?.numberOfLoops = -1
+                preparedTrack?.prepareToPlay()
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
                     self.urls[index] = file
+                    if let preparedTrack { self.prewarmedMusic[index]=preparedTrack }
                     self.backgroundPrepared += 1
                     if !self.suspended,
                        case .mission(let sector) = self.context,
@@ -203,7 +234,8 @@ final class OriginalAudioAV568: ObservableObject {
         do {
             try AVAudioSession.sharedInstance().setCategory(.ambient,mode:.default)
             try AVAudioSession.sharedInstance().setActive(true)
-            let player = try AVAudioPlayer(contentsOf: url)
+            let player = try prewarmedMusic[index] ?? AVAudioPlayer(contentsOf: url)
+            player.currentTime = 0
             player.numberOfLoops = -1 // original MusicReader loops all 0...14
             player.volume = Float(settings.musicPercent)/100 * 0.8
             player.prepareToPlay()
@@ -283,7 +315,23 @@ final class OriginalAudioAV568: ObservableObject {
         else { stem = "SFX\(code)_\((10...30).contains(code) ? variation % 3 : 0)" }
         guard let file = sounds[stem] else { return }
         do {
-            let player = try AVAudioPlayer(contentsOf: file)
+            // First two players for every exact source sample were
+            // prepared at application startup; allocate only when the
+            // same effect exceeds its two-voice source budget.
+            let pool = prewarmedEffects[stem] ?? []
+            let player:AVAudioPlayer
+            if let available=pool.first(where:{!$0.isPlaying}) {
+                player=available
+            } else if pool.count<4 {
+                let new=try AVAudioPlayer(contentsOf:file)
+                new.prepareToPlay()
+                prewarmedEffects[stem,default:[]].append(new)
+                player=new
+            } else {
+                player=pool[0]
+                player.stop()
+            }
+            player.currentTime=0
             let gain:Float = (50...57).contains(code) ? 0.84 :
                              code==60 ? 0.38 : (40...45).contains(code) ? 0.32 : 0.55
             player.volume = Float(settings.effectsPercent)/100 * gain
