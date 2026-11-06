@@ -30,6 +30,13 @@ struct CampaignProgress556: Equatable {
         selectedSector = sector
         return true
     }
+    /// PC Orbit50.OrbitClick51 selects only MissionUnlocked50.
+    /// Selection never changes completion bits, rewards or unlocks.
+    @discardableResult mutating func selectUnlocked(_ sector: Int) -> Bool {
+        guard unlocked(sector) else { return false }
+        selectedSector = sector
+        return true
+    }
     @discardableResult mutating func finishMission(_ sector: Int) -> Bool {
         guard (1...Self.missionCount).contains(sector), unlocked(sector), !completed(sector) else { return false }
         completedMask |= 1 << (sector - 1)
@@ -44,10 +51,21 @@ struct CampaignProgress556: Equatable {
 }
 enum CampaignStore556 {
     private static let key = "asteroidy.ios.v556.campaign.completedMask"
+    // iOS-only UI restoration of OrbitTarget50, never mission completion.
+    private static let selectedKey = "asteroidy.ios.v568.campaign.selectedSector"
     static func load(defaults: UserDefaults = .standard) -> CampaignProgress556 {
-        CampaignProgress556(mask: defaults.integer(forKey: key))
+        var result = CampaignProgress556(mask: defaults.integer(forKey: key))
+        let stored = defaults.integer(forKey: selectedKey)
+        if !result.selectUnlocked(stored) {
+            _ = result.selectUnlocked(result.nextAvailableSector)
+        }
+        return result
     }
     static func save(_ progress: CampaignProgress556, defaults: UserDefaults = .standard) {
         defaults.set(progress.completedMask, forKey: key)
+        // Never store a locked selection through the public selection flow.
+        defaults.set(progress.unlocked(progress.selectedSector)
+                     ? progress.selectedSector : progress.nextAvailableSector,
+                     forKey: selectedKey)
     }
 }
