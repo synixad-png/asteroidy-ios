@@ -238,6 +238,8 @@ Stała lista 18 zadań i ich procenty bez zmian: zadanie 2 **78%**, łączny his
 
 **Następny krok:** dokończyć zadanie 2 w zakresie rzeczywistych efektów i optymalizacji, a przy osobnym poleceniu wygenerowania IPA przygotować nowe niepodpisane wydanie iPhone+iPad już z rzeczywistym Vanguard431 oraz sprawdzić pliki wewnątrz IPA przed udostępnieniem. Nie zastępować wcześniej działającego IPA bez testu.
 
+**Końcowa kontrola po zabezpieczeniu wydania:** nowa domyślna ścieżka iPhone+iPad wymaga oryginalnej siatki/tekstury, a ręczny `compatibility_old_ship=true` usuwa oba pliki **wyłącznie z tymczasowego checkoutu Github Actions** przed XcodeGen, dzięki czemu stary AS3D jest rzeczywiście używany tylko na wyraźny wybór. Test `ReleaseGateVanguard431Tests.py` zabezpiecza to zachowanie. Ostatni [preflight 42169385020](https://github.com/synixad-png/asteroidy-ios/actions/runs/42169385020) **SUCCESS** oraz [pełne źródłowe testy regresji 42169384956](https://github.com/synixad-png/asteroidy-ios/actions/runs/42169384956) **SUCCESS**. Natywna kontrola `.app` pozostaje **SUCCESS** z [42168975848](https://github.com/synixad-png/asteroidy-ios/actions/runs/42168975848); po niej zmieniano wyłącznie skrypty i raporty, nie rendering. Nie uruchamiano nowego IPA.
+
 ## Kolejność dalszej pracy
 
 1. **Zadanie 7 — zamknięte implementacyjnie (100%)**, zachować wszystkie zweryfikowane mechanizmy i regresje.
