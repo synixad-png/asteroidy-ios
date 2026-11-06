@@ -46,7 +46,7 @@ def capture(app,reports,kind):
                         reports/f"{kind}_boot.txt")
         run_command(["xcrun","simctl","bootstatus",udid,"-b"],540,
                     reports/f"{kind}_bootstatus.txt")
-        run_command(["xcrun","simctl","install",udid,str(app)],85,
+        run_command(["xcrun","simctl","install",udid,str(app)],300,
                     reports/f"{kind}_install.txt")
         raw=run_command(
             ["xcrun","simctl","get_app_container",udid,PACKAGE,"data"],
