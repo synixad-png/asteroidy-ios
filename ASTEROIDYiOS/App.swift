@@ -124,6 +124,9 @@ struct GameView: View {
                         _ = Sector01MissionSettlement568.commit(
                             report,campaign:&changed)
                         campaign=changed
+                    },onSurvivalChanged:{ lives,charges in
+                        Sector01Shop568.persistSurvival(
+                            lives:lives,shieldCharges:charges)
                     },preparedWave:preparedWave)
                 } else if showMainMenu {
                     W3MainMenu568(progress:campaign,selectMission:{ sector in
