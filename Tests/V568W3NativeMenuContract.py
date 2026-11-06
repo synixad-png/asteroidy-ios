@@ -83,15 +83,21 @@ carbonis=(root/"ASTEROIDYiOS/Sector01CarbonisPreview568.swift").read_text()
 source_drone=(root/"ASTEROIDYiOS/CarbonisShooterMesh71.swift").read_text()
 source_combat=(root/"ASTEROIDYiOS/CarbonisCombat568.swift").read_text()
 assert "static func typeZero()->Mesh" in source_drone
+assert "static func typeOne()->Mesh" in source_drone
 assert "private static func curve55(" in source_drone
 assert "private static func smoothPoint(" in source_drone
 assert "static func warningVertices(" in carbonis
 assert "CarbonisShooterMesh71.typeZero()" in carbonis
-assert "shooterType0=(fighterBuffer,sourceShooter.ranges)" in carbonis
-assert "for enemy in session.game.shooters where enemy.core.type==0" in carbonis
+assert "CarbonisShooterMesh71.typeOne()" in carbonis
+assert "sourceShooters[kind]=(buffer,mesh.ranges)" in carbonis
+assert "for enemy in session.game.shooters {" in carbonis
+assert "guard let shooter=sourceShooters[enemy.core.type]" in carbonis
 assert "sector01ShooterFragment71" in rock_metal
 assert "Turn72" in source_combat or "turn72(" in source_combat
 assert "fighter.phase+0.4" in source_combat
+assert "ShooterTactics71(" in source_combat
+assert "tactics.projectileDamage" in source_combat
+assert "tactics.volleyCount" in source_combat
 
 assert "sourceRockModel(_ rock:SphereAsteroid556)" in carbonis
 assert "activeRocks[index].advance(dt:dt)" in carbonis
