@@ -1,3 +1,34 @@
+## AKTUALNY POSTĘP 06.11.2026 — źródłowe asteroidy C279 w natywnym Metal
+
+**Całość: 31% wykonane (+1 pp), 69% pozostało.** Etap C: scena CARBONIS korzysta z rzeczywistego zestawu asteroid `MissionWave568`. W `Sector01CarbonisPreview568` zaimplementowano proceduralne siatki `RockVertices75`, buforowane według kształtu, źródłowe osadzenie `StampSphere67`, toon z `GpuRockInstancing75` i rzeczywiste klatkowe `SphereAsteroid556.advance(dt:)`. Oryginalne indeksy 810 747, 2 grupy materiałów, UV i 3 tekstury C279 zostały nietknięte.
+
+**Weryfikacja:** lokalnie Swift/Linux **43 385 asercji geometrii PASS**; 10 kontroli źródła renderer/Metal i zachowania C279 PASS. GitHub Actions przygotowano do kompilacji oryginalnych modeli w Swift i natywnego Xcode. **Nie ma jeszcze potwierdzenia wyniku kompilacji iOS ani wykonania Metal na prawdziwym urządzeniu.** Myśliwce, AI, lot statku, kolizje i warunki zwycięstwa nie są gotowe. Nie wydano IPA. [Pełny raport źródłowy](Reports/V568_STAGE_C_ORIGINAL_ROCK_RENDERER_2026-11-06.md).
+
+| Nr | Stałe zadanie | Poprzednio | Obecnie | Zmiana |
+|---:|---|---:|---:|---:|
+| 1 | Infrastruktura iOS | 88% | 88% | 0 pp |
+| 2 | Silnik Metal | 89% | 89% | 0 pp |
+| 3 | Materiały i oświetlenie | 25% | 25% | 0 pp |
+| 4 | Statki i planety 3D | 22% | **24%** | **+2 pp** |
+| 5 | Animacje GLB | 35% | 35% | 0 pp |
+| 6 | Fizyka lotu | 35% | 35% | 0 pp |
+| 7 | Kolizje i obrażenia — wcześniej zamknięty moduł | 100% | 100% | 0 pp |
+| 8 | Asteroidy i fale — wcześniej zamknięty moduł | 100% | 100% | 0 pp |
+| 9 | Bronie i trafienia | 10% | 10% | 0 pp |
+| 10 | AI przeciwników | 0% | 0% | 0 pp |
+| 11 | Bossowie | 0% | 0% | 0 pp |
+| 12 | Misje planetarne | 10% | **12%** | **+2 pp** |
+| 13 | Kampania — 26 sektorów atlasu | 35% | 35% | 0 pp |
+| 14 | Menu W3 i HUD | 15% | 15% | 0 pp |
+| 15 | Muzyka i dźwięki | 0% | 0% | 0 pp |
+| 16 | Zapisywanie gry | 20% | 20% | 0 pp |
+| 17 | Sterowanie | 35% | 35% | 0 pp |
+| 18 | Optymalizacja i testy | 10% | 10% | 0 pp |
+
+**Następne zadanie w C/D:** aktywny statek i prawdziwa kamera lotu na C279 (nie obrót planety jako inspekcja), następnie myśliwce/AI i łączenie istniejącego `SpawnIncoming` z klatkową symulacją oraz kolizjami. Zachować zakres 18 zadań. Starsze wartości 30% w historii poniżej nie są aktualnym stanem.
+
+---
+
 ## BIEŻĄCY STAN — 06.11.2026: przygotowana źródłowa WAVE na CARBONIS
 
 **Cały projekt: 30% wykonane (+1 pp) / 70% pozostało.** Ukończona implementacja początkowej źródłowej fali dla wszystkich 25 faktycznych poziomów PC: asteroid, uzbrojonych myśliwców, segmentowanych robotów, parametrów fal i początkowych limitów posiłków. Nie jest to jeszcze grywalna walka w CARBONIS — brakuje aktywnego AI, renderowania przeciwników i lotu/strzałów/wyniku.
