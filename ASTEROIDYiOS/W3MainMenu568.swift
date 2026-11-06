@@ -170,7 +170,11 @@ struct W3MainMenu568: View {
     }
 
     private func navigation(compact:Bool) -> some View {
-        VStack(alignment:.leading,spacing:compact ? 5 : 10) {
+        // On landscape iPhone the seven original W3 actions cannot all fit
+        // between the fixed header and footer. Keep every real Button
+        // reachable by touch, VoiceOver and XCTest without clipping.
+        ScrollView(.vertical) {
+            VStack(alignment:.leading,spacing:compact ? 5 : 10) {
             Text("PANEL OPERACYJNY")
                 .font(.system(size:compact ? 9 : 12,weight:.bold,design:.monospaced))
                 .foregroundStyle(gold)
@@ -202,7 +206,7 @@ struct W3MainMenu568: View {
                     .font(.system(size:compact ? 11 : 13,
                                   weight:.semibold,design:.monospaced))
                     .padding(.horizontal,11)
-                    .frame(maxWidth:.infinity,minHeight:compact ? 31 : 42)
+                    .frame(maxWidth:.infinity,minHeight:44)
                     .background(Color(red:0.02,green:0.065,blue:0.10).opacity(0.96))
                     .overlay {
                         RoundedRectangle(cornerRadius:3)
@@ -216,8 +220,9 @@ struct W3MainMenu568: View {
                 .accessibilityAddTraits(.isButton)
                 .accessibilityIdentifier("w3-home-\(index)")
             }
-            Spacer(minLength:0)
+            }
         }
+        .scrollIndicators(.hidden)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("w3-home-navigation")
     }
