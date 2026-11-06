@@ -1,4 +1,4 @@
-# USER-REQUESTED IPA: source v568 GpuShip491 twin-engine exhaust + GpuPlanetGltf463 mission C279 v523 radius. Rebuild iPhone/iPad arm64 with corrected Swift 6-safe @main radius regression and verify unsigned IPA.
+# USER-REQUESTED IPA 2026-11-07: REAL original v568 15 music tracks + 34 SFX + 7 Polish voices + Intro43, W3 menu preload, 2s transitions, CARBONIS gameplay SFX and live engine; iPhone+iPad arm64 unsigned; verify all original audio assets in .app.
 name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
 on:
   workflow_dispatch:
@@ -360,6 +360,14 @@ jobs:
           python3 Tools/prepare_v568_w3_home_planet290.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets
           echo 'Verified real CARBONIS C279 and W3 assets staged for unsigned IPA.'
+      - name: Verify all 58 source-generated original v568 audio assets before device build
+        run: |
+          set -euo pipefail
+          python3 Tools/verify_original_audio568_assets.py
+          swiftc ASTEROIDYiOS/OriginalMusicTransition568.swift Tests/OriginalMusicTransition568Tests.swift -o /tmp/v568-music-crossfade
+          /tmp/v568-music-crossfade
+          swiftc ASTEROIDYiOS/OriginalEngineDSP52.swift Tests/OriginalEngineDSP52Tests.swift -o /tmp/v568-original-engine-dsp
+          /tmp/v568-original-engine-dsp
       - name: Generate native Xcode project
         run: xcodegen generate
       - name: Compile iPhone/iPad device build (unsigned)
@@ -372,6 +380,12 @@ jobs:
             ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
             -derivedDataPath build build
+      - name: Verify all 58 source audio files actually bundled in iPhone/iPad .app
+        run: |
+          set -euo pipefail
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP"
+          python3 Tools/verify_original_audio568_assets.py --app "$APP"
       - name: Package unsigned IPA for Sideloadly signing
         run: |
           set -euo pipefail
