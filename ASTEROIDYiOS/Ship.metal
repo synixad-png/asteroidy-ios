@@ -248,7 +248,13 @@ fragment float4 sceneFragment(RasterOutput in [[stage_in]]) {
     // fragment view vector must use the same camera as MetalRenderer's MVP.
     const float3 V = normalize(in.cameraEye - in.worldPosition);
     const float3 N = normalize(in.normal);
-    const float3 H = normalize(V + L);
+    // When V and L oppose one another, normalize(V+L) is undefined.
+    // The halfway vector only affects the specular term; with
+    // NdotL==0 that term must be zero, not NaN/Inf GPU pixels.
+    const float3 sumVL = V + L;
+    const float sumVL2 = dot(sumVL,sumVL);
+    const float3 H = sumVL2 > 1.0e-10f
+        ? sumVL * rsqrt(sumVL2) : N;
     const float metallic = clamp(in.material.x, 0.0, 1.0);
     const float roughness = clamp(in.material.y, 0.04, 1.0);
     const float alpha = roughness * roughness;
