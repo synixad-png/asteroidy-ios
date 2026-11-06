@@ -390,3 +390,39 @@ wynik trzeba odczytać po ich zakończeniu.
 
 **Nie uruchomiono B, IPA nie generowano.
 Zadanie 14: 10% (+0 pp), projekt: 27% / pozostało 73%.**
+
+### Kontynuacja A — aktualizacja automatycznych testów po rozbudowie menu
+
+Wprowadzono do GitHuba **poprawkę procesu weryfikacji**:
+`.github/workflows/verify-v568-w3-navigation-ui.yml`
+uruchamia teraz prawdziwe XCTest również po zmianach w
+`W3HomeShipPreview568.swift`, `W3HomePlanetMetal568.swift`
+i `Tests/V568W3NativeMenuContract.py`. Dzięki temu zmiana
+źródłowego statku w menu nie pozwala ominąć testów
+siedmiu przycisków, paneli `WSTECZ` oraz powrotu przez
+`MENU W3`.
+
+- Najnowszy **test dotyku**:
+  [42202753554](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202753554)
+  — oba joby wystartowały; wynik wymaga sprawdzenia. Poprzedni
+  [42202329563](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202329563)
+  nie przeszedł źródłowego preflightu przed uruchomieniem
+  interaktywnych testów, zatem nie stanowi dowodu, że dotyk
+  w działającej aplikacji jest wadliwy.
+- Najnowszy **test W3 GPU** uwzględniający rozwijany podgląd
+  źródłowego statku Vanguard431:
+  [42202733165](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202733165)
+  — w trakcie, nie deklarować PASS bez potwierdzenia.
+- Natywna kompilacja Swift/Metal dla ostatniego audytowanego
+  zestawu zmian:
+  [42202600804](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202600804)
+  — job kompilacji **SUCCESS**; testy regresji osobno.
+- Zaliczone wcześniej na obu symulatorach menu W3/NewHome290:
+  [42198113753](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113753).
+
+**Kamień A nadal otwarty. Kamień B nie jest rozpoczynany,
+dopóki przejście menu nie jest zweryfikowane.**
+Zachowano 18 oryginalnych pozycji i procenty, bez przypisywania
+niezakończonych XCTest do ukończonych zadań:
+nr 14 **10% (+0 pp)**, projekt **27% / 73% pozostało**.
+Bez nowego IPA.
