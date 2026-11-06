@@ -1,4 +1,4 @@
-# Rebuild unsigned iOS after authentic source Explosion524 12 controls + Combat69 player/enemy colored effects and ProjectileLight285 3 controls; requires passing source preflight.
+# Full source v568 Combat69 + Explosion524 settings / ProjectileLight285 validation PASS GitHub 42283180401; build native iOS iPhone/iPad and verify shader Xcode/Metal, unsigned IPA.
 name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
 on:
   workflow_dispatch:
