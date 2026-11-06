@@ -44,8 +44,8 @@ assert "MissionCatalog568.title(for:progress.selectedSector)" in app
 assert 'accessibilityIdentifier("campaign-26-sector-selector")' in app
 assert 'accessibilityIdentifier("campaign-sector-' in app
 assert ".disabled(!available)" in app
-assert "ETAP C: PLANETA ŹRÓDŁOWA — WALKA I UKOŃCZENIE MISJI NIEPODŁĄCZONE" in app
-assert "WEJDŹ NA CARBONIS 01 / ŹRÓDŁOWA SCENA 3D" in app
+assert "SEKTOR 01: WALKA, RAPORT, ŻETONY I ZAPIS" in app
+assert "ROZPOCZNIJ CARBONIS 01 / PEŁNA WALKA" in app
 assert 'accessibilityIdentifier("campaign-enter-source-sector01")' in app
 assert "if let sourceEntry=sourceSector01" in app
 assert "Sector01Scene568(entry:sourceEntry,returnToAtlas:" in app
@@ -61,6 +61,23 @@ assert "Sector01PreparedWave568.prepare(" in app
 assert "@State private var sourceSector01Setup: Sector01PreparedWave568?" in app
 assert "sourceSector01Setup = nil" in app
 assert "initialRocks:preparedWave.encounter.rocks" in source_scene
+source_shop=(root/"ASTEROIDYiOS/Sector01Shop568.swift").read_text()
+shop_view=(root/"ASTEROIDYiOS/Sector01ShopPanel568.swift").read_text()
+source_summary=(root/"ASTEROIDYiOS/Sector01MissionSummary568.swift").read_text()
+source_settlement=(root/"ASTEROIDYiOS/Sector01MissionSettlement568.swift").read_text()
+assert "Sector01MissionSettlement568.commit(" in app
+assert "onMissionCompleted:{ report in" in app
+assert "shopProfile:sourceShop" in app
+assert "Sector01ShopPanel568(onReturnAtlas:returnToAtlas)" in source_scene
+assert "accessibilityIdentifier(\"sector01-result-to-service\")" in source_scene
+assert "accessibilityIdentifier(\"sector01-retry-after-defeat\")" in source_scene
+assert "session.hud.summarySeconds>=4.2" in source_scene
+assert "Sector01MissionSummary568.completedFirstMission(" in source_summary
+assert "CampaignStore556.save(campaign,defaults:defaults)" in source_settlement
+assert "Sector01Shop568.save(profile,defaults:defaults)" in source_settlement
+assert "enum Item:Int,CaseIterable" in source_shop
+assert "accessibilityIdentifier(\"sector01-source-post-mission-service-shop\")" in shop_view
+
 assert "session.hud.fighters" in source_scene
 incoming_wave=(root/"ASTEROIDYiOS/MissionIncoming568.swift").read_text()
 assert "random = encounter.randomState" in incoming_wave
