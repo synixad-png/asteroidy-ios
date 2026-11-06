@@ -74,6 +74,7 @@ struct GameView: View {
     // Source C279 sector inspection remains separate from the Boreas
     // diagnostic simulation. This is not StartHubMission261 or a win state.
     @State private var sourceSector01: Sector01Entry568?
+    @State private var reopenAtlasAfterCarbonis = false
 
     private func inspectSourceSector(_ sector: Int) {
         guard let entry=Sector01Entry568.open(
@@ -83,6 +84,7 @@ struct GameView: View {
         input.releaseHeldControls()
         input.gameplayPaused = true
         showCampaign = false
+        reopenAtlasAfterCarbonis = false
         sourceSector01 = entry
         showMainMenu = true
     }
@@ -97,6 +99,7 @@ struct GameView: View {
                 if let sourceEntry=sourceSector01 {
                     Sector01Scene568(entry:sourceEntry,returnToAtlas:{
                         sourceSector01 = nil
+                        reopenAtlasAfterCarbonis = true
                         input.releaseHeldControls()
                         input.gameplayPaused = true
                         showCampaign = false
@@ -112,8 +115,9 @@ struct GameView: View {
                     },openDiagnostic:{
                         input.releaseHeldControls()
                         input.gameplayPaused = false
+                        reopenAtlasAfterCarbonis = false
                         showMainMenu = false
-                    })
+                    },openCampaignOnEntry:reopenAtlasAfterCarbonis)
                 } else {
                 MetalScene(input: input)
                     .ignoresSafeArea()
