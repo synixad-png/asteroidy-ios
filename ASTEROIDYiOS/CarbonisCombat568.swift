@@ -134,6 +134,10 @@ struct CarbonisCombat568 {
         hull-=damage-blocked
         invincible=0.8
         if hull>0 {return}
+        // Original Windows/src/Game.cs:190 Game.Damage: fatal hull loss
+        // increments BlastEvents and sets BlastSound>=1. CombatSound.Blast(1)
+        // is source SFX 21, both for respawn and final GameOver.
+        emitOriginalAudio568(21)
         lives-=1
         shieldCharges=0
         if lives<=0 {phase = .defeat; hull=0;return}

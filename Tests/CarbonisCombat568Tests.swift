@@ -91,6 +91,8 @@ import Foundation
         failure.invincible=0;failure.armor=0;failure.hull=1;failure.lives=1
         failure.suffer(8)
         check(failure.phase == .defeat && failure.lives==0,"real defeat")
+        check(failure.drainOriginalAudioEvents568()==[21],
+              "source Game.Damage fatal hull emits BlastEvents/BlastSound1 as SFX21")
         var protectedRespawn=CarbonisCombat568(prepared)
         protectedRespawn.invincible=0
         protectedRespawn.armor=0
@@ -101,6 +103,8 @@ import Foundation
             velocity:Vec2(x:30,y:0),radius:16,
             size:3,tier:0,health:5)]
         protectedRespawn.suffer(18)
+        check(protectedRespawn.drainOriginalAudioEvents568()==[21],
+              "source Game.Damage respawn uses same SFX21 exactly once")
         check(protectedRespawn.phase == .playing &&
               protectedRespawn.lives==1 &&
               protectedRespawn.invincible==4.5,
@@ -285,6 +289,8 @@ import Foundation
         var upgraded=CarbonisCombat568(purchased)
         upgraded.invincible=0
         upgraded.suffer(18)
+        check(upgraded.drainOriginalAudioEvents568().isEmpty,
+              "source shield intercept makes no fatal explosion sound")
         check(upgraded.shieldCharges==0 && upgraded.armor==25 &&
               upgraded.hull==60 && upgraded.invincible==1,
               "real source shop shield intercepts first hit")
