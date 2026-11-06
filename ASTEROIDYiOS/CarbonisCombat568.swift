@@ -151,13 +151,15 @@ struct CarbonisCombat568 {
              objectivePosition:Vec2(x:640,y:420))
         rocks.append(contentsOf:additions)
         updateShooters(dt:dt)
+        // Original Physics68.StepSolids68 order: all solid contacts
+        // BEFORE the player's new bullets are fired.
+        resolveWorldContacts()
+        resolveShipContacts()
+        if phase != .playing {return}
         if shooting && cooldown<=0 && bullets.count<=140 {
             fireSourceWeapon()
         }
         stepShots(dt:dt)
-        // Original Physics68.ShipContacts68: always resolve physical
-        // overlap, even during temporary post-hit invulnerability.
-        resolveShipContacts()
         // MissionCleared69: objective Clear plus absence of rock and bug
         // threats and all reinforcements, not a timer-based fake win.
         // Game.Step checks objective, rocks and Bugs; hostile shots
@@ -240,6 +242,48 @@ struct CarbonisCombat568 {
             lootTokens:collectedLootTokens,replay:isReplay,
             elapsed:elapsed)
         phase = .victory
+    }
+
+    /// Physics68.StepSolids68: rock/rock broadphase, every shooter/rock
+    /// and shooter/shooter contact. This is separate from ship hit damage.
+    private mutating func resolveWorldContacts() {
+        _=SphereRockContact68.solve(&rocks)
+        for i in shooters.indices {
+            for j in rocks.indices {
+                var enemy=CarbonisBodyContact68.Body(
+                    position:shooters[i].core.position,
+                    velocity:shooters[i].velocity,mass:2,radius:16)
+                var stone=CarbonisBodyContact68.Body(
+                    position:rocks[j].position,velocity:rocks[j].velocity,
+                    mass:rocks[j].mass,radius:rocks[j].radius)
+                if CarbonisBodyContact68.resolve(
+                    &enemy,&stone,restitution:0.45) {
+                    shooters[i].core.position=enemy.position
+                    shooters[i].velocity=enemy.velocity
+                    rocks[j].position=stone.position
+                    rocks[j].velocity=stone.velocity
+                }
+            }
+        }
+        if shooters.count>=2 {
+            for i in 0..<(shooters.count-1) {
+                for j in (i+1)..<shooters.count {
+                    var a=CarbonisBodyContact68.Body(
+                        position:shooters[i].core.position,
+                        velocity:shooters[i].velocity,mass:2,radius:16)
+                    var b=CarbonisBodyContact68.Body(
+                        position:shooters[j].core.position,
+                        velocity:shooters[j].velocity,mass:2,radius:16)
+                    if CarbonisBodyContact68.resolve(
+                        &a,&b,restitution:0.30) {
+                        shooters[i].core.position=a.position
+                        shooters[i].velocity=a.velocity
+                        shooters[j].core.position=b.position
+                        shooters[j].velocity=b.velocity
+                    }
+                }
+            }
+        }
     }
 
     /// Physics68.cs:62-65 ShipContacts68 with exact source body masses:
