@@ -43,10 +43,17 @@ final class CarbonisExplosion524Renderer {
         desc.depthAttachmentPixelFormat = .depth32Float
         pipeline=try device.makeRenderPipelineState(descriptor:desc)
 
-        let tex=MTLTextureDescriptor.texture3DDescriptor(
-            pixelFormat:.r8Unorm,width:64,height:64,depth:64,
-            mipmapped:false)
-        tex.usage=[.shaderRead]
+        // Xcode 16.4: MTLTextureDescriptor provides texture2DDescriptor,
+        // but no texture3DDescriptor convenience factory. Configure true
+        // 3D texture explicitly; R8 bytes and dimensions are unchanged.
+        let tex=MTLTextureDescriptor()
+        tex.textureType = .type3D
+        tex.pixelFormat = .r8Unorm
+        tex.width=64
+        tex.height=64
+        tex.depth=64
+        tex.mipmapLevelCount=1
+        tex.usage = .shaderRead
         tex.storageMode = .shared
         guard let result=device.makeTexture(descriptor:tex)
         else {throw Setup.failed}
