@@ -252,12 +252,9 @@ struct CarbonisCombat568 {
                 shooters[i]=fighter
                 continue
             }
-            let alignment=abs(atan2(
-                sin(fighter.aim-fighter.aim),cos(fighter.aim-fighter.aim)))
-            if alignment>0.25 {
-                shooters[i]=fighter
-                continue
-            }
+            // EnemyTactics71.cs:63-64: for type 0, shotAngle=Aim71,
+            // so its alignment with the current aim is exactly zero.
+            // The GunAim72 alignment gate only affects enemy kinds 1/4.
             // Level 1: single bullet per volley, 2.8 s recovery.
             if hostileShots.count<160 {
                 let forward=Vec2(x:cos(fighter.aim),y:sin(fighter.aim))
