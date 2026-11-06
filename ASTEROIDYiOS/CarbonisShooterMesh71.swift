@@ -36,8 +36,11 @@ enum CarbonisShooterMesh71 {
                                     _ after:P,_ t:Float)->P {
         let t2=t*t,t3=t2*t,tension:Float=0.72
         func curve(_ p:Float,_ q:Float,_ r:Float,_ s:Float)->Float {
-            (2*t3-3*t2+1)*q+(t3-2*t2+t)*tension*(r-p)*0.5
-                +(-2*t3+3*t2)*r+(t3-t2)*tension*(s-q)*0.5
+            let a=(2*t3-3*t2+1)*q
+            let b=(t3-2*t2+t)*tension*(r-p)*0.5
+            let c=(-2*t3+3*t2)*r
+            let d=(t3-t2)*tension*(s-q)*0.5
+            return a+b+c+d
         }
         return P(curve(before.x,a.x,b.x,after.x),
                  a.y+(b.y-a.y)*t,
