@@ -104,7 +104,32 @@ check('base_from_glb(archive.read(GLB_PATH))' in importer and
       'float_count != 194427 * 12' in importer and
       'if cpu_faces != 10802' in importer,
       'Source import no longer proves original runtime binary/glTF match')
+# Simulator-only evidence must be generated AFTER the original
+# source asset draw and only when the entire Metal buffer completes.
+# It must never alter the normal shipped iPhone/iPad gameplay state.
+for token in (
+    'ProcessInfo.processInfo.environment["ASTEROIDY_RENDER_VERIFY"] == "1"',
+    'if sourceDrawProofRequested && !sourceDrawProofScheduled,',
+    'let original=sourceVanguard431 {',
+    'command.addCompletedHandler { finished in',
+    'let passed=finished.status == .completed',
+    '"gpuCommandBufferCompleted":passed',
+    '"pipeline":"sourceFighterTexturedPipeline431"',
+    '"vertexCount":vertexCount',
+    '"textureWidth":textureWidth',
+    '"textureHeight":textureHeight',
+    '"ASTEROIDY_Vanguard431_RenderProof.json"',
+    'try? bytes.write(to:path,options:.atomic)',
+):
+    check(token in renderer,
+          'Source Vanguard completed-GPU-draw proof missing: '+token)
+proof=cinematic.index('if sourceDrawProofRequested && !sourceDrawProofScheduled,')
+draw=cinematic.index('vertexCount:native.count)')
+finish=cinematic.index('command.commit()',proof)
+check(draw<proof<finish,
+      'Simulator proof must be gated after actual source 4311 draw and before GPU submit')
 print('PASS: source 4311 mesh normals and UV+original JPEG shader,')
 print('      exact source 3-band toon, paired assets and v556 fallback')
-print('LIMIT: binary assets not in GitHub yet; regular IPA remains')
-print('       on old AS3D path until .mesh/.jpg are included')
+print('PASS: simulator-only completed-Metal-command draw proof gated')
+print('      by real 4311 path and zero change to default gameplay')
+print('LIMIT: source contract does not prove physical iPhone GPU pixels')
