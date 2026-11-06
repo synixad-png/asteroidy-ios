@@ -95,6 +95,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var craftVertexCount=0
             private var craftPipeline:MTLRenderPipelineState?
             private var tracerPipeline:MTLRenderPipelineState?
+            // Explosion524 v568: one 3D noise texture and one Metal
+            // pipeline for all actual rock/enemy death events.
+            private var destructionRenderer:CarbonisExplosion524Renderer?
             private var shooterPipeline:MTLRenderPipelineState?
             private var sourceShooters:[Int:(buffer:MTLBuffer,ranges:[Range<Int>])] = [:]
             private var proofScheduled=false
@@ -240,12 +243,17 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     shooterSpec.depthAttachmentPixelFormat = .depth32Float
                     shooterPipeline=try device.makeRenderPipelineState(
                         descriptor:shooterSpec)
+                    destructionRenderer=try CarbonisExplosion524Renderer(
+                        device:device,library:library)
                     if let tracer=library.makeFunction(name:"sector01CombatTracer568") {
                         let tracerSpec=MTLRenderPipelineDescriptor()
                         tracerSpec.vertexFunction=v
                         tracerSpec.fragmentFunction=tracer
                         tracerSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
                         tracerSpec.depthAttachmentPixelFormat = .depth32Float
+                        tracerSpec.colorAttachments[0].isBlendingEnabled=true
+                        tracerSpec.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
+                        tracerSpec.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
                         tracerPipeline=try device.makeRenderPipelineState(
                             descriptor:tracerSpec)
                     }
@@ -593,6 +601,15 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     encoder.drawPrimitives(type:.triangle,vertexStart:0,
                                            vertexCount:craftVertexCount)
                 }
+                // Windows GpuSphere67.cs:433 calls volume explosion
+                // immediately before projectile/debris visual effects.
+                if let session=gameSession,let worldView=vp,
+                   let explosion=destructionRenderer {
+                    explosion.render(session.game.destruction,
+                        time:session.game.elapsed,
+                        camera:session.game.flight.camera,
+                        vp:worldView,into:encoder)
+                }
                 if let session=gameSession,let tracer=tracerPipeline,
                    let cameraMatrix=vp {
                     let shots=session.game.bullets+session.game.hostileShots
@@ -601,6 +618,13 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         session.game.shooters))
                     values.append(contentsOf:Self.tokenVertices(
                         session.game.tokenPickups))
+                    // Source particle bursts, radius-animated lights,
+                    // metal CombatPieces125 and Explosion524 3D shards.
+                    values.append(contentsOf:
+                        CarbonisExplosion524Meshes.vertices(
+                            session.game.destruction,
+                            time:session.game.elapsed,
+                            camera:session.game.flight.camera))
                     if !values.isEmpty,
                        let buffer=values.withUnsafeBytes({ bytes in
                            bytes.baseAddress.flatMap {
