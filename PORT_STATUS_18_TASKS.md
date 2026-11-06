@@ -1,5 +1,11 @@
 # ASTEROIDY iOS — stały harmonogram portowania
 
+## UZUPEŁNIENIE 06.11.2026 — bezpieczeństwo wejścia do CARBONIS (bez zmiany postępu)
+
+W commitach `7438a823` i `9f769824` uszczelniono wejście do oryginalnej sceny C279: `Sector01CarbonisPreview568.isAvailable` sprawdza teraz nie tylko istnienie, ale również SHA-256 wszystkich pięciu źródłowych plików jeszcze przed wyborem sceny. Weryfikacja w rendererze Metal pozostaje niezależnie aktywna. Rozszerzono kontrakt `Tests/V568W3NativeMenuContract.py` o asercje tej bramki.
+
+**Postęp bez zmian: 29% wykonane / 71% pozostało.** To naprawa ochronna etapu C, a nie implementacja `StartHubMission261`, fal, lotu czy wygranej. Natywna kompilacja po tych commitach i test na fizycznym iOS nie zostały jeszcze potwierdzone; poprzedni PASS `42225858732` dotyczy wcześniejszego snapshotu. Następne zadanie: rzeczywista logika startu misji na podstawie Windows v568, nie powtarzanie testów menu. Nowego IPA nie wydano.
+
 ## BIEŻĄCY STAN — etap C: wejście w rzeczywistą scenę CARBONIS, 06.11.2026
 
 **Ocena projektu 29% wykonane (+1 pp) / 71% pozostało.**
