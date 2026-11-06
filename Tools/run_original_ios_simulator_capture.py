@@ -139,6 +139,18 @@ def capture(app:Path,reports:Path,kinds):
             print(f"REAL {kind}: CoreSimulator boot completed",flush=True)
             run_command(["xcrun","simctl","install",udid,str(app)],85,
                 reports/f"{kind}_install.txt")
+            # Clear proof from any previous install/launch. A stale JSON
+            # must NEVER certify this launch's screenshot as a GPU draw.
+            container=run_command(
+                ["xcrun","simctl","get_app_container",udid,PACKAGE,"data"],
+                45,reports/f"{kind}_app-container.txt").strip()
+            proof_path=(Path(container)/"Library"/"Caches"/
+                "ASTEROIDY_Vanguard431_RenderProof.json")
+            try:
+                proof_path.unlink(missing_ok=True)
+            except OSError as exc:
+                raise AppValidationFailed(
+                    f"{kind}: cannot clear prior GPU render proof: {exc}")
             # Simulator-only flag: the game itself will write proof
             # AFTER its real Vanguard431 draw's Metal command buffer
             # successfully completes. Normal user's iOS app unchanged.
@@ -170,11 +182,6 @@ def capture(app:Path,reports:Path,kinds):
             # test-only file written by the source renderer ONLY when
             # the real GPU command buffer finishes. Independent of
             # logger permissions and the screenshot's apparent content.
-            container=run_command(
-                ["xcrun","simctl","get_app_container",udid,PACKAGE,"data"],
-                45,reports/f"{kind}_app-container.txt").strip()
-            proof_path=(Path(container)/"Library"/"Caches"/
-                "ASTEROIDY_Vanguard431_RenderProof.json")
             if not proof_path.is_file():
                 raise AppValidationFailed(
                     f"{kind}: no proof of completed original textured "
