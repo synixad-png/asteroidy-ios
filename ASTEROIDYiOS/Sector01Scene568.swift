@@ -10,6 +10,7 @@ struct Sector01Scene568: View {
     let onMissionCompleted:(Sector01MissionSummary568)->Void
     let onSurvivalChanged:(Int,Int)->Void
     let onAudioEvent:(Int)->Void
+    let onEnginePower:(Float)->Void
     let preparedWave:Sector01PreparedWave568
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var session:CarbonisSession568
@@ -20,12 +21,14 @@ struct Sector01Scene568: View {
          onMissionCompleted:@escaping (Sector01MissionSummary568)->Void,
          onSurvivalChanged:@escaping (Int,Int)->Void,
          onAudioEvent:@escaping (Int)->Void = {_ in},
+         onEnginePower:@escaping (Float)->Void = {_ in},
          preparedWave:Sector01PreparedWave568) {
         self.entry=entry
         self.returnToAtlas=returnToAtlas
         self.onMissionCompleted=onMissionCompleted
         self.onSurvivalChanged=onSurvivalChanged
         self.onAudioEvent=onAudioEvent
+        self.onEnginePower=onEnginePower
         self.preparedWave=preparedWave
         _session=StateObject(wrappedValue:CarbonisSession568(prepared:preparedWave))
     }
@@ -248,6 +251,14 @@ struct Sector01Scene568: View {
                               session.game.shieldCharges)
             onMissionCompleted(report)
         }
+        // MusicAudio.cs engineLevel: active thrust=1; no thrust idle=.16.
+        // Subscribe to actual simulation HUD updates at 10 Hz, not the
+        // render thread. Physics and touch control remain unchanged.
+        .onChange(of:session.hud.seconds) { _ in
+            let engine:Float=session.game.phase == .playing
+                ? (session.move.lengthSquared>0.01 ? 1 : 0.16) : 0
+            onEnginePower(engine)
+        }
         // Interrupted iOS touches (Control Center, app switcher, call)
         // cannot leave auto-fire held after returning to the mission.
         .onChange(of:scenePhase) { phase in
@@ -265,6 +276,7 @@ struct Sector01Scene568: View {
             }
         }
         .onDisappear {
+            onEnginePower(0)
             session.onAudioEvents=nil
             session.paused=true
             session.release()

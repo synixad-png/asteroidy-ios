@@ -84,6 +84,8 @@ final class OriginalAudioAV568: ObservableObject {
     private var settings = OriginalAudioSettings568.load()
     private var music: AVAudioPlayer?
     private var effects: [AVAudioPlayer] = []
+    private let enginePlayback52=OriginalEnginePlayback52()
+    private var engineLevel52:Float=0
     private var variant = 0
     private var started = false
     private var suspended = false
@@ -112,6 +114,8 @@ final class OriginalAudioAV568: ObservableObject {
     private func reloadSettings() {
         settings = OriginalAudioSettings568.load()
         music?.volume = Float(settings.musicPercent) / 100 * 0.8
+        enginePlayback52.setPower(engineLevel52,
+            effectsVolume:Float(settings.effectsPercent)/100)
         // Preserve per-sound source gain, and only scale new voices.
     }
     func prepareMenuAtStartup() {
@@ -214,15 +218,27 @@ final class OriginalAudioAV568: ObservableObject {
         }
     }
     func returnToMenu() {
+        engineLevel52=0
+        enginePlayback52.stop()
         context = .menu
         if !suspended { playTrack(0) }
     }
     func enterMission(_ sector: Int) {
         guard (1...26).contains(sector) else { return }
         context = .mission(sector)
-        if !suspended { playTrack(OriginalAudioCatalog568.missionTrack(sector)) }
+        // MusicAudio.cs:79 idle power .16, full thrust 1.0, no audio
+        // generation in the Metal render loop.
+        engineLevel52=0.16
+        if !suspended {
+            enginePlayback52.setPower(engineLevel52,
+                effectsVolume:Float(settings.effectsPercent)/100)
+            enginePlayback52.start()
+            playTrack(OriginalAudioCatalog568.missionTrack(sector))
+        }
     }
     func stopForDiagnostic() {
+        engineLevel52=0
+        enginePlayback52.stop()
         context = .diagnostic
         music?.stop(); activeMusicIndex = nil
         effects.removeAll()
@@ -230,9 +246,15 @@ final class OriginalAudioAV568: ObservableObject {
     func sceneIsActive(_ active: Bool) {
         suspended = !active
         if !active {
+            enginePlayback52.stop()
             music?.pause()
             effects.forEach { $0.pause() }
         } else {
+            if case .mission = context {
+                enginePlayback52.setPower(engineLevel52,
+                    effectsVolume:Float(settings.effectsPercent)/100)
+                enginePlayback52.start()
+            }
             if music != nil, activeMusicIndex != nil { music?.play() }
             else {
                 switch context {
@@ -242,6 +264,13 @@ final class OriginalAudioAV568: ObservableObject {
                 case .diagnostic: break
                 }
             }
+        }
+    }
+    func sourceEnginePower(_ raw:Float) {
+        engineLevel52=max(0,min(1,raw))
+        if case .mission = context, !suspended {
+            enginePlayback52.setPower(engineLevel52,
+                effectsVolume:Float(settings.effectsPercent)/100)
         }
     }
     func sourceEffect(_ code: Int) {

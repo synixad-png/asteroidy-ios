@@ -132,6 +132,8 @@ struct GameView: View {
                             lives:lives,shieldCharges:charges)
                     },onAudioEvent:{ code in
                         audio.sourceEffect(code)
+                    },onEnginePower:{ power in
+                        audio.sourceEnginePower(power)
                     },preparedWave:preparedWave)
                 } else if showMainMenu {
                     if !audio.startupComplete {
