@@ -11,6 +11,31 @@
 > następne”) opisaną niżej jako historia. **Wszystkie 18 zadań, ich
 > numery, zakresy i dotychczasowe procenty pozostają niezmienione.**
 > Najbliższe do wykonania: **A. Menu, potem B. Wybór misji**.
+> **06.11.2026 — IPA NA ŻĄDANIE WYDANE I SPRAWDZONE:**
+> [GitHub Actions 42203939074](https://github.com/synixad-png/asteroidy-ios/actions/runs/42203939074)
+> zakończony `success`, `ASTEROIDY_v568_W3_iPhone_iPad_UNSIGNED.ipa`
+> (14 097 407 B, SHA256
+> `ba0ab998837d6b769bb5ddfd2b027d712351dc6833390b80d12ab9a96b90ff2a`).
+> Kompilacja fizycznego iOS ARM64, iPhone/iPad, 7 oryginalnych
+> zasobów W3/Vanguard/H290 i CRC IPA — PASS.
+> Potwierdzono hash ponownie po pobraniu pliku z GitHuba.
+> **NIEPODPISANY:** niepotwierdzona instalacja na fizycznym iOS.
+> Zobacz [raport wydania](Reports/V568_W3_IPA_RELEASE_2026-11-06.md).
+> Snapshot wydania = `5242e4f`; dalsze commity nie znajdują się w IPA.
+>
+> **Etap A — GPU potwierdzone na iPhonie i iPadzie:**
+> [GitHub Actions 42202733165](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202733165)
+> oba joby `success`; NewHome290 516624 wierzchołków,
+> oryginalny Vanguard431 194427 wierzchołków na iPadzie,
+> zakończone komendy Metal i prawdziwe zrzuty. Po wydaniu IPA
+> poszerzono *wyłącznie viewport* prawego podglądu statku
+> ze 110 do 164 pt, nie zmieniając skali/siatki/animacji.
+> Jest to kolejna wersja robocza, nie część wydanego IPA.
+> Dotykowe 7 przycisków XCTest i porównanie oświetlenia
+> 1:1 z Windows v568 nie są jeszcze zaliczone.
+> Etap A **W TRAKCIE**, etap B jeszcze nierozpoczęty.
+> **Zadanie 14: 10%, zmiana +0 pp; projekt 27%, pozostało 73%.**
+>
 > **Etap A, kolejny widoczny element (06.11.2026):** na podstawie
 > źródłowego `GpuW3HomeReal333.cs` dodano do panelu HOME
 > na iPadzie **oryginalny obracany statek Vanguard431**,
