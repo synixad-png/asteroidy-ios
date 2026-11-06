@@ -18,6 +18,8 @@ on:
       - 'ASTEROIDYiOS/W3HomeShipPreview568.swift'
       - 'ASTEROIDYiOS/Ship.metal'
       - 'Tests/V568W3HomeShipSourceContract.py'
+      - 'Tests/V568W3NativeMenuContract.py'
+      - 'project.yml'
       - 'ASTEROIDY_v568_W3_ORIGINAL_MENU_ASSETS.zip'
       - 'Tests/V568W3MenuSourceImagesTests.py'
 
