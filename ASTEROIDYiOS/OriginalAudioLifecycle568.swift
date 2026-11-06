@@ -1,5 +1,15 @@
 import Foundation
 
+/// Byte fingerprints from the original Windows/SteamOS v568 source archive
+/// build inventory, NOT inferred audio formats or waveform content.
+/// These files are NOT present in the four partial GitHub resource ZIPs.
+enum OriginalAudioManifest568 {
+    static let introPCM="Shared/music/intro43.pcm.gz"
+    static let introPCMSHA256="372d78e964c2d43b6c476488226d403547af4f2cfaafb650bc11fdedd9dc8b25"
+    static let synthLicenses="Shared/music/SYNTH_LICENSES.txt"
+    static let synthLicensesSHA256="8d790c6967996cb4903651087a73e961d846106c7ed3a6f4f2a01dfcc20eabfa615"
+}
+
 /// A source-verified PCM carrier only. Never generate replacement audio.
 struct OriginalPCM568 {
     let sourceId:String
