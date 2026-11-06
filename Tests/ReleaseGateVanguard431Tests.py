@@ -57,10 +57,17 @@ assert "python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiO
 assert "--require-vanguard-original" in manual
 assert "--require-vanguard-original" in ipa
 assert "compatibility_old_ship" in manual
+assert "if: inputs.compatibility_old_ship == true" in manual
+assert "rm -f ASTEROIDYiOS/Assets/Vanguard431Source.mesh" in manual
+assert "rm -f ASTEROIDYiOS/Assets/Vanguard431Base.jpg" in manual
+assert manual.index("rm -f ASTEROIDYiOS/Assets/Vanguard431Source.mesh") < manual.index(
+    "Generate original iOS Xcode project"
+), "Legacy compatibility must remove assets BEFORE XcodeGen bundles them"
 assert "TARGETED_DEVICE_FAMILY=1,2" in manual
 assert "workflow_dispatch:" in manual and "  push:" not in manual
 print("PASS: original Vanguard source material is mandatory for textured")
 print("      releases; old AS3D fallback requires explicit compatibility")
 print("      switch. Missing/malformed/renamed JPEG/mesh IPA rejected.")
+print("      legacy mode really removes both sources in runner checkout")
 print("POSITIVE: exact original source binaries are in GitHub;")
 print("          separate source and native compiled-app tests verify them")
