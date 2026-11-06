@@ -27,8 +27,9 @@ struct CarbonisVisualSettingsPanel568: View {
         })
     }
     private func sliderRange(_ idx:Int)->ClosedRange<Double> {
-        Double(CarbonisVisualSettings568.minimum[idx])...
-        Double(CarbonisVisualSettings568.maximum[idx])
+        let low=Double(CarbonisVisualSettings568.minimum[idx])
+        let high=Double(CarbonisVisualSettings568.maximum[idx])
+        return low...high
     }
     private var brightness:Binding<Double> {
         Binding(get:{Double(profile.projectileBrightness)},
