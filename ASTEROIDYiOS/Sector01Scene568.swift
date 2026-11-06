@@ -7,13 +7,18 @@ import SwiftUI
 struct Sector01Scene568: View {
     let entry:Sector01Entry568
     let returnToAtlas:()->Void
+    let onMissionCompleted:(Sector01MissionSummary568)->Void
     let preparedWave:Sector01PreparedWave568
     @StateObject private var session:CarbonisSession568
+    @State private var completionReported=false
+    @State private var showingService=false
 
     init(entry:Sector01Entry568,returnToAtlas:@escaping ()->Void,
+         onMissionCompleted:@escaping (Sector01MissionSummary568)->Void,
          preparedWave:Sector01PreparedWave568) {
         self.entry=entry
         self.returnToAtlas=returnToAtlas
+        self.onMissionCompleted=onMissionCompleted
         self.preparedWave=preparedWave
         _session=StateObject(wrappedValue:CarbonisSession568(prepared:preparedWave))
     }
@@ -124,6 +129,8 @@ struct Sector01Scene568: View {
                                 .foregroundStyle(.cyan)
                             Text("ASTEROIDY \(session.hud.rocks)  MYŚLIWCE \(session.hud.fighters)")
                                 .foregroundStyle(.orange)
+                            Text("PUNKTY \(session.hud.score)  ŻETONY \(session.hud.collectedTokens)  DO ZEBRANIA \(session.hud.tokenPickups.count)")
+                                .foregroundStyle(.yellow)
                             Text("CZAS \(Int(session.hud.seconds)) s  ·  LEWA: LOT / PRAWA: CEL")
                                 .foregroundStyle(.white)
                         }
@@ -152,23 +159,76 @@ struct Sector01Scene568: View {
                         .padding(.vertical,5)
                         .background(.black.opacity(0.9))
                 }
-                if session.hud.phase != .playing {
+                if showingService {
+                    Color.black.opacity(0.88).ignoresSafeArea()
+                    Sector01ShopPanel568(onReturnAtlas:returnToAtlas)
+                        .padding(compact ? 6:20)
+                } else if session.hud.phase != .playing {
                     Color.black.opacity(0.80).ignoresSafeArea()
-                    VStack(spacing:16) {
-                        Text(session.hud.phase == .victory ?
-                             "SEKTOR 01 · CELE WALKI WYKONANE" : "STATEK ZNISZCZONY")
-                            .font(.system(size:compact ? 19:28,weight:.bold,
-                                          design:.monospaced))
-                            .foregroundStyle(session.hud.phase == .victory ? .green : .red)
-                        Text("Wersja demonstracyjna portu misji · postęp kampanii nie jest zapisywany")
-                            .font(.system(size:12,design:.monospaced))
-                            .foregroundStyle(.white)
-                            .multilineTextAlignment(.center)
-                        Button("POWRÓT DO ATLASU") {returnToAtlas()}
-                            .buttonStyle(.borderedProminent)
-                    }.padding(30)
+                    ScrollView {
+                        VStack(spacing:14) {
+                            Text(session.hud.phase == .victory ?
+                                 "MISJA UKOŃCZONA" : "STATEK ZNISZCZONY")
+                                .font(.system(size:compact ? 21:30,weight:.heavy,
+                                              design:.monospaced))
+                                .foregroundStyle(session.hud.phase == .victory ? .cyan : .red)
+                            if let report=session.hud.summary {
+                                Text("POZIOM 1 / RAPORT MISJI")
+                                    .foregroundStyle(.cyan)
+                                Text("ZESTRZELENI PRZECIWNICY  \(report.enemiesDestroyed)")
+                                Text("ZNISZCZONE ASTEROIDY       \(report.rocksDestroyed)")
+                                Text("PUNKTY ZA POZIOM          +\(report.scoreGained)")
+                                Text("ZEBRANE ŻETONY            +\(report.collectedTokens)")
+                                Text("PREMIA ZA MISJĘ           +\(report.clearBonus)")
+                                Text("ŁĄCZNIE: +\(report.earnedTokens) ŻETONÓW")
+                                    .foregroundStyle(.yellow)
+                                    .fontWeight(.bold)
+                                if report.isReplay {
+                                    Text("POWTÓRKA MISJI — BEZ KOLEJNYCH NAGRÓD")
+                                        .foregroundStyle(.orange)
+                                }
+                                if session.hud.summarySeconds>=4.2 {
+                                    Button("DALEJ / SERWIS") {
+                                        showingService=true
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .accessibilityIdentifier("sector01-result-to-service")
+                                } else {
+                                    Text("RAPORT MISJI · \(Int(max(0,4.2-session.hud.summarySeconds)+1)) s")
+                                        .foregroundStyle(.secondary)
+                                }
+                            } else {
+                                Text("MISJA NIEZALICZONA · BRAK ZAPISU POSTĘPU")
+                                    .foregroundStyle(.orange)
+                                Button("SPRÓBUJ PONOWNIE") {
+                                    completionReported=false
+                                    session.restart(prepared:preparedWave)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .accessibilityIdentifier("sector01-retry-after-defeat")
+                                Button("POWRÓT DO ATLASU") {returnToAtlas()}
+                                    .buttonStyle(.bordered)
+                            }
+                        }
+                        .font(.system(size:compact ? 11:14,
+                                      design:.monospaced))
+                        .foregroundStyle(.white)
+                        .padding(compact ? 15:28)
+                        .background(Color(red:0.02,green:0.04,blue:0.10),
+                                    in:RoundedRectangle(cornerRadius:12))
+                    }
+                    .frame(maxWidth:650,maxHeight:compact ? 400:550)
                 }
             }
+        }
+        // Source CompleteMission50: persist only after the genuine
+        // 0.20 s full clear gate and one-shot FinishLevel settlement.
+        .onChange(of:session.hud.phase) { phase in
+            guard phase == .victory, !completionReported,
+                  let report=session.hud.summary else {return}
+            completionReported=true
+            session.release()
+            onMissionCompleted(report)
         }
         .onDisappear {session.paused=true;session.release()}
         .accessibilityIdentifier("sector01-real-source-scene")
