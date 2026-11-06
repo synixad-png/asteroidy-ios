@@ -1,0 +1,80 @@
+# One-time native Apple build after the user uploaded original PC Vanguard
+# source mesh and BaseColor JPEG. This NEVER creates an IPA or app artifact.
+# It checks the ACTUAL compiled iOS app bundle contains the verified bytes.
+name: ASTEROIDY iOS - Real Vanguard431 texture in compiled iPhone+iPad app (NO IPA)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/check-original-vanguard431-bundled-app-once.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original-vanguard-native-asset-check:
+    name: Compile + verify real Vanguard UV/JPEG inside iPhone+iPad .app (NO IPA)
+    runs-on: macos-15-intel
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate the real user-uploaded PC model and JPEG before Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python3 Tools/prepare_vanguard431_assets.py | tee reports/direct-source-check.txt
+          python3 Tests/OriginalVanguard431InstalledAssetsTests.py | tee reports/source-vertex-uv-check.txt
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets | tee reports/source-hash-check.txt
+      - name: Record native Xcode / iOS target
+        shell: bash
+        run: |
+          set -euo pipefail
+          { xcodebuild -version; xcrun --sdk iphoneos --show-sdk-version; xcrun --find metal; echo "Revision: $GITHUB_SHA"; } | tee reports/native-toolchain.txt
+      - name: Generate unchanged native XcodeGen project
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+          xcodegen generate --spec project.yml
+      - name: Compile actual Metal / Swift Release app for physical iPhone + iPad ARM64
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/OriginalVanguard431" \
+            build > reports/xcodebuild.log 2>&1 || {
+              tail -n 160 reports/xcodebuild.log
+              exit 1
+            }
+          echo "PASS: native Release Swift+Metal built for iPhone and iPad ARM64"
+      - name: Verify exact two source assets in actual compiled app
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/OriginalVanguard431/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" && test -f "$APP/Info.plist"
+          python3 Tools/verify_compiled_vanguard431_app.py --app "$APP" | tee reports/verified-compiled-app.txt
+          echo "No IPA generated. This is a real compiled-app resource test, not a live iPhone GPU run." | tee reports/no-ipa.txt
+      - name: Save text diagnostics only, do NOT publish .app or IPA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-iOS-real-Vanguard431-native-bundle-verification
+          path: |
+            reports/direct-source-check.txt
+            reports/source-vertex-uv-check.txt
+            reports/source-hash-check.txt
+            reports/native-toolchain.txt
+            reports/verified-compiled-app.txt
+            reports/no-ipa.txt
+            reports/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 7
