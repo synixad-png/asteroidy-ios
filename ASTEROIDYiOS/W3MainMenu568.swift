@@ -49,6 +49,7 @@ struct W3MainMenu568: View {
     let selectMission: (Int) -> Void
     let inspectSector: (Int) -> Void
     let openDiagnostic: () -> Void
+    let openCampaignOnEntry: Bool
     @State private var page: Page?
     // Same Y/X globe rotation axes as the source W3 NewHome290 preview.
     @State private var planetYaw: Float=0
@@ -110,6 +111,9 @@ struct W3MainMenu568: View {
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("asteroidy-w3-main-menu")
         .onAppear {
+            // Returning from original C279 planet restores the real
+            // source-locked 26-sector campaign atlas, not the W3 home page.
+            if openCampaignOnEntry { page = .campaign }
             // Simulator diagnostic only. An actual screenshot is still
             // independently required; never report this marker as pixel parity.
             guard ProcessInfo.processInfo.environment["ASTEROIDY_W3_MENU_VERIFY"] == "1" else {
