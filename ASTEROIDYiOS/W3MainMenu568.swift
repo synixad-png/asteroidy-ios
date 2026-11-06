@@ -31,7 +31,7 @@ private enum SourceW3Images568 {
 /// Uses the original seven action captions and W3 palette/layout hierarchy.
 /// This is a real, tappable iPhone/iPad navigation surface, not HTML/WebView,
 /// not a captured image of another game and not a claim of W3 visual parity.
-/// Original W3 background/logo and 3D animated central planet are pending.
+/// W3 background/logo and actual GLB-derived NewHome290 source are loaded if SHA-verified;\n/// final shader parity is still a separate task.
 struct W3MainMenu568: View {
     enum Page: String, CaseIterable, Identifiable {
         case newGame = "NOWA GRA"
@@ -48,6 +48,12 @@ struct W3MainMenu568: View {
     let progress: CampaignProgress556
     let openDiagnostic: () -> Void
     @State private var page: Page?
+    // Same Y/X globe rotation axes as the source W3 NewHome290 preview.
+    @State private var planetYaw: Float=0
+    @State private var planetPitch: Float=0
+    @State private var planetDragYaw: Float=0
+    @State private var planetDragPitch: Float=0
+    @State private var planetDragging=false
 
     private let gold = Color(red: 0.89, green: 0.67, blue: 0.31)
     private let cyan = Color(red: 0.39, green: 0.75, blue: 0.79)
@@ -112,7 +118,7 @@ struct W3MainMenu568: View {
                 "htmlOrWebView": false,
                 "hasOriginalW3BackgroundImage": SourceW3Images568.pair != nil,
                 "hasOriginalW3LogoImage": SourceW3Images568.pair != nil,
-                "sourcePlanet3DIntegrated": false,
+                "sourcePlanet3DIntegrated": W3HomePlanetMetal568.isAvailable,
                 "bundleID": Bundle.main.bundleIdentifier ?? "",
                 "simulatorOnly": true
             ]
@@ -229,10 +235,36 @@ struct W3MainMenu568: View {
                     .frame(width:diameter*1.07,height:1)
                 Rectangle().fill(cyan.opacity(0.22))
                     .frame(width:1,height:diameter*1.07)
-                Circle()
-                    .fill(Color(red:0.023,green:0.113,blue:0.158))
-                    .frame(width:diameter*0.36,height:diameter*0.36)
-                    .overlay { Circle().stroke(gold.opacity(0.5),lineWidth:1) }
+                if W3HomePlanetMetal568.isAvailable {
+                    W3HomePlanetMetal568(yaw:planetYaw,pitch:planetPitch)
+                        .frame(width:diameter,height:diameter)
+                        .contentShape(Circle())
+                        .gesture(DragGesture(minimumDistance:0)
+                            .onChanged { value in
+                                if !planetDragging {
+                                    planetDragYaw=planetYaw
+                                    planetDragPitch=planetPitch
+                                    planetDragging=true
+                                }
+                                // Normalize drag distance to the original 455 px
+                                // W3 preview. No change to the gameplay camera.
+                                let dx=Float(value.translation.width)
+                                    * 455 / Float(max(1,diameter))
+                                let dy=Float(value.translation.height)
+                                    * 455 / Float(max(1,diameter))
+                                planetYaw=planetDragYaw+dx*0.006
+                                planetPitch=min(1.05,max(-1.05,
+                                    planetDragPitch+dy*0.005))
+                            }
+                            .onEnded { _ in planetDragging=false })
+                        .accessibilityLabel(
+                            "Oryginalna planeta NewHome290 v568. Przeciągnij, aby obracać.")
+                } else {
+                    Circle()
+                        .fill(Color(red:0.023,green:0.113,blue:0.158))
+                        .frame(width:diameter*0.36,height:diameter*0.36)
+                        .overlay { Circle().stroke(gold.opacity(0.5),lineWidth:1) }
+                }
                 Ellipse()
                     .stroke(gold.opacity(0.85),lineWidth:1.5)
                     .frame(width:diameter*0.97,height:diameter*0.38)
@@ -246,7 +278,7 @@ struct W3MainMenu568: View {
                     .font(.system(size:compact ? 8 : 11,design:.monospaced))
                     .foregroundStyle(muted)
                     Spacer()
-                    Text("MODEL PLANETY 3D — DO PRZENIESIENIA")
+                    Text(W3HomePlanetMetal568.isAvailable ? "ORYGINALNA PLANETA NEWHOME290 / 3D METAL" : "MODEL PLANETY 3D — BRAK ZASOBÓW")
                         .font(.system(size:compact ? 8 : 10,design:.monospaced))
                         .foregroundStyle(gold)
                 }
