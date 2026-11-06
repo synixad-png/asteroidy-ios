@@ -8,6 +8,7 @@ struct Sector01Scene568: View {
     let entry:Sector01Entry568
     let returnToAtlas:()->Void
     let onMissionCompleted:(Sector01MissionSummary568)->Void
+    let onSurvivalChanged:(Int,Int)->Void
     let preparedWave:Sector01PreparedWave568
     @StateObject private var session:CarbonisSession568
     @State private var completionReported=false
@@ -15,10 +16,12 @@ struct Sector01Scene568: View {
 
     init(entry:Sector01Entry568,returnToAtlas:@escaping ()->Void,
          onMissionCompleted:@escaping (Sector01MissionSummary568)->Void,
+         onSurvivalChanged:@escaping (Int,Int)->Void,
          preparedWave:Sector01PreparedWave568) {
         self.entry=entry
         self.returnToAtlas=returnToAtlas
         self.onMissionCompleted=onMissionCompleted
+        self.onSurvivalChanged=onSurvivalChanged
         self.preparedWave=preparedWave
         _session=StateObject(wrappedValue:CarbonisSession568(prepared:preparedWave))
     }
@@ -75,6 +78,8 @@ struct Sector01Scene568: View {
                         Spacer()
                         Button("WRÓĆ DO MAPY") {
                             session.release(); session.paused=true
+                            onSurvivalChanged(session.game.lives,
+                                              session.game.shieldCharges)
                             returnToAtlas()
                         }
                         .font(.system(size:compact ? 10:13,weight:.bold,design:.monospaced))
@@ -214,7 +219,11 @@ struct Sector01Scene568: View {
                                 }
                                 .buttonStyle(.borderedProminent)
                                 .accessibilityIdentifier("sector01-retry-after-defeat")
-                                Button("POWRÓT DO ATLASU") {returnToAtlas()}
+                                Button("POWRÓT DO ATLASU") {
+                                    onSurvivalChanged(session.game.lives,
+                                                      session.game.shieldCharges)
+                                    returnToAtlas()
+                                }
                                     .buttonStyle(.bordered)
                             }
                         }
@@ -236,6 +245,8 @@ struct Sector01Scene568: View {
                   let report=session.hud.summary else {return}
             completionReported=true
             session.release()
+            onSurvivalChanged(session.game.lives,
+                              session.game.shieldCharges)
             onMissionCompleted(report)
         }
         .onDisappear {session.paused=true;session.release()}
