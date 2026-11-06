@@ -261,10 +261,12 @@ struct CarbonisDestruction524 {
 
     /// BossTunnelGame.cs:96, ordinary shooter: contact sparks, 11 real
     /// 3D pieces, burst22, ring .30, Explosion524 kind0 scale14.
-    mutating func shooterHit(at point:Vec2,velocity:Vec2,
-                             momentum:Vec2,defeated:Bool,time:Float,
+    mutating func shooterHit(at point:Vec2,impactPoint:Vec2,
+                             velocity:Vec2,momentum:Vec2,
+                             defeated:Bool,time:Float,
                              rng:inout MissionWave568.SourceRandom) {
-        impact(at:point,shotVelocity:velocity,armored:0,rng:&rng)
+        impact(at:impactPoint,shotVelocity:velocity,
+               armored:0,rng:&rng)
         if defeated {
             breakApart(at:point,momentum:momentum,
                        count:11,size:8,type:2,rng:&rng)
