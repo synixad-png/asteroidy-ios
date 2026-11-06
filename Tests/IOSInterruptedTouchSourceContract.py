@@ -19,7 +19,7 @@ print("PASS: source touch-hold state resets on foreground interruption and campa
 renderer = Path("ASTEROIDYiOS/MetalRenderer.swift").read_text(encoding="utf-8")
 assert "@Published var gameplayPaused = false" in s
 assert "input.gameplayPaused = phase != .active || showCampaign" in s
-assert "input.gameplayPaused = visible || scenePhase != .active" in s
+assert "input.gameplayPaused = visible || showMainMenu || scenePhase != .active" in s
 assert "let elapsed = input.gameplayPaused ? 0.0 : frameElapsed" in renderer
 assert renderer.index("lastTime = now") < renderer.index("let elapsed = input.gameplayPaused")
 assert "fixedClock.advance(elapsed:elapsed)" in renderer
