@@ -11,6 +11,8 @@ on:
       - '.github/workflows/verify-v568-w3-navigation-ui.yml'
       - 'project.yml'
       - 'W3MenuUITests/**'
+      - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
+      - 'ASTEROIDYiOS/CarbonisVisualSettings568.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/App.swift'
       - 'Tests/V568W3NativeMenuContract.py'
@@ -74,7 +76,7 @@ jobs:
           with open("reports/device-udid.txt","w") as f:
               f.write(udid+"\n")
           PY
-      - name: Actually tap and return from all seven W3 menu entries
+      - name: Tap seven W3 actions and test native explosion/projectile settings after relaunch
         timeout-minutes: 23
         shell: bash
         run: |
@@ -86,6 +88,7 @@ jobs:
             -destination "platform=iOS Simulator,id=$UDID" \
             -parallel-testing-enabled NO \
             -only-testing:ASTEROIDYW3UITests/W3MenuNavigationUITests \
+            -only-testing:ASTEROIDYW3UITests/CarbonisVisualSettingsUITests \
             -derivedDataPath "$PWD/build/W3Touch" \
             -resultBundlePath "$PWD/reports/W3-Actual-${{ matrix.device }}.xcresult" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
@@ -93,7 +96,7 @@ jobs:
               tail -n 160 reports/xcodebuild-ui-test.log
               exit 1
             }
-          grep -E 'Executed 2 tests|Test Suite .* passed' \
+          grep -E 'Executed [0-9]+ tests|Test Suite .* passed' \
             reports/xcodebuild-ui-test.log | tail -n 6 \
             | tee reports/w3-ui-tests-pass.txt
           test ! -e ASTEROIDY_iOS_UNSIGNED.ipa

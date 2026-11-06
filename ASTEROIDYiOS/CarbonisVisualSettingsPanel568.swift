@@ -64,6 +64,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 .padding(.bottom,14)
                 .frame(maxWidth:.infinity,alignment:.leading)
             }
+            .accessibilityIdentifier("w3-effects-scroll")
         }
         .frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.topLeading)
         .accessibilityIdentifier("w3-original-explosion-projectile-settings")
@@ -85,6 +86,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     tab==index ? gold:cyan.opacity(0.35),lineWidth:1))
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("w3-effects-tab-\(index)")
     }
     private func header(_ title:String)->some View {
         Text(title)
@@ -113,6 +115,7 @@ struct CarbonisVisualSettingsPanel568: View {
                         gold.opacity(profile.type==index ? 1:0.25)))
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("w3-explosion-type-\(index)")
+                    .accessibilityValue(profile.type==index ? "wybrany":"niewybrany")
                 }
             }
             header("JAKOŚĆ RENDEROWANIA")
@@ -130,6 +133,7 @@ struct CarbonisVisualSettingsPanel568: View {
                                 Color.white.opacity(0.08))
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("w3-explosion-quality-\(index)")
+                    .accessibilityValue(profile.quality==index ? "wybrany":"niewybrany")
                 }
             }
             ForEach(0..<8,id:\.self) { i in
@@ -139,6 +143,7 @@ struct CarbonisVisualSettingsPanel568: View {
                         Spacer(minLength:8)
                         Text(explosionValue(i))
                             .foregroundStyle(gold)
+                            .accessibilityIdentifier("w3-explosion-value-\(i)")
                     }
                     .font(.system(size:compact ? 10:12,
                                   weight:.medium,design:.monospaced))
@@ -197,6 +202,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     Spacer()
                     Text("\(profile.projectileBrightness)%")
                         .foregroundStyle(gold)
+                        .accessibilityIdentifier("w3-projectile-brightness-value")
                 }
                 .foregroundStyle(.white)
                 .font(.system(size:compact ? 10:12,

@@ -53,13 +53,12 @@ final class W3MenuNavigationUITests: XCTestCase {
             let back=app.buttons["w3-panel-back"]
             XCTAssertTrue(back.waitForExistence(timeout: 15),
                           "W3 panel \(index) did not open")
-            // The atlas provides actual source-locked sector selection;
-            // only source C279 planet inspection is open, not combat.
+            // Current source-locked atlas opens actual CARBONIS 01 gameplay.
             if index==0 || index==2 {
                 XCTAssertTrue(
-                    app.staticTexts["ATLAS 26 SEKTORÓW — WYBÓR I WEJŚCIE NA CARBONIS"]
+                    app.staticTexts["ATLAS 26 SEKTORÓW — CARBONIS 01: WALKA, WYNIKI I SERWIS"]
                         .waitForExistence(timeout: 8),
-                    "Mission atlas must say it is a read-only preview")
+                    "The source atlas must have the current playable CARBONIS title")
             }
             back.tap()
             XCTAssertTrue(button.waitForExistence(timeout: 10),

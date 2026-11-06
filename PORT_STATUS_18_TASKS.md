@@ -1,3 +1,11 @@
+## CARBONIS 01 — weryfikacja interakcji i zapisu ustawień W3 (06.11.2026)
+
+**38% portu wykonane / 62% pozostało (+0 pp).** Dodano natywny iOS XCTest na Apple Simulator iPhone/iPad sprawdzający obie zakładki WYBUCHY 3D i POCISKI: preset ASTEROIDA (92% rozmiaru i 11 kłębów), jakość BALANCED, jasność światła 0–400%, przełącznik mieszania kolorów oraz zapis po faktycznym zamknięciu i ponownym uruchomieniu procesu aplikacji. Dodano wyłącznie identyfikatory dostępności wartości istniejących kontrolek; bez zmian GPU/Metal, fizyki, hitboxów i broni. Naprawiono przestarzałą asercję dawnego podglądowego tytułu atlasu, która nie odpowiada już grywalnemu CARBONIS 01. Testy są podłączone do obecnego workflow `verify-v568-w3-navigation-ui.yml`, **bez tworzenia IPA**.
+
+**Wyniki:** kod testów dodany, ale brak jeszcze zakończonego XCTest na Apple Simulator oraz testu fizycznych urządzeń; natywny build IPA 42283783569 nadal oczekuje na wynik zadania macOS. Testów nie oznaczono jako PASS. Dalej: odczytać wyniki Xcode i `.xcresult`, poprawić wykazane błędy, przetestować wygląd i wydajność efektów. **Globalne 38% / 62% bez zmiany**.
+
+---
+
 ## CARBONIS 01 — WYBUCHY 3D / POCISKI, ustawienia jak w Windows v568 (06.11.2026)
 
 **38% całego portu wdrożone / 62% pozostało — bez sztucznego podnoszenia procentów.** Z oryginalnych źródeł `Windows/src/Menu139.cs`, `Explosion524.cs`, `Combat69.cs`, `ShotAppearance151.cs`, `GpuSphere67.cs` przeniesiono prawdziwe **dwie zakładki menu W3**: „WYBUCHY 3D” (12 oryginalnych kontrolek, trzy presety, jakość 22/32/48 próbek, 3/4/6 wybuchów, suwak odłamków i natywny podgląd detonacji Metal) oraz „POCISKI” (3 kontrolki: jasność 0–400%, osiem źródłowych kolorów, mieszanie 48/52%). Ustawienia zapisują się trwale przez UserDefaults. Rzeczywisty renderer CARBONIS 01 pobiera ustawienia podczas wejścia do misji.
