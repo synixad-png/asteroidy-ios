@@ -1,3 +1,11 @@
+## AKTUALNY KAMIEŃ C/D — 06.11.2026: aktywna walka CARBONIS (źródła) i żądany IPA
+
+**33% wykonano implementacyjnie / 67% pozostało.** Ukończono podzakres kodu dla pierwszej misji: oryginalny VANGUARD z zapamiętaną geometrią GLB, kamera śledząca Sphere67, natywne sterowanie L/P, ogień Pulse, efekty pocisków, źródłowe asteroidy i ich fragmenty, czterech przeciwników z symulacją AI i strzałami, życie i pancerz statku, radar i warunek zwycięstwa po 0,20 s. To NIE jest pełny port 25 misji: 3D przeciwników, bossów, pozostałych broni, audio, zapisu kampanii i testu fizycznego iOS nadal brak. [Raport techniczny i lista braków](Reports/V568_CARBONIS_LIVE_COMBAT_2026-11-06.md).
+
+Zgodnie z wyraźnym poleceniem użytkownika uruchomiono **GitHub Actions generujące niepodpisany IPA** dla iPhone/iPad. Natywne zasoby CARBONIS C279 są weryfikowane i etapowo odtwarzane z oryginalnych ZIP przed Xcode. Weryfikacja nowego `CarbonisCombat568` odbywa się w Swift/Linux przed macOS build. [Przebieg 42247230721](https://github.com/synixad-png/asteroidy-ios/actions/runs/42247230721). Dopóki nie ma `compile-device` SUCCESS i artefaktu `ASTEROIDY-iOS-device-unsigned-ipa`, **nie deklarować gotowego IPA**.
+
+Następny krok: naprawa ewentualnych błędów kompilacji, potwierdzenie rzeczywistego IPA i wizualnego testu iPhone, a dalej oryginalne `BossMesh65/ShipMesh` dla czterech myśliwców i pełna ścieżka ukończenia misji. Plan 18 zadań i etapów A–J niezmieniony; historyczne 31% poniżej nie jest bieżącym postępem.
+
 ## AKTUALNIE REALIZOWANA BRAMKA C → D — 06.11.2026
 
 **31% wykonano / 69% pozostało.** Zrealizowano następny element źródłowej sceny gry, nie nową wersję demonstracyjną: natywne `RockVertices75` i `StampSphere67` z oryginalnego Windows v568, aktualizowane przez `SphereAsteroid556.advance` bezpośrednio w rendererze Metal autentycznej CARBONIS C279. Geometria jest budowana tylko raz na unikalny kształt, a nowe rysowanie nie modyfikuje indeksów, materiałów, UV ani tekstur C279.
