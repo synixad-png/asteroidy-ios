@@ -38,6 +38,11 @@ import Foundation
         touchFire.step(move:still,aim:still,shooting:true,dt:1/120)
         check(touchFire.bullets.count==1,
               "first right-side contact fires immediately without a button")
+        let firstAudio=touchFire.drainOriginalAudioEvents568()
+        check(firstAudio.contains(10),
+              "true first Pulse fire emits original CombatSound code 10")
+        check(touchFire.drainOriginalAudioEvents568().isEmpty,
+              "original SFX queue drains atomically; no duplicated audio")
         for _ in 0..<24 {
             touchFire.step(move:still,aim:still,shooting:true,dt:1/120)
         }
@@ -151,6 +156,8 @@ import Foundation
         check(clearShot.shooters.isEmpty && clearShot.shooterKills==1,
               "Unobstructed type0 enemy is destroyed by source Pulse hit")
         check(clearShot.score==180,"Source Bug kill reward 180")
+        check(clearShot.drainOriginalAudioEvents568().contains(20),
+              "original destroyed shooter dispatches fuel blast SFX code20")
         check(clearShot.destruction.particles.count==22 &&
               clearShot.destruction.pieces.count==17 &&
               clearShot.destruction.explosions.count==1 &&
@@ -174,6 +181,8 @@ import Foundation
                       shooting:false,dt:1.0/60)
         check(terminal.rocks.count==18,
               "Game.SpawnTerminalShards187 creates exactly 18 source pieces")
+        check(terminal.drainOriginalAudioEvents568().contains(20),
+              "original small asteroid destruction emits CombatSound blast20")
         check(terminal.destruction.particles.count==18 &&
               terminal.destruction.explosions.count==1 &&
               terminal.destruction.explosions[0].kind==1 &&
