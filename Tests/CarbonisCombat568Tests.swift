@@ -174,6 +174,28 @@ import Foundation
               "FinishLevel settles and clears outstanding collectibles")
         check(settlement.missionSummary?.clearBonus==12,
               "first mission original non-boss clear bonus")
+        let integrationDefaults=UserDefaults(
+            suiteName:"c279-real-finish-\(UUID().uuidString)")!
+        var integratedCampaign=CampaignProgress556()
+        check(Sector01MissionSettlement568.commit(
+              settlement.missionSummary!,
+              campaign:&integratedCampaign,
+              defaults:integrationDefaults),
+              "real combat victory commits source campaign exactly once")
+        check(integratedCampaign.completed(1) &&
+              integratedCampaign.unlocked(2),
+              "real CARBONIS clear unlocks sector02 in atlas state")
+        check(Sector01Shop568.load(defaults:integrationDefaults).tokens==20,
+              "actual Game.FinishLevel summary transfers 8 pickups +12 clear to wallet")
+        check(CampaignStore556.load(defaults:integrationDefaults).completed(1),
+              "end-to-end saved source first mission survives app state reconstruction")
+        check(!Sector01MissionSettlement568.commit(
+              settlement.missionSummary!,campaign:&integratedCampaign,
+              defaults:integrationDefaults),
+              "same CombatGame victory cannot credit wallet twice")
+        check(Sector01Shop568.load(defaults:integrationDefaults).tokens==20,
+              "source Game and shop wallet remain idempotent")
+
         for _ in 0..<60 {
             settlement.step(move:Vec2(x:0,y:0),
                 aim:Vec2(x:0,y:0),shooting:false,dt:1/120)
