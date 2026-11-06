@@ -1,4 +1,31 @@
 import SwiftUI
+import CryptoKit
+import UIKit
+
+// The two original v568 W3 images are shared once across all flat
+// native menu screens. Never load mismatched or unverified images.
+private enum SourceW3Images568 {
+    static let pair: (background: UIImage, logo: UIImage)? = {
+        func verified(_ name: String,_ ext: String,_ expected: String) -> UIImage? {
+            let url=Bundle.main.url(forResource:name,withExtension:ext)
+                ?? Bundle.main.url(forResource:name,withExtension:ext,
+                    subdirectory:"Assets")
+            guard let file=url, let bytes=try? Data(contentsOf:file) else {
+                return nil
+            }
+            let digest=SHA256.hash(data:bytes)
+                .map { String(format:"%02x",$0) }.joined()
+            guard digest==expected else {return nil}
+            return UIImage(data:bytes)
+        }
+        guard let bg=verified("W3Background568","jpg",
+            "a8aa28883084657f0c38900dbb011de09e2b0fd461704d370a68858be0178145"),
+              let logo=verified("W3Logo568","png",
+            "cab4198b953640c787975c5a8436a0fdeaa82502b40e000077ff055cc0709e09")
+        else {return nil}
+        return (background:bg,logo:logo)
+    }()
+}
 
 /// Source-guided native UI for v568 Windows/src/RendererW3Home328.cs.
 /// Uses the original seven action captions and W3 palette/layout hierarchy.
@@ -32,11 +59,22 @@ struct W3MainMenu568: View {
             let compact = proxy.size.height < 540
             let pad: CGFloat = compact ? 12 : 24
             ZStack {
-                LinearGradient(
-                    colors: [Color(red:0.012,green:0.042,blue:0.071),
-                             Color(red:0.006,green:0.019,blue:0.035)],
-                    startPoint:.topLeading,endPoint:.bottomTrailing)
-                    .ignoresSafeArea()
+                if let images=SourceW3Images568.pair {
+                    Image(uiImage:images.background)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width:proxy.size.width,height:proxy.size.height)
+                        .clipped()
+                        .overlay(Color(red:0.004,green:0.035,blue:0.067)
+                            .opacity(0.65))
+                        .ignoresSafeArea()
+                } else {
+                    LinearGradient(
+                        colors: [Color(red:0.012,green:0.042,blue:0.071),
+                                 Color(red:0.006,green:0.019,blue:0.035)],
+                        startPoint:.topLeading,endPoint:.bottomTrailing)
+                        .ignoresSafeArea()
+                }
                 VStack(spacing:0) {
                     header(compact:compact)
                     HStack(alignment:.top,spacing:compact ? 10 : 20) {
@@ -72,8 +110,8 @@ struct W3MainMenu568: View {
                 "menuItems": Page.allCases.map { $0.rawValue },
                 "navigationAvailable": true,
                 "htmlOrWebView": false,
-                "hasOriginalW3BackgroundImage": false,
-                "hasOriginalW3LogoImage": false,
+                "hasOriginalW3BackgroundImage": SourceW3Images568.pair != nil,
+                "hasOriginalW3LogoImage": SourceW3Images568.pair != nil,
                 "sourcePlanet3DIntegrated": false,
                 "bundleID": Bundle.main.bundleIdentifier ?? "",
                 "simulatorOnly": true
@@ -90,6 +128,13 @@ struct W3MainMenu568: View {
 
     private func header(compact:Bool) -> some View {
         HStack(spacing:12) {
+            if let image=SourceW3Images568.pair?.logo {
+                Image(uiImage:image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width:compact ? 86 : 122,height:compact ? 34 : 44)
+                    .accessibilityLabel("Oryginalne logo ASTEROIDY W3")
+            }
             VStack(alignment:.leading,spacing:2) {
                 Text("SYNIXAD SYSTEMS")
                     .font(.system(size:compact ? 13 : 18,
