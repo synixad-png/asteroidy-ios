@@ -17,6 +17,7 @@ struct CarbonisCombat568 {
         var velocity: Vec2 = Vec2(x:0,y:0)
         var aim: Float = 0
         var fireClock: Float
+        var telegraph: Float = 0
         var phase: Float
         init(_ source:MissionWave568.Fighter) {
             core=source; fireClock=source.fireClock; phase=source.phase
@@ -115,7 +116,7 @@ struct CarbonisCombat568 {
         if invincible<=0 {
             for r in rocks where r.shardLife<=0 {
                 if Self.distance(r.position,flight.position) <= r.radius+11.2 {
-                    suffer(12);break
+                    suffer(18);break // v568 CollisionDamage96, normal lvl 01
                 }
             }
         }
@@ -186,8 +187,22 @@ struct CarbonisCombat568 {
             b.fireClock-=dt
             // Source EnemyTactics71: introductory fighters engage within
             // 200 units, a 2.8s recovery and speed 245 * DangerSpeed.
+            if sqrt(toShip.lengthSquared)>200 {
+                // Source EnemyTactics71:53: out-of-range cancels warning.
+                b.telegraph=0
+                b.fireClock=max(0.45,b.fireClock)
+            } else {
+                if b.fireClock<=0.82 && b.telegraph<=0 {
+                    // Source level-one Shooter telegraph 0.82 seconds.
+                    b.telegraph=0.82
+                }
+                if b.telegraph>0 {
+                    b.telegraph=max(0.001,b.telegraph-dt)
+                }
+            }
             if sqrt(toShip.lengthSquared)<=200 && b.fireClock<=0 {
                 b.fireClock=2.8
+                b.telegraph=0
                 if hostileShots.count<160 {
                     let facing=Vec2(x:cos(b.aim),y:sin(b.aim))
                     let origin=Sphere67.offset(b.core.position,by:facing*18)
