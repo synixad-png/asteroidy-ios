@@ -327,3 +327,42 @@ autentycznych PNG i testu nawigacji wszystkich 7 przycisków.
 
 **Status A: W TRAKCIE. Zadanie 14: 10% / +0 pp;
 całość: 27%, pozostało 73%. B nierozpoczęte. Bez IPA.**
+
+### 06.11.2026 — etap A: rzeczywiste testy dotyku menu W3
+
+Do kodu dodano odrębny target Xcode UI testing
+`ASTEROIDYW3UITests` w `project.yml` i
+`W3MenuUITests/W3MenuNavigationUITests.swift`.
+W przeciwieństwie do kontroli źródłowej oraz samego
+`onAppear`, XCTest **realnie uruchamia aplikację i naciska**
+kolejno siedem przycisków z oryginalnego menu W3, sprawdza
+otwarcie odpowiadającego panelu, przycisk `WSTECZ`,
+powrót do menu, a dla `NOWA GRA` i `KAMPANIA` jawne
+oznaczenie atlasu jako podglądu. Osobny test naciska
+`SCENA TESTOWA`, następnie `MENU W3`, weryfikując powrót
+bez zmieniania dotychczasowych mechanik walki.
+
+Wprowadzono workflow
+[W3 real touch iPhone+iPad XCTest
+42200004528](https://github.com/synixad-png/asteroidy-ios/actions/runs/42200004528),
+który przygotowuje 5 SHA-verified źródłowych zasobów,
+generuje projekt Xcode i uruchamia prawdziwy XCTest w
+symulatorze, bez IPA. **Testy zostały uruchomione, ale ich
+wynik trzeba sprawdzić osobno.** Dopóki oba urządzenia nie
+potwierdzą działania, etap A nie jest zamknięty.
+
+Wcześniejszy rzeczywisty test GPU źródłowego
+`NewHome290`, oryginalnych W3 JPEG/PNG i
+autentycznych screenshotów:
+[42198113753](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113753).
+Job symulatora iPad **SUCCESS** (GPU, oryginalne 5 assetów,
+prawdziwy obraz). Job iPhone podczas dodawania testów
+XCTest kończył zapisywanie raportów; jego ostateczny wynik
+należy odczytać z Actions. Nie ma jeszcze pełnego
+porównania pikselowego z Windows v568, a shader
+oświetlenia jest tylko częściowo zgodny z PC.
+
+Postęp 18 zadań pozostaje bez zmian do końcowych
+testów etapu: **nr 14 = 10% (+0 pp), projekt 27%,
+pozostało 73%.** Kamień B nadal nierozpoczęty.
+Nie wygenerowano IPA.
