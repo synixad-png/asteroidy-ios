@@ -7,6 +7,9 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/verify-v568-w3-native-menu-once.yml'
+      - 'Tools/run_w3_native_menu_simulator_capture.py'
+      - 'ASTEROIDYiOS/W3MainMenu568.swift'
+      - 'Tools/prepare_v568_w3_original_assets.py'
 
 permissions:
   contents: read
@@ -30,6 +33,8 @@ jobs:
           python3 Tests/V568W3NativeMenuContract.py | tee reports/w3-source-contract.txt
           python3 -m py_compile Tools/run_w3_native_menu_simulator_capture.py
           swift Tools/verify_simulator_render_snapshot.swift --self-test | tee reports/w3-screenshot-detector.txt
+      - name: Stage SHA-pinned original v568 W3 images if available
+        run: python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets
       - name: Create native iOS source project (no HTML/WebView)
         timeout-minutes: 5
         run: |
