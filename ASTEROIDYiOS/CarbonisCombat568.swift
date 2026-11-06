@@ -328,28 +328,80 @@ struct CarbonisCombat568 {
         rock.spin=max(-2.5,min(2.5,rock.spin+angular/inertial))
     }
 
+    /// BossTunnelGame.cs:96 HitBug: source projected closest-contact time
+    /// and the rock occlusion check before accepting an enemy hit.
+    static func projectedHit71(_ shot:Projectile,target:Vec2,
+                               radius:Float,dt:Float)->Float? {
+        let travel=shot.velocity*dt
+        let len=travel.lengthSquared
+        let delta=Sphere67.delta(target:target,origin:shot.point)
+        let t=len>0 ? max(0,min(1,
+            (delta.x*travel.x+delta.y*travel.y)/len)) : 0
+        let closest=delta-travel*t
+        return closest.lengthSquared < radius*radius ? t : nil
+    }
+    static func sourceRockScore(_ rock:SphereAsteroid556)->Int {
+        (rock.size==3 ? 20 : rock.size==2 ? 50 : 100)
+            +(rock.originalHealth-1)*30+rock.tier*10
+    }
+
     private mutating func stepShots(dt:Float) {
         for i in bullets.indices.reversed() {
             let shot=bullets[i]
             var impact=false
-            for j in shooters.indices.reversed() {
-                if Self.hit(shot,shooters[j].core.position,radius:15,dt:dt) {
-                    shooters[j].core.hp-=1;impact=true
-                    if shooters[j].core.hp<=0 {shooters.remove(at:j);shooterKills+=1;score+=2}
-                    break
+            // The source selects the earliest projected hit on a shooter,
+            // then permits it only if NO rock intersects earlier.
+            var shooterIndex:Int?=nil
+            var firstShooter:Float=2
+            for j in shooters.indices {
+                if let time=Self.projectedHit71(
+                    shot,target:shooters[j].core.position,radius:16,dt:dt),
+                    time<firstShooter {
+                    firstShooter=time
+                    shooterIndex=j
+                }
+            }
+            if let j=shooterIndex {
+                let blocked=rocks.contains { rock in
+                    guard rock.shardLife<=0 else {return false}
+                    guard let time=Self.projectedHit71(
+                        shot,target:rock.position,radius:rock.radius+2,dt:dt)
+                    else {return false}
+                    return time<firstShooter
+                }
+                if !blocked {
+                    let recoil=CarbonisBodyContact68.transported(
+                        shot.velocity,from:shot.point,
+                        to:shooters[j].core.position)*0.035
+                    shooters[j].velocity=shooters[j].velocity+recoil
+                    shooters[j].core.hp-=1
+                    impact=true
+                    if shooters[j].core.hp<=0 {
+                        let destroyed=shooters.remove(at:j)
+                        shooterKills+=1
+                        score+=destroyed.core.hunter ? 300 : 180
+                    }
                 }
             }
             if !impact {
-                for j in rocks.indices.reversed() where rocks[j].shardLife<=0 {
-                    if Self.hit(shot,rocks[j].position,radius:rocks[j].radius+2,dt:dt) {
-                        Self.impactRock68(&rocks[j],shot:shot)
-                        rocks[j].health-=1;impact=true
-                        if rocks[j].health<=0 {
-                            let removed=rocks.remove(at:j)
-                            rocksDestroyed+=1;score+=1
-                            splitRock(removed)
-                        }
-                        break
+                // Original Game.Step: choose the earliest swept rock,
+                // not the first array element, regardless of draw order.
+                var hitIndex:Int?=nil
+                var first:Float=2
+                for j in rocks.indices where rocks[j].shardLife<=0 {
+                    let t=Self.hit(shot,rocks[j].position,
+                                   radius:rocks[j].radius+2,dt:dt)
+                    if t<first {first=t;hitIndex=j}
+                }
+                if let j=hitIndex {
+                    Self.impactRock68(&rocks[j],shot:shot)
+                    rocks[j].health-=1
+                    impact=true
+                    if rocks[j].health<=0 {
+                        let removed=rocks.remove(at:j)
+                        rocksDestroyed+=1
+                        score+=Self.sourceRockScore(removed)
+                        splitRock(removed)
                     }
                 }
             }
