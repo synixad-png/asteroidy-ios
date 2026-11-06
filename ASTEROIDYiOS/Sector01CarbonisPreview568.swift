@@ -14,6 +14,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
     var pitchOffset: Float = 0
     // Initial authentic Game.Wave actors; renderer advances positions in Metal draw loop.
     var initialRocks: [SphereAsteroid556] = []
+    var gameSession: CarbonisSession568? = nil
     static let isAvailable: Bool = {
         let files:[(String,String)] = [
             ("Sector01CarbonisVertices","bin"),
@@ -52,7 +53,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
         view.preferredFramesPerSecond=30
         if let device=view.device {
             do {
-                let renderer=try Coordinator.Renderer(device:device,initialRocks:initialRocks)
+                let renderer=try Coordinator.Renderer(device:device,initialRocks:initialRocks,
+                    gameSession:gameSession)
                 renderer.yawOffset=yawOffset
                 renderer.pitchOffset=pitchOffset
                 view.delegate=renderer
@@ -86,6 +88,11 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let emissive:MTLTexture
             private let irradiance:MTLTexture
             private let started=ProcessInfo.processInfo.systemUptime
+            private let gameSession:CarbonisSession568?
+            private var craftBuffer:MTLBuffer?
+            private var craftTexture:MTLTexture?
+            private var craftVertexCount=0
+            private var craftPipeline:MTLRenderPipelineState?
             private var proofScheduled=false
             var yawOffset: Float = 0
             var pitchOffset: Float = 0
@@ -95,7 +102,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 "Sector01CarbonisHeightMap.dat":"3ce9a0456d23a5b88de718e7fd8fe6560cb53cd112a31ecc876e6200a762cb39",
                 "Sector01CarbonisBase.dat":"8a9d5d2ad53d1c5bc8681f9ff17b83a3375fb7e16f58a3ed083a9157bcc58424",
                 "Sector01CarbonisEmissive.dat":"cc32669e8e31dbf0942fa0db54fd04582af9bfbd02e7248932a04e7eb78646b3",
-                "Sector01CarbonisIrradiance.dat":"b1cc566768c655e643c450b1eba73cf718765b918e54d7f7a1ac30ac6045d685"
+                "Sector01CarbonisIrradiance.dat":"b1cc566768c655e643c450b1eba73cf718765b918e54d7f7a1ac30ac6045d685",
+                "Vanguard431Source.mesh":SourceVanguardMesh431.exactMeshSHA256,
+                "Vanguard431Base.jpg":SourceVanguardMesh431.exactBaseJPEG_SHA256
             ]
             private struct Uniforms {
                 var mvp:simd_float4x4
@@ -126,8 +135,10 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 }) else {throw SourceError.metal}
                 return buffer
             }
-            init(device:MTLDevice,initialRocks:[SphereAsteroid556]) throws {
+            init(device:MTLDevice,initialRocks:[SphereAsteroid556],
+                 gameSession:CarbonisSession568?) throws {
                 activeRocks=initialRocks
+                self.gameSession=gameSession
                 guard let q=device.makeCommandQueue() else {throw SourceError.metal}
                 queue=q
                 let vertices=try Self.verified("Sector01CarbonisVertices.bin")
