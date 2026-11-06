@@ -30,7 +30,7 @@ PACKAGE = "com.synixad.asteroidyios"
 class EnvironmentUnavailable(RuntimeError): pass
 class AppValidationFailed(RuntimeError): pass
 
-def run_command(args, timeout, stdout_path=None, check=True):
+def run_command(args, timeout, stdout_path=None, check=True, env=None):
     command=list(map(str,args))
     # macOS simctl may leave descendants holding the parent's STDOUT
     # pipe. subprocess.run(timeout=...) kills only the parent and can
@@ -38,7 +38,7 @@ def run_command(args, timeout, stdout_path=None, check=True):
     try:
         proc=subprocess.Popen(command,stdin=subprocess.DEVNULL,
                               stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
-                              text=True,errors="replace",start_new_session=True)
+                              text=True,errors="replace",start_new_session=True,env=env)
         try:
             output,_=proc.communicate(timeout=timeout)
         except subprocess.TimeoutExpired as exc:
@@ -108,9 +108,14 @@ def capture(app:Path,reports:Path):
             print(f"REAL {kind}: CoreSimulator boot completed",flush=True)
             run_command(["xcrun","simctl","install",udid,str(app)],85,
                 reports/f"{kind}_install.txt")
+            # Simulator-only flag: the game itself will write proof
+            # AFTER its real Vanguard431 draw's Metal command buffer
+            # successfully completes. Normal user's iOS app unchanged.
+            simulator_env=os.environ.copy()
+            simulator_env["SIMCTL_CHILD_ASTEROIDY_RENDER_VERIFY"]="1"
             output=run_command(
                 ["xcrun","simctl","launch",udid,PACKAGE],50,
-                reports/f"{kind}_launch.txt")
+                reports/f"{kind}_launch.txt",env=simulator_env)
             if PACKAGE not in output:
                 raise AppValidationFailed(
                     f"{kind}: Simulator launch output lacks {PACKAGE}: {output}")
@@ -129,21 +134,52 @@ def capture(app:Path,reports:Path):
                 reports/f"{kind}_real_pixels.txt",check=False)
             if "PASS: authentic ASTEROIDY simulator screenshot" not in pixel_check:
                 raise AppValidationFailed(f"{kind}: scene pixel evidence missing")
-            log=run_command(
-                ["xcrun","simctl","spawn",udid,"log","show","--last","3m",
-                 "--style","compact","--predicate",
-                 'eventMessage CONTAINS "Vanguard431 UV/BaseColor active"'],
-                45,reports/f"{kind}_source-load.log")
-            required="real PC Vanguard431 UV/BaseColor active: 194427 vertices"
-            if required not in log:
+            # The Apple unified-log database on hosted simulators can
+            # fail to expose NSLog from an actual launched app. Query a
+            # test-only file written by the source renderer ONLY when
+            # the real GPU command buffer finishes. Independent of
+            # logger permissions and the screenshot's apparent content.
+            container=run_command(
+                ["xcrun","simctl","get_app_container",udid,PACKAGE,"data"],
+                45,reports/f"{kind}_app-container.txt").strip()
+            proof_path=(Path(container)/"Library"/"Caches"/
+                "ASTEROIDY_Vanguard431_RenderProof.json")
+            if not proof_path.is_file():
                 raise AppValidationFailed(
-                    f"{kind}: genuine 194427-vertex texture activation "
-                    "not confirmed by application's own log")
+                    f"{kind}: no proof of completed original textured "
+                    "Vanguard431 GPU draw inside its real app sandbox")
+            try:
+                proof=json.loads(proof_path.read_text(encoding="utf-8"))
+            except (OSError,ValueError) as exc:
+                raise AppValidationFailed(
+                    f"{kind}: corrupt original Vanguard431 GPU draw proof: {exc}")
+            required={
+                "evidence":"actual-source-vanguard-metal-command-buffer",
+                "gpuCommandBufferCompleted":True,
+                "pipeline":"sourceFighterTexturedPipeline431",
+                "vertexCount":194427,
+                "textureWidth":2048,
+                "textureHeight":2048,
+                "meshSHA256":"f5d6d0107437fa54c3e8505f9adfbf6143cc877cb970eef687603609e26f9f4a",
+                "skinSHA256":"2945f711a6b559bfb5fdfb79750a2f2f77e2071aa5f3f4173eb450bce81b8b95",
+                "bundleID":PACKAGE,
+                "simulatorTestOnly":True
+            }
+            mismatches={
+                key:(proof.get(key),value)
+                for key,value in required.items()
+                if proof.get(key)!=value
+            }
+            if mismatches:
+                raise AppValidationFailed(
+                    f"{kind}: original Vanguard431 GPU proof mismatch: {mismatches}")
+            (reports/f"{kind}_GPU_source431_proof.json").write_text(
+                json.dumps(proof,indent=2,sort_keys=True),encoding="utf-8")
             verified=reports/f"{kind}_VERIFIED_ASTEROIDY_source431.png"
             picture.rename(verified)
-            print(f"PASS: {kind} screenshot from own game + source GPU UV "
-                  f"runtime log, elapsed={time.monotonic()-start:.1f}s",
-                  flush=True)
+            print(f"PASS: {kind} real pixels and GPU-completed "
+                  f"original 194427-vertex textured draw, "
+                  f"elapsed={time.monotonic()-start:.1f}s",flush=True)
         finally:
             # Never turn a cleanup problem into a false render pass.
             try:
