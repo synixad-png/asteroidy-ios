@@ -59,6 +59,28 @@ import Foundation
         failure.invincible=0;failure.armor=0;failure.hull=1;failure.lives=1
         failure.suffer(8)
         check(failure.phase == .defeat && failure.lives==0,"real defeat")
+        var protectedRespawn=CarbonisCombat568(prepared)
+        protectedRespawn.invincible=0
+        protectedRespawn.armor=0
+        protectedRespawn.hull=1
+        protectedRespawn.lives=2
+        protectedRespawn.rocks=[SphereAsteroid556(
+            position:Vec2(x:644,y:360),
+            velocity:Vec2(x:30,y:0),radius:16,
+            size:3,tier:0,health:5)]
+        protectedRespawn.suffer(18)
+        check(protectedRespawn.phase == .playing &&
+              protectedRespawn.lives==1 &&
+              protectedRespawn.invincible==4.5,
+              "Game.Damage resets lives and source 4.5s immunity on level1")
+        check(abs(protectedRespawn.flight.heading+Float.pi/2)<0.0001 &&
+              protectedRespawn.flight.velocity.lengthSquared==0,
+              "Game.Damage resets heading and speed")
+        check(CarbonisCombat568.distance(
+              protectedRespawn.flight.position,
+              protectedRespawn.rocks[0].position)>160,
+              "Game.Damage relocates obstructing source rock beyond spawn exclusion")
+
         var victory=CarbonisCombat568(prepared)
         victory.rocks=[];victory.shooters=[]
         for _ in 0..<35 {
