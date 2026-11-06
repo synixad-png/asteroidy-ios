@@ -18,6 +18,8 @@ on:
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'ASTEROIDYiOS/MissionStart261.swift'
       - 'Tests/MissionStart261Tests.swift'
+      - 'ASTEROIDYiOS/MissionWave568.swift'
+      - 'Tests/MissionWave568Tests.swift'
       - 'ASTEROIDYiOS/CarbonisSurface277.swift'
       - 'Tests/CarbonisSurface277Tests.swift'
       - 'Tests/Sector01Entry568Tests.swift'
