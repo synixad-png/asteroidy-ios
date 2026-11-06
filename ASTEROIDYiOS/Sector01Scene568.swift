@@ -17,6 +17,19 @@ struct Sector01Scene568: View {
     @State private var anchorPitch: Float = 0
     @State private var dragging = false
 
+    // This is the genuine CPU height-map lookup, not active ship collisions.
+    // Availability also requires SHA-256 of the original C279 height bytes.
+    private static let sourceHeightProbe277: Float? = {
+        guard Sector01CarbonisPreview568.isAvailable,
+              let url=Bundle.main.url(forResource:"Sector01CarbonisHeightMap",withExtension:"dat")
+                ?? Bundle.main.url(forResource:"Sector01CarbonisHeightMap",
+                                   withExtension:"dat",subdirectory:"Assets"),
+              let data=try? Data(contentsOf:url),
+              let surface=CarbonisSurface277(data:data)
+        else { return nil }
+        return surface.surfaceRadius(x:1,y:0,z:0)
+    }()
+
     var body: some View {
         GeometryReader { geo in
             let compact=geo.size.height < 550
@@ -75,6 +88,11 @@ struct Sector01Scene568: View {
                     HStack {
                         VStack(alignment:.leading,spacing:4) {
                             Text("270 249 TRÓJKĄTÓW / 2 MATERIAŁY")
+                                .foregroundStyle(.cyan)
+                            Text(Self.sourceHeightProbe277.map {
+                                "MAPA TERENU 512×256 / ODCZYT +X: " +
+                                String(format:"%.5f",$0)
+                            } ?? "MAPA TERENU C279: NIEDOSTĘPNA")
                                 .foregroundStyle(.cyan)
                             Text("GEOMETRIA I TEKSTURY: ORYGINAŁ WINDOWS v568")
                                 .foregroundStyle(.white)
