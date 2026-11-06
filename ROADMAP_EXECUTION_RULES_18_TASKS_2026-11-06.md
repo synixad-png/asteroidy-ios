@@ -1,3 +1,11 @@
+## AKTUALNY ETAP C/D — 06.11.2026: źródłowe typy 0 i 1 oraz wspólne reguły AI
+
+**36% zrealizowano implementacyjnie / 64% pozostało**, względem poprzednich 35% (+1 pp). Zachowana pełna lista 18 pozycji i kolejność A–J. Port `ShipMesh(1,false)` tworzy odrębną źródłową siatkę typu 1 (5521 trójkątów i 8 materiałów) obok niezmienionego typu 0 (5345 trójkątów). Metal nie tworzy atrap dla niewdrożonych typów 2–5, a części świecącego rdzenia (5/6) skaluje o 15% wyłącznie podczas ostrzeżenia o strzale, zgodnie z `GpuRobot70.cs:17`. Nowy `ShooterTactics71.swift` przenosi `EnemyTactics71.cs` dla 25 poziomów × 6 rodzajów × 3 trudności bez udawania, że wszystkie misje są już dostępne.
+
+**Wyniki:** [`verify-combat-no-ipa` 42260834217 — PASS](https://github.com/synixad-png/asteroidy-ios/actions/runs/42260834217), 97 301 asercji geometrii i 6307 asercji reguł; późniejsza poprawka świecącego rdzenia ma oddzielną weryfikację. [Niepodpisany IPA 42259012837 — potwierdzony, ale starszy](https://github.com/synixad-png/asteroidy-ios/actions/runs/42259012837), 26,3 MB, bez zmian tego etapu. Nowy Xcode/GPU iOS niepotwierdzony. [Raport](Reports/V568_SOURCE_SHOOTER_KIND1_450_TACTICS_2026-11-06.md) · [Stałe 18 zadań](PORT_STATUS_18_TASKS.md).
+
+**Dalej:** potwierdzić ostatnią kompilację, następnie kolejny źródłowy typ przeciwnika, połączenie misji 2–25 z natywnym loaderem i kompletną kampanią. Brak dowodów działania na rzeczywistym iPhonie/iPadzie; nie publikować kolejnej wersji jako ukończonej na podstawie samych testów Linux.
+
 ## NOWY UTRWALONY ETAP C/D — 06.11.2026 (źródłowe myśliwce, kolizje, odłamki)
 
 **35% wykonano implementacyjnie / 65% pozostało** na niezmiennej liście 18 zadań. Dodano rzeczywistą proceduralną siatkę 3D `ShipMesh(0,false)` z oryginalnej gałęzi `GpuRobot70/BossMesh65`; współdzielony bufor Metal renderuje cztery myśliwce CARBONIS. Uzupełniono AI `EnemyTactics71`, ostrzeżenia geodezyjne, impuls `Contact68` oraz `ImpactRock68`, pociski z pierwotnym zasłanianiem `HitBug`, punktację `Game.Split` i 18 zanikających `SpawnTerminalShards187`.
