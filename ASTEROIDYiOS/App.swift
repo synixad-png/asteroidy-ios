@@ -323,10 +323,10 @@ struct CampaignAtlas556: View {
                     Button("ZAMKNIJ",action:dismiss)
                         .accessibilityLabel("Zamknij atlas misji")
                 }
-                Text("UKOŃCZONE: \\(progress.completedCount) / 26")
+                Text("UKOŃCZONE: \(progress.completedCount) / 26")
                     .font(.system(.subheadline,design:.monospaced))
                     .foregroundStyle(.cyan)
-                Text("WYBRANY SEKTOR: \\(String(format:"%02d",progress.selectedSector))")
+                Text("WYBRANY SEKTOR: \(String(format:"%02d",progress.selectedSector))")
                     .font(.system(size:13,weight:.bold,design:.monospaced))
                     .foregroundStyle(.orange)
                     .accessibilityIdentifier("campaign-selected-sector")
@@ -335,7 +335,7 @@ struct CampaignAtlas556: View {
                     .foregroundStyle(.cyan)
                     .accessibilityIdentifier("campaign-selected-planet")
                 LazyVGrid(columns:columns,spacing:8) {
-                    ForEach(1...CampaignProgress556.missionCount,id:\\.self) { sector in
+                    ForEach(1...CampaignProgress556.missionCount,id:\.self) { sector in
                         let finished=progress.completed(sector)
                         let available=progress.unlocked(sector)
                         let current=progress.selectedSector == sector
@@ -366,10 +366,10 @@ struct CampaignAtlas556: View {
                         }
                         .buttonStyle(.plain)
                         .disabled(!available)
-                        .accessibilityIdentifier("campaign-sector-\\(sector)")
+                        .accessibilityIdentifier("campaign-sector-\(sector)")
                         .accessibilityLabel(
-                            "Sektor \\(sector), \\(MissionCatalog568.title(for:sector) ?? "brak nazwy"), " +
-                            "\\(finished ? "ukończony" : available ? "odblokowany" : "zablokowany")")
+                            "Sektor \(sector), \(MissionCatalog568.title(for:sector) ?? "brak nazwy"), " +
+                            "\(finished ? "ukończony" : available ? "odblokowany" : "zablokowany")")
                         .accessibilityAddTraits(.isButton)
                     }
                 }
