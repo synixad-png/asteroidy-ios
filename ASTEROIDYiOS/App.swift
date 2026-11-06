@@ -49,6 +49,8 @@ final class FlightInput: ObservableObject {
     @Published var planetAmigaDemo = false
     @Published var planetAmigaHits = 0
     @Published var rendererError: String?
+    // UI-only pause state; do not mutate saved campaign or physics.
+    @Published var gameplayPaused = false
 
     // Touch gestures may not deliver onEnded if iOS backgrounds the app.
     // Clear only transient held inputs; never reset the game simulation.
@@ -246,9 +248,11 @@ struct GameView: View {
             }.frame(width: g.size.width, height: g.size.height)
         }
         .onChange(of: scenePhase) { phase in
+            input.gameplayPaused = phase != .active || showCampaign
             if phase != .active { input.releaseHeldControls() }
         }
         .onChange(of: showCampaign) { visible in
+            input.gameplayPaused = visible || scenePhase != .active
             if visible { input.releaseHeldControls() }
         }
     }
