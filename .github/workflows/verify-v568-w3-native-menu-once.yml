@@ -10,6 +10,11 @@ on:
       - 'Tools/run_w3_native_menu_simulator_capture.py'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'Tools/prepare_v568_w3_original_assets.py'
+      - 'Tools/prepare_v568_w3_home_planet290.py'
+      - 'Tools/convert_v568_w3_home_planet290.py'
+      - 'Tests/V568W3HomePlanet290Tests.py'
+      - 'ASTEROIDYiOS/W3HomePlanetMetal568.swift'
+      - 'ASTEROIDYiOS/W3HomePlanet290.metal'
       - 'ASTEROIDY_v568_W3_ORIGINAL_MENU_ASSETS.zip'
       - 'Tests/V568W3MenuSourceImagesTests.py'
 
@@ -34,6 +39,8 @@ jobs:
           mkdir -p reports
           python3 Tests/V568W3NativeMenuContract.py | tee reports/w3-source-contract.txt
           python3 -m py_compile Tools/run_w3_native_menu_simulator_capture.py
+          python3 -m py_compile Tools/convert_v568_w3_home_planet290.py Tools/prepare_v568_w3_home_planet290.py
+          python3 Tests/V568W3HomePlanet290Tests.py | tee reports/w3-NewHome290-source-planet.txt
           swift Tools/verify_simulator_render_snapshot.swift --self-test | tee reports/w3-screenshot-detector.txt
       - name: Require exact v568 W3 background/logo, verify CRC and both SHA256
         timeout-minutes: 3
@@ -43,6 +50,14 @@ jobs:
           python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required
           test -s ASTEROIDYiOS/Assets/W3Background568Original.dat
           test -s ASTEROIDYiOS/Assets/W3Logo568Original.dat
+      - name: Prepare real original NewHome290 3D planet for native W3 home
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          python3 Tools/prepare_v568_w3_home_planet290.py --root . --destination ASTEROIDYiOS/Assets | tee reports/w3-source-planet-stage.txt
+          test -s ASTEROIDYiOS/Assets/W3HomePlanet290OriginalGPU.bin
+          test -s ASTEROIDYiOS/Assets/W3HomePlanet290Base.dat
+          test -s ASTEROIDYiOS/Assets/W3HomePlanet293Glow.dat
       - name: Create native iOS source project (no HTML/WebView)
         timeout-minutes: 5
         run: |
@@ -74,7 +89,10 @@ jobs:
           assert len(list(app.rglob("default.metallib")))==1
           originals={
             "W3Background568Original.dat":"a8aa28883084657f0c38900dbb011de09e2b0fd461704d370a68858be0178145",
-            "W3Logo568Original.dat":"cab4198b953640c787975c5a8436a0fdeaa82502b40e000077ff055cc0709e09"
+            "W3Logo568Original.dat":"cab4198b953640c787975c5a8436a0fdeaa82502b40e000077ff055cc0709e09",
+            "W3HomePlanet290OriginalGPU.bin":"e93a0bbafc9bb50a25726a828ada81f36675bf88d802c5a8f985b89b6dc96c1b",
+            "W3HomePlanet290Base.dat":"4987f35cd6f021fd98794f406c641f4853c538a82b10625e6b79e860c8a787c0",
+            "W3HomePlanet293Glow.dat":"6f1debd175f52b7ce1fbc687e9977597335ee432858d7d6d6e47cf66b5f9aa39"
           }
           for name,sha in originals.items():
             bundled=list(app.rglob(name))
@@ -101,6 +119,7 @@ jobs:
             reports/*.txt
             reports/*.log
             reports/*_W3_appearance_proof.json
+            reports/*_W3_NewHome290_GPU_proof.json
             reports/*_VERIFIED_ASTEROIDY_W3_NATIVE.png
             reports/selected-devices.json
           if-no-files-found: ignore
