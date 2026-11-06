@@ -124,3 +124,61 @@ rozpocząć etap B — rzeczywistą listę 26 misji i wybór sektora.
 Dla kamieni milowych A i B przed kompilacją sprawdzić źródłowo,
 czy menu i selektor misji mają rzeczywistą logikę (a nie tylko
 grafikę). Nie tworzyć IPA bez osobnego polecenia użytkownika.
+
+## 06.11.2026 — wykonanie kamienia A, pierwsza rzeczywista implementacja
+
+**Stan: W TRAKCIE.** Bez zmiany 18 zadań i bez podnoszenia procentów
+odniesienia (27% ukończone, 73% pozostało; nr 14 nadal 10%).
+
+W commitach `9681d18`, `ce74f4a`, `0b70633`, `2c9334a` wykonano
+`ASTEROIDYiOS/W3MainMenu568.swift`: natywny SwiftUI/Metal ekran
+domyślny z siedmioma rzeczywistymi etykietami v568
+(`NOWA GRA`, `KONTYNUUJ`, `KAMPANIA`, `HANGAR`,
+`USTAWIENIA`, `AUTORZY`, `WYJŚCIE`), paletą i panelem
+radarowym opartym na `RendererW3Home328.cs`, układem adaptacyjnym
+iPhone/iPad i ekranami stanu funkcji. Zmieniono punkt wejścia
+`App.swift`: zwykłe uruchomienie pokazuje menu, a istniejące
+podglądy 3D są dostępne dopiero przez `SCENA TESTOWA`.
+`MENU W3` wraca z testu do menu, kasując przytrzymane wejścia.
+Tryby simulatorowego dowodu GPU Vanguard431/PlayerShip367
+są zachowane jako jawne wyjątki. Oryginalne mechanizmy
+kolizji/asteroid nie zostały zmienione.
+
+**Zasada bez pozorowania ukończenia:** oryginalne
+`Shared/assets/ui_w3_background.jpg` (806519 bajtów; SHA256
+`a8aa28883084657f0c38900dbb011de09e2b0fd461704d370a68858be0178145`)
+i `Shared/assets/ui_w3_logo.png` (50257 bajtów; SHA256
+`cab4198b953640c787975c5a8436a0fdeaa82502b40e000077ff055cc0709e09`)
+są w pełnym ZIP v568, ale **nie** zostały dołączone do wcześniejszego
+czteroczęściowego archiwum modeli. Są nadal do przeniesienia do
+repozytorium i bundla iOS. Centralna planetarna animacja/proceduralna
+geometria z `RendererW3Home328.cs` NIE została jeszcze portowana.
+Obecny radar jest jawnym płaskim elementem nawigacyjnym, nie
+symulacją oryginalnej planety. Opcje zapisu, hangaru i misji
+pokazują stany „brak / podgląd” zamiast fałszywie działać.
+`KAMPANIA` i `NOWA GRA` otwierają wyłącznie istniejący,
+tylko-do-odczytu atlas 26 sektorów z bazy v556;
+przeniesienie realnego wyboru v568 jest kamieniem B.
+
+**Zapisane testy:** `Tests/V568W3NativeMenuContract.py` sprawdza
+7 źródłowych etykiet, sposób uruchamiania, bezpieczne przejście do
+testu i powrót oraz brak WebView. Natywna kompilacja iOS
+`42193391940`: job **Compile iOS source only — SUCCESS**;
+pełna ścieżka testów nadal podlega regresjom, a błędne dosłowne
+asercje źródłowych testów dopasowano do nowego stanu menu.
+Do bieżącej walidacji są uruchomione:
+[GitHub Actions W3 iPhone+iPad](https://github.com/synixad-png/asteroidy-ios/actions/runs/42193792251)
+— rzeczywiste screenshoty simulatów, oddzielny marker wyświetlenia
+widoku i detektor niepustych pikseli (bez IPA).
+**Nie oznaczać obu za PASS, dopóki nie zakończą się wynikiem success.**
+Test aktywacji i wstecz wszystkich 7 akcji dotykiem w rzeczywistym
+symulatorze nadal nie został wykonany.
+
+**Bramka zamknięcia A:** zweryfikowane oryginalne tło i logo
+w aplikacji, źródłowa planeta/animacja w centrum, test
+przejścia po wszystkich pozycjach, autentyczne screenshoty
+iPhone+iPad, regresje 7/8, zgodność z W3 v568
+(bez twierdzenia „identyczny pikselowo”, zanim istnieje dowód).
+Dopiero po tej bramce etap B — w pełni funkcjonalny wybór misji.
+
+**Nie tworzono IPA.**
