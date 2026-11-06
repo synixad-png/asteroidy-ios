@@ -49,6 +49,21 @@ assert "WEJDŹ NA CARBONIS 01 / ŹRÓDŁOWA SCENA 3D" in app
 assert 'accessibilityIdentifier("campaign-enter-source-sector01")' in app
 assert "if let sourceEntry=sourceSector01" in app
 assert "Sector01Scene568(entry:sourceEntry,returnToAtlas:" in app
+# Source original Game.Wave is prepared for CARBONIS, never conflated
+# with rendered combat or automatically completed campaign objectives.
+source_wave=(root/"ASTEROIDYiOS/MissionWave568.swift").read_text()
+prepared_wave=(root/"ASTEROIDYiOS/Sector01PreparedWave568.swift").read_text()
+source_scene=(root/"ASTEROIDYiOS/Sector01Scene568.swift").read_text()
+assert 'SourceRandom(seed:seed)' in source_wave
+assert 'var playable: Bool { false }' in source_wave
+assert 'var isPlayable: Bool { false }' in prepared_wave
+assert "Sector01PreparedWave568.prepare(" in app
+assert "@State private var sourceSector01Setup: Sector01PreparedWave568?" in app
+assert "sourceSector01Setup = nil" in app
+assert "preparedWave.encounter.rocks.count" in source_scene
+assert "preparedWave.encounter.fighters.count" in source_scene
+assert "PRZECIWNICY NIE SĄ JESZCZE RENDEROWANI ANI STEROWANI PRZEZ AI" in source_scene
+
 assert "Sector01Entry568.open(" in app
 assert "hasOriginalC279Assets:Sector01CarbonisPreview568.isAvailable" in app
 # C279 source integrity must be checked before leaving the atlas.
