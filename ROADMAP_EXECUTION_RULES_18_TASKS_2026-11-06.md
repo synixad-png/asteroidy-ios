@@ -700,3 +700,13 @@ wciąż nie zakończone; kompilacja IPA nie stanowi dowodu
 obsługi wszystkich przycisków na fizycznym urządzeniu.
 **B jeszcze nie rozpoczęto; 18 zadań zachowane,
 nr 14 = 10% (+0 pp), całość 27%, pozostało 73%.**
+
+**Aktualizacja dostarczenia 06.11.2026:** nowy zweryfikowany IPA
+(14 103 697 B, SHA256
+`9b16daf6e045220140505ebbed99cf24befadbea8c0b7b2d8a1080df7b5c98ce`)
+jest na [prywatnym Dysku Google jako bezpośredni plik IPA](https://drive.google.com/file/d/1SFMg2sOZFvhL3IAwSu_t8JO-BJU4TX5i/view?usp=drivesdk).
+To nie jest tylko ZIP z artefaktu; kopia ZIP z raportami jest
+dostępna niezależnie. Plik jest niepodpisany i nieprzetestowany
+na fizycznym urządzeniu. Etap A pozostaje otwarty do testów
+nawigacji, etap B nierozpoczęty. **Postęp bez zmian: 27%,
+pozostało 73%, zadanie nr 14 10% (+0 pp).**
