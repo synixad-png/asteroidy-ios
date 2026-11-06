@@ -17,8 +17,9 @@ struct CarbonisCombat568 {
         var velocity: Vec2
         var life: Float
         var hostile: Bool
-        // Gpu EnemyShots71 / ShooterShotDamage96: first CARBONIS = 8.
-        var damage:Int = 8
+        // Game.Fire Pulse rank1 deals one damage. Hostile shots override
+        // this with ShooterShotDamage96 (eight damage on CARBONIS).
+        var damage:Int = 1
         var pierce:Int = 1
         var hitRockSeeds:[Int] = []
         var hitShooterPhases:[Float] = []
