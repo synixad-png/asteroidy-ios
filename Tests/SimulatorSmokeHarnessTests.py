@@ -25,6 +25,8 @@ assert 'verified=reports/f"{kind}_VERIFIED_ASTEROIDY_source431.png"' in source
 assert source.index('if required not in log:') < source.index('picture.rename(verified)')
 assert "real PC Vanguard431 UV/BaseColor active: 194427 vertices" in source
 assert "Tools/verify_simulator_render_snapshot.swift" in source
+assert 'reports/f"{kind}_real_pixels.txt",check=False)' in source
+assert 'raise AppValidationFailed(f"{kind}: scene pixel evidence missing")' in source
 assert 'run_command(["xcrun","simctl","bootstatus",udid,"-b"],125,' in source
 assert 'run_command(["xcrun","simctl","install",udid,str(app)],85,' in source
 assert '["xcrun","simctl","launch",udid,PACKAGE],50,' in source
