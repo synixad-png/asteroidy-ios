@@ -8,6 +8,10 @@ import SwiftUI
 /// Uses all source vertices, source UVs, indexed triangles, two material groups
 /// and THREE exact PC v568 images. Preview ≠ playable mission (stage C pending).
 struct Sector01CarbonisPreview568: UIViewRepresentable {
+    // User-controlled orientation affects only the real source C279
+    // inspection camera; never alters PC mesh geometry or UV data.
+    var yawOffset: Float = 0
+    var pitchOffset: Float = 0
     static let isAvailable: Bool = {
         let files:[(String,String)] = [
             ("Sector01CarbonisVertices","bin"),
@@ -36,6 +40,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
         if let device=view.device {
             do {
                 let renderer=try Coordinator.Renderer(device:device)
+                renderer.yawOffset=yawOffset
+                renderer.pitchOffset=pitchOffset
                 view.delegate=renderer
                 context.coordinator.renderer=renderer
             } catch {
@@ -45,7 +51,10 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
         }
         return view
     }
-    func updateUIView(_ view:MTKView,context:Context) {}
+    func updateUIView(_ view:MTKView,context:Context) {
+        context.coordinator.renderer?.yawOffset=yawOffset
+        context.coordinator.renderer?.pitchOffset=pitchOffset
+    }
 
     final class Coordinator {
         var renderer: Renderer?
@@ -61,6 +70,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let irradiance:MTLTexture
             private let started=ProcessInfo.processInfo.systemUptime
             private var proofScheduled=false
+            var yawOffset: Float = 0
+            var pitchOffset: Float = 0
             private static let expected:[String:String] = [
                 "Sector01CarbonisVertices.bin":"b35318d059b9c4f180d03f36e52a6c4eea1225a484e339d3f117e5df9d7634bd",
                 "Sector01CarbonisIndices.bin":"e542a65a0ddf0767d982b573da037becea7872cc8a6e0d5d1e1851cd90730bef",
@@ -174,7 +185,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 let t=Float(ProcessInfo.processInfo.systemUptime-started)
                 var model=matrix_identity_float4x4
                 model.columns.3.z = -5
-                model=model*Self.rotateX(-0.24)*Self.rotateY(t*0.22)
+                model=model*Self.rotateX(-0.24+pitchOffset)
+                    * Self.rotateY(t*0.22+yawOffset)
                 let size=view.drawableSize
                 let aspect=Float(max(1,size.width)/max(1,size.height))
                 var uniforms=Uniforms(mvp:Self.previewMVP(aspect,model),
