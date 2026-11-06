@@ -46,7 +46,7 @@ enum CarbonisBodyContact68 {
         let total=ia+ib
         if total<=0 {return false}
         if closing<0 {
-            let impulse=-(1+restitution)*closing/total
+            let impulse = -(1+restitution)*closing/total
             let tangent=Vec2(x:-normal.y,y:normal.x)
             let tangentSpeed=dot(relative,tangent)
             let friction=max(-impulse*0.12,
