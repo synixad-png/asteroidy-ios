@@ -111,7 +111,7 @@ def capture(app:Path,reports:Path):
             pixel_check=run_command(
                 ["swift","Tools/verify_simulator_render_snapshot.swift",
                  str(picture)],75,
-                reports/f"{kind}_real_pixels.txt")
+                reports/f"{kind}_real_pixels.txt",check=False)
             if "PASS: authentic ASTEROIDY simulator screenshot" not in pixel_check:
                 raise AppValidationFailed(f"{kind}: scene pixel evidence missing")
             log=run_command(
