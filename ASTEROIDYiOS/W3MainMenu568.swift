@@ -396,6 +396,10 @@ struct W3MainMenu568: View {
                                      dismiss:{page=nil},
                                      onSelect:selectMission,
                                      onInspect:inspectSector)
+                } else if item == .settings {
+                    // Real original Menu139 WYBUCHY 3D / POCISKI tabs,
+                    // not an inert W3 placeholder or a different game UI.
+                    CarbonisVisualSettingsPanel568(compact:compact)
                 } else {
                     Text(message(for:item))
                         .font(.system(size:compact ? 12 : 15,design:.monospaced))
@@ -422,7 +426,7 @@ struct W3MainMenu568: View {
         case .hangar:
             return "Hangar wymaga oryginalnej sceny hangar_h55.glb, której nie zawiera dostarczona paczka BEZ_HANGARU."
         case .settings:
-            return "Opcje grafiki, dźwięku i sterowania zostaną podłączone do rzeczywistych ustawień gry. Dotychczasowe ustawienia nie są zmieniane."
+            return "Ustawienia wybuchów 3D i oświetlenia pocisków są aktywne w osobnych zakładkach."
         case .credits:
             return "SYNIXAD SYSTEMS — ASTEROIDY. Oryginalne źródła: Windows/SteamOS v568. Natywny port iOS jest w trakcie prac."
         case .exit:
