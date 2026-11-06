@@ -28,9 +28,9 @@ Zmieniono `ASTEROIDYiOS/Sector01Scene568.swift`: inspektor źródłowej sceny fa
 
 ## Niewykonane i dalsza kolejność
 
-- Oryginalne wykonanie `Game.Wave()` z v568 nie jest zawarte w dostępnym wycinku źródeł; nie zastępowano go wymyśloną falą. Kod `SphereSector556` to osobny istniejący testowy sektor, nie autentyczna grywalna misja CARBONIS.
+- **Korekta po sprawdzeniu pełnej paczki źródłowej:** definicja `Game.Wave()` znajduje się w `Windows/src/Game.cs:90–101` oraz `SteamOS/src/Game.cs:90–101` pełnego ZIP v568. Wcześniejszy brak dotyczył tylko 66 MB archiwum wyciągu audytowego. [Szczegółowy audyt](V568_WAVE_FULL_SOURCE_AUDIT_2026-11-06.md). Kod `SphereSector556` to odrębny sektor testowy, a grywalna misja CARBONIS nadal nie została podłączona.
 - Brakuje użycia odczytu wysokości w symulacji ruchu statku/kolizji, prawdziwej grywalnej sceny misji, strzelania, przeciwników, zwycięstwa/przegranej i intro.
-- Następny etap: pozyskać pełne `Game.Wave()` i zależności ze źródeł v568, podłączyć właściwą pętlę gry, następnie zastosować `CarbonisSurface277` do ruchu i kontaktu z terenem w tych samych jednostkach co oryginał, bez używania diagnostycznej planety Boreas zamiast Carbonis.
+- Następny etap: skorzystać z **odnalezionych** `Game.Wave()` i zależności w kompletnym ZIP v568, podłączyć właściwą pętlę gry, następnie zastosować `CarbonisSurface277` do ruchu i kontaktu z terenem w tych samych jednostkach co oryginał, bez używania diagnostycznej planety Boreas zamiast Carbonis.
 - Nie zmieniano mechanizmów walki/kolizji zadań 7/8, zapisu kampanii ani blokad 26 sektorów.
 - Żadnego nowego IPA ani kompilacji IPA nie zlecano.
 
