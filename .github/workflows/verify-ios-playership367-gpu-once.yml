@@ -1,0 +1,92 @@
+# Real original ASTEROIDY v568 PlayerShip367, not an invented screenshot.
+# Single opt-in run on creation. Creates NO IPA, changes NO production default.
+name: ASTEROIDY v568 original PlayerShip367 iPhone GPU draw (NO IPA)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-ios-playership367-gpu-once.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  real-v568-ship367-iphone-sim:
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify source v568 ZIP manifest and shader attestation contracts
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python3 -m py_compile Tools/run_v568_player_ship367_simulator_capture.py Tests/V568PlayerShip367GPUProofContract.py
+          python3 Tools/stage_v568_resources.py --root . --verify-only | tee reports/v568-source-integrity.txt
+          python3 Tests/V568PlayerShip367Tests.py | tee reports/v568-player-mesh-test.txt
+          python3 Tests/V568PlayerShip367GPUProofContract.py | tee reports/v568-gpu-proof-contract.txt
+          swift Tools/verify_simulator_render_snapshot.swift --self-test | tee reports/screenshot-gate-self-test.txt
+      - name: Stage actual original v568 PlayerShip367 GPU stream and original JPEG
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Generate exact app Xcode project
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+      - name: Compile original iOS Swift and Metal for Apple simulator (no IPA)
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/Sim367Source" \
+            build > reports/xcodebuild.log 2>&1 || {
+              tail -n 130 reports/xcodebuild.log
+              exit 1
+            }
+          APP=$(find build/Sim367Source/Build/Products/Debug-iphonesimulator \
+                -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP"
+          python3 - "$APP" <<'PY' | tee reports/bundled-v568-assets.txt
+          import hashlib,pathlib,plistlib,sys
+          app=pathlib.Path(sys.argv[1])
+          info=plistlib.loads((app/"Info.plist").read_bytes())
+          assert set(info.get("UIDeviceFamily",[]))=={1,2}
+          assert info["CFBundleIdentifier"]=="com.synixad.asteroidyios"
+          for name in ("PlayerShip367OriginalGPU.bin","PlayerShip363Base.jpg"):
+              compiled=list(app.rglob(name))
+              assert len(compiled)==1,(name,compiled)
+              original=pathlib.Path("ASTEROIDYiOS/Assets")/name
+              assert hashlib.sha256(compiled[0].read_bytes()).digest()==hashlib.sha256(original.read_bytes()).digest()
+          assert len(list(app.rglob("default.metallib")))==1
+          print("PASS: genuine original 599997-vertex PC source ship and JPEG bundled with Metal")
+          PY
+      - name: Draw real original PlayerShip367 on Apple iPhone simulator GPU
+        timeout-minutes: 18
+        run: |
+          set -euo pipefail
+          APP=$(find build/Sim367Source/Build/Products/Debug-iphonesimulator \
+                -maxdepth 1 -type d -name '*.app' -print -quit)
+          python3 -u Tools/run_v568_player_ship367_simulator_capture.py \
+            --app "$APP" --reports reports --only IPHONE | tee reports/source367-simulator-test.txt
+      - name: Attach only genuine verified screenshot and source diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-original-v568-PlayerShip367-real-iPhone-GPU-proof-NO-IPA
+          path: |
+            reports/*.txt
+            reports/*.log
+            reports/*_GPU_source367_proof.json
+            reports/*_VERIFIED_ASTEROIDY_source367.png
+            reports/selected-devices.json
+          if-no-files-found: ignore
+          retention-days: 7
