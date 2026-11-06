@@ -331,12 +331,13 @@ struct GameView: View {
 }
 
 // Real unlocked-only 26-sector selection from Orbit50.MissionUnlocked50.
-// LaunchOrbitMission50 / StartHubMission261 are NOT ported yet: selecting
-// a sector changes only the active target, never the completion mask.
+// LaunchOrbitMission50 / StartHubMission261 combat are NOT ported yet.
+// Entering sector01 renders its original planet, without fake mission wins.
 struct CampaignAtlas556: View {
     let progress: CampaignProgress556
     let dismiss: () -> Void
     let onSelect: (Int) -> Void
+    let onInspect: (Int) -> Void
     private let columns = [GridItem(.adaptive(minimum:52,maximum:90),spacing:8)]
 
     var body: some View {
@@ -422,7 +423,19 @@ struct CampaignAtlas556: View {
                 Text("Dotknij odblokowanego sektora, aby go wybrać. Wybór jest zapisywany, ale nie zalicza misji.")
                     .font(.system(size:11,design:.monospaced))
                     .foregroundStyle(.secondary)
-                Text("START MISJI: JESZCZE NIEPODŁĄCZONY — ETAP C")
+                if progress.selectedSector == 1 &&
+                   progress.unlocked(1) &&
+                   Sector01CarbonisPreview568.isAvailable {
+                    Button("WEJDŹ NA CARBONIS 01 / ŹRÓDŁOWA SCENA 3D") {
+                        onInspect(1)
+                    }
+                    .font(.system(size:12,weight:.bold,design:.monospaced))
+                    .foregroundStyle(.black)
+                    .frame(maxWidth:.infinity,minHeight:46)
+                    .background(.orange,in:RoundedRectangle(cornerRadius:7))
+                    .accessibilityIdentifier("campaign-enter-source-sector01")
+                }
+                Text("ETAP C: PLANETA ŹRÓDŁOWA — WALKA I UKOŃCZENIE MISJI NIEPODŁĄCZONE")
                     .font(.system(size:11,weight:.bold,design:.monospaced))
                     .foregroundStyle(.orange)
             }
