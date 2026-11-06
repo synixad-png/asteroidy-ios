@@ -310,6 +310,25 @@ struct CarbonisCombat568 {
         }
     }
 
+    /// Source Physics68.cs:77 ImpactRock68: Pulse transfers momentum and
+    /// torque to the *actual* Rock state; it is not damage-only shooting.
+    /// Level-one Pulse has one damage and one pierce, so transfer=1.
+    static func impactRock68(_ rock:inout SphereAsteroid556,
+                             shot:Projectile) {
+        guard rock.mass>0 && rock.radius>0 else{return}
+        let momentum=CarbonisBodyContact68.transported(
+            shot.velocity,from:shot.point,to:rock.position)*0.055
+        var lever=Sphere67.delta(target:shot.point,origin:rock.position)
+        let length=sqrt(lever.lengthSquared)
+        if length>rock.radius {
+            lever=lever*(rock.radius/length)
+        }
+        rock.velocity=rock.velocity+momentum*(1/rock.mass)
+        let angular=lever.x*momentum.y-lever.y*momentum.x
+        let inertial=0.4*rock.mass*rock.radius*rock.radius
+        rock.spin=max(-2.5,min(2.5,rock.spin+angular/inertial))
+    }
+
     private mutating func stepShots(dt:Float) {
         for i in bullets.indices.reversed() {
             let shot=bullets[i]
@@ -324,6 +343,7 @@ struct CarbonisCombat568 {
             if !impact {
                 for j in rocks.indices.reversed() where rocks[j].shardLife<=0 {
                     if Self.hit(shot,rocks[j].position,radius:rocks[j].radius+2,dt:dt) {
+                        Self.impactRock68(&rocks[j],shot:shot)
                         rocks[j].health-=1;impact=true
                         if rocks[j].health<=0 {
                             let removed=rocks.remove(at:j)
