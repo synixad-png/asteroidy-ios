@@ -1,5 +1,14 @@
 # ASTEROIDY iOS — natywny port Swift/Metal (projekt w trakcie rozwoju)
 
+## Aktualizacja 06.11.2026 — drugi myśliwiec źródłowy i 450 profili zachowania
+
+**Port iOS: 36% zaimplementowano / 64% pozostało.** Z oryginalnego `Windows/src/ShipMesh.cs` przeniesiono `ShipMesh(1,false)` (drugi myśliwiec, 5521 trójkątów) obok istniejącego rodzaju 0 (5345). Oba mają oddzielne proceduralne bryły, 8 grup materiałowych, cache GPU Metal i barwy pochodzące z `GpuRobot70`. Skalowanie świecącego rdzenia o 15% podczas ostrzeżenia nie zmienia pozostałej geometrii. `ShooterTactics71` przenosi pełne parametry AI, strzałów i obrażeń sześciu rodzajów myśliwców dla 25 poziomów i wszystkich trudności. Aktywny CARBONIS 01 wciąż wykorzystuje wyłącznie typ 0 — nie są to ukończone misje 2–25.
+
+**Testy [42260834217](https://github.com/synixad-png/asteroidy-ios/actions/runs/42260834217): PASS** — 97 301 sprawdzeń geometrii, 6307 reguł AI, regresje pierwszej misji i wcześniejszych mechanizmów. Nowy efekt rdzeni ma późniejszy przebieg testowy. **Pierwszy niepodpisany IPA jest naprawdę dostępny** z przebiegu [42259012837](https://github.com/synixad-png/asteroidy-ios/actions/runs/42259012837) (ok. 26,3 MB), ale pochodzi ze starszego kodu i nie zawiera nowych myśliwców i reguł. Natywne uruchomienie tego kodu na iPhonie/iPadzie nadal niepotwierdzone. [Raport](Reports/V568_SOURCE_SHOOTER_KIND1_450_TACTICS_2026-11-06.md) · [Harmonogram 18 zadań](PORT_STATUS_18_TASKS.md).
+
+Poniższe wpisy 35% i wcześniejsze pozostają wyłącznie historią rozwoju.
+
+
 ## Aktualizacja 06.11.2026 — pierwszy źródłowy myśliwiec 3D, kolizje i trafienia
 
 **Port: 35% zaimplementowane / 65% pozostało.** CARBONIS 01 ma teraz w kodzie cztery proceduralne myśliwce typu 0 pochodzące z oryginalnego `Windows/src/ShipMesh.cs` i `BossMesh65/GpuRobot70`, ze wspólną siatką Metal i ośmioma materiałami. AI `EnemyTactics71` porusza nimi i ostrzega przed ostrzałem; `Physics68` rozwiązuje fizyczne zderzenia oraz odrzuty; broń Pulse uwzględnia zasłanianie myśliwców przez asteroidy, prawidłową punktację i 18 krótkotrwałych fragmentów małej skały. Pierwsza misja jest więc rozwijana na prawdziwym kodzie, nie atrapach.
