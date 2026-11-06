@@ -1,5 +1,18 @@
 # ASTEROIDY iOS — stały harmonogram portowania
 
+> **AKTUALNA KOLEJNOŚĆ WYKONAWCZA (06.11.2026):** na życzenie użytkownika
+> priorytetem jest **widoczny przepływ gry**, nie pierwotna kolejność
+> numerów: **A. natywne menu → B. wybór misji → C. wejście na planetę →
+> D. pełna grywalna misja i wynik → E. kolejne planety/statki → F. AI i
+> bossowie → G. kampania 26/26 → H. ustawienia/sterowanie → I. audio
+> i zapis → J. optymalizacja i testy**. Szczegóły, bramki i zasady:
+> [ROADMAP_EXECUTION_RULES_18_TASKS_2026-11-06.md](ROADMAP_EXECUTION_RULES_18_TASKS_2026-11-06.md).
+> Późniejsza decyzja **zastępuje jedynie wykonawczą kolejność** („zadanie 9
+> następne”) opisaną niżej jako historia. **Wszystkie 18 zadań, ich
+> numery, zakresy i dotychczasowe procenty pozostają niezmienione.**
+> Najbliższe do wykonania: **A. Menu, potem B. Wybór misji**.
+
+
 Źródło kolejności/nazw: zatwierdzony przez użytkownika zrzut harmonogramu 18 zadań z 2026-11-05. Nie zmieniać nazw ani zakresów bez decyzji użytkownika.
 
 **Łączny postęp odniesienia: 27%; pozostało 73%.** To zachowany wynik zbiorczy, bez ponownego ważenia 18 zadań. **Zadanie 7 — Kolizje, obrażenia i zniszczenia: 100% implementacji modułu, bez zmian. Zadanie 8 — Asteroidy i fale walki: 100% implementacji modułu (poprzednio 96%, +4 pp).** W oryginalnym kodzie C# v556 zweryfikowano `Game.Wave`, `Action38`, `Balance70`, `Physics68`, `AmigaBounce265` i `Game.Step`. Przeniesiono wytrzymałość i skalę skał, w tym +1 HP dla Coop62, kolejność wygasania odłamków/ruchu/posiłków/kolizji/strzałów, ostrzeżenie o posiłkach 1.6 s, 3 fale 16-sekundowe i specyficzną niezniszczalną mechanikę odbijanych kul sektora 25. **Swift/Linux: 25/25 zestawów PASS w GitHub Actions `42049818376`, commit `74fe326e1db29daac94e93a7ef8a906d327adefb`; uwzględniono regresję sektorów 9 i 17.** Osobna kontrola natywnej kompilacji Apple w tym przebiegu **czekała w kolejce** podczas raportowania — nie wolno twierdzić, że jej wynik PASS jest znany. iOS/Metal nie zostały interaktywnie sprawdzone na rzeczywistym urządzeniu (etap 18). **Nie utworzono IPA.** Zrealizowane zadania 7 i 8 podlegają regresji, nie rozpoczynać ich od nowa. Ponadto podłączono do interfejsu testowego iPhone'a sektory 1/9/17/25 przez `App.swift` i `MetalRenderer.swift`; ich wybór resetuje odrębny sektor, lot i diagnostyczny stan obrażeń bez ingerencji w kampanię. Natywne typowanie tej rewizji przez Xcode jeszcze oczekiwało na runner macOS. AI, bossowie, wszystkie bronie, komplet misji oraz kampania nadal należą do osobnych zadań 9–13.
