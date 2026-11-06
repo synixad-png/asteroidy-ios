@@ -10,6 +10,7 @@ struct Sector01Scene568: View {
     let onMissionCompleted:(Sector01MissionSummary568)->Void
     let onSurvivalChanged:(Int,Int)->Void
     let preparedWave:Sector01PreparedWave568
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var session:CarbonisSession568
     @State private var completionReported=false
     @State private var showingService=false
@@ -243,6 +244,17 @@ struct Sector01Scene568: View {
             onSurvivalChanged(session.game.lives,
                               session.game.shieldCharges)
             onMissionCompleted(report)
+        }
+        // Interrupted iOS touches (Control Center, app switcher, call)
+        // cannot leave auto-fire held after returning to the mission.
+        .onChange(of:scenePhase) { phase in
+            if phase != .active {
+                session.release()
+                session.paused=true
+            } else {
+                session.release()
+                session.paused=false
+            }
         }
         .onDisappear {session.paused=true;session.release()}
         .accessibilityIdentifier("sector01-real-source-scene")
