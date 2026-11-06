@@ -4,7 +4,7 @@
 
 **Ostatnia zweryfikowana funkcja:** z `Carbonis277.cs:56–65` przeniesiono matematyczne próbkowanie oryginalnej mapy C279 o wymiarach 512×256. `CarbonisSurface277.swift` odczytuje wysokość, a natywny inspektor CARBONIS wywołuje tę funkcję; wejście wymaga SHA-256 wysokości, oprócz pozostałych pięciu zasobów. **27/27 lokalnych testów Swift/Linux PASS**, natywna kompilacja tej rewizji na Apple iOS i integracja z lotem pozostają bez potwierdzenia. [Raport C279](Reports/V568_STAGE_C_CARBONIS_TERRAIN_SOURCE_2026-11-06.md).
 
-**Bramka przed etapem D:** odzyskać z oryginalnego v568 pełną definicję `Game.Wave()` i zależności (dostępne archiwum źródłowego audytu zawiera jedynie wywołanie z `Orbit50.cs`), podłączyć realny start, lot, przeciwników, kolizje statku z próbkowanym terenem, HUD oraz zwycięstwo/przegraną. Nie używać diagnostycznego Boreas do zastępowania CARBONIS. Wcześniejszy niepodpisany IPA na Dysku Google nie zawiera tych zmian.
+**Bramka przed etapem D (skorygowano):** pełna definicja `Game.Wave()` została odnaleziona w kompletnym ZIP v568, `Windows/src/Game.cs:90–101` i `SteamOS/src/Game.cs:90–101`; starszy wyciąg audytu obejmował tylko wywołanie z `Orbit50.cs`. Teraz należy przenieść jej zweryfikowane zależności z `Action38.cs`, `EnemyTactics71.cs`, `RobotSnake70.cs`, `Balance70.cs`, podłączyć realny start, lot, przeciwników, kolizje statku z próbkowanym terenem, HUD oraz zwycięstwo/przegraną. Szczegóły i niezgodność starego testu: [audyt pełnych źródeł WAVE](Reports/V568_WAVE_FULL_SOURCE_AUDIT_2026-11-06.md). Nie używać diagnostycznego Boreas do zastępowania CARBONIS. Wcześniejszy niepodpisany IPA na Dysku Google nie zawiera tych zmian.
 
 Poniższy starszy opis 28% jest zachowany jako historia.
 
