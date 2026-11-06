@@ -20,10 +20,20 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             ("Sector01CarbonisEmissive","dat"),
             ("Sector01CarbonisIrradiance","dat")
         ]
+        // The entry gate must reject damaged/substituted source files,
+        // not merely confirm that a filename exists. The renderer also
+        // validates these hashes before allocating GPU buffers.
         return files.allSatisfy { name,ext in
-            Bundle.main.url(forResource:name,withExtension:ext) != nil
-            || Bundle.main.url(forResource:name,withExtension:ext,
-                               subdirectory:"Assets") != nil
+            guard let url=Bundle.main.url(forResource:name,withExtension:ext)
+                    ?? Bundle.main.url(forResource:name,withExtension:ext,
+                                       subdirectory:"Assets"),
+                  let bytes=try? Data(contentsOf:url),
+                  let expected=Coordinator.Renderer.expected[name+"."+ext]
+            else { return false }
+            let actual=SHA256.hash(data:bytes).map {
+                String(format:"%02x",$0)
+            }.joined()
+            return actual==expected
         }
     }()
 
@@ -72,7 +82,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var proofScheduled=false
             var yawOffset: Float = 0
             var pitchOffset: Float = 0
-            private static let expected:[String:String] = [
+            static let expected:[String:String] = [
                 "Sector01CarbonisVertices.bin":"b35318d059b9c4f180d03f36e52a6c4eea1225a484e339d3f117e5df9d7634bd",
                 "Sector01CarbonisIndices.bin":"e542a65a0ddf0767d982b573da037becea7872cc8a6e0d5d1e1851cd90730bef",
                 "Sector01CarbonisBase.dat":"8a9d5d2ad53d1c5bc8681f9ff17b83a3375fb7e16f58a3ed083a9157bcc58424",
