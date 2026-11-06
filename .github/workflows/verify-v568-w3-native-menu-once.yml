@@ -41,8 +41,8 @@ jobs:
           set -euo pipefail
           python3 Tests/V568W3MenuSourceImagesTests.py
           python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required
-          test -s ASTEROIDYiOS/Assets/W3Background568.jpg
-          test -s ASTEROIDYiOS/Assets/W3Logo568.png
+          test -s ASTEROIDYiOS/Assets/W3Background568Original.dat
+          test -s ASTEROIDYiOS/Assets/W3Logo568Original.dat
       - name: Create native iOS source project (no HTML/WebView)
         timeout-minutes: 5
         run: |
@@ -73,8 +73,8 @@ jobs:
           assert info.get("CFBundleIdentifier")=="com.synixad.asteroidyios"
           assert len(list(app.rglob("default.metallib")))==1
           originals={
-            "W3Background568.jpg":"a8aa28883084657f0c38900dbb011de09e2b0fd461704d370a68858be0178145",
-            "W3Logo568.png":"cab4198b953640c787975c5a8436a0fdeaa82502b40e000077ff055cc0709e09"
+            "W3Background568Original.dat":"a8aa28883084657f0c38900dbb011de09e2b0fd461704d370a68858be0178145",
+            "W3Logo568Original.dat":"cab4198b953640c787975c5a8436a0fdeaa82502b40e000077ff055cc0709e09"
           }
           for name,sha in originals.items():
             bundled=list(app.rglob(name))
