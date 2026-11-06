@@ -11,6 +11,25 @@
 > następne”) opisaną niżej jako historia. **Wszystkie 18 zadań, ich
 > numery, zakresy i dotychczasowe procenty pozostają niezmienione.**
 > Najbliższe do wykonania: **A. Menu, potem B. Wybór misji**.
+> **Etap A, kolejny widoczny element (06.11.2026):** na podstawie
+> źródłowego `GpuW3HomeReal333.cs` dodano do panelu HOME
+> na iPadzie **oryginalny obracany statek Vanguard431**,
+> zgodnie z domyślnym `Game.ShipType=1`. Nowy moduł
+> `W3HomeShipPreview568.swift` korzysta z autentycznej
+> siatki i tekstury w istniejącej paczce iOS, chronionych SHA256.
+> Oddzielny shader W3 wykorzystuje źródłowy gładki
+> Toon60, kamerę i rotację modelu. **Kompilacja iOS PASS**
+> ([42202600804](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202600804)).
+> Realny test GPU podglądu statku i poprawionego światła planety:
+> [42202733165](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202733165).
+> Dotykowa nawigacja siedmiu przycisków:
+> [42202807377](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202807377).
+> **Wyniki obu wymagają potwierdzenia — nie uznawać ich za PASS
+> dopóki nie zakończą się poprawnie**. Nie zmieniono
+> zamkniętych mechanik 7/8 ani menu misji. **A nadal w trakcie,
+> B nierozpoczęte; 14 = 10% (+0 pp), całe 27% / pozostaje 73%.**
+> Bez IPA.
+>
 > **Kontynuacja testów W3 — najnowsza rewizja:** po dodaniu źródłowego
 > podglądu statku Vanguard431 w menu testy interakcji zostały
 > powiązane również z plikami podglądu statku, planety i
