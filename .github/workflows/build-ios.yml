@@ -1,4 +1,4 @@
-# Jednorazowe wywołanie na polecenie użytkownika 2026-11-05; kolejne zwykłe commity źródeł nie uruchamiają IPA automatycznie.
+# Weryfikacyjny build na wyraźne żądanie użytkownika 2026-11-06: najnowszy Swift/Metal v568; następnie poprawki funkcjonalne.
 name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
 on:
   workflow_dispatch:
