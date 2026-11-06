@@ -13,6 +13,8 @@ on:
       - 'ASTEROIDYiOS/App.swift'
       - 'Tests/IOSInterruptedTouchSourceContract.py'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
+      - 'ASTEROIDYiOS/Ship.metal'
+      - 'Tests/MetalPBRHalfVectorContract.py'
       - 'ASTEROIDYiOS/SphereRockContact68.swift'
       - 'ASTEROIDYiOS/SphereSector556.swift'
       - 'ASTEROIDYiOS/CombatSolids68.swift'
@@ -58,6 +60,8 @@ jobs:
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
+      - name: Guard against invalid PBR highlight pixels under opposing view and light
+        run: python3 Tests/MetalPBRHalfVectorContract.py
       - name: Guard against stuck iPhone/iPad touch inputs after app interruption
         run: python3 Tests/IOSInterruptedTouchSourceContract.py
       - name: Full Physics68/Damage556/destruction regression matrix (NO IPA)
