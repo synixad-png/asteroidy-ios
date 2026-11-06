@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Offline adversarial tests of the real-vs-fallback release boundary.
 
-No original PC user ZIP is stored in public GitHub: green tests here
-mean the release blocks missing, substituted, malformed source assets.
-Successful actual asset validation must additionally use the user's
-original source ZIP, not a synthetic substitute.
+The two verified original PC asset binaries are now in GitHub as
+ASTEROIDYiOS/Assets/Vanguard431Source.mesh and Vanguard431Base.jpg.
+This test proves missing/substituted assets are blocked; positive byte
+validation is handled by OriginalVanguard431InstalledAssetsTests.py.
+The user's full PC source ZIP is not stored in this repository.
 """
 import importlib.util
 import pathlib
@@ -61,5 +62,5 @@ assert "workflow_dispatch:" in manual and "  push:" not in manual
 print("PASS: original Vanguard source material is mandatory for textured")
 print("      releases; old AS3D fallback requires explicit compatibility")
 print("      switch. Missing/malformed/renamed JPEG/mesh IPA rejected.")
-print("LIMIT: actual original assets are not yet in GitHub, positive")
-print("      end-to-end material build remains to be executed.")
+print("POSITIVE: exact original source binaries are in GitHub;")
+print("          separate source and native compiled-app tests verify them")
