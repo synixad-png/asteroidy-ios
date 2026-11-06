@@ -398,6 +398,15 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     encoder.setRenderPipelineState(rockPipeline)
                     for rock in activeRocks {
                         let shape=CarbonisRockGeometry568.shape(for:rock)
+                        if rockBuffers[shape] == nil {
+                            // Physics68 splits create new source shapes; cache once.
+                            let mesh=CarbonisRockGeometry568.vertices(shape:shape)
+                            rockBuffers[shape]=mesh.withUnsafeBytes { bytes in
+                                bytes.baseAddress.flatMap {
+                                    gpu.makeBuffer(bytes:$0,length:bytes.count,options:[])
+                                }
+                            }
+                        }
                         guard let buffer=rockBuffers[shape] else {continue}
                         let rockMatrix=model*Self.sourceRockModel(rock)
                         uniforms=Uniforms(mvp:vp.map{$0*rockMatrix} ??
