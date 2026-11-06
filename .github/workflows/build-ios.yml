@@ -1,4 +1,4 @@
-# Weryfikacyjny build na wyraźne żądanie użytkownika 2026-11-06: najnowszy Swift/Metal v568; następnie poprawki funkcjonalne.
+# Ponowny build IPA iPhone/iPad na źródłach v568 po naprawach z testów Swift/Linux PASS i błędu Xcode explicit-self, 2026-11-06.
 name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
 on:
   workflow_dispatch:
