@@ -1,3 +1,11 @@
+## AKTUALNIE REALIZOWANA BRAMKA C → D — 06.11.2026
+
+**31% wykonano / 69% pozostało.** Zrealizowano następny element źródłowej sceny gry, nie nową wersję demonstracyjną: natywne `RockVertices75` i `StampSphere67` z oryginalnego Windows v568, aktualizowane przez `SphereAsteroid556.advance` bezpośrednio w rendererze Metal autentycznej CARBONIS C279. Geometria jest budowana tylko raz na unikalny kształt, a nowe rysowanie nie modyfikuje indeksów, materiałów, UV ani tekstur C279.
+
+**Lokalnie 43 385 asercji Swift PASS** i regresje struktury źródeł PASS, ale **brak potwierdzonego natywnego wyniku Xcode/GPU Apple**. [Raport realizacji](Reports/V568_STAGE_C_ORIGINAL_ROCK_RENDERER_2026-11-06.md); [aktualne, stałe 18 zadań](PORT_STATUS_18_TASKS.md).
+
+**Dalej według A–J:** ruch prawdziwego statku i kamera nad C279, render aktywnych myśliwców, AI, ruch posiłków z `MissionIncoming568` w pętli rozgrywki, strzały, obrażenia, kolizje i cele. Nie zaliczać zakończenia misji do czasu pełnego end-to-end. Nie zlecano IPA. Historyczne wpisy niżej opisują wcześniejsze postępy 30/29%.
+
 ## NAJNOWSZY ETAP REALIZACJI C → D: źródłowa fala CARBONIS, 06.11.2026
 
 **30% wykonane / 70% pozostało.** Kamienie A–J i zakres 18 zadań bez zmiany. Zakończono obecny podzakres tworzenia autentycznej początkowej `Wave()` v568: skały, uzbrojeni myśliwce, robotyczne węże, klasy i poziomy HP, przydziały posiłków oraz generator C# Random. `Sector01PreparedWave568` łączy `MissionStart261` i `MissionWave568` z natywnym wejściem do oryginalnej planety C279. 909 testów początkowej WAVE + 633 testy źródłowego Action38 SpawnIncoming + 12 testów bramki lokalnie PASS (z testowymi odpowiednikami zależności); docelowe GitHub CI i natywny iPhone niezweryfikowane. [Raport wdrożenia](Reports/V568_STAGE_C_WAVE_PREPARED_2026-11-06.md).
