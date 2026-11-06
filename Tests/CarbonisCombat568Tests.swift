@@ -34,6 +34,27 @@ import Foundation
         contact.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
                      shooting:false,dt:1.0/120)
         check(contact.lastContactCount>0 && contact.armor<25,"source spherical contact")
+        check(contact.armor==7,"source 18 HP asteroid collision")
+        var enemyContact=CarbonisCombat568(prepared)
+        enemyContact.invincible=0
+        enemyContact.rocks=[]
+        enemyContact.shooters=Array(enemyContact.shooters.prefix(1))
+        enemyContact.shooters[0].core.position=enemyContact.flight.position
+        enemyContact.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                          shooting:false,dt:1.0/120)
+        check(enemyContact.lastContactCount>0 &&
+              enemyContact.armor==7,
+              "original Physics68 fighter contact applies 18 HP")
+        var knock=SphereAsteroid556(position:Vec2(x:650,y:350),
+            velocity:Vec2(x:0,y:0),radius:16)
+        let slug=CarbonisCombat568.Projectile(
+            point:Vec2(x:644,y:347),velocity:Vec2(x:210,y:65),
+            life:1.1,hostile:false)
+        CarbonisCombat568.impactRock68(&knock,shot:slug)
+        check(knock.velocity.lengthSquared>0,
+              "original Physics68 bullet transfers momentum")
+        check(knock.spin.isFinite && abs(knock.spin)<=2.5,
+              "original Physics68 clamps impact torque")
         var failure=CarbonisCombat568(prepared)
         failure.invincible=0;failure.armor=0;failure.hull=1;failure.lives=1
         failure.suffer(8)
