@@ -95,6 +95,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var craftVertexCount=0
             private var craftPipeline:MTLRenderPipelineState?
             private var tracerPipeline:MTLRenderPipelineState?
+            private var shooterPipeline:MTLRenderPipelineState?
+            private var shooterType0:(buffer:MTLBuffer,ranges:[Range<Int>])?
             private var proofScheduled=false
             var yawOffset: Float = 0
             var pitchOffset: Float = 0
@@ -215,6 +217,26 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     fighterSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
                     fighterSpec.depthAttachmentPixelFormat = .depth32Float
                     craftPipeline=try device.makeRenderPipelineState(descriptor:fighterSpec)
+                    // GpuRobot70.cs: CARBONIS L1 shooter type 0 is
+                    // BossMesh65(0,"drone") over ShipMesh(0,false).
+                    // Generate once: four live ships share one source VBO.
+                    let sourceShooter=CarbonisShooterMesh71.typeZero()
+                    let fighterBuffer=sourceShooter.vertices.withUnsafeBytes { raw in
+                        raw.baseAddress.flatMap {
+                            device.makeBuffer(bytes:$0,length:raw.count,options:[])
+                        }
+                    }
+                    guard let fighterBuffer else {throw SourceError.metal}
+                    shooterType0=(fighterBuffer,sourceShooter.ranges)
+                    guard let shooterFragment=library.makeFunction(
+                        name:"sector01ShooterFragment71") else {throw SourceError.metal}
+                    let shooterSpec=MTLRenderPipelineDescriptor()
+                    shooterSpec.vertexFunction=v
+                    shooterSpec.fragmentFunction=shooterFragment
+                    shooterSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
+                    shooterSpec.depthAttachmentPixelFormat = .depth32Float
+                    shooterPipeline=try device.makeRenderPipelineState(
+                        descriptor:shooterSpec)
                     if let tracer=library.makeFunction(name:"sector01CombatTracer568") {
                         let tracerSpec=MTLRenderPipelineDescriptor()
                         tracerSpec.vertexFunction=v
@@ -421,6 +443,38 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             vertexCount:CarbonisRockGeometry568.sourceVertexCount)
                     }
                 }
+                // Original GpuRobot70.DrawShooter71 source geometry and
+                // StampSphere67(point,aim,9*Scale67). No fake substitutes
+                // for later enemy kinds; they remain a separate port step.
+                if let session=gameSession,let worldView=vp,
+                   let shooter=shooterType0,
+                   let shooterPipeline=shooterPipeline {
+                    encoder.setRenderPipelineState(shooterPipeline)
+                    encoder.setVertexBuffer(shooter.buffer,offset:0,index:0)
+                    for enemy in session.game.shooters where enemy.core.type==0 {
+                        let stamp=SphereSurfaceStamp556(
+                            point:enemy.core.position,angle:enemy.aim)
+                        let pose=stamp.columnMajor(size:9)
+                        let matrix=simd_float4x4(columns:(
+                            SIMD4<Float>(pose[0],pose[1],pose[2],pose[3]),
+                            SIMD4<Float>(pose[4],pose[5],pose[6],pose[7]),
+                            SIMD4<Float>(pose[8],pose[9],pose[10],pose[11]),
+                            SIMD4<Float>(pose[12],pose[13],pose[14],pose[15])))
+                        for (material,range) in shooter.ranges.enumerated()
+                            where !range.isEmpty {
+                            uniforms=Uniforms(
+                                mvp:worldView*matrix,model:matrix,
+                                material:UInt32(material),glow:0)
+                            encoder.setVertexBytes(&uniforms,
+                                length:MemoryLayout<Uniforms>.stride,index:1)
+                            encoder.setFragmentBytes(&uniforms,
+                                length:MemoryLayout<Uniforms>.stride,index:1)
+                            encoder.drawPrimitives(
+                                type:.triangle,vertexStart:range.lowerBound,
+                                vertexCount:range.count)
+                        }
+                    }
+                }
                 // Render the exact default VANGUARD v568 craft alongside
                 // its moving CARBONIS sphere; use real source mesh and UV.
                 if let session=gameSession,
@@ -479,7 +533,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             "sourceRockMeshes":activeRocks.count,
                             "sourceRockMeshVerticesPerObject":CarbonisRockGeometry568.sourceVertexCount,
                             "sourceRockUpdateRoutine":"SphereAsteroid556.advance",
-                            "enemyAIIntegrated":false,
+                            "enemyAIIntegrated":true,
+                            "sourceShooterType0Geometry":"ShipMesh0-BossMesh65-drone",
                             "nativeMissionPlayable":false
                         ]
                         if let dir=FileManager.default.urls(
