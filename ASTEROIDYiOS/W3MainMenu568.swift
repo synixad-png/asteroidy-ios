@@ -1,0 +1,285 @@
+import SwiftUI
+
+/// Source-guided native UI for v568 Windows/src/RendererW3Home328.cs.
+/// Uses the original seven action captions and W3 palette/layout hierarchy.
+/// This is a real, tappable iPhone/iPad navigation surface, not HTML/WebView,
+/// not a captured image of another game and not a claim of W3 visual parity.
+/// Original W3 background/logo and 3D animated central planet are pending.
+struct W3MainMenu568: View {
+    enum Page: String, CaseIterable, Identifiable {
+        case newGame = "NOWA GRA"
+        case continueGame = "KONTYNUUJ"
+        case campaign = "KAMPANIA"
+        case hangar = "HANGAR"
+        case settings = "USTAWIENIA"
+        case credits = "AUTORZY"
+        case exit = "WYJŚCIE"
+
+        var id: String { rawValue }
+    }
+
+    let progress: CampaignProgress556
+    let openDiagnostic: () -> Void
+    @State private var page: Page?
+
+    private let gold = Color(red: 0.89, green: 0.67, blue: 0.31)
+    private let cyan = Color(red: 0.39, green: 0.75, blue: 0.79)
+    private let paper = Color(red: 0.92, green: 0.93, blue: 0.94)
+    private let muted = Color(red: 0.63, green: 0.73, blue: 0.77)
+
+    var body: some View {
+        GeometryReader { proxy in
+            let compact = proxy.size.height < 540
+            let pad: CGFloat = compact ? 12 : 24
+            ZStack {
+                LinearGradient(
+                    colors: [Color(red:0.012,green:0.042,blue:0.071),
+                             Color(red:0.006,green:0.019,blue:0.035)],
+                    startPoint:.topLeading,endPoint:.bottomTrailing)
+                    .ignoresSafeArea()
+                VStack(spacing:0) {
+                    header(compact:compact)
+                    HStack(alignment:.top,spacing:compact ? 10 : 20) {
+                        navigation(compact:compact)
+                            .frame(width:min(264,max(174,proxy.size.width * 0.245)))
+                        radar(compact:compact)
+                            .frame(maxWidth:.infinity,maxHeight:.infinity)
+                        if proxy.size.width > 850 {
+                            telemetry
+                                .frame(width:min(215,proxy.size.width * 0.18))
+                        }
+                    }
+                    .padding(.horizontal,pad)
+                    .padding(.vertical,compact ? 7 : 16)
+                    footer(compact:compact)
+                }
+                if let shown=page {
+                    panel(for:shown,compact:compact)
+                        .padding(compact ? 10 : 24)
+                        .transition(.opacity)
+                }
+            }
+        }
+        .accessibilityIdentifier("asteroidy-w3-main-menu")
+    }
+
+    private func header(compact:Bool) -> some View {
+        HStack(spacing:12) {
+            VStack(alignment:.leading,spacing:2) {
+                Text("SYNIXAD SYSTEMS")
+                    .font(.system(size:compact ? 13 : 18,
+                                  weight:.heavy,design:.monospaced))
+                    .foregroundStyle(gold)
+                Text("ORBITAL NAVIGATION SYSTEM")
+                    .font(.system(size:compact ? 9 : 11,design:.monospaced))
+                    .foregroundStyle(paper)
+            }
+            Spacer()
+            VStack(alignment:.trailing,spacing:3) {
+                Text("TRYB CENTRUM DOWODZENIA")
+                    .font(.system(size:compact ? 9 : 12,design:.monospaced))
+                    .foregroundStyle(muted)
+                Text("SYSTEM ONLINE")
+                    .font(.system(size:compact ? 10 : 12,
+                                  weight:.semibold,design:.monospaced))
+                    .foregroundStyle(cyan)
+            }
+        }
+        .padding(.horizontal,compact ? 14 : 26)
+        .frame(height:compact ? 52 : 74)
+        .background(Color(red:0.004,green:0.027,blue:0.048).opacity(0.96))
+        .overlay(alignment:.bottom) { Rectangle().fill(cyan.opacity(0.25)).frame(height:1) }
+    }
+
+    private func navigation(compact:Bool) -> some View {
+        VStack(alignment:.leading,spacing:compact ? 5 : 10) {
+            Text("PANEL OPERACYJNY")
+                .font(.system(size:compact ? 9 : 12,weight:.bold,design:.monospaced))
+                .foregroundStyle(gold)
+            Text("CENTRUM DOWODZENIA")
+                .font(.system(size:compact ? 15 : 22,
+                              weight:.bold,design:.monospaced))
+                .foregroundStyle(paper)
+                .lineLimit(2)
+                .minimumScaleFactor(0.75)
+            Rectangle().fill(gold.opacity(0.55)).frame(height:1)
+                .padding(.bottom,compact ? 1 : 6)
+            ForEach(Array(Page.allCases.enumerated()),id:\.element.id) { index,item in
+                Button {
+                    page=item
+                } label: {
+                    HStack(spacing:10) {
+                        Text(String(format:"%02d",index+1))
+                            .foregroundStyle(gold)
+                            .frame(width:22,alignment:.leading)
+                        Text(item.rawValue)
+                            .foregroundStyle(paper)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                        Spacer(minLength:0)
+                        Image(systemName:"chevron.right")
+                            .foregroundStyle(gold)
+                    }
+                    .font(.system(size:compact ? 11 : 13,
+                                  weight:.semibold,design:.monospaced))
+                    .padding(.horizontal,11)
+                    .frame(maxWidth:.infinity,minHeight:compact ? 31 : 42)
+                    .background(Color(red:0.02,green:0.065,blue:0.10).opacity(0.96))
+                    .overlay {
+                        RoundedRectangle(cornerRadius:3)
+                            .stroke(cyan.opacity(0.32),lineWidth:1)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("w3-home-\(index)")
+            }
+            Spacer(minLength:0)
+        }
+    }
+
+    // W3 C# sources draw a procedural center radar and orbit. This is a
+    // 2D navigation panel only; no fabricated planet or screenshot is shown.
+    private func radar(compact:Bool) -> some View {
+        GeometryReader { geo in
+            let diameter=min(geo.size.width * 0.76,geo.size.height * 0.78)
+            ZStack {
+                RoundedRectangle(cornerRadius:5)
+                    .fill(Color(red:0.009,green:0.036,blue:0.061).opacity(0.85))
+                RoundedRectangle(cornerRadius:5)
+                    .stroke(cyan.opacity(0.24),lineWidth:1)
+                ForEach(1...5,id:\.self) { i in
+                    Circle()
+                        .stroke(cyan.opacity(0.09+Double(i)*0.035),lineWidth:1)
+                        .frame(width:diameter*CGFloat(i)/5,
+                               height:diameter*CGFloat(i)/5)
+                }
+                Rectangle().fill(cyan.opacity(0.22))
+                    .frame(width:diameter*1.07,height:1)
+                Rectangle().fill(cyan.opacity(0.22))
+                    .frame(width:1,height:diameter*1.07)
+                Circle()
+                    .fill(Color(red:0.023,green:0.113,blue:0.158))
+                    .frame(width:diameter*0.36,height:diameter*0.36)
+                    .overlay { Circle().stroke(gold.opacity(0.5),lineWidth:1) }
+                Ellipse()
+                    .stroke(gold.opacity(0.85),lineWidth:1.5)
+                    .frame(width:diameter*0.97,height:diameter*0.38)
+                    .rotationEffect(.degrees(-24))
+                VStack {
+                    HStack {
+                        Text("RADAR / SYSTEM NAWIGACJI")
+                        Spacer()
+                        Text("W3 v568")
+                    }
+                    .font(.system(size:compact ? 8 : 11,design:.monospaced))
+                    .foregroundStyle(muted)
+                    Spacer()
+                    Text("MODEL PLANETY 3D — DO PRZENIESIENIA")
+                        .font(.system(size:compact ? 8 : 10,design:.monospaced))
+                        .foregroundStyle(gold)
+                }
+                .padding(12)
+            }
+        }
+        .accessibilityLabel("Panel radarowy. Oryginalny model planety 3D nie jest jeszcze przeniesiony.")
+    }
+
+    private var telemetry: some View {
+        VStack(alignment:.leading,spacing:16) {
+            Text("PARAMETRY SYSTEMU")
+                .font(.system(size:11,weight:.bold,design:.monospaced))
+                .foregroundStyle(gold)
+            ForEach(["STATUS  /  ONLINE","SEKTORY / 26",
+                     "ŹRÓDŁO / PC v568","SILNIK / METAL",
+                     "TRYB / MENU"],id:\.self) { line in
+                Text(line)
+                    .font(.system(size:11,design:.monospaced))
+                    .foregroundStyle(muted)
+                Rectangle().fill(cyan.opacity(0.18)).frame(height:1)
+            }
+            Spacer()
+        }
+        .padding(15)
+        .background(Color(red:0.008,green:0.035,blue:0.055).opacity(0.9))
+        .overlay { Rectangle().stroke(cyan.opacity(0.2),lineWidth:1) }
+    }
+
+    private func footer(compact:Bool) -> some View {
+        HStack(spacing:8) {
+            Text("ASTEROIDY / NATYWNY PORT W3")
+                .foregroundStyle(muted)
+            Spacer()
+            Button("SCENA TESTOWA") {
+                openDiagnostic()
+            }
+            .fontWeight(.bold)
+            .foregroundStyle(gold)
+            .accessibilityIdentifier("w3-open-diagnostic")
+        }
+        .font(.system(size:compact ? 9 : 11,design:.monospaced))
+        .padding(.horizontal,compact ? 14 : 26)
+        .frame(height:compact ? 37 : 52)
+        .background(Color(red:0.004,green:0.027,blue:0.048))
+        .overlay(alignment:.top) {
+            Rectangle().fill(cyan.opacity(0.25)).frame(height:1)
+        }
+    }
+
+    @ViewBuilder private func panel(for item:Page,compact:Bool) -> some View {
+        ZStack {
+            Color.black.opacity(0.86).ignoresSafeArea()
+            VStack(spacing:10) {
+                HStack {
+                    Text(item.rawValue)
+                        .font(.system(size:compact ? 17 : 22,
+                                      weight:.bold,design:.monospaced))
+                        .foregroundStyle(gold)
+                    Spacer()
+                    Button("WSTECZ") { page=nil }
+                        .foregroundStyle(cyan)
+                        .accessibilityIdentifier("w3-panel-back")
+                }
+                Rectangle().fill(cyan.opacity(0.45)).frame(height:1)
+                if item == .campaign || item == .newGame {
+                    // The existing 26-sector atlas is read-only. It does
+                    // not activate or clear a source v568 mission.
+                    Text("ATLAS 26 SEKTORÓW — PODGLĄD, BEZ URUCHAMIANIA MISJI")
+                        .font(.system(size:10,design:.monospaced))
+                        .foregroundStyle(muted)
+                    CampaignAtlas556(progress:progress,dismiss:{page=nil})
+                } else {
+                    Text(message(for:item))
+                        .font(.system(size:compact ? 12 : 15,design:.monospaced))
+                        .foregroundStyle(paper)
+                        .frame(maxWidth:.infinity,alignment:.leading)
+                    Spacer(minLength:10)
+                }
+            }
+            .padding(compact ? 14 : 24)
+            .frame(maxWidth:780,maxHeight:compact ? .infinity : 570)
+            .background(Color(red:0.016,green:0.048,blue:0.08))
+            .overlay {
+                Rectangle().stroke(gold.opacity(0.5),lineWidth:1)
+            }
+        }
+        .accessibilityIdentifier("w3-panel-\(item.id)")
+    }
+
+    private func message(for item:Page) -> String {
+        switch item {
+        case .continueGame:
+            return "Wczytanie rzeczywistego zapisu gry Windows v568 nie jest jeszcze podłączone. Nie uruchamiam przypadkowego sektora."
+        case .hangar:
+            return "Hangar wymaga oryginalnej sceny hangar_h55.glb, której nie zawiera dostarczona paczka BEZ_HANGARU."
+        case .settings:
+            return "Opcje grafiki, dźwięku i sterowania zostaną podłączone do rzeczywistych ustawień gry. Dotychczasowe ustawienia nie są zmieniane."
+        case .credits:
+            return "SYNIXAD SYSTEMS — ASTEROIDY. Oryginalne źródła: Windows/SteamOS v568. Natywny port iOS jest w trakcie prac."
+        case .exit:
+            return "Na iPhonie i iPadzie aplikację zamyka się gestem systemowym. Menu pozostaje dostępne."
+        case .newGame,.campaign:
+            return ""
+        }
+    }
+}
