@@ -205,7 +205,8 @@ def capture(app:Path,reports:Path,kinds):
                                 20,check=False)
                 except EnvironmentUnavailable:
                     pass
-    print("PASS: genuine original ASTEROIDY rendered on both Apple simulators")
+    tested = " and ".join(kinds)
+    print(f"PASS: genuine original ASTEROIDY rendered on selected Apple simulator family: {tested}")
     print("LIMIT: simulator render does not prove physical device GPU/FPS")
 
 def self_test():
