@@ -104,6 +104,8 @@ struct W3MainMenu568: View {
                 }
             }
         }
+        // Keep native buttons accessible to VoiceOver and XCTest.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("asteroidy-w3-main-menu")
         .onAppear {
             // Simulator diagnostic only. An actual screenshot is still
@@ -209,10 +211,15 @@ struct W3MainMenu568: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(item.rawValue)
+                .accessibilityAddTraits(.isButton)
                 .accessibilityIdentifier("w3-home-\(index)")
             }
             Spacer(minLength:0)
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("w3-home-navigation")
     }
 
     // The source H290 globe is a real independent Metal render in the middle;
@@ -342,6 +349,7 @@ struct W3MainMenu568: View {
             .foregroundStyle(gold)
             .accessibilityIdentifier("w3-open-diagnostic")
         }
+        .accessibilityElement(children: .contain)
         .font(.system(size:compact ? 9 : 11,design:.monospaced))
         .padding(.horizontal,compact ? 14 : 26)
         .frame(height:compact ? 37 : 52)
@@ -388,6 +396,7 @@ struct W3MainMenu568: View {
                 Rectangle().stroke(gold.opacity(0.5),lineWidth:1)
             }
         }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("w3-panel-\(item.id)")
     }
 
