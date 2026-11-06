@@ -11,6 +11,22 @@
 > następne”) opisaną niżej jako historia. **Wszystkie 18 zadań, ich
 > numery, zakresy i dotychczasowe procenty pozostają niezmienione.**
 > Najbliższe do wykonania: **A. Menu, potem B. Wybór misji**.
+>
+> **Aktualizacja implementacji 06.11.2026:** etap **A w trakcie**.
+> Dodano natywny, obsługiwany dotykiem ekran W3 jako domyślne
+> uruchomienie, 7 autentycznych etykiet z `RendererW3Home328.cs`,
+> aktywne panele komunikujące rzeczywisty status funkcji,
+> bezpieczny powrót do istniejącej sceny diagnostycznej i
+> przycisk `MENU W3` w tej scenie. Kompilacja iOS dla wersji z menu
+> w GitHub Actions **PASS** (`42193391940` oraz `42193674926`).
+> Pierwszy autentyczny zrzut z obu symulatorów: workflow
+> [42193792251](https://github.com/synixad-png/asteroidy-ios/actions/runs/42193792251)
+> — wynik należy sprawdzić osobno, nie uznawać oczekującego za PASS.
+> Oryginalne tło/logo W3 i proceduralna planeta w menu są
+> nadal brakujące; dotykowe przejścia end-to-end nieprzetestowane.
+> **Postęp zadania 14: 10%, zmiana 0 pp, cały projekt 27%.**
+> Szczegółowe dowody i warunki zaliczenia:
+> [ROADMAP_EXECUTION_RULES_18_TASKS_2026-11-06.md](ROADMAP_EXECUTION_RULES_18_TASKS_2026-11-06.md).
 
 
 Źródło kolejności/nazw: zatwierdzony przez użytkownika zrzut harmonogramu 18 zadań z 2026-11-05. Nie zmieniać nazw ani zakresów bez decyzji użytkownika.
