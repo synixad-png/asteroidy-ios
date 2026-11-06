@@ -1,3 +1,11 @@
+## NOWY UTRWALONY ETAP C/D — 06.11.2026 (źródłowe myśliwce, kolizje, odłamki)
+
+**35% wykonano implementacyjnie / 65% pozostało** na niezmiennej liście 18 zadań. Dodano rzeczywistą proceduralną siatkę 3D `ShipMesh(0,false)` z oryginalnej gałęzi `GpuRobot70/BossMesh65`; współdzielony bufor Metal renderuje cztery myśliwce CARBONIS. Uzupełniono AI `EnemyTactics71`, ostrzeżenia geodezyjne, impuls `Contact68` oraz `ImpactRock68`, pociski z pierwotnym zasłanianiem `HitBug`, punktację `Game.Split` i 18 zanikających `SpawnTerminalShards187`.
+
+**[GitHub Actions 42256245496: `verify-combat-no-ipa` SUCCESS](https://github.com/synixad-png/asteroidy-ios/actions/runs/42256245496)**, z nowymi testami siatki myśliwca, kontaktów przy szwie i biegunie, pocisków i terminalnych odłamków. Testy Xcode/macOS pozostają w kolejce — nie ma jeszcze zweryfikowanego obrazu iOS ani IPA. [Raport nowej implementacji](Reports/V568_CARBONIS_SOURCE_FIGHTERS_PHYSICS_SHARDS_2026-11-06.md) · [pełne 18 zadań](PORT_STATUS_18_TASKS.md).
+
+**Następne etapy:** kolejny typ przeciwnika tylko według oryginalnego `ShipMesh` i `EnemyTactics71`, następnie integralność misji i zapisu; oddzielnie potwierdzić Xcode, iPhone/iPad oraz wszystkie rzeczywiste zasoby. Nie deklarować ukończenia całej kampanii 25 misji. Starsze etapy poniżej to historia.
+
 ## AKTUALNY KAMIEŃ C/D — 06.11.2026: aktywna walka CARBONIS (źródła) i żądany IPA
 
 **33% wykonano implementacyjnie / 67% pozostało.** Ukończono podzakres kodu dla pierwszej misji: oryginalny VANGUARD z zapamiętaną geometrią GLB, kamera śledząca Sphere67, natywne sterowanie L/P, ogień Pulse, efekty pocisków, źródłowe asteroidy i ich fragmenty, czterech przeciwników z symulacją AI i strzałami, życie i pancerz statku, radar i warunek zwycięstwa po 0,20 s. To NIE jest pełny port 25 misji: 3D przeciwników, bossów, pozostałych broni, audio, zapisu kampanii i testu fizycznego iOS nadal brak. [Raport techniczny i lista braków](Reports/V568_CARBONIS_LIVE_COMBAT_2026-11-06.md).
