@@ -93,6 +93,7 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Entry568.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisSurface277.swift
+          swiftc -frontend -parse ASTEROIDYiOS/MissionWave568.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3HomePlanetMetal568.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
           swiftc -frontend -parse ASTEROIDYiOS/SourcePlayerShip367.swift
