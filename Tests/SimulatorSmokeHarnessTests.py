@@ -3,7 +3,7 @@
 
 Runs the actual Python command runner's deterministic child-process
 self-test. Verifies no screenshot is labelled verified before both the
-image and source-specific renderer log pass; every CoreSimulator
+image and actual completed GPU draw proof pass; every CoreSimulator
 command has a timeout to avoid silent multi-hour macOS worker hangs.
 """
 import pathlib
@@ -25,8 +25,10 @@ assert "raise SystemExit(75)" in source
 assert "raise SystemExit(1)" in source
 assert 'picture=reports/f"{kind}_candidate_unverified.png"' in source
 assert 'verified=reports/f"{kind}_VERIFIED_ASTEROIDY_source431.png"' in source
-assert source.index('if required not in log:') < source.index('picture.rename(verified)')
-assert "real PC Vanguard431 UV/BaseColor active: 194427 vertices" in source
+assert source.index('validate_render_proof(proof)') < source.index('picture.rename(verified)')
+assert 'SIMCTL_CHILD_ASTEROIDY_RENDER_VERIFY' in source
+assert 'ASTEROIDY_Vanguard431_RenderProof.json' in source
+assert '["xcrun","simctl","get_app_container",udid,PACKAGE,"data"]' in source
 assert "Tools/verify_simulator_render_snapshot.swift" in source
 assert 'reports/f"{kind}_real_pixels.txt",check=False)' in source
 assert 'raise AppValidationFailed(f"{kind}: scene pixel evidence missing")' in source
@@ -35,6 +37,29 @@ assert 'run_command(["xcrun","simctl","install",udid,str(app)],85,' in source
 assert '["xcrun","simctl","launch",udid,PACKAGE],50,' in source
 assert "PACKAGE = \"com.synixad.asteroidyios\"" in source
 assert "run_command([" in source
+
+# Exercise the ACTUAL schema validator, not a static-only regex.
+import importlib.util
+spec=importlib.util.spec_from_file_location("real_ast_sim_runner",script)
+module=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+sample=dict(module.EXPECTED_GPU_PROOF)
+assert module.validate_render_proof(sample) is True
+for field in module.EXPECTED_GPU_PROOF:
+    corrupt=dict(sample)
+    corrupt[field]="WRONG_ORIGINAL_SOURCE"
+    try:
+        module.validate_render_proof(corrupt)
+    except module.AppValidationFailed:
+        pass
+    else:
+        raise AssertionError("Accepted forged original Vanguard GPU proof: "+field)
+try:
+    module.validate_render_proof({})
+except module.AppValidationFailed:
+    pass
+else:
+    raise AssertionError("Accepted missing actual Vanguard431 GPU proof")
 print("PASS: ASTEROIDY simulator runner distinguishes CoreSimulator timeouts")
 print("      from actual game rendering failures, and never labels a")
-print("      screenshot verified before real pixels AND native model log")
+print("      screenshot verified before real pixels AND completed GPU command")
