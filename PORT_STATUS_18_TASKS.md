@@ -1,10 +1,14 @@
+## KOREKTA ŹRÓDEŁ WAVE — 06.11.2026
+
+**PEŁNE ŹRÓDŁA ODNALEZIONE.** `Game.Wave()` jest w oryginalnym v568: `Windows/src/Game.cs:90–101` oraz `SteamOS/src/Game.cs:90–101`; ich bloki mają identyczny SHA-256. Weryfikacja dotyczy kompletnego ZIP z Biblioteki (1788 pozycji; CRC PASS), nie ograniczonego audytu. [Pełne ustalenia](Reports/V568_WAVE_FULL_SOURCE_AUDIT_2026-11-06.md). **Wciąż brak wdrożenia kompletnej WAVE w rozgrywce CARBONIS na iOS.** Procenty projektu bez zmiany: 29% / 71%.
+
 ## AKTUALIZACJA 06.11.2026 — rzeczywisty teren C279, etap C bez sztucznego ukończenia
 
 **Projekt: 29% wykonane / 71% pozostało (zmiana 0 pp). Stałe 18 zadań i ich dotychczasowe wartości bez zmian.** Ostatnia funkcja: `CarbonisSurface277.swift` — dokładny odczyt oryginalnej mapy wysokości CARBONIS 512×256 na podstawie `Carbonis277.cs:56–65` i `PlanetMesh.cs:193`. Inspektor planety korzysta z rzeczywistego wyniku `surfaceRadius(x:1,y:0,z:0)`; bramka wejścia wymaga również SHA-256 rzeczywistej mapy C279. Pozostają nienaruszone źródłowe indeksy, UV, materiały i blokady misji.
 
 **Weryfikacja:** oryginalna mapa 524296 B, SHA-256 `3ce9a0456d23a5b88de718e7fd8fe6560cb53cd112a31ecc876e6200a762cb39`; lokalne testy Swift/Linux 27/27 PASS na oryginalnym zasobie, włączone również do GitHub Actions bez IPA. **Natywny wynik iOS/Xcode tej rewizji niepotwierdzony.** To tylko próbnik terenu, nie działający kontroler kolizji statku.
 
-**Następna rzeczywista praca:** pozyskanie z pełnego oryginału definicji `Wave()`, kompletna inicjalizacja rzeczywistych fal i fizyki misji; następnie połączenie `SurfaceRadius` z lotem/kolizjami na CARBONIS. W dostępnym archiwum v568 jest `StartHubMission261`, ale nie ma definicji `Wave()` — nie wolno jej zgadywać. Nowego IPA nie wydano.
+**SKORYGOWANO po przeglądzie pełnej paczki źródłowej:** definicja `Wave()` ISTNIEJE w `Windows/src/Game.cs:90–101` i `SteamOS/src/Game.cs:90–101` w pełnym `Asteroidy_v568_ZRODLA_Windows_SteamOS_BEZ_EXE_BEZ_HANGARU.zip` (150 473 406 B, CRC PASS). Wcześniejszy brak dotyczył tylko 66 MB wyciągu audytowego. Należy teraz przenieść rzeczywiste `Wave()` wraz z `Action38.cs`, `EnemyTactics71.cs`, `RobotSnake70.cs`, `Balance70.cs` i podłączyć do CARBONIS; później dokończyć ruch i kolizje. Źródłowy przegląd i wykryta niezgodność starszego testu w [audycie WAVE](Reports/V568_WAVE_FULL_SOURCE_AUDIT_2026-11-06.md). Bez IPA.
 
 [Pełny raport źródłowy](Reports/V568_STAGE_C_CARBONIS_TERRAIN_SOURCE_2026-11-06.md).
 
