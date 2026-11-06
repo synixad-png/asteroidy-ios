@@ -11,6 +11,9 @@ on:
       - 'ASTEROIDYiOS/PlanetDamageLab556.swift'
       - 'Tests/PlanetDamageLab556Tests.swift'
       - 'ASTEROIDYiOS/App.swift'
+      - 'ASTEROIDYiOS/OriginalAudioLifecycle568.swift'
+      - 'ASTEROIDYiOS/OriginalAudioAV568.swift'
+      - 'Tests/OriginalAudioLifecycle568Tests.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/MissionCatalog568.swift'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
@@ -133,6 +136,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Swift compiler
         run: swift --version
+      - name: Verify original v568 audio startup order, lazy mission, cache and no replacements
+        run: |
+          swiftc ASTEROIDYiOS/OriginalAudioLifecycle568.swift Tests/OriginalAudioLifecycle568Tests.swift -o /tmp/original-audio-v568
+          /tmp/original-audio-v568
+          swiftc -frontend -parse ASTEROIDYiOS/OriginalAudioAV568.swift
       - name: Verify authentic Carbonis terrain scale v523 (no IPA)
         run: |
           swiftc ASTEROIDYiOS/CarbonisMissionPlanet523.swift Tests/CarbonisMissionPlanet523Tests.swift -o /tmp/carbonis-mission-scale-523
