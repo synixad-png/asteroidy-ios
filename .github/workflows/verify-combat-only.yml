@@ -16,6 +16,8 @@ on:
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
       - 'ASTEROIDYiOS/Sector01Entry568.swift'
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
+      - 'ASTEROIDYiOS/MissionStart261.swift'
+      - 'Tests/MissionStart261Tests.swift'
       - 'Tests/Sector01Entry568Tests.swift'
       - 'ASTEROIDYiOS/Sector01Carbonis568.metal'
       - 'Tools/prepare_v568_carbonis_sector01.py'
@@ -98,6 +100,11 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift Tests/CampaignSelection568Tests.swift -o /tmp/campaign-selection-v568
           /tmp/campaign-selection-v568
+      - name: Verify original Orbit50.cs StartHubMission261 reset preparation for 26 missions (no fake combat)
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/MissionStart261.swift Tests/MissionStart261Tests.swift -o /tmp/mission-start261-tests
+          /tmp/mission-start261-tests
       - name: Verify unlocked-only CARBONIS first sector entry, never fake campaign completion
         run: |
           set -euo pipefail
