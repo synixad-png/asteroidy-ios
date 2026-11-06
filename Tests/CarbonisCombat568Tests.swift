@@ -129,6 +129,81 @@ import Foundation
               "terminal debris expires after original 1.3-2.5 seconds")
         check(terminal.phase == .victory,
               "source 0.2-second clear hold starts only after debris gone")
+        // Real first-sector completion, including remaining uncollected
+        // source tokens and Game.FinishLevel clear bonus, only once.
+        var settlement=CarbonisCombat568(prepared)
+        settlement.rocks=[];settlement.shooters=[]
+        settlement.tokenPickups=[
+            CarbonisCombat568.TokenPickup(
+                position:Vec2(x:320,y:430),
+                velocity:Vec2(x:0,y:0),value:2),
+            CarbonisCombat568.TokenPickup(
+                position:Vec2(x:990,y:450),
+                velocity:Vec2(x:0,y:0),value:6)
+        ]
+        for _ in 0..<40 {
+            settlement.step(move:Vec2(x:0,y:0),
+                aim:Vec2(x:0,y:0),shooting:false,dt:1/120)
+        }
+        check(settlement.phase == .victory &&
+              settlement.missionSummary?.earnedTokens==20,
+              "source FinishLevel gathers remaining 8 tokens plus bonus 12")
+        check(settlement.tokenPickups.isEmpty,
+              "FinishLevel settles and clears outstanding collectibles")
+        check(settlement.missionSummary?.clearBonus==12,
+              "first mission original non-boss clear bonus")
+        for _ in 0..<60 {
+            settlement.step(move:Vec2(x:0,y:0),
+                aim:Vec2(x:0,y:0),shooting:false,dt:1/120)
+        }
+        check(settlement.missionSummary?.earnedTokens==20,
+              "victory cannot award the clear bonus twice")
+        var replayProgress=CampaignProgress556()
+        _=replayProgress.finishMission(1)
+        let replayEntry=Sector01Entry568.open(
+            selectedSector:1,campaign:replayProgress,
+            hasOriginalC279Assets:true)!
+        let replayWave=Sector01PreparedWave568.prepare(
+            entry:replayEntry,campaign:replayProgress,
+            hasOriginalC279Assets:true,difficulty:.normal,seed:1)!
+        check(replayWave.isReplay,
+              "source replay suppression originates at the recorded atlas bit")
+        var replayGame=CarbonisCombat568(replayWave)
+        replayGame.rocks=[];replayGame.shooters=[]
+        for _ in 0..<40 {
+            replayGame.step(move:Vec2(x:0,y:0),
+                aim:Vec2(x:0,y:0),shooting:false,dt:1/120)
+        }
+        check(replayGame.missionSummary?.earnedTokens==0 &&
+              replayGame.missionSummary?.isReplay==true,
+              "replay earns no tokens or repeated mission bonus")
+        var shieldProfile=Sector01Shop568.State()
+        shieldProfile.shieldCharges=1
+        shieldProfile.twinOwned=true
+        shieldProfile.weapon = .twin
+        shieldProfile.upgradeLevel=3
+        shieldProfile.rapidLevel=2
+        var purchased=prepared
+        purchased.shopProfile=shieldProfile
+        var upgraded=CarbonisCombat568(purchased)
+        upgraded.invincible=0
+        upgraded.suffer(18)
+        check(upgraded.shieldCharges==0 && upgraded.armor==25 &&
+              upgraded.hull==60 && upgraded.invincible==1,
+              "real source shop shield intercepts first hit")
+        upgraded.invincible=0
+        upgraded.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:1),
+                      shooting:true,dt:1/120)
+        check(upgraded.selectedWeapon == .twin &&
+              upgraded.bullets.count==2,
+              "shop Twin fires two real projectiles, not only a UI icon")
+        check(upgraded.bullets.allSatisfy({
+             $0.pierce==2 && abs($0.velocity.lengthSquared)>600*600
+             }),"power III increases shot speed and allows two impacts")
+        check(upgraded.cooldown<0.16,
+              "rapid II mechanically shortens the firing interval")
+        check(failure.missionSummary==nil,
+              "fatal loss never creates a mission-reward result")
         check(campaign.completedMask==0,"no fake campaign completion")
         print("PASS \(checks) live Carbonis C279 flight, shot, hit, victory and defeat checks")
     }
