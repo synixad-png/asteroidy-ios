@@ -2,7 +2,7 @@
 
 ## Źródło
 Oryginalne Windows v568: `GpuShip.cs` (v491, źródłowy strumień dwóch silników), `GpuSphere67.cs:368` (dla rzeczywistej walki `DrawFighterMesh(g.Time,Math.Max(.12, VisualPower298),0,false)`), `GpuSphere67.cs:420` (planeta misji `MissionPlanetScale523(100f)`), `GpuPlanetGltf463.cs:37-69` (rzeczywisty promień wierzchołków i niezależność planety głównej), `carbonis279.mesh.gz` (137067 unikatowych wierzchołków).
-Obliczone bezpośrednio z oryginalnej siatki C279: promień maksymalny 1.09607509146; mission scale 100*1.4419674/1.09607509146 = 131.607... w jednostkach PC; iOS already divides world by 144.19674, so effective mesh-only scale = 1/1.09607509146 = 0.91234625053.
+Obliczone bezpośrednio z oryginalnej siatki C279: promień maksymalny 1.09607509146; mission scale 100*1.4419674/1.09607509146 = 131.55735508 w jednostkach PC; iOS already divides world by 144.19674, so effective mesh-only scale = 1/1.09607509146 = 0.91234625053.
 
 ## Wdrożenie
 `Sector01CarbonisPreview568.swift`: normalizuj tylko siatkę terenu w rzeczywistym gameplay CARBONIS 01; pozostaw NewHome290 i statki/asteroidy nietknięte. Powiąż pipeline additive Metal Ship.metal v491 z oryginalnym modelem Vanguard431, oryginalnymi punktami montażu, tą samą macierzą modelu, animacją oraz płynnie wyznaczoną mocą 0.12..1.
