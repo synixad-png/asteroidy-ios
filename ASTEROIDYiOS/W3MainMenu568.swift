@@ -104,7 +104,8 @@ struct W3MainMenu568: View {
                 .minimumScaleFactor(0.75)
             Rectangle().fill(gold.opacity(0.55)).frame(height:1)
                 .padding(.bottom,compact ? 1 : 6)
-            ForEach(Array(Page.allCases.enumerated()),id:\.element.id) { index,item in
+            ForEach(0..<Page.allCases.count,id:\.self) { index in
+                let item=Page.allCases[index]
                 Button {
                     page=item
                 } label: {
@@ -257,7 +258,7 @@ struct W3MainMenu568: View {
                 }
             }
             .padding(compact ? 14 : 24)
-            .frame(maxWidth:780,maxHeight:compact ? .infinity : 570)
+            .frame(maxWidth:780,maxHeight:compact ? CGFloat.infinity : 570)
             .background(Color(red:0.016,green:0.048,blue:0.08))
             .overlay {
                 Rectangle().stroke(gold.opacity(0.5),lineWidth:1)
