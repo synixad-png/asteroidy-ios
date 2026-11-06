@@ -33,7 +33,11 @@ final class Audio568Fixture:OriginalAudioGenerator568 {
         life.openMission(sector:1)
         life.openMission(sector:2)
         life.openMenu()
-        RunLoop.main.run(until:Date().addingTimeInterval(0.5))
+        let finished=Date().addingTimeInterval(5)
+        while menuEvents<1 && Date()<finished {
+            RunLoop.main.run(until:Date().addingTimeInterval(0.01))
+        }
+        precondition(menuEvents==1,"latest menu event must be delivered")
         precondition(fixture.menuCalls==1)
         precondition(fixture.missionCalls[1]==1 && fixture.missionCalls[2]==1)
         precondition(menuEvents==1 && missionEvents==0)
