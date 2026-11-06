@@ -16,6 +16,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
         let files:[(String,String)] = [
             ("Sector01CarbonisVertices","bin"),
             ("Sector01CarbonisIndices","bin"),
+            ("Sector01CarbonisHeightMap","dat"),
             ("Sector01CarbonisBase","dat"),
             ("Sector01CarbonisEmissive","dat"),
             ("Sector01CarbonisIrradiance","dat")
@@ -85,6 +86,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             static let expected:[String:String] = [
                 "Sector01CarbonisVertices.bin":"b35318d059b9c4f180d03f36e52a6c4eea1225a484e339d3f117e5df9d7634bd",
                 "Sector01CarbonisIndices.bin":"e542a65a0ddf0767d982b573da037becea7872cc8a6e0d5d1e1851cd90730bef",
+                "Sector01CarbonisHeightMap.dat":"3ce9a0456d23a5b88de718e7fd8fe6560cb53cd112a31ecc876e6200a762cb39",
                 "Sector01CarbonisBase.dat":"8a9d5d2ad53d1c5bc8681f9ff17b83a3375fb7e16f58a3ed083a9157bcc58424",
                 "Sector01CarbonisEmissive.dat":"cc32669e8e31dbf0942fa0db54fd04582af9bfbd02e7248932a04e7eb78646b3",
                 "Sector01CarbonisIrradiance.dat":"b1cc566768c655e643c450b1eba73cf718765b918e54d7f7a1ac30ac6045d685"
