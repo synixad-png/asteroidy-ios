@@ -8,6 +8,8 @@ on:
       - 'ASTEROIDY_v568_ZASOBY_DO_GITHUB_CZESC_*_z_04.zip'
       - 'Tools/stage_v568_resources.py'
       - 'Tests/V568ArchiveStagingTests.py'
+      - 'Tools/convert_v568_player_ship367.py'
+      - 'Tests/V568PlayerShip367Tests.py'
       - '.github/workflows/verify-v568-assets.yml'
 
 permissions:
@@ -26,6 +28,8 @@ jobs:
         run: python3 Tools/stage_v568_resources.py --root . --verify-only
       - name: Test atomic extraction, original source paths and malicious path rejection
         run: python3 Tests/V568ArchiveStagingTests.py
+      - name: Validate original v568 PlayerShip367 engine positions, UVs, skin and geometry
+        run: python3 Tests/V568PlayerShip367Tests.py
       - name: Verify that original assets remain separate from the iOS application
         run: |
           test ! -d ASTEROIDYiOS/Assets/PortingResources
