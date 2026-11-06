@@ -53,11 +53,11 @@ final class W3MenuNavigationUITests: XCTestCase {
             let back=app.buttons["w3-panel-back"]
             XCTAssertTrue(back.waitForExistence(timeout: 15),
                           "W3 panel \(index) did not open")
-            // The UI presents the actual read-only mission atlas for
-            // Nowa Gra/Kampania, NOT a fictitious playable 26-sector map.
+            // The atlas provides actual source-locked sector selection;
+            // only source C279 planet inspection is open, not combat.
             if index==0 || index==2 {
                 XCTAssertTrue(
-                    app.staticTexts["ATLAS 26 SEKTORÓW — PODGLĄD, BEZ URUCHAMIANIA MISJI"]
+                    app.staticTexts["ATLAS 26 SEKTORÓW — WYBÓR I WEJŚCIE NA CARBONIS"]
                         .waitForExistence(timeout: 8),
                     "Mission atlas must say it is a read-only preview")
             }
