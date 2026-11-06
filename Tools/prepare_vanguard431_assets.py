@@ -29,8 +29,22 @@ DEFAULT_ASSETS=ROOT/"ASTEROIDYiOS"/"Assets"
 
 def install(archive_path,assets_dir):
     if not archive_path.is_file():
-        print("Vanguard source archive absent; retaining previous AS3D"
-              " compatibility path. New textured IPA release gate will FAIL.")
+        # Source files are now directly uploaded by the user to GitHub.
+        # Do not require the old intermediary ZIP or report a false
+        # fallback warning; still verify both bytes before returning.
+        direct={name:(assets_dir/name).read_bytes()
+                for name in EXPECTED if (assets_dir/name).is_file()}
+        if len(direct)==len(EXPECTED):
+            inspect_assets(direct)
+            print("PASS: original Vanguard431 source pair uploaded directly"
+                  " to ASTEROIDYiOS/Assets; ZIP extraction not required")
+            return True
+        if direct:
+            raise ValueError(
+                "Incomplete direct Vanguard431 upload: both source mesh"
+                " and source BaseColor JPEG are required")
+        print("Vanguard source assets are absent; retaining previous AS3D"
+              " compatibility path. NEW textured IPA release gate will FAIL.")
         return False
     with zipfile.ZipFile(archive_path) as archive:
         damaged=archive.testzip()
