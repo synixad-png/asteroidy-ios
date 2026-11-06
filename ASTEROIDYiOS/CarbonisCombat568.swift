@@ -72,6 +72,17 @@ struct CarbonisCombat568 {
     var shooterKills:Int=0
     private var random:MissionWave568.SourceRandom
     private var completed=false
+    // Audio events mirror original Game.ShotEvents, BlastEvents,
+    // PickupEvents and EnemyShotSound79. Pure side channel only.
+    private var originalAudioEvents568:[Int]=[]
+    mutating func drainOriginalAudioEvents568()->[Int] {
+        let result=originalAudioEvents568
+        originalAudioEvents568.removeAll(keepingCapacity:true)
+        return result
+    }
+    private mutating func emitOriginalAudio568(_ id:Int) {
+        if originalAudioEvents568.count<64 {originalAudioEvents568.append(id)}
+    }
     private var sourceClearHold:Float=0
     private(set) var lastContactCount=0
 
@@ -235,6 +246,7 @@ struct CarbonisCombat568 {
             let distance=sqrt(delta.lengthSquared)
             if distance<26 {
                 if !isReplay {collectedLootTokens+=item.value}
+                emitOriginalAudio568(30) // original PickupEvents
                 tokenPickups.remove(at:i)
                 continue
             }
@@ -573,6 +585,8 @@ struct CarbonisCombat568 {
                     hostile:true,kind:tactics.type==3 ? 2:0,
                     damage:tactics.projectileDamage))
             }
+            // One sound event per hostile gun volley, not per bolt.
+            emitOriginalAudio568(40+max(0,min(5,fighter.core.type)))
             fighter.muzzle=0.10
             fighter.telegraph=0
             fighter.burst+=1
@@ -595,6 +609,9 @@ struct CarbonisCombat568 {
         cooldown=max(0.075,
             (base-reduction*Float(upgradeLevel-1)) /
             (1+Float(rapidLevel)*0.15))
+        // Original Game.Fire -> ShotEvents once per trigger.
+        emitOriginalAudio568(selectedWeapon == .twin ? 11 :
+                             selectedWeapon == .scatter ? 12 : 10)
         let count=selectedWeapon == .twin ? 2 :
                   selectedWeapon == .scatter
                     ? (upgradeLevel==3 ? 5:3) : 1
@@ -708,6 +725,7 @@ struct CarbonisCombat568 {
                         velocity:shot.velocity,momentum:shooters[j].velocity,
                         defeated:fatal,time:elapsed,rng:&random)
                     if fatal {
+                        emitOriginalAudio568(20) // BossTunnelGame.HitBug: default 0 blast
                         let destroyed=shooters.remove(at:j)
                         shooterKills+=1
                         score+=destroyed.core.hunter ? 300 : 180
@@ -750,7 +768,7 @@ struct CarbonisCombat568 {
                     bullets[i].hitRockSeeds.append(rocks[j].shapeSeed)
                     if rocks[j].health<=0 {
                         let removed=rocks.remove(at:j)
-                        destruction.rockDestroyed(
+                        emitOriginalAudio568(removed.size>=3 ? 21 : 20)                        destruction.rockDestroyed(
                             removed,time:elapsed,rng:&random)
                         rocksDestroyed+=1
                         score+=Self.sourceRockScore(removed)

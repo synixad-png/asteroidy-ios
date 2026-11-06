@@ -50,6 +50,7 @@ final class CarbonisSession568: ObservableObject {
     var aim=Vec2(x:0,y:0)
     var shooting=false
     var paused=false
+    var onAudioEvents:(([Int])->Void)?
     private var lastFrame:TimeInterval?
     private var lastHUD:TimeInterval=0
     private var summaryElapsed:Float=0
@@ -86,6 +87,12 @@ final class CarbonisSession568: ObservableObject {
             let dt=min(1.0/120.0,remaining)
             game.step(move:move,aim:aim,shooting:shooting,dt:dt)
             remaining-=dt
+        }
+        let soundCodes=game.drainOriginalAudioEvents568()
+        if !soundCodes.isEmpty {
+            DispatchQueue.main.async { [weak self] in
+                self?.onAudioEvents?(soundCodes)
+            }
         }
         if now-lastHUD > 0.10 {
             lastHUD=now

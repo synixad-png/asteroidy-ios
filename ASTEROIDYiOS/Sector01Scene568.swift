@@ -9,6 +9,7 @@ struct Sector01Scene568: View {
     let returnToAtlas:()->Void
     let onMissionCompleted:(Sector01MissionSummary568)->Void
     let onSurvivalChanged:(Int,Int)->Void
+    let onAudioEvent:(Int)->Void
     let preparedWave:Sector01PreparedWave568
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var session:CarbonisSession568
@@ -18,11 +19,13 @@ struct Sector01Scene568: View {
     init(entry:Sector01Entry568,returnToAtlas:@escaping ()->Void,
          onMissionCompleted:@escaping (Sector01MissionSummary568)->Void,
          onSurvivalChanged:@escaping (Int,Int)->Void,
+         onAudioEvent:@escaping (Int)->Void = {_ in},
          preparedWave:Sector01PreparedWave568) {
         self.entry=entry
         self.returnToAtlas=returnToAtlas
         self.onMissionCompleted=onMissionCompleted
         self.onSurvivalChanged=onSurvivalChanged
+        self.onAudioEvent=onAudioEvent
         self.preparedWave=preparedWave
         _session=StateObject(wrappedValue:CarbonisSession568(prepared:preparedWave))
     }
@@ -256,7 +259,16 @@ struct Sector01Scene568: View {
                 session.paused=false
             }
         }
-        .onDisappear {session.paused=true;session.release()}
+        .onAppear {
+            session.onAudioEvents = { sourceCodes in
+                for code in sourceCodes { onAudioEvent(code) }
+            }
+        }
+        .onDisappear {
+            session.onAudioEvents=nil
+            session.paused=true
+            session.release()
+        }
         .accessibilityIdentifier("sector01-real-source-scene")
     }
 }
