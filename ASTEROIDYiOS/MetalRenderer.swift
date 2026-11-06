@@ -887,8 +887,12 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let now = CACurrentMediaTime()
         // 120 Hz fixed-step simulation decoupled from 60/120 Hz display refresh.
         // A bounded catch-up prevents an unbounded simulation spiral after resume.
-        let elapsed = min(0.25, max(0, now - lastTime))
+        let frameElapsed = min(0.25, max(0, now - lastTime))
         lastTime = now
+        // Continue presenting Metal frames, but do not advance the
+        // original cinematic or either game simulation under an overlay.
+        // Keeping lastTime current avoids a 250-ms catch-up on resume.
+        let elapsed = input.gameplayPaused ? 0.0 : frameElapsed
         if input.introPreview41 != wasIntroPreview41 {
             // Different source clocks: always refresh the first GLB
             // morph frame when switching cinematic <-> Boreas combat.
