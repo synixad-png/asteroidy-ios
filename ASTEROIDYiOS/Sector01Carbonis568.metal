@@ -96,3 +96,10 @@ fragment float4 sector01SourceCraftFragment568(
                     +.40f*smoothstep(.70f,.72f,diffuse);
     return float4(clamp(albedo.rgb*band,0.0f,1.0f),clamp(albedo.a,0.0f,1.0f));
 }
+
+// The current CARBONIS tactical fire streaks are geometry colored by the
+// original pulse/enemy projectile state. Detailed GpuSphere67 beam VFX pending.
+fragment float4 sector01CombatTracer568(
+    CarbonisSectorRaster568 in [[stage_in]]) {
+    return float4(in.color.rgb,in.color.a);
+}
