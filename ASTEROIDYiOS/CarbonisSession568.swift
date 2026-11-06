@@ -11,12 +11,21 @@ final class CarbonisSession568: ObservableObject {
         var rocks:Int
         var fighters:Int
         var shots:Int
+        var targets:[Vec2]
+        var hazards:[Vec2]
         var seconds:Float
         var phase:CarbonisCombat568.Phase
         init(_ game:CarbonisCombat568) {
             hull=game.hull;armor=game.armor;lives=game.lives
             rocks=game.rocks.count;fighters=game.shooters.count
-            shots=game.bullets.count;seconds=game.elapsed;phase=game.phase
+            shots=game.bullets.count
+            targets=game.shooters.map {
+                Sphere67.delta(target:$0.core.position,origin:game.flight.position)
+            }
+            hazards=game.rocks.prefix(40).map {
+                Sphere67.delta(target:$0.position,origin:game.flight.position)
+            }
+            seconds=game.elapsed;phase=game.phase
         }
     }
     @Published private(set) var hud:HUD
