@@ -89,7 +89,24 @@ assert "incoming:MissionIncoming568(from:encounter,difficulty:difficulty)" in pr
 
 assert "Sector01CarbonisPreview568(" in source_scene
 assert "gameSession:session" in source_scene
-assert "sector01-fire-pulse" in source_scene
+# Two independent invisible half-screen controls remain in place:
+# left flight stays unchanged; the right gesture aims AND fires on first touch.
+# The old fire button must not intercept the aiming region.
+assert "private var movement:some Gesture {" in source_scene
+assert "session.input(move:Vec2(x:clamp(Float(v.translation.width)/110)" in source_scene
+assert "private var aiming:some Gesture {" in source_scene
+assert "DragGesture(minimumDistance:0).onChanged { v in" in source_scene
+assert "session.input(aim:Vec2(x:clamp(Float(v.translation.width)/100)" in source_scene
+assert "shooting:true)" in source_scene
+assert "session.input(aim:Vec2(x:0,y:0),shooting:false)" in source_scene
+assert 'accessibilityIdentifier("sector01-right-steer-auto-fire")' in source_scene
+assert 'accessibilityIdentifier("sector01-fire-pulse")' not in source_scene
+assert "private var fireGesture" not in source_scene
+assert 'Text("OGIEŃ")' not in source_scene
+assert "session.release()" in source_scene
+# Static HUD must not block right-side touch and its held-auto-fire gesture.
+assert source_scene.count(".allowsHitTesting(false)")>=4
+
 assert "SEKTOR 01 / CARBONIS" in source_scene
 rock_geom=(root/"ASTEROIDYiOS/CarbonisRockGeometry568.swift").read_text()
 rock_metal=(root/"ASTEROIDYiOS/Sector01Carbonis568.metal").read_text()
