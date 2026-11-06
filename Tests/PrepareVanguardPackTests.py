@@ -48,6 +48,24 @@ with tempfile.TemporaryDirectory() as folder:
         raise AssertionError("Accepted substituted Vanguard mesh and JPEG")
     assert not assets.exists(), "Should not write either resource before verification"
 
+# The user now uploaded BOTH exact source binaries to the repository,
+# so the real default path MUST succeed without a redundant ZIP.
+with tempfile.TemporaryDirectory() as folder:
+    fake_archive=pathlib.Path(folder)/"absent.zip"
+    direct_originals=root/"ASTEROIDYiOS"/"Assets"
+    assert importer.install(fake_archive,direct_originals) is True
+    partial=pathlib.Path(folder)/"partial"
+    partial.mkdir()
+    (partial/"Vanguard431Source.mesh").write_bytes(
+        (direct_originals/"Vanguard431Source.mesh").read_bytes())
+    try:
+        importer.install(fake_archive,partial)
+    except ValueError as error:
+        assert "Incomplete direct Vanguard431 upload" in str(error)
+    else:
+        raise AssertionError("Accepted incomplete direct Vanguard431 upload")
+    assert not (partial/"Vanguard431Base.jpg").exists()
+
 manual=(root/".github/workflows/build-ios-iphone-ipad-manual.yml").read_text()
 assert "Tools/prepare_vanguard431_assets.py" in manual
 assert "Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets" in manual
@@ -57,4 +75,5 @@ assert "--require-vanguard-original" in manual
 
 print("PASS: compact original asset bundle importer fails closed on")
 print("      absent members, corrupted bytes and substituted materials;")
-print("      future manual iPhone+iPad IPA verifies after import and packaging")
+print("      direct original assets load without the optional ZIP; partial uploads fail")
+print("      future manual iPhone+iPad IPA verifies original sources in bundle")
