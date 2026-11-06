@@ -89,6 +89,20 @@ import Foundation
         var damaged=upgrades;damaged.lives=6
         check(!Sector01Shop568.validate(damaged),
               "tampered profile with over-cap life rejected")
+        Sector01Shop568.save(upgrades,defaults:defaults)
+        Sector01Shop568.persistSurvival(
+            lives:4,shieldCharges:1,defaults:defaults)
+        let afterMission=Sector01Shop568.load(defaults:defaults)
+        check(afterMission.lives==4 && afterMission.shieldCharges==1 &&
+              afterMission.upgradeLevel==3 &&
+              afterMission.rapidLevel==2,
+              "combat persistence preserves all purchased power and rapid")
+        Sector01Shop568.persistSurvival(
+            lives:0,shieldCharges:0,defaults:defaults)
+        let gameOver=Sector01Shop568.load(defaults:defaults)
+        check(gameOver.lives==3 && gameOver.shieldCharges==0,
+              "source StartHubMission261 restores 3 lives after game over")
+
         let noRewards=Sector01MissionSummary568.completedFirstMission(
             rocks:0,enemies:0,score:0,lootTokens:60,
             replay:true,elapsed:0)
