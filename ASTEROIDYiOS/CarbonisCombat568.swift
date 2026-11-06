@@ -116,13 +116,9 @@ struct CarbonisCombat568 {
             bullets.append(Projectile(point:nose,velocity:vel,life:1.1,hostile:false))
         }
         stepShots(dt:dt)
-        if invincible<=0 {
-            for r in rocks where r.shardLife<=0 {
-                if Self.distance(r.position,flight.position) <= r.radius+11.2 {
-                    suffer(18);break // v568 CollisionDamage96, normal lvl 01
-                }
-            }
-        }
+        // Original Physics68.ShipContacts68: always resolve physical
+        // overlap, even during temporary post-hit invulnerability.
+        resolveShipContacts()
         // MissionCleared69: objective Clear plus absence of rock and bug
         // threats and all reinforcements, not a timer-based fake win.
         let allThreatsCleared=rocks.filter({$0.shardLife<=0}).isEmpty &&
@@ -137,6 +133,45 @@ struct CarbonisCombat568 {
             }
         } else {
             sourceClearHold=0
+        }
+    }
+
+    /// Physics68.cs:62-65 ShipContacts68 with exact source body masses:
+    /// Vanguard (type 1) 3.4; shooter mass 2; contact radii 11.2 and 16;
+    /// restitution .42 for Rock, .35 for enemy. Damage96 level1 = 18.
+    private mutating func resolveShipContacts() {
+        guard phase == .playing else {return}
+        for i in rocks.indices {
+            var player=CarbonisBodyContact68.Body(
+                position:flight.position,velocity:flight.velocity,
+                mass:3.4,radius:11.2)
+            var rock=CarbonisBodyContact68.Body(
+                position:rocks[i].position,velocity:rocks[i].velocity,
+                mass:rocks[i].mass,radius:rocks[i].radius)
+            if CarbonisBodyContact68.resolve(&player,&rock,restitution:0.42) {
+                flight.position=player.position
+                flight.velocity=player.velocity
+                rocks[i].position=rock.position
+                rocks[i].velocity=rock.velocity
+                suffer(18)
+                if phase != .playing {return}
+            }
+        }
+        for i in shooters.indices {
+            var player=CarbonisBodyContact68.Body(
+                position:flight.position,velocity:flight.velocity,
+                mass:3.4,radius:11.2)
+            var enemy=CarbonisBodyContact68.Body(
+                position:shooters[i].core.position,
+                velocity:shooters[i].velocity,mass:2,radius:16)
+            if CarbonisBodyContact68.resolve(&player,&enemy,restitution:0.35) {
+                flight.position=player.position
+                flight.velocity=player.velocity
+                shooters[i].core.position=enemy.position
+                shooters[i].velocity=enemy.velocity
+                suffer(18)
+                if phase != .playing {return}
+            }
         }
     }
 
