@@ -1,5 +1,70 @@
 # ASTEROIDY iOS — stały harmonogram portowania
 
+## BIEŻĄCY STAN — etap C: wejście w rzeczywistą scenę CARBONIS, 06.11.2026
+
+**Ocena projektu 29% wykonane (+1 pp) / 71% pozostało.**
+Nowy przyrost jest oszacowaniem wdrożonej na iOS, skompilowanej
+funkcjonalności przejścia do źródłowego sektora 01, a nie
+deklaracją, że ten sektor jest już grywalny.
+Poniższy harmonogram jest bieżący; starsze wartości poniżej
+pozostają archiwalnymi raportami.
+
+**Nowa funkcja:** `W3MainMenu568` → wybór z prawdziwego
+26-sektorowego `CampaignAtlas556` → przycisk
+`WEJDŹ NA CARBONIS 01 / ŹRÓDŁOWA SCENA 3D` →
+`Sector01Scene568` z oryginalnym C279 Metal
+(270249 trójkątów) → **WRÓĆ DO MAPY** przywraca
+właściwy atlas. Jest obsługa obrotu planety palcem;
+brak fikcyjnych nagród, włączania zablokowanych misji,
+podmiany Carbonis na Boreas i fałszywego ukończenia.
+Wszystkie 25 pozostałych sektorów mają zabezpieczoną
+bramkę wejścia — nie są kierowane do Carbonis.
+Źródłowe indeksy/UV/tekstury nadal nienaruszone.
+
+[GitHub Actions 42225858732](https://github.com/synixad-png/asteroidy-ios/actions/runs/42225858732)
+**PASS / PASS** — natywna kompilacja iOS Swift/Metal
+oraz źródłowe testy wejścia, selekcji, kolizji i walki.
+**Brak testu dotyku tej nowej trasy na fizycznym iOS**,
+nie deklarować interaktywnego PASS na urządzeniu.
+
+**Nadal do wykonania w C:** właściwy
+`Game.StartHubMission261`, uruchomienie fal `Wave()`,
+statek i kamera w realnym świecie Carbonis, kolizja
+z mapą wysokości, broń, przeciwnicy, wynik
+i zakończenie misji. To ma być kolejny zakres wdrożenia;
+testy menu nie mogą ponownie zastąpić rozwoju gry.
+
+**Stałe 18 zadań; wartości poprzednie i obecne:**
+
+| Nr | Zadanie | Było | Jest | Zmiana |
+|---:|---|---:|---:|---:|
+| 1 | Infrastruktura iOS | 88% | 88% | 0 pp |
+| 2 | Silnik Metal | 89% | 89% | 0 pp |
+| 3 | Materiały i oświetlenie | 25% | 25% | 0 pp |
+| 4 | Statki i planety 3D | 22% | 22% | 0 pp |
+| 5 | Animacje GLB | 35% | 35% | 0 pp |
+| 6 | Fizyka lotu | 35% | 35% | 0 pp |
+| 7 | Kolizje i obrażenia | 100% | 100% | 0 pp |
+| 8 | Asteroidy i fale | 100% | 100% | 0 pp |
+| 9 | Bronie i trafienia | 10% | 10% | 0 pp |
+| 10 | AI przeciwników | 0% | 0% | 0 pp |
+| 11 | Bossowie | 0% | 0% | 0 pp |
+| 12 | Misje planetarne | 7% | 8% | +1 pp |
+| 13 | Kampania — 26 sektorów | 34% | 35% | +1 pp |
+| 14 | Menu W3, HUD i ustawienia | 14% | 15% | +1 pp |
+| 15 | Muzyka i dźwięki | 0% | 0% | 0 pp |
+| 16 | Zapisywanie gry | 20% | 20% | 0 pp |
+| 17 | Sterowanie | 35% | 35% | 0 pp |
+| 18 | Optymalizacja i testy | 10% | 10% | 0 pp |
+
+**Raport techniczny:**
+[Reports/V568_STAGE_C_CARBONIS_ENTRY_2026-11-06.md](Reports/V568_STAGE_C_CARBONIS_ENTRY_2026-11-06.md).
+
+**IPA:** nowe wydanie nie było zlecone; wcześniejszy plik
+na Dysku Google pozostaje starszym snapshotem.
+Nie wydano nowego IPA.
+
+
 ## BIEŻĄCY STAN — REALNY POSTĘP, 06.11.2026 (obowiązuje przed starszymi wpisami)
 
 **Ocena całego projektu: 28% wykonane (+1 pp), 72% pozostało.**
