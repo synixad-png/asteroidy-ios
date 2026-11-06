@@ -69,6 +69,7 @@ final class FlightInput: ObservableObject {
 struct GameView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var input = FlightInput()
+    @StateObject private var audio = OriginalAudioAV568()
     @State private var showCampaign = false
     @State private var campaign = CampaignStore556.load()
     // Native CARBONIS first mission runs an original source-driven state,
@@ -97,6 +98,7 @@ struct GameView: View {
         reopenAtlasAfterCarbonis = false
         sourceSector01Setup = preparedWave
         sourceSector01 = entry
+        audio.enterMission(sector)
         showMainMenu = true
     }
     // The genuine W3 navigation is the normal entry point.
@@ -113,6 +115,7 @@ struct GameView: View {
                         sourceSector01 = nil
                         sourceSector01Setup = nil
                         reopenAtlasAfterCarbonis = true
+                        audio.returnToMenu()
                         input.releaseHeldControls()
                         input.gameplayPaused = true
                         showCampaign = false
@@ -139,6 +142,7 @@ struct GameView: View {
                         input.releaseHeldControls()
                         input.gameplayPaused = false
                         reopenAtlasAfterCarbonis = false
+                        audio.stopForDiagnostic()
                         showMainMenu = false
                     },openCampaignOnEntry:reopenAtlasAfterCarbonis)
                 } else {
@@ -166,6 +170,7 @@ struct GameView: View {
                             showCampaign = false
                             input.gameplayPaused = true
                             showMainMenu = true
+                            audio.returnToMenu()
                         }
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.cyan)
@@ -342,7 +347,9 @@ struct GameView: View {
                 }
             }.frame(width: g.size.width, height: g.size.height)
         }
+        .onAppear { audio.prepareMenuAtStartup() }
         .onChange(of: scenePhase) { phase in
+            audio.sceneIsActive(phase == .active)
             input.gameplayPaused = phase != .active || showCampaign || showMainMenu
             if phase != .active { input.releaseHeldControls() }
         }
@@ -353,6 +360,7 @@ struct GameView: View {
         .onChange(of: showMainMenu) { visible in
             input.gameplayPaused = visible || showCampaign || scenePhase != .active
             if visible { input.releaseHeldControls() }
+            if visible && sourceSector01 == nil { audio.returnToMenu() }
         }
     }
 }
