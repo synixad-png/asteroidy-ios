@@ -332,6 +332,57 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 return base*rotateY(flight.flight.visualBank*Float.pi/180)
                     * rotateX(flight.flight.visualPitch*Float.pi/180)
             }
+            /// EnemyTactics71.cs:84-85 DrawThreatWarnings71:
+            /// RingSphere67(b.P,22,OrangeRed) and SphereLine67(b.P,
+            /// Offset(b.P,Direction(Aim71)*100),rgba(160,255,100,70)).
+            /// Actual surface points, depth tested against C279.
+            static func warningVertices(
+                _ fighters:[CarbonisCombat568.Shooter])->[Float] {
+                let shell=SphereSurfaceStamp556.normalizedShellRadius+0.012
+                let ringColor:[Float]=[1.0,0.28,0.12,0.9]
+                let lineColor:[Float]=[1.0,0.39,0.27,160.0/255.0]
+                var result:[Float]=[]
+                func emit(_ at:Vec2,_ rgba:[Float]) {
+                    let n=Sphere67.normal(at)
+                    result.append(contentsOf:[
+                        n.x*shell,n.y*shell,n.z*shell,
+                        n.x,n.y,n.z,rgba[0],rgba[1],rgba[2],rgba[3],0,0])
+                }
+                func quad(_ a:Vec2,_ b:Vec2,_ c:Vec2,_ d:Vec2,
+                          _ color:[Float]) {
+                    emit(a,color);emit(b,color);emit(c,color)
+                    emit(a,color);emit(c,color);emit(d,color)
+                }
+                for f in fighters where f.telegraph>0 {
+                    let origin=f.core.position
+                    // Original spherical radius 22. Thin ring with 32
+                    // geodesic sections; on-screen source warning distance.
+                    for i in 0..<32 {
+                        let a=Float(i)*2*Float.pi/32
+                        let b=Float(i+1)*2*Float.pi/32
+                        let av=Vec2(x:cos(a),y:sin(a))
+                        let bv=Vec2(x:cos(b),y:sin(b))
+                        quad(Sphere67.offset(origin,by:av*21.3),
+                             Sphere67.offset(origin,by:bv*21.3),
+                             Sphere67.offset(origin,by:bv*22.7),
+                             Sphere67.offset(origin,by:av*22.7),
+                             ringColor)
+                    }
+                    let gun=Vec2(x:cos(f.aim),y:sin(f.aim))
+                    let side=Vec2(x:-gun.y,y:gun.x)
+                    for j in 0..<20 {
+                        let start=Float(j)*5
+                        let end=Float(j+1)*5
+                        quad(Sphere67.offset(origin,by:gun*start+side*0.7),
+                             Sphere67.offset(origin,by:gun*end+side*0.7),
+                             Sphere67.offset(origin,by:gun*end-side*0.7),
+                             Sphere67.offset(origin,by:gun*start-side*0.7),
+                             lineColor)
+                    }
+                }
+                return result
+            }
+
             /// Small surface-following native Pulse and hostile shot streaks.
             /// Positions and tangents come from the actual combat projectiles.
             /// This is a basic beam renderer, not full PC particle parity.
@@ -498,7 +549,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 if let session=gameSession,let tracer=tracerPipeline,
                    let cameraMatrix=vp {
                     let shots=session.game.bullets+session.game.hostileShots
-                    let values=Self.shotVertices(shots)
+                    var values=Self.shotVertices(shots)
+                    values.append(contentsOf:Self.warningVertices(
+                        session.game.shooters))
                     if !values.isEmpty,
                        let buffer=values.withUnsafeBytes({ bytes in
                            bytes.baseAddress.flatMap {
