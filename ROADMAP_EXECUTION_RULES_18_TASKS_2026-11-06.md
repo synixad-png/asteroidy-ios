@@ -213,3 +213,38 @@ nie zakończą się `success` i nie będzie zweryfikowanych PNG.
 
 **Etap A nadal otwarty. Zadanie 14 nadal 10%, zmiana 0 pp.
 27% całego projektu, 73% pozostało. IPA nie generowano.**
+
+### Uzupełnienie po wgraniu grafik — 06.11.2026
+
+Użytkownik **wgrał** do głównego katalogu `main` oryginalny
+`ASTEROIDY_v568_W3_ORIGINAL_MENU_ASSETS.zip` (857501 bajtów,
+blob GitHub `0eb49bd74b1ef0b2d7bfcc93c01e3c99b6b47954`).
+Osobno zweryfikowane z archiwum: `W3Background568.jpg` 806519 B,
+**2560 × 1440**, SHA256
+`a8aa28883084657f0c38900dbb011de09e2b0fd461704d370a68858be0178145`;
+`W3Logo568.png` 50257 B, **476 × 138**, SHA256
+`cab4198b953640c787975c5a8436a0fdeaa82502b40e000077ff055cc0709e09`.
+
+Zmieniono [.github/workflows/verify-v568-w3-native-menu-once.yml](.github/workflows/verify-v568-w3-native-menu-once.yml):
+archiwum W3 jest teraz **wymagane** (`--required`); kompilacja
+musi zawierać oba pliki o identycznych SHA256, zanim zostanie
+uruchomiona aplikacja w symulatorze. Dowód `onAppear` menu musi
+jawnie potwierdzać `hasOriginalW3BackgroundImage=true` i
+`hasOriginalW3LogoImage=true`; inaczej screenshot nie zostaje
+uznany za zweryfikowany. Oryginalna para jest współdzielona
+w kodzie SwiftUI, a nie kopiowana dla każdego ekranu.
+
+Testy kompilacji/regresji po wdrożeniu pierwszej wersji menu
+([42194850474](https://github.com/synixad-png/asteroidy-ios/actions/runs/42194850474))
+**PASS**. Nowy workflow rzeczywistych obrazów z obowiązkowymi
+źródłowymi plikami W3
+([42195681068](https://github.com/synixad-png/asteroidy-ios/actions/runs/42195681068))
+uruchomiono; wynik należy odczytać po zakończeniu, bez zakładania
+sukcesu z samej kompilacji.
+
+**Etap A nadal NIEZAMKNIĘTY:** centrum menu wymaga wiernego
+oryginalnego obiektu 3D oraz interaktywnych testów przejść.
+Dotychczasowy ekran wykorzystuje rzeczywiste tło i logo, kiedy
+są prawidłowo zainstalowane. Numer i zakres wszystkich 18 zadań
+pozostają bez zmian; zadanie 14: **10%, +0 pp**, zbiorczo:
+**27% zrobione / 73% pozostało**. Brak nowego IPA.
