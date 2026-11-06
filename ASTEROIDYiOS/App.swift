@@ -80,7 +80,11 @@ struct GameView: View {
         GeometryReader { g in
             ZStack {
                 if showMainMenu {
-                    W3MainMenu568(progress:campaign,openDiagnostic:{
+                    W3MainMenu568(progress:campaign,selectMission:{ sector in
+                        if campaign.selectUnlocked(sector) {
+                            CampaignStore556.save(campaign)
+                        }
+                    },openDiagnostic:{
                         input.releaseHeldControls()
                         input.gameplayPaused = false
                         showMainMenu = false
@@ -274,7 +278,13 @@ struct GameView: View {
                 }
                 .foregroundStyle(.white)
                 if showCampaign {
-                    CampaignAtlas556(progress: campaign, dismiss: { showCampaign = false })
+                    CampaignAtlas556(progress: campaign,
+                                     dismiss: { showCampaign = false },
+                                     onSelect: { sector in
+                                         if campaign.selectUnlocked(sector) {
+                                             CampaignStore556.save(campaign)
+                                         }
+                                     })
                 }
                 }
             }.frame(width: g.size.width, height: g.size.height)
@@ -294,45 +304,89 @@ struct GameView: View {
     }
 }
 
-// Read-only mission atlas. A mission is never claimed playable before porting.
+// Real unlocked-only 26-sector selection from Orbit50.MissionUnlocked50.
+// LaunchOrbitMission50 / StartHubMission261 are NOT ported yet: selecting
+// a sector changes only the active target, never the completion mask.
 struct CampaignAtlas556: View {
     let progress: CampaignProgress556
     let dismiss: () -> Void
-    private let columns = Array(repeating: GridItem(.flexible(),spacing:8),count:7)
+    let onSelect: (Int) -> Void
+    private let columns = [GridItem(.adaptive(minimum:52,maximum:90),spacing:8)]
 
     var body: some View {
         ScrollView {
-            VStack(alignment:.leading,spacing:16) {
+            VStack(alignment:.leading,spacing:12) {
                 HStack {
-                    Text("KAMPANIA / 26 SEKTORÓW").font(.system(.headline, design:.monospaced))
+                    Text("KAMPANIA / 26 SEKTORÓW")
+                        .font(.system(.headline,design:.monospaced))
                     Spacer()
-                    Button("ZAMKNIJ",action:dismiss).accessibilityLabel("Zamknij atlas misji")
+                    Button("ZAMKNIJ",action:dismiss)
+                        .accessibilityLabel("Zamknij atlas misji")
                 }
-                Text("UKOŃCZONE: \(progress.completedCount) / 26")
-                    .font(.system(.subheadline,design:.monospaced)).foregroundStyle(.cyan)
+                Text("UKOŃCZONE: \\(progress.completedCount) / 26")
+                    .font(.system(.subheadline,design:.monospaced))
+                    .foregroundStyle(.cyan)
+                Text("WYBRANY SEKTOR: \\(String(format:"%02d",progress.selectedSector))")
+                    .font(.system(size:13,weight:.bold,design:.monospaced))
+                    .foregroundStyle(.orange)
+                    .accessibilityIdentifier("campaign-selected-sector")
+                Text(MissionCatalog568.title(for:progress.selectedSector) ?? "BRAK SEKTORA")
+                    .font(.system(size:11,weight:.semibold,design:.monospaced))
+                    .foregroundStyle(.cyan)
+                    .accessibilityIdentifier("campaign-selected-planet")
                 LazyVGrid(columns:columns,spacing:8) {
-                    ForEach(1...CampaignProgress556.missionCount,id:\.self) { sector in
-                        let finished = progress.completed(sector)
-                        let available = progress.unlocked(sector)
-                        VStack(spacing:4) {
-                            Text(String(format:"%02d",sector)).font(.system(.headline,design:.monospaced))
-                            Image(systemName:finished ? "checkmark.circle.fill" : available ? "circle" : "lock.fill")
+                    ForEach(1...CampaignProgress556.missionCount,id:\\.self) { sector in
+                        let finished=progress.completed(sector)
+                        let available=progress.unlocked(sector)
+                        let current=progress.selectedSector == sector
+                        Button {
+                            // Protect original orbit unlock state, also in
+                            // case a programmatic callback invokes this.
+                            if available { onSelect(sector) }
+                        } label: {
+                            VStack(spacing:4) {
+                                Text(String(format:"%02d",sector))
+                                    .font(.system(.headline,design:.monospaced))
+                                Image(systemName:finished ? "checkmark.circle.fill"
+                                      : current ? "location.circle.fill"
+                                      : available ? "circle" : "lock.fill")
+                            }
+                            .foregroundStyle(current ? Color.orange :
+                                             finished ? Color.green :
+                                             available ? Color.cyan : Color.gray)
+                            .frame(maxWidth:.infinity,minHeight:48)
+                            .background(current ? Color.orange.opacity(0.2)
+                                        : Color.white.opacity(0.07),
+                                        in:RoundedRectangle(cornerRadius:8))
+                            .overlay {
+                                RoundedRectangle(cornerRadius:8)
+                                    .stroke(current ? Color.orange : Color.clear,
+                                            lineWidth:2)
+                            }
                         }
-                        .foregroundStyle(finished ? Color.green : available ? Color.cyan : Color.gray)
-                        .frame(maxWidth:.infinity,minHeight:48)
-                        .background(Color.white.opacity(0.07),in:RoundedRectangle(cornerRadius:8))
-                        .accessibilityElement(children:.ignore)
-                        .accessibilityLabel("Sektor \(sector), \(finished ? "ukończony" : available ? "odblokowany" : "zablokowany")")
+                        .buttonStyle(.plain)
+                        .disabled(!available)
+                        .accessibilityIdentifier("campaign-sector-\\(sector)")
+                        .accessibilityLabel(
+                            "Sektor \\(sector), \\(MissionCatalog568.title(for:sector) ?? "brak nazwy"), " +
+                            "\\(finished ? "ukończony" : available ? "odblokowany" : "zablokowany")")
+                        .accessibilityAddTraits(.isButton)
                     }
                 }
-                Text("Atlas odzwierciedla zasady odblokowania z v556. Rozgrywanie misji i zaliczanie postępu zostaną uruchomione po przeniesieniu oryginalnych misji.")
-                    .font(.system(.caption,design:.monospaced)).foregroundStyle(.secondary)
+                Text("Dotknij odblokowanego sektora, aby go wybrać. Wybór jest zapisywany, ale nie zalicza misji.")
+                    .font(.system(size:11,design:.monospaced))
+                    .foregroundStyle(.secondary)
+                Text("START MISJI: JESZCZE NIEPODŁĄCZONY — ETAP C")
+                    .font(.system(size:11,weight:.bold,design:.monospaced))
+                    .foregroundStyle(.orange)
             }
-            .padding(24)
+            .padding(18)
         }
         .frame(maxWidth:740,maxHeight:550)
         .background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:18))
-        .padding(20)
+        .padding(12)
+        .accessibilityElement(children:.contain)
+        .accessibilityIdentifier("campaign-26-sector-selector")
     }
 }
 
