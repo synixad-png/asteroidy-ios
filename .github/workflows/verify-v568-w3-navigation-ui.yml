@@ -33,7 +33,7 @@ permissions:
 jobs:
   actual-touch-navigation:
     name: Tap all seven original W3 actions on ${{ matrix.device }}
-    runs-on: macos-15-intel
+    runs-on: macos-15
     timeout-minutes: 35
     strategy:
       fail-fast: false
