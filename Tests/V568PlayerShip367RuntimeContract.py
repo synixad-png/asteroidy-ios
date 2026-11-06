@@ -11,7 +11,7 @@ renderer=(root/"ASTEROIDYiOS/MetalRenderer.swift").read_text()
 source=(root/"ASTEROIDYiOS/SourcePlayerShip367.swift").read_text()
 prepare=(root/"Tools/prepare_v568_player_ship_ios.py").read_text()
 workflow=(root/".github/workflows/verify-combat-only.yml").read_text()
-assert "@Published var sourceShip367Preview = false" in app
+assert '@Published var sourceShip367Preview =\n        ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] == "1"' in app
 assert "input.sourceShip367Preview.toggle()" in app
 assert "private func verifiedPlayerShip367()" in renderer
 assert 'forResource: "PlayerShip367OriginalGPU"' in renderer
