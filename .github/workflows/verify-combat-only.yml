@@ -14,6 +14,9 @@ on:
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/MissionCatalog568.swift'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/Sector01Entry568.swift'
+      - 'ASTEROIDYiOS/Sector01Scene568.swift'
+      - 'Tests/Sector01Entry568Tests.swift'
       - 'ASTEROIDYiOS/Sector01Carbonis568.metal'
       - 'Tools/prepare_v568_carbonis_sector01.py'
       - 'ASTEROIDYiOS/CampaignProgress556.swift'
@@ -81,6 +84,8 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Entry568.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3HomePlanetMetal568.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
           swiftc -frontend -parse ASTEROIDYiOS/SourcePlayerShip367.swift
@@ -93,6 +98,11 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift Tests/CampaignSelection568Tests.swift -o /tmp/campaign-selection-v568
           /tmp/campaign-selection-v568
+      - name: Verify unlocked-only CARBONIS first sector entry, never fake campaign completion
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift Tests/Sector01Entry568Tests.swift -o /tmp/carbonis-source-entry-v568
+          /tmp/carbonis-source-entry-v568
       - name: Regress original v568 PlayerShip367 optional runtime model and source-matching skin
         run: python3 Tests/V568PlayerShip367RuntimeContract.py
       - name: Guard against invalid PBR highlight pixels under opposing view and light
