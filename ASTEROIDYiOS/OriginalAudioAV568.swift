@@ -85,6 +85,7 @@ final class OriginalAudioAV568:ObservableObject {
     private let lifecycle=OriginalAudioLifecycle568()
     private var currentSector:Int?
     private var suspended=false
+    private var inDiagnostic=false
 
     init() {
         lifecycle.onEvent={ [weak self] event in
@@ -111,27 +112,31 @@ final class OriginalAudioAV568:ObservableObject {
         }
     }
     func prepareMenuAtStartup() {
+        inDiagnostic=false
         currentSector=nil
         suspended=false
         lifecycle.prepareAtStartup()
     }
     func returnToMenu() {
+        inDiagnostic=false
         currentSector=nil
         output.stop()
         if !suspended {lifecycle.openMenu()}
     }
     func enterMission(_ sector:Int) {
+        inDiagnostic=false
         currentSector=sector
         output.stop()
         if !suspended {lifecycle.openMission(sector:sector)}
     }
     func stopForDiagnostic() {
+        inDiagnostic=true
         currentSector=nil
         output.stop()
     }
     func sceneIsActive(_ active:Bool) {
         suspended = !active
-        if !active {output.stop()}
+        if !active || inDiagnostic {output.stop()}
         else if let currentSector {lifecycle.openMission(sector:currentSector)}
         else {lifecycle.openMenu()}
     }
