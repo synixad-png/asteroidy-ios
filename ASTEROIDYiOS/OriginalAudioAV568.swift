@@ -34,6 +34,9 @@ struct OriginalAudioSettings568: Codable, Equatable {
 extension Notification.Name {
     static let originalAudioSettings568 = Notification.Name("ASTEROIDY.originalAudioSettings568")
     static let originalMusicPreview568 = Notification.Name("ASTEROIDY.originalMusicPreview568")
+    static let originalMusicStop568 = Notification.Name("ASTEROIDY.originalMusicStop568")
+    static let originalMusicReplay568 = Notification.Name("ASTEROIDY.originalMusicReplay568")
+    static let originalMusicRestore568 = Notification.Name("ASTEROIDY.originalMusicRestore568")
 }
 
 /// Original Windows MusicSynth.cs: 15 tracks, including menu tracks 0 and 1.
@@ -98,6 +101,11 @@ final class OriginalAudioAV568: ObservableObject {
                                        qos: .userInitiated)
     private var settingsObserver: NSObjectProtocol?
     private var previewObserver: NSObjectProtocol?
+    private var stopObserver: NSObjectProtocol?
+    private var replayObserver: NSObjectProtocol?
+    private var restoreObserver: NSObjectProtocol?
+    private var lastPreviewIndex=1
+    private var previewStopped=false
 
     init() {
         settingsObserver = NotificationCenter.default.addObserver(
@@ -108,16 +116,38 @@ final class OriginalAudioAV568: ObservableObject {
         ) { [weak self] notification in
             if let index = notification.object as? Int { self?.preview(index) }
         }
+        stopObserver = NotificationCenter.default.addObserver(
+            forName:.originalMusicStop568,object:nil,queue:.main
+        ) { [weak self] _ in self?.stopMusicPreview() }
+        replayObserver = NotificationCenter.default.addObserver(
+            forName:.originalMusicReplay568,object:nil,queue:.main
+        ) { [weak self] _ in self?.replayMusicPreview() }
+        restoreObserver = NotificationCenter.default.addObserver(
+            forName:.originalMusicRestore568,object:nil,queue:.main
+        ) { [weak self] _ in self?.restoreMenuMusic() }
     }
     deinit {
-        if let settingsObserver { NotificationCenter.default.removeObserver(settingsObserver) }
-        if let previewObserver { NotificationCenter.default.removeObserver(previewObserver) }
+        for observer in [settingsObserver,previewObserver,stopObserver,
+                         replayObserver,restoreObserver] {
+            if let observer {NotificationCenter.default.removeObserver(observer)}
+        }
     }
     private func reloadSettings() {
         settings = OriginalAudioSettings568.load()
         music?.volume = Float(settings.musicPercent) / 100 * 0.8
         enginePlayback52.setPower(engineLevel52,
             effectsVolume:Float(settings.effectsPercent)/100)
+        // Original MusicMix uses a live value, not a one-time volume at start.
+        // Restoring volume from zero must start the selected source track,
+        // unless the real MusicLibrary STOP action is active.
+        if settings.musicPercent>0 && music == nil && startupComplete && !suspended {
+            switch context {
+            case .menu:
+                if !previewStopped {playTrack(0)}
+            case .mission(let sector):playTrack(OriginalAudioCatalog568.missionTrack(sector))
+            case .diagnostic:break
+            }
+        }
         // Preserve per-sound source gain, and only scale new voices.
     }
     func prepareMenuAtStartup() {
@@ -250,6 +280,7 @@ final class OriginalAudioAV568: ObservableObject {
         }
     }
     func returnToMenu() {
+        previewStopped=false
         engineLevel52=0
         enginePlayback52.stop()
         context = .menu
@@ -257,6 +288,7 @@ final class OriginalAudioAV568: ObservableObject {
     }
     func enterMission(_ sector: Int) {
         guard (1...26).contains(sector) else { return }
+        previewStopped=false
         context = .mission(sector)
         // MusicAudio.cs:79 idle power .16, full thrust 1.0, no audio
         // generation in the Metal render loop.
@@ -290,7 +322,8 @@ final class OriginalAudioAV568: ObservableObject {
             if music != nil, activeMusicIndex != nil { music?.play() }
             else {
                 switch context {
-                case .menu: playTrack(0)
+                case .menu:
+                    if !previewStopped {playTrack(0)}
                 case .mission(let sector):
                     playTrack(OriginalAudioCatalog568.missionTrack(sector))
                 case .diagnostic: break
@@ -347,8 +380,33 @@ final class OriginalAudioAV568: ObservableObject {
     func preview(_ index:Int) {
         guard OriginalAudioCatalog568.names.indices.contains(index),
               case .menu = context else { return }
-        // Windows MusicLibrary previews the selected track, without
-        // altering the chosen current mission track or campaign state.
+        // Source MusicLibrary.PlaySelectedMusic selects a particular
+        // original track. STOP / REPLAY operate on this selection only.
+        lastPreviewIndex=index
+        previewStopped=false
         playTrack(index)
+    }
+    func stopMusicPreview() {
+        guard case .menu = context else {return}
+        // Original MusicLibrary.MusicPreview=-2: STOP mutes the preview.
+        previewStopped=true
+        music?.stop()
+        music=nil
+        activeMusicIndex=nil
+    }
+    func replayMusicPreview() {
+        guard case .menu = context else {return}
+        // MusicLibrary.W3SelectMusic355(16): restart selected song at 0.
+        previewStopped=false
+        music?.stop()
+        music=nil
+        activeMusicIndex=nil
+        playTrack(lastPreviewIndex)
+    }
+    func restoreMenuMusic() {
+        guard case .menu = context else {return}
+        // MusicLibrary.CloseMusic returns to Game.Mode.Menu track 0.
+        previewStopped=false
+        if !suspended {playTrack(0)}
     }
 }
