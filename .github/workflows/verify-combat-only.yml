@@ -12,6 +12,8 @@ on:
       - 'Tests/PlanetDamageLab556Tests.swift'
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
+      - 'Tools/prepare_v568_w3_original_assets.py'
+      - 'ASTEROIDY_v568_W3_ORIGINAL_MENU_ASSETS.zip'
       - 'Tests/V568W3NativeMenuContract.py'
       - 'Tests/IOSInterruptedTouchSourceContract.py'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
@@ -125,6 +127,8 @@ jobs:
         run: brew install xcodegen
       - name: Prepare ONLY original source-verified PlayerShip367 assets for native iOS compilation
         run: python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Stage original W3 v568 menu images when supplied, verify SHA256
+        run: python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets
       - name: Generate native Xcode project from verified project.yml
         run: xcodegen generate
       - name: Typecheck and compile all native iOS Swift/Metal sources (unsigned, NO IPA)
