@@ -18,7 +18,7 @@ EXPECTED={
     "htmlOrWebView":False,
     "hasOriginalW3BackgroundImage":True,
     "hasOriginalW3LogoImage":True,
-    "sourcePlanet3DIntegrated":False,
+    "sourcePlanet3DIntegrated":True,
     "bundleID":PACKAGE,
     "simulatorOnly":True,
 }
@@ -40,6 +40,7 @@ def capture(app,reports,kind):
     _,name,udid,state=devices[kind]
     print("REAL",kind,name,udid,flush=True)
     proof_name="ASTEROIDY_W3_MenuProof.json"
+    gpu_proof_name="ASTEROIDY_W3_NewHome290_GPUProof.json"
     try:
         if state!="Booted":
             run_command(["xcrun","simctl","boot",udid],45,
@@ -52,9 +53,10 @@ def capture(app,reports,kind):
             ["xcrun","simctl","get_app_container",udid,PACKAGE,"data"],
             45,reports/f"{kind}_container.txt")
         proof=Path(raw.strip())/"Library"/"Caches"/proof_name
+        planet_proof=Path(raw.strip())/"Library"/"Caches"/gpu_proof_name
         candidate=reports/f"{kind}_W3_candidate_unverified.png"
         verified=reports/f"{kind}_VERIFIED_ASTEROIDY_W3_NATIVE.png"
-        for stale in (proof,candidate,verified):
+        for stale in (proof,planet_proof,candidate,verified):
             try:stale.unlink(missing_ok=True)
             except OSError as exc:
                 raise AppValidationFailed("Cannot clear stale evidence: "+str(exc))
@@ -81,13 +83,38 @@ def capture(app,reports,kind):
         except (OSError,ValueError) as exc:
             raise AppValidationFailed("Unreadable native W3 marker: "+str(exc))
         validate(payload)
+        if not planet_proof.is_file():
+            raise AppValidationFailed("Original NewHome290 v568 GPU proof missing")
+        try:
+            gpu=json.loads(planet_proof.read_text(encoding="utf-8"))
+        except (OSError,ValueError) as exc:
+            raise AppValidationFailed("Unreadable NewHome290 GPU proof: "+str(exc))
+        expected_gpu={
+            "render":"NewHome290-source-v568-original-3D",
+            "gpuCommandBufferCompleted":True,
+            "vertexCount":516624,
+            "triangleCount":172208,
+            "materialGroups":2,
+            "baseTextureWidth":2048,
+            "baseTextureHeight":1024,
+            "geometrySHA256":"e93a0bbafc9bb50a25726a828ada81f36675bf88d802c5a8f985b89b6dc96c1b",
+            "baseSHA256":"4987f35cd6f021fd98794f406c641f4853c538a82b10625e6b79e860c8a787c0",
+            "glowSHA256":"6f1debd175f52b7ce1fbc687e9977597335ee432858d7d6d6e47cf66b5f9aa39",
+            "simulatorOnly":True
+        }
+        errors={key:(gpu.get(key),v) for key,v in expected_gpu.items()
+                if gpu.get(key)!=v}
+        if errors:
+            raise AppValidationFailed("NewHome290 GPU proof mismatches: "+str(errors))
+        (reports/f"{kind}_W3_NewHome290_GPU_proof.json").write_text(
+            json.dumps(gpu,sort_keys=True,indent=2),encoding="utf-8")
         (reports/f"{kind}_W3_appearance_proof.json").write_text(
             json.dumps(payload,sort_keys=True,indent=2),encoding="utf-8")
         candidate.rename(verified)
         print("PASS REAL",kind,"native W3 source-caption SwiftUI view "
               "appeared and actual nonblank screenshot saved",flush=True)
-        print("LIMIT: no proof of all touch navigation actions, source W3 "
-              "JPEG/logo and 3D globe not yet present",flush=True)
+        print("PASS: original NewHome290 v568 Metal source planet drew 172208 triangles",flush=True)
+        print("LIMIT: shader pixel parity and all seven touch routes not yet tested",flush=True)
     finally:
         try:
             run_command(["xcrun","simctl","terminate",udid,PACKAGE],15,
