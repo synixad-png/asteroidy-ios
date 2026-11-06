@@ -11,6 +11,19 @@
 > następne”) opisaną niżej jako historia. **Wszystkie 18 zadań, ich
 > numery, zakresy i dotychczasowe procenty pozostają niezmienione.**
 > Najbliższe do wykonania: **A. Menu, potem B. Wybór misji**.
+> **W3 — testy nawigacji (06.11.2026):** dodano natywny target
+> `ASTEROIDYW3UITests` i dwie rzeczywiste próby XCTest
+> na symulatorach iPhone/iPad: siedem dotykowych akcji W3 wraz z
+> otwieraniem/zamykaniem paneli oraz wejście do diagnostycznej
+> sceny 3D i powrót przez `MENU W3`.
+> [Workflow 42200004528](https://github.com/synixad-png/asteroidy-ios/actions/runs/42200004528).
+> Wyniki XCTest wymagają weryfikacji; nie oznaczać ich PASS,
+> dopóki oba joby nie zakończą się sukcesem. Osobny
+> [GPU/iPad 42198113753](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113753)
+> ma PASS na iPadzie, iPhone pozostawał w trakcie archiwizacji
+> raportu. **A nadal w trakcie, B nierozpoczęte;
+> zadanie 14: 10%, +0 pp; całość 27%, 73% pozostało.** Bez IPA.
+>
 > **Ostatni wynik kompilacji (06.11.2026):**
 > [42198113777](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113777)
 > potwierdził `Compile iOS source only — SUCCESS` dla
