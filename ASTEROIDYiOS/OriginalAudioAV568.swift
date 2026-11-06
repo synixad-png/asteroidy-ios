@@ -86,6 +86,9 @@ final class OriginalAudioAV568: ObservableObject {
     private var context: Context = .menu
     private var settings = OriginalAudioSettings568.load()
     private var music: AVAudioPlayer?
+    private var previousMusic:AVAudioPlayer?
+    private var fadeTimer:Timer?
+    private var fadeStart:TimeInterval=0
     private var effects: [AVAudioPlayer] = []
     private var prewarmedEffects: [String:[AVAudioPlayer]] = [:]
     private var prewarmedMusic: [Int:AVAudioPlayer] = [:]
@@ -134,7 +137,8 @@ final class OriginalAudioAV568: ObservableObject {
     }
     private func reloadSettings() {
         settings = OriginalAudioSettings568.load()
-        music?.volume = Float(settings.musicPercent) / 100 * 0.8
+        if fadeTimer != nil {updateMusicFade()}
+        else {music?.volume = Float(settings.musicPercent)/100 * 0.8}
         enginePlayback52.setPower(engineLevel52,
             effectsVolume:Float(settings.effectsPercent)/100)
         // Original MusicMix uses a live value, not a one-time volume at start.
@@ -256,27 +260,57 @@ final class OriginalAudioAV568: ObservableObject {
             }
         }
     }
+    // MusicAudio.cs MusicMix.Render fades equal-power for 88200
+    // samples at 44100 Hz (2 seconds) between real 0...14 tracks.
+    // Source cinematic Intro43 uses separate rates and is not mixed here.
+    private func finishMusicFade() {
+        fadeTimer?.invalidate()
+        fadeTimer=nil
+        previousMusic?.stop()
+        previousMusic=nil
+        music?.volume=Float(settings.musicPercent)/100*0.8
+    }
+    private func updateMusicFade() {
+        guard previousMusic != nil else {finishMusicFade();return}
+        let elapsed=ProcessInfo.processInfo.systemUptime-fadeStart
+        let gains=OriginalMusicTransition568.gains(seconds:elapsed)
+        let master=Float(settings.musicPercent)/100*0.8
+        music?.volume=master*gains.incoming
+        previousMusic?.volume=master*gains.outgoing
+        if elapsed>=OriginalMusicTransition568.duration {finishMusicFade()}
+    }
     private func playTrack(_ index: Int) {
         guard startupComplete, !suspended, settings.musicPercent>0,
               let url = urls[index] else { return }
         if activeMusicIndex==index, music?.isPlaying==true { return }
-        music?.stop()
+        finishMusicFade()
+        let outgoing = music?.isPlaying==true ? music : nil
         do {
             try AVAudioSession.sharedInstance().setCategory(.ambient,mode:.default)
             try AVAudioSession.sharedInstance().setActive(true)
-            let player = try prewarmedMusic[index] ?? AVAudioPlayer(contentsOf: url)
-            player.currentTime = 0
-            player.numberOfLoops = -1 // original MusicReader loops all 0...14
-            player.volume = Float(settings.musicPercent)/100 * 0.8
+            let player = try prewarmedMusic[index] ?? AVAudioPlayer(contentsOf:url)
+            player.currentTime=0
+            player.numberOfLoops = -1
+            player.volume = outgoing == nil ? Float(settings.musicPercent)/100*0.8 : 0
             player.prepareToPlay()
-            guard player.play() else { return }
-            music = player
-            activeMusicIndex = index
-            sourceStatus = "ODTWARZANIE: \(OriginalAudioCatalog568.names[index])"
+            guard player.play() else {return}
+            music=player
+            activeMusicIndex=index
+            if let outgoing, outgoing !== player {
+                previousMusic=outgoing
+                fadeStart=ProcessInfo.processInfo.systemUptime
+                updateMusicFade()
+                fadeTimer=Timer.scheduledTimer(withTimeInterval:1.0/60.0,
+                    repeats:true) { [weak self] _ in
+                    self?.updateMusicFade()
+                }
+            }
+            sourceStatus="ODTWARZANIE: \(OriginalAudioCatalog568.names[index])"
         } catch {
-            sourceStatus = "ORYGINALNY UTWÓR \(index) — BŁĄD: \(error)"
-            music = nil
-            activeMusicIndex = nil
+            sourceStatus="ORYGINALNY UTWÓR \(index) — BŁĄD: \(error)"
+            music=nil
+            activeMusicIndex=nil
+            finishMusicFade()
         }
     }
     func returnToMenu() {
@@ -304,6 +338,7 @@ final class OriginalAudioAV568: ObservableObject {
         engineLevel52=0
         enginePlayback52.stop()
         context = .diagnostic
+        finishMusicFade()
         music?.stop(); activeMusicIndex = nil
         effects.removeAll()
     }
@@ -311,6 +346,8 @@ final class OriginalAudioAV568: ObservableObject {
         suspended = !active
         if !active {
             enginePlayback52.stop()
+            // iOS backgrounding must not leave an outgoing track playing.
+            finishMusicFade()
             music?.pause()
             effects.forEach { $0.pause() }
         } else {
@@ -390,6 +427,7 @@ final class OriginalAudioAV568: ObservableObject {
         guard case .menu = context else {return}
         // Original MusicLibrary.MusicPreview=-2: STOP mutes the preview.
         previewStopped=true
+        finishMusicFade()
         music?.stop()
         music=nil
         activeMusicIndex=nil
@@ -398,6 +436,7 @@ final class OriginalAudioAV568: ObservableObject {
         guard case .menu = context else {return}
         // MusicLibrary.W3SelectMusic355(16): restart selected song at 0.
         previewStopped=false
+        finishMusicFade()
         music?.stop()
         music=nil
         activeMusicIndex=nil
