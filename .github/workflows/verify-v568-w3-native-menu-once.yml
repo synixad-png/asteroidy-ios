@@ -18,6 +18,11 @@ on:
       - 'ASTEROIDY_v568_W3_ORIGINAL_MENU_ASSETS.zip'
       - 'Tests/V568W3MenuSourceImagesTests.py'
 
+# Avoid spending macOS runner minutes on obsolete intermediate revisions.
+concurrency:
+  group: w3-original-menu-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
