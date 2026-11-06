@@ -1,135 +1,141 @@
 import Foundation
 import SwiftUI
 
-/// Stage C: actual source CARBONIS / C279 scene reached from mission selection.
-///
-/// This screen renders the genuine 270249-triangle indexed planet, with the
-/// same audited material buffers and three original textures as in the atlas.
-/// The source-derived initial Game.Wave() snapshot is now prepared before
-/// opening this screen. Original initial ASTEROIDS are now drawn and
-/// animated by native Metal using source procedural rock geometry.
-/// This is not complete flight, enemy AI, hit detection or victory/defeat.
+/// CARBONIS 01 native interactive combat on the verified source planet C279.
+/// Wave actors, player flight, shots and HUD share the persistent combat state.
+/// The complete 25-sector PC campaign and late-game features are NOT ported.
 struct Sector01Scene568: View {
-    let entry: Sector01Entry568
-    let returnToAtlas: () -> Void
-    let preparedWave: Sector01PreparedWave568
+    let entry:Sector01Entry568
+    let returnToAtlas:()->Void
+    let preparedWave:Sector01PreparedWave568
+    @StateObject private var session:CarbonisSession568
 
-    @State private var yaw: Float = 0
-    @State private var pitch: Float = 0
-    @State private var anchorYaw: Float = 0
-    @State private var anchorPitch: Float = 0
-    @State private var dragging = false
-
-    // This is the genuine CPU height-map lookup, not active ship collisions.
-    // Availability also requires SHA-256 of the original C279 height bytes.
-    private static let sourceHeightProbe277: Float? = {
-        guard Sector01CarbonisPreview568.isAvailable,
-              let url=Bundle.main.url(forResource:"Sector01CarbonisHeightMap",withExtension:"dat")
-                ?? Bundle.main.url(forResource:"Sector01CarbonisHeightMap",
-                                   withExtension:"dat",subdirectory:"Assets"),
-              let data=try? Data(contentsOf:url),
-              let surface=CarbonisSurface277(data:data)
-        else { return nil }
-        return surface.surfaceRadius(x:1,y:0,z:0)
-    }()
-
-    var body: some View {
+    init(entry:Sector01Entry568,returnToAtlas:@escaping ()->Void,
+         preparedWave:Sector01PreparedWave568) {
+        self.entry=entry
+        self.returnToAtlas=returnToAtlas
+        self.preparedWave=preparedWave
+        _session=StateObject(wrappedValue:CarbonisSession568(prepared:preparedWave))
+    }
+    private func clamp(_ a:Float)->Float {max(-1,min(1,a))}
+    private var movement:some Gesture {
+        DragGesture(minimumDistance:0).onChanged { v in
+            session.input(move:Vec2(x:clamp(Float(v.translation.width)/110),
+                                    y:clamp(Float(v.translation.height)/110)))
+        }.onEnded { _ in session.input(move:Vec2(x:0,y:0)) }
+    }
+    private var aiming:some Gesture {
+        DragGesture(minimumDistance:0).onChanged { v in
+            session.input(aim:Vec2(x:clamp(Float(v.translation.width)/100),
+                                   y:clamp(Float(v.translation.height)/100)))
+        }.onEnded { _ in session.input(aim:Vec2(x:0,y:0)) }
+    }
+    private var fireGesture:some Gesture {
+        DragGesture(minimumDistance:0)
+            .onChanged { _ in session.input(shooting:true) }
+            .onEnded { _ in session.input(shooting:false) }
+    }
+    var body:some View {
         GeometryReader { geo in
-            let compact=geo.size.height < 550
+            let compact=geo.size.height<550
             ZStack {
-                Color(red:0.006,green:0.018,blue:0.035)
+                Color(red:0.008,green:0.014,blue:0.032).ignoresSafeArea()
+                Sector01CarbonisPreview568(
+                    yawOffset:0,pitchOffset:0,
+                    initialRocks:preparedWave.encounter.rocks,
+                    gameSession:session)
                     .ignoresSafeArea()
-                Sector01CarbonisPreview568(yawOffset:yaw,pitchOffset:pitch,
-                    initialRocks:preparedWave.encounter.rocks)
-                    .frame(width:geo.size.width,height:geo.size.height)
-                    .contentShape(Rectangle())
-                    .gesture(DragGesture(minimumDistance:3)
-                        .onChanged { gesture in
-                            if !dragging {
-                                anchorYaw=yaw
-                                anchorPitch=pitch
-                                dragging=true
-                            }
-                            let sensitivity:Float=0.005
-                            yaw=anchorYaw+Float(gesture.translation.width)*sensitivity
-                            pitch=max(-1.0,min(1.0,
-                                anchorPitch+Float(gesture.translation.height)*sensitivity))
-                        }
-                        .onEnded { _ in dragging=false })
-                    .accessibilityIdentifier("sector01-source-carbonis-gpu")
-                    .accessibilityLabel(
-                        "Oryginalna planeta CARBONIS 3D, obróć palcem")
+                    .allowsHitTesting(false)
+                    .accessibilityIdentifier("sector01-carbonis-native-combat-3d")
+
+                // The control zones are gestures, not on-screen analog images.
+                HStack(spacing:0) {
+                    Color.clear.contentShape(Rectangle())
+                        .gesture(movement)
+                        .accessibilityLabel("Lewy obszar: lot i przemieszczanie statku")
+                    Color.clear.contentShape(Rectangle())
+                        .gesture(aiming)
+                        .accessibilityLabel("Prawy obszar: celowanie")
+                }
                 VStack(spacing:0) {
-                    HStack(spacing:12) {
-                        VStack(alignment:.leading,spacing:3) {
+                    HStack(spacing:10) {
+                        VStack(alignment:.leading,spacing:2) {
                             Text("SEKTOR 01 / CARBONIS")
-                                .font(.system(size:compact ? 14 : 20,
-                                              weight:.bold,design:.monospaced))
+                                .font(.system(size:compact ? 14:20,weight:.bold,design:.monospaced))
                                 .foregroundStyle(.orange)
-                            Text("ŹRÓDŁOWA PLANETA v568 / C279")
-                                .font(.system(size:compact ? 9 : 12,
-                                              design:.monospaced))
+                            Text("ORYGINALNA PLANETA C279 · VANGUARD · WAVE 01")
+                                .font(.system(size:compact ? 9:11,design:.monospaced))
                                 .foregroundStyle(.cyan)
                         }
                         Spacer()
                         Button("WRÓĆ DO MAPY") {
+                            session.release(); session.paused=true
                             returnToAtlas()
                         }
-                        .font(.system(size:compact ? 10 : 13,
-                                      weight:.bold,design:.monospaced))
-                        .padding(11)
+                        .font(.system(size:compact ? 10:13,weight:.bold,design:.monospaced))
+                        .padding(10)
                         .foregroundStyle(.white)
                         .background(Color(red:0.05,green:0.15,blue:0.22),
                                     in:RoundedRectangle(cornerRadius:6))
                         .accessibilityIdentifier("sector01-back-to-atlas")
                     }
-                    .padding(.horizontal,compact ? 12 : 24)
-                    .padding(.vertical,8)
-                    .background(.black.opacity(0.82))
-
+                    .padding(.horizontal,compact ? 12:24)
+                    .padding(.vertical,6)
+                    .background(.black.opacity(0.78))
                     Spacer()
-
-                    HStack {
-                        VStack(alignment:.leading,spacing:4) {
-                            Text("270 249 TRÓJKĄTÓW / 2 MATERIAŁY")
+                    HStack(alignment:.bottom) {
+                        VStack(alignment:.leading,spacing:5) {
+                            Text("KADŁUB \(session.hud.hull)  PANCERZ \(session.hud.armor)  ŻYCIA \(session.hud.lives)")
                                 .foregroundStyle(.cyan)
-                            Text("WAVE: " +
-                                 String(preparedWave.encounter.rocks.count) +
-                                 " ASTEROID · " +
-                                 String(preparedWave.encounter.fighters.count) +
-                                 " MYŚLIWCE · " +
-                                 String(preparedWave.encounter.robots.count) +
-                                 " ROBOTY")
+                            Text("ASTEROIDY \(session.hud.rocks)  MYŚLIWCE \(session.hud.fighters)")
                                 .foregroundStyle(.orange)
-                                .accessibilityIdentifier("sector01-source-wave-prepared")
-                            Text(Self.sourceHeightProbe277.map {
-                                "MAPA TERENU 512×256 / ODCZYT +X: " +
-                                String(format:"%.5f",$0)
-                            } ?? "MAPA TERENU C279: NIEDOSTĘPNA")
-                                .foregroundStyle(.cyan)
-                            Text("GEOMETRIA I TEKSTURY: ORYGINAŁ WINDOWS v568")
+                            Text("CZAS \(Int(session.hud.seconds)) s  ·  LEWA: LOT / PRAWA: CEL")
                                 .foregroundStyle(.white)
-                            Text("GEST: PRZECIĄGNIJ, ABY OBRÓCIĆ PLANETĘ")
-                                .foregroundStyle(.orange)
                         }
+                        .font(.system(size:compact ? 10:12,weight:.bold,design:.monospaced))
+                        .padding(10)
+                        .background(.black.opacity(0.70),in:RoundedRectangle(cornerRadius:7))
                         Spacer()
+                        Text("OGIEŃ")
+                            .font(.system(size:compact ? 13:16,weight:.bold,design:.monospaced))
+                            .foregroundStyle(.white)
+                            .frame(width:compact ? 82:112,height:compact ? 58:76)
+                            .background(Color(red:0.62,green:0.15,blue:0.05),
+                                        in:RoundedRectangle(cornerRadius:12))
+                            .overlay(RoundedRectangle(cornerRadius:12)
+                                .stroke(.orange.opacity(0.7),lineWidth:1))
+                            .gesture(fireGesture)
+                            .accessibilityIdentifier("sector01-fire-pulse")
                     }
-                    .font(.system(size:compact ? 9 : 11,design:.monospaced))
-                    .padding(.horizontal,compact ? 12 : 24)
-                    .padding(.vertical,7)
-                    .background(.black.opacity(0.75))
-
-                    Text("ETAP C: ASTEROIDY WAVE SĄ RYSOWANE I PORUSZAJĄ SIĘ NA PRAWDZIWEJ PLANECIE. MYŚLIWCE/ROBOTY, AI, LOT STATKU, KOLIZJE I UKOŃCZENIE MISJI NIE SĄ JESZCZE WDROŻONE.")
-                        .font(.system(size:compact ? 9 : 11,design:.monospaced))
+                    .padding(.horizontal,compact ? 14:28)
+                    .padding(.bottom,compact ? 9:20)
+                    Text("PORT MISJI 01 · POZOSTAŁE SEKTORY I MECHANIKI PC NADAL W OPRACOWANIU")
+                        .font(.system(size:compact ? 8:10,design:.monospaced))
                         .foregroundStyle(.yellow)
                         .frame(maxWidth:.infinity,alignment:.leading)
-                        .padding(.horizontal,compact ? 12 : 24)
-                        .padding(.vertical,8)
-                        .background(.black.opacity(0.91))
-                        .accessibilityIdentifier("sector01-stage-c-scope")
+                        .padding(.horizontal,compact ? 12:24)
+                        .padding(.vertical,5)
+                        .background(.black.opacity(0.9))
+                }
+                if session.hud.phase != .playing {
+                    Color.black.opacity(0.80).ignoresSafeArea()
+                    VStack(spacing:16) {
+                        Text(session.hud.phase == .victory ?
+                             "SEKTOR 01 · CELE WALKI WYKONANE" : "STATEK ZNISZCZONY")
+                            .font(.system(size:compact ? 19:28,weight:.bold,
+                                          design:.monospaced))
+                            .foregroundStyle(session.hud.phase == .victory ? .green : .red)
+                        Text("Wersja demonstracyjna portu misji · postęp kampanii nie jest zapisywany")
+                            .font(.system(size:12,design:.monospaced))
+                            .foregroundStyle(.white)
+                            .multilineTextAlignment(.center)
+                        Button("POWRÓT DO ATLASU") {returnToAtlas()}
+                            .buttonStyle(.borderedProminent)
+                    }.padding(30)
                 }
             }
         }
+        .onDisappear {session.paused=true;session.release()}
         .accessibilityIdentifier("sector01-real-source-scene")
     }
 }
