@@ -165,6 +165,14 @@ def capture(app:Path,reports:Path,kinds):
             print(f"REAL {kind}: genuine app launched",flush=True)
             time.sleep(5)
             picture=reports/f"{kind}_candidate_unverified.png"
+            verified=reports/f"{kind}_VERIFIED_ASTEROIDY_source431.png"
+            # Both paths may be reused by CI; do not accept an old frame.
+            try:
+                picture.unlink(missing_ok=True)
+                verified.unlink(missing_ok=True)
+            except OSError as exc:
+                raise AppValidationFailed(
+                    f"{kind}: cannot clear prior screenshot: {exc}")
             run_command(
                 ["xcrun","simctl","io",udid,"screenshot",
                  "--type=png",str(picture)],55,
@@ -194,7 +202,6 @@ def capture(app:Path,reports:Path,kinds):
             validate_render_proof(proof)
             (reports/f"{kind}_GPU_source431_proof.json").write_text(
                 json.dumps(proof,indent=2,sort_keys=True),encoding="utf-8")
-            verified=reports/f"{kind}_VERIFIED_ASTEROIDY_source431.png"
             picture.rename(verified)
             print(f"PASS: {kind} real pixels and GPU-completed "
                   f"original 194427-vertex textured draw, "
