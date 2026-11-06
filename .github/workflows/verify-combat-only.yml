@@ -18,6 +18,8 @@ on:
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'ASTEROIDYiOS/MissionStart261.swift'
       - 'Tests/MissionStart261Tests.swift'
+      - 'ASTEROIDYiOS/CarbonisSurface277.swift'
+      - 'Tests/CarbonisSurface277Tests.swift'
       - 'Tests/Sector01Entry568Tests.swift'
       - 'ASTEROIDYiOS/Sector01Carbonis568.metal'
       - 'Tools/prepare_v568_carbonis_sector01.py'
@@ -88,6 +90,7 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Entry568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisSurface277.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3HomePlanetMetal568.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
           swiftc -frontend -parse ASTEROIDYiOS/SourcePlayerShip367.swift
@@ -105,6 +108,13 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/MissionStart261.swift Tests/MissionStart261Tests.swift -o /tmp/mission-start261-tests
           /tmp/mission-start261-tests
+      - name: Verify real Carbonis277 terrain lookup against original C279 height-map (no IPA)
+        run: |
+          set -euo pipefail
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination /tmp/carbonis-277-assets
+          echo '3ce9a0456d23a5b88de718e7fd8fe6560cb53cd112a31ecc876e6200a762cb39  /tmp/carbonis-277-assets/Sector01CarbonisHeightMap.dat' | sha256sum --check
+          swiftc ASTEROIDYiOS/CarbonisSurface277.swift Tests/CarbonisSurface277Tests.swift -o /tmp/carbonis-surface277-tests
+          /tmp/carbonis-surface277-tests /tmp/carbonis-277-assets/Sector01CarbonisHeightMap.dat
       - name: Verify unlocked-only CARBONIS first sector entry, never fake campaign completion
         run: |
           set -euo pipefail
