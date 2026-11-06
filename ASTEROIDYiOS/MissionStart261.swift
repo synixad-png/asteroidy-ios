@@ -1,7 +1,8 @@
 import Foundation
 
 /// Source: Windows v568 Orbit50.cs, Game.StartHubMission261 lines 58-78.
-/// Reset preparation ONLY; Wave() and BeginLevelIntro() remain unported.
+/// Reset preparation ONLY. Initial Wave() spawning now lives in MissionWave568;
+/// its active combat update, BeginLevelIntro() and enemy rendering remain unported.
 /// No fake mission completion, unlock or playable state is created here.
 struct MissionStart261 {
     enum Failure: Error, Equatable {
