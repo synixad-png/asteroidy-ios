@@ -6,6 +6,12 @@ import Foundation
 /// ordinary Pulse / shooter encounter. No boss, shop, multi-ship or later sectors.
 struct CarbonisCombat568 {
     enum Phase: Equatable { case playing, victory, defeat }
+    /// Source Game.Pickup Token with real spherical position and velocity.
+    struct TokenPickup {
+        var position:Vec2
+        var velocity:Vec2
+        var value:Int
+    }
     struct Projectile {
         var point: Vec2
         var velocity: Vec2
@@ -34,6 +40,7 @@ struct CarbonisCombat568 {
     var shooters:[Shooter]
     var bullets:[Projectile] = []
     var hostileShots:[Projectile] = []
+    var tokenPickups:[TokenPickup] = []
     var incoming:MissionIncoming568
     var elapsed:Float = 0
     var invincible:Float = 4.5
@@ -42,6 +49,11 @@ struct CarbonisCombat568 {
     var armor:Int=25
     var lives:Int=3
     var score:Int=0
+    var collectedLootTokens:Int=0
+    private var lootCarry:Float=0
+    private let lootYieldScale:Float
+    private let isReplay:Bool
+    private(set) var missionSummary:Sector01MissionSummary568?
     var rocksDestroyed:Int=0
     var shooterKills:Int=0
     private var random:MissionWave568.SourceRandom
@@ -59,6 +71,8 @@ struct CarbonisCombat568 {
         shooters=prepared.encounter.fighters.map{ Shooter($0) }
         incoming=prepared.incoming
         random=prepared.encounter.randomState
+        lootYieldScale=prepared.encounter.lootYieldScale
+        isReplay=prepared.isReplay
         lives=prepared.reset.lives
         invincible=prepared.reset.invincibleSeconds
     }
@@ -102,6 +116,7 @@ struct CarbonisCombat568 {
         elapsed+=dt; cooldown=max(0,cooldown-dt)
         invincible=max(0,invincible-dt)
         flight.tick(move:move,aim:aim,dt:dt)
+        stepTokenPickups(dt:dt)
         // Game.cs:240 — terminal debris expires BEFORE advancing rocks.
         for i in rocks.indices.reversed() {
             if rocks[i].shardLife>0 {
@@ -131,19 +146,86 @@ struct CarbonisCombat568 {
         resolveShipContacts()
         // MissionCleared69: objective Clear plus absence of rock and bug
         // threats and all reinforcements, not a timer-based fake win.
+        // Game.Step checks objective, rocks and Bugs; hostile shots
+        // do NOT delay clear. FinishLevel guards remaining reinforcements.
         let allThreatsCleared=rocks.isEmpty &&
-            shooters.isEmpty && incoming.incomingLeft==0 &&
-            hostileShots.isEmpty
+            shooters.isEmpty && incoming.incomingLeft==0
         if allThreatsCleared && !completed {
             // Game.cs:276: original spherical NextWave > .20s victory
             // staging; a transient empty rock list cannot instantly win.
             sourceClearHold+=dt
             if sourceClearHold>0.20 {
-                completed=true;phase = .victory
+                completed=true
+                finishSourceMission()
             }
         } else {
             sourceClearHold=0
         }
+    }
+
+    /// Source Game.DropLoot: small/large asteroids generate token
+    /// pickups; medium rocks never do. Classic fractional carry is
+    /// accumulated deterministically (not randomly awarded).
+    private mutating func dropSourceRockLoot(_ rock:SphereAsteroid556) {
+        guard !isReplay && rock.shardLife<=0 && rock.size != 2 else{return}
+        lootCarry += Float((rock.size==3 ? 1 : 2)+rock.tier)*lootYieldScale
+        let value=Int(lootCarry)
+        lootCarry-=Float(value)
+        guard value>0 else{return}
+        if tokenPickups.count>=96 {
+            if !tokenPickups.isEmpty {tokenPickups[0].value+=value}
+            else{collectedLootTokens+=value}
+            return
+        }
+        let a=random.float(0,Float.pi*2)
+        tokenPickups.append(TokenPickup(
+            position:rock.position,
+            velocity:Vec2(x:cos(a)*15,y:sin(a)*15),
+            value:value))
+    }
+
+    /// Windows Physics68.MovePickup68: pickup attraction and spherical
+    /// transport, contact radius 26 for the original collector level 0.
+    private mutating func stepTokenPickups(dt:Float) {
+        for i in tokenPickups.indices.reversed() {
+            var item=tokenPickups[i]
+            let delta=Sphere67.delta(target:flight.position,
+                                     origin:item.position)
+            let distance=sqrt(delta.lengthSquared)
+            if distance<26 {
+                if !isReplay {collectedLootTokens+=item.value}
+                tokenPickups.remove(at:i)
+                continue
+            }
+            if distance<165 && distance>0.1 {
+                item.velocity=item.velocity+
+                    delta*(dt*210/max(distance,0.1))
+            }
+            let drag:Float=distance<165 ? 1.4 : 0.18
+            item.velocity=item.velocity*exp(-dt*drag)
+            let speed=sqrt(item.velocity.lengthSquared)
+            if speed>145 {item.velocity=item.velocity*(145/speed)}
+            item.position=Sphere67.advance(
+                item.position,velocity:&item.velocity,dt:dt)
+            tokenPickups[i]=item
+        }
+    }
+
+    /// Game.FinishLevel: first valid clear records the mission once,
+    /// collects ALL remaining tokens, and grants 10+level*2=12.
+    /// The owning GameView alone is allowed to save campaign progress.
+    private mutating func finishSourceMission() {
+        guard phase == .playing && missionSummary==nil else{return}
+        if !isReplay {
+            collectedLootTokens+=tokenPickups.reduce(0) {$0+$1.value}
+        }
+        tokenPickups.removeAll(keepingCapacity:true)
+        bullets.removeAll(keepingCapacity:true)
+        missionSummary=Sector01MissionSummary568.completedFirstMission(
+            rocks:rocksDestroyed,enemies:shooterKills,score:score,
+            lootTokens:collectedLootTokens,replay:isReplay,
+            elapsed:elapsed)
+        phase = .victory
     }
 
     /// Physics68.cs:62-65 ShipContacts68 with exact source body masses:
@@ -453,6 +535,20 @@ struct CarbonisCombat568 {
                         let destroyed=shooters.remove(at:j)
                         shooterKills+=1
                         score+=destroyed.core.hunter ? 300 : 180
+                        // BossTunnelGame.HitBug: reward is a collectible
+                        // token pickup, not instantly credited.
+                        if !isReplay {
+                            let amount=2+destroyed.core.type/2
+                            if tokenPickups.count<96 {
+                                let a=Float(5)*1.37
+                                let velocity=Vec2(x:cos(a)*18,y:sin(a)*18)
+                                tokenPickups.append(TokenPickup(
+                                    position:destroyed.core.position,
+                                    velocity:velocity,value:amount))
+                            } else {
+                                collectedLootTokens+=amount
+                            }
+                        }
                     }
                 }
             }
@@ -478,6 +574,7 @@ struct CarbonisCombat568 {
                         let removed=rocks.remove(at:j)
                         rocksDestroyed+=1
                         score+=Self.sourceRockScore(removed)
+                        dropSourceRockLoot(removed)
                         splitRock(removed)
                     }
                 }
