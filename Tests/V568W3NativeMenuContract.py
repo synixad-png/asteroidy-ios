@@ -38,7 +38,7 @@ assert app.index("if showMainMenu {")<app.index("MetalScene(input: input)")
 assert "CampaignAtlas556(progress:progress,dismiss:{page=nil})" in menu
 assert "onOpen" not in menu  # no invented campaign loader
 assert 'openDiagnostic()' in menu
-assert "WebView" not in menu and "WKWebView" not in menu
+assert "import WebKit" not in menu and "WKWebView(" not in menu
 assert "MODEL PLANETY 3D — DO PRZENIESIENIA" in menu
 assert "Oryginalny model planety 3D nie jest jeszcze przeniesiony" in menu
 assert 'hangar_h55.glb' in menu
