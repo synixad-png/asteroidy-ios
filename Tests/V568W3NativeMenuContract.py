@@ -43,7 +43,9 @@ assert "W3HomePlanetMetal568.isAvailable" in menu
 assert "W3HomePlanetMetal568(yaw:planetYaw,pitch:planetPitch)" in menu
 assert "ORYGINALNA PLANETA NEWHOME290 / 3D METAL" in menu
 assert "MODEL PLANETY 3D — BRAK ZASOBÓW" in menu
-assert "Oryginalny model planety 3D nie jest jeszcze przeniesiony" in menu
+assert "Radar W3 z oryginalną planetą 3D NewHome290" in menu
+assert "Brak zweryfikowanego oryginalnego modelu planety" in menu
+assert "W3HomeShipPreview568()" in menu
 assert 'hangar_h55.glb' in menu
 assert 'Wczytanie rzeczywistego zapisu' in menu
 # Navigation is fully handled in one native SwiftUI view, without
