@@ -53,6 +53,20 @@ jobs:
           else
             python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets | tee reports/vanguard-material.txt
           fi
+      - name: Honor explicitly selected old AS3D compatibility mode
+        if: inputs.compatibility_old_ship == true
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Only mutate the temporary GitHub Actions checkout, NEVER
+          # remove the verified original source files from GitHub.
+          # Otherwise, the renderer would still select the real source
+          # texture despite the user's explicit legacy toggle.
+          rm -f ASTEROIDYiOS/Assets/Vanguard431Source.mesh
+          rm -f ASTEROIDYiOS/Assets/Vanguard431Base.jpg
+          test ! -e ASTEROIDYiOS/Assets/Vanguard431Source.mesh
+          test ! -e ASTEROIDYiOS/Assets/Vanguard431Base.jpg
+          echo "PASS: explicit old-AS3D compatibility mode really omits both source assets" | tee -a reports/vanguard-material.txt
       - name: Record native Apple compiler and source revision
         shell: bash
         run: |
