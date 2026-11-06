@@ -11,6 +11,8 @@ on:
       - 'ASTEROIDYiOS/PlanetDamageLab556.swift'
       - 'Tests/PlanetDamageLab556Tests.swift'
       - 'ASTEROIDYiOS/App.swift'
+      - 'ASTEROIDYiOS/W3MainMenu568.swift'
+      - 'Tests/V568W3NativeMenuContract.py'
       - 'Tests/IOSInterruptedTouchSourceContract.py'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/SourcePlayerShip367.swift'
@@ -63,8 +65,11 @@ jobs:
       - name: Syntax-parse active SwiftUI and Metal renderer (NO iOS build or IPA)
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
           swiftc -frontend -parse ASTEROIDYiOS/SourcePlayerShip367.swift
+      - name: Verify source v568 W3 menu start and real navigation contracts
+        run: python3 Tests/V568W3NativeMenuContract.py
       - name: Regress original v568 PlayerShip367 optional runtime model and source-matching skin
         run: python3 Tests/V568PlayerShip367RuntimeContract.py
       - name: Guard against invalid PBR highlight pixels under opposing view and light
