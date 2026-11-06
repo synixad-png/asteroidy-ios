@@ -508,3 +508,41 @@ uruchomienie IPA ich automatycznie nie zalicza.
 Dotychczasowe procenty 18 zadań bez zmiany:
 **27% ukończone, 73% pozostało, nr 14 10% (+0 pp)**.
 Etap B nadal nie rozpoczęty.
+
+### 06.11.2026 — wydanie IPA faktycznie ukończone; etap A rozwijany dalej
+
+**POTWIERDZONE:** workflow [42203939074](https://github.com/synixad-png/asteroidy-ios/actions/runs/42203939074)
+`completed/success`, oryginalne źródła snapshot
+`5242e4f38c25bcf3dd641e4aefeceb30890ee5f4`,
+wydany rzeczywisty `ASTEROIDY_v568_W3_iPhone_iPad_UNSIGNED.ipa`
+o rozmiarze `14 097 407` B. SHA256
+`ba0ab998837d6b769bb5ddfd2b027d712351dc6833390b80d12ab9a96b90ff2a`.
+IPA rozpakowano po pobraniu i ponownie sprawdzono architekturę
+ARM64 iPhoneOS, `UIDeviceFamily = 1,2`, CRC, oryginalne
+7 assetów w bundlu i SHA256 — **PASS**. Artefakt
+[13496560050](https://github.com/synixad-png/asteroidy-ios/actions/runs/42203939074/artifacts/13496560050).
+Pełny techniczny raport:
+[Reports/V568_W3_IPA_RELEASE_2026-11-06.md](Reports/V568_W3_IPA_RELEASE_2026-11-06.md).
+
+**NIEPODPISANY IPA:** instalacji ani działania na fizycznym
+urządzeniu nie testowano. Nie zawiera pełnych 26 misji PC.
+
+Osobno **GPU iPhone+iPad PASS** dla menu W3,
+oryginalnych NewHome290 oraz iPad-owego podglądu Vanguard431:
+[42202733165](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202733165)
+(oba joby success, autentyczne zrzuty, `gpuCommandBufferCompleted`).
+Po ustaleniu stabilności wydania, kontynuacja A
+`8bff492bf537580f8f933ef34b7553c02d93ad56`
+powiększyła tylko obszar podglądu oryginalnego statku
+w prawym panelu W3 z 110 do 164 pt dla lepszej widoczności
+(względna geometria/UV, oryginalny model, skala 0.34,
+kamera i animacja bez zmian). Nie jest częścią powyższego IPA.
+Autentyczne testy grafiki i dotykowe po zmianie wymagają
+potwierdzenia wyników nowych przebiegów GitHub Actions,
+bez zakładania sukcesu wcześniej.
+
+**Najbliższa bramka A:** test siedmiu realnych przycisków W3 i
+powrót z diagnozy, następnie ocena zgodności z PC.
+Nie przechodzimy do B, dopóki A nie spełnia bramki.
+Stała lista 18 zadań nienaruszona: projekt 27% wykonany,
+73% pozostało, zadanie 14 10% (+0 pp).
