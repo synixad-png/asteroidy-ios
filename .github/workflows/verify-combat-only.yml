@@ -121,6 +121,11 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift Tests/MissionWave568Tests.swift -o /tmp/mission-wave568-tests
           /tmp/mission-wave568-tests
+      - name: Verify Action38 source incoming waves and timers
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift Tests/MissionIncoming568Tests.swift -o /tmp/mission-incoming568-tests
+          /tmp/mission-incoming568-tests
       - name: Verify CARBONIS 01 original Wave startup bridge, locks and no fabricated victories
         run: |
           set -euo pipefail
