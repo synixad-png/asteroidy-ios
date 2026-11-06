@@ -147,7 +147,7 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisCombat568.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisSession568.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01ShopPanel568.swift
-          swiftc -frontend -parse ASTEROIDYiOS/Sector01PreparedWave568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3HomePlanetMetal568.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
           swiftc -frontend -parse ASTEROIDYiOS/SourcePlayerShip367.swift
@@ -178,7 +178,7 @@ jobs:
       - name: Verify CARBONIS 01 original Wave startup bridge, locks and no fabricated victories
         run: |
           set -euo pipefail
-          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift Tests/Sector01PreparedWave568Tests.swift -o /tmp/sector01-wave-entry-tests
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift Tests/Sector01PreparedWave568Tests.swift -o /tmp/sector01-wave-entry-tests
           /tmp/sector01-wave-entry-tests
       - name: Verify original Physics68 two-body ship-rock and ship-fighter contacts
         run: |
