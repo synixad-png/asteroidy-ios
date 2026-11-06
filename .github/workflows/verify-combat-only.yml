@@ -13,6 +13,8 @@ on:
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/OriginalAudioLifecycle568.swift'
       - 'ASTEROIDYiOS/OriginalAudioAV568.swift'
+      - 'ASTEROIDYiOS/OriginalMusicTransition568.swift'
+      - 'Tests/OriginalMusicTransition568Tests.swift'
       - 'ASTEROIDYiOS/OriginalEngineDSP52.swift'
       - 'ASTEROIDYiOS/OriginalEnginePlayback52.swift'
       - 'ASTEROIDYiOS/Assets/Audio568/**'
@@ -148,6 +150,10 @@ jobs:
           swiftc ASTEROIDYiOS/OriginalEngineDSP52.swift Tests/OriginalEngineDSP52Tests.swift -o /tmp/engine-dsp52-regression
           /tmp/engine-dsp52-regression
           swiftc -frontend -parse ASTEROIDYiOS/OriginalEnginePlayback52.swift
+      - name: Verify exact original MusicMix 2s equal-power audio transition (NO IPA)
+        run: |
+          swiftc ASTEROIDYiOS/OriginalMusicTransition568.swift Tests/OriginalMusicTransition568Tests.swift -o /tmp/v568-music-fade
+          /tmp/v568-music-fade
       - name: Verify original v568 audio startup order, lazy mission, cache and no replacements
         run: |
           swiftc ASTEROIDYiOS/OriginalAudioLifecycle568.swift Tests/OriginalAudioLifecycle568Tests.swift -o /tmp/original-audio-v568
