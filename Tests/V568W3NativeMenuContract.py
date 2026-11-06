@@ -69,7 +69,18 @@ assert "let count=min(2,incomingLeft)" in incoming_wave
 assert "if objective == .clear && activeRocks == 0 && activeEnemies == 0" in incoming_wave
 assert "incoming:MissionIncoming568(from:encounter,difficulty:difficulty)" in prepared_wave
 
-assert "PRZECIWNICY NIE SĄ JESZCZE RENDEROWANI ANI STEROWANI PRZEZ AI" in source_scene
+assert "MYŚLIWCE/ROBOTY, AI, LOT STATKU, KOLIZJE I UKOŃCZENIE MISJI NIE SĄ JESZCZE WDROŻONE" in source_scene
+rock_geom=(root/"ASTEROIDYiOS/CarbonisRockGeometry568.swift").read_text()
+rock_metal=(root/"ASTEROIDYiOS/Sector01Carbonis568.metal").read_text()
+assert "let seed=Float((shape%40)/5+13)" in rock_geom
+assert "sourceVertexCount=20*16*3" in rock_geom
+assert "static func stoneNormal(" in rock_geom
+assert 'sector01SourceRockFragment568' in rock_metal
+assert "sourceRockModel(_ rock:SphereAsteroid556)" in carbonis
+assert "activeRocks[index].advance(dt:dt)" in carbonis
+assert "encoder.drawPrimitives(type:.triangle,vertexStart:0," in carbonis
+assert "initialRocks:preparedWave.encounter.rocks" in source_scene
+assert '"nativeMissionPlayable":false' in carbonis
 
 assert "Sector01Entry568.open(" in app
 assert "hasOriginalC279Assets:Sector01CarbonisPreview568.isAvailable" in app
