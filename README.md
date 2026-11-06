@@ -1,5 +1,11 @@
 # ASTEROIDY iOS — natywny port Swift/Metal (projekt w trakcie rozwoju)
 
+## AKTUALNY POSTĘP — 6 listopada 2026 (po wdrożeniu początkowej WAVE)
+
+**30% wykonane / 70% pozostało.** Do natywnego wejścia na CARBONIS 01 dodano źródłową inicjalizację `Game.Wave()` z oryginalnych Windows/SteamOS v568: asteroidy, uzbrojeni myśliwce, robotyczne węże, parametry i limity posiłków. Scena wyświetla prawdziwe liczby struktur początkowych, a jej dane powstają z `MissionStart261` + `MissionWave568`. **Wciąż nie ma aktywnego renderowania ani AI tych przeciwników, lotu i wyniku misji w scenie CARBONIS.** Lokalnie Swift/Linux 909+12 testów PASS; natywne iOS CI po aktualnych commitach pozostaje niepotwierdzone. [Pełny raport](Reports/V568_STAGE_C_WAVE_PREPARED_2026-11-06.md), [18-zadaniowy harmonogram](PORT_STATUS_18_TASKS.md).
+
+Poprzednie wartości 29% oraz opis braku źródłowej `Wave()` w sekcjach historycznych są już nieaktualne. Nie wygenerowano nowego IPA.
+
 ## Bieżący postęp projektu — 6 listopada 2026
 
 **29% wykonane, 71% pozostało.** Natywne menu W3 → wybór 26 sektorów → oryginalna scena 3D CARBONIS 01 jest dostępna w źródłach; nie jest jeszcze pełną grywalną misją. Kolejny krok etapu C: źródłowa mechanika startu, fale i kontakt statku z terenem. [Stały harmonogram 18 zadań](PORT_STATUS_18_TASKS.md).
