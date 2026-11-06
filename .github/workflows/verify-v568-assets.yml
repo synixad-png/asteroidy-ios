@@ -1,0 +1,33 @@
+name: ASTEROIDY v568 genuine resource verification (NO IPA)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ASTEROIDY_v568_ZASOBY_DO_GITHUB_CZESC_*_z_04.zip'
+      - 'Tools/stage_v568_resources.py'
+      - 'Tests/V568ArchiveStagingTests.py'
+      - '.github/workflows/verify-v568-assets.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-v568-original-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out the exact four user-uploaded v568 ZIPs
+        uses: actions/checkout@v4
+      - name: Verify Python scripts have valid syntax
+        run: python3 -m py_compile Tools/stage_v568_resources.py Tests/V568ArchiveStagingTests.py
+      - name: Verify original ZIPs, all source SHA256 hashes and full manifest
+        run: python3 Tools/stage_v568_resources.py --root . --verify-only
+      - name: Test atomic extraction, original source paths and malicious path rejection
+        run: python3 Tests/V568ArchiveStagingTests.py
+      - name: Verify that original assets remain separate from the iOS application
+        run: |
+          test ! -d ASTEROIDYiOS/Assets/PortingResources
+          test ! -e ASTEROIDY_iOS_UNSIGNED.ipa
+          echo 'PASS: original v568 staging validated; no IPA or automatic runtime replacement'
