@@ -85,6 +85,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let depth:MTLDepthStencilState
             private let noDepthWrite:MTLDepthStencilState
             private let visualSettings=CarbonisVisualSettings568.load()
+            private let missionTerrainScale523:Float
             private let vertexBuffer:MTLBuffer
             private let indexBuffer:MTLBuffer
             private let base:MTLTexture
@@ -96,6 +97,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var craftTexture:MTLTexture?
             private var craftVertexCount=0
             private var craftPipeline:MTLRenderPipelineState?
+            private var craftEnginePipeline491:MTLRenderPipelineState?
             private var tracerPipeline:MTLRenderPipelineState?
             private var projectilePipeline:MTLRenderPipelineState?
             private var projectileGroundPipeline:MTLRenderPipelineState?
@@ -122,6 +124,13 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 var model:simd_float4x4
                 var material:UInt32=0
                 var glow:Float=1.0
+            }
+            // Exact ABI of Ship.metal FighterPlasmaUniform491.
+            private struct EngineUniforms491 {
+                var mvp:simd_float4x4
+                var engine0:SIMD4<Float>
+                var engine1:SIMD4<Float>
+                var frame:SIMD4<Float>
             }
             private static func verified(_ full:String) throws -> Data {
                 let name=(full as NSString).deletingPathExtension
@@ -157,6 +166,12 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 let indices=try Self.verified("Sector01CarbonisIndices.bin")
                 guard vertices.count==137067*48 && indices.count==810747*4
                 else {throw SourceError.invalid}
+                // Windows GpuPlanetGltf463: terrain radius from actual
+                // C279 triangles, not the conservative MaxRadius.
+                guard let sourceScale=CarbonisMissionPlanet523
+                    .missionScale523(vertexBytes:vertices)
+                else {throw SourceError.invalid}
+                missionTerrainScale523=sourceScale
                 vertexBuffer=try Self.makeBuffer(vertices,device:device)
                 indexBuffer=try Self.makeBuffer(indices,device:device)
                 let texLoader=MTKTextureLoader(device:device)
@@ -224,6 +239,25 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     fighterSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
                     fighterSpec.depthAttachmentPixelFormat = .depth32Float
                     craftPipeline=try device.makeRenderPipelineState(descriptor:fighterSpec)
+                    // Source GpuShip.cs v491 uses the same 2 source sockets,
+                    // 3 layers, 3 planes, 16 segments as Ship.metal.
+                    guard let exhaustVertex=library.makeFunction(
+                        name:"fighterPlasmaVertex491"),
+                          let exhaustFragment=library.makeFunction(
+                        name:"fighterPlasmaFragment491")
+                    else {throw SourceError.metal}
+                    let exhaustSpec=MTLRenderPipelineDescriptor()
+                    exhaustSpec.vertexFunction=exhaustVertex
+                    exhaustSpec.fragmentFunction=exhaustFragment
+                    exhaustSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
+                    exhaustSpec.depthAttachmentPixelFormat = .depth32Float
+                    exhaustSpec.colorAttachments[0].isBlendingEnabled=true
+                    exhaustSpec.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
+                    exhaustSpec.colorAttachments[0].destinationRGBBlendFactor = .one
+                    exhaustSpec.colorAttachments[0].sourceAlphaBlendFactor = .sourceAlpha
+                    exhaustSpec.colorAttachments[0].destinationAlphaBlendFactor = .one
+                    craftEnginePipeline491=try device.makeRenderPipelineState(
+                        descriptor:exhaustSpec)
                     // Original GpuRobot70: two unique source drone hulls.
                     // Level1 has four kind0 fighters; later missions use
                     // kind1. Each shape is uploaded once, never per actor.
@@ -489,9 +523,15 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 let vp:simd_float4x4?=gameSession.map {
                     Self.viewProjection($0.game.flight.camera,aspect:aspect)
                 }
-                var uniforms=Uniforms(mvp:vp.map{$0*model} ??
-                                      Self.previewMVP(aspect,model),
-                                      model:model)
+                // Only the combat planet takes the v523 radius transform;
+                // NewHome290 and the PlanetScreen preview are separate.
+                let terrainModel=gameSession == nil ? model :
+                    simd_float4x4(diagonal:SIMD4<Float>(
+                        missionTerrainScale523,missionTerrainScale523,
+                        missionTerrainScale523,1))
+                var uniforms=Uniforms(mvp:vp.map{$0*terrainModel} ??
+                                       Self.previewMVP(aspect,terrainModel),
+                                       model:terrainModel)
                 encoder.setRenderPipelineState(pipeline)
                 encoder.setDepthStencilState(depth)
                 encoder.setCullMode(.none)
@@ -633,6 +673,27 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     encoder.setFragmentTexture(texture,index:0)
                     encoder.drawPrimitives(type:.triangle,vertexStart:0,
                                            vertexCount:craftVertexCount)
+                    // GpuSphere67.CraftSphere67 draws v491 exhaust at the
+                    // exact craft transform, with max(.12, VisualPower298).
+                    if let enginePipeline=craftEnginePipeline491 {
+                        let engines=IntroEnginePlasma491.engineCenters
+                        var exhaust=EngineUniforms491(
+                            mvp:worldView*shipMatrix,
+                            engine0:SIMD4<Float>(engines[0].x,
+                                engines[0].y,engines[0].z,0),
+                            engine1:SIMD4<Float>(engines[1].x,
+                                engines[1].y,engines[1].z,0),
+                            frame:SIMD4<Float>(session.game.elapsed,
+                                max(0.12,session.game.flight.flight.visualPower),
+                                IntroEnginePlasma491.visualSize,0))
+                        encoder.setRenderPipelineState(enginePipeline)
+                        encoder.setDepthStencilState(noDepthWrite)
+                        encoder.setVertexBytes(&exhaust,
+                            length:MemoryLayout<EngineUniforms491>.stride,index:0)
+                        encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                            vertexCount:IntroEnginePlasma491.vertexCount)
+                        encoder.setDepthStencilState(depth)
+                    }
                 }
                 // Windows GpuSphere67.cs:433 calls volume explosion
                 // immediately before projectile/debris visual effects.
