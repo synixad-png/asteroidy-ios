@@ -31,20 +31,50 @@ zaliczamy badań zasobów za ukończenie mechanik.
 Procent zmieniamy dopiero po zweryfikowanej zmianie funkcjonalnej oraz
 adekwatnych testach — bez sztucznego przeliczania 18 wartości na średnią.
 
-## Kolejność operacyjna i zasada jednej aktywnej funkcji
+## Kolejność operacyjna — grywalne i wizualnie weryfikowalne etapy
 
-Zgodnie z końcową sekcją `PORT_STATUS_18_TASKS.md`: 7 i 8 są
-zamknięte, a **następny aktywny punkt to ZADANIE 9 — Wszystkie bronie
-i efekty trafień (10%)**. Nie rozpoczynać równolegle AI (10), bossów
-(11) ani misji (12–13), dopóki nie domkniemy w dostępnym zakresie
-zadania 9. Gdy natrafimy na twardą zależność od nieukończonego 1–6,
-wykonujemy wyłącznie niezbędną naprawę zależności, odnotowujemy ją
-pod jej właściwym numerem, wracamy do 9.
+**Decyzja użytkownika 06.11.2026:** priorytetem nie jest numer najbliższego
+zadania, ale **widoczna, spójna droga gracza: uruchomienie → menu →
+wybór misji → wejście na planetę → lot i walka → wynik → powrót**.
+Wcześniejsze sekwencyjne „najpierw całe 9, później 10 i 11, menu dopiero
+na końcu” jest ZASTĄPIONE poniższym wykonawczym porządkiem. Oryginalne
+18 zadań, numery, zakresy i procenty w tabeli wyżej pozostają bez zmian.
+**Każdy kamień milowy kończy się widocznym wynikiem w tej samej
+natywnej aplikacji**, nie samym importem modeli. W danym momencie
+wdrażamy jeden pionowy przebieg end-to-end; wcześniej rozpoczęta część
+tego przebiegu musi być sprawdzona przed kolejną.
 
-Po 9: 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18.
-Pozostałe 1–6 **nie są oznaczone jako ukończone**; mają własne
-otwarte bramki i wymagają domknięcia przed deklaracją całości
-portu. Nie wolno omijać krytycznej zależności od 1–6.
+| Kolejność | Kamień milowy / widoczny stan gry | Numery oryginalnych zadań | Bramka zaliczenia |
+|---:|---|---|---|
+| A | **Ekran startowy i oryginalne menu** W3, w pełni natywne Metal/Swift, na iPhone i iPad | 14 + zależności 1–3,17 | Uruchomienie → rzeczywiste menu, obsługa dotyku, nawigacja i powrót; autentyczny screenshot + test stanu na obu symulatorach |
+| B | **Wybór misji**: ekran kampanii, 26 sektorów z oryginalnymi nazwami/zasadami dostępności (bez sztucznego odblokowania) | 13,14,16 + 1 | Menu → wybór → podgląd/wybór dozwolonej misji → Wstecz; zapis ustawień zgodny z bazą v568; test UI |
+| C | **Wejście do pierwszej misji**: ekran ładowania, właściwa planeta/sektor i statek, kamera, oryginalne zasoby | 2–6,12–14 + 17 | Wybór sektora 01 → autentyczna scena Metal → interaktywny lot, pauza i powrót; NIE oznaczać demo jako kompletnej misji |
+| D | **Pełna rozgrywka pierwszej misji**: wszystkie jej wymagane obiekty, fale, bronie, kolizje, cele, zakończenie | 6–10,12,14,17 (7–8 tylko regresje) | Scena 01 → gra → osiągnięcie autentycznego celu → wynik → menu; test end-to-end, bez fałszywego komunikatu ukończenia |
+| E | **Widoczna rozbudowa świata**: wszystkie pozostałe typy planet i statków, animacje, światło, tekstury | 2–5,13 | Odwiedzenie kolejnych prawdziwych planet i porównanie ich źródłowej geometrii/efektów v568; widoczne różnice, testy GPU |
+| F | **Przeciwnicy i 6 bossów**: autentyczne modele, osobne AI, animacje, ataki, zniszczenia | 5,7,9–12 | Grywalny pojedynek z przeciwnikiem/bossem i poprawne zakończenie; nie wystarczy test parsera B82S |
+| G | **Kampania 26/26**: pełne cele misji, przejścia, blokady, wynik i postęp kampanii | 12,13,16 | Test przejścia całej kampanii; wszystkie 26 sektorów rzeczywiście uruchamiają się i mają poprawne stany |
+| H | **Pełny interfejs i ustawienia**, sterowanie dotykowe i pady, ustawienia obrazu i dźwięku | 14,15,17 | Wszystkie ustawienia działają w misji i poza nią; testy iPhone/iPad i kontrolerów |
+| I | **Oryginalne audio i trwałe zapisy** | 15,16 | Muzyka/efekty zgodne z oryginałem, zapis/odczyt po restarcie bez utraty postępu |
+| J | **Wydajność, regresje i przygotowanie wydania** | 1–18, ze szczególnym 18 | Kompilacja, testy GPU, pamięci, FPS i end-to-end na urządzeniach; nie deklarować 100% bez ich wykonania |
+
+**Najbliższy aktywny kamień milowy: A — prawdziwe menu.**
+Na etapie A nie portować nowych bossów lub kolejnych statków, chyba że
+są bezpośrednio wymagane przez ekran menu. Dopiero po zaliczeniu A
+przejść do B, następnie C. Zadania 7 i 8 pozostają zamknięte
+implementacyjnie i obowiązkowo objęte regresją przy każdym relewantnym
+wydaniu. Otwarte zadanie 9 pozostaje otwarte, lecz jego funkcje
+wdrażane są w **grywalnym przebiegu D**, gdy menu i wejście do misji już
+działają. Nie zwiększać żadnego procentu bez realnych testów.
+
+### Sposób raportowania na każdym etapie
+
+Raport zawsze zawiera jedną stałą tabelę **18 zadań**, z postępem,
+zmianą w punktach procentowych i osobnym paskiem dla każdej pozycji;
+nad nią postęp zbiorczy 27% / pozostało 73% dopóki dowody nie pozwolą
+go zmienić. Ponadto pokazujemy: aktualny etap A–J, wykonane
+funkcje widoczne dla gracza, wyniki autentycznych screenshotów lub
+testów, czego dokładnie brakuje do zaliczenia etapu, i następny
+kamień milowy. Nie podmieniać screenshotów na koncepcje lub cudze gry.
 
 ### Rozliczenie dotychczas wykonanych prac spoza aktualnego punktu
 
@@ -80,10 +110,17 @@ portu. Nie wolno omijać krytycznej zależności od 1–6.
 Nie uruchamiać `build-ios.yml` ani nie tworzyć nowego IPA bez
 wyraźnego polecenia. Zachować dotychczas działający kod iOS.
 
-## Najbliższy rzeczywisty zakres: Zadanie 9
+## Najbliższy rzeczywisty zakres: kamień milowy A — menu
 
-Audyt oryginalnych typów broni z v568 i ich wywołań, wybór jednego
-pełnego toru: wejście gracza → strzał → pocisk → kolizja → efekt trafienia
-→ zgodne obrażenia. Zachować już zamknięte zadania 7/8.
-Zadanie 9 kończy się dopiero, gdy **wszystkie** oryginalne bronie i efekty
-są implementowane i zweryfikowane, nie po jednym efekcie.
+Najpierw zweryfikować źródłowy interfejs W3 w aktualnym Windows v568
+oraz istniejące widoki i routing `App.swift`. Nie tworzyć nowej
+estetyki ani zastępników. Wdrożyć natywny ekran startowy,
+menu główne i nawigację iPhone/iPad, przy zachowaniu istniejącego
+intro, diagnostycznych widoków i gameplayu (jako osobnych
+niedomyślnych ścieżek). Następnie dwa autentyczne screenshoty
+symulatorów oraz testy działania przycisków. Dopiero **po teście menu**
+rozpocząć etap B — rzeczywistą listę 26 misji i wybór sektora.
+
+Dla kamieni milowych A i B przed kompilacją sprawdzić źródłowo,
+czy menu i selektor misji mają rzeczywistą logikę (a nie tylko
+grafikę). Nie tworzyć IPA bez osobnego polecenia użytkownika.
