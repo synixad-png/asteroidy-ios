@@ -310,6 +310,35 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 return base*rotateY(flight.flight.visualBank*Float.pi/180)
                     * rotateX(flight.flight.visualPitch*Float.pi/180)
             }
+            /// Small surface-following native Pulse and hostile shot streaks.
+            /// Positions and tangents come from the actual combat projectiles.
+            /// This is a basic beam renderer, not full PC particle parity.
+            static func shotVertices(_ shots:[CarbonisCombat568.Projectile])
+                -> [Float] {
+                let shell=SphereSurfaceStamp556.normalizedShellRadius+0.005
+                var output:[Float]=[]
+                output.reserveCapacity(shots.count*72)
+                for shot in shots {
+                    let n=Sphere67.normal(shot.point)
+                    let direction=Sphere67.vector(
+                        shot.point,shot.velocity).normalized
+                    let side=SphereVector3.cross(direction,n).normalized
+                    let p=n*shell
+                    let ahead=direction*0.055
+                    let width=side*0.010
+                    let a=p-ahead-width,b=p+ahead-width
+                    let c=p+ahead+width,d=p-ahead+width
+                    let color:[Float]=shot.hostile
+                        ? [1,0.18,0.06,0.95] : [0.22,0.90,1,0.98]
+                    for v in [a,b,c,a,c,d] {
+                        output.append(contentsOf:[
+                            v.x,v.y,v.z,n.x,n.y,n.z,
+                            color[0],color[1],color[2],color[3],0,0])
+                    }
+                }
+                return output
+            }
+
             func mtkView(_ view:MTKView,drawableSizeWillChange size:CGSize) {}
             func draw(in view:MTKView) {
                 guard let drawable=view.currentDrawable,
@@ -402,6 +431,29 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     encoder.setFragmentTexture(texture,index:0)
                     encoder.drawPrimitives(type:.triangle,vertexStart:0,
                                            vertexCount:craftVertexCount)
+                }
+                if let session=gameSession,let tracer=tracerPipeline,
+                   let cameraMatrix=vp {
+                    let shots=session.game.bullets+session.game.hostileShots
+                    let values=Self.shotVertices(shots)
+                    if !values.isEmpty,
+                       let buffer=values.withUnsafeBytes({ bytes in
+                           bytes.baseAddress.flatMap {
+                               gpu.makeBuffer(bytes:$0,length:bytes.count,options:[])
+                           }
+                       }) {
+                        uniforms=Uniforms(mvp:cameraMatrix,
+                                          model:matrix_identity_float4x4,
+                                          material:2,glow:1)
+                        encoder.setRenderPipelineState(tracer)
+                        encoder.setVertexBuffer(buffer,offset:0,index:0)
+                        encoder.setVertexBytes(&uniforms,
+                            length:MemoryLayout<Uniforms>.stride,index:1)
+                        encoder.setFragmentBytes(&uniforms,
+                            length:MemoryLayout<Uniforms>.stride,index:1)
+                        encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                                               vertexCount:values.count/12)
+                    }
                 }
                 encoder.endEncoding()
                 command.present(drawable)
