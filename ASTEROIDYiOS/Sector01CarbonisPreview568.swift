@@ -96,7 +96,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var craftPipeline:MTLRenderPipelineState?
             private var tracerPipeline:MTLRenderPipelineState?
             private var shooterPipeline:MTLRenderPipelineState?
-            private var shooterType0:(buffer:MTLBuffer,ranges:[Range<Int>])?
+            private var sourceShooters:[Int:(buffer:MTLBuffer,ranges:[Range<Int>])] = [:]
             private var proofScheduled=false
             var yawOffset: Float = 0
             var pitchOffset: Float = 0
@@ -217,17 +217,20 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     fighterSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
                     fighterSpec.depthAttachmentPixelFormat = .depth32Float
                     craftPipeline=try device.makeRenderPipelineState(descriptor:fighterSpec)
-                    // GpuRobot70.cs: CARBONIS L1 shooter type 0 is
-                    // BossMesh65(0,"drone") over ShipMesh(0,false).
-                    // Generate once: four live ships share one source VBO.
-                    let sourceShooter=CarbonisShooterMesh71.typeZero()
-                    let fighterBuffer=sourceShooter.vertices.withUnsafeBytes { raw in
-                        raw.baseAddress.flatMap {
-                            device.makeBuffer(bytes:$0,length:raw.count,options:[])
+                    // Original GpuRobot70: two unique source drone hulls.
+                    // Level1 has four kind0 fighters; later missions use
+                    // kind1. Each shape is uploaded once, never per actor.
+                    for kind in 0...1 {
+                        let mesh=kind==0 ? CarbonisShooterMesh71.typeZero()
+                                         : CarbonisShooterMesh71.typeOne()
+                        let buffer=mesh.vertices.withUnsafeBytes { raw in
+                            raw.baseAddress.flatMap {
+                                device.makeBuffer(bytes:$0,length:raw.count,options:[])
+                            }
                         }
+                        guard let buffer else {throw SourceError.metal}
+                        sourceShooters[kind]=(buffer,mesh.ranges)
                     }
-                    guard let fighterBuffer else {throw SourceError.metal}
-                    shooterType0=(fighterBuffer,sourceShooter.ranges)
                     guard let shooterFragment=library.makeFunction(
                         name:"sector01ShooterFragment71") else {throw SourceError.metal}
                     let shooterSpec=MTLRenderPipelineDescriptor()
@@ -497,15 +500,16 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             vertexCount:CarbonisRockGeometry568.sourceVertexCount)
                     }
                 }
-                // Original GpuRobot70.DrawShooter71 source geometry and
-                // StampSphere67(point,aim,9*Scale67). No fake substitutes
-                // for later enemy kinds; they remain a separate port step.
+                // GpuRobot70.DrawShooter71: kind0/1 independently authored
+                // original source meshes. Unported kinds2–5 are not faked.
                 if let session=gameSession,let worldView=vp,
-                   let shooter=shooterType0,
                    let shooterPipeline=shooterPipeline {
                     encoder.setRenderPipelineState(shooterPipeline)
-                    encoder.setVertexBuffer(shooter.buffer,offset:0,index:0)
-                    for enemy in session.game.shooters where enemy.core.type==0 {
+                    for enemy in session.game.shooters {
+                        guard let shooter=sourceShooters[enemy.core.type] else {
+                            continue
+                        }
+                        encoder.setVertexBuffer(shooter.buffer,offset:0,index:0)
                         let stamp=SphereSurfaceStamp556(
                             point:enemy.core.position,angle:enemy.aim)
                         let pose=stamp.columnMajor(size:9)
