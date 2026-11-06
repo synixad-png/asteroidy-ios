@@ -24,20 +24,6 @@ final class CarbonisExplosion524Renderer {
     private let noise:MTLTexture
     private let noDepthWrite:MTLDepthStencilState
 
-    /// Original Windows/src/Explosion524.cs:147-148
-    /// seeded Xorshift32 bytes; the 64x64x64 source volume is shared.
-    static func originalNoise()->[UInt8] {
-        var result=[UInt8](repeating:0,count:64*64*64)
-        var state:UInt32=0x47D6A2C3
-        for i in result.indices {
-            state ^= state << 13
-            state ^= state >> 17
-            state ^= state << 5
-            result[i]=UInt8(truncatingIfNeeded:state)
-        }
-        return result
-    }
-
     init(device:MTLDevice,library:MTLLibrary) throws {
         enum Setup:Error {case failed}
         guard let vertex=library.makeFunction(
@@ -65,7 +51,7 @@ final class CarbonisExplosion524Renderer {
         guard let result=device.makeTexture(descriptor:tex)
         else {throw Setup.failed}
         noise=result
-        let bytes=Self.originalNoise()
+        let bytes=CarbonisExplosionNoise524.originalBytes()
         bytes.withUnsafeBytes { raw in
             if let address=raw.baseAddress {
                 result.replace(
