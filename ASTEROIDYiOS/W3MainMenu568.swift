@@ -2,7 +2,7 @@ import SwiftUI
 import CryptoKit
 import UIKit
 
-// The two original v568 W3 images are shared once across all flat
+// The two original v568 W3 JPEG/PNG byte streams are stored as .dat to avoid\n// Xcode image optimization, then decoded by UIImage(data:) once across all flat
 // native menu screens. Never load mismatched or unverified images.
 private enum SourceW3Images568 {
     static let pair: (background: UIImage, logo: UIImage)? = {
@@ -18,9 +18,9 @@ private enum SourceW3Images568 {
             guard digest==expected else {return nil}
             return UIImage(data:bytes)
         }
-        guard let bg=verified("W3Background568","jpg",
+        guard let bg=verified("W3Background568Original","dat",
             "a8aa28883084657f0c38900dbb011de09e2b0fd461704d370a68858be0178145"),
-              let logo=verified("W3Logo568","png",
+              let logo=verified("W3Logo568Original","dat",
             "cab4198b953640c787975c5a8436a0fdeaa82502b40e000077ff055cc0709e09")
         else {return nil}
         return (background:bg,logo:logo)
