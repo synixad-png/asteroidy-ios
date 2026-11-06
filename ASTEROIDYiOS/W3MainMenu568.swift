@@ -387,9 +387,9 @@ struct W3MainMenu568: View {
                 Rectangle().fill(cyan.opacity(0.45)).frame(height:1)
                 if item == .campaign || item == .newGame {
                     // 26-sector atlas selects real unlocked missions.
-                    // Sector01 allows inspection of original C279 rendering;
-                    // PC combat StartHubMission261 is not yet integrated.
-                    Text("ATLAS 26 SEKTORÓW — WYBÓR I WEJŚCIE NA CARBONIS")
+                    // Sector01 now starts the genuine first level of combat,
+                    // while the 24 later playable sectors remain unported.
+                    Text("ATLAS 26 SEKTORÓW — CARBONIS 01: WALKA, WYNIKI I SERWIS")
                         .font(.system(size:10,design:.monospaced))
                         .foregroundStyle(muted)
                     CampaignAtlas556(progress:progress,
