@@ -633,3 +633,36 @@ PASS na obu symulatorach.
 **Bramka etapu A pozostaje otwarta. B jeszcze nie rozpoczęto.
 18 zadań niezmienione; zadanie 14 10% (+0 pp),
 całość 27% / 73% do wykonania.**
+
+### 06.11.2026 — ponowne wydanie IPA na wyraźne polecenie i widoczny postęp etapu A
+
+Aby siedem przycisków W3 było osiągalnych na ekranach iPhone w
+orientacji poziomej, `W3MainMenu568.swift` dodano rzeczywisty
+`ScrollView(.vertical)` z **44-punktowym minimalnym polem dotyku**
+każdej akcji, zachowując identyfikatory VoiceOver/XCTest.
+Zmiana nie rekonstruuje grafiki W3, nie zmienia geometrii
+NewHome290/Vanguard431 ani mechanik rozgrywki. Źródłowe kontrakty
+`Tests/V568W3NativeMenuContract.py` zostały uzupełnione
+o to zachowanie. Sprawdzenie iOS Swift/Metal:
+[42212331058](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331058)
+job `Compile iOS source only` **PASS**.
+
+Na wyraźne polecenie użytkownika wygenerowano definicję
+jednorazowego wydania fizycznego IPA:
+`.github/workflows/build-asteroidy-w3-menu-nav-ipa-once-20261106.yml`.
+Uruchomione zadanie
+[42212392679](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212392679)
+ze snapshotu `0873cae65b99c41d020f6e841407e468e077e2e8`
+ma zbudować i sprawdzić **niepodpisane iPhone/iPad ARM64 IPA**
+ze wszystkimi siedmioma oryginalnymi assetami W3/H290/Vanguard431
+i kontrolą sum SHA/CRC, bez podmieniania rzeczywistej zawartości gry.
+Status publikacji na moment wpisu: **w kolejce**; nie twierdzić,
+że gotowy plik już istnieje, dopóki nie ma potwierdzonego
+artefaktu i weryfikacji jego bajtów.
+
+Niezależnie trwają testy
+[XCTest 42212331207](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331207)
+i [GPU 42212331152](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331152).
+Nie zastępują one wyniku rzeczywistego testu na urządzeniu.
+**A pozostaje otwarty, B nie rozpoczęto. 18 punktów bez zmiany:
+nr 14 = 10% (+0 pp), całość 27%, pozostaje 73%.**
