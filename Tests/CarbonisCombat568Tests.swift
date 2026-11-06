@@ -135,6 +135,10 @@ import Foundation
               "Source HitBug prevents firing through nearer asteroid")
         check(cover.rocks[0].health==1,
               "Occluding asteroid receives physical Pulse impact")
+        check(cover.destruction.explosions.isEmpty &&
+              cover.destruction.particles.count==3,
+              "one nonfatal rock hit adds original three cyan trails, not a death cloud")
+
 
         var clearShot=CarbonisCombat568(prepared)
         clearShot.rocks=[]
@@ -147,6 +151,13 @@ import Foundation
         check(clearShot.shooters.isEmpty && clearShot.shooterKills==1,
               "Unobstructed type0 enemy is destroyed by source Pulse hit")
         check(clearShot.score==180,"Source Bug kill reward 180")
+        check(clearShot.destruction.particles.count==22 &&
+              clearShot.destruction.pieces.count==17 &&
+              clearShot.destruction.explosions.count==1 &&
+              clearShot.destruction.explosions[0].kind==0 &&
+              clearShot.destruction.explosions[0].scale==14,
+              "real Pulse shooter kill emits original 22 orange trails, six impact sparks, 11 metal tetra and fuel cloud")
+
         check(CarbonisCombat568.sourceRockScore(SphereAsteroid556(
                 position:Vec2(x:490,y:360),
                 velocity:Vec2(x:0,y:0),radius:9,
@@ -163,6 +174,12 @@ import Foundation
                       shooting:false,dt:1.0/60)
         check(terminal.rocks.count==18,
               "Game.SpawnTerminalShards187 creates exactly 18 source pieces")
+        check(terminal.destruction.particles.count==18 &&
+              terminal.destruction.explosions.count==1 &&
+              terminal.destruction.explosions[0].kind==1 &&
+              terminal.destruction.explosions[0].scale==9,
+              "source Game.Split size1 produces actual 18 cyan trails and 3D rock volume")
+
         check(terminal.rocks.allSatisfy({
               $0.fragment && $0.shardLife>=1.3 &&
               $0.shardLife<=2.5 && $0.mass==0.09
