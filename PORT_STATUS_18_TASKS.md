@@ -1,3 +1,36 @@
+## BIEŻĄCY STAN — 06.11.2026: przygotowana źródłowa WAVE na CARBONIS
+
+**Cały projekt: 30% wykonane (+1 pp) / 70% pozostało.** Ukończona implementacja początkowej źródłowej fali dla wszystkich 25 faktycznych poziomów PC: asteroid, uzbrojonych myśliwców, segmentowanych robotów, parametrów fal i początkowych limitów posiłków. Nie jest to jeszcze grywalna walka w CARBONIS — brakuje aktywnego AI, renderowania przeciwników i lotu/strzałów/wyniku.
+
+W `GameView` po legalnym wyborze CARBONIS 01 tworzony jest teraz snapshot `MissionStart261` i `MissionWave568`, przekazywany do `Sector01Scene568`. Scena pokazuje **rzeczywiste dane 13 asteroid / 4 myśliwców / 0 robotów** dla normalnej trudności, bez fikcyjnych odblokowań. Po powrocie do atlasu snapshot jest usuwany. W źródłowym `Windows/src/Game.cs` `CampaignLength=25`, dlatego 26. pozycja atlasu nie jest automatycznie traktowana jako dodatkowy poziom `Wave()`.
+
+**Weryfikacja:** Swift/Linux na lokalnych odpowiednikach zależności — **909 testów generatora + 12 testów bramki PASS**, 12 kontroli spójności repozytorium PASS, archiwum v568 CRC PASS. CI GitHub zostało uzupełnione, ale jego końcowy wynik oraz natywne wykonanie na iPhone/iPad dla tej rewizji **nie zostały jeszcze potwierdzone**. Bez nowego IPA.
+
+| Nr | Stałe zadanie | Było | Jest | Zmiana |
+|---:|---|---:|---:|---:|
+| 1 | Infrastruktura iOS | 88% | 88% | 0 pp |
+| 2 | Silnik Metal | 89% | 89% | 0 pp |
+| 3 | Materiały i oświetlenie | 25% | 25% | 0 pp |
+| 4 | Statki i planety 3D | 22% | 22% | 0 pp |
+| 5 | Animacje GLB | 35% | 35% | 0 pp |
+| 6 | Fizyka lotu | 35% | 35% | 0 pp |
+| 7 | Kolizje i obrażenia (wcześniejszy moduł) | 100% | 100% | 0 pp |
+| 8 | Asteroidy i fale (wcześniejszy moduł) | 100% | 100% | 0 pp |
+| 9 | Bronie i trafienia | 10% | 10% | 0 pp |
+| 10 | AI przeciwników | 0% | 0% | 0 pp |
+| 11 | Bossowie | 0% | 0% | 0 pp |
+| 12 | Misje planetarne | 8% | 10% | +2 pp |
+| 13 | Kampania — 26 sektorów atlasu | 35% | 35% | 0 pp |
+| 14 | Menu W3, HUD i ustawienia | 15% | 15% | 0 pp |
+| 15 | Muzyka i dźwięki | 0% | 0% | 0 pp |
+| 16 | Zapisywanie gry | 20% | 20% | 0 pp |
+| 17 | Sterowanie | 35% | 35% | 0 pp |
+| 18 | Optymalizacja i testy | 10% | 10% | 0 pp |
+
+**Następne w C/D:** aktywne renderowanie wygenerowanych statków/asteroid w C279, fizyka lotu i kamera, zintegrowana pętla AI, rzeczywiste `SpawnIncoming()`, broń, kolizje i wynik misji. Nie zamykać C ani D przed tym etapem. [Raport źródłowy i ograniczenia](Reports/V568_STAGE_C_WAVE_PREPARED_2026-11-06.md).
+
+---
+
 ## KOREKTA ŹRÓDEŁ WAVE — 06.11.2026
 
 **PEŁNE ŹRÓDŁA ODNALEZIONE.** `Game.Wave()` jest w oryginalnym v568: `Windows/src/Game.cs:90–101` oraz `SteamOS/src/Game.cs:90–101`; ich bloki mają identyczny SHA-256. Weryfikacja dotyczy kompletnego ZIP z Biblioteki (1788 pozycji; CRC PASS), nie ograniczonego audytu. [Pełne ustalenia](Reports/V568_WAVE_FULL_SOURCE_AUDIT_2026-11-06.md). **Wciąż brak wdrożenia kompletnej WAVE w rozgrywce CARBONIS na iOS.** Procenty projektu bez zmiany: 29% / 71%.
