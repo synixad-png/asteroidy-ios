@@ -1,5 +1,36 @@
 # ASTEROIDY iOS — stały harmonogram portowania
 
+## AKTUALIZACJA ETAPU A — natywna nawigacja W3, ostatni stan 06.11.2026
+
+**Stan A: OTWARTY; B nie rozpoczęty.** Cały projekt **27%**,
+pozostało **73%**, zadanie nr 14 **10%, +0 pp**. Nie zmieniono
+zakresu ani postępów pozostałych 17 zadań. Nie wydano nowego IPA.
+
+Rzeczywiste XCTest
+[42204712384](https://github.com/synixad-png/asteroidy-ios/actions/runs/42204712384)
+wykazały niedostępność `w3-home-0` dla automatycznego
+wyszukiwania obu urządzeń. Poprawiono semantykę
+`accessibilityElement(children: .contain)`, nazwy/cechy
+i stabilne identyfikatory siedmiu natywnych przycisków;
+w XCTest poprawiono interpolację, ustawiono krajobrazowe
+uruchamianie i zapisano pełny `.xcresult` z obrazem/hierarchią
+w razie błędu. Środowiskowy timeout `simctl launch`
+iPada wydłużono z 50 do wciąż ograniczonych 150 s.
+Testy iPhone/iPad przeniesiono na standardowe `macos-15`
+bez zmiany prawdziwych kontroli GPU i dotyku.
+
+**Potwierdzone:** rzeczywista kompilacja iOS + testy regresji
+[42210096215](https://github.com/synixad-png/asteroidy-ios/actions/runs/42210096215)
+PASS. **Oczekują na wykonanie** dwa nowe przebiegi:
+[dotyk 42211323604](https://github.com/synixad-png/asteroidy-ios/actions/runs/42211323604)
+oraz
+[GPU 42211331700](https://github.com/synixad-png/asteroidy-ios/actions/runs/42211331700).
+Tego wyniku NIE nazywać PASS, zanim GitHub Actions nie
+potwierdzi wszystkich jobów. Dalsza bramka A:
+rzeczywiste tapnięcia wszystkich 7 pozycji, powroty i
+weryfikacja zgodności wizualnej z PC v568.
+
+
 ## BIEŻĄCY STAN — etap A / menu W3, 06.11.2026
 
 **Kolejność A → B → C → D... bez zmian. Zadanie 14: 10% (+0 pp).
