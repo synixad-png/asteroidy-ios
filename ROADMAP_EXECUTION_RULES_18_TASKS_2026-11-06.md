@@ -426,3 +426,53 @@ Zachowano 18 oryginalnych pozycji i procenty, bez przypisywania
 niezakończonych XCTest do ukończonych zadań:
 nr 14 **10% (+0 pp)**, projekt **27% / 73% pozostało**.
 Bez nowego IPA.
+
+### 06.11.2026 — etap A, podgląd prawdziwego statku w prawym panelu W3
+
+Potwierdzono w **pełnych** źródłach Windows v568
+`RendererW3Home328.cs` i `GpuW3HomeReal333.cs`, że oryginalne
+menu HOME posiada osobny panel `STATEK / PODGLĄD` z
+obracającym się aktywnym statkiem. Domyślny `Game.ShipType=1`
+z `Campaign37.cs` wybiera autentyczny `Vanguard431`
+(w `ShipMesh.cs` jest `Vanguard431.TryApply`).
+
+**Zaimplementowano** `ASTEROIDYiOS/W3HomeShipPreview568.swift`:
+własny podgląd Metal w prawym panelu menu iPada
+(węższe iPhone pozostają przy dwukolumnowym menu),
+z wykorzystaniem już zabundlowanych oryginalnych
+`Vanguard431Source.mesh` i `Vanguard431Base.jpg`,
+obu sprawdzanych po SHA256. Nie generowano nowego modelu,
+nie zmieniono gracza ani danych rozgrywki. Odtworzono
+źródłowe parametry kamery `near 1/far 28`, `zoom .88`,
+pozycję `(0,-.15,-5.5)`, obrót początkowy X `18°`,
+obrót Y `42°/s`, wahadłowy Z `sin(t*.71)*8°` i
+skalowanie `.34`. W `Ship.metal` dodano osobny shader
+podglądu oryginalnego statku wykorzystujący źródłowy
+`FighterLight` i `BeginToon60(true,true)`. Wymagany
+jest ukończony dowód GPU na iPadzie dla **194427
+wierzchołków**; script `run_w3_native_menu_simulator_capture.py`
+odrzuca brak dowodu, starą pozostałość albo zły hash.
+Do regresji dodano `Tests/V568W3HomeShipSourceContract.py`.
+
+**Stan testów podczas aktualizacji:** kompilacja Swift/Metal
+z nowym podglądem po naprawie składni — **PASS**
+([42202600804](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202600804),
+job Compile iOS source only). Testy kompletnego HUD/gry
+i nowy rzeczywisty podgląd GPU uruchomiono, lecz
+nie stwierdzono jeszcze końcowego PASS:
+[W3 GPU 42202733165](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202733165)
+oraz
+[W3 UI XCTest 42202807377](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202807377).
+Nie zaliczać testu dotyku ani podglądu statku wyłącznie na
+podstawie pomyślnej kompilacji.
+
+W osobnym kroku skorygowano kierunek światła głównego
+podglądu planety `NewHome290` do oryginalnej stałej
+`GpuShip.cs` (`-.6,.8,1.4`, w=0). Szybki test
+[42201635022](https://github.com/synixad-png/asteroidy-ios/actions/runs/42201635022)
+**PASS** dla dołączonych materiałów źródłowych. Pełna
+zgodność PC GLSL i Metal nadal niepotwierdzona.
+
+**Etap A w toku, B nierozpoczęte, IPA nie generowano.
+Postęp 18 zadań pozostaje na wartościach odniesienia —
+14 = 10% (+0 pp), projekt 27% / pozostało 73%.**
