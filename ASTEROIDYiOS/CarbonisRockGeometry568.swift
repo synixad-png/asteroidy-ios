@@ -40,8 +40,8 @@ enum CarbonisRockGeometry568 {
     ]
     static func stone(_ d:V3,seed:Float)->V3 {
         let p=d.unit
-        var radius:Float=0.91+0.065*sin(p.x*4+p.y*3+p.z*5+seed)
-            +0.022*sin(p.x*21-p.y*18+p.z*16+seed*2)
+        let grain:Float=0.022*sin(p.x*21-p.y*18+p.z*16+seed*2)
+        var radius:Float=0.91+0.065*sin(p.x*4+p.y*3+p.z*5+seed)+grain
         for i in 0..<3 {
             let k=Float(i)
             let crater=V3(x:sin(seed*1.3+k*4),
