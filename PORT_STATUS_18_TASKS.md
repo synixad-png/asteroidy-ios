@@ -11,6 +11,20 @@
 > następne”) opisaną niżej jako historia. **Wszystkie 18 zadań, ich
 > numery, zakresy i dotychczasowe procenty pozostają niezmienione.**
 > Najbliższe do wykonania: **A. Menu, potem B. Wybór misji**.
+> **Nowa implementacja etapu A (06.11.2026):** oryginalny model
+> centralnej planety `NewHome290` v568, H290, **172208 trójkątów**,
+> 516624 wierzchołków, dwie grupy materiałów i źródłowa mapa
+> lawy zostały zaimplementowane w oddzielnym podglądzie Metal
+> `W3HomePlanetMetal568.swift` / `W3HomePlanet290.metal`.
+> Dodatkowo wdrożono obrót palcem i oryginalne wspólne tło/logo W3
+> bez zmiany bajtów zasobów. Testy kompletnej grafiki Apple GPU i
+> dotykowej nawigacji wciąż trwają, zatem **A niezamknięte**.
+> Najnowszy [test iPhone+iPad
+> 42197653964](https://github.com/synixad-png/asteroidy-ios/actions/runs/42197653964).
+> Oświetlenie jest częściowym portem, a zgodność wizualna PC
+> v568 nie została jeszcze wykazana. **Projekt 27%, pozostaje 73%,
+> zadanie 14: 10%, +0 pp.** Bez IPA.
+>
 >
 > **Aktualizacja implementacji 06.11.2026:** etap **A w trakcie**.
 > Dodano natywny, obsługiwany dotykiem ekran W3 jako domyślne
