@@ -45,8 +45,15 @@ def prepare(root,destination,required=False):
                 raise ValueError("Original W3 source asset SHA256/size mismatch: "+name)
             payload[name]=b
     destination.mkdir(parents=True,exist_ok=True)
+    # Xcode may recompress PNG resource files (and alter their SHA-256).
+    # Preserve the exact original JPEG/PNG *bytes* in extension-neutral blobs.
+    # UIImage(data:) still decodes original formats without any approximation.
+    output_names={
+        "W3Background568.jpg":"W3Background568Original.dat",
+        "W3Logo568.png":"W3Logo568Original.dat",
+    }
     for name,data in payload.items():
-        path=destination/name
+        path=destination/output_names[name]
         if path.exists():
             if sha(path.read_bytes())!=sha(data):
                 raise ValueError("Refusing overwrite of different W3 asset: "+name)
