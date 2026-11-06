@@ -66,6 +66,43 @@ import Foundation
                          shooting:false,dt:1.0/120)
         }
         check(victory.phase == .victory,"original spherical 0.20-second clear hold")
+        // v568 HitBug: shooter collision uses nearest projected time,
+        // but cannot damage a target if a stone is intersected earlier.
+        let pulse=CarbonisCombat568.Projectile(
+            point:Vec2(x:450,y:360),
+            velocity:Vec2(x:6000,y:0),life:1,hostile:false)
+        var cover=CarbonisCombat568(prepared)
+        cover.rocks=[SphereAsteroid556(
+            position:Vec2(x:490,y:360),
+            velocity:Vec2(x:0,y:0),radius:9,
+            size:3,tier:0,health:2,originalHealth:2)]
+        cover.shooters=Array(cover.shooters.prefix(1))
+        cover.shooters[0].core.position=Vec2(x:520,y:360)
+        let initialEnemyHP=cover.shooters[0].core.hp
+        cover.bullets=[pulse]
+        cover.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                   shooting:false,dt:1.0/60)
+        check(cover.shooters[0].core.hp==initialEnemyHP,
+              "Source HitBug prevents firing through nearer asteroid")
+        check(cover.rocks[0].health==1,
+              "Occluding asteroid receives physical Pulse impact")
+
+        var clearShot=CarbonisCombat568(prepared)
+        clearShot.rocks=[]
+        clearShot.shooters=Array(clearShot.shooters.prefix(1))
+        clearShot.shooters[0].core.position=Vec2(x:520,y:360)
+        clearShot.shooters[0].core.hp=1
+        clearShot.bullets=[pulse]
+        clearShot.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                       shooting:false,dt:1.0/60)
+        check(clearShot.shooters.isEmpty && clearShot.shooterKills==1,
+              "Unobstructed type0 enemy is destroyed by source Pulse hit")
+        check(clearShot.score==180,"Source Bug kill reward 180")
+        check(CarbonisCombat568.sourceRockScore(SphereAsteroid556(
+                position:Vec2(x:490,y:360),
+                velocity:Vec2(x:0,y:0),radius:9,
+                size:3,tier:0,health:1,originalHealth:2))==50,
+              "Source size3 rock score includes original HP")
         check(campaign.completedMask==0,"no fake campaign completion")
         print("PASS \(checks) live Carbonis C279 flight, shot, hit, victory and defeat checks")
     }
