@@ -212,6 +212,29 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     SIMD4<Float>(0,0,-near/(far-near),1)))
                 return projection*model
             }
+            /// GpuSphere67.cs:8,63,133: source StampSphere67 placement
+            /// and 41/23 degree rock spin rotations. CARBONIS C279 is
+            /// already normalized to source outer radius in this renderer.
+            static func sourceRockModel(_ rock:SphereAsteroid556)
+                -> simd_float4x4 {
+                let n=Sphere67.normal(rock.position)
+                let forward=Sphere67.vector(
+                    rock.position,MissionWave568.direction(rock.angle)).normalized
+                let right=SphereVector3.cross(forward,n).normalized
+                let outer:Float=100*1.4419674
+                let shell=outer+15
+                let radius=rock.radius*(shell/Sphere67.radius)/outer
+                let place=shell/outer
+                let placement=simd_float4x4(columns:(
+                    SIMD4<Float>(right.x*radius,right.y*radius,right.z*radius,0),
+                    SIMD4<Float>(forward.x*radius,forward.y*radius,forward.z*radius,0),
+                    SIMD4<Float>(n.x*radius,n.y*radius,n.z*radius,0),
+                    SIMD4<Float>(n.x*place,n.y*place,n.z*place,1)))
+                let degrees=Float.pi/180
+                return placement*rotateX(rock.angle*41*degrees)
+                    * rotateY(rock.angle*23*degrees)
+            }
+
             func mtkView(_ view:MTKView,drawableSizeWillChange size:CGSize) {}
             func draw(in view:MTKView) {
                 guard let drawable=view.currentDrawable,
@@ -219,7 +242,17 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                       let command=queue.makeCommandBuffer(),
                       let encoder=command.makeRenderCommandEncoder(descriptor:pass)
                 else {return}
-                let t=Float(ProcessInfo.processInfo.systemUptime-started)
+                let now=ProcessInfo.processInfo.systemUptime
+                if let previous=previousRockFrame {
+                    let dt=Float(min(0.05,max(0,now-previous)))
+                    // Game.cs:238-239: source spherical WorldAdvance67
+                    // and rock angular spin, no invented AI/mission progression.
+                    for index in activeRocks.indices {
+                        activeRocks[index].advance(dt:dt)
+                    }
+                }
+                previousRockFrame=now
+                let t=Float(now-started)
                 var model=matrix_identity_float4x4
                 model.columns.3.z = -5
                 model=model*Self.rotateX(-0.24+pitchOffset)
@@ -249,6 +282,26 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 encoder.drawIndexedPrimitives(type:.triangle,indexCount:7035,
                     indexType:.uint32,indexBuffer:indexBuffer,
                     indexBufferOffset:803712*MemoryLayout<UInt32>.stride)
+
+                // Original Game.Wave asteroid shapes, not billboard/GLB stand-ins.
+                // C279 stays unchanged; rock meshes share one cached VBO per shape.
+                if !activeRocks.isEmpty {
+                    encoder.setRenderPipelineState(rockPipeline)
+                    for rock in activeRocks {
+                        let shape=CarbonisRockGeometry568.shape(for:rock)
+                        guard let buffer=rockBuffers[shape] else {continue}
+                        let rockMatrix=model*Self.sourceRockModel(rock)
+                        uniforms=Uniforms(mvp:Self.previewMVP(aspect,rockMatrix),
+                                          model:rockMatrix,material:2,glow:0)
+                        encoder.setVertexBuffer(buffer,offset:0,index:0)
+                        encoder.setVertexBytes(&uniforms,
+                            length:MemoryLayout<Uniforms>.stride,index:1)
+                        encoder.setFragmentBytes(&uniforms,
+                            length:MemoryLayout<Uniforms>.stride,index:1)
+                        encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                            vertexCount:CarbonisRockGeometry568.sourceVertexCount)
+                    }
+                }
                 encoder.endEncoding()
                 command.present(drawable)
                 if !proofScheduled &&
@@ -260,7 +313,12 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             "gpuCommandBufferCompleted":completed.status == .completed,
                             "triangles":270249,"sourceUniqueVertices":137067,
                             "sourceIndices":810747,
-                            "sourceMaterialGroups":2,"nativeMissionPlayable":false
+                            "sourceMaterialGroups":2,
+                            "sourceRockMeshes":activeRocks.count,
+                            "sourceRockMeshVerticesPerObject":CarbonisRockGeometry568.sourceVertexCount,
+                            "sourceRockPositionsAdvanced":true,
+                            "enemyAIIntegrated":false,
+                            "nativeMissionPlayable":false
                         ]
                         if let dir=FileManager.default.urls(
                             for:.cachesDirectory,in:.userDomainMask).first,
