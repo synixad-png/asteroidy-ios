@@ -25,6 +25,10 @@ assert "raise SystemExit(75)" in source
 assert "raise SystemExit(1)" in source
 assert 'picture=reports/f"{kind}_candidate_unverified.png"' in source
 assert 'verified=reports/f"{kind}_VERIFIED_ASTEROIDY_source431.png"' in source
+assert "picture.unlink(missing_ok=True)" in source
+assert "verified.unlink(missing_ok=True)" in source
+assert source.index("picture.unlink(missing_ok=True)") < source.index('["xcrun","simctl","io",udid,"screenshot",')
+assert source.rindex("            validate_render_proof(proof)") < source.index("picture.rename(verified)")
 assert source.index('validate_render_proof(proof)') < source.index('picture.rename(verified)')
 assert 'SIMCTL_CHILD_ASTEROIDY_RENDER_VERIFY' in source
 assert 'ASTEROIDY_Vanguard431_RenderProof.json' in source
