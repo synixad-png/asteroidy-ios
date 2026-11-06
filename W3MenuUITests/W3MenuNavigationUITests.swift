@@ -8,13 +8,35 @@ final class W3MenuNavigationUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// Real native accessibility, not a simulated menu or a fake test-mode
+    /// hierarchy. Both a Button and an accessible other element can be
+    /// tapped; missing control logs the real on-device XCUI hierarchy.
+    private func menuButton(_ app: XCUIApplication, index: Int) -> XCUIElement {
+        let identifier = "w3-home-\\(index)"
+        let button = app.buttons[identifier]
+        if button.waitForExistence(timeout: 10) { return button }
+        let visible = app.descendants(matching: .any)
+            .matching(identifier: identifier).firstMatch
+        if visible.waitForExistence(timeout: 5) { return visible }
+        XCTContext.runActivity(named: "Actual W3 iOS accessibility hierarchy") { activity in
+            print("W3_ACTUAL_ACCESSIBILITY_TREE_BEGIN")
+            print(app.debugDescription)
+            print("W3_ACTUAL_ACCESSIBILITY_TREE_END")
+            let screenshot = XCTAttachment(screenshot: app.screenshot())
+            screenshot.name = "Actual-W3-Simulator-UI-On-Failure"
+            screenshot.lifetime = .keepAlways
+            activity.add(screenshot)
+        }
+        XCTFail("Original v568 native W3 menu button \\(identifier) was not exposed to XCTest")
+        return button
+    }
+
     private func launchW3() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["ASTEROIDY_W3_MENU_VERIFY"] = "1"
+        // No changes to app data, original mission selection or graphics.
         app.launch()
-        XCTAssertTrue(
-            app.buttons["w3-home-0"].waitForExistence(timeout: 25),
-            "Native W3 menu must be the normal launch screen")
+        _ = menuButton(app,index:0)
         return app
     }
 
@@ -53,7 +75,7 @@ final class W3MenuNavigationUITests: XCTestCase {
         XCTAssertTrue(returnButton.waitForExistence(timeout: 20),
                       "Source-diagnostic scene must offer MENU W3 return")
         returnButton.tap()
-        XCTAssertTrue(app.buttons["w3-home-0"].waitForExistence(timeout: 20),
+        XCTAssertTrue(menuButton(app,index:0).waitForExistence(timeout: 20),
                       "Returning from 3D diagnostic must show actual W3 menu")
         XCTAssertFalse(app.buttons["w3-panel-back"].exists)
     }
