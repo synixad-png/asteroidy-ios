@@ -27,3 +27,24 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.synixad.asteroidyios
         PRODUCT_NAME: ASTEROIDY iOS
+
+  ASTEROIDYW3UITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: W3MenuUITests
+    dependencies:
+      - target: ASTEROIDYiOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.synixad.asteroidyios.w3uitests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  ASTEROIDYiOS:
+    build:
+      targets:
+        ASTEROIDYiOS: all
+        ASTEROIDYW3UITests: [test]
+    test:
+      targets:
+        - ASTEROIDYW3UITests
