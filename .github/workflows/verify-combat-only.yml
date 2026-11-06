@@ -13,6 +13,10 @@ on:
       - 'ASTEROIDYiOS/App.swift'
       - 'Tests/IOSInterruptedTouchSourceContract.py'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
+      - 'ASTEROIDYiOS/SourcePlayerShip367.swift'
+      - 'Tools/convert_v568_player_ship367.py'
+      - 'Tools/prepare_v568_player_ship_ios.py'
+      - 'Tests/V568PlayerShip367RuntimeContract.py'
       - 'ASTEROIDYiOS/Ship.metal'
       - 'Tests/MetalPBRHalfVectorContract.py'
       - 'ASTEROIDYiOS/SphereRockContact68.swift'
@@ -60,6 +64,9 @@ jobs:
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourcePlayerShip367.swift
+      - name: Regress original v568 PlayerShip367 optional runtime model and source-matching skin
+        run: python3 Tests/V568PlayerShip367RuntimeContract.py
       - name: Guard against invalid PBR highlight pixels under opposing view and light
         run: python3 Tests/MetalPBRHalfVectorContract.py
       - name: Guard against stuck iPhone/iPad touch inputs after app interruption
@@ -111,6 +118,8 @@ jobs:
         run: xcodebuild -version
       - name: Install XcodeGen
         run: brew install xcodegen
+      - name: Prepare ONLY original source-verified PlayerShip367 assets for native iOS compilation
+        run: python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets
       - name: Generate native Xcode project from verified project.yml
         run: xcodegen generate
       - name: Typecheck and compile all native iOS Swift/Metal sources (unsigned, NO IPA)
