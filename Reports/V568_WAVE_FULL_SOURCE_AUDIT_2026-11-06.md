@@ -4,7 +4,7 @@ Data kontroli: 2026-11-06. Zakres: rzeczywiste pliki źródłowe, nie tylko wyci
 ## Istotna korekta wcześniejszych raportów
 Wcześniejszy raport stwierdzał, że definicji `Wave()` nie ma w dostępnych źródłach. To było NIEPRAWIDŁOWE uogólnienie z niepełnego archiwum `ASTEROIDY_v568_AUDYT_26_PLANET_STATKOW_BOSSOW_I_ZASOBOW.zip` (66 347 483 bajty, tylko 32 pliki C#).
 
-**Pełne archiwum** użytkownika w Bibliotece ChatGPT: `Asteroidy_v568_ZRODLA_Windows_SteamOS_BEZ_EXE_BEZ_HANGARU.zip` (150 473 406 bajtów) zawiera 1788 pozycji oraz 771 plików C#; przeprowadzono pomyślną kontrolę CRC wszystkich pozycji (Python zipfile.testzip -> PASS).
+**Pełne archiwum** użytkownika w Bibliotece ChatGPT: `Asteroidy_v568_ZRODLA_Windows_SteamOS_BEZ_EXE_BEZ_HANGARU.zip` (150 473 406 bajtów), SHA-256 całego archiwum `271229a995c6e0a096ec401ba969c795a2fe4a4954462465ec1de2e1af5caaa7`, zawiera 1788 pozycji oraz 771 plików C# (307 z `Windows/src`, 279 z `SteamOS/src`, pozostałe w innych katalogach); przeprowadzono pomyślną kontrolę CRC wszystkich pozycji (Python zipfile.testzip -> PASS).
 
 `Wave()` występuje w:
 - `Windows/src/Game.cs`, wiersze **90–101**, SHA256 całego Game.cs: `cb0b398ccf47408174b392ea3e5827d53c188e08c293fe8632ac3898c1e25aae`.
