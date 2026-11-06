@@ -116,7 +116,7 @@ def stage(root,destination):
                 path.write_bytes(blob)
         print(json.dumps({"result":"PASS","planet":"CARBONIS","triangles":TRIANGLES,
             "indexedGpuBytes":len(vertices)+len(indices),
-            "groups":list(groups) if False else list(GROUPS),
+            "groups":list(GROUPS),
             "sourceGeometryUnchanged":True,
             "nativeMissionPlayable":False},sort_keys=True))
     finally:
