@@ -71,9 +71,21 @@ struct GameView: View {
     @StateObject private var input = FlightInput()
     @State private var showCampaign = false
     @State private var campaign = CampaignStore556.load()
+    // The genuine W3 navigation is the normal entry point.
+    // Existing source-GPU verification remains an explicit simulator mode.
+    @State private var showMainMenu =
+        ProcessInfo.processInfo.environment["ASTEROIDY_RENDER_VERIFY"] != "1" &&
+        ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] != "1"
     var body: some View {
         GeometryReader { g in
             ZStack {
+                if showMainMenu {
+                    W3MainMenu568(progress:campaign,openDiagnostic:{
+                        input.releaseHeldControls()
+                        input.gameplayPaused = false
+                        showMainMenu = false
+                    })
+                } else {
                 MetalScene(input: input)
                     .ignoresSafeArea()
                 VStack {
@@ -90,6 +102,14 @@ struct GameView: View {
                             input.planetPreview = true
                             input.tarczaHeld = false
                             input.shooting = false
+                        }
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.cyan)
+                        Button("MENU W3") {
+                            input.releaseHeldControls()
+                            showCampaign = false
+                            input.gameplayPaused = true
+                            showMainMenu = true
                         }
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.cyan)
@@ -256,14 +276,19 @@ struct GameView: View {
                 if showCampaign {
                     CampaignAtlas556(progress: campaign, dismiss: { showCampaign = false })
                 }
+                }
             }.frame(width: g.size.width, height: g.size.height)
         }
         .onChange(of: scenePhase) { phase in
-            input.gameplayPaused = phase != .active || showCampaign
+            input.gameplayPaused = phase != .active || showCampaign || showMainMenu
             if phase != .active { input.releaseHeldControls() }
         }
         .onChange(of: showCampaign) { visible in
-            input.gameplayPaused = visible || scenePhase != .active
+            input.gameplayPaused = visible || showMainMenu || scenePhase != .active
+            if visible { input.releaseHeldControls() }
+        }
+        .onChange(of: showMainMenu) { visible in
+            input.gameplayPaused = visible || showCampaign || scenePhase != .active
             if visible { input.releaseHeldControls() }
         }
     }
