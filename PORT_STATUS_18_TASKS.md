@@ -1,5 +1,42 @@
 # ASTEROIDY iOS — stały harmonogram portowania
 
+## BIEŻĄCY STAN — etap A / menu W3, 06.11.2026
+
+**Kolejność A → B → C → D... bez zmian. Zadanie 14: 10% (+0 pp).
+Postęp całego projektu: 27% wykonane / 73% pozostało.**
+
+- **Potwierdzone:** dwie rzeczywiste symulacje GPU oryginalnego menu
+  W3, NewHome290 i Vanguard431: [42202733165](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202733165)
+  — oba joby PASS. Natywna kompilacja Swift/Metal oraz testy
+  kolizji/asteroid po najnowszej zmianie dostępności:
+  [42210096215](https://github.com/synixad-png/asteroidy-ios/actions/runs/42210096215)
+  — oba joby PASS.
+- **Niepowodzenia wykryte faktycznymi testami:** poprzednie
+  [XCTest 42204712384](https://github.com/synixad-png/asteroidy-ios/actions/runs/42204712384)
+  nie znajdowały identyfikatorów przycisków `w3-home-0` na
+  obu symulatorach; [GPU 42204712407](https://github.com/synixad-png/asteroidy-ios/actions/runs/42204712407)
+  miał PASS iPhone i timeout 50 s na `simctl launch` iPada.
+  **Nie zaliczono** tych prób.
+- **Wdrożone naprawy:** SwiftUI udostępnia każdą z siedmiu
+  akcji jako natywny element dostępności z nazwą i stabilnym
+  identyfikatorem; XCTest sprawdza kontrolki w orientacji
+  poziomej, naprawiono interpolację indeksu oraz włączono
+  zrzut rzeczywistej hierarchii dostępności po niepowodzeniu.
+  Czas operacji `simctl launch` ograniczono do 150 s (zamiast 50 s)
+  bez osłabiania kontroli prawdziwego obrazu i ukończonych
+  komend Metal.
+- **Bieżące testy:** [XCTest siedmiu przycisków
+  42210375096](https://github.com/synixad-png/asteroidy-ios/actions/runs/42210375096)
+  oraz [GPU iPhone/iPad
+  42210271128](https://github.com/synixad-png/asteroidy-ios/actions/runs/42210271128).
+  Ich końcowy wynik **nie jest jeszcze potwierdzony**.
+- **Etap A otwarty**, ponieważ nawigacja i pełna zgodność
+  oświetlenia z Windows v568 nie są zaliczone. **Etap B
+  jeszcze nierozpoczęty.** Wcześniej wydane, niepodpisane IPA
+  pozostaje nienaruszone i jest na Dysku Google użytkownika.
+  Nowego IPA nie generowano.
+
+
 > **AKTUALNA KOLEJNOŚĆ WYKONAWCZA (06.11.2026):** na życzenie użytkownika
 > priorytetem jest **widoczny przepływ gry**, nie pierwotna kolejność
 > numerów: **A. natywne menu → B. wybór misji → C. wejście na planetę →
