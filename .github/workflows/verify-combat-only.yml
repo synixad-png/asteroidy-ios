@@ -12,6 +12,9 @@ on:
       - 'Tests/PlanetDamageLab556Tests.swift'
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
+      - 'ASTEROIDYiOS/MissionCatalog568.swift'
+      - 'ASTEROIDYiOS/CampaignProgress556.swift'
+      - 'Tests/CampaignSelection568Tests.swift'
       - 'ASTEROIDYiOS/W3HomePlanetMetal568.swift'
       - 'ASTEROIDYiOS/W3HomePlanet290.metal'
       - 'Tools/convert_v568_w3_home_planet290.py'
@@ -81,6 +84,11 @@ jobs:
         run: python3 Tests/V568W3MenuSourceImagesTests.py
       - name: Verify source v568 W3 menu start and real navigation contracts
         run: python3 Tests/V568W3NativeMenuContract.py
+      - name: Verify functional 26-sector mission selection and persistence (no gameplay bypass)
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift Tests/CampaignSelection568Tests.swift -o /tmp/campaign-selection-v568
+          /tmp/campaign-selection-v568
       - name: Regress original v568 PlayerShip367 optional runtime model and source-matching skin
         run: python3 Tests/V568PlayerShip367RuntimeContract.py
       - name: Guard against invalid PBR highlight pixels under opposing view and light
