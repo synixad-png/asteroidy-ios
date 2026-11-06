@@ -26,7 +26,7 @@ assert 'case newGame = "NOWA GRA"' in menu
 for caption in reference:
     assert menu.count('= "'+caption+'"')==1,(caption,"missing/duplicated")
 assert menu.index('case newGame')<menu.index('case continueGame')<menu.index('case campaign')
-assert "W3MainMenu568(progress:campaign,openDiagnostic:" in app
+assert "W3MainMenu568(progress:campaign,selectMission:" in app
 assert "Button(\"MENU W3\")" in app
 assert "showMainMenu = true" in app
 assert "showMainMenu = false" in app
@@ -36,7 +36,15 @@ assert "input.releaseHeldControls()" in app
 assert "input.gameplayPaused = visible || showCampaign || scenePhase != .active" in app
 assert "if showMainMenu {" in app
 assert app.index("if showMainMenu {")<app.index("MetalScene(input: input)")
-assert "CampaignAtlas556(progress:progress,dismiss:{page=nil})" in menu
+assert "CampaignAtlas556(progress:progress," in menu
+assert "onSelect:selectMission" in menu
+assert "CampaignStore556.save(campaign)" in app
+assert "campaign.selectUnlocked(sector)" in app
+assert "MissionCatalog568.title(for:progress.selectedSector)" in app
+assert 'accessibilityIdentifier("campaign-26-sector-selector")' in app
+assert 'accessibilityIdentifier("campaign-sector-' in app
+assert ".disabled(!available)" in app
+assert "START MISJI: JESZCZE NIEPODŁĄCZONY" in app
 assert "onOpen" not in menu  # no invented campaign loader
 assert 'openDiagnostic()' in menu
 assert "import WebKit" not in menu and "WKWebView(" not in menu
@@ -59,6 +67,6 @@ assert "accessibilityLabel(item.rawValue)" in menu
 assert "page=item" in menu and "page=nil" in menu
 assert "switch item" in menu
 assert "if item == .campaign || item == .newGame" in menu
-print("PASS: 7 source v568 W3 home actions, native menu entry, safe visible routes")
+print("PASS: 7 W3 native actions and real 26-sector unlocked-only persistent mission selection")
 print("PASS: simulator GPU verification opt-outs remain, diagnostics and collisions protected")
 print("LIMIT: actual iPhone/iPad seven-button XCTest and full PC W3 pixel parity are separately gated")
