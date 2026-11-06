@@ -710,3 +710,33 @@ dostępna niezależnie. Plik jest niepodpisany i nieprzetestowany
 na fizycznym urządzeniu. Etap A pozostaje otwarty do testów
 nawigacji, etap B nierozpoczęty. **Postęp bez zmian: 27%,
 pozostało 73%, zadanie nr 14 10% (+0 pp).**
+
+### 06.11.2026 — etap A, Apple Intel: pierwsze nowe rzeczywiste wyniki
+
+Po wykryciu anulowanych bez wyniku jobów na `macos-15`,
+przywrócono `macos-15-intel` wyłącznie do dwóch workflow
+źródłowego W3 (nie do wydania IPA). Zachowano wszystkie
+ograniczenia źródłowych SHA256, własny prawdziwy Apple
+Simulator, `gpuCommandBufferCompleted`, oryginalne
+screenshoty oraz pełne XCTest i `.xcresult`.
+Testy wreszcie faktycznie uruchomiły aplikację:
+
+- [GPU 42217818216](https://github.com/synixad-png/asteroidy-ios/actions/runs/42217818216):
+  **iPhone PASS** po rzeczywistym zrzucie menu W3 i dowodzie
+  ukończonego renderowania NewHome290. iPad podczas
+  tego wpisu wciąż w rzeczywistym renderowaniu i walidacji.
+- [UI XCTest 42217810810](https://github.com/synixad-png/asteroidy-ios/actions/runs/42217810810):
+  **oba joby iPhone/iPad aktywnie wykonywały siedem naciśnięć
+  menu i powroty**. Nie oznaczać jako PASS bez końcowego
+  `success` i sprawdzenia `.xcresult`.
+- Wcześniejsze [42212331207](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331207)
+  i [42212331152](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331152)
+  nie zaliczają A — ich joby zostały anulowane.
+- Nowego IPA nie generowano. Obecne źródła podtrzymują
+  użytkownikowi już udostępniony `W3_MENU_NAV`.
+
+**Decyzja zgodna z harmonogramem:** A OTWARTY do pełnych
+testów nawigacji; etap B niewdrażany, nie zastępować
+oryginalnej kampanii demonstracją. Osiemnaście numerów
+zadań bez zmian, zadanie 14 **10% (+0 pp)**, łącznie
+**27% ukończone / 73% pozostało**.
