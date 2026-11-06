@@ -39,7 +39,10 @@ assert "CampaignAtlas556(progress:progress,dismiss:{page=nil})" in menu
 assert "onOpen" not in menu  # no invented campaign loader
 assert 'openDiagnostic()' in menu
 assert "import WebKit" not in menu and "WKWebView(" not in menu
-assert "MODEL PLANETY 3D — DO PRZENIESIENIA" in menu
+assert "W3HomePlanetMetal568.isAvailable" in menu
+assert "W3HomePlanetMetal568(yaw:planetYaw,pitch:planetPitch)" in menu
+assert "ORYGINALNA PLANETA NEWHOME290 / 3D METAL" in menu
+assert "MODEL PLANETY 3D — BRAK ZASOBÓW" in menu
 assert "Oryginalny model planety 3D nie jest jeszcze przeniesiony" in menu
 assert 'hangar_h55.glb' in menu
 assert 'Wczytanie rzeczywistego zapisu' in menu
