@@ -45,3 +45,9 @@ W oryginalnym programie `GpuSphere67.cs:433,442-443` wyświetla odrębnie objęt
 3. Dopiero po potwierdzeniu przez źródła i wizualną kontrolę uznać odtworzenie pełnych efektów za zweryfikowane. Nie zmieniać reszty kampanii ani nie traktować źródłowych testów jako gwarancji 100%.
 
 **Łączny harmonogram portu pozostaje na 38% / 62%.** Nowe efekty uzupełniają brak pierwszej misji, nie stanowią dowodu ukończenia całej gry.
+
+## Weryfikacja kompilacji Xcode — uzupełnienie
+
+Pierwszy build [42277254285](https://github.com/synixad-png/asteroidy-ios/actions/runs/42277254285) wykonał pełną weryfikację Swift/Linux **SUCCESS**, lecz `compile-device` **FAILURE** w Xcode 16.4: `CarbonisExplosion524Renderer.swift:46` wykorzystywał nieistniejącą metodę `MTLTextureDescriptor.texture3DDescriptor`; pozostałe błędy zgłoszone przy `.r8Unorm`, `.shaderRead` i `.shared` były skutkiem braku typu deskryptora. Naprawa: utworzono `MTLTextureDescriptor()` i jawnie skonfigurowano `textureType = .type3D`, `pixelFormat = .r8Unorm`, szerokość/wysokość/głębokość `64`, `mipmapLevelCount=1`, `usage=.shaderRead`, `storageMode=.shared`. To zachowuje **dokładnie te same 262144 bajty szumu** z oryginału. Dodatkowo niepowodzenie runtime inicjalizacji samej objętościowej funkcji GPU nie wyłącza gry: zgodnie z podejściem źródłowego `InitExplosion524` zachowuje geometryczne odłamki i cząsteczki oraz emituje komunikat diagnostyczny.
+
+Uruchomiono [ponowny build 42278648837](https://github.com/synixad-png/asteroidy-ios/actions/runs/42278648837) commit `67b4e3e3a39dc3fc376d7ba402d7ed9dcd73de45`. Przed Xcode **PASS `verify-sphere-linux`**, w tym 45 kontroli efektów i 18 testów całej pierwszej misji. Przy ostatnim sprawdzeniu `compile-device` wciąż **queued**, liczba artefaktów **0**. Do uznania wydania za gotowe wymagane jest `compile-device=success` i rzeczywiste pojawienie się `ASTEROIDY-iOS-device-unsigned-ipa` w artefaktach. Brak potwierdzenia interaktywnego GPU Apple.
