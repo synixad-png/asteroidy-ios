@@ -130,8 +130,13 @@ struct GameView: View {
                     },onSurvivalChanged:{ lives,charges in
                         Sector01Shop568.persistSurvival(
                             lives:lives,shieldCharges:charges)
+                    },onAudioEvent:{ code in
+                        audio.sourceEffect(code)
                     },preparedWave:preparedWave)
                 } else if showMainMenu {
+                    if !audio.startupComplete {
+                        OriginalAudioLoadingView568(audio:audio)
+                    } else {
                     W3MainMenu568(progress:campaign,selectMission:{ sector in
                         if campaign.selectUnlocked(sector) {
                             CampaignStore556.save(campaign)
@@ -145,6 +150,7 @@ struct GameView: View {
                         audio.stopForDiagnostic()
                         showMainMenu = false
                     },openCampaignOnEntry:reopenAtlasAfterCarbonis)
+                    }
                 } else {
                 MetalScene(input: input)
                     .ignoresSafeArea()

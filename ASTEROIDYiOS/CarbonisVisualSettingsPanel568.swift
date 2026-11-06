@@ -51,14 +51,17 @@ struct CarbonisVisualSettingsPanel568: View {
             HStack(spacing:8) {
                 tabButton("WYBUCHY 3D",index:0)
                 tabButton("POCISKI",index:1)
+                tabButton("AUDIO",index:2)
             }
             .accessibilityIdentifier("w3-effects-tabs-524-285")
             ScrollView {
                 VStack(alignment:.leading,spacing:compact ? 8:13) {
                     if tab==0 {
                         explosionPage
-                    } else {
+                    } else if tab==1 {
                         projectilePage
+                    } else {
+                        OriginalAudioSettingsPanel568(compact:compact)
                     }
                 }
                 .padding(.bottom,14)
