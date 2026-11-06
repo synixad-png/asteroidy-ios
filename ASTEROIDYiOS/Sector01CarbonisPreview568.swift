@@ -316,7 +316,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             "sourceMaterialGroups":2,
                             "sourceRockMeshes":activeRocks.count,
                             "sourceRockMeshVerticesPerObject":CarbonisRockGeometry568.sourceVertexCount,
-                            "sourceRockPositionsAdvanced":true,
+                            "sourceRockUpdateRoutine":"SphereAsteroid556.advance",
                             "enemyAIIntegrated":false,
                             "nativeMissionPlayable":false
                         ]
