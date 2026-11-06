@@ -135,6 +135,11 @@ jobs:
           /tmp/sphere-sector-full
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift Tests/SphereCombatBatch556Tests.swift -o /tmp/sphere-combat-full
           /tmp/sphere-combat-full
+      - name: Verify live Carbonis level-one flight and source combat
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift ASTEROIDYiOS/CarbonisCombat568.swift Tests/CarbonisCombat568Tests.swift -o /tmp/ios-carbonis-combat
+          /tmp/ios-carbonis-combat
   compile-device:
     needs: verify-sphere-linux
     if: ${{ github.event.repository.private == false }}
