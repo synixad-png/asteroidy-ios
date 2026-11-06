@@ -45,6 +45,9 @@ struct CarbonisCombat568 {
     var bullets:[Projectile] = []
     var hostileShots:[Projectile] = []
     var tokenPickups:[TokenPickup] = []
+    // Pure visual state ported from Game.Particles/Lights/Explosion524
+    // and CombatPieces125. Independent from hitboxes and rewards.
+    var destruction=CarbonisDestruction524()
     var incoming:MissionIncoming568
     var elapsed:Float = 0
     var invincible:Float = 4.5
@@ -152,6 +155,7 @@ struct CarbonisCombat568 {
         let dt=min(1/60,max(0,requested))
         guard dt>0 else{return}
         elapsed+=dt; cooldown=max(0,cooldown-dt)
+        destruction.tick(dt:dt)
         invincible=max(0,invincible-dt)
         flight.tick(move:move,aim:aim,dt:dt)
         stepTokenPickups(dt:dt)
@@ -687,7 +691,16 @@ struct CarbonisCombat568 {
                     shooters[j].core.hp-=shot.damage
                     impact=true
                     bullets[i].hitShooterPhases.append(shooters[j].phase)
-                    if shooters[j].core.hp<=0 {
+                    // BossTunnelGame.HitBug: exact 6 sparks + 3/22 burst,
+                    // physical 11-part debris only on fatal hit.
+                    let fatal=shooters[j].core.hp<=0
+                    let impactPoint=Sphere67.offset(
+                        shot.point,by:shot.velocity*(dt*firstShooter))
+                    destruction.shooterHit(
+                        at:shooters[j].core.position,impactPoint:impactPoint,
+                        velocity:shot.velocity,momentum:shooters[j].velocity,
+                        defeated:fatal,time:elapsed,rng:&random)
+                    if fatal {
                         let destroyed=shooters.remove(at:j)
                         shooterKills+=1
                         score+=destroyed.core.hunter ? 300 : 180
@@ -730,10 +743,15 @@ struct CarbonisCombat568 {
                     bullets[i].hitRockSeeds.append(rocks[j].shapeSeed)
                     if rocks[j].health<=0 {
                         let removed=rocks.remove(at:j)
+                        destruction.rockDestroyed(
+                            removed,time:elapsed,rng:&random)
                         rocksDestroyed+=1
                         score+=Self.sourceRockScore(removed)
                         dropSourceRockLoot(removed)
                         splitRock(removed)
+                    } else {
+                        // Game.cs:258 HitFlash only, no destruction cloud.
+                        destruction.rockHit(rocks[j],rng:&random)
                     }
                 }
             }
