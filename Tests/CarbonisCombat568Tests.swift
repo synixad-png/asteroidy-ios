@@ -213,6 +213,28 @@ import Foundation
         check(upgraded.shieldCharges==0 && upgraded.armor==25 &&
               upgraded.hull==60 && upgraded.invincible==1,
               "real source shop shield intercepts first hit")
+        var rockProfile=Sector01Shop568.State()
+        rockProfile.shieldCharges=1
+        var equipped=prepared
+        equipped.shopProfile=rockProfile
+        var shieldedRock=CarbonisCombat568(equipped)
+        shieldedRock.invincible=0
+        shieldedRock.shooters=[]
+        shieldedRock.rocks=[SphereAsteroid556(
+            position:shieldedRock.flight.position,
+            velocity:Vec2(x:0,y:0),radius:16,
+            size:3,tier:0,health:4)]
+        shieldedRock.step(move:Vec2(x:0,y:0),
+            aim:Vec2(x:0,y:0),shooting:false,dt:1/120)
+        check(shieldedRock.shieldCharges==0 &&
+              abs(shieldedRock.invincible-0.8)<0.01 &&
+              shieldedRock.armor==25,
+              "source bought shield absorbs rock collision for 0.8 seconds")
+        check(CarbonisCombat568.distance(
+            shieldedRock.flight.position,
+            shieldedRock.rocks[0].position)>40,
+            "source shield pushes rock to radius+32, not overlapping the ship")
+
         upgraded.invincible=0
         upgraded.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:1),
                       shooting:true,dt:1/120)
