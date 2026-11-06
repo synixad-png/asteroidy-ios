@@ -60,8 +60,11 @@ enum CarbonisShooterMesh71 {
     }
     private static func curve55(_ a:[Float],_ r:Int,_ t:Float)->Float {
         let p=a[max(0,r-2)],q=a[r-1],v=a[r],w=a[min(a.count-1,r+1)]
-        return 0.5*((2*q)+(-p+v)*t+(2*p-5*q+4*v-w)*t*t
-                    +(-p+3*q-3*v+w)*t*t*t)
+        let term0=2*q
+        let term1=(-p+v)*t
+        let term2=(2*p-5*q+4*v-w)*t*t
+        let term3=(-p+3*q-3*v+w)*t*t*t
+        return 0.5*(term0+term1+term2+term3)
     }
     private struct Builder {
         var faces=[Triangle]()
