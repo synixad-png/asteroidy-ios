@@ -104,7 +104,7 @@ ck('static let boreasSourceLevel = 5' in intro and
    'Real PlanetAssetBytes463 loads Boreas at original game.Level=5, not 1')
 ck('level:1,time:introTime41' not in metal,
    'Hard-coded level=1 incorrectly rotates the Boreas GLB in cinematic')
-ck('@Published var introPreview41 = true' in app,
+ck('@Published var introPreview41 =\n        ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] != "1"' in app,
    'The new source cinematic must be initially visible, not old training arena')
 ck('@Published var planetPreview = true' in app,
    'Existing source Boreas sector still enabled as alternate scene')
