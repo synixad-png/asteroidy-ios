@@ -231,8 +231,8 @@ struct CarbonisCombat568 {
                 continue
             }
             if distance<165 && distance>0.1 {
-                item.velocity=item.velocity+
-                    delta*(dt*210/max(distance,0.1))
+                let attraction=delta*(dt*210/max(distance,0.1))
+                item.velocity=item.velocity+attraction
             }
             let drag:Float=distance<165 ? 1.4 : 0.18
             item.velocity=item.velocity*exp(-dt*drag)
@@ -564,8 +564,8 @@ struct CarbonisCombat568 {
                 origin=Sphere67.offset(origin,
                     by:side*(index==0 ? -9:9))
             }
-            let raw=heading*(610+Float(upgradeLevel-1)*95)
-                +flight.velocity
+            let speed=610+Float(upgradeLevel-1)*95
+            let raw=heading*speed+flight.velocity
             let velocity=CarbonisBodyContact68.transported(
                 raw,from:flight.position,to:origin)
             let damage=selectedWeapon == .pulse && upgradeLevel==3 ? 2 : 1
