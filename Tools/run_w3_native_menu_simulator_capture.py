@@ -56,7 +56,9 @@ def capture(app,reports,kind):
         planet_proof=Path(raw.strip())/"Library"/"Caches"/gpu_proof_name
         candidate=reports/f"{kind}_W3_candidate_unverified.png"
         verified=reports/f"{kind}_VERIFIED_ASTEROIDY_W3_NATIVE.png"
-        for stale in (proof,planet_proof,candidate,verified):
+        for stale in (proof,planet_proof,
+                      Path(raw.strip())/"Library"/"Caches"/"ASTEROIDY_W3_Vanguard431_GPUProof.json",
+                      candidate,verified):
             try:stale.unlink(missing_ok=True)
             except OSError as exc:
                 raise AppValidationFailed("Cannot clear stale evidence: "+str(exc))
@@ -106,6 +108,32 @@ def capture(app,reports,kind):
                 if gpu.get(key)!=v}
         if errors:
             raise AppValidationFailed("NewHome290 GPU proof mismatches: "+str(errors))
+        if kind=="IPAD":
+            # Original PC W3 HOME right-hand panel shows default
+            # Vanguard431 ShipType 1. iPad displays that side panel;
+            # narrow iPhones intentionally omit it in responsive layout.
+            ship_path=Path(raw.strip())/"Library"/"Caches"/"ASTEROIDY_W3_Vanguard431_GPUProof.json"
+            if not ship_path.is_file():
+                raise AppValidationFailed("Actual v568 W3 Vanguard431 ship GPU proof missing on iPad")
+            try:
+                ship=json.loads(ship_path.read_text(encoding="utf-8"))
+            except (OSError,ValueError) as exc:
+                raise AppValidationFailed("Unreadable W3 Vanguard431 GPU proof: "+str(exc))
+            expected_ship={
+                "source":"Vanguard431-default-ShipType1-v568",
+                "gpuCommandBufferCompleted":True,
+                "vertexCount":194427,
+                "meshSHA256":"f5d6d0107437fa54c3e8505f9adfbf6143cc877cb970eef687603609e26f9f4a",
+                "skinSHA256":"2945f711a6b559bfb5fdfb79750a2f2f77e2071aa5f3f4173eb450bce81b8b95",
+                "originalW3PreviewScale":0.34,
+                "simulatorOnly":True
+            }
+            differences={key:(ship.get(key),value)
+                         for key,value in expected_ship.items() if ship.get(key)!=value}
+            if differences:
+                raise AppValidationFailed("W3 source ship GPU mismatch: "+str(differences))
+            (reports/f"{kind}_W3_Vanguard431_GPU_proof.json").write_text(
+                json.dumps(ship,sort_keys=True,indent=2),encoding="utf-8")
         (reports/f"{kind}_W3_NewHome290_GPU_proof.json").write_text(
             json.dumps(gpu,sort_keys=True,indent=2),encoding="utf-8")
         (reports/f"{kind}_W3_appearance_proof.json").write_text(
