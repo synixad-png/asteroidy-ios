@@ -25,6 +25,8 @@ on:
       - 'ASTEROIDYiOS/Sector01PreparedWave568.swift'
       - 'Tests/Sector01PreparedWave568Tests.swift'
       - 'ASTEROIDYiOS/CarbonisSurface277.swift'
+      - 'ASTEROIDYiOS/CarbonisRockGeometry568.swift'
+      - 'Tests/CarbonisRockGeometry568Tests.swift'
       - 'Tests/CarbonisSurface277Tests.swift'
       - 'Tests/Sector01Entry568Tests.swift'
       - 'ASTEROIDYiOS/Sector01Carbonis568.metal'
