@@ -26,3 +26,21 @@ assert "fixedClock.advance(elapsed:elapsed)" in renderer
 assert "introTime41+Float(elapsed)" in renderer
 print("PASS: campaign/background pauses simulation and cinematic clock without a catch-up")
 print("LIMIT: source contract only; requires native iOS touch interruption test")
+
+# CARBONIS C279 uses its own session and two invisible half-screen zones.
+# Interrupted right-side aiming must never leave the ship firing indefinitely.
+sector = Path("ASTEROIDYiOS/Sector01Scene568.swift").read_text(encoding="utf-8")
+session = Path("ASTEROIDYiOS/CarbonisSession568.swift").read_text(encoding="utf-8")
+assert "private var movement:some Gesture" in sector
+assert "session.input(move:Vec2(" in sector
+assert "private var aiming:some Gesture" in sector
+assert "shooting:true)" in sector
+assert "session.input(aim:Vec2(x:0,y:0),shooting:false)" in sector
+assert "private var fireGesture" not in sector
+assert 'Text("OGIEŃ")' not in sector
+assert ".onChange(of:scenePhase)" in sector
+assert "session.release()" in sector
+assert "if phase != .active" in sector
+assert "func release()" in session and "shooting=false" in session
+print("PASS: CARBONIS right touch starts sustained fire, drag keeps aiming, lift/background cancels fire; separate left flight unchanged")
+print("LIMIT: actual simultaneous two-finger touch requires iPhone/iPad test")
