@@ -39,6 +39,9 @@ assert "PACKAGE = \"com.synixad.asteroidyios\"" in source
 assert "run_command([" in source
 assert 'parser.add_argument("--only",choices=["IPHONE","IPAD","BOTH"],' in source
 assert 'if kind not in kinds:' in source
+assert 'tested = " and ".join(kinds)' in source
+assert 'rendered on selected Apple simulator family: {tested}' in source
+assert 'rendered on both Apple simulators' not in source
 
 # Exercise the ACTUAL schema validator, not a static-only regex.
 import importlib.util
