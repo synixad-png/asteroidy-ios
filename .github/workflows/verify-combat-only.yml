@@ -20,6 +20,8 @@ on:
       - 'Tests/MissionStart261Tests.swift'
       - 'ASTEROIDYiOS/MissionWave568.swift'
       - 'Tests/MissionWave568Tests.swift'
+      - 'ASTEROIDYiOS/Sector01PreparedWave568.swift'
+      - 'Tests/Sector01PreparedWave568Tests.swift'
       - 'ASTEROIDYiOS/CarbonisSurface277.swift'
       - 'Tests/CarbonisSurface277Tests.swift'
       - 'Tests/Sector01Entry568Tests.swift'
