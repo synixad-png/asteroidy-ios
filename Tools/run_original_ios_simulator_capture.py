@@ -27,6 +27,35 @@ import time
 
 PACKAGE = "com.synixad.asteroidyios"
 
+# Original v568 PC 4311 GPU mesh + glTF image, not a guessed asset.
+# The app writes this JSON only after GPU command-buffer completion
+# in the *actual* sourceVanguardTexturedToonFragment431 path.
+EXPECTED_GPU_PROOF={
+    "evidence":"actual-source-vanguard-metal-command-buffer",
+    "gpuCommandBufferCompleted":True,
+    "pipeline":"sourceFighterTexturedPipeline431",
+    "vertexCount":194427,
+    "textureWidth":2048,
+    "textureHeight":2048,
+    "meshSHA256":"f5d6d0107437fa54c3e8505f9adfbf6143cc877cb970eef687603609e26f9f4a",
+    "skinSHA256":"2945f711a6b559bfb5fdfb79750a2f2f77e2071aa5f3f4173eb450bce81b8b95",
+    "bundleID":PACKAGE,
+    "simulatorTestOnly":True
+}
+
+def validate_render_proof(proof):
+    if not isinstance(proof,dict):
+        raise AppValidationFailed("original Vanguard GPU proof is not JSON object")
+    mismatches={
+        key:(proof.get(key),expected)
+        for key,expected in EXPECTED_GPU_PROOF.items()
+        if proof.get(key)!=expected
+    }
+    if mismatches:
+        raise AppValidationFailed(
+            f"Original Vanguard431 GPU command buffer proof mismatches: {mismatches}")
+    return True
+
 class EnvironmentUnavailable(RuntimeError): pass
 class AppValidationFailed(RuntimeError): pass
 
@@ -153,26 +182,7 @@ def capture(app:Path,reports:Path):
             except (OSError,ValueError) as exc:
                 raise AppValidationFailed(
                     f"{kind}: corrupt original Vanguard431 GPU draw proof: {exc}")
-            required={
-                "evidence":"actual-source-vanguard-metal-command-buffer",
-                "gpuCommandBufferCompleted":True,
-                "pipeline":"sourceFighterTexturedPipeline431",
-                "vertexCount":194427,
-                "textureWidth":2048,
-                "textureHeight":2048,
-                "meshSHA256":"f5d6d0107437fa54c3e8505f9adfbf6143cc877cb970eef687603609e26f9f4a",
-                "skinSHA256":"2945f711a6b559bfb5fdfb79750a2f2f77e2071aa5f3f4173eb450bce81b8b95",
-                "bundleID":PACKAGE,
-                "simulatorTestOnly":True
-            }
-            mismatches={
-                key:(proof.get(key),value)
-                for key,value in required.items()
-                if proof.get(key)!=value
-            }
-            if mismatches:
-                raise AppValidationFailed(
-                    f"{kind}: original Vanguard431 GPU proof mismatch: {mismatches}")
+            validate_render_proof(proof)
             (reports/f"{kind}_GPU_source431_proof.json").write_text(
                 json.dumps(proof,indent=2,sort_keys=True),encoding="utf-8")
             verified=reports/f"{kind}_VERIFIED_ASTEROIDY_source431.png"
