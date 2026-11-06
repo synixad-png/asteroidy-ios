@@ -19,6 +19,7 @@ on:
       - 'Tests/SourceVanguardTextureContract431.py'
       - 'Tools/verify_original_vanguard_resources.py'
       - 'Tests/ReleaseGateVanguard431Tests.py'
+      - 'Tests/OriginalVanguard431InstalledAssetsTests.py'
       - 'Tools/prepare_vanguard431_assets.py'
       - 'Tests/PrepareVanguardPackTests.py'
       - 'Tools/verify_ipa.py'
@@ -53,6 +54,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify exact original v556 SHA256 and binary resource formats
         run: python3 Tools/verify_ios_inputs.py
+      - name: Validate actual original Vanguard431 source mesh, BaseColor and ALL 194427 UVs
+        run: |
+          set -euo pipefail
+          python3 Tests/OriginalVanguard431InstalledAssetsTests.py
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets
       - name: Guard v556 Boreas default scene, flat diagnostic and both iOS device families
         run: python3 Tests/SourceSceneStartupContract556.py
       - name: Swift frontend parse of current iPhone/iPad Metal scene (syntax only)
