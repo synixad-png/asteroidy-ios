@@ -804,3 +804,43 @@ testów nawigacji; etap B niewdrażany, nie zastępować
 oryginalnej kampanii demonstracją. Osiemnaście numerów
 zadań bez zmian, zadanie 14 **10% (+0 pp)**, łącznie
 **27% ukończone / 73% pozostało**.
+
+### 06.11.2026 — wykonany etap przejścia z atlasu do oryginalnej planety CARBONIS (C)
+
+Na bazie ukończonego wyboru 26 sektorów z etapu B wdrożono
+w `App.swift` i `W3MainMenu568.swift` rzeczywistą nawigację
+`Menu W3 → Kampania / Nowa gra → odblokowany sektor 01 →
+oryginalna scena planety CARBONIS → WRÓĆ DO MAPY`.
+Przycisk jest dostępny wyłącznie dla **odblokowanego,
+wybranego sektora 01 i istniejących zasobów C279**. Nie
+przekierowuje 25 pozostałych misji do zastępczego świata
+Boreas i nie modyfikuje `completedMask`.
+`Sector01Entry568.swift` weryfikuje bramkę oryginalnych
+zasobów, `Sector01Scene568.swift` renderuje źródłowe
+270249 trójkątów z indeksami/UV i umożliwia obrót
+rzeczywistej planety gestem palca. Powrót automatycznie
+otwiera ten sam atlas 26 misji.
+
+**Potwierdzone automatycznie:**
+[GitHub Actions 42225858732](https://github.com/synixad-png/asteroidy-ios/actions/runs/42225858732)
+— dwa joby **SUCCESS**, natywna kompilacja iOS/Metal,
+test `Sector01Entry568Tests.swift` i dotychczasowe regresje
+Physics68/Damage556/asteroidy. Brak natywnego testu
+interaktywnego dotyku na fizycznym iOS, więc nie deklarujemy
+tej weryfikacji.
+
+**Nie jest to jeszcze pełna grywalna misja**: oryginalne
+`Game.StartHubMission261` / `Wave()`, fizyka lotu,
+kamera statku, kolizje z C279, fale i warunki zwycięstwa
+muszą zostać podłączone w kolejnych zadaniach C/D.
+Nie przerabiać treningowego Boreas na fałszywy CARBONIS.
+
+**Aktualna ostrożna ocena:** projekt **29% (+1 pp) / 71%
+pozostało**; w stałej liście 18 zadań: #12 7→8%,
+#13 34→35%, #14 14→15% (+1 pp każde); pozostałe 15
+bez zmian. Zasady kolejności A→J, oryginalne modele
+i mechaniki chronione. Niedokończona pełna weryfikacja
+menu A nie może być pretekstem do kolejnych sesji
+bez progresu funkcjonalnego.
+[Raport wykonania C](Reports/V568_STAGE_C_CARBONIS_ENTRY_2026-11-06.md).
+**Nowego IPA nie generowano.**
