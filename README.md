@@ -1,5 +1,14 @@
 # ASTEROIDY iOS — natywny port Swift/Metal (projekt w trakcie rozwoju)
 
+## Bieżący postęp projektu — 6 listopada 2026
+
+**29% wykonane, 71% pozostało.** Natywne menu W3 → wybór 26 sektorów → oryginalna scena 3D CARBONIS 01 jest dostępna w źródłach; nie jest jeszcze pełną grywalną misją. Kolejny krok etapu C: źródłowa mechanika startu, fale i kontakt statku z terenem. [Stały harmonogram 18 zadań](PORT_STATUS_18_TASKS.md).
+
+Ostatnia zmiana: **dokładny odczyt oryginalnej mapy wysokości CARBONIS 512×256** (`CarbonisSurface277.swift`, na podstawie Windows v568 `Carbonis277.cs`). Inspektor wywołuje prawdziwe `SurfaceRadius`, wejście wymaga poprawnego SHA-256 szóstego źródłowego zasobu. **Lokalne testy Swift/Linux 27/27 PASS**; nowa kompilacja Xcode i test fizycznego iOS **jeszcze niepotwierdzone**. [Raport i ograniczenia](Reports/V568_STAGE_C_CARBONIS_TERRAIN_SOURCE_2026-11-06.md).
+
+**Aktualny kod nie wydaje nowego IPA.** Poprzednie IPA na Dysku Google jest starszym wydaniem i nie zawiera najnowszego terenu/rozwoju misji. Całość gry nie jest jeszcze ukończona.
+
+
 ## Aktualna kompilacja IPA — 5 listopada 2026
 
 Na wyraźne polecenie użytkownika uruchomiono **budowanie niepodpisanego IPA dla fizycznego iPhone'a/iPada** z commita `18e18797046dd37807650313990913dce38ab522`:
