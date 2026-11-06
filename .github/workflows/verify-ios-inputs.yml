@@ -22,6 +22,9 @@ on:
       - 'Tests/OriginalVanguard431InstalledAssetsTests.py'
       - 'Tools/prepare_vanguard431_assets.py'
       - 'Tests/PrepareVanguardPackTests.py'
+      - 'Tools/run_original_ios_simulator_capture.py'
+      - 'Tests/SimulatorSmokeHarnessTests.py'
+      - 'Tools/verify_simulator_render_snapshot.swift'
       - 'Tools/verify_ipa.py'
       - '.github/workflows/build-ios-iphone-ipad-manual.yml'
       - 'Tests/SourceFighterToon60Tests.swift'
@@ -81,3 +84,5 @@ jobs:
           python3 Tests/SourceVanguardTextureContract431.py
           python3 Tests/ReleaseGateVanguard431Tests.py
           python3 Tests/PrepareVanguardPackTests.py
+          python3 -m py_compile Tools/run_original_ios_simulator_capture.py
+          python3 Tests/SimulatorSmokeHarnessTests.py
