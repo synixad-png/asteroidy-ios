@@ -22,3 +22,7 @@
 - Należy niezależnie potwierdzić sukces CI Swift/Linux i **natywnej kompilacji Xcode**. Tylko rzeczywisty test dwóch palców na iPhone/iPad może potwierdzić brak konfliktów gestów na danym urządzeniu.
 
 Nie zmieniono planu całego portu (38% wykonane / 62% pozostało) ani listy 18 zadań; zadanie dotyczy konkretnej poprawki sterowania w pierwszej misji.
+
+## Potwierdzona regresja i uruchomienie wydania
+
+[GitHub Actions 42271566729](https://github.com/synixad-png/asteroidy-ios/actions/runs/42271566729): `verify-combat-no-ipa` zakończył się **SUCCESS** dla commita `a05687790741465410528576c90bb19f836bda99`. Obejmuje obie kontrole sterowania i rzeczywiste testy pocisków oraz fizyki CARBONIS 01. Po sukcesie uruchomiono [kompilację IPA 42272087164](https://github.com/synixad-png/asteroidy-ios/actions/runs/42272087164) dla commita `d6ccf2f1eb86cef02e6a249678ca6de590532f1d`, który obejmuje zmianę gestów, usunięcie przycisku i testy jako warunek przed zbudowaniem iOS. Wynik i obecność artefaktu trzeba sprawdzić osobno; w chwili dopisania wpisu `verify-sphere-linux` jeszcze trwał, a `compile-device` nie rozpoczął się. Nie ma potwierdzenia interaktywnego testu na fizycznym telefonie.
