@@ -17,6 +17,9 @@ struct CarbonisCombat568 {
         var velocity: Vec2
         var life: Float
         var hostile: Bool
+        // Original Game.Bullet.Kind and BossProjectile.Kind select visual
+        // material and shot tint, not ballistic damage.
+        var kind:Int = 0
         // Game.Fire Pulse rank1 deals one damage. Hostile shots override
         // this with ShooterShotDamage96 (eight damage on CARBONIS).
         var damage:Int = 1
@@ -567,7 +570,8 @@ struct CarbonisCombat568 {
                     to:Sphere67.normal(start)))
                 hostileShots.append(Projectile(
                     point:start,velocity:velocity,life:2.6,
-                    hostile:true,damage:tactics.projectileDamage))
+                    hostile:true,kind:tactics.type==3 ? 2:0,
+                    damage:tactics.projectileDamage))
             }
             fighter.muzzle=0.10
             fighter.telegraph=0
@@ -616,7 +620,10 @@ struct CarbonisCombat568 {
                 (selectedWeapon != .scatter || index==count/2) ? 2:1
             bullets.append(Projectile(
                 point:origin,velocity:velocity,life:1.1,
-                hostile:false,damage:damage,pierce:pierce))
+                hostile:false,
+                kind:selectedWeapon == .twin ? 1 :
+                     selectedWeapon == .scatter ? 2:0,
+                damage:damage,pierce:pierce))
         }
     }
 
