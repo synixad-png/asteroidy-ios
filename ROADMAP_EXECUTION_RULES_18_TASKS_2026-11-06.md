@@ -546,3 +546,45 @@ powrót z diagnozy, następnie ocena zgodności z PC.
 Nie przechodzimy do B, dopóki A nie spełnia bramki.
 Stała lista 18 zadań nienaruszona: projekt 27% wykonany,
 73% pozostało, zadanie 14 10% (+0 pp).
+
+
+### 06.11.2026 — diagnoza blokady nawigacji W3, naprawa dostępności
+
+**Zakończone testy dotykowe ujawniły rzeczywisty problem:**
+[42204712384](https://github.com/synixad-png/asteroidy-ios/actions/runs/42204712384)
+— oba joby FAIL; standardowy `app.buttons["w3-home-0"]`
+nie znajdował pierwszego przycisku na iPhonie ani iPadzie.
+Nie oznaczono testu jako zaliczony na podstawie wcześniejszego
+GPU/screenshotu. Do `W3MainMenu568.swift` dodano
+jawne grupowanie `accessibilityElement(children:.contain)`
+dla menu i modalnych paneli, natywne `isButton`,
+`accessibilityLabel` oraz stabilne identyfikatory 7 przycisków.
+`W3MenuNavigationUITests.swift` otrzymał prawidłową interpolację
+indeksów, wymuszenie poziomego ustawienia symulatora i zapis
+faktycznego `XCUIApplication.debugDescription` oraz
+zrzutu ekranu przy błędzie. Test nadal MUSI nacisnąć przyciski,
+otworzyć i zamknąć każdy panel i powrócić z diagnostyki.
+Nowy bieg:
+[42210375096](https://github.com/synixad-png/asteroidy-ios/actions/runs/42210375096)
+— wynik do potwierdzenia.
+
+Poprzedni test renderowania
+[42204712407](https://github.com/synixad-png/asteroidy-ios/actions/runs/42204712407):
+iPhone PASS, iPad **INCONCLUSIVE** z powodu przekroczenia 50 s
+przez `xcrun simctl launch`. Zwiększono **ograniczony**
+timeout uruchamiania do 150 s bez usuwania jakiejkolwiek
+kontroli sum źródłowych ani `gpuCommandBufferCompleted`.
+Nowy test:
+[42210271128](https://github.com/synixad-png/asteroidy-ios/actions/runs/42210271128)
+— wynik do potwierdzenia.
+
+**Po poprawce dostępności natywna kompilacja iOS oraz
+regresje mechanik 7/8 PASS:**
+[42210096215](https://github.com/synixad-png/asteroidy-ios/actions/runs/42210096215).
+Nie oznacza to jeszcze PASS dla testu dotykowego.
+
+**Bramka A niezaliczona, B nierozpoczęte.** Harmonogram
+18 zadań i proporcje bez zmiany: nr 14 **10% (+0 pp)**,
+projekt **27% / 73% pozostało**.
+Wcześniej wydane IPA (`5242e4f`, na prywatnym Dysku Google)
+nie jest przebudowywane automatycznie.
