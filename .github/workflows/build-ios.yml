@@ -28,7 +28,7 @@ jobs:
               'Actions: https://github.com/'+owner+'/'+repo+'/actions/runs/'+context.runId,
               'Status: requested; consult latest GitHub Actions jobs/artifacts',
               'Signing: unsigned IPA, device signing required'
-            ].join('\\n')+'\\n';
+            ].join('\n')+'\n';
             let sha;
             try {
               const current=await github.rest.repos.getContent({owner,repo,path});
