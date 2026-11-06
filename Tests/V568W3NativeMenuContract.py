@@ -59,6 +59,16 @@ assert "let expected=Coordinator.Renderer.expected[name+\".\"+ext]" in carbonis
 assert "return actual==expected" in carbonis
 assert carbonis.count("SHA256.hash(data:bytes)")>=2
 assert "static let expected:[String:String]" in carbonis
+assert '("Sector01CarbonisHeightMap","dat")' in carbonis
+assert '"Sector01CarbonisHeightMap.dat":"3ce9a0456d23a5b88de718e7fd8fe6560cb53cd112a31ecc876e6200a762cb39"' in carbonis
+surface=(root/"ASTEROIDYiOS/CarbonisSurface277.swift").read_text()
+scene=(root/"ASTEROIDYiOS/Sector01Scene568.swift").read_text()
+assert "func surfaceRadius(x: Float, y: Float, z: Float) -> Float" in surface
+assert "let x0 = ((ix % Self.width) + Self.width) % Self.width" in surface
+assert "let y0 = max(0, min(Self.height - 1, iy))" in surface
+assert "surface.surfaceRadius(x:1,y:0,z:0)" in scene
+assert 'sourceHeightProbe277' in scene
+
 
 assert "onInspect:inspectSector" in menu
 assert "onInspect: { sector in inspectSourceSector(sector) }" in app
