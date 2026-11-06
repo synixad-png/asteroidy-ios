@@ -32,6 +32,11 @@ on:
       - 'ASTEROIDYiOS/ShooterTactics71.swift'
       - 'Tests/ShooterTactics71Tests.swift'
       - 'ASTEROIDYiOS/CarbonisCombat568.swift'
+      - 'ASTEROIDYiOS/Sector01MissionSummary568.swift'
+      - 'ASTEROIDYiOS/Sector01MissionSettlement568.swift'
+      - 'ASTEROIDYiOS/Sector01Shop568.swift'
+      - 'ASTEROIDYiOS/Sector01ShopPanel568.swift'
+      - 'Tests/Sector01MissionFinish568Tests.swift'
       - 'ASTEROIDYiOS/CarbonisBodyContact68.swift'
       - 'Tests/CarbonisBodyContact68Tests.swift'
       - 'ASTEROIDYiOS/CarbonisSession568.swift'
@@ -141,6 +146,7 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisBodyContact68.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisCombat568.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisSession568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01ShopPanel568.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01PreparedWave568.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3HomePlanetMetal568.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
@@ -179,10 +185,15 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/CarbonisBodyContact68.swift Tests/CarbonisBodyContact68Tests.swift -o /tmp/carbonis-body-contact68-tests
           /tmp/carbonis-body-contact68-tests
+      - name: Verify first CARBONIS mission source result, replay, wallet, service and real campaign unlock
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01MissionSummary568.swift ASTEROIDYiOS/Sector01MissionSettlement568.swift Tests/Sector01MissionFinish568Tests.swift -o /tmp/sector01-source-finish-tests
+          /tmp/sector01-source-finish-tests
       - name: Verify live CARBONIS 01 ship, geodesic motion and combat outcome
         run: |
           set -euo pipefail
-          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/ShooterTactics71.swift ASTEROIDYiOS/CarbonisCombat568.swift Tests/CarbonisCombat568Tests.swift -o /tmp/carbonis-live568-tests
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/ShooterTactics71.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01MissionSummary568.swift ASTEROIDYiOS/CarbonisCombat568.swift Tests/CarbonisCombat568Tests.swift -o /tmp/carbonis-live568-tests
           /tmp/carbonis-live568-tests
       - name: Verify source fighter AI for 25 levels, six kinds and all difficulties
         run: |
