@@ -26,6 +26,10 @@ struct CarbonisVisualSettingsPanel568: View {
             save{$0.setValue(idx,Int(n.rounded()))}
         })
     }
+    private func sliderRange(_ idx:Int)->ClosedRange<Double> {
+        Double(CarbonisVisualSettings568.minimum[idx])...
+        Double(CarbonisVisualSettings568.maximum[idx])
+    }
     private var brightness:Binding<Double> {
         Binding(get:{Double(profile.projectileBrightness)},
                 set:{n in
@@ -138,9 +142,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     .font(.system(size:compact ? 10:12,
                                   weight:.medium,design:.monospaced))
                     .foregroundStyle(.white)
-                    Slider(value:doubleValue(i),
-                           in:Double(CarbonisVisualSettings568.minimum[i])...
-                              Double(CarbonisVisualSettings568.maximum[i]),
+                    Slider(value:doubleValue(i),in:sliderRange(i),
                            step:Double(CarbonisVisualSettings568.increments[i]))
                         .tint(cyan)
                         .accessibilityIdentifier("w3-explosion-slider-\(i)")
