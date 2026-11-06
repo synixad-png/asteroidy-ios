@@ -366,3 +366,27 @@ Postęp 18 zadań pozostaje bez zmian do końcowych
 testów etapu: **nr 14 = 10% (+0 pp), projekt 27%,
 pozostało 73%.** Kamień B nadal nierozpoczęty.
 Nie wygenerowano IPA.
+
+### 06.11.2026 — autentyczna grafika menu W3: iPhone i iPad PASS
+
+**Potwierdzony wynik GitHub Actions:
+[42198113753](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113753) —
+oba joby symulatorów (IPHONE i IPAD) zakończone `success`.**
+Oba uruchomiły rzeczywistą aplikację, wykorzystały oryginalne
+SHA-pinned W3 background/logo i NewHome290 H290 z dwoma materiałami,
+sprawdziły ukończone polecenia GPU dla **172208 trójkątów**
+i zapisały autentyczne screenshoty oraz osobne dowody JSON.
+Zrzuty z GitHub:
+[iPhone artifact #13493952002](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113753/artifacts/13493952002),
+[iPad artifact #13493651804](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113753/artifacts/13493651804).
+Techniczne ograniczenia i dowody:
+[Reports/V568_W3_HOME_IPHONE_IPAD_GPU_PASS_2026-11-06.md](Reports/V568_W3_HOME_IPHONE_IPAD_GPU_PASS_2026-11-06.md).
+
+Nadal należy ukończyć **realne przejście dotykiem** przez wszystkie
+pozycje, oświetlenie względem v568 i zamknięcie
+kamienia A. Autentyczne dwa XCTest na Apple simulator są
+w [workflow 42200004528](https://github.com/synixad-png/asteroidy-ios/actions/runs/42200004528),
+wynik trzeba odczytać po ich zakończeniu.
+
+**Nie uruchomiono B, IPA nie generowano.
+Zadanie 14: 10% (+0 pp), projekt: 27% / pozostało 73%.**
