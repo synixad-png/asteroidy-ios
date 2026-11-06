@@ -1,5 +1,13 @@
 # ASTEROIDY iOS — natywny port Swift/Metal (projekt w trakcie rozwoju)
 
+## AKTUALNY POSTĘP — 6 listopada 2026: autentyczne asteroidy w scenie CARBONIS
+
+**31% wykonano, 69% pozostało.** W kodzie natywnego Swift/Metal wdrożono źródłowe siatki asteroid `RockVertices75` z Windows v568 (20-ścienny bryła, dwukrotny podział, kraterowanie i kolory), ruch na sferze `SphereAsteroid556.advance`, źródłowe ułożenie `StampSphere67` oraz toon z oryginalnego `GpuRockInstancing75`. Scena C279 renderuje przygotowane obiekty `Game.Wave()` obok oryginalnej planety; każdy kształt ma współdzielony bufor GPU.
+
+**Weryfikacja:** lokalnie 43 385 asercji Swift/Linux PASS, Xcode/GPU Apple tej rewizji **niepotwierdzone**. To nie jest jeszcze kompletna gra: myśliwce/AI, sterowanie statkiem, broń, kolizje i rozstrzygnięcie misji pozostają do wdrożenia. [Techniczny raport](Reports/V568_STAGE_C_ORIGINAL_ROCK_RENDERER_2026-11-06.md) · [18 zadań](PORT_STATUS_18_TASKS.md). Bez nowego IPA.
+
+Poniżej pozostawiono historyczny stan 30% po przygotowaniu pierwszej fali.
+
 ## AKTUALNY POSTĘP — 6 listopada 2026 (po wdrożeniu początkowej WAVE)
 
 **30% wykonane / 70% pozostało.** Do natywnego wejścia na CARBONIS 01 dodano źródłową inicjalizację `Game.Wave()` z oryginalnych Windows/SteamOS v568: asteroidy, uzbrojeni myśliwce, robotyczne węże, parametry i limity posiłków. Scena wyświetla prawdziwe liczby struktur początkowych, a jej dane powstają z `MissionStart261` + `MissionWave568`. **Wciąż nie ma aktywnego renderowania ani AI tych przeciwników, lotu i wyniku misji w scenie CARBONIS.** Moduł `MissionIncoming568` odtwarza też źródłowy zegar `StepAction` i `SpawnIncoming`, lecz na razie jest wpięty jako stan przygotowany, nie aktywny system walki. Lokalnie Swift/Linux 909 testów fali + 633 testy posiłków Action38 + 12 testów wejścia = **1554 PASS**; natywne iOS CI po aktualnych commitach pozostaje niepotwierdzone. [Pełny raport](Reports/V568_STAGE_C_WAVE_PREPARED_2026-11-06.md), [18-zadaniowy harmonogram](PORT_STATUS_18_TASKS.md).
