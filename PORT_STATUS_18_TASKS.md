@@ -12,7 +12,7 @@
 | Nr | Zadanie (stała nazwa) | Postęp odniesienia |
 |---:|---|---:|
 | 1 | Kompilacja i infrastruktura iOS | 88% |
-| 2 | Silnik graficzny Metal | 86% |
+| 2 | Silnik graficzny Metal | 89% |
 | 3 | Materiały PBR, tekstury i oświetlenie | 25% |
 | 4 | Statki, planety i zasoby 3D | 20% |
 | 5 | Animacje modeli GLB | 35% |
@@ -223,6 +223,20 @@ Stała lista 18 zadań i ich procenty bez zmian: zadanie 2 **78%**, łączny his
 **Nierozwiązana zależność:** paczka binarna jest rzeczywiście w tej rozmowie, **ale nie jest obecna w publicznym repozytorium GitHub**. Testy źródłowe i Xcode kompilowały więc opcjonalną ścieżkę, lecz nie rysowały jeszcze rzeczywistej tekstury na iPhonie. Nie wolno deklarować pełnej funkcji ani budować nowego 'teksturami' IPA bez bezpośredniej integracji obu zweryfikowanych binarek. Dalszy krok: dodać kompaktową 3,53MB paczkę do `AssetsCompressed/` lub parę oryginalnych binarek do `ASTEROIDYiOS/Assets`, uruchomić realny build, zweryfikować zawartość IPA i potem test wyglądu i FPS.
 
 **Postęp zadania 2:** **85% → 86% (+1 pp)** tylko za źródłową poprawkę i rygorystyczny, przetestowany proces wydawania; pozostałe pozycje 1 i 3–18 bez zmian. Łączny historyczny wskaźnik projektu **27%, pozostało 73%**, bez zmiany wag i bez naciągania gotowości.
+
+## 06.11.2026 — domknięcie importu oryginalnego Vanguard431 w skompilowanej aplikacji (86→89%)
+
+**Co zostało rzeczywiście wdrożone:**
+- Użytkownik wgrał do `ASTEROIDYiOS/Assets` na `main` dwa oryginalne pliki PC v568: `Vanguard431Source.mesh` (**9 721 408 bajtów**) oraz `Vanguard431Base.jpg` (**1 275 318 bajtów**, 2048×2048). Oba pliki zweryfikowano według SHA-256 i Git blob SHA-1 wobec lokalnych źródeł, bez zamienników i pointerów LFS.
+- `Tests/OriginalVanguard431InstalledAssetsTests.py` skanuje prawdziwy strumień **194 427** wierzchołków, ich normalne, RGBA i współrzędne UV oraz obie oryginalne dysze; nie jest to syntetyczna demonstracja modelu.
+- `Tools/prepare_vanguard431_assets.py` obsługuje teraz **bezpośrednie umieszczenie zweryfikowanej pary w GitHubie** bez ponownego rozpakowywania ZIP. Uszkodzony lub częściowy upload odrzucany jest bez fallbacku niezgodnego z wydaniem teksturowanym. Test `Tests/PrepareVanguardPackTests.py` pokrywa ścieżkę pozytywną i negatywną.
+- `Tools/verify_compiled_vanguard431_app.py` sprawdza już **rzeczywisty wynik kompilacji Apple**, a nie tylko źródłową listę plików: oryginalny mesh/JPEG wewnątrz `.app`, SHA-256, Info.plist `UIDeviceFamily=[1,2]`, fizyczny iOS arm64 Mach-O, iOS 17+ i `default.metallib`. Istniejący `MetalRenderer.swift` wybiera dokładną siatkę/UV i bazowy JPEG z oryginalnego modelu po przejściu własnego testu CryptoKit, zachowując dotychczasową ścieżkę AS3D jako fallback.
+
+**Wykonane testy i wyniki:** [Source kamera i regresje 42168920268](https://github.com/synixad-png/asteroidy-ios/actions/runs/42168920268) **SUCCESS**; [preflight 42168920269](https://github.com/synixad-png/asteroidy-ios/actions/runs/42168920269) **SUCCESS**; [pełna natywna kompilacja Release z weryfikacją zasobów wewnątrz `.app` 42168975848](https://github.com/synixad-png/asteroidy-ios/actions/runs/42168975848) **SUCCESS**. Logi kompilacji potwierdzają obecność obydwu oryginalnych binarek w gotowym `.app` i brak błędów SHA256. Żadnego IPA ani testu na fizycznym urządzeniu w tym etapie nie wykonywano.
+
+**Uzasadniony postęp:** zadanie 2 **89% (+3 pp)** za ukończone faktyczne dostarczenie materiału i kontrolę natywnego `.app`; 17 pozostałych pozycji niezmienionych, łącznie historycznie **27%**, pozostało **73%** bez przeliczania wag. *Nie* stwierdzamy 100% renderer parity: brak interaktywnej kontroli koloru/UV/GPU/FPS na urządzeniu, źródłowego shaderowania całej gry i pełnych misji.
+
+**Następny krok:** dokończyć zadanie 2 w zakresie rzeczywistych efektów i optymalizacji, a przy osobnym poleceniu wygenerowania IPA przygotować nowe niepodpisane wydanie iPhone+iPad już z rzeczywistym Vanguard431 oraz sprawdzić pliki wewnątrz IPA przed udostępnieniem. Nie zastępować wcześniej działającego IPA bez testu.
 
 ## Kolejność dalszej pracy
 
