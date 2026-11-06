@@ -1,5 +1,34 @@
 # ASTEROIDY iOS — stały harmonogram portowania
 
+## 06.11.2026 — POTWIERDZONE NOWE WYDANIE IPA W3 MENU NAV
+
+**GitHub Actions 42212773252 — SUCCESS**. Nowy rzeczywisty,
+**NIEPODPISANY** IPA do fizycznego iPhone/iPada:
+`ASTEROIDY_v568_W3_MENU_NAV_iPhone_iPad_UNSIGNED.ipa`,
+**14 103 697 B**; SHA256
+`9b16daf6e045220140505ebbed99cf24befadbea8c0b7b2d8a1080df7b5c98ce`.
+ZIP, iOS ARM64, oryginalne materiały W3/H290/Vanguard431
+i wyniki `Tools/verify_ipa.py` — PASS, potwierdzone po
+pobraniu pliku z GitHub. Snapshot wydania:
+`1ebd88d37bd5cf0bb2b26ce961e067f4764b002c`.
+[Artefakt GitHub 13500341359](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212773252/artifacts/13500341359).
+
+Na **prywatnym Dysku Google użytkownika** potwierdzono
+[ZIP z nowym IPA i raportami SHA/CRC](https://drive.google.com/file/d/1VyqprYPbt6KLGIqwKzgwrHzAGGqrGSyH/view?usp=drivesdk)
+(13 943 090 B). ZIP trzeba rozpakować, by otrzymać plik
+IPA. Jest to kopia całego artefaktu GitHub, nie błędnie nazwany ZIP
+udający IPA. Raport:
+[Reports/V568_W3_MENU_NAV_IPA_RELEASE_2026-11-06.md](Reports/V568_W3_MENU_NAV_IPA_RELEASE_2026-11-06.md).
+
+**Postęp harmonogramu nie został sztucznie podwyższony:**
+cały projekt **27% wykonane / 73% pozostało**,
+zadanie 14 **10% (+0 pp)**. Etap A otwarty, ponieważ
+[XCTest 42212331207](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331207)
+i [GPU 42212331152](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331152)
+nie mają jeszcze końcowego wyniku. Etapu B (wybór misji)
+nie rozpoczęto. Fizyczna instalacja nie została przetestowana.
+
+
 ## OSTATNI RAPORT — 06.11.2026, nowe IPA W3 na życzenie
 
 **ETAP A: W TRAKCIE. ETAP B: nierozpoczęty.** Pełna lista 18 zadań
