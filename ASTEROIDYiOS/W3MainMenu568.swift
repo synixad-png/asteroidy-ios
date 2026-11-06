@@ -309,7 +309,10 @@ struct W3MainMenu568: View {
                 .foregroundStyle(gold)
             if W3HomeShipPreview568.isAvailable {
                 W3HomeShipPreview568()
-                    .frame(height:110)
+                    // More of the existing sidebar real estate for the
+                    // same source-accurate v568 0.34-size Vanguard431 pose.
+                    // Changing viewport size does not rescale the 3D mesh.
+                    .frame(height:164)
                     .accessibilityLabel(
                         "Oryginalny Vanguard431, domyślny statek 01")
                 Text("VANGUARD / TYP 01")
