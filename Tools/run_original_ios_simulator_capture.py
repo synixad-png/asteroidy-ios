@@ -170,6 +170,17 @@ def self_test():
         raise AssertionError("Timeout guard failed")
     except EnvironmentUnavailable as exc:
         assert "TIMEOUT" in str(exc)
+    # Forked child also inherits STDOUT: the old subprocess.run()
+    # implementation could hang draining the pipe after parent timeout.
+    # The process-group implementation must terminate both quickly.
+    try:
+        run_command([sys.executable,"-c",
+            "import subprocess,sys,time;"
+            "subprocess.Popen([sys.executable,'-c','import time;time.sleep(10)']);"
+            "time.sleep(10)"],0.2)
+        raise AssertionError("Inherited-pipe process-group guard failed")
+    except EnvironmentUnavailable as exc:
+        assert "TIMEOUT" in str(exc)
     try:
         run_command([sys.executable,"-c","raise SystemExit(7)"],5)
         raise AssertionError("Exit-code guard failed")
