@@ -1,5 +1,48 @@
 # ASTEROIDY iOS — stały harmonogram portowania
 
+## OSTATNI RAPORT — 06.11.2026, nowe IPA W3 na życzenie
+
+**ETAP A: W TRAKCIE. ETAP B: nierozpoczęty.** Pełna lista 18 zadań
+i ich procenty pozostają niezmienione: **27% projektu wykonano,
+73% pozostało**, zadanie 14 **10%, zmiana +0 pp**.
+
+- Naprawiono osiągalność wszystkich siedmiu źródłowych pozycji
+  W3 w poziomym widoku iPhone'a: `W3MainMenu568.swift`
+  korzysta teraz z pionowo przewijanej nawigacji oraz
+  minimalnych obszarów dotykowych **44 pt**. Zachowano
+  oryginalną geometrię NewHome290, podgląd Vanguard431,
+  sterowanie planetą, siedem polskich nazw oraz przejścia
+  do istniejących paneli. Nie modyfikowano misji, broni
+  ani zamrożonych mechanik 7/8.
+- Rozszerzono `Tests/V568W3NativeMenuContract.py` o wymuszenie
+  przewijania, 44-pt przycisków, identyfikatorów dostępności
+  i zachowania rozdziału menu od sceny diagnostycznej.
+- **Kompilacja źródłowa Swift/Metal na iOS: PASS**
+  [42212331058](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331058)
+  (job `Compile iOS source only`, wynik `success`).
+  Pozostałe testy regresyjne iOS i Xbox/asteroid nie muszą
+  być uznawane za zakończone przed ich faktycznym wynikiem.
+- **Nowe, jednorazowe IPA użytkownika** (niepodpisane
+  arm64 dla fizycznych iPhone/iPad) uruchomiono z
+  rewizji `0873cae65b99c41d020f6e841407e468e077e2e8`:
+  [42212392679](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212392679).
+  Wydanie należy uznać za gotowe **wyłącznie** po
+  zweryfikowanym `success`, kontroli SHA/CRC/7
+  oryginalnych zasobów i pobraniu pliku IPA. W przypadku
+  niepowodzenia nie podawać linku do nieistniejącego pliku.
+- Osobne, niedokończone testy nawigacji
+  [42212331207](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331207)
+  oraz grafiki GPU
+  [42212331152](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331152)
+  pozostają odrębnymi bramkami zaliczenia A. NIE zaliczać
+  ich na podstawie kompilacji IPA ani starego zrzutu.
+
+**Następne:** zakończyć XCTest siedmiu rzeczywistych
+dotknięć oraz powrotu ze sceny 3D i zamknąć etap A; dopiero
+potem B — wybór misji. Wydany wcześniej IPA z rewizji
+`5242e4f` na Dysku Google jest odrębną starszą wersją.
+
+
 ## AKTUALIZACJA ETAPU A — natywna nawigacja W3, ostatni stan 06.11.2026
 
 **Stan A: OTWARTY; B nie rozpoczęty.** Cały projekt **27%**,
