@@ -1,3 +1,39 @@
+## AKTUALNY ETAP — 06.11.2026: oryginalne audio v568 po integracji menu i CARBONIS 01
+
+**Status:** oryginalna muzyka oraz efekty są już w kodzie i repozytorium iOS, nie jest to jednak potwierdzenie odsłuchu na fizycznym iPhonie/iPadzie. Odnaleziono pełną paczkę `Asteroidy_v568_ZRODLA_Windows_SteamOS_BEZ_EXE_BEZ_HANGARU.zip` w Bibliotece ChatGPT; wcześniejsze stwierdzenie o braku źródeł dotyczyło tylko czterech częściowych ZIP-ów GitHub i **jest nieaktualne**.
+
+- **Źródła i nagrania:** [Github Actions 42298944326](https://github.com/synixad-png/asteroidy-ios/actions/runs/42298944326) — SUCCESS. `SourceExact568/` przechowuje oryginalne źródła C# generatora, a `ASTEROIDYiOS/Assets/Audio568/` zawiera 58 oryginalnych pozycji po konwersji audio na AAC (15 utworów Music0–14, 34 SFX, 7 polskich komunikatów, Intro43, licencje). Bez substytutów i bez nowych kompozycji.
+- **Dwie fazy:** SFX i pierwsze utwory 0 „Astral Gate” / 1 „Orbital Pulse” przygotowywane przed otwarciem W3, reszta przygotowywana w tle; rzeczywista synteza oryginalnym C# wykonywana **przy budowaniu źródeł/zasobów**, a na iOS w tle odbywa się wstępne dekodowanie/wczytywanie tych samych utworów — nie należy tego błędnie nazywać runtime syntezą C# na iPhonie.
+- **Odtwarzanie:** `OriginalAudioAV568` i `OriginalEngineDSP52` obsługują muzykę i 16 głośów SFX (w tym oryginalne czasy/przypisania dźwięków walki), dynamiczny dźwięk silnika, głośność muzyki 56% i SFX 100%, STOP/REPLAY w bibliotece 15 utworów, oryginalne 2-sekundowe equal-power przejścia, odłożony odsłuch jeszcze nieprzygotowanego utworu, przerwanie starszego komunikatu głosowego, zachowanie po zmianie sceny/tła.
+- **CARBONIS 01:** realne wywołania SFX dla strzałów, wrogich salw, eksplozji asteroid i przeciwników, zbierania tokenów oraz oryginalny kod21 dla utraty życia/końca gry z testami osłony. `MusicMix.TrackFor`: zwycięstwo/porażka -> Music0, GameOver z tłumieniem .4, replay -> Music1, silnik 0 po zakończeniu.
+- **Weryfikacja:** [Swift/Xcode 42302524489](https://github.com/synixad-png/asteroidy-ios/actions/runs/42302524489) PASS m.in. test equal-power 88200 ramek/44.1kHz; [Swift/Xcode 42302185649](https://github.com/synixad-png/asteroidy-ios/actions/runs/42302185649) PASS nowego SFX śmierci i regresji. Najnowsze [testy 42303421953](https://github.com/synixad-png/asteroidy-ios/actions/runs/42303421953) i osobne [XCTest iPhone/iPad 42303125651](https://github.com/synixad-png/asteroidy-ios/actions/runs/42303125651) — **stan sprawdzić**. W próbie iPada `simctl list devices available` przekroczył 60 s (błąd środowiska GitHub, nie dowód awarii aplikacji). Nie wykonano odsłuchu na fizycznym urządzeniu.
+- **Co pozostało:** ręczny odsłuch na iPhone/iPad, pełna synchronizacja `Intro43` z oryginalną sceną intro (nie jest jeszcze normalną grywalną sceną iOS), pozostałe triggery dźwięków dotyczące jeszcze nieprzeniesionych mechanik/25 misji, porównanie subiektywne i próbkowe miksu AAC/Metal, pełna weryfikacja UI audio i stabilności symulatorów. **Nie wygenerowano nowego IPA**.
+
+**Harmonogram 18 zadań — zachowany bez zmiany zakresu. Projekt: historyczne 38% / 62% pozostało (cały port, bez przeliczenia wag); zadanie 15: 60% za implementację źródłowych zasobów i kodu, 40% pozostało (bez fizycznych testów).**
+
+| Nr | Zadanie | Postęp | Zmiana |
+|---:|---|---:|---:|
+| 1 | Kompilacja i infrastruktura iOS | 88% | 0 pp |
+| 2 | Silnik graficzny Metal | 89% | 0 pp |
+| 3 | Materiały PBR, tekstury i oświetlenie | 25% | 0 pp |
+| 4 | Statki, planety i zasoby 3D | 32% | 0 pp |
+| 5 | Animacje modeli GLB | 35% | 0 pp |
+| 6 | Fizyka lotu i poruszanie po planetach | 43% | 0 pp |
+| 7 | Kolizje, obrażenia i zniszczenia (dotychczasowy moduł) | 100% | 0 pp |
+| 8 | Asteroidy i fale walki (dotychczasowy moduł) | 100% | 0 pp |
+| 9 | Bronie i trafienia | 24% | 0 pp |
+| 10 | Przeciwnicy i AI | 11% | 0 pp |
+| 11 | Bossowie i ich mechaniki | 0% | 0 pp |
+| 12 | Komplet misji planetarnych | 30% | 0 pp |
+| 13 | Kampania — 26 sektorów atlasu | 37% | 0 pp |
+| 14 | Menu W3, HUD i ustawienia | 24% | 0 pp |
+| 15 | Dźwięki i muzyka | **60%** | **+50 pp** |
+| 16 | Zapisywanie i wczytywanie gry | 32% | 0 pp |
+| 17 | Sterowanie | 41% | 0 pp |
+| 18 | Optymalizacja i testy | 18% | 0 pp |
+
+---
+
 ## AKTUALNY ETAP — 06.11.2026: oryginalna muzyka i SFX, dwufazowy loader (BEZ IPA)
 
 **Cały port: 38% wykonane, 62% pozostało (+0 pp).** W zakresie zadania 15 **infrastruktura audio 10% (+10 pp), oryginalna muzyka/SFX 0% (NIE przeniesiono brzmień)**. Audyt [42293009917](https://github.com/synixad-png/asteroidy-ios/actions/runs/42293009917) czterech paczek częściowych dowiódł braku generatora syntezy i prawdziwego pliku Intro43 PCM; dostępny jest wyłącznie obraz planet53.jpg. Oryginalny inwentarz potwierdza nazwę i SHA Intro43 PCM, ale nie zawiera jego bajtów. Wdrożono przygotowanie menu przy starcie, późniejsze przygotowanie audio tylko dla wczytywanej misji, cache oryginalnych wyników, odrzucanie spóźnionych żądań, zatrzymywanie po zmianie sceny oraz źródłowy tor AVAudioEngine; **z powodu brakujących źródeł obecnie niczego nie syntezuje ani nie odtwarza**. Nie dodano żadnych losowych melodii, plików WAV ani niezweryfikowanych suwaków. [Raport szczegółowy](Reports/V568_AUDIO_DWIE_FAZY_BEZ_ZAMIENNIKOW_2026-11-06.md).
