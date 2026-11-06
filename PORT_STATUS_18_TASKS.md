@@ -1,5 +1,82 @@
 # ASTEROIDY iOS — stały harmonogram portowania
 
+## BIEŻĄCY STAN — REALNY POSTĘP, 06.11.2026 (obowiązuje przed starszymi wpisami)
+
+**Ocena całego projektu: 28% wykonane (+1 pp), 72% pozostało.**
+Procenty poniżej są ostrożną oceną realnego zakresu implementacji
+i testów; wcześniejsze wpisy zachowano jako historię, a nie bieżący stan.
+
+**Wykonano nowe funkcje, a nie kolejne powtórzenie testów menu:**
+
+- **B. Wybór misji:** prawdziwe klikalne 26 pól kampanii w
+  `App.swift` i `W3MainMenu568.swift`, autentyczne nazwy planet
+  z audytu PC v568 (`MissionCatalog568.swift`), blokowanie
+  niedostępnych sektorów zgodnie z `Orbit50.MissionUnlocked50`,
+  podświetlenie wybranego sektora i zapis `selectedSector`
+  w UserDefaults **osobno od bitów ukończonych misji**.
+  Przypadkowe dotknięcie nie zalicza misji. Natywna kompilacja
+  i testy czystej logiki **PASS**:
+  [GitHub Actions 42220854317](https://github.com/synixad-png/asteroidy-ios/actions/runs/42220854317).
+  Test interaktywny tej nowej funkcji na fizycznym iPhonie/iPadzie
+  nie został wykonany; nie deklarować 100% gotowości B.
+- **C. Pierwszy sektor CARBONIS:** oryginalna siatka C279,
+  **270249 trójkątów, 137067 unikatowych wierzchołków,
+  810747 oryginalnych indeksów, UV, 2 grupy materiałów i
+  mapa wysokości 512×256**. Bez rekonstrukcji z OBB lub
+  generowania zastępczej kuli. Oryginalne trzy tekstury są
+  chronione SHA-256. Zamiast rozwijać geometrię do ~38,9 MB,
+  zachowano GPU indexed mesh **9 822 204 B** bez zmiany
+  źródłowej geometrii. Wdrożono źródłowy podgląd Carbonis
+  po wybraniu sektora 01, nowy shader i renderer Metal.
+  Test autentyczności [42222217173](https://github.com/synixad-png/asteroidy-ios/actions/runs/42222217173)
+  **PASS**. Natywna kompilacja iOS wraz z regresjami
+  [42223077726](https://github.com/synixad-png/asteroidy-ios/actions/runs/42223077726)
+  **PASS** dla obu jobów. Zgodność PBR obrazu 1:1 z Windows,
+  fizyczny render i prawdziwy start rozgrywki są jeszcze
+  do wdrożenia/zweryfikowania.
+- **A. Menu W3:** pozostają do zamknięcia ograniczenia testu
+  interaktywnego iPada oraz pełna zgodność graficzna; nie
+  blokują już przygotowania kolejnych elementów gry.
+- **Czego NIE wykonano:** rzeczywistego `StartHubMission261`
+  na wybranym sektorze, walki w źródłowej misji CARBONIS,
+  śledzenia zwycięstwa/przegranej i 25 pozostałych grywalnych
+  planet. **Nowego IPA nie wydano**. Poprzedni plik z Dysku
+  Google nie zawiera tych nowych zmian.
+
+**Stała lista 18 zadań — aktualne procenty i zmiany względem
+poprzedniego raportu:**
+
+| Nr | Stałe zadanie | Było | Jest | Zmiana |
+|---:|---|---:|---:|---:|
+| 1 | Infrastruktura iOS | 88% | 88% | 0 pp |
+| 2 | Silnik Metal | 89% | 89% | 0 pp |
+| 3 | Materiały i oświetlenie | 25% | 25% | 0 pp |
+| 4 | Statki i planety 3D | 20% | 22% | +2 pp |
+| 5 | Animacje GLB | 35% | 35% | 0 pp |
+| 6 | Fizyka lotu | 35% | 35% | 0 pp |
+| 7 | Kolizje i obrażenia | 100% | 100% | 0 pp |
+| 8 | Asteroidy i fale | 100% | 100% | 0 pp |
+| 9 | Bronie i trafienia | 10% | 10% | 0 pp |
+| 10 | AI przeciwników | 0% | 0% | 0 pp |
+| 11 | Bossowie | 0% | 0% | 0 pp |
+| 12 | Misje planetarne | 5% | 7% | +2 pp |
+| 13 | Kampania — 26 sektorów | 30% | 34% | +4 pp |
+| 14 | Menu W3, HUD i ustawienia | 10% | 14% | +4 pp |
+| 15 | Muzyka i dźwięki | 0% | 0% | 0 pp |
+| 16 | Zapisywanie gry | 20% | 20% | 0 pp |
+| 17 | Sterowanie | 35% | 35% | 0 pp |
+| 18 | Optymalizacja i testy | 10% | 10% | 0 pp |
+
+**Następny krok wykonawczy:** faktyczne wejście z wyboru sektora
+01 do źródłowej misji CARBONIS z prawdziwym trybem gry,
+kamerą, kolizjami, falami i wynikiem. Dalsze testy menu
+prowadzić jako rozwiązywanie konkretnych usterek, nie
+nieskończoną blokadę rozwoju.
+
+Dokładne dowody:
+[Raport B/C CARBONIS](Reports/V568_STAGE_B_SELECTION_C_CARBONIS_SOURCE_2026-11-06.md).
+
+
 ## AKTUALIZACJA 06.11.2026 — realizacja A, faktyczne Apple GPU i XCTest
 
 **ETAP A (MENU W3) W TRAKCIE; B JESZCZE NIEROZPOCZĘTY.**
