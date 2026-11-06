@@ -8,8 +8,8 @@ func vertex(_ x:Float,_ y:Float,_ z:Float)->[Float] {
 // Original carbonis279.mesh.gz 137067 vertices: max radius=1.09607509146.
 @main struct CarbonisMissionPlanet523TestRunner {
     static func main() {
-let floats=vertex(1.0960751,0,0)+vertex(0,0.92,0)+
-           vertex(0,-1,0)+vertex(0,0,0.98)
+let floats=[vertex(1.0960751,0,0),vertex(0,0.92,0),
+            vertex(0,-1,0),vertex(0,0,0.98)].flatMap { $0 }
 let data=floats.withUnsafeBytes{Data($0)}
 near(CarbonisMissionPlanet523.sourceOuterRadius523(
     vertexBytes:data)!,1.0960751,"C279 radius")
