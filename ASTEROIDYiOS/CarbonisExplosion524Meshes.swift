@@ -89,9 +89,8 @@ enum CarbonisExplosion524Meshes {
             x:rotX.x*cos(y)+rotX.z*sin(y),
             y:rotX.y,
             z:-rotX.x*sin(y)+rotX.z*cos(y))
-        return n*shell +
-            (right*rotated.x+forward*rotated.y+n*rotated.z)
-            *(size*scale67)
+        let displacement=right*rotated.x+forward*rotated.y+n*rotated.z
+        return n*shell+displacement*(size*scale67)
     }
     private static func tetra(_ piece:CarbonisDestruction524.CombatPiece,
         into out:inout [Float]) {
