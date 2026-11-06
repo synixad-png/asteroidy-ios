@@ -1,0 +1,85 @@
+# One-shot REAL source-guided W3 home-screen screenshots on Apple simulators.
+# No illustrative mockups, no IPA, no signing and no mission unlock.
+name: ASTEROIDY iOS v568 W3 native home menu iPhone+iPad proof (NO IPA)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-v568-w3-native-menu-once.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  genuine-w3-menu-simulator:
+    name: Source-guided native W3 menu on ${{ matrix.device }} Simulator
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [IPHONE, IPAD]
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify original source captions and actual navigation routes
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python3 Tests/V568W3NativeMenuContract.py | tee reports/w3-source-contract.txt
+          python3 -m py_compile Tools/run_w3_native_menu_simulator_capture.py
+          swift Tools/verify_simulator_render_snapshot.swift --self-test | tee reports/w3-screenshot-detector.txt
+      - name: Create native iOS source project (no HTML/WebView)
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+      - name: Compile original ASTEROIDY native iPhone/iPad application without IPA
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/W3NativeMenuSimulator" \
+            build > reports/xcodebuild.log 2>&1 || {
+              tail -n 140 reports/xcodebuild.log
+              exit 1
+            }
+          APP=$(find build/W3NativeMenuSimulator/Build/Products/Debug-iphonesimulator \
+                -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP"
+          python3 - "$APP" <<'PY' | tee reports/menu-compiled-app.txt
+          import pathlib,plistlib,sys
+          app=pathlib.Path(sys.argv[1])
+          info=plistlib.loads((app/"Info.plist").read_bytes())
+          assert set(info.get("UIDeviceFamily",[]))=={1,2}
+          assert info.get("CFBundleIdentifier")=="com.synixad.asteroidyios"
+          assert len(list(app.rglob("default.metallib")))==1
+          print("PASS: native W3-capable iPhone and iPad source app bundled with Metal")
+          PY
+      - name: Actually run W3 main menu on Apple simulator and capture real frame
+        timeout-minutes: 18
+        run: |
+          set -euo pipefail
+          APP=$(find build/W3NativeMenuSimulator/Build/Products/Debug-iphonesimulator \
+                -maxdepth 1 -type d -name '*.app' -print -quit)
+          python3 -u Tools/run_w3_native_menu_simulator_capture.py \
+            --app "$APP" --reports reports --only ${{ matrix.device }} \
+            | tee reports/w3-actual-simulator.txt
+      - name: Archive only genuine W3 screenshot and diagnostic logs, no IPA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-v568-W3-NATIVE-${{ matrix.device }}-real-screen-NO-IPA
+          path: |
+            reports/*.txt
+            reports/*.log
+            reports/*_W3_appearance_proof.json
+            reports/*_VERIFIED_ASTEROIDY_W3_NATIVE.png
+            reports/selected-devices.json
+          if-no-files-found: ignore
+          retention-days: 7
