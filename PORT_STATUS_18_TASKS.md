@@ -1,3 +1,15 @@
+## CARBONIS 01 — WYBUCHY 3D / POCISKI, ustawienia jak w Windows v568 (06.11.2026)
+
+**38% całego portu wdrożone / 62% pozostało — bez sztucznego podnoszenia procentów.** Z oryginalnych źródeł `Windows/src/Menu139.cs`, `Explosion524.cs`, `Combat69.cs`, `ShotAppearance151.cs`, `GpuSphere67.cs` przeniesiono prawdziwe **dwie zakładki menu W3**: „WYBUCHY 3D” (12 oryginalnych kontrolek, trzy presety, jakość 22/32/48 próbek, 3/4/6 wybuchów, suwak odłamków i natywny podgląd detonacji Metal) oraz „POCISKI” (3 kontrolki: jasność 0–400%, osiem źródłowych kolorów, mieszanie 48/52%). Ustawienia zapisują się trwale przez UserDefaults. Rzeczywisty renderer CARBONIS 01 pobiera ustawienia podczas wejścia do misji.
+
+Dotychczasowe prostokątne smugi zastąpiono geodezyjnymi **sześcioczęściowymi, trójwarstwowymi** smugami, radialnymi rdzeniami o stałym rozmiarze ekranowym, błyskami wylotowymi myśliwców i **czterema warstwami światła każdego pocisku** na planecie. Pociski mają oryginalne barwy Pulse/Twin/Scatter oraz niebieskie/zielone/fioletowe barwy wrogów. Wybrany kolor w ustawieniach dotyczy **oświetlenia terenu**, nie zmienia barwy naturalnej pocisku ani mechaniki obrażeń i sterowania.
+
+**Zweryfikowano:** [GitHub 42283180401](https://github.com/synixad-png/asteroidy-ios/actions/runs/42283180401) — **PASS 19 testów opcji + 17 testów efektów pocisków + 45 testów zniszczeń + 18 kontroli integracyjnych pierwszej misji i pełna regresja Swift/Linux**. [Build iOS 42283783569](https://github.com/synixad-png/asteroidy-ios/actions/runs/42283783569) — Linux preflight **PASS**, `compile-device` **queued** podczas wpisu. **Nie wykonano jeszcze** interaktywnej weryfikacji na iPhone/iPad, ani testu jakości obrazu i GPU Apple. [Raport szczegółowy](Reports/V568_CARBONIS01_USTAWIENIA_WYBUCHOW_I_POCISKOW_2026-11-06.md).
+
+**Następne działanie:** uzyskać natywny wynik kompilacji Xcode/Metal, poprawić wyłącznie konkretnie wykazane błędy i potwierdzić na urządzeniu jednoczesne strzelanie/sterowanie, wygląd obydwu typów pocisków, suwak 400%, podgląd eksplozji i zapis po ponownym uruchomieniu. Nie przechodzić do kolejnej misji. 18 zadań stałego harmonogramu pozostaje bez zmian.
+
+---
+
 ## POPRAWKA EFEKTÓW NISZCZENIA CARBONIS 01 — 06.11.2026
 
 **Postęp portu pozostaje 38% / pozostało 62%** — nie podnoszono go przed testami renderowania Apple GPU. Dotychczas po zniszczeniu asteroidy lub myśliwca znikał model, a brakowało efektów wizualnych z oryginalnego Windows v568. Na podstawie **prawdziwej paczki źródeł Windows/SteamOS v568**, `Game.cs:224-230`, `BossTunnelGame.cs:96`, `GpuSphere67.cs:433,442-443`, `CombatPieces125.cs`, `GpuCombatPieces125.cs` i `Explosion524.cs`, przeniesiono odrębne reakcje: mała/średnia/duża skała **18/18/27** cząsteczek plus pierścień i objętościowy wybuch skali **9/15/23**; myśliwiec **22 pomarańczowe cząsteczki, 6 iskier, 11 metalowych szczątków 3D** plus wybuch paliwowy skali **14**; osobne efekty trafienia bez zniszczenia. Zachowano fizyczne odłamki, geometrię modeli, obrażenia, sterowanie i ukończenie misji.
