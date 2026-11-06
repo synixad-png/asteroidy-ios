@@ -51,6 +51,15 @@ assert "if let sourceEntry=sourceSector01" in app
 assert "Sector01Scene568(entry:sourceEntry,returnToAtlas:" in app
 assert "Sector01Entry568.open(" in app
 assert "hasOriginalC279Assets:Sector01CarbonisPreview568.isAvailable" in app
+# C279 source integrity must be checked before leaving the atlas.
+carbonis=(root/"ASTEROIDYiOS/Sector01CarbonisPreview568.swift").read_text()
+assert "return files.allSatisfy { name,ext in" in carbonis
+assert "let bytes=try? Data(contentsOf:url)" in carbonis
+assert "let expected=Coordinator.Renderer.expected[name+\".\"+ext]" in carbonis
+assert "return actual==expected" in carbonis
+assert carbonis.count("SHA256.hash(data:bytes)")>=2
+assert "static let expected:[String:String]" in carbonis
+
 assert "onInspect:inspectSector" in menu
 assert "onInspect: { sector in inspectSourceSector(sector) }" in app
 assert "onOpen" not in menu  # no invented campaign loader
