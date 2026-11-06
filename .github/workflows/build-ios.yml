@@ -1,4 +1,4 @@
-# CARBONIS01 true source explosions v568: rerun unsigned iOS build after Xcode16.4 MTLTextureDescriptor.type3D fix and safe 3D GPU volume fallback.
+# Rebuild unsigned iOS after authentic source Explosion524 12 controls + Combat69 player/enemy colored effects and ProjectileLight285 3 controls; requires passing source preflight.
 name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
 on:
   workflow_dispatch:
@@ -145,10 +145,20 @@ jobs:
           set -euo pipefail
           python3 Tests/V568W3NativeMenuContract.py
           python3 Tests/IOSInterruptedTouchSourceContract.py
+      - name: Verify original W3 Explosion524 and ProjectileLight285 12+3 settings before IPA
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/CarbonisVisualSettings568.swift Tests/CarbonisVisualSettings568Tests.swift -o /tmp/ios-c279-visual-settings
+          /tmp/ios-c279-visual-settings
+      - name: Verify original Combat69 friendly hostile shots and GPU sphere light color mix before IPA
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01MissionSummary568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/ShooterTactics71.swift ASTEROIDYiOS/Sector01MissionSettlement568.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/CarbonisCombat568.swift ASTEROIDYiOS/CarbonisVisualSettings568.swift ASTEROIDYiOS/CarbonisProjectileFX69.swift Tests/CarbonisProjectileFX69Tests.swift -o /tmp/ios-c279-projectile-fx69-tests
+          /tmp/ios-c279-projectile-fx69-tests
       - name: Verify original v568 rock / enemy explosion recipes, 3D fragment geometry and exact 64x64x64 GPU noise
         run: |
           set -euo pipefail
-          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/CarbonisExplosionNoise524.swift ASTEROIDYiOS/CarbonisExplosion524Meshes.swift Tests/CarbonisDestruction524Tests.swift -o /tmp/ios-c279-explosion524-test
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/CarbonisExplosionNoise524.swift ASTEROIDYiOS/CarbonisExplosion524Meshes.swift ASTEROIDYiOS/CarbonisVisualSettings568.swift Tests/CarbonisDestruction524Tests.swift -o /tmp/ios-c279-explosion524-test
           /tmp/ios-c279-explosion524-test
       - name: Verify live Carbonis level-one flight and source combat
         run: |
