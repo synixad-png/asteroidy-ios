@@ -11,6 +11,16 @@
 > następne”) opisaną niżej jako historia. **Wszystkie 18 zadań, ich
 > numery, zakresy i dotychczasowe procenty pozostają niezmienione.**
 > Najbliższe do wykonania: **A. Menu, potem B. Wybór misji**.
+> **Ostatni wynik kompilacji (06.11.2026):**
+> [42198113777](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113777)
+> potwierdził `Compile iOS source only — SUCCESS` dla
+> wprowadzonej oryginalnej planety NewHome290 po naprawie
+> macierzy normalnych w shaderze. Test faktycznego obrazu
+> [42198113753](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113753)
+> sprawdza oba symulatory Apple, oryginalne 5 zasobów W3/H290
+> i dowód GPU. Nie zaliczać go przed zakończeniem. **A w trakcie;
+> 14 nadal 10%, +0 pp; projekt 27% / pozostało 73%, bez IPA.**
+>
 > **Nowa implementacja etapu A (06.11.2026):** oryginalny model
 > centralnej planety `NewHome290` v568, H290, **172208 trójkątów**,
 > 516624 wierzchołków, dwie grupy materiałów i źródłowa mapa
