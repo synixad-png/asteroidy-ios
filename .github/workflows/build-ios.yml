@@ -1,4 +1,4 @@
-# CARBONIS 01 explosions source v568, GpuSphere67 + CombatPieces125 + Explosion524 Metal volumetric; tests PASS 42276790554.
+# CARBONIS01 true source explosions v568: rerun unsigned iOS build after Xcode16.4 MTLTextureDescriptor.type3D fix and safe 3D GPU volume fallback.
 name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
 on:
   workflow_dispatch:
