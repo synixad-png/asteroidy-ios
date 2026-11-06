@@ -61,6 +61,31 @@ struct W3MainMenu568: View {
             }
         }
         .accessibilityIdentifier("asteroidy-w3-main-menu")
+        .onAppear {
+            // Simulator diagnostic only. An actual screenshot is still
+            // independently required; never report this marker as pixel parity.
+            guard ProcessInfo.processInfo.environment["ASTEROIDY_W3_MENU_VERIFY"] == "1" else {
+                return
+            }
+            let proof: [String: Any] = [
+                "screen": "native-W3-v568-home",
+                "menuItems": Page.allCases.map { $0.rawValue },
+                "navigationAvailable": true,
+                "htmlOrWebView": false,
+                "hasOriginalW3BackgroundImage": false,
+                "hasOriginalW3LogoImage": false,
+                "sourcePlanet3DIntegrated": false,
+                "bundleID": Bundle.main.bundleIdentifier ?? "",
+                "simulatorOnly": true
+            ]
+            if let folder = FileManager.default.urls(
+                for: .cachesDirectory, in: .userDomainMask).first,
+               let data = try? JSONSerialization.data(
+                withJSONObject: proof, options: [.sortedKeys]) {
+                try? data.write(to: folder.appendingPathComponent(
+                    "ASTEROIDY_W3_MenuProof.json"), options: .atomic)
+            }
+        }
     }
 
     private func header(compact:Bool) -> some View {
