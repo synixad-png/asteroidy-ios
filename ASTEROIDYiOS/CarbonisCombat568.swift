@@ -341,8 +341,8 @@ struct CarbonisCombat568 {
         return closest.lengthSquared < radius*radius ? t : nil
     }
     static func sourceRockScore(_ rock:SphereAsteroid556)->Int {
-        (rock.size==3 ? 20 : rock.size==2 ? 50 : 100)
-            +(rock.originalHealth-1)*30+rock.tier*10
+        let sizeScore=rock.size==3 ? 20 : rock.size==2 ? 50 : 100
+        return sizeScore+(rock.originalHealth-1)*30+rock.tier*10
     }
 
     private mutating func stepShots(dt:Float) {
