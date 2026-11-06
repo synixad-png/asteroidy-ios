@@ -237,11 +237,10 @@ struct CarbonisCombat568 {
             // Bug.Phase is a fixed spawn-time orbit direction: DO NOT
             // animate it. Original EnemyTactics71.cs:43-45 uses sin(Phase+.4).
             let orbitDirection:Float=sin(fighter.phase+0.4)>0 ? 1 : -1
-            let flank:Float=(abs(distance-preferred)<90 ? 52 : 22)
-                * orbitDirection
+            let flank:Float=(abs(distance-preferred)<90 ? 52 : 22) * orbitDirection
             let desired=(dir*radial+side*flank)*dangerSpeed
-            fighter.velocity=fighter.velocity+(desired-fighter.velocity)
-                *(1-exp(-dt*4.2))
+            let convergence:Float=1-exp(-dt*4.2)
+            fighter.velocity=fighter.velocity+(desired-fighter.velocity)*convergence
             let old=fighter.core.position
             let oldAim=Sphere67.vector(old,Vec2(
                 x:cos(fighter.aim),y:sin(fighter.aim)))
