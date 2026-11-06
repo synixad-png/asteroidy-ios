@@ -33,7 +33,7 @@ for name in expected():
         if name.startswith("Music"):
             assert file.stat().st_size>100_000,(name,"not a source music track")
 assert sorted(x.name for x in root.iterdir() if x.is_file())==sorted(expected()),"unexpected files"
-print("PASS original v568 source-generated assets: 15 music + 37 SFX + 7 voices + intro + licenses = 58")
+print("PASS original v568 source-generated assets: 15 music + 34 SFX + 7 voices + intro + licenses = 58")
 if args.app is not None:
     app=Path(args.app)
     assert (app/"Info.plist").is_file(),app
