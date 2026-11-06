@@ -6,6 +6,8 @@
 
 Ostatnia zmiana: **dokładny odczyt oryginalnej mapy wysokości CARBONIS 512×256** (`CarbonisSurface277.swift`, na podstawie Windows v568 `Carbonis277.cs`). Inspektor wywołuje prawdziwe `SurfaceRadius`, wejście wymaga poprawnego SHA-256 szóstego źródłowego zasobu. **Lokalne testy Swift/Linux 27/27 PASS**; nowa kompilacja Xcode i test fizycznego iOS **jeszcze niepotwierdzone**. [Raport i ograniczenia](Reports/V568_STAGE_C_CARBONIS_TERRAIN_SOURCE_2026-11-06.md).
 
+**Zweryfikowano źródło WAVE:** pełny ZIP Windows/SteamOS v568 w Bibliotece zawiera `Game.Wave()` (`Windows/src/Game.cs:90–101`, `SteamOS/src/Game.cs:90–101`) i wszystkie kluczowe zależności. Dwie definicje `Wave()` mają ten sam SHA-256. [Audyt pełnych źródeł i testów](Reports/V568_WAVE_FULL_SOURCE_AUDIT_2026-11-06.md). To koryguje wcześniejszy, błędny wniosek wyciągnięty z niepełnego archiwum. **Wdrożenie pełnej WAVE do misji CARBONIS na iOS jest nadal do zrobienia.**
+
 **Aktualny kod nie wydaje nowego IPA.** Poprzednie IPA na Dysku Google jest starszym wydaniem i nie zawiera najnowszego terenu/rozwoju misji. Całość gry nie jest jeszcze ukończona.
 
 
