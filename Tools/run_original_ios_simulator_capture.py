@@ -101,7 +101,7 @@ def capture(app:Path,reports:Path):
                     f"{kind}: Simulator launch output lacks {PACKAGE}: {output}")
             print(f"REAL {kind}: genuine app launched",flush=True)
             time.sleep(5)
-            picture=reports/f"{kind}_real_app.png"
+            picture=reports/f"{kind}_candidate_unverified.png"
             run_command(
                 ["xcrun","simctl","io",udid,"screenshot",
                  "--type=png",str(picture)],55,
@@ -124,6 +124,8 @@ def capture(app:Path,reports:Path):
                 raise AppValidationFailed(
                     f"{kind}: genuine 194427-vertex texture activation "
                     "not confirmed by application's own log")
+            verified=reports/f"{kind}_VERIFIED_ASTEROIDY_source431.png"
+            picture.rename(verified)
             print(f"PASS: {kind} screenshot from own game + source GPU UV "
                   f"runtime log, elapsed={time.monotonic()-start:.1f}s",
                   flush=True)
