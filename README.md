@@ -1,5 +1,14 @@
 # ASTEROIDY iOS — natywny port Swift/Metal (projekt w trakcie rozwoju)
 
+## CARBONIS 01 — oryginalne wybuchy asteroid i myśliwców (06.11.2026)
+
+W pierwszej misji dotychczasowe znikanie asteroid i myśliwców po trafieniu zostało uzupełnione o **źródłowe efekty 3D z Windows v568**. Na podstawie faktycznych `Game.cs`, `BossTunnelGame.cs`, `CombatPieces125.cs`, `GpuCombatPieces125.cs` oraz `Explosion524.cs` dodano osobne eksplozje asteroid (18/18/27 cyjanowych smug, błysk, rozchodzący się pierścień i skala 9/15/23), myśliwców (22 pomarańczowe smugi, sześć iskier, **11 obracających się metalowych szczątków 3D**, wybuch paliwowy skali 14) i nieśmiertelnych trafień. Zamiast statycznych sprite'ów używana jest rzeczywista geometria oraz shader **objętościowego ognia i dymu** `Explosion524`: jedna tekstura szumu GPU 64³, 13 kłębów, 22 próbki głębokości i limit trzech jednoczesnych wybuchów. Poprzednie kolizje, zniszczenia fizyczne, sterowanie i warunki zwycięstwa pozostały bez zmian.
+
+**[Testy źródłowe GitHub 42276790554: PASS](https://github.com/synixad-png/asteroidy-ios/actions/runs/42276790554)** — 45 nowych kontroli oryginalnych efektów i wcześniejsza pełna regresja. **[Pre-build IPA 42277254285: PASS Linux](https://github.com/synixad-png/asteroidy-ios/actions/runs/42277254285)**. Budowanie natywnego IPA i shadera Metal na macOS trwa; wynik i potwierdzenie efektów na GPU Apple wymagają oddzielnego sprawdzenia. [Raport audytu oryginalnych eksplozji](Reports/V568_CARBONIS01_ORYGINALNE_EKSPLOZJE524_2026-11-06.md) · [Niezmieniony plan 18 zadań](PORT_STATUS_18_TASKS.md).
+
+**Port całej gry pozostaje na 38% implementacji / 62% pozostało**. Oryginalne dźwięki eksplozji, porównanie wizualne z Windows i test interaktywny na iPhone/iPad wciąż nie są potwierdzone.
+
+
 ## Najnowszy etap: CARBONIS 01 — walka → wygrana → raport → serwis → zapis (06.11.2026)
 
 **Port całej gry: 38% implementacyjnie (+2 pp), 62% pozostało.** W pierwszej misji działa źródłowa sekwencja `Game.Wave` (13 asteroid, cztery myśliwce), kolizje sferyczne, broń Pulse/Twin/Scatter z zakupionymi ulepszeniami, odłamki, realistyczne zbieranie żetonów i `Game.FinishLevel`. Po zwycięstwie powstaje raport `LevelSummary166` z premią 12 żetonów i przyciskiem serwisu po 4,2 s. Wyniki i zasoby zapisują się trwale, ukończenie CARBONIS odblokowuje sektor02, a powtórka nie przyznaje drugi raz nagrody. Po porażce dostępne jest ponowienie misji.
