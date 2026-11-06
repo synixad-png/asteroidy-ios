@@ -4,8 +4,8 @@ import Foundation
 ///
 /// Windows/src/Orbit50.cs starts a complete combat mission only after
 /// MissionUnlocked50 and a valid orbit entry. The iOS port currently has the
-/// exact CARBONIS (C279) GLB-derived globe but not the complete mission mode,
-/// source mission Wave(), boss rules, or full terrain collision. Do not use
+/// exact CARBONIS (C279) GLB-derived globe and source initial Wave() spawn,
+/// but not active enemy AI, boss rules, flight or full terrain collisions. Do not use
 /// the unrelated Boreas/9-asteroid diagnostic in its place.
 ///
 /// This gate allows a real transition from the 26-sector source atlas to the
@@ -32,7 +32,7 @@ struct Sector01Entry568: Equatable {
                     stage: .sourcePlanetInspection)
     }
 
-    /// Must remain false until source StartHubMission261/Wave(), full scene,
+    /// Must remain false until the prepared source wave is actually stepped,
     /// controls, HUD, terrain collisions and completion logic are integrated.
     var sourceCombatMissionIsPlayable: Bool { false }
 }
