@@ -12,6 +12,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
     // inspection camera; never alters PC mesh geometry or UV data.
     var yawOffset: Float = 0
     var pitchOffset: Float = 0
+    // Initial authentic Game.Wave actors; renderer advances positions in Metal draw loop.
+    var initialRocks: [SphereAsteroid556] = []
     static let isAvailable: Bool = {
         let files:[(String,String)] = [
             ("Sector01CarbonisVertices","bin"),
@@ -50,7 +52,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
         view.preferredFramesPerSecond=30
         if let device=view.device {
             do {
-                let renderer=try Coordinator.Renderer(device:device)
+                let renderer=try Coordinator.Renderer(device:device,initialRocks:initialRocks)
                 renderer.yawOffset=yawOffset
                 renderer.pitchOffset=pitchOffset
                 view.delegate=renderer
@@ -73,6 +75,10 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             enum SourceError: Error {case missing,invalid,metal}
             private let queue:MTLCommandQueue
             private let pipeline:MTLRenderPipelineState
+            private let rockPipeline:MTLRenderPipelineState
+            private var rockBuffers: [Int:MTLBuffer] = [:]
+            private var activeRocks: [SphereAsteroid556]
+            private var previousRockFrame: TimeInterval?
             private let depth:MTLDepthStencilState
             private let vertexBuffer:MTLBuffer
             private let indexBuffer:MTLBuffer
@@ -120,7 +126,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 }) else {throw SourceError.metal}
                 return buffer
             }
-            init(device:MTLDevice) throws {
+            init(device:MTLDevice,initialRocks:[SphereAsteroid556]) throws {
+                activeRocks=initialRocks
                 guard let q=device.makeCommandQueue() else {throw SourceError.metal}
                 queue=q
                 let vertices=try Self.verified("Sector01CarbonisVertices.bin")
@@ -146,7 +153,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     options:opts)
                 let library=try device.makeDefaultLibrary(bundle:.main)
                 guard let v=library.makeFunction(name:"sector01CarbonisVertex568"),
-                      let f=library.makeFunction(name:"sector01CarbonisFragment568")
+                      let f=library.makeFunction(name:"sector01CarbonisFragment568"),
+                      let rockFragment=library.makeFunction(name:"sector01SourceRockFragment568")
                 else {throw SourceError.metal}
                 let spec=MTLRenderPipelineDescriptor()
                 spec.vertexFunction=v
@@ -157,6 +165,23 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 spec.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
                 spec.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
                 pipeline=try device.makeRenderPipelineState(descriptor:spec)
+                let rockSpec=MTLRenderPipelineDescriptor()
+                rockSpec.vertexFunction=v
+                rockSpec.fragmentFunction=rockFragment
+                rockSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
+                rockSpec.depthAttachmentPixelFormat = .depth32Float
+                rockPipeline=try device.makeRenderPipelineState(descriptor:rockSpec)
+                // Cache original procedural geometry per shape, never each frame.
+                for shape in Set(initialRocks.map { CarbonisRockGeometry568.shape(for:$0) }) {
+                    let values=CarbonisRockGeometry568.vertices(shape:shape)
+                    let newBuffer=values.withUnsafeBytes { bytes in
+                        bytes.baseAddress.flatMap {
+                            device.makeBuffer(bytes:$0,length:bytes.count,options:[])
+                        }
+                    }
+                    guard let buffer=newBuffer else {throw SourceError.metal}
+                    rockBuffers[shape]=buffer
+                }
                 let ds=MTLDepthStencilDescriptor()
                 ds.depthCompareFunction = .lessEqual
                 ds.isDepthWriteEnabled=true
