@@ -6,6 +6,7 @@ import Foundation
 struct Sector01PreparedWave568 {
     let reset: MissionStart261.Snapshot
     let encounter: MissionWave568.Encounter
+    let incoming: MissionIncoming568
 
     static func prepare(entry: Sector01Entry568,
                         campaign: CampaignProgress556,
@@ -27,7 +28,8 @@ struct Sector01PreparedWave568 {
               let encounter = MissionWave568.generate(
                 level: entry.sector, difficulty: difficulty, seed: seed,
                 ship: Vec2(x:640,y:360)) else { return nil }
-        return Self(reset:reset,encounter:encounter)
+        return Self(reset:reset,encounter:encounter,
+                    incoming:MissionIncoming568(from:encounter,difficulty:difficulty))
     }
 
     /// Runtime transition remains blocked until wave entities are actually
