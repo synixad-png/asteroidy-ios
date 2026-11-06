@@ -1,0 +1,54 @@
+name: ASTEROIDY v568 real alien scout B82S native Swift bridge (NO IPA)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-v568-scout-native.yml'
+      - 'ASTEROIDYiOS/SourceAlienScout173.swift'
+      - 'Tests/SourceAlienScout173NativeTests.swift'
+      - 'Tools/convert_v568_alien_scout_b82s.py'
+      - 'Tests/V568AlienScoutB82STests.py'
+permissions:
+  contents: read
+jobs:
+  native-scout-source:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact Windows v568 source campaign boss type 4 and original animation
+        run: |
+          set -euo pipefail
+          python3 Tools/stage_v568_resources.py --root . --verify-only
+          python3 Tests/V568AlienScoutB82STests.py
+      - name: Extract isolated original source v568 B82S asset
+        run: |
+          set -euo pipefail
+          python3 Tools/stage_v568_resources.py --root . --destination "$RUNNER_TEMP/asteroidy-v568-original"
+          python3 Tools/convert_v568_alien_scout_b82s.py \
+            --source "$RUNNER_TEMP/asteroidy-v568-original/PortingResources/v568/Shared/Assets_Boss82_GZ/alien_scout_173.b82.gz" \
+            --out "$RUNNER_TEMP/v568-boss-original"
+      - name: Compile and execute original B82S reader on Apple Swift
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/SourceAlienScout173.swift \
+            Tests/SourceAlienScout173NativeTests.swift \
+            -o "$RUNNER_TEMP/b82s-source-verify"
+          "$RUNNER_TEMP/b82s-source-verify" "$RUNNER_TEMP/v568-boss-original"
+      - name: Verify original iOS app still typechecks with the additional source reader, without IPA
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$RUNNER_TEMP/asteroidy-v568-scout-build" build \
+            > "$RUNNER_TEMP/scout-xcodebuild.log" 2>&1 || {
+              tail -n 120 "$RUNNER_TEMP/scout-xcodebuild.log"
+              exit 1
+            }
+          test ! -e ASTEROIDY_iOS_UNSIGNED.ipa
+          echo "PASS: iOS simulator code compiles; B82S source reader validated; NO IPA"
