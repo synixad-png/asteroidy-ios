@@ -12,7 +12,7 @@ final class W3MenuNavigationUITests: XCTestCase {
     /// hierarchy. Both a Button and an accessible other element can be
     /// tapped; missing control logs the real on-device XCUI hierarchy.
     private func menuButton(_ app: XCUIApplication, index: Int) -> XCUIElement {
-        let identifier = "w3-home-\\(index)"
+        let identifier = "w3-home-\(index)"
         let button = app.buttons[identifier]
         if button.waitForExistence(timeout: 10) { return button }
         let visible = app.descendants(matching: .any)
@@ -27,7 +27,7 @@ final class W3MenuNavigationUITests: XCTestCase {
             screenshot.lifetime = .keepAlways
             activity.add(screenshot)
         }
-        XCTFail("Original v568 native W3 menu button \\(identifier) was not exposed to XCTest")
+        XCTFail("Original v568 native W3 menu button \(identifier) was not exposed to XCTest")
         return button
     }
 
@@ -35,6 +35,9 @@ final class W3MenuNavigationUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["ASTEROIDY_W3_MENU_VERIFY"] = "1"
         // No changes to app data, original mission selection or graphics.
+        // The original app supports only landscape orientations.
+        // Align XCTest's device frame with the actual on-screen layout.
+        XCUIDevice.shared.orientation = .landscapeRight
         app.launch()
         _ = menuButton(app,index:0)
         return app
@@ -43,7 +46,7 @@ final class W3MenuNavigationUITests: XCTestCase {
     func testSevenOriginalMenuActionsAndBack() {
         let app=launchW3()
         for index in 0..<7 {
-            let button=app.buttons["w3-home-\(index)"]
+            let button=menuButton(app,index:index)
             XCTAssertTrue(button.waitForExistence(timeout: 10),
                           "Missing original W3 menu action \(index)")
             button.tap()
