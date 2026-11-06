@@ -18,6 +18,9 @@ assert "PASS: real subprocess timeout" in p.stdout
 source=script.read_text()
 assert "class EnvironmentUnavailable" in source
 assert "except subprocess.TimeoutExpired" in source
+assert "start_new_session=True" in source
+assert "os.killpg(proc.pid,signal.SIGKILL)" in source
+assert "Inherited-pipe process-group guard failed" in source
 assert "raise SystemExit(75)" in source
 assert "raise SystemExit(1)" in source
 assert 'picture=reports/f"{kind}_candidate_unverified.png"' in source
