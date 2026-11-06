@@ -1,5 +1,42 @@
 # ASTEROIDY iOS — stały harmonogram portowania
 
+## AKTUALIZACJA 06.11.2026 — realizacja A, faktyczne Apple GPU i XCTest
+
+**ETAP A (MENU W3) W TRAKCIE; B JESZCZE NIEROZPOCZĘTY.**
+Stały harmonogram 18 zadań: **27% wykonane / 73% pozostało**.
+Zadanie 14 **10% (+0 pp)** — nie podwyższać bez ukończenia testów UI.
+
+**Aktualna praca:** poprzednie sesje Apple Actions
+[42212331207](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331207)
+i
+[42212331152](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331152)
+zakończyły się niepowodzeniem, a zadania symulatorów anulowano;
+nie dostarczyły pełnego wyniku nowej nawigacji.
+Oba przepływy uruchomiono ponownie na **macos-15-intel**,
+który wcześniej skutecznie kompilował i uruchamiał ASTEROIDY iOS.
+
+- [GitHub Actions 42217818216 — oryginalne menu/planeta/okręt W3 GPU](https://github.com/synixad-png/asteroidy-ios/actions/runs/42217818216):
+  **IPHONE SUCCESS** — rzeczywiste uruchomienie ekranu,
+  oryginalne obrazy W3, planetarny model NewHome290 i ukończone
+  komendy Metal oraz autentyczny zrzut ekranu.
+  IPAD w momencie aktualizacji nadal uruchamiał rzeczywisty
+  ekran i walidację GPU; nie zaliczono go bez wyniku końcowego.
+- [GitHub Actions 42217810810 — siedem prawdziwych dotknięć W3](https://github.com/synixad-png/asteroidy-ios/actions/runs/42217810810):
+  oba joby **IPHONE i IPAD wykonują rzeczywiste XCTest**,
+  czyli dotknięcia 7 pozycji, wejścia do paneli, powroty i
+  przejście do diagnostyki 3D. Nie deklarować PASS bez
+  zakończonego testu; nie przedstawiać uruchomienia jako wyniku.
+  W razie niepowodzenia pobrać zachowane `.xcresult`
+  z drzewem dostępności i autentycznym zrzutem ekranu.
+- Nie dokonano zmian w źródłowej geometrii, zapisach, kolizjach
+  ani falach walki. **Nowego IPA nie generowano**; wcześniejszy
+  zweryfikowany `W3_MENU_NAV` jest już na Dysku Google.
+
+**Dalsza bramka:** bezpośrednie potwierdzenie siedmiu przycisków,
+końcowy wynik obu GPU i ocena zgodności W3 z Windows.
+Dopiero po zamknięciu A rozpoczyna się etap B — realny wybór misji.
+
+
 ## 06.11.2026 — POTWIERDZONE NOWE WYDANIE IPA W3 MENU NAV
 
 **GitHub Actions 42212773252 — SUCCESS**. Nowy rzeczywisty,
