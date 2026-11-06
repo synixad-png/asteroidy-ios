@@ -13,6 +13,9 @@ on:
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/MissionCatalog568.swift'
+      - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/Sector01Carbonis568.metal'
+      - 'Tools/prepare_v568_carbonis_sector01.py'
       - 'ASTEROIDYiOS/CampaignProgress556.swift'
       - 'Tests/CampaignSelection568Tests.swift'
       - 'ASTEROIDYiOS/W3HomePlanetMetal568.swift'
@@ -77,6 +80,7 @@ jobs:
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3HomePlanetMetal568.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
           swiftc -frontend -parse ASTEROIDYiOS/SourcePlayerShip367.swift
@@ -146,6 +150,8 @@ jobs:
         run: python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets
       - name: Stage original W3 v568 menu images when supplied, verify SHA256
         run: python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Stage exact indexed CARBONIS sector01 preview and three source texture maps
+        run: python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
       - name: Generate native Xcode project from verified project.yml
         run: xcodegen generate
       - name: Typecheck and compile all native iOS Swift/Metal sources (unsigned, NO IPA)
