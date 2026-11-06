@@ -11,12 +11,25 @@ final class CarbonisSession568: ObservableObject {
         var rocks:Int
         var fighters:Int
         var shots:Int
+        var tokenPickups:[Vec2]
+        var score:Int
+        var collectedTokens:Int
+        var destroyedRocks:Int
+        var shotDownEnemies:Int
+        var summary:Sector01MissionSummary568?
+        var summarySeconds:Float
         var targets:[Vec2]
         var hazards:[Vec2]
         var seconds:Float
         var phase:CarbonisCombat568.Phase
-        init(_ game:CarbonisCombat568) {
+        init(_ game:CarbonisCombat568,summarySeconds:Float=0) {
             hull=game.hull;armor=game.armor;lives=game.lives
+            score=game.score;collectedTokens=game.collectedLootTokens
+            destroyedRocks=game.rocksDestroyed
+            shotDownEnemies=game.shooterKills
+            tokenPickups=game.tokenPickups.map{$0.position}
+            summary=game.missionSummary
+            self.summarySeconds=summarySeconds
             rocks=game.rocks.count;fighters=game.shooters.count
             shots=game.bullets.count
             targets=game.shooters.map {
@@ -36,6 +49,7 @@ final class CarbonisSession568: ObservableObject {
     var paused=false
     private var lastFrame:TimeInterval?
     private var lastHUD:TimeInterval=0
+    private var summaryElapsed:Float=0
 
     init(prepared:Sector01PreparedWave568) {
         let first=CarbonisCombat568(prepared)
@@ -53,6 +67,7 @@ final class CarbonisSession568: ObservableObject {
         let elapsed=max(0,min(0.05,now-lastFrame))
         guard elapsed>0 else{return}
         var remaining=Float(elapsed)
+        if game.phase == .victory {summaryElapsed+=remaining}
         while remaining>0.000001 && game.phase == .playing {
             let dt=min(1.0/120.0,remaining)
             game.step(move:move,aim:aim,shooting:shooting,dt:dt)
@@ -60,7 +75,7 @@ final class CarbonisSession568: ObservableObject {
         }
         if now-lastHUD > 0.10 {
             lastHUD=now
-            let snapshot=HUD(game)
+            let snapshot=HUD(game,summarySeconds:summaryElapsed)
             DispatchQueue.main.async { [weak self] in
                 self?.hud=snapshot
             }
