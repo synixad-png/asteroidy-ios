@@ -11,6 +11,7 @@ on:
       - 'ASTEROIDYiOS/PlanetDamageLab556.swift'
       - 'Tests/PlanetDamageLab556Tests.swift'
       - 'ASTEROIDYiOS/App.swift'
+      - 'Tests/IOSInterruptedTouchSourceContract.py'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/SphereRockContact68.swift'
       - 'ASTEROIDYiOS/SphereSector556.swift'
@@ -57,6 +58,8 @@ jobs:
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
+      - name: Guard against stuck iPhone/iPad touch inputs after app interruption
+        run: python3 Tests/IOSInterruptedTouchSourceContract.py
       - name: Full Physics68/Damage556/destruction regression matrix (NO IPA)
         run: |
           set -eu
