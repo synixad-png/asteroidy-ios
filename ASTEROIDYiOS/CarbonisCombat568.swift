@@ -18,6 +18,8 @@ struct CarbonisCombat568 {
         var aim: Float = 0
         var fireClock: Float
         var telegraph: Float = 0
+        var gunAim: Float = 0
+        var muzzle: Float = 0
         var phase: Float
         init(_ source:MissionWave568.Fighter) {
             core=source; fireClock=source.fireClock; phase=source.phase
@@ -172,61 +174,107 @@ struct CarbonisCombat568 {
         }
     }
 
+    /// EnemyTactics71.cs:32 Turn72, angularly capped to 6.5 rad/s.
+    static func turn72(_ angle:Float,_ target:Float,
+                       dt:Float,speed:Float=6.5)->Float {
+        let delta=atan2(sin(target-angle),cos(target-angle))
+        return angle + max(-speed*dt,min(speed*dt,delta))
+    }
+
     private mutating func updateShooters(dt:Float) {
-        let ship=flight.position
+        let player=flight.position
+        let dangerSpeed:Float=1.1
+        let speed:Float=245
         for i in shooters.indices {
-            var b=shooters[i]
-            let delta=Sphere67.delta(target:ship,origin:b.core.position)
+            var fighter=shooters[i]
+            let delta=Sphere67.delta(target:player,origin:fighter.core.position)
             let dir=Self.unit(delta)
             let side=Vec2(x:-dir.y,y:dir.x)
             let distance=sqrt(delta.lengthSquared)
+            // Level <=4: source source standoff ring at 158.
             let preferred:Float=158
             var radial:Float=0
-            if distance>preferred+32 {radial=min(124,(distance-preferred-32)*1.4)}
-            else if distance<preferred-25 {radial = -min(145,(preferred-25-distance)*2.5)}
-            let flank:Float=(abs(distance-preferred)<90 ? 52 : 22) *
-                 (sin(b.phase+0.4)>0 ? 1 : -1)
-            let desired=(dir*radial+side*flank)*1.1
-            b.velocity=b.velocity+(desired-b.velocity)*(1-exp(-dt*4.2))
-            let old=b.core.position
-            b.core.position=Sphere67.advance(b.core.position,
-                                              velocity:&b.velocity,dt:dt)
-            let toShip=Sphere67.delta(target:ship,origin:b.core.position)
-            b.aim=atan2(toShip.y,toShip.x)
-            b.fireClock-=dt
-            // Source EnemyTactics71: introductory fighters engage within
-            // 200 units, a 2.8s recovery and speed 245 * DangerSpeed.
-            if sqrt(toShip.lengthSquared)>200 {
-                // Source EnemyTactics71:53: out-of-range cancels warning.
-                b.telegraph=0
-                b.fireClock=max(0.45,b.fireClock)
-            } else {
-                if b.fireClock<=0.82 && b.telegraph<=0 {
-                    // Source level-one Shooter telegraph 0.82 seconds.
-                    b.telegraph=0.82
-                }
-                if b.telegraph>0 {
-                    b.telegraph=max(0.001,b.telegraph-dt)
-                }
+            if distance>preferred+32 {
+                radial=min(124,(distance-preferred-32)*1.4)
+            } else if distance<preferred-25 {
+                radial = -min(145,(preferred-25-distance)*2.5)
             }
-            if sqrt(toShip.lengthSquared)<=200 && b.fireClock<=0 {
-                b.fireClock=2.8
-                b.telegraph=0
-                if hostileShots.count<160 {
-                    let facing=Vec2(x:cos(b.aim),y:sin(b.aim))
-                    let origin=Sphere67.offset(b.core.position,by:facing*18)
-                    let sourceVelocity=facing*(245*1.1)
-                    let velocity=Sphere67.components(origin,Sphere67.transport(
-                        Sphere67.vector(b.core.position,sourceVelocity),
-                        from:Sphere67.normal(b.core.position),
-                        to:Sphere67.normal(origin)))
-                    hostileShots.append(Projectile(point:origin,
-                           velocity:velocity,life:2.6,hostile:true))
-                }
+            // Bug.Phase is a fixed spawn-time orbit direction: DO NOT
+            // animate it. Original EnemyTactics71.cs:43-45 uses sin(Phase+.4).
+            let orbitDirection:Float=sin(fighter.phase+0.4)>0 ? 1 : -1
+            let flank:Float=(abs(distance-preferred)<90 ? 52 : 22)
+                * orbitDirection
+            let desired=(dir*radial+side*flank)*dangerSpeed
+            fighter.velocity=fighter.velocity+(desired-fighter.velocity)
+                *(1-exp(-dt*4.2))
+            let old=fighter.core.position
+            let oldAim=Sphere67.vector(old,Vec2(
+                x:cos(fighter.aim),y:sin(fighter.aim)))
+            fighter.core.position=Sphere67.advance(
+                old,velocity:&fighter.velocity,dt:dt)
+            let transported=Sphere67.components(
+                fighter.core.position,Sphere67.transport(
+                    oldAim,from:Sphere67.normal(old),
+                    to:Sphere67.normal(fighter.core.position)))
+            fighter.aim=atan2(transported.y,transported.x)
+
+            // EnemyTactics71.cs:31 Predicted71, exact first-level 245
+            // shooter speed, original 0.8-second max lead.
+            let offset=Sphere67.delta(target:player,
+                                      origin:fighter.core.position)
+            let range=sqrt(offset.lengthSquared)
+            let lead=min(Float(0.8),range/(speed*dangerSpeed))
+            let future=Sphere67.offset(player,by:flight.velocity*lead)
+            let prediction=Sphere67.delta(target:future,
+                                          origin:fighter.core.position)
+            let targetAngle=atan2(prediction.y,prediction.x)
+            fighter.aim=Self.turn72(fighter.aim,targetAngle,dt:dt)
+            fighter.muzzle=max(0,fighter.muzzle-dt)
+
+            if range>200 {
+                // Source out-of-range enemies cancel all warnings and cannot
+                // carry an old firing countdown into range.
+                fighter.fireClock=max(0.45,fighter.fireClock-dt)
+                fighter.telegraph=0
+                shooters[i]=fighter
+                continue
             }
-            // Preserve C# source shooter phase value in its own actor.
-            if Self.distance(old,b.core.position)>0.001 {b.phase+=dt*0.3}
-            shooters[i]=b
+            fighter.fireClock-=dt
+            let warning:Float=0.82
+            if fighter.fireClock<=warning && fighter.telegraph<=0 {
+                fighter.gunAim=targetAngle
+                fighter.telegraph=warning
+            }
+            if fighter.telegraph>0 {
+                fighter.telegraph=max(0.001,fighter.telegraph-dt)
+            }
+            if fighter.fireClock>0 {
+                shooters[i]=fighter
+                continue
+            }
+            let alignment=abs(atan2(
+                sin(fighter.aim-fighter.aim),cos(fighter.aim-fighter.aim)))
+            if alignment>0.25 {
+                shooters[i]=fighter
+                continue
+            }
+            // Level 1: single bullet per volley, 2.8 s recovery.
+            if hostileShots.count<160 {
+                let forward=Vec2(x:cos(fighter.aim),y:sin(fighter.aim))
+                let start=Sphere67.offset(fighter.core.position,
+                                         by:forward*18)
+                let velocity=Sphere67.components(start,Sphere67.transport(
+                    Sphere67.vector(fighter.core.position,
+                                    forward*(speed*dangerSpeed)),
+                    from:Sphere67.normal(fighter.core.position),
+                    to:Sphere67.normal(start)))
+                hostileShots.append(Projectile(
+                    point:start,velocity:velocity,life:2.6,hostile:true))
+            }
+            fighter.muzzle=0.10
+            fighter.telegraph=0
+            fighter.fireClock=2.8
+            shooters[i]=fighter
         }
     }
 
