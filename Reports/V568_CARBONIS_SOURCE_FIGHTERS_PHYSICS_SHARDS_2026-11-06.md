@@ -27,3 +27,10 @@ Zakres obejmuje aktywnego, proceduralnego myśliwca typu 0 i mechaniki pierwszej
 ## Następny krok
 
 Po potwierdzonym przejściu źródłowych testów rozwijać kolejno kolejne typy przeciwników i logikę pełnej kampanii, niezależnie od kolejki runnerów macOS. W razie dostępności Xcode sprawdzić render prawdziwego C279, zgodność Metal i dotyku; dopiero potem potwierdzać IPA.
+
+## Uzupełnienie: natywna kompilacja iPhone/iPad
+
+W przebiegu [42247840690](https://github.com/synixad-png/asteroidy-ios/actions/runs/42247840690) runner macOS ostatecznie wykonał `xcodebuild` i wykazał błąd (nie był to tylko brak przydziału runnera): `CarbonisRockGeometry568.swift` (składnia operatorów, obecnie poprawiona) oraz `Sector01CarbonisPreview568.swift` (jawny `self` wymagany w zamknięciu `addCompletedHandler`). Poprawki są zatwierdzone w repozytorium, a najnowszy przebieg `verify-combat-no-ipa` dla wcześniejszych zmian osiągnął PASS.
+
+Uruchomiono ponowny [build IPA 42259012837](https://github.com/synixad-png/asteroidy-ios/actions/runs/42259012837) na commicie `a7ebee2f2d98a2ce93a891b1c92365237003e1de`, zawierającym komplet zmian tego etapu i naprawę błędu Xcode. Przy sporządzeniu uzupełnienia: zadania workflow nadal trwają; **IPA niezweryfikowany**. Dopiero sukces `compile-device` i pojawienie się `ASTEROIDY-iOS-device-unsigned-ipa` potwierdzi nowe wydanie. Nie deklarować zweryfikowanego testu GPU Apple lub sterowania iOS.
+
