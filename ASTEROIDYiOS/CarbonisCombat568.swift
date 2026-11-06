@@ -11,6 +11,8 @@ struct CarbonisCombat568 {
         var velocity: Vec2
         var life: Float
         var hostile: Bool
+        // Gpu EnemyShots71 / ShooterShotDamage96: first CARBONIS = 8.
+        var damage:Int = 8
     }
     struct Shooter {
         var core: MissionWave568.Fighter
@@ -20,6 +22,7 @@ struct CarbonisCombat568 {
         var telegraph: Float = 0
         var gunAim: Float = 0
         var muzzle: Float = 0
+        var burst:Int = 0
         var phase: Float
         init(_ source:MissionWave568.Fighter) {
             core=source; fireClock=source.fireClock; phase=source.phase
@@ -263,15 +266,18 @@ struct CarbonisCombat568 {
     private mutating func updateShooters(dt:Float) {
         let player=flight.position
         let dangerSpeed:Float=1.1
-        let speed:Float=245
         for i in shooters.indices {
             var fighter=shooters[i]
+            // CARBONIS is level1, normal. Future stage contexts must
+            // supply their own level; don't claim 25 live missions.
+            let tactics=ShooterTactics71(
+                level:1,type:fighter.core.type,difficulty:1)
+            let speed=tactics.sourceSpeed
             let delta=Sphere67.delta(target:player,origin:fighter.core.position)
             let dir=Self.unit(delta)
             let side=Vec2(x:-dir.y,y:dir.x)
             let distance=sqrt(delta.lengthSquared)
-            // Level <=4: source source standoff ring at 158.
-            let preferred:Float=158
+            let preferred=tactics.preferredStandoff
             var radial:Float=0
             if distance>preferred+32 {
                 radial=min(124,(distance-preferred-32)*1.4)
@@ -306,20 +312,25 @@ struct CarbonisCombat568 {
             let prediction=Sphere67.delta(target:future,
                                           origin:fighter.core.position)
             let targetAngle=atan2(prediction.y,prediction.x)
-            fighter.aim=Self.turn72(fighter.aim,targetAngle,dt:dt)
+            fighter.aim=Self.turn72(
+                fighter.aim,
+                tactics.lockedSalvo && fighter.telegraph>0
+                    ? fighter.gunAim : targetAngle,dt:dt)
             fighter.muzzle=max(0,fighter.muzzle-dt)
 
-            if range>200 {
+            if range>tactics.shootingRange {
                 // Source out-of-range enemies cancel all warnings and cannot
                 // carry an old firing countdown into range.
                 fighter.fireClock=max(0.45,fighter.fireClock-dt)
                 fighter.telegraph=0
+                fighter.burst=0
                 shooters[i]=fighter
                 continue
             }
             fighter.fireClock-=dt
-            let warning:Float=0.82
-            if fighter.fireClock<=warning && fighter.telegraph<=0 {
+            let warning=tactics.warningSeconds
+            if fighter.fireClock<=warning && fighter.telegraph<=0 &&
+               fighter.burst==0 {
                 fighter.gunAim=targetAngle
                 fighter.telegraph=warning
             }
@@ -330,12 +341,23 @@ struct CarbonisCombat568 {
                 shooters[i]=fighter
                 continue
             }
-            // EnemyTactics71.cs:63-64: for type 0, shotAngle=Aim71,
-            // so its alignment with the current aim is exactly zero.
-            // The GunAim72 alignment gate only affects enemy kinds 1/4.
-            // Level 1: single bullet per volley, 2.8 s recovery.
-            if hostileShots.count<160 {
-                let forward=Vec2(x:cos(fighter.aim),y:sin(fighter.aim))
+            // EnemyTactics71.cs:63-74: heavy fighters retain marked
+            // gun direction; other kinds track until their shot.
+            let shotAngle=tactics.lockedSalvo
+                ? fighter.gunAim : fighter.aim
+            let alignment=abs(atan2(
+                sin(shotAngle-fighter.aim),cos(shotAngle-fighter.aim)))
+            if alignment>0.25 {
+                shooters[i]=fighter
+                continue
+            }
+            for shotIndex in 0..<tactics.volleyCount {
+                if tactics.type==4 && shotIndex==3 {continue}
+                if hostileShots.count>=160 {break}
+                let spreadOffset=(Float(shotIndex) -
+                    Float(tactics.volleyCount-1)*0.5)*tactics.spread
+                let a=shotAngle+spreadOffset
+                let forward=Vec2(x:cos(a),y:sin(a))
                 let start=Sphere67.offset(fighter.core.position,
                                          by:forward*18)
                 let velocity=Sphere67.components(start,Sphere67.transport(
@@ -344,11 +366,18 @@ struct CarbonisCombat568 {
                     from:Sphere67.normal(fighter.core.position),
                     to:Sphere67.normal(start)))
                 hostileShots.append(Projectile(
-                    point:start,velocity:velocity,life:2.6,hostile:true))
+                    point:start,velocity:velocity,life:2.6,
+                    hostile:true,damage:tactics.projectileDamage))
             }
             fighter.muzzle=0.10
             fighter.telegraph=0
-            fighter.fireClock=2.8
+            fighter.burst+=1
+            if fighter.burst<tactics.burstLength {
+                fighter.fireClock=0.19
+            } else {
+                fighter.burst=0
+                fighter.fireClock=tactics.recoverySeconds
+            }
             shooters[i]=fighter
         }
     }
@@ -462,7 +491,7 @@ struct CarbonisCombat568 {
         for i in hostileShots.indices.reversed() {
             let shot=hostileShots[i]
             if Self.hit(shot,flight.position,radius:11.2+4.5,dt:dt) {
-                hostileShots.remove(at:i);suffer(8);continue
+                hostileShots.remove(at:i);suffer(shot.damage);continue
             }
             var moved=shot
             moved.point=Sphere67.advance(shot.point,velocity:&moved.velocity,dt:dt)
