@@ -1,3 +1,34 @@
+## NAJNOWSZY ETAP 06.11.2026 — źródłowe myśliwce CARBONIS 3D i fizyka Physics68
+
+**Cały port implementacyjnie: 35% (+2 pp), pozostało 65%.** W bieżącym etapie dodano pełną proceduralną geometrię myśliwca typu 0, współdzieloną w Metal przez cztery jednostki, oraz pierścienie ostrzegające przed strzałem. AI poziomu 1 bazuje teraz na `EnemyTactics71.cs`, a kolizje statku, odrzut po trafieniu, priorytet trafień, zasłanianie przez asteroidy, punktacja i 18 nietrwałych odłamków na `Physics68.cs`, `HitBug` i `Game.Split`. Zachowano mechanizmy i zasoby dotychczasowej CARBONIS C279 bez ingerencji w samą geometrię planety.
+
+**Testy tego etapu: [GitHub Actions 42256245496 — SUCCESS](https://github.com/synixad-png/asteroidy-ios/actions/runs/42256245496)** dla całego `verify-combat-no-ipa` (w tym nowych testów generatora myśliwców i fizyki oraz historycznych regresji). Kompilacja Xcode/macOS pozostaje **queued**, nowy IPA i test GPU Apple **niepotwierdzone**. Wszystkie 18 zadań są nadal w tym samym układzie. [Raport techniczny](Reports/V568_CARBONIS_SOURCE_FIGHTERS_PHYSICS_SHARDS_2026-11-06.md).
+
+| Nr | Stałe zadanie | Poprzednio | Obecnie | Zmiana |
+|---:|---|---:|---:|---:|
+| 1 | Kompilacja i infrastruktura iOS | 88% | 88% | 0 pp |
+| 2 | Silnik graficzny Metal | 89% | 89% | 0 pp |
+| 3 | Materiały PBR, tekstury i oświetlenie | 25% | 25% | 0 pp |
+| 4 | Statki, planety i zasoby 3D | 24% | **28%** | **+4 pp** |
+| 5 | Animacje modeli GLB | 35% | 35% | 0 pp |
+| 6 | Fizyka lotu i poruszanie po planetach | 41% | 41% | 0 pp |
+| 7 | Kolizje, obrażenia i zniszczenia (dotychczasowy moduł) | 100% | 100% | 0 pp |
+| 8 | Asteroidy i fale walki (dotychczasowy moduł) | 100% | 100% | 0 pp |
+| 9 | Bronie i trafienia | 13% | **18%** | **+5 pp** |
+| 10 | Przeciwnicy i AI | 3% | **8%** | **+5 pp** |
+| 11 | Bossowie i ich mechaniki | 0% | 0% | 0 pp |
+| 12 | Komplet misji planetarnych | 18% | **22%** | **+4 pp** |
+| 13 | Kampania — 26 sektorów atlasu | 35% | 35% | 0 pp |
+| 14 | Menu W3, HUD i ustawienia | 19% | 19% | 0 pp |
+| 15 | Dźwięki i muzyka | 0% | 0% | 0 pp |
+| 16 | Zapisywanie i wczytywanie gry | 20% | 20% | 0 pp |
+| 17 | Sterowanie | 41% | 41% | 0 pp |
+| 18 | Optymalizacja i testy | 10% | **12%** | **+2 pp** |
+
+**Dalej:** kolejne typy przeciwników i misje źródłowe, w międzyczasie natywna kompilacja iOS, bez zastępowania rzeczywistych assetów atrapami i bez udawania gotowego IPA. Niżej pozostaje historia etapów 33%, 31%, 30% oraz wcześniejszych.
+
+---
+
 ## NOWY ETAP 06.11.2026 — pierwsza interaktywna misja CARBONIS 01 (kod wdrożony, IPA weryfikowane)
 
 **33% projektu ukończone implementacyjnie (+2 pp) / 67% pozostało.** Po wcześniejszym kroku 31% wdrożono źródłowy VANGUARD431 w scenie CARBONIS C279 z kamerą Sphere67, sterowaniem L/P bez widocznych analogów, osobnym przyciskiem ognia, klatkową symulacją pocisków i myśliwców z oryginalnej WAVE, rozpadem asteroid, uszkodzeniami, śmiercią, 0,2s warunkiem zwycięstwa i radarem rzeczywistych zagrożeń. `CarbonisSession568` jest wspólnym stanem logiki i Metal; nie jest to niezależna demonstracja Boreas. Zasoby planety z czterech audytowanych ZIP są teraz przygotowywane również podczas budowania IPA.
