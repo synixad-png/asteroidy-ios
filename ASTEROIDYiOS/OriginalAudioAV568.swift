@@ -114,6 +114,7 @@ final class OriginalAudioAV568: ObservableObject {
     private var replayObserver: NSObjectProtocol?
     private var restoreObserver: NSObjectProtocol?
     private var lastPreviewIndex=1
+    private var pendingPreviewIndex:Int?
     private var previewStopped=false
 
     init() {
@@ -258,6 +259,13 @@ final class OriginalAudioAV568: ObservableObject {
                     if let preparedTrack { self.prewarmedMusic[index]=preparedTrack }
                     self.backgroundPrepared += 1
                     if !self.suspended,
+                       case .menu = self.context,
+                       self.pendingPreviewIndex == index,
+                       !self.previewStopped {
+                        self.pendingPreviewIndex=nil
+                        self.playTrack(index)
+                    }
+                    if !self.suspended,
                        case .mission(let sector) = self.context,
                        self.activeMusicIndex != OriginalAudioCatalog568.missionTrack(sector) {
                         self.playTrack(OriginalAudioCatalog568.missionTrack(sector))
@@ -321,6 +329,7 @@ final class OriginalAudioAV568: ObservableObject {
     }
     func returnToMenu() {
         previewStopped=false
+        pendingPreviewIndex=nil
         musicDuck=1
         engineLevel52=0
         enginePlayback52.stop()
@@ -333,6 +342,7 @@ final class OriginalAudioAV568: ObservableObject {
     func enterMission(_ sector: Int) {
         guard (1...26).contains(sector) else { return }
         previewStopped=false
+        pendingPreviewIndex=nil
         musicDuck=1
         context = .mission(sector)
         // MusicAudio.cs:79 idle power .16, full thrust 1.0, no audio
@@ -398,7 +408,7 @@ final class OriginalAudioAV568: ObservableObject {
             else {
                 switch context {
                 case .menu:
-                    if !previewStopped {playTrack(0)}
+                    if !previewStopped {playTrack(pendingPreviewIndex ?? 0)}
                 case .mission(let sector):
                     playTrack(OriginalAudioCatalog568.missionTrack(sector))
                 case .diagnostic: break
@@ -466,12 +476,25 @@ final class OriginalAudioAV568: ObservableObject {
         // original track. STOP / REPLAY operate on this selection only.
         lastPreviewIndex=index
         previewStopped=false
-        playTrack(index)
+        if urls[index] == nil {
+            // Original MusicBank.Request(track): keep selection pending,
+            // start playback only when original background track is ready.
+            pendingPreviewIndex=index
+            finishMusicFade()
+            music?.stop()
+            music=nil
+            activeMusicIndex=nil
+            sourceStatus="PRZYGOTOWYWANIE: \(OriginalAudioCatalog568.names[index])"
+        } else {
+            pendingPreviewIndex=nil
+            playTrack(index)
+        }
     }
     func stopMusicPreview() {
         guard case .menu = context else {return}
         // Original MusicLibrary.MusicPreview=-2: STOP mutes the preview.
         previewStopped=true
+        pendingPreviewIndex=nil
         finishMusicFade()
         music?.stop()
         music=nil
@@ -485,12 +508,13 @@ final class OriginalAudioAV568: ObservableObject {
         music?.stop()
         music=nil
         activeMusicIndex=nil
-        playTrack(lastPreviewIndex)
+        preview(lastPreviewIndex)
     }
     func restoreMenuMusic() {
         guard case .menu = context else {return}
         // MusicLibrary.CloseMusic returns to Game.Mode.Menu track 0.
         previewStopped=false
+        pendingPreviewIndex=nil
         if !suspended {playTrack(0)}
     }
 }
