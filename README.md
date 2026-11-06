@@ -1,5 +1,14 @@
 # ASTEROIDY iOS — natywny port Swift/Metal (projekt w trakcie rozwoju)
 
+## CARBONIS 01 — WYBUCHY 3D + POCISKI z oryginalnych ustawień Windows v568 (06.11.2026)
+
+Zamiast dotychczasowej informacji, że ustawienia są niedostępne, **USTAWIENIA w natywnym menu W3 zawierają dwie funkcjonalne karty**: `WYBUCHY 3D` (12 oryginalnych wartości łącznie z podglądem, 3 źródłowymi presetami, 3 jakościami, odłamkami i czasem trwania), `POCISKI` (jasność oświetlenia 0–400%, 8 kolorów z `Menu139.cs` i dokładne mieszanie 48%). Wszystkie kontrolki zapisują stan UserDefaults i aktualizują realny renderer CARBONIS 01.
+
+Oryginalne `Windows/src/Combat69.cs` i `ShotAppearance151.cs` są teraz źródłem geodezyjnych smug 6×3, jasnego rdzenia 3,6/3,3 px, radialnej poświaty, niebieskich pocisków wroga i jego błysków wylotowych. `GpuSphere67.cs` jest źródłem czterech warstw światła na powierzchni planety; kolor pocisku pozostaje naturalny, a wybór koloru z menu dotyczy wyłącznie oświetlenia. Nie zmieniono hitboxów, prędkości, życia pocisków, obrażeń ani sterowania lewą/prawą stroną ekranu.
+
+[**GitHub CI 42283180401: SUCCESS**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42283180401) — **19 testów ustawień**, **17 testów efektów pocisków**, **45 testów eksplozji** oraz wcześniejsze regresje pierwszej misji. [**GitHub IPA 42283783569**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42283783569) — testy Linux PASS, natywna kompilacja Xcode `compile-device` w kolejce podczas ostatniego sprawdzenia. Nie potwierdzono jeszcze nowego IPA ani GPU/sterowania na fizycznym iPhonie/iPadzie. [Pełny raport źródeł](Reports/V568_CARBONIS01_USTAWIENIA_WYBUCHOW_I_POCISKOW_2026-11-06.md). [Stały harmonogram 18 zadań](PORT_STATUS_18_TASKS.md): **38% portu / 62% pozostało**.
+
+
 ## CARBONIS 01 — oryginalne wybuchy asteroid i myśliwców (06.11.2026)
 
 W pierwszej misji dotychczasowe znikanie asteroid i myśliwców po trafieniu zostało uzupełnione o **źródłowe efekty 3D z Windows v568**. Na podstawie faktycznych `Game.cs`, `BossTunnelGame.cs`, `CombatPieces125.cs`, `GpuCombatPieces125.cs` oraz `Explosion524.cs` dodano osobne eksplozje asteroid (18/18/27 cyjanowych smug, błysk, rozchodzący się pierścień i skala 9/15/23), myśliwców (22 pomarańczowe smugi, sześć iskier, **11 obracających się metalowych szczątków 3D**, wybuch paliwowy skali 14) i nieśmiertelnych trafień. Zamiast statycznych sprite'ów używana jest rzeczywista geometria oraz shader **objętościowego ognia i dymu** `Explosion524`: jedna tekstura szumu GPU 64³, 13 kłębów, 22 próbki głębokości i limit trzech jednoczesnych wybuchów. Poprzednie kolizje, zniszczenia fizyczne, sterowanie i warunki zwycięstwa pozostały bez zmian.
