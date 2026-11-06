@@ -248,3 +248,59 @@ Dotychczasowy ekran wykorzystuje rzeczywiste tło i logo, kiedy
 są prawidłowo zainstalowane. Numer i zakres wszystkich 18 zadań
 pozostają bez zmian; zadanie 14: **10%, +0 pp**, zbiorczo:
 **27% zrobione / 73% pozostało**. Brak nowego IPA.
+
+## 06.11.2026 — etap A: oryginalna planeta 3D NewHome290 w menu
+
+**Zaimplementowano w kodzie (weryfikacja GPU trwa):** na podstawie
+rzeczywistego `Windows/src/NewHome290.cs`,
+`GpuNewHome290.cs`, `GpuW3HomeReal333.cs` i
+`RendererW3Home328.cs` dodano:
+`Tools/convert_v568_w3_home_planet290.py`,
+`Tools/prepare_v568_w3_home_planet290.py`,
+`ASTEROIDYiOS/W3HomePlanetMetal568.swift` oraz
+`ASTEROIDYiOS/W3HomePlanet290.metal`.
+
+- Wykorzystano **oryginalne dane H290**, a nie kulę zastępczą:
+  172208 trójkątów / **516624 źródłowych wierzchołków**,
+  dwie oddzielne grupy materiałów, oryginalny strumień float32
+  `XYZ normalXYZ RGBA UV`.
+- Siatka `home290.mesh.gz` w zweryfikowanych czterech ZIP-ach:
+  SHA256 `025a3ad626de24e666bb0c697aa1a8e855401965869ded96f7eee109f0ece278`;
+  rozpakowana siatka 24 797 952 bajtów:
+  SHA256 `e93a0bbafc9bb50a25726a828ada81f36675bf88d802c5a8f985b89b6dc96c1b`.
+  Potwierdzona źródłowa tablica wysokości **512×256**.
+- Base JPEG 2048×1024 oraz mapa `home293.glow.png` 2048×1024
+  zachowują oryginalne bajty w plikach `.dat`, bez ingerencji
+  optymalizatora PNG Xcode. Emisja lawy jest obliczana w tym samym
+  przebiegu fragment shader, według źródłowego wzoru
+  `GpuToon60.cs` dla `homeGlow293`.
+- Widok wykorzystuje ortogonalne parametry podglądu
+  `GpuW3HomeReal333.cs`: `halfHeight335=1.72`, przesunięcie
+  `z=-6`, podstawowy obrót X `-18°`, osie X/Y.
+  Użytkownik może obracać planetę gestem dotykowym; stały
+  ruch obrotu wynosi 0,19 rad/s jak w Windows.
+- Trwały renderer świata planety oraz źródłowe mechaniki 7/8
+  pozostają bez zmian. Oddzielna tekstura GPU dla podglądu
+  menu jest tworzona tylko po wejściu do W3; nie jest zamiennikiem
+  planet w 26 misjach.
+- `Tests/V568W3HomePlanet290Tests.py` sprawdza źródłowy
+  parser, materiał 0 i 1, oryginalne pliki, SHA256 i pełny
+  proces budowania siatki z prawdziwych indeksów GLB.
+- `Tools/run_w3_native_menu_simulator_capture.py` wymaga
+  zarówno autentycznego zrzutu iPhone/iPad i rzeczywistych obrazów
+  W3, jak również zakończonej komendy Metal podglądu NewHome290,
+  potwierdzającej **516624 wierzchołków i 172208 trójkątów**.
+  Samo skompilowanie Swift nie wystarcza do zaliczenia GPU.
+  Najnowszy test: [GitHub Actions
+  42197653964](https://github.com/synixad-png/asteroidy-ios/actions/runs/42197653964).
+- Obecne oświetlenie podglądu jest **częściowym portem**:
+  nie stwierdzono jeszcze pełnej zgodności światła `FighterLight`
+  i oryginalnego postprocessingu z PC. Nie deklarować
+  identycznego wyglądu 1:1 bez porównania rzeczywistych obrazów.
+
+**Etap A w trakcie**, dopóki dwa natywne testy GPU, obrazy,
+nawigacja i shader nie będą potwierdzone. **Etap B bez zmian
+i jeszcze nierozpoczęty.** Główny harmonogram 18 zadań i
+dotychczasowe procenty pozostają nienaruszone:
+**27% wykonane / 73% pozostało, zadanie 14 nadal 10% (+0 pp)**.
+**IPA nie generowano.**
