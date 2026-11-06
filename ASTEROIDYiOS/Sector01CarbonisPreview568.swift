@@ -83,6 +83,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var activeRocks: [SphereAsteroid556]
             private var previousRockFrame: TimeInterval?
             private let depth:MTLDepthStencilState
+            private let noDepthWrite:MTLDepthStencilState
+            private let visualSettings=CarbonisVisualSettings568.load()
             private let vertexBuffer:MTLBuffer
             private let indexBuffer:MTLBuffer
             private let base:MTLTexture
@@ -95,6 +97,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var craftVertexCount=0
             private var craftPipeline:MTLRenderPipelineState?
             private var tracerPipeline:MTLRenderPipelineState?
+            private var projectilePipeline:MTLRenderPipelineState?
+            private var projectileGroundPipeline:MTLRenderPipelineState?
             // Explosion524 v568: one 3D noise texture and one Metal
             // pipeline for all actual rock/enemy death events.
             private var destructionRenderer:CarbonisExplosion524Renderer?
@@ -265,6 +269,19 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         tracerSpec.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
                         tracerPipeline=try device.makeRenderPipelineState(
                             descriptor:tracerSpec)
+                        let fx=MTLRenderPipelineDescriptor()
+                        fx.vertexFunction=v
+                        fx.fragmentFunction=tracer
+                        fx.colorAttachments[0].pixelFormat = .bgra8Unorm
+                        fx.depthAttachmentPixelFormat = .depth32Float
+                        fx.colorAttachments[0].isBlendingEnabled=true
+                        fx.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
+                        fx.colorAttachments[0].destinationRGBBlendFactor = .one
+                        // Combat69 + GpuSphere67 use additive depth-tested
+                        // blending for both projectiles and ground light.
+                        projectilePipeline=try device.makeRenderPipelineState(
+                            descriptor:fx)
+                        projectileGroundPipeline=projectilePipeline
                     }
                 }
                 let ds=MTLDepthStencilDescriptor()
@@ -273,6 +290,12 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 guard let d=device.makeDepthStencilState(descriptor:ds)
                 else {throw SourceError.metal}
                 depth=d
+                let effectsDepth=MTLDepthStencilDescriptor()
+                effectsDepth.depthCompareFunction = .lessEqual
+                effectsDepth.isDepthWriteEnabled=false
+                guard let noWrite=device.makeDepthStencilState(
+                    descriptor:effectsDepth) else {throw SourceError.metal}
+                noDepthWrite=noWrite
                 super.init()
             }
             static func rotateY(_ angle:Float) -> simd_float4x4 {
@@ -520,6 +543,36 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     indexType:.uint32,indexBuffer:indexBuffer,
                     indexBufferOffset:803712*MemoryLayout<UInt32>.stride)
 
+                // Original GpuSphere67.DrawProjectileGroundLights170:
+                // source four colored radial lights on the planet surface,
+                // brightness/color/mixing follow the saved settings.
+                if let session=gameSession,let cameraMatrix=vp,
+                   let groundPipeline=projectileGroundPipeline {
+                    let lights=CarbonisProjectileFX69.groundLights(
+                        session.game.bullets+session.game.hostileShots,
+                        settings:visualSettings)
+                    if !lights.isEmpty,let buffer=lights.withUnsafeBytes({
+                        raw in raw.baseAddress.flatMap {
+                            gpu.makeBuffer(bytes:$0,
+                                length:raw.count,options:[])
+                        }
+                    }) {
+                        uniforms=Uniforms(mvp:cameraMatrix,
+                            model:matrix_identity_float4x4,
+                            material:2,glow:1)
+                        encoder.setDepthStencilState(noDepthWrite)
+                        encoder.setRenderPipelineState(groundPipeline)
+                        encoder.setVertexBuffer(buffer,offset:0,index:0)
+                        encoder.setVertexBytes(&uniforms,
+                            length:MemoryLayout<Uniforms>.stride,index:1)
+                        encoder.setFragmentBytes(&uniforms,
+                            length:MemoryLayout<Uniforms>.stride,index:1)
+                        encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                            vertexCount:lights.count/12)
+                        encoder.setDepthStencilState(depth)
+                    }
+                }
+
                 // Original Game.Wave asteroid shapes, not billboard/GLB stand-ins.
                 // C279 stays unchanged; rock meshes share one cached VBO per shape.
                 if !activeRocks.isEmpty {
@@ -617,7 +670,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     explosion.render(session.game.destruction,
                         time:session.game.elapsed,
                         camera:session.game.flight.camera,
-                        vp:worldView,into:encoder)
+                        vp:worldView,settings:visualSettings,
+                        into:encoder)
                 }
                 if let session=gameSession,let tracer=tracerPipeline,
                    let cameraMatrix=vp {
@@ -633,7 +687,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         CarbonisExplosion524Meshes.vertices(
                             session.game.destruction,
                             time:session.game.elapsed,
-                            camera:session.game.flight.camera))
+                            camera:session.game.flight.camera,
+                            settings:visualSettings))
                     if !values.isEmpty,
                        let buffer=values.withUnsafeBytes({ bytes in
                            bytes.baseAddress.flatMap {
