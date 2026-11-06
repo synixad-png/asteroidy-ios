@@ -476,3 +476,35 @@ zgodność PC GLSL i Metal nadal niepotwierdzona.
 **Etap A w toku, B nierozpoczęte, IPA nie generowano.
 Postęp 18 zadań pozostaje na wartościach odniesienia —
 14 = 10% (+0 pp), projekt 27% / pozostało 73%.**
+
+
+### 06.11.2026 — na wyraźne polecenie użytkownika: jedno wydanie IPA, etap A kontynuowany
+
+Użytkownik zlecił wygenerowanie IPA i dalszą pracę. Utworzono
+**jednorazowy**, odrębny workflow
+[build-asteroidy-w3-ipa-once-20261106.yml](.github/workflows/build-asteroidy-w3-ipa-once-20261106.yml).
+Run [42203939074](https://github.com/synixad-png/asteroidy-ios/actions/runs/42203939074),
+snapshot źródeł `5242e4f38c25bcf3dd641e4aefeceb30890ee5f4`.
+Będzie to **niepodpisany** `arm64` IPA (`UIDeviceFamily=1,2`,
+iOS 17+) dla fizycznego iPhone'a i iPada, z natywnym menu W3.
+Nie jest pakietem symulatora ani podpisanym App Store IPA.
+
+Do warunku publikacji dołożono: zgodność 7 plików oryginalnych
+modeli/grafik z SHA-256 **wewnątrz skompilowanej aplikacji**,
+kontrolę `Tools/verify_ipa.py --require-vanguard-original`,
+kontrolę ZIP CRC oraz SHA-256 samego IPA. W3 oryginalne tło,
+logo, siatka planety H290, tekstury, mapa żaru, Vanguard431 mesh
+i JPG są wymagane, bez zastępników. Zwykłe późniejsze commity
+nie uruchomią workflow IPA ponownie.
+
+**Stan na moment tego wpisu:** etap weryfikacji źródeł i staging
+zasobów `PASS`; trwa natywna kompilacja Xcode.
+Wynik `success` i plik IPA można uznać za dostarczone
+dopiero po sprawdzeniu uploadu i artefaktu.
+Prace nad A i UI XCTest mogą iść dalej w następnych commitach,
+ale **nie znajdą się w już uruchomionym snapshot builda IPA**.
+Testy ekranowe/dotykowe pozostają oddzielną bramką;
+uruchomienie IPA ich automatycznie nie zalicza.
+Dotychczasowe procenty 18 zadań bez zmiany:
+**27% ukończone, 73% pozostało, nr 14 10% (+0 pp)**.
+Etap B nadal nie rozpoczęty.
