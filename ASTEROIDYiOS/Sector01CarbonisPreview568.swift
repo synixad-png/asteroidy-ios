@@ -75,6 +75,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
         var renderer: Renderer?
         final class Renderer: NSObject,MTKViewDelegate {
             enum SourceError: Error {case missing,invalid,metal}
+            private let gpu:MTLDevice
             private let queue:MTLCommandQueue
             private let pipeline:MTLRenderPipelineState
             private let rockPipeline:MTLRenderPipelineState
@@ -93,6 +94,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var craftTexture:MTLTexture?
             private var craftVertexCount=0
             private var craftPipeline:MTLRenderPipelineState?
+            private var tracerPipeline:MTLRenderPipelineState?
             private var proofScheduled=false
             var yawOffset: Float = 0
             var pitchOffset: Float = 0
@@ -138,6 +140,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             init(device:MTLDevice,initialRocks:[SphereAsteroid556],
                  gameSession:CarbonisSession568?) throws {
                 activeRocks=initialRocks
+                gpu=device
                 self.gameSession=gameSession
                 guard let q=device.makeCommandQueue() else {throw SourceError.metal}
                 queue=q
@@ -212,6 +215,15 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     fighterSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
                     fighterSpec.depthAttachmentPixelFormat = .depth32Float
                     craftPipeline=try device.makeRenderPipelineState(descriptor:fighterSpec)
+                    if let tracer=library.makeFunction(name:"sector01CombatTracer568") {
+                        let tracerSpec=MTLRenderPipelineDescriptor()
+                        tracerSpec.vertexFunction=v
+                        tracerSpec.fragmentFunction=tracer
+                        tracerSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
+                        tracerSpec.depthAttachmentPixelFormat = .depth32Float
+                        tracerPipeline=try device.makeRenderPipelineState(
+                            descriptor:tracerSpec)
+                    }
                 }
                 let ds=MTLDepthStencilDescriptor()
                 ds.depthCompareFunction = .lessEqual
