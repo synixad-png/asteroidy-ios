@@ -36,6 +36,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     // BOTH source resources are bundled. Previous v556 AS3D stays.
     let sourceFighterTexturedPipeline431: MTLRenderPipelineState
     private let sourceVanguard431: (buffer:MTLBuffer,count:Int,skin:MTLTexture)?
+    // Separate v568 player craft, loaded ONLY on explicit diagnostic selection.
+    private var sourcePlayerShip367: (buffer:MTLBuffer,count:Int,skin:MTLTexture)?
+    private var sourcePlayerShip367LoadAttempted = false
     // Debug evidence is explicitly enabled only by an Apple Simulator
     // process environment flag, not during the normal user's game.
     private let sourceDrawProofRequested =
@@ -882,6 +885,65 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let e=f.eyeNormalized
         return (view,SIMD3(e.x,e.y,e.z))
     }
+    /// Load only the source-audited PlayerShip367 GPU stream and its matching
+    /// texture. Missing resources do not trigger a misleading substitute model.
+    private func verifiedPlayerShip367() ->
+        (buffer: MTLBuffer, count: Int, skin: MTLTexture)? {
+        if sourcePlayerShip367LoadAttempted { return sourcePlayerShip367 }
+        sourcePlayerShip367LoadAttempted = true
+        let file = Bundle.main.url(
+            forResource: "PlayerShip367OriginalGPU", withExtension: "bin")
+            ?? Bundle.main.url(
+                forResource: "PlayerShip367OriginalGPU",
+                withExtension: "bin", subdirectory: "Assets")
+        let jpeg = Bundle.main.url(
+            forResource: "PlayerShip363Base", withExtension: "jpg")
+            ?? Bundle.main.url(
+                forResource: "PlayerShip363Base",
+                withExtension: "jpg", subdirectory: "Assets")
+        guard let meshURL=file, let skinURL=jpeg else {
+            DispatchQueue.main.async { [weak input] in
+                input?.rendererError =
+                    "Statek 03 wymaga oryginalnych zasobów PlayerShip367 v568"
+            }
+            return nil
+        }
+        do {
+            let original=try SourcePlayerShip367(
+                data: Data(contentsOf:meshURL))
+            let jpegBytes=try Data(contentsOf:skinURL)
+            guard SourcePlayerShip367.verifiedTexture(jpegBytes) else {
+                throw SourcePlayerShip367.AssetError.wrongSource
+            }
+            guard let buffer=original.gpuBytes.withUnsafeBytes({
+                raw in raw.baseAddress.flatMap {
+                    device.makeBuffer(bytes:$0,length:original.gpuBytes.count,
+                                      options:[])
+                }
+            }) else {
+                throw NSError(domain:"ASTEROIDY v568 PlayerShip367",code:1)
+            }
+            let texture=try MTKTextureLoader(device:device).newTexture(
+                URL:skinURL,options:[
+                    .SRGB:false,
+                    .generateMipmaps:false,
+                    .origin:MTKTextureLoader.Origin.topLeft
+                ])
+            sourcePlayerShip367=(buffer:buffer,count:SourcePlayerShip367.vertexCount,
+                                 skin:texture)
+            NSLog("ASTEROIDY: original PlayerShip367 v568 GPU/UV/JPEG loaded")
+            return sourcePlayerShip367
+        } catch {
+            NSLog("ASTEROIDY: original PlayerShip367 rejected: %@",
+                  String(describing:error))
+            DispatchQueue.main.async { [weak input] in
+                input?.rendererError =
+                    "Nieprawidłowy oryginalny model PlayerShip367 v568"
+            }
+            return nil
+        }
+    }
+
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
     func draw(in view: MTKView) {
         let now = CACurrentMediaTime()
@@ -1647,7 +1709,29 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             let shipModel=craft *
                 Self.rotateYDegrees(sphereFlight.flight.visualBank) *
                 Self.rotateXDegrees(sphereFlight.flight.visualPitch)
-            drawMesh(shipMesh,shipModel)
+            if input.sourceShip367Preview {
+                // Original Windows/src/GpuSphere67.cs CraftSphere67 uses the
+                // same tangent basis and ShipContactRadius * Scale67 * .65.
+                // PlayerShip363 has already applied StandardSize369=.714
+                // to XYZ; never scale vertices a second time.
+                if let native=verifiedPlayerShip367() {
+                    var uniforms=FighterSourceUniform431(
+                        mvp:vp*shipModel,model:shipModel,
+                        eyeView:cameraFrame.view)
+                    encoder.setRenderPipelineState(
+                        sourceFighterTexturedPipeline431)
+                    encoder.setVertexBuffer(native.buffer,offset:0,index:0)
+                    encoder.setVertexBytes(&uniforms,
+                        length:MemoryLayout<FighterSourceUniform431>.stride,
+                        index:1)
+                    encoder.setFragmentTexture(native.skin,index:0)
+                    encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                        vertexCount:native.count)
+                    encoder.setRenderPipelineState(pipeline)
+                }
+            } else {
+                drawMesh(shipMesh,shipModel)
+            }
             encoder.endEncoding()
             command.present(drawable)
             command.commit()
