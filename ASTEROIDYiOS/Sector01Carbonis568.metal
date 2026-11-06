@@ -16,6 +16,7 @@ struct CarbonisSectorRaster568 {
     float3 normal;
     float4 color;
     float2 uv;
+    float3 eyePosition;
 };
 vertex CarbonisSectorRaster568 sector01CarbonisVertex568(
     uint id [[vertex_id]],
@@ -32,6 +33,7 @@ vertex CarbonisSectorRaster568 sector01CarbonisVertex568(
     o.normal=normalize(axes*float3(mesh[i+3],mesh[i+4],mesh[i+5]));
     o.color=float4(mesh[i+6],mesh[i+7],mesh[i+8],mesh[i+9]);
     o.uv=float2(mesh[i+10],mesh[i+11]);
+    o.eyePosition=(u.model*float4(p,1)).xyz;
     return o;
 }
 fragment float4 sector01CarbonisFragment568(
@@ -57,4 +59,24 @@ fragment float4 sector01CarbonisFragment568(
         lit+=albedo.rgb*ambient*0.10f+hot*u.glow*0.38f;
     }
     return float4(clamp(lit,0.0f,1.0f),clamp(albedo.a,0.0f,1.0f));
+}
+
+// Native version of GpuRockInstancing75.cs:49-50 original source toon bands.
+// Uses the same original procedural vertex colors/normals from RockVertices75;
+// unlike the CARBONIS planet fragment this does not sample any planet textures.
+fragment float4 sector01SourceRockFragment568(
+    CarbonisSectorRaster568 in [[stage_in]],
+    constant CarbonisSectorUniforms568 &u [[buffer(1)]])
+{
+    float3 n=normalize(in.normal);
+    float3 light=normalize((u.model*float4(-0.6f,0.8f,1.4f,0)).xyz);
+    float diffuse=max(0.0f,dot(n,light));
+    float band=0.25f
+        +0.33f*smoothstep(0.30f,0.32f,diffuse)
+        +0.40f*smoothstep(0.70f,0.72f,diffuse);
+    float3 eye=normalize(-in.eyePosition);
+    float rim=0.10f*smoothstep(0.72f,0.86f,
+        1.0f-max(0.0f,dot(n,eye)))*smoothstep(0.1f,0.3f,diffuse);
+    float3 ink=in.color.rgb*(band+rim);
+    return float4(clamp(ink,0.0f,1.0f),in.color.a);
 }
