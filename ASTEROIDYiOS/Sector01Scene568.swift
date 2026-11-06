@@ -11,6 +11,8 @@ struct Sector01Scene568: View {
     let onSurvivalChanged:(Int,Int)->Void
     let onAudioEvent:(Int)->Void
     let onEnginePower:(Float)->Void
+    let onMissionPhase:(CarbonisCombat568.Phase)->Void
+    let onReplay:()->Void
     let preparedWave:Sector01PreparedWave568
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var session:CarbonisSession568
@@ -22,6 +24,8 @@ struct Sector01Scene568: View {
          onSurvivalChanged:@escaping (Int,Int)->Void,
          onAudioEvent:@escaping (Int)->Void = {_ in},
          onEnginePower:@escaping (Float)->Void = {_ in},
+         onMissionPhase:@escaping (CarbonisCombat568.Phase)->Void = {_ in},
+         onReplay:@escaping ()->Void = {},
          preparedWave:Sector01PreparedWave568) {
         self.entry=entry
         self.returnToAtlas=returnToAtlas
@@ -29,6 +33,8 @@ struct Sector01Scene568: View {
         self.onSurvivalChanged=onSurvivalChanged
         self.onAudioEvent=onAudioEvent
         self.onEnginePower=onEnginePower
+        self.onMissionPhase=onMissionPhase
+        self.onReplay=onReplay
         self.preparedWave=preparedWave
         _session=StateObject(wrappedValue:CarbonisSession568(prepared:preparedWave))
     }
@@ -218,6 +224,7 @@ struct Sector01Scene568: View {
                                 Button("SPRÓBUJ PONOWNIE") {
                                     completionReported=false
                                     session.restart(prepared:preparedWave)
+                                    onReplay()
                                 }
                                 .buttonStyle(.borderedProminent)
                                 .accessibilityIdentifier("sector01-retry-after-defeat")
@@ -243,6 +250,7 @@ struct Sector01Scene568: View {
         // Source CompleteMission50: persist only after the genuine
         // 0.20 s full clear gate and one-shot FinishLevel settlement.
         .onChange(of:session.hud.phase) { phase in
+            onMissionPhase(phase)
             guard phase == .victory, !completionReported,
                   let report=session.hud.summary else {return}
             completionReported=true

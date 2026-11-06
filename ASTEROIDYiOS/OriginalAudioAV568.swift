@@ -90,6 +90,12 @@ final class OriginalAudioAV568: ObservableObject {
     private var fadeTimer:Timer?
     private var fadeStart:TimeInterval=0
     private var effects: [AVAudioPlayer] = []
+    // Original MusicAudio.cs: voice announcements interrupt one another.
+    private var spokenVoices:[AVAudioPlayer]=[]
+    private var musicDuck:Float=1
+    private var masterMusicVolume:Float {
+        Float(settings.musicPercent)/100*0.8*musicDuck
+    }
     private var prewarmedEffects: [String:[AVAudioPlayer]] = [:]
     private var prewarmedMusic: [Int:AVAudioPlayer] = [:]
     private let enginePlayback52=OriginalEnginePlayback52()
@@ -138,7 +144,7 @@ final class OriginalAudioAV568: ObservableObject {
     private func reloadSettings() {
         settings = OriginalAudioSettings568.load()
         if fadeTimer != nil {updateMusicFade()}
-        else {music?.volume = Float(settings.musicPercent)/100 * 0.8}
+        else {music?.volume=masterMusicVolume}
         enginePlayback52.setPower(engineLevel52,
             effectsVolume:Float(settings.effectsPercent)/100)
         // Original MusicMix uses a live value, not a one-time volume at start.
@@ -268,13 +274,13 @@ final class OriginalAudioAV568: ObservableObject {
         fadeTimer=nil
         previousMusic?.stop()
         previousMusic=nil
-        music?.volume=Float(settings.musicPercent)/100*0.8
+        music?.volume=masterMusicVolume
     }
     private func updateMusicFade() {
         guard previousMusic != nil else {finishMusicFade();return}
         let elapsed=ProcessInfo.processInfo.systemUptime-fadeStart
         let gains=OriginalMusicTransition568.gains(seconds:elapsed)
-        let master=Float(settings.musicPercent)/100*0.8
+        let master=masterMusicVolume
         music?.volume=master*gains.incoming
         previousMusic?.volume=master*gains.outgoing
         if elapsed>=OriginalMusicTransition568.duration {finishMusicFade()}
@@ -291,7 +297,7 @@ final class OriginalAudioAV568: ObservableObject {
             let player = try prewarmedMusic[index] ?? AVAudioPlayer(contentsOf:url)
             player.currentTime=0
             player.numberOfLoops = -1
-            player.volume = outgoing == nil ? Float(settings.musicPercent)/100*0.8 : 0
+            player.volume = outgoing == nil ? masterMusicVolume : 0
             player.prepareToPlay()
             guard player.play() else {return}
             music=player
@@ -315,14 +321,19 @@ final class OriginalAudioAV568: ObservableObject {
     }
     func returnToMenu() {
         previewStopped=false
+        musicDuck=1
         engineLevel52=0
         enginePlayback52.stop()
         context = .menu
+        effects.forEach {$0.stop()}
+        effects.removeAll()
+        spokenVoices.removeAll()
         if !suspended { playTrack(0) }
     }
     func enterMission(_ sector: Int) {
         guard (1...26).contains(sector) else { return }
         previewStopped=false
+        musicDuck=1
         context = .mission(sector)
         // MusicAudio.cs:79 idle power .16, full thrust 1.0, no audio
         // generation in the Metal render loop.
@@ -334,10 +345,37 @@ final class OriginalAudioAV568: ObservableObject {
             playTrack(OriginalAudioCatalog568.missionTrack(sector))
         }
     }
+    // MusicAudio.cs MusicMix.TrackFor: Victory and GameOver return
+    // to song 0; GameOver attenuates music to 40%. A replay restores
+    // the normal current-level track and live engine audio.
+    func missionPhase568(_ phase:CarbonisCombat568.Phase) {
+        guard case .mission(let sector) = context else {return}
+        switch phase {
+        case .playing:
+            musicDuck=1
+            engineLevel52=0.16
+            if !suspended {
+                enginePlayback52.setPower(engineLevel52,
+                    effectsVolume:Float(settings.effectsPercent)/100)
+                enginePlayback52.start()
+                playTrack(OriginalAudioCatalog568.missionTrack(sector))
+            }
+        case .victory,.defeat:
+            musicDuck = phase == .defeat ? 0.4 : 1
+            engineLevel52=0
+            enginePlayback52.stop()
+            if !suspended {
+                playTrack(0)
+                if fadeTimer != nil {updateMusicFade()}
+                else {music?.volume=masterMusicVolume}
+            }
+        }
+    }
     func stopForDiagnostic() {
         engineLevel52=0
         enginePlayback52.stop()
         context = .diagnostic
+        musicDuck=1
         finishMusicFade()
         music?.stop(); activeMusicIndex = nil
         effects.removeAll()
@@ -384,6 +422,12 @@ final class OriginalAudioAV568: ObservableObject {
         if (50...57).contains(code) { stem = "Voice\(code-50)" }
         else { stem = "SFX\(code)_\((10...30).contains(code) ? variation % 3 : 0)" }
         guard let file = sounds[stem] else { return }
+        if (50...57).contains(code) {
+            // Source MusicMix.AddEffect: stop previous Polish announcement
+            // without silencing any playing gun or explosion.
+            spokenVoices.forEach {$0.stop()}
+            spokenVoices.removeAll()
+        }
         do {
             // First two players for every exact source sample were
             // prepared at application startup; allocate only when the
@@ -409,6 +453,7 @@ final class OriginalAudioAV568: ObservableObject {
             effects.removeAll { !$0.isPlaying }
             if effects.count>=16 { effects.removeFirst().stop() }
             effects.append(player)
+            if (50...57).contains(code) {spokenVoices.append(player)}
             player.play()
         } catch {
             sourceStatus = "SFX \(code) — BŁĄD ORYGINALNEGO PLIKU"

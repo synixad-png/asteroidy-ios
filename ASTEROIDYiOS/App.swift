@@ -134,6 +134,10 @@ struct GameView: View {
                         audio.sourceEffect(code)
                     },onEnginePower:{ power in
                         audio.sourceEnginePower(power)
+                    },onMissionPhase:{ phase in
+                        audio.missionPhase568(phase)
+                    },onReplay:{
+                        audio.missionPhase568(.playing)
                     },preparedWave:preparedWave)
                 } else if showMainMenu {
                     if !audio.startupComplete {
