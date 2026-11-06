@@ -240,6 +240,23 @@ struct CarbonisCombat568 {
             if speed>145 {item.velocity=item.velocity*(145/speed)}
             item.position=Sphere67.advance(
                 item.position,velocity:&item.velocity,dt:dt)
+            // Physics68.MovePickup68: token mass .15, radius 6, genuine
+            // physical contact against all nearby source asteroids.
+            for j in rocks.indices {
+                var pickup=CarbonisBodyContact68.Body(
+                    position:item.position,velocity:item.velocity,
+                    mass:0.15,radius:6)
+                var stone=CarbonisBodyContact68.Body(
+                    position:rocks[j].position,velocity:rocks[j].velocity,
+                    mass:rocks[j].mass,radius:rocks[j].radius)
+                if CarbonisBodyContact68.resolve(
+                    &pickup,&stone,restitution:0.25) {
+                    item.position=pickup.position
+                    item.velocity=pickup.velocity
+                    rocks[j].position=stone.position
+                    rocks[j].velocity=stone.velocity
+                }
+            }
             tokenPickups[i]=item
         }
     }
