@@ -50,7 +50,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
         view.colorPixelFormat = .bgra8Unorm
         view.depthStencilPixelFormat = .depth32Float
         view.framebufferOnly=true
-        view.preferredFramesPerSecond=30
+        view.preferredFramesPerSecond=gameSession == nil ? 30 : 60
         if let device=view.device {
             do {
                 let renderer=try Coordinator.Renderer(device:device,initialRocks:initialRocks,
@@ -266,6 +266,38 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     * rotateY(rock.angle*23*degrees)
             }
 
+            /// Original SphereCamera67 / GpuSphere67:420 camera center follows
+            /// the player's geodesic position, not an arbitrary spun globe.
+            static func viewProjection(_ camera:SphereCamera67,
+                                       aspect:Float)->simd_float4x4 {
+                let v=SphereCameraView556(camera:camera).viewColumnMajor
+                let view=simd_float4x4(columns:(
+                    SIMD4<Float>(v[0],v[1],v[2],v[3]),
+                    SIMD4<Float>(v[4],v[5],v[6],v[7]),
+                    SIMD4<Float>(v[8],v[9],v[10],v[11]),
+                    SIMD4<Float>(v[12],v[13],v[14],v[15])))
+                let near=SphereProjection556.normalizedNear
+                let far=SphereProjection556.normalizedFar
+                let focal=SphereProjection556.sourceVerticalFocal
+                let projection=simd_float4x4(columns:(
+                    SIMD4<Float>(focal/max(0.35,aspect),0,0,0),
+                    SIMD4<Float>(0,focal,0,0),
+                    SIMD4<Float>(0,0,far/(near-far),-1),
+                    SIMD4<Float>(0,0,near*far/(near-far),0)))
+                return projection*view
+            }
+            static func craftModel(_ flight:SphereFlight67)->simd_float4x4 {
+                let stamp=SphereSurfaceStamp556(
+                    point:flight.position,angle:flight.flight.visualHeading)
+                let v=stamp.columnMajor(size:SphereSurfaceStamp556.sourceCraftRadius)
+                let base=simd_float4x4(columns:(
+                    SIMD4<Float>(v[0],v[1],v[2],v[3]),
+                    SIMD4<Float>(v[4],v[5],v[6],v[7]),
+                    SIMD4<Float>(v[8],v[9],v[10],v[11]),
+                    SIMD4<Float>(v[12],v[13],v[14],v[15])))
+                return base*rotateY(flight.flight.visualBank*Float.pi/180)
+                    * rotateX(flight.flight.visualPitch*Float.pi/180)
+            }
             func mtkView(_ view:MTKView,drawableSizeWillChange size:CGSize) {}
             func draw(in view:MTKView) {
                 guard let drawable=view.currentDrawable,
@@ -274,23 +306,28 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                       let encoder=command.makeRenderCommandEncoder(descriptor:pass)
                 else {return}
                 let now=ProcessInfo.processInfo.systemUptime
-                if let previous=previousRockFrame {
+                if let session=gameSession {
+                    session.frame(at:now)
+                    activeRocks=session.game.rocks
+                } else if let previous=previousRockFrame {
                     let dt=Float(min(0.05,max(0,now-previous)))
-                    // Game.cs:238-239: source spherical WorldAdvance67
-                    // and rock angular spin, no invented AI/mission progression.
-                    for index in activeRocks.indices {
-                        activeRocks[index].advance(dt:dt)
-                    }
+                    for index in activeRocks.indices {activeRocks[index].advance(dt:dt)}
                 }
                 previousRockFrame=now
                 let t=Float(now-started)
                 var model=matrix_identity_float4x4
-                model.columns.3.z = -5
-                model=model*Self.rotateX(-0.24+pitchOffset)
-                    * Self.rotateY(t*0.22+yawOffset)
+                if gameSession == nil {
+                    model.columns.3.z = -5
+                    model=model*Self.rotateX(-0.24+pitchOffset)
+                        * Self.rotateY(t*0.22+yawOffset)
+                }
                 let size=view.drawableSize
                 let aspect=Float(max(1,size.width)/max(1,size.height))
-                var uniforms=Uniforms(mvp:Self.previewMVP(aspect,model),
+                let vp:simd_float4x4?=gameSession.map {
+                    Self.viewProjection($0.game.flight.camera,aspect:aspect)
+                }
+                var uniforms=Uniforms(mvp:vp.map{$0*model} ??
+                                      Self.previewMVP(aspect,model),
                                       model:model)
                 encoder.setRenderPipelineState(pipeline)
                 encoder.setDepthStencilState(depth)
@@ -322,7 +359,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         let shape=CarbonisRockGeometry568.shape(for:rock)
                         guard let buffer=rockBuffers[shape] else {continue}
                         let rockMatrix=model*Self.sourceRockModel(rock)
-                        uniforms=Uniforms(mvp:Self.previewMVP(aspect,rockMatrix),
+                        uniforms=Uniforms(mvp:vp.map{$0*rockMatrix} ??
+                                          Self.previewMVP(aspect,rockMatrix),
                                           model:rockMatrix,material:2,glow:0)
                         encoder.setVertexBuffer(buffer,offset:0,index:0)
                         encoder.setVertexBytes(&uniforms,
