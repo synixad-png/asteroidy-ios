@@ -18,6 +18,7 @@ No IPA is created.
 import argparse
 import json
 import os
+import signal
 from pathlib import Path
 import shlex
 import subprocess
@@ -31,26 +32,40 @@ class AppValidationFailed(RuntimeError): pass
 
 def run_command(args, timeout, stdout_path=None, check=True):
     command=list(map(str,args))
+    # macOS simctl may leave descendants holding the parent's STDOUT
+    # pipe. subprocess.run(timeout=...) kills only the parent and can
+    # hang forever draining that pipe. Own the ENTIRE process group.
     try:
-        result=subprocess.run(command,stdin=subprocess.DEVNULL,
+        proc=subprocess.Popen(command,stdin=subprocess.DEVNULL,
                               stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
-                              text=True,errors="replace",timeout=timeout,
-                              check=False)
-    except subprocess.TimeoutExpired as exc:
-        msg=f"ENVIRONMENT TIMEOUT after {timeout}s: {shlex.join(command)}"
-        if stdout_path is not None:
-            Path(stdout_path).write_text(msg+"\n",encoding="utf-8")
-        raise EnvironmentUnavailable(msg) from exc
+                              text=True,errors="replace",start_new_session=True)
+        try:
+            output,_=proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired as exc:
+            try:
+                os.killpg(proc.pid,signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            try:
+                output,_=proc.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                output=""
+            msg=f"ENVIRONMENT TIMEOUT after {timeout}s: {shlex.join(command)}"
+            if stdout_path is not None:
+                Path(stdout_path).write_text(msg+"\n"+(output or ""),
+                                             encoding="utf-8")
+            raise EnvironmentUnavailable(msg) from exc
     except OSError as exc:
         raise EnvironmentUnavailable(
             f"ENVIRONMENT SPAWN ERROR: {shlex.join(command)}: {exc}") from exc
     if stdout_path is not None:
-        Path(stdout_path).write_text(result.stdout,encoding="utf-8")
-    if check and result.returncode != 0:
+        Path(stdout_path).write_text(output,encoding="utf-8")
+    if check and proc.returncode != 0:
         raise EnvironmentUnavailable(
-            f"ENVIRONMENT COMMAND FAILED rc={result.returncode}: "
-            f"{shlex.join(command)}\n{result.stdout[-1600:]}")
-    return result.stdout
+            f"ENVIRONMENT COMMAND FAILED rc={proc.returncode}: "
+            f"{shlex.join(command)}\n{output[-1600:]}")
+    return output
 
 def available_devices():
     raw=run_command(["xcrun","simctl","list","-j","devices","available"],60)
