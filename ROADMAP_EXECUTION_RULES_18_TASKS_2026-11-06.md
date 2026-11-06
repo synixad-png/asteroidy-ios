@@ -1,3 +1,13 @@
+## NAJNOWSZY STAN — 06.11.2026, etap C: prawdziwa geometria i próbnik terenu CARBONIS
+
+**29% całego projektu / 71% pozostało.** W kolejności A–J nadal realizowany jest C (CARBONIS 01). Bez zmiany stałej listy 18 zadań i procentów względem ostatniego raportu.
+
+**Ostatnia zweryfikowana funkcja:** z `Carbonis277.cs:56–65` przeniesiono matematyczne próbkowanie oryginalnej mapy C279 o wymiarach 512×256. `CarbonisSurface277.swift` odczytuje wysokość, a natywny inspektor CARBONIS wywołuje tę funkcję; wejście wymaga SHA-256 wysokości, oprócz pozostałych pięciu zasobów. **27/27 lokalnych testów Swift/Linux PASS**, natywna kompilacja tej rewizji na Apple iOS i integracja z lotem pozostają bez potwierdzenia. [Raport C279](Reports/V568_STAGE_C_CARBONIS_TERRAIN_SOURCE_2026-11-06.md).
+
+**Bramka przed etapem D:** odzyskać z oryginalnego v568 pełną definicję `Game.Wave()` i zależności (dostępne archiwum źródłowego audytu zawiera jedynie wywołanie z `Orbit50.cs`), podłączyć realny start, lot, przeciwników, kolizje statku z próbkowanym terenem, HUD oraz zwycięstwo/przegraną. Nie używać diagnostycznego Boreas do zastępowania CARBONIS. Wcześniejszy niepodpisany IPA na Dysku Google nie zawiera tych zmian.
+
+Poniższy starszy opis 28% jest zachowany jako historia.
+
 
 ## BIEŻĄCA REALIZACJA: B i C — wybór misji oraz oryginalna planeta 01, 06.11.2026
 
