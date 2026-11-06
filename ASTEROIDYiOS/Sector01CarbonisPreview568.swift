@@ -296,8 +296,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     SIMD4<Float>(n.x*radius,n.y*radius,n.z*radius,0),
                     SIMD4<Float>(n.x*place,n.y*place,n.z*place,1)))
                 let degrees=Float.pi/180
-                return placement*rotateX(rock.angle*41*degrees)
-                    * rotateY(rock.angle*23*degrees)
+                let spin=rotateX(rock.angle*41*degrees) *
+                    rotateY(rock.angle*23*degrees)
+                return placement*spin
             }
 
             /// Original SphereCamera67 / GpuSphere67:420 camera center follows
@@ -329,8 +330,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     SIMD4<Float>(v[4],v[5],v[6],v[7]),
                     SIMD4<Float>(v[8],v[9],v[10],v[11]),
                     SIMD4<Float>(v[12],v[13],v[14],v[15])))
-                return base*rotateY(flight.flight.visualBank*Float.pi/180)
-                    * rotateX(flight.flight.visualPitch*Float.pi/180)
+                let attitude=rotateY(flight.flight.visualBank*Float.pi/180) *
+                    rotateX(flight.flight.visualPitch*Float.pi/180)
+                return base*attitude
             }
             /// EnemyTactics71.cs:84-85 DrawThreatWarnings71:
             /// RingSphere67(b.P,22,OrangeRed) and SphereLine67(b.P,
@@ -432,8 +434,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 var model=matrix_identity_float4x4
                 if gameSession == nil {
                     model.columns.3.z = -5
-                    model=model*Self.rotateX(-0.24+pitchOffset)
-                        * Self.rotateY(t*0.22+yawOffset)
+                    let orbit=Self.rotateX(-0.24+pitchOffset) *
+                        Self.rotateY(t*0.22+yawOffset)
+                    model=model*orbit
                 }
                 let size=view.drawableSize
                 let aspect=Float(max(1,size.width)/max(1,size.height))
