@@ -64,7 +64,10 @@ def capture(app,reports,kind):
                 raise AppValidationFailed("Cannot clear stale evidence: "+str(exc))
         env=os.environ.copy()
         env["SIMCTL_CHILD_ASTEROIDY_W3_MENU_VERIFY"]="1"
-        launched=run_command(["xcrun","simctl","launch",udid,PACKAGE],50,
+        # The same source-verified iPad build passed on other Apple
+        # simulator runs; CoreSimulator launch exceeded 50 s once during
+        # parallel CI. Allow bounded recovery before classifying an app fault.
+        launched=run_command(["xcrun","simctl","launch",udid,PACKAGE],150,
                               reports/f"{kind}_launch.txt",env=env)
         if PACKAGE not in launched:
             raise AppValidationFailed("Native W3 app did not launch")
