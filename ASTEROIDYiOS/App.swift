@@ -23,6 +23,8 @@ final class FlightInput: ObservableObject {
     // independent 9-rock flat diagnostic arena. This is still a
     // test sector, NOT a port of the complete original mission.
     @Published var planetPreview = true
+    // Explicit optional v568 ship 3. Never replace the default Vanguard556.
+    @Published var sourceShip367Preview = false
     // Real IntroScene41 camera/planet/ship positions, but cinematic
     // GPU rock meshes still need source-specific geometric detail.
     // An explicit rendering preview, NEVER a mission completion.
@@ -160,6 +162,13 @@ struct GameView: View {
                                               design: .monospaced))
                                 .foregroundStyle(.cyan)
                         }
+                        Button(input.sourceShip367Preview
+                               ? "STATEK 03 · ORYGINAŁ v568 (TEST)"
+                               : "STATEK v556 · TEST") {
+                            input.sourceShip367Preview.toggle()
+                        }
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.cyan)
                         HStack {
                             Button(input.verifiedDamageLab
                                    ? "TEST OBRAŻEŃ v556: WŁ." : "TEST OBRAŻEŃ v556: WYŁ.") {
