@@ -1,0 +1,131 @@
+# One-shot native launch of the user's ACTUAL ASTEROIDY iOS game.
+# Captures only genuine app screenshots produced by simctl. This is
+# NOT a physical GPU/device validation, nor is any IPA generated.
+name: ASTEROIDY iOS - genuine iPhone+iPad simulator Metal render (NO IPA)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-iphone-ipad-simulator-vanguard431-once.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  simulator-real-source:
+    name: Launch genuine source Vanguard431 in iPhone and iPad iOS Simulator (NO IPA)
+    runs-on: macos-15-intel
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify user's original Vega source meshes and textures
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python3 Tests/OriginalVanguard431InstalledAssetsTests.py | tee reports/source-assets.txt
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets | tee -a reports/source-assets.txt
+          swift Tools/verify_simulator_render_snapshot.swift --self-test | tee reports/shot-self-test.txt
+      - name: Find actual installed Apple iOS simulators
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcrun simctl list -j devices available > reports/available-simulators.json
+          python3 - <<'PY' > reports/simulator-ids.env
+          import json,shlex
+          doc=json.load(open('reports/available-simulators.json'))
+          available=[]
+          for runtime,devices in doc['devices'].items():
+              if '.iOS-' not in runtime:
+                  continue
+              for item in devices:
+                  if item.get('isAvailable',True):
+                      available.append((runtime,item['name'],item['udid']))
+          for name,prefix in [('IPHONE','iPhone'),('IPAD','iPad')]:
+              matches=sorted((x for x in available if x[1].startswith(prefix)),reverse=True)
+              if not matches:
+                  raise SystemExit('FAIL: no real installed Apple '+prefix+
+                                   ' simulator runtime on this macOS runner')
+              choice=matches[0]
+              print(name+'_UDID='+shlex.quote(choice[2]))
+              print(name+'_NAME='+shlex.quote(choice[1]))
+          PY
+          cat reports/simulator-ids.env
+      - name: Generate existing native ASTEROIDY Xcode project
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+      - name: Build the ACTUAL game for iOS Simulator (no IPA)
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/SimulatorVanguard431" \
+            build > reports/simulator-xcodebuild.log 2>&1 || {
+              tail -n 150 reports/simulator-xcodebuild.log
+              exit 1
+            }
+          APP=$(find build/SimulatorVanguard431/Build/Products/Debug-iphonesimulator \
+                 -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP"
+          python3 - "$APP" <<'PY' | tee reports/simulator-app-info.txt
+          import plistlib,sys,pathlib
+          app=pathlib.Path(sys.argv[1])
+          info=plistlib.loads((app/'Info.plist').read_bytes())
+          assert set(info['UIDeviceFamily'])=={1,2}
+          assert info['CFBundleIdentifier']=='com.synixad.asteroidyios'
+          for name in ['Vanguard431Source.mesh','Vanguard431Base.jpg','default.metallib']:
+              matches=list(app.rglob(name))
+              assert len(matches)==1,(name,matches)
+          print('PASS: actual simulator app includes both source Vanguard assets,')
+          print('      original Metal shader library and iPhone+iPad support')
+          PY
+      - name: Boot REAL iPhone and iPad simulators, launch app and capture their genuine frames
+        shell: bash
+        run: |
+          set -euo pipefail
+          source reports/simulator-ids.env
+          APP=$(find build/SimulatorVanguard431/Build/Products/Debug-iphonesimulator \
+                 -maxdepth 1 -type d -name '*.app' -print -quit)
+          for kind in IPHONE IPAD; do
+            if [ "$kind" = "IPHONE" ]; then UDID="$IPHONE_UDID"; else UDID="$IPAD_UDID"; fi
+            echo "Starting actual $kind simulator $UDID" | tee -a reports/launch-status.txt
+            xcrun simctl boot "$UDID"
+            xcrun simctl bootstatus "$UDID" -b
+            xcrun simctl install "$UDID" "$APP"
+            xcrun simctl launch "$UDID" com.synixad.asteroidyios | tee -a reports/launch-status.txt
+            # The original intro is a 16-second orbit; capture mid-orbit,
+            # NOT the iOS launch/splash screen.
+            sleep 8
+            xcrun simctl io "$UDID" screenshot --type=png "reports/${kind}_real_app.png"
+            swift Tools/verify_simulator_render_snapshot.swift \
+              "reports/${kind}_real_app.png" | tee "reports/${kind}_real_pixels.txt"
+            xcrun simctl spawn "$UDID" log show --last 4m --style compact \
+              --predicate 'eventMessage CONTAINS "Vanguard431 UV/BaseColor active"' \
+              > "reports/${kind}_source-load.log" || true
+            if grep -F 'real PC Vanguard431 UV/BaseColor active: 194427 vertices' \
+                 "reports/${kind}_source-load.log"; then
+              echo "PASS: actual $kind app logged authentic 194427-vertex UV/BaseColor path" | tee -a reports/launch-status.txt
+            else
+              echo "FAIL: could not prove the actual $kind renderer loaded the original textured mesh" | tee -a reports/launch-status.txt
+              exit 1
+            fi
+            xcrun simctl terminate "$UDID" com.synixad.asteroidyios || true
+            xcrun simctl shutdown "$UDID"
+          done
+          echo "PASS: source game launched and nonblank REAL frames captured on iPhone + iPad simulators" | tee -a reports/launch-status.txt
+          echo "NOTE: simulator GPU is NOT a physical iPhone/iPad GPU; no IPA generated" | tee -a reports/launch-status.txt
+      - name: Publish ONLY authentic application simulator screenshots and test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-iOS-genuine-simulator-frames-and-logs-NO-IPA
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 7
