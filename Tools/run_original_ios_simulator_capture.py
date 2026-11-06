@@ -96,7 +96,7 @@ def run_command(args, timeout, stdout_path=None, check=True, env=None):
             f"{shlex.join(command)}\n{output[-1600:]}")
     return output
 
-def available_devices():
+def available_devices(kinds):
     raw=run_command(["xcrun","simctl","list","-j","devices","available"],60)
     data=json.loads(raw)
     found=[]
@@ -107,6 +107,8 @@ def available_devices():
                 found.append((runtime,d["name"],d["udid"],d.get("state","")))
     result={}
     for kind,prefix in (("IPHONE","iPhone"),("IPAD","iPad")):
+        if kind not in kinds:
+            continue
         matches=[d for d in found if d[1].startswith(prefix)]
         if not matches:
             raise EnvironmentUnavailable(
@@ -117,11 +119,11 @@ def available_devices():
         result[kind]=matches[0]
     return result
 
-def capture(app:Path,reports:Path):
+def capture(app:Path,reports:Path,kinds):
     if not app.is_dir() or app.suffix!=".app":
         raise AppValidationFailed("Compiled original ASTEROIDY .app missing")
     reports.mkdir(parents=True,exist_ok=True)
-    devices=available_devices()
+    devices=available_devices(kinds)
     (reports/"selected-devices.json").write_text(
         json.dumps(devices,indent=2),encoding="utf-8")
     for kind,(runtime,name,udid,state) in devices.items():
@@ -132,7 +134,7 @@ def capture(app:Path,reports:Path):
             if state!="Booted":
                 run_command(["xcrun","simctl","boot",udid],45,
                     reports/f"{kind}_boot.txt")
-            run_command(["xcrun","simctl","bootstatus",udid,"-b"],125,
+            run_command(["xcrun","simctl","bootstatus",udid,"-b"],540,
                 reports/f"{kind}_bootstatus.txt")
             print(f"REAL {kind}: CoreSimulator boot completed",flush=True)
             run_command(["xcrun","simctl","install",udid,str(app)],85,
@@ -240,12 +242,15 @@ if __name__=="__main__":
     parser.add_argument("--self-test",action="store_true")
     parser.add_argument("--app",type=Path)
     parser.add_argument("--reports",type=Path,default=Path("reports"))
+    parser.add_argument("--only",choices=["IPHONE","IPAD","BOTH"],
+                        default="BOTH")
     args=parser.parse_args()
     try:
         if args.self_test:
             self_test()
         elif args.app:
-            capture(args.app.resolve(),args.reports.resolve())
+            kinds=("IPHONE","IPAD") if args.only=="BOTH" else (args.only,)
+            capture(args.app.resolve(),args.reports.resolve(),kinds)
         else:
             parser.error("--self-test or --app is required")
     except EnvironmentUnavailable as exc:
