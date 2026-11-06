@@ -32,16 +32,16 @@ struct Sector01Scene568: View {
                                     y:clamp(Float(v.translation.height)/110)))
         }.onEnded { _ in session.input(move:Vec2(x:0,y:0)) }
     }
+    // RIGHT half starts firing at touch-down and continues while held.
+    // Preserve the original drag-to-turn sensitivity and both-axis aim.
     private var aiming:some Gesture {
         DragGesture(minimumDistance:0).onChanged { v in
             session.input(aim:Vec2(x:clamp(Float(v.translation.width)/100),
-                                   y:clamp(Float(v.translation.height)/100)))
-        }.onEnded { _ in session.input(aim:Vec2(x:0,y:0)) }
-    }
-    private var fireGesture:some Gesture {
-        DragGesture(minimumDistance:0)
-            .onChanged { _ in session.input(shooting:true) }
-            .onEnded { _ in session.input(shooting:false) }
+                                    y:clamp(Float(v.translation.height)/100)),
+                          shooting:true)
+        }.onEnded { _ in
+            session.input(aim:Vec2(x:0,y:0),shooting:false)
+        }
     }
     var body:some View {
         GeometryReader { geo in
@@ -63,7 +63,8 @@ struct Sector01Scene568: View {
                         .accessibilityLabel("Lewy obszar: lot i przemieszczanie statku")
                     Color.clear.contentShape(Rectangle())
                         .gesture(aiming)
-                        .accessibilityLabel("Prawy obszar: celowanie")
+                        .accessibilityLabel("Prawy obszar: skręt i ciągły ostrzał")
+                        .accessibilityIdentifier("sector01-right-steer-auto-fire")
                 }
                 VStack(spacing:0) {
                     HStack(spacing:10) {
@@ -135,6 +136,7 @@ struct Sector01Scene568: View {
                                     in:RoundedRectangle(cornerRadius:9))
                         .padding(.trailing,compact ? 15:28)
                         .accessibilityIdentifier("sector01-live-enemy-radar")
+                        .allowsHitTesting(false)
                     }
                     HStack(alignment:.bottom) {
                         VStack(alignment:.leading,spacing:5) {
@@ -144,26 +146,18 @@ struct Sector01Scene568: View {
                                 .foregroundStyle(.orange)
                             Text("PUNKTY \(session.hud.score)  ŻETONY \(session.hud.collectedTokens)  DO ZEBRANIA \(session.hud.tokenPickups.count)")
                                 .foregroundStyle(.yellow)
-                            Text("CZAS \(Int(session.hud.seconds)) s  ·  LEWA: LOT / PRAWA: CEL")
+                            Text("CZAS \(Int(session.hud.seconds)) s  ·  LEWA: LOT / PRAWA: SKRĘT + OGIEŃ")
                                 .foregroundStyle(.white)
                         }
                         .font(.system(size:compact ? 10:12,weight:.bold,design:.monospaced))
                         .padding(10)
                         .background(.black.opacity(0.70),in:RoundedRectangle(cornerRadius:7))
                         Spacer()
-                        Text("OGIEŃ")
-                            .font(.system(size:compact ? 13:16,weight:.bold,design:.monospaced))
-                            .foregroundStyle(.white)
-                            .frame(width:compact ? 82:112,height:compact ? 58:76)
-                            .background(Color(red:0.62,green:0.15,blue:0.05),
-                                        in:RoundedRectangle(cornerRadius:12))
-                            .overlay(RoundedRectangle(cornerRadius:12)
-                                .stroke(.orange.opacity(0.7),lineWidth:1))
-                            .gesture(fireGesture)
-                            .accessibilityIdentifier("sector01-fire-pulse")
+
                     }
                     .padding(.horizontal,compact ? 14:28)
                     .padding(.bottom,compact ? 9:20)
+                    .allowsHitTesting(false)
                     Text("PORT MISJI 01 · POZOSTAŁE SEKTORY I MECHANIKI PC NADAL W OPRACOWANIU")
                         .font(.system(size:compact ? 8:10,design:.monospaced))
                         .foregroundStyle(.yellow)
@@ -171,6 +165,7 @@ struct Sector01Scene568: View {
                         .padding(.horizontal,compact ? 12:24)
                         .padding(.vertical,5)
                         .background(.black.opacity(0.9))
+                        .allowsHitTesting(false)
                 }
                 if showingService {
                     Color.black.opacity(0.88).ignoresSafeArea()
