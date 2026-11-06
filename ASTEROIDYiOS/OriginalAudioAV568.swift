@@ -114,6 +114,7 @@ final class OriginalAudioAV568: ObservableObject {
     private var replayObserver: NSObjectProtocol?
     private var restoreObserver: NSObjectProtocol?
     private var lastPreviewIndex=1
+    private var previewActive=false
     private var pendingPreviewIndex:Int?
     private var previewStopped=false
 
@@ -154,7 +155,7 @@ final class OriginalAudioAV568: ObservableObject {
         if settings.musicPercent>0 && music == nil && startupComplete && !suspended {
             switch context {
             case .menu:
-                if !previewStopped {playTrack(0)}
+                if !previewStopped {playTrack(previewActive ? (pendingPreviewIndex ?? lastPreviewIndex) : 0)}
             case .mission(let sector):playTrack(OriginalAudioCatalog568.missionTrack(sector))
             case .diagnostic:break
             }
@@ -329,6 +330,7 @@ final class OriginalAudioAV568: ObservableObject {
     }
     func returnToMenu() {
         previewStopped=false
+        previewActive=false
         pendingPreviewIndex=nil
         musicDuck=1
         engineLevel52=0
@@ -342,6 +344,7 @@ final class OriginalAudioAV568: ObservableObject {
     func enterMission(_ sector: Int) {
         guard (1...26).contains(sector) else { return }
         previewStopped=false
+        previewActive=false
         pendingPreviewIndex=nil
         musicDuck=1
         context = .mission(sector)
@@ -408,7 +411,7 @@ final class OriginalAudioAV568: ObservableObject {
             else {
                 switch context {
                 case .menu:
-                    if !previewStopped {playTrack(pendingPreviewIndex ?? 0)}
+                    if !previewStopped {playTrack(previewActive ? (pendingPreviewIndex ?? lastPreviewIndex) : 0)}
                 case .mission(let sector):
                     playTrack(OriginalAudioCatalog568.missionTrack(sector))
                 case .diagnostic: break
@@ -475,6 +478,7 @@ final class OriginalAudioAV568: ObservableObject {
         // Source MusicLibrary.PlaySelectedMusic selects a particular
         // original track. STOP / REPLAY operate on this selection only.
         lastPreviewIndex=index
+        previewActive=true
         previewStopped=false
         if urls[index] == nil {
             // Original MusicBank.Request(track): keep selection pending,
@@ -514,6 +518,7 @@ final class OriginalAudioAV568: ObservableObject {
         guard case .menu = context else {return}
         // MusicLibrary.CloseMusic returns to Game.Mode.Menu track 0.
         previewStopped=false
+        previewActive=false
         pendingPreviewIndex=nil
         if !suspended {playTrack(0)}
     }
