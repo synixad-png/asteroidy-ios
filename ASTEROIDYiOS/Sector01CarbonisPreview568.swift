@@ -388,6 +388,38 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 return result
             }
 
+            /// GpuSphere67.cs:438 first-level Supply.Token:
+            /// RingSphere67(p.P,4.5f, Color.FromArgb(255,222,118)).
+            /// Genuine collectible token locations, not decoration.
+            static func tokenVertices(
+                _ tokens:[CarbonisCombat568.TokenPickup])->[Float] {
+                let shell=SphereSurfaceStamp556.normalizedShellRadius+0.014
+                let color:[Float]=[1,222.0/255.0,118.0/255.0,0.95]
+                var result:[Float]=[]
+                result.reserveCapacity(tokens.count*24*6*12)
+                func emit(_ point:Vec2) {
+                    let n=Sphere67.normal(point)
+                    result.append(contentsOf:[
+                        n.x*shell,n.y*shell,n.z*shell,
+                        n.x,n.y,n.z,color[0],color[1],color[2],color[3],0,0])
+                }
+                for token in tokens {
+                    for i in 0..<24 {
+                        let a=Float(i)*2*Float.pi/24
+                        let b=Float(i+1)*2*Float.pi/24
+                        let da=Vec2(x:cos(a),y:sin(a))
+                        let db=Vec2(x:cos(b),y:sin(b))
+                        let a1=Sphere67.offset(token.position,by:da*4.2)
+                        let b1=Sphere67.offset(token.position,by:db*4.2)
+                        let a2=Sphere67.offset(token.position,by:da*4.8)
+                        let b2=Sphere67.offset(token.position,by:db*4.8)
+                        emit(a1);emit(b1);emit(b2)
+                        emit(a1);emit(b2);emit(a2)
+                    }
+                }
+                return result
+            }
+
             /// Small surface-following native Pulse and hostile shot streaks.
             /// Positions and tangents come from the actual combat projectiles.
             /// This is a basic beam renderer, not full PC particle parity.
@@ -567,6 +599,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     var values=Self.shotVertices(shots)
                     values.append(contentsOf:Self.warningVertices(
                         session.game.shooters))
+                    values.append(contentsOf:Self.tokenVertices(
+                        session.game.tokenPickups))
                     if !values.isEmpty,
                        let buffer=values.withUnsafeBytes({ bytes in
                            bytes.baseAddress.flatMap {
