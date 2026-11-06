@@ -13,6 +13,11 @@ on:
       - 'W3MenuUITests/**'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/App.swift'
+      - 'ASTEROIDYiOS/W3HomeShipPreview568.swift'
+      - 'ASTEROIDYiOS/W3HomePlanetMetal568.swift'
+      - 'Tests/V568W3NativeMenuContract.py'
+      - 'Tools/prepare_v568_w3_original_assets.py'
+      - 'ASTEROIDY_v568_W3_ORIGINAL_MENU_ASSETS.zip'
 
 concurrency:
   group: w3-menu-touch-${{ github.ref }}
