@@ -58,10 +58,11 @@ enum CarbonisRockGeometry568 {
         let p=d.unit
         let axis=abs(p.y)<0.9 ? V3(x:0,y:1,z:0) : V3(x:1,y:0,z:0)
         let r=V3.cross(p,axis).unit,f=V3.cross(r,p).unit
-        var n=V3.cross(stone((p+r*0.001).unit,seed:seed)
-                         -stone((p-r*0.001).unit,seed:seed),
-                       stone((p+f*0.001).unit,seed:seed)
-                         -stone((p-f*0.001).unit,seed:seed)).unit
+        let du=stone((p+r*0.001).unit,seed:seed) -
+            stone((p-r*0.001).unit,seed:seed)
+        let dv=stone((p+f*0.001).unit,seed:seed) -
+            stone((p-f*0.001).unit,seed:seed)
+        var n=V3.cross(du,dv).unit
         if V3.dot(n,p)<0 {n=n * -1}
         return n
     }
