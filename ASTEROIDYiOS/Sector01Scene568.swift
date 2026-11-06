@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 /// Stage C: actual source CARBONIS / C279 scene reached from mission selection.
