@@ -83,6 +83,41 @@ struct Sector01Scene568: View {
                     .padding(.vertical,6)
                     .background(.black.opacity(0.78))
                     Spacer()
+                    HStack {
+                        Spacer()
+                        Canvas { context,size in
+                            let radius=min(size.width,size.height)*0.44
+                            let center=CGPoint(x:size.width/2,y:size.height/2)
+                            let circle=CGRect(x:center.x-radius,y:center.y-radius,
+                                              width:radius*2,height:radius*2)
+                            context.stroke(Path(ellipseIn:circle),
+                                with:.color(.cyan.opacity(0.5)),lineWidth:1)
+                            let cross=Path(ellipseIn:CGRect(
+                                x:center.x-3,y:center.y-3,width:6,height:6))
+                            context.fill(cross,with:.color(.green))
+                            for p in session.hud.hazards {
+                                let x=center.x+CGFloat(p.x/400)*radius
+                                let y=center.y+CGFloat(p.y/400)*radius
+                                guard hypot(x-center.x,y-center.y)<=radius else {continue}
+                                context.fill(Path(ellipseIn:CGRect(
+                                    x:x-2,y:y-2,width:4,height:4)),
+                                    with:.color(.orange.opacity(0.76)))
+                            }
+                            for p in session.hud.targets {
+                                let x=center.x+CGFloat(p.x/400)*radius
+                                let y=center.y+CGFloat(p.y/400)*radius
+                                guard hypot(x-center.x,y-center.y)<=radius else {continue}
+                                context.fill(Path(ellipseIn:CGRect(
+                                    x:x-4,y:y-4,width:8,height:8)),
+                                    with:.color(.red))
+                            }
+                        }
+                        .frame(width:compact ? 120:162,height:compact ? 100:142)
+                        .background(.black.opacity(0.73),
+                                    in:RoundedRectangle(cornerRadius:9))
+                        .padding(.trailing,compact ? 15:28)
+                        .accessibilityIdentifier("sector01-live-enemy-radar")
+                    }
                     HStack(alignment:.bottom) {
                         VStack(alignment:.leading,spacing:5) {
                             Text("KADŁUB \(session.hud.hull)  PANCERZ \(session.hud.armor)  ŻYCIA \(session.hud.lives)")
