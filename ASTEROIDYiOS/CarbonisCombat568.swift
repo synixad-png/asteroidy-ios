@@ -38,6 +38,7 @@ struct CarbonisCombat568 {
     var score:Int=0
     var rocksDestroyed:Int=0
     var shooterKills:Int=0
+    private var random:MissionWave568.SourceRandom
     private var completed=false
     private(set) var lastContactCount=0
 
@@ -50,6 +51,7 @@ struct CarbonisCombat568 {
         rocks=prepared.encounter.rocks
         shooters=prepared.encounter.fighters.map{ Shooter($0) }
         incoming=prepared.incoming
+        random=prepared.encounter.randomState
         lives=prepared.reset.lives
         invincible=prepared.reset.invincibleSeconds
     }
@@ -126,6 +128,40 @@ struct CarbonisCombat568 {
         }
     }
 
+    /// Physics68.SplitPhysical68: each large rock produces two physical
+    /// spherical fragments with perpendicular 19-unit momentum and transport.
+    private mutating func splitRock(_ parent:SphereAsteroid556) {
+        guard parent.size>1,
+              let balance=CombatBalance556(level:1,difficulty:.normal,
+                                           spherical:true) else{return}
+        let speed=sqrt(parent.velocity.lengthSquared)
+        let sideways=speed>0.00001
+            ? Vec2(x:-parent.velocity.y/speed,
+                   y:parent.velocity.x/speed)
+            : Vec2(x:0,y:0)
+        let separation:Float=(parent.size==3 ? 18:10)*1.12*0.75+1
+        for sign:Float in [-1,1] {
+            let point=Sphere67.offset(parent.position,
+                                      by:sideways*(sign*separation))
+            let local=parent.velocity+sideways*(sign*19)
+            let transported=Sphere67.components(point,
+                Sphere67.transport(Sphere67.vector(parent.position,local),
+                  from:Sphere67.normal(parent.position),
+                  to:Sphere67.normal(point)))
+            let nextSize=parent.size-1
+            let tier=max(0,parent.tier-1)
+            let hp=balance.sphericalRockHealth(size:nextSize,tier:tier)
+            rocks.append(SphereAsteroid556(position:point,velocity:transported,
+                radius:balance.sphericalRockRadius(
+                    size:nextSize,parentSize:parent.size),
+                size:nextSize,tier:tier,health:hp,fragment:true,
+                mass:parent.mass*0.5,
+                spin:parent.spin+sign*0.35,angle:parent.angle,
+                originalHealth:Rock.healthFor(size:nextSize,tier:tier),
+                shapeSeed:random.next()))
+        }
+    }
+
     private mutating func updateShooters(dt:Float) {
         let ship=flight.position
         for i in shooters.indices {
@@ -186,7 +222,9 @@ struct CarbonisCombat568 {
                     if Self.hit(shot,rocks[j].position,radius:rocks[j].radius+2,dt:dt) {
                         rocks[j].health-=1;impact=true
                         if rocks[j].health<=0 {
-                            rocks.remove(at:j);rocksDestroyed+=1;score+=1
+                            let removed=rocks.remove(at:j)
+                            rocksDestroyed+=1;score+=1
+                            splitRock(removed)
                         }
                         break
                     }
