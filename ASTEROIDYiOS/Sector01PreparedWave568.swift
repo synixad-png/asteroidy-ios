@@ -10,6 +10,7 @@ struct Sector01PreparedWave568 {
     /// Game.BeginRewards57: replay in a selected hub mission grants no
     /// further token rewards. The original completion bit is immutable.
     var isReplay:Bool = false
+    var shopProfile:Sector01Shop568.State = Sector01Shop568.State()
 
     static func prepare(entry: Sector01Entry568,
                         campaign: CampaignProgress556,
@@ -17,7 +18,8 @@ struct Sector01PreparedWave568 {
                         difficulty: CombatBalance556.Difficulty,
                         seed: Int32,
                         currentLives: Int = 3,
-                        startingLives: Int = 3) -> Self? {
+                        startingLives: Int = 3,
+                        shopProfile:Sector01Shop568.State = .init()) -> Self? {
         guard entry.sector == 1,
               entry.stage == .sourcePlanetInspection,
               campaign.selectedSector == entry.sector,
@@ -33,7 +35,8 @@ struct Sector01PreparedWave568 {
                 ship: Vec2(x:640,y:360)) else { return nil }
         return Self(reset:reset,encounter:encounter,
                     incoming:MissionIncoming568(from:encounter,difficulty:difficulty),
-                    isReplay:campaign.completed(1))
+                    isReplay:campaign.completed(1),
+                    shopProfile:shopProfile)
     }
 
     /// Runtime transition remains blocked until wave entities are actually
