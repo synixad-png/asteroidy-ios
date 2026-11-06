@@ -1,3 +1,11 @@
+## POPRAWKA STEROWANIA CARBONIS 01 — 06.11.2026 (bez zmiany 18 zadań)
+
+Prawa połowa ekranu zachowuje celowanie/skręt i jednocześnie **automatycznie strzela od pierwszego dotknięcia**, także podczas przeciągania palca; puszczenie prawego palca wyłącza ostrzał. Lewa połowa, czułość ruchu `/110`, prawa czułość celowania `/100` i mechanika lotu pozostają niezmienione. Usunięto osobny ekranowy przycisk „OGIEŃ”, a pasywny HUD i radar przepuszczają dotknięcia. Powrót z tła iOS resetuje zablokowane sterowanie. Testy regresji: źródłowy kontrakt SwiftUI/dotyku i fizyczny test ciągłego strzelania w logice `CarbonisCombat568`. [Raport techniczny](Reports/CARBONIS01_RIGHT_TOUCH_AUTO_FIRE_2026-11-06.md).
+
+**Łączny postęp portu nadal 38% / pozostało 62%.** Nie ma podstaw, aby podnosić ten wskaźnik za małą poprawkę UI. Nadal pracujemy wyłącznie nad pierwszą misją. Odrębny status Xcode i testu dwóch palców na iPhone/iPad należy potwierdzić.
+
+---
+
 ## AKTUALNY ETAP — 06.11.2026: CARBONIS 01 — od realnej walki do zapisu, nagród i serwisu
 
 **Cały port: 38% wykonano implementacyjnie (+2 pp), 62% pozostało.** Lista 18 stałych zadań jest niezmienna; zmieniają się wyłącznie poparte kodem i testami procenty. **To nie jest 100% pierwszej misji na urządzeniu.** Nie uruchomiono najnowszej rewizji na fizycznym iPhonie, nie potwierdzono kompletnych oryginalnych SFX ani wizualnej zgodności z Windows v568.
