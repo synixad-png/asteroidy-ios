@@ -1,3 +1,9 @@
+## Kompilacja natywna Xcode — diagnoza i poprawka API Metal (06.11.2026)
+
+[Run 42283783569](https://github.com/synixad-png/asteroidy-ios/actions/runs/42283783569) zakończył się **FAIL** podczas natywnej kompilacji `compile-device`, mimo PASS bramki Linux. Rzeczywisty log Xcode wskazał jedno konkretne miejsce: `CarbonisExplosion524Renderer.swift:66:34` — `missing argument for parameter 'slice' in call`. W [commicie 6d212ed](https://github.com/synixad-png/asteroidy-ios/commit/6d212ed987ac89c84c590a68fd793a3b39ba6a0b) uzupełniono wymagany `slice:0` przy `MTLTexture.replace(region:mipmapLevel:slice:withBytes:bytesPerRow:bytesPerImage:)` dla 64³ tekstury szumu. Nie zmieniono shadera, ustawień, kolizji ani mechaniki. Automatyczna ponowna weryfikacja **bez IPA**: [GitHub Actions 42285668117](https://github.com/synixad-png/asteroidy-ios/actions/runs/42285668117), wynik natywnej kompilacji i Apple GPU **do potwierdzenia**. Testy interakcji ustawień na symulatorach [42285229667](https://github.com/synixad-png/asteroidy-ios/actions/runs/42285229667) także nie są jeszcze zaliczone. **Postęp: 38% / 62% pozostało (+0 pp).**
+
+---
+
 # ASTEROIDY iOS v568 — WYBUCHY 3D i POCISKI (oryginalne ustawienia)
 
 **Data audytu:** 6.11.2026. **Zakres:** CARBONIS 01, W3 menu i renderer natywny SwiftUI/Metal. **Źródło prawdy:** `Asteroidy_v568_ZRODLA_Windows_SteamOS_BEZ_EXE_BEZ_HANGARU.zip`, nie przykładowy projekt ani podobne gry.
@@ -37,3 +43,4 @@
 - Zgodności dźwięków pocisków i eksplozji — nie należą do tego etapu.
 
 **Status portu 18 zadań: nadal 38% globalnie; 62% pozostało**, bez zwiększania procentu przed natywną weryfikacją GPU. Baza nadal CARBONIS 01, nie rozpoczynano sektorów 02–26.
+
