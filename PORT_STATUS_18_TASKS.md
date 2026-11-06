@@ -25,6 +25,20 @@
 > Oryginalne tło/logo W3 i proceduralna planeta w menu są
 > nadal brakujące; dotykowe przejścia end-to-end nieprzetestowane.
 > **Postęp zadania 14: 10%, zmiana 0 pp, cały projekt 27%.**
+> **Dalsza realizacja A:** dostępny oryginalny ZIP JPEG/PNG v568
+> `ASTEROIDY_v568_W3_ORIGINAL_MENU_ASSETS.zip` (857501 bajtów)
+> nie został jeszcze wgrany na GitHub; po wgraniu narzędzie
+> `Tools/prepare_v568_w3_original_assets.py` automatycznie
+> sprawdza SHA256 i dołącza dwa współdzielone obrazy W3 do aplikacji.
+> Natywny SwiftUI `SourceW3Images568` już obsługuje prawdziwe
+> obrazy i odrzuca zamienniki. Pierwsza próba screenshotu menu
+> [42193792251](https://github.com/synixad-png/asteroidy-ios/actions/runs/42193792251)
+> nie zaliczyła instalacji iPhone przez timeout środowiska
+> `simctl install` 85 s. Limit podniesiono do 300 s, a nowy
+> [test obu symulatorów 42194736690](https://github.com/synixad-png/asteroidy-ios/actions/runs/42194736690)
+> został uruchomiony. Etap A nadal W TRAKCIE; procentów
+> nie zwiększać przed dowodem rzeczywistych ekranów i nawigacji.
+
 > Szczegółowe dowody i warunki zaliczenia:
 > [ROADMAP_EXECUTION_RULES_18_TASKS_2026-11-06.md](ROADMAP_EXECUTION_RULES_18_TASKS_2026-11-06.md).
 
