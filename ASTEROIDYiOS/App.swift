@@ -74,6 +74,7 @@ struct GameView: View {
     // Source C279 sector inspection remains separate from the Boreas
     // diagnostic simulation. This is not StartHubMission261 or a win state.
     @State private var sourceSector01: Sector01Entry568?
+    @State private var sourceSector01Setup: Sector01PreparedWave568?
     @State private var reopenAtlasAfterCarbonis = false
 
     private func inspectSourceSector(_ sector: Int) {
@@ -81,10 +82,18 @@ struct GameView: View {
             selectedSector:sector,campaign:campaign,
             hasOriginalC279Assets:Sector01CarbonisPreview568.isAvailable)
         else { return }
+        // Actual original Game.Wave initial spawn for the selected C279
+        // world; the flight/AI runtime remains explicitly unported.
+        guard let preparedWave=Sector01PreparedWave568.prepare(
+            entry:entry,campaign:campaign,
+            hasOriginalC279Assets:Sector01CarbonisPreview568.isAvailable,
+            difficulty:.normal,seed:Int32.random(in:0...Int32.max))
+        else { return }
         input.releaseHeldControls()
         input.gameplayPaused = true
         showCampaign = false
         reopenAtlasAfterCarbonis = false
+        sourceSector01Setup = preparedWave
         sourceSector01 = entry
         showMainMenu = true
     }
@@ -96,15 +105,17 @@ struct GameView: View {
     var body: some View {
         GeometryReader { g in
             ZStack {
-                if let sourceEntry=sourceSector01 {
+                if let sourceEntry=sourceSector01,
+                   let preparedWave=sourceSector01Setup {
                     Sector01Scene568(entry:sourceEntry,returnToAtlas:{
                         sourceSector01 = nil
+                        sourceSector01Setup = nil
                         reopenAtlasAfterCarbonis = true
                         input.releaseHeldControls()
                         input.gameplayPaused = true
                         showCampaign = false
                         showMainMenu = true
-                    })
+                    },preparedWave:preparedWave)
                 } else if showMainMenu {
                     W3MainMenu568(progress:campaign,selectMission:{ sector in
                         if campaign.selectUnlocked(sector) {
