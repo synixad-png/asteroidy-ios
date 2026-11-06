@@ -49,9 +49,19 @@ final class FlightInput: ObservableObject {
     @Published var planetAmigaDemo = false
     @Published var planetAmigaHits = 0
     @Published var rendererError: String?
+
+    // Touch gestures may not deliver onEnded if iOS backgrounds the app.
+    // Clear only transient held inputs; never reset the game simulation.
+    func releaseHeldControls() {
+        thrust = 0
+        steer = 0
+        shooting = false
+        tarczaHeld = false
+    }
 }
 
 struct GameView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var input = FlightInput()
     @State private var showCampaign = false
     @State private var campaign = CampaignStore556.load()
@@ -234,6 +244,12 @@ struct GameView: View {
                     CampaignAtlas556(progress: campaign, dismiss: { showCampaign = false })
                 }
             }.frame(width: g.size.width, height: g.size.height)
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase != .active { input.releaseHeldControls() }
+        }
+        .onChange(of: showCampaign) { visible in
+            if visible { input.releaseHeldControls() }
         }
     }
 }
