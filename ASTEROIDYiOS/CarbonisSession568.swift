@@ -27,7 +27,10 @@ final class CarbonisSession568: ObservableObject {
             score=game.score;collectedTokens=game.collectedLootTokens
             destroyedRocks=game.rocksDestroyed
             shotDownEnemies=game.shooterKills
-            tokenPickups=game.tokenPickups.map{$0.position}
+            tokenPickups=game.tokenPickups.map {
+                Sphere67.delta(target:$0.position,
+                               origin:game.flight.position)
+            }
             summary=game.missionSummary
             self.summarySeconds=summarySeconds
             rocks=game.rocks.count;fighters=game.shooters.count
