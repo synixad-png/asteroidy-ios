@@ -1,4 +1,4 @@
-# USER-REQUESTED IPA: source v568 GpuShip491 twin engine exhaust + GpuPlanetGltf463 mission C279 v523 terrain radius. Rebuild universal iPhone/iPad ARM64 UNSIGNED and validate original assets.
+# USER-REQUESTED IPA: source v568 GpuShip491 twin-engine exhaust + GpuPlanetGltf463 mission C279 v523 radius. Rebuild iPhone/iPad arm64 with corrected Swift 6-safe @main radius regression and verify unsigned IPA.
 name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
 on:
   workflow_dispatch:
