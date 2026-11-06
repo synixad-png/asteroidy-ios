@@ -389,8 +389,12 @@ struct CarbonisCombat568 {
                 var hitIndex:Int?=nil
                 var first:Float=2
                 for j in rocks.indices where rocks[j].shardLife<=0 {
-                    let t=Self.hit(shot,rocks[j].position,
-                                   radius:rocks[j].radius+2,dt:dt)
+                    let travel=shot.velocity*dt
+                    let delta=Sphere67.delta(target:rocks[j].position,
+                                             origin:shot.point)
+                    let t=CombatCollision556.segmentHit(
+                        delta:delta,travel:travel,
+                        radius:rocks[j].radius+2)
                     if t<first {first=t;hitIndex=j}
                 }
                 if let j=hitIndex {
