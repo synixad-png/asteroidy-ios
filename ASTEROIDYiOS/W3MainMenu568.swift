@@ -215,8 +215,8 @@ struct W3MainMenu568: View {
         }
     }
 
-    // W3 C# sources draw a procedural center radar and orbit. This is a
-    // 2D navigation panel only; no fabricated planet or screenshot is shown.
+    // The source H290 globe is a real independent Metal render in the middle;
+// reference W3 radar/orbit lines remain native vector UI overlays.
     private func radar(compact:Bool) -> some View {
         GeometryReader { geo in
             let diameter=min(geo.size.width * 0.76,geo.size.height * 0.78)
@@ -285,7 +285,10 @@ struct W3MainMenu568: View {
                 .padding(12)
             }
         }
-        .accessibilityLabel("Panel radarowy. Oryginalny model planety 3D nie jest jeszcze przeniesiony.")
+        .accessibilityLabel(
+            W3HomePlanetMetal568.isAvailable
+                ? "Radar W3 z oryginalną planetą 3D NewHome290"
+                : "Radar W3. Brak zweryfikowanego oryginalnego modelu planety")
     }
 
     private var telemetry: some View {
@@ -301,7 +304,23 @@ struct W3MainMenu568: View {
                     .foregroundStyle(muted)
                 Rectangle().fill(cyan.opacity(0.18)).frame(height:1)
             }
-            Spacer()
+            Text("STATEK / PODGLĄD")
+                .font(.system(size:11,weight:.bold,design:.monospaced))
+                .foregroundStyle(gold)
+            if W3HomeShipPreview568.isAvailable {
+                W3HomeShipPreview568()
+                    .frame(height:110)
+                    .accessibilityLabel(
+                        "Oryginalny Vanguard431, domyślny statek 01")
+                Text("VANGUARD / TYP 01")
+                    .font(.system(size:10,design:.monospaced))
+                    .foregroundStyle(muted)
+            } else {
+                Text("BRAK ORYGINALNEJ SIATKI LUB TEKSTURY")
+                    .font(.system(size:10,design:.monospaced))
+                    .foregroundStyle(muted)
+            }
+            Spacer(minLength:0)
         }
         .padding(15)
         .background(Color(red:0.008,green:0.035,blue:0.055).opacity(0.9))
