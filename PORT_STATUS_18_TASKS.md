@@ -11,6 +11,20 @@
 > następne”) opisaną niżej jako historia. **Wszystkie 18 zadań, ich
 > numery, zakresy i dotychczasowe procenty pozostają niezmienione.**
 > Najbliższe do wykonania: **A. Menu, potem B. Wybór misji**.
+> **Kontynuacja testów W3 — najnowsza rewizja:** po dodaniu źródłowego
+> podglądu statku Vanguard431 w menu testy interakcji zostały
+> powiązane również z plikami podglądu statku, planety i
+> kontraktu menu; zmiana tych plików wymusza XCTest iPhone/iPad.
+> [Najnowszy test dotyku 42202753554](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202753554).
+> [Test GPU 42202733165](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202733165).
+> Nie zaliczać ich przed wynikami. Poprzedni test
+> [42202329563](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202329563)
+> zatrzymał się na preflight źródłowym, **nie na rzeczywistym dotyku**.
+> Potwierdzona kompilacja iOS: job SUCCESS
+> [42202600804](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202600804).
+> **A otwarte, B nierozpoczęte; zadanie 14: 10%, +0 pp;
+> cały projekt: 27% / pozostało 73%. IPA nie generowano.**
+>
 > **Potwierdzony wynik etapu A — iPhone i iPad GPU PASS:**
 > [workflow 42198113753](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113753)
 > zakończył oba symulatory wynikiem `success`.
