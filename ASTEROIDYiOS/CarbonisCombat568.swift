@@ -768,7 +768,8 @@ struct CarbonisCombat568 {
                     bullets[i].hitRockSeeds.append(rocks[j].shapeSeed)
                     if rocks[j].health<=0 {
                         let removed=rocks.remove(at:j)
-                        emitOriginalAudio568(removed.size>=3 ? 21 : 20)                        destruction.rockDestroyed(
+                        emitOriginalAudio568(removed.size>=3 ? 21 : 20)
+                        destruction.rockDestroyed(
                             removed,time:elapsed,rng:&random)
                         rocksDestroyed+=1
                         score+=Self.sourceRockScore(removed)
