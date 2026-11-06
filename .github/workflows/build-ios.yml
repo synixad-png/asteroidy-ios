@@ -140,6 +140,11 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01MissionSummary568.swift ASTEROIDYiOS/Sector01MissionSettlement568.swift Tests/Sector01MissionFinish568Tests.swift -o /tmp/ios-sector01-rewards-and-shop
           /tmp/ios-sector01-rewards-and-shop
+      - name: Verify CARBONIS touch UI - left flight, right instant autofire, no fire button, app-interruption safety
+        run: |
+          set -euo pipefail
+          python3 Tests/V568W3NativeMenuContract.py
+          python3 Tests/IOSInterruptedTouchSourceContract.py
       - name: Verify live Carbonis level-one flight and source combat
         run: |
           set -euo pipefail
