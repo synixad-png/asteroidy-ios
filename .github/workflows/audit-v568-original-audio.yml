@@ -1,0 +1,53 @@
+name: ASTEROIDY v568 audit original audio assets (NO IPA)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/audit-v568-original-audio.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect untouched v568 four source asset archives for original audio
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports extract
+          python3 - <<'PY' | tee reports/audio-inventory.txt
+          import zipfile,pathlib,hashlib,os
+          archives=sorted(pathlib.Path(".").glob("ASTEROIDY_v568_ZASOBY_DO_GITHUB_CZESC_*_z_04.zip"))
+          assert len(archives)==4,archives
+          for p in archives:
+            with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None
+              files=z.infolist()
+              print("ARCHIVE",p,len(files))
+              for info in files:
+                name=info.filename
+                if any(w in name.lower() for w in ("/music/","/audio/","/sound/","/sfx/","intro43","synth","music","audio")):
+                  print("AUDIO CANDIDATE",name,info.file_size,info.CRC)
+                  if not info.is_dir() and info.file_size<100_000_000:
+                    data=z.read(info)
+                    dest=pathlib.Path("extract")/name
+                    dest.parent.mkdir(parents=True,exist_ok=True)
+                    dest.write_bytes(data)
+                    print("SHA256",hashlib.sha256(data).hexdigest())
+              if any(n.endswith(".cs") for n in z.namelist()):
+                for n in z.namelist():
+                  if n.endswith(".cs"):print("C# SOURCE",n)
+          print("AUDIT COMPLETE")
+          PY
+      - name: Publish actual original audio bytes and inventory if present
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-v568-original-audio-source-inventory
+          path: |
+            reports/audio-inventory.txt
+            extract/
+          if-no-files-found: error
+          retention-days: 7
