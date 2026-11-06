@@ -80,3 +80,19 @@ fragment float4 sector01SourceRockFragment568(
     float3 ink=in.color.rgb*(band+rim);
     return float4(clamp(ink,0.0f,1.0f),in.color.a);
 }
+
+// Source Vanguard431 textured model in the actual CARBONIS gameplay scene.
+// Retains original UV/vertex RGBA, reuses the fragment conventions of the
+// existing source W3 Vanguard431, distinct from the planet's three textures.
+fragment float4 sector01SourceCraftFragment568(
+    CarbonisSectorRaster568 in [[stage_in]],
+    texture2d<float> skin [[texture(0)]])
+{
+    constexpr sampler sourceSkin(coord::normalized,address::repeat,filter::linear);
+    float4 albedo=in.color*skin.sample(sourceSkin,in.uv);
+    float3 n=normalize(in.normal);
+    float diffuse=max(0.0f,dot(n,normalize(float3(-0.6f,0.8f,1.4f))));
+    float band=.25f+.33f*smoothstep(.30f,.32f,diffuse)
+                    +.40f*smoothstep(.70f,.72f,diffuse);
+    return float4(clamp(albedo.rgb*band,0.0f,1.0f),clamp(albedo.a,0.0f,1.0f));
+}
