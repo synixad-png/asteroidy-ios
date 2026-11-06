@@ -1,5 +1,16 @@
 # ASTEROIDY iOS — natywny port Swift/Metal (projekt w trakcie rozwoju)
 
+## Najnowszy etap: CARBONIS 01 — walka → wygrana → raport → serwis → zapis (06.11.2026)
+
+**Port całej gry: 38% implementacyjnie (+2 pp), 62% pozostało.** W pierwszej misji działa źródłowa sekwencja `Game.Wave` (13 asteroid, cztery myśliwce), kolizje sferyczne, broń Pulse/Twin/Scatter z zakupionymi ulepszeniami, odłamki, realistyczne zbieranie żetonów i `Game.FinishLevel`. Po zwycięstwie powstaje raport `LevelSummary166` z premią 12 żetonów i przyciskiem serwisu po 4,2 s. Wyniki i zasoby zapisują się trwale, ukończenie CARBONIS odblokowuje sektor02, a powtórka nie przyznaje drugi raz nagrody. Po porażce dostępne jest ponowienie misji.
+
+**[Testy 42269114054 — PASS](https://github.com/synixad-png/asteroidy-ios/actions/runs/42269114054):** 335 realnych kroków bitwy 120 Hz, 18 asercji end-to-end, 41 kontroli serwisu, zapisu i ochrony replay. Test jest automatyczny i wykorzystuje kierowane pociski: nie jest potwierdzeniem ręcznej gry na iPhonie. **Najnowszy IPA nadal wymaga potwierdzenia Xcode**; oryginalne SFX i wizualna weryfikacja Apple GPU nie są ukończone. Nie deklarować 100% gotowości pierwszej misji ani wszystkich 25 grywalnych sektorów.
+
+[Stały harmonogram 18 zadań](PORT_STATUS_18_TASKS.md) · [Raport etapu CARBONIS01](Reports/V568_CARBONIS01_FINISH_REWARDS_SERVICE_E2E_2026-11-06.md) · [GitHub build IPA](https://github.com/synixad-png/asteroidy-ios/actions/runs/42269114054).
+
+Starsze komunikaty 36%, 35% itd. poniżej są historycznym zapisem prac, nie aktualnym stanem wydania.
+
+
 ## Aktualizacja 06.11.2026 — drugi myśliwiec źródłowy i 450 profili zachowania
 
 **Port iOS: 36% zaimplementowano / 64% pozostało.** Z oryginalnego `Windows/src/ShipMesh.cs` przeniesiono `ShipMesh(1,false)` (drugi myśliwiec, 5521 trójkątów) obok istniejącego rodzaju 0 (5345). Oba mają oddzielne proceduralne bryły, 8 grup materiałowych, cache GPU Metal i barwy pochodzące z `GpuRobot70`. Skalowanie świecącego rdzenia o 15% podczas ostrzeżenia nie zmienia pozostałej geometrii. `ShooterTactics71` przenosi pełne parametry AI, strzałów i obrażeń sześciu rodzajów myśliwców dla 25 poziomów i wszystkich trudności. Aktywny CARBONIS 01 wciąż wykorzystuje wyłącznie typ 0 — nie są to ukończone misje 2–25.
