@@ -1,3 +1,32 @@
+## AKTUALNY ETAP — 06.11.2026: oryginalna muzyka i SFX, dwufazowy loader (BEZ IPA)
+
+**Cały port: 38% wykonane, 62% pozostało (+0 pp).** W zakresie zadania 15 **infrastruktura audio 10% (+10 pp), oryginalna muzyka/SFX 0% (NIE przeniesiono brzmień)**. Audyt [42293009917](https://github.com/synixad-png/asteroidy-ios/actions/runs/42293009917) czterech paczek częściowych dowiódł braku generatora syntezy i prawdziwego pliku Intro43 PCM; dostępny jest wyłącznie obraz planet53.jpg. Oryginalny inwentarz potwierdza nazwę i SHA Intro43 PCM, ale nie zawiera jego bajtów. Wdrożono przygotowanie menu przy starcie, późniejsze przygotowanie audio tylko dla wczytywanej misji, cache oryginalnych wyników, odrzucanie spóźnionych żądań, zatrzymywanie po zmianie sceny oraz źródłowy tor AVAudioEngine; **z powodu brakujących źródeł obecnie niczego nie syntezuje ani nie odtwarza**. Nie dodano żadnych losowych melodii, plików WAV ani niezweryfikowanych suwaków. [Raport szczegółowy](Reports/V568_AUDIO_DWIE_FAZY_BEZ_ZAMIENNIKOW_2026-11-06.md).
+
+| Nr | Stałe zadanie | Postęp | Zmiana |
+|---:|---|---:|---:|
+| 1 | Kompilacja i infrastruktura iOS | 88% | 0 pp |
+| 2 | Silnik graficzny Metal | 89% | 0 pp |
+| 3 | Materiały PBR, tekstury i oświetlenie | 25% | 0 pp |
+| 4 | Statki, planety i zasoby 3D | 32% | 0 pp |
+| 5 | Animacje modeli GLB | 35% | 0 pp |
+| 6 | Fizyka lotu i poruszanie po planetach | 43% | 0 pp |
+| 7 | Kolizje, obrażenia i zniszczenia (dotychczasowy moduł) | 100% | 0 pp |
+| 8 | Asteroidy i fale walki (dotychczasowy moduł) | 100% | 0 pp |
+| 9 | Bronie i trafienia | 24% | 0 pp |
+| 10 | Przeciwnicy i AI | 11% | 0 pp |
+| 11 | Bossowie i ich mechaniki | 0% | 0 pp |
+| 12 | Komplet misji planetarnych | 30% | 0 pp |
+| 13 | Kampania — 26 sektorów atlasu | 37% | 0 pp |
+| 14 | Menu W3, HUD i ustawienia | 24% | 0 pp |
+| 15 | Dźwięki i muzyka | **10% (tylko infrastruktura)** | **+10 pp** |
+| 16 | Zapisywanie i wczytywanie gry | 32% | 0 pp |
+| 17 | Sterowanie | 41% | 0 pp |
+| 18 | Optymalizacja i testy | 18% | 0 pp |
+
+**Pozostało konkretnie:** uzyskać rzeczywiste źródłowe procedury syntezy v568 i intro43.pcm.gz, przenieść muzykę menu i bank misji 1, powiązać oryginalne wyzwalacze SFX broni/wybuchów/silników/UI, odczytać autentyczne ustawienia, przetestować na iOS. Nie rozpoczynać zastępczej ścieżki ani następnego sektora. Bez generowania IPA i bez podnoszenia całkowitego wskaźnika bez testów.
+
+---
+
 ## Wydany IPA — oryginalne silniki v491 / normalizacja C279 v523 (06.11.2026)
 
 **GitHub Actions [42289576566](https://github.com/synixad-png/asteroidy-ios/actions/runs/42289576566) zakończył się SUCCESS** (Linux testy źródłowe oraz macOS natywne Xcode/Metal ARM64). Kompilacja z SHA źródeł `839edce5c5cb08e57bd11f614c7bc8513aa4f2bf`. Zweryfikowany ZIP artefaktu [13539047406](https://github.com/synixad-png/asteroidy-ios/actions/runs/42289576566/artifacts/13539047406) zawiera **ASTEROIDY_iOS_UNSIGNED.ipa** (27 059 072 bajtów, SHA-256 `b870ee6ef43c3c5e719fcd176d23fc0990f227aa07a5a059649faf662a91fad4`), platformę iPhoneOS z `UIDeviceFamily=[1,2]`, arm64, oryginalny `Vanguard431Source.mesh`, `Sector01CarbonisVertices.bin` oraz `default.metallib`. IPA ZIP CRC: PASS, zgodność hash z raportem CI: PASS. Brak podpisu i brak testu fizycznego iPhone/iPad; weryfikacja wzrokowa silników/skali na fizycznym GPU nadal nieprzeprowadzona. Osobny test na rzeczywistych 137067 wierzchołkach C279 z oryginalnego `carbonis279.mesh.gz`: obliczony promień 1.096075 i skala 0.9123463, PASS.
