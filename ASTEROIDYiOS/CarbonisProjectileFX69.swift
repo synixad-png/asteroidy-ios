@@ -75,8 +75,8 @@ enum CarbonisProjectileFX69 {
         let travel=b-a
         if travel.length<0.000001{return}
         let center=(a+b)*0.5
-        let side=SphereVector3.cross(travel,eye-center).normalized
-            *max(0.000005,width*0.5)
+        let side=SphereVector3.cross(travel,eye-center).normalized *
+            max(0.000005,width*0.5)
         let p=a-side,q=b-side,r=b+side,t=a+side
         tri(p,q,r,color,&into);tri(p,r,t,color,&into)
     }
@@ -110,7 +110,7 @@ enum CarbonisProjectileFX69 {
             let px=pxPerWorld((a+b)*0.5,camera:camera,
                               height:drawableHeight)
             let perWorld=sourceWidth/px
-            let outerWidth=shot.hostile ? 2.45:2.50
+            let outerWidth:Float=shot.hostile ? 2.45:2.50
             let middleWidth=shot.hostile ? Float(1.45):1.40
             let innerWidth=shot.hostile ? Float(0.67):0.70
             if width>0 {
@@ -210,10 +210,10 @@ enum CarbonisProjectileFX69 {
         for i in 0..<slices {
             let a=2*Float.pi*Float(i)/Float(slices)
             let b=2*Float.pi*Float(i+1)/Float(slices)
-            let v1=center+
-                (basis.east*cos(a)+basis.south*sin(a))*radius*scale
-            let v2=center+
-                (basis.east*cos(b)+basis.south*sin(b))*radius*scale
+            let offset1=(basis.east*cos(a)+basis.south*sin(a))*radius*scale
+            let offset2=(basis.east*cos(b)+basis.south*sin(b))*radius*scale
+            let v1=center+offset1
+            let v2=center+offset2
             let c1=rgba(tint,alpha)
             let c0=rgba(tint,0)
             vert(center,c1,&into);vert(v1,c0,&into);vert(v2,c0,&into)
