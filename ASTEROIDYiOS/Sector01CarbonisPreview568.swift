@@ -371,6 +371,26 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             vertexCount:CarbonisRockGeometry568.sourceVertexCount)
                     }
                 }
+                // Render the exact default VANGUARD v568 craft alongside
+                // its moving CARBONIS sphere; use real source mesh and UV.
+                if let session=gameSession,
+                   let buffer=craftBuffer,
+                   let texture=craftTexture,
+                   let fighterPipeline=craftPipeline,
+                   let worldView=vp {
+                    let shipMatrix=Self.craftModel(session.game.flight)
+                    uniforms=Uniforms(mvp:worldView*shipMatrix,
+                                      model:shipMatrix,material:2,glow:0)
+                    encoder.setRenderPipelineState(fighterPipeline)
+                    encoder.setVertexBuffer(buffer,offset:0,index:0)
+                    encoder.setVertexBytes(&uniforms,
+                        length:MemoryLayout<Uniforms>.stride,index:1)
+                    encoder.setFragmentBytes(&uniforms,
+                        length:MemoryLayout<Uniforms>.stride,index:1)
+                    encoder.setFragmentTexture(texture,index:0)
+                    encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                                           vertexCount:craftVertexCount)
+                }
                 encoder.endEncoding()
                 command.present(drawable)
                 if !proofScheduled &&
