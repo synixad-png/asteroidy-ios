@@ -10,6 +10,8 @@ on:
       - 'Tools/run_w3_native_menu_simulator_capture.py'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'Tools/prepare_v568_w3_original_assets.py'
+      - 'ASTEROIDY_v568_W3_ORIGINAL_MENU_ASSETS.zip'
+      - 'Tests/V568W3MenuSourceImagesTests.py'
 
 permissions:
   contents: read
@@ -33,8 +35,14 @@ jobs:
           python3 Tests/V568W3NativeMenuContract.py | tee reports/w3-source-contract.txt
           python3 -m py_compile Tools/run_w3_native_menu_simulator_capture.py
           swift Tools/verify_simulator_render_snapshot.swift --self-test | tee reports/w3-screenshot-detector.txt
-      - name: Stage SHA-pinned original v568 W3 images if available
-        run: python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Require exact v568 W3 background/logo, verify CRC and both SHA256
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          python3 Tests/V568W3MenuSourceImagesTests.py
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required
+          test -s ASTEROIDYiOS/Assets/W3Background568.jpg
+          test -s ASTEROIDYiOS/Assets/W3Logo568.png
       - name: Create native iOS source project (no HTML/WebView)
         timeout-minutes: 5
         run: |
@@ -58,13 +66,22 @@ jobs:
                 -maxdepth 1 -type d -name '*.app' -print -quit)
           test -n "$APP"
           python3 - "$APP" <<'PY' | tee reports/menu-compiled-app.txt
-          import pathlib,plistlib,sys
+          import pathlib,plistlib,sys,hashlib
           app=pathlib.Path(sys.argv[1])
           info=plistlib.loads((app/"Info.plist").read_bytes())
           assert set(info.get("UIDeviceFamily",[]))=={1,2}
           assert info.get("CFBundleIdentifier")=="com.synixad.asteroidyios"
           assert len(list(app.rglob("default.metallib")))==1
-          print("PASS: native W3-capable iPhone and iPad source app bundled with Metal")
+          originals={
+            "W3Background568.jpg":"a8aa28883084657f0c38900dbb011de09e2b0fd461704d370a68858be0178145",
+            "W3Logo568.png":"cab4198b953640c787975c5a8436a0fdeaa82502b40e000077ff055cc0709e09"
+          }
+          for name,sha in originals.items():
+            bundled=list(app.rglob(name))
+            assert len(bundled)==1,(name,bundled)
+            actual=hashlib.sha256(bundled[0].read_bytes()).hexdigest()
+            assert actual==sha,(name,actual)
+          print("PASS: native iPhone+iPad app contains BOTH original SHA256-pinned W3 images and Metal")
           PY
       - name: Actually run W3 main menu on Apple simulator and capture real frame
         timeout-minutes: 18
