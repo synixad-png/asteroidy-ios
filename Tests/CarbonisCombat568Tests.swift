@@ -40,9 +40,11 @@ import Foundation
         check(failure.phase == .defeat && failure.lives==0,"real defeat")
         var victory=CarbonisCombat568(prepared)
         victory.rocks=[];victory.shooters=[]
-        victory.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
-                     shooting:false,dt:1.0/120)
-        check(victory.phase == .victory,"real empty clear objective")
+        for _ in 0..<35 {
+            victory.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                         shooting:false,dt:1.0/120)
+        }
+        check(victory.phase == .victory,"original spherical 0.20-second clear hold")
         check(campaign.completedMask==0,"no fake campaign completion")
         print("PASS \(checks) live Carbonis C279 flight, shot, hit, victory and defeat checks")
     }
