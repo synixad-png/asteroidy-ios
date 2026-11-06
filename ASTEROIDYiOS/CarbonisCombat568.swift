@@ -119,12 +119,29 @@ struct CarbonisCombat568 {
         lives-=1
         shieldCharges=0
         if lives<=0 {phase = .defeat; hull=0;return}
-        hull=60;armor=25;invincible=3
+        hull=60;armor=25;invincible=4.5
+        // Game.Damage: respawn keeps the original Vanguard and restores
+        // its heading, movement damping, bank and aiming state.
         flight.position=Vec2(x:640,y:360)
         flight.velocity=Vec2(x:0,y:0)
+        flight.heading = -Float.pi/2
+        flight.flight=FlightDynamics556()
+        flight.flight.configuration.cruiseSpeed=156
         flight.camera=SphereCamera67(at:flight.position)
         bullets.removeAll(keepingCapacity:true)
-        hostileShots.removeAll(keepingCapacity:true)
+        // Original Game.Damage relocates every rock within 160 atlas
+        // units to 220 units from spawn to prevent unavoidable spawn death.
+        for i in rocks.indices {
+            if Self.distance(rocks[i].position,flight.position)<160 {
+                let angle=random.float(0,Float.pi*2)
+                let dir=Vec2(x:cos(angle),y:sin(angle))
+                let oldSpeed=sqrt(rocks[i].velocity.lengthSquared)
+                let point=Sphere67.offset(flight.position,by:dir*220)
+                rocks[i].position=point
+                rocks[i].velocity=CarbonisBodyContact68.transported(
+                    dir*oldSpeed,from:flight.position,to:point)
+            }
+        }
     }
     /// Pure simulation step, max 1/60s to retain collision fidelity.
     /// The authentic position of the first 13 rocks and four fighters is
