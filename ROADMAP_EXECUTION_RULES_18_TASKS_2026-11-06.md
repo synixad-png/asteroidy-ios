@@ -588,3 +588,48 @@ Nie oznacza to jeszcze PASS dla testu dotykowego.
 projekt **27% / 73% pozostało**.
 Wcześniej wydane IPA (`5242e4f`, na prywatnym Dysku Google)
 nie jest przebudowywane automatycznie.
+
+
+### Etap A — weryfikacja odtwarzalności iOS XCTest / GPU: ostatnia aktualizacja
+
+Wydanie IPA `5242e4f` pozostaje bez zmian i jest na Dysku Google
+użytkownika. Obecna praca odbywa się na źródłach GitHub i **nie
+tworzy nowego IPA**.
+
+Po analizie rzeczywistych logów `W3MenuNavigationUITests`
+ustalono, że na obu urządzeniach symulowanych XCTest w
+poprzedniej wersji nie znajdował `w3-home-0`, mimo że
+wcześniejsze autentyczne renderowanie W3 Metal zakończyło się PASS.
+Zmieniono **wyłącznie dostępność i testowalność** natywnych
+przycisków: `accessibilityElement(children:.contain)` na
+kontenerach, jawne `accessibilityLabel`, `isButton`,
+identyfikatory oraz poprawna interpolacja
+`w3-home-\\(index)` w kodzie Swift testów. W razie
+niepowodzenia test przechowuje `app.debugDescription` i
+faktyczny zrzut w `.xcresult`.
+
+Ustalono również odrębny błąd środowiska na poprzednim
+runnerze `macos-15-intel`: `simctl launch` iPada przekroczył
+twarde 50 s. Limit został zwiększony do nadal ograniczonych
+150 s. Do uruchamiania obu niezależnych workflow wybrano
+teraz runner `macos-15` Apple Silicon z pełnymi
+dotychczasowymi bramkami testowymi; ani zakres testów,
+ani oryginalne zasoby nie zostały uproszczone.
+
+**Aktualne workflow po zmianie runnera:**
+- [Test rzeczywistego dotyku 42211323604](https://github.com/synixad-png/asteroidy-ios/actions/runs/42211323604)
+  — 7 wejść i powrotów, wejście w diagnostykę i powrót.
+- [Test autentycznego GPU i screenshotów 42211331700](https://github.com/synixad-png/asteroidy-ios/actions/runs/42211331700)
+  — dwa symulatory, oryginalne NewHome290/Vanguard431,
+  checksumy i ukończone komendy Metal.
+
+Podczas aktualizacji workflow pozostawały w kolejce
+GitHub Actions; **nie są zaliczone**. Potwierdzone wcześniej:
+[kompilacja i regresje 42210096215](https://github.com/synixad-png/asteroidy-ios/actions/runs/42210096215),
+oba joby PASS; poprzedni rzeczywisty GPU z
+[42202733165](https://github.com/synixad-png/asteroidy-ios/actions/runs/42202733165)
+PASS na obu symulatorach.
+
+**Bramka etapu A pozostaje otwarta. B jeszcze nie rozpoczęto.
+18 zadań niezmienione; zadanie 14 10% (+0 pp),
+całość 27% / 73% do wykonania.**
