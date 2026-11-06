@@ -22,7 +22,7 @@ FILES = {
   "carbonis279.mesh.gz":"27dfc67667b1605b57cfd3146993fecc1c62bbcc38037237fbdd050db16f8d84",
   "carbonis277.base.jpg":"8a9d5d2ad53d1c5bc8681f9ff17b83a3375fb7e16f58a3ed083a9157bcc58424",
   "carbonis277.emissive.png":"cc32669e8e31dbf0942fa0db54fd04582af9bfbd02e7248932a04e7eb78646b3",
-  "carbonis288.irradiance.png":"b1cc566768c655e643c450b1eba73cf718765b918e54d7f7a1ac6045d685"
+  "carbonis288.irradiance.png":"b1cc566768c655e643c450b1eba73cf718765b918e54d7f7a1ac30ac6045d685"
 }
 RAW_SHA = "2f5a704efb5fb21e196b47f2950be21f157af80157ce2b5a255779cb1a9dc59c"
 VERTEX_SHA = "b35318d059b9c4f180d03f36e52a6c4eea1225a484e339d3f117e5df9d7634bd"
