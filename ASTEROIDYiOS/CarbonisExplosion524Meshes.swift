@@ -121,7 +121,8 @@ enum CarbonisExplosion524Meshes {
     /// default explosion preset (50% shards); no rendered texture stand-in.
     private static func volumetricShards(
         _ event:CarbonisDestruction524.Explosion,time:Float,
-        camera:SphereCamera67,into out:inout [Float]) {
+        camera:SphereCamera67,settings:CarbonisVisualSettings568,
+        into out:inout [Float]) {
         let age=time-event.spawned
         if age<0.1 || age>3.8 {return}
         let center=Sphere67.normal(event.point)*(shell+1.1/outer)
@@ -132,8 +133,8 @@ enum CarbonisExplosion524Meshes {
         if right.length<0.01 {right=SphereVector3(x:1,y:0,z:0)}
         let up=SphereVector3.cross(front,right).normalized
         let life=max(0,1-age/3.8)
-        let spread:Float=1.25 // original ExplosionSettings524 preset0
-        for i in 0..<35 {
+        let spread=settings.factor(5)
+        for i in 0..<settings.shardCount {
             let seed=Float(i+1)
             let dx=hash524(seed*3+2)*2-1
             let dy=hash524(seed*5+4)*2-1
@@ -160,7 +161,8 @@ enum CarbonisExplosion524Meshes {
     }
 
     static func vertices(_ state:CarbonisDestruction524,
-                         time:Float,camera:SphereCamera67)->[Float] {
+                         time:Float,camera:SphereCamera67,
+                         settings:CarbonisVisualSettings568 = .init())->[Float] {
         var out:[Float]=[]
         out.reserveCapacity(60000)
         for p in state.particles {
@@ -198,8 +200,11 @@ enum CarbonisExplosion524Meshes {
                 tetra(piece,into:&out)
             }
         }
-        for event in state.visibleExplosions(at:time) {
-            volumetricShards(event,time:time,camera:camera,into:&out)
+        for event in state.visibleExplosions(
+            at:time,maxCount:settings.simultaneousVolumes,
+            duration:settings.explosionDuration) {
+            volumetricShards(event,time:time,camera:camera,
+                             settings:settings,into:&out)
         }
         return out
     }
