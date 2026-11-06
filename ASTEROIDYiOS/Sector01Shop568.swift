@@ -97,6 +97,15 @@ enum Sector01Shop568 {
         else {return State()}
         return state
     }
+    /// Game.ReturnToMenu / SaveShopProfile56 preserves lives and
+    /// purchased shield state. Zero lives reload as StartingLives=3.
+    static func persistSurvival(lives:Int,shieldCharges:Int,
+                                defaults:UserDefaults = .standard) {
+        var profile=load(defaults:defaults)
+        profile.lives=min(5,lives>0 ? lives:3)
+        profile.shieldCharges=max(0,min(3,shieldCharges))
+        save(profile,defaults:defaults)
+    }
     static func save(_ state:State,defaults:UserDefaults = .standard) {
         guard validate(state),let bytes=try? JSONEncoder().encode(state)
         else{return}
