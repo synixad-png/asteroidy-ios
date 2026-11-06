@@ -304,3 +304,26 @@ i jeszcze nierozpoczęty.** Główny harmonogram 18 zadań i
 dotychczasowe procenty pozostają nienaruszone:
 **27% wykonane / 73% pozostało, zadanie 14 nadal 10% (+0 pp)**.
 **IPA nie generowano.**
+
+### Weryfikacja ostatniej poprawki — H290 / Metal
+
+Po źródłowo wykrytej niezgodności konstruktora macierzy w
+`W3HomePlanet290.metal` zastosowano jawną transformację
+normalnych przez oryginalne trzy osie modelu. Potwierdzona
+**natywna kompilacja Swift/Metal iOS PASS**:
+[GitHub Actions 42198113777](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113777)
+(job `Compile iOS source only`, bez IPA).
+Cały przebieg testów kolizji/asteroid należy oceniać osobno
+po jego zakończeniu.
+
+Bieżący test rzeczywistego menu i planety na symulatorach:
+[GitHub Actions 42198113753](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113753).
+Wymaga **oryginalnych obrazów W3**, **oryginalnego H290 z
+dwóch grup**, waliduje sumy SHA256 pięciu zasobów wewnątrz
+`.app` i dowód `gpuCommandBufferCompleted=true`
+po faktycznym zgłoszeniu obydwu grup renderowania. Uruchomienie
+przebiegu nie jest zaliczeniem: do zamknięcia A potrzeba
+autentycznych PNG i testu nawigacji wszystkich 7 przycisków.
+
+**Status A: W TRAKCIE. Zadanie 14: 10% / +0 pp;
+całość: 27%, pozostało 73%. B nierozpoczęte. Bez IPA.**
