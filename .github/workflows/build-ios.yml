@@ -1,4 +1,4 @@
-# Ponowny build IPA iPhone/iPad na źródłach v568 po naprawach z testów Swift/Linux PASS i błędu Xcode explicit-self, 2026-11-06.
+# Bieżący build IPA ASTEROIDY iOS po SOURCE KIND1 5521 TRIANGLES + 450 ENEMYTactics71 profilach, CI 42261182143 PASS; 2026-11-06.
 name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
 on:
   workflow_dispatch:
