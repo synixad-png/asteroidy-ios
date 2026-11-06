@@ -55,6 +55,17 @@ final class CarbonisSession568: ObservableObject {
         let first=CarbonisCombat568(prepared)
         game=first;hud=HUD(first)
     }
+    /// Genuine GameOver retry: fresh first-wave state, not a save/unlock.
+    func restart(prepared:Sector01PreparedWave568) {
+        let restarted=CarbonisCombat568(prepared)
+        game=restarted
+        release()
+        paused=false
+        lastFrame=nil
+        lastHUD=0
+        summaryElapsed=0
+        hud=HUD(restarted)
+    }
     func input(move:Vec2? = nil,aim:Vec2? = nil,shooting:Bool? = nil) {
         if let move {self.move=move}
         if let aim {self.aim=aim}
