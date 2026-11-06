@@ -1,4 +1,4 @@
-# Full source v568 Combat69 + Explosion524 settings / ProjectileLight285 validation PASS GitHub 42283180401; build native iOS iPhone/iPad and verify shader Xcode/Metal, unsigned IPA.
+# USER-REQUESTED IPA: source v568 GpuShip491 twin engine exhaust + GpuPlanetGltf463 mission C279 v523 terrain radius. Rebuild universal iPhone/iPad ARM64 UNSIGNED and validate original assets.
 name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
 on:
   workflow_dispatch:
@@ -57,6 +57,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Swift Linux availability
         run: swift --version
+      - name: Verify original C279 terrain radius v523 before IPA build
+        run: |
+          swiftc ASTEROIDYiOS/CarbonisMissionPlanet523.swift Tests/CarbonisMissionPlanet523Tests.swift -o /tmp/carbonis-mission-scale-523
+          /tmp/carbonis-mission-scale-523
       - name: Verify original Physics68 impulse, spin, rock fragment and geodesic mission gates
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift Tests/SpherePhysicsAndMissionGate556Tests.swift -o /tmp/physics68-test

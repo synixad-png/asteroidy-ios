@@ -14,6 +14,8 @@ on:
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/MissionCatalog568.swift'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/CarbonisMissionPlanet523.swift'
+      - 'Tests/CarbonisMissionPlanet523Tests.swift'
       - 'ASTEROIDYiOS/Sector01Entry568.swift'
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'ASTEROIDYiOS/MissionStart261.swift'
@@ -131,6 +133,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Swift compiler
         run: swift --version
+      - name: Verify authentic Carbonis terrain scale v523 (no IPA)
+        run: |
+          swiftc ASTEROIDYiOS/CarbonisMissionPlanet523.swift Tests/CarbonisMissionPlanet523Tests.swift -o /tmp/carbonis-mission-scale-523
+          /tmp/carbonis-mission-scale-523
       - name: Compile and run source-verified Gameplay65 rescue and Physics68 regressions
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/CombatVerifiedEncounter556.swift Tests/CombatVerifiedEncounter556Tests.swift -o /tmp/verified-encounter-556
