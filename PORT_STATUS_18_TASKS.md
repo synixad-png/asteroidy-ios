@@ -11,6 +11,22 @@
 > następne”) opisaną niżej jako historia. **Wszystkie 18 zadań, ich
 > numery, zakresy i dotychczasowe procenty pozostają niezmienione.**
 > Najbliższe do wykonania: **A. Menu, potem B. Wybór misji**.
+> **Potwierdzony wynik etapu A — iPhone i iPad GPU PASS:**
+> [workflow 42198113753](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113753)
+> zakończył oba symulatory wynikiem `success`.
+> Natywna gra wyświetliła oryginalne logo i tło W3 oraz
+> oryginalną planetę NewHome290 (172208 trójkątów), a Metal
+> potwierdził wykonanie renderowania. Autentyczne obrazy:
+> [iPhone](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113753/artifacts/13493952002)
+> i [iPad](https://github.com/synixad-png/asteroidy-ios/actions/runs/42198113753/artifacts/13493651804).
+> Oddzielne **testy siedmiu rzeczywistych dotknięć i powrotu**
+> uruchomione w [workflow
+> 42200004528](https://github.com/synixad-png/asteroidy-ios/actions/runs/42200004528).
+> Nadal nie zaliczać etapu A przed wynikiem XCTest, porównaniem
+> oświetlenia i potwierdzeniem pozostałych braków.
+> **Nr 14: 10%, +0 pp. Projekt 27%, pozostało 73%. B jeszcze
+> nierozpoczęte. Bez IPA.**
+>
 > **W3 — testy nawigacji (06.11.2026):** dodano natywny target
 > `ASTEROIDYW3UITests` i dwie rzeczywiste próby XCTest
 > na symulatorach iPhone/iPad: siedem dotykowych akcji W3 wraz z
