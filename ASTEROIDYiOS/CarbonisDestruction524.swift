@@ -132,7 +132,8 @@ struct CarbonisDestruction524 {
 
     /// Explosion524.cs:189–196: newest first, original gameplay budget3,
     /// explosion preset 0 duration2.6+1.6 = 4.2 seconds.
-    func visibleExplosions(at time:Float)->[Explosion] {
+    func visibleExplosions(at time:Float,maxCount:Int=3,
+                           duration:Float=4.2)->[Explosion] {
         var result:[Explosion]=[]
         for n in 0..<min(explosions.count,Self.maxExplosions) {
             let idx=(explosionCursor-1-n+Self.maxExplosions) %
@@ -140,11 +141,11 @@ struct CarbonisDestruction524 {
             if idx>=explosions.count {continue}
             let event=explosions[idx]
             let age=time-event.spawned
-            if age<0 || age>min(Self.volumetricDuration,2.6+1.6) {
+            if age<0 || age>min(Self.volumetricDuration,duration) {
                 continue
             }
             result.append(event)
-            if result.count>=Self.maxSimultaneousVolumetric {break}
+            if result.count>=max(1,min(6,maxCount)) {break}
         }
         return result
     }
