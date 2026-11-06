@@ -108,6 +108,14 @@ struct Sector01Scene568: View {
                                     x:x-2,y:y-2,width:4,height:4)),
                                     with:.color(.orange.opacity(0.76)))
                             }
+                            for p in session.hud.tokenPickups {
+                                let x=center.x+CGFloat(p.x/400)*radius
+                                let y=center.y+CGFloat(p.y/400)*radius
+                                guard hypot(x-center.x,y-center.y)<=radius else {continue}
+                                context.fill(Path(ellipseIn:CGRect(
+                                    x:x-3,y:y-3,width:6,height:6)),
+                                    with:.color(.yellow))
+                            }
                             for p in session.hud.targets {
                                 let x=center.x+CGFloat(p.x/400)*radius
                                 let y=center.y+CGFloat(p.y/400)*radius
