@@ -83,7 +83,7 @@ ck('drawMesh(shipMesh,shipModel)' in renderer and
    'drawMesh(activeMesh, Self.scale(1.0))' in renderer and
    'drawMesh(mesh,planetModel)' in cinematic,
    'Existing sphere combat and original planet pipeline regressed')
-ck('@Published var introPreview41 = true' in app,
+ck('@Published var introPreview41 =\n        ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] != "1"' in app,
    'Source cinematic must remain reachable')
 print('PASS: authentic GpuToon60 toon-light bands and camera-based rim')
 print('      with real key direction on Vanguard only; sphere PBR untouched')
