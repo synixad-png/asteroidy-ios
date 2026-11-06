@@ -54,7 +54,10 @@ fragment float4 w3Home290Fragment(
     float3 n=normalize(in.normal);
     // Directional-preview lighting: GpuToon60's smooth branch baseline.
     // Original FighterLight / orbit sun state needs a separate source audit.
-    float3 l=normalize(float3(0.38f,0.73f,0.57f));
+    // Windows/src/GpuShip.cs FighterLight(false): keyPosition
+    // = {-0.6f, 0.8f, 1.4f, 0}; directional source light in eye space.
+    // OpenGL was configured before the HomePlanetPreview333 model transforms.
+    float3 l=normalize(float3(-0.6f,0.8f,1.4f));
     float d=max(0.0f,dot(n,l));
     float band=0.25f+0.78f*d;
     float3 view=normalize(float3(0.0f,0.0f,6.0f)-in.viewPosition);
