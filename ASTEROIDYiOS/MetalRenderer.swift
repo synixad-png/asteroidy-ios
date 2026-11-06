@@ -39,6 +39,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     // Separate v568 player craft, loaded ONLY on explicit diagnostic selection.
     private var sourcePlayerShip367: (buffer:MTLBuffer,count:Int,skin:MTLTexture)?
     private var sourcePlayerShip367LoadAttempted = false
+    private let sourceShip367DrawProofRequested =
+        ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] == "1"
+    private var sourceShip367DrawProofScheduled = false
     // Debug evidence is explicitly enabled only by an Apple Simulator
     // process environment flag, not during the normal user's game.
     private let sourceDrawProofRequested =
@@ -1727,6 +1730,38 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                     encoder.setFragmentTexture(native.skin,index:0)
                     encoder.drawPrimitives(type:.triangle,vertexStart:0,
                         vertexCount:native.count)
+                    // Simulator-only evidence from the same command buffer
+                    // as the *actual* original v568 PlayerShip367 draw.
+                    // This does not claim pixel parity or visible model size.
+                    if sourceShip367DrawProofRequested &&
+                       !sourceShip367DrawProofScheduled {
+                        sourceShip367DrawProofScheduled=true
+                        let count=native.count
+                        let width=native.skin.width
+                        let height=native.skin.height
+                        command.addCompletedHandler { finished in
+                            let payload:[String:Any]=[
+                                "evidence":"actual-source-playership367-metal-command-buffer",
+                                "gpuCommandBufferCompleted":finished.status == .completed,
+                                "pipeline":"sourceFighterTexturedPipeline431",
+                                "vertexCount":count,
+                                "textureWidth":width,
+                                "textureHeight":height,
+                                "sourceGPU_SHA256":SourcePlayerShip367.expectedGPU_SHA256,
+                                "skinSHA256":SourcePlayerShip367.expectedTexture_SHA256,
+                                "bundleID":Bundle.main.bundleIdentifier ?? "",
+                                "simulatorTestOnly":true
+                            ]
+                            if let dir=FileManager.default.urls(
+                                for:.cachesDirectory,in:.userDomainMask).first,
+                               let encoded=try? JSONSerialization.data(
+                                withJSONObject:payload,options:[.sortedKeys]) {
+                                try? encoded.write(to:dir.appendingPathComponent(
+                                    "ASTEROIDY_PlayerShip367_RenderProof.json"),
+                                    options:.atomic)
+                            }
+                        }
+                    }
                     encoder.setRenderPipelineState(pipeline)
                 }
             } else {
