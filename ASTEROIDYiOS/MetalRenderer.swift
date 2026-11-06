@@ -36,6 +36,11 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     // BOTH source resources are bundled. Previous v556 AS3D stays.
     let sourceFighterTexturedPipeline431: MTLRenderPipelineState
     private let sourceVanguard431: (buffer:MTLBuffer,count:Int,skin:MTLTexture)?
+    // Debug evidence is explicitly enabled only by an Apple Simulator
+    // process environment flag, not during the normal user's game.
+    private let sourceDrawProofRequested =
+        ProcessInfo.processInfo.environment["ASTEROIDY_RENDER_VERIFY"] == "1"
+    private var sourceDrawProofScheduled = false
     let atmosphereDepthState: MTLDepthStencilState
     private let atmosphereMesh: GPUModel
     private let shipMesh: GPUModel
@@ -1387,6 +1392,43 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             encoder.setDepthStencilState(atmosphereDepthState)
             drawMesh(atmosphereMesh,atmoModel,unlit:1)
             encoder.endEncoding()
+
+            // GitHub iOS SIMULATOR ONLY: prove the original textured
+            // Vanguard draw was actually submitted and the entire
+            // Metal command buffer COMPLETED, not just that JPEG/mesh
+            // happened to exist in a compiled .app. No external
+            // logging permission or unreliable macOS log database.
+            // Normal iPhone/iPad builds leave no diagnostic file.
+            if sourceDrawProofRequested && !sourceDrawProofScheduled,
+               let original=sourceVanguard431 {
+                sourceDrawProofScheduled=true
+                let vertexCount=original.count
+                let textureWidth=original.skin.width
+                let textureHeight=original.skin.height
+                command.addCompletedHandler { finished in
+                    let passed=finished.status == .completed
+                    let payload:[String:Any]=[
+                        "evidence":"actual-source-vanguard-metal-command-buffer",
+                        "gpuCommandBufferCompleted":passed,
+                        "pipeline":"sourceFighterTexturedPipeline431",
+                        "vertexCount":vertexCount,
+                        "textureWidth":textureWidth,
+                        "textureHeight":textureHeight,
+                        "meshSHA256":SourceVanguardMesh431.exactMeshSHA256,
+                        "skinSHA256":SourceVanguardMesh431.exactBaseJPEG_SHA256,
+                        "bundleID":Bundle.main.bundleIdentifier ?? "",
+                        "simulatorTestOnly":true
+                    ]
+                    if let folder=FileManager.default.urls(
+                        for:.cachesDirectory,in:.userDomainMask).first,
+                       let bytes=try? JSONSerialization.data(
+                        withJSONObject:payload,options:[.sortedKeys]) {
+                        let path=folder.appendingPathComponent(
+                            "ASTEROIDY_Vanguard431_RenderProof.json")
+                        try? bytes.write(to:path,options:.atomic)
+                    }
+                }
+            }
             command.present(drawable)
             command.commit()
             return
