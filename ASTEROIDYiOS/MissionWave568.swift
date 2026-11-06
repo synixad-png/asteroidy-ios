@@ -35,6 +35,7 @@ enum MissionWave568 {
         let lootYieldScale: Float
         let isAmigaShowroom: Bool
         let sector: Int
+        var randomState: SourceRandom
         /// An encounter snapshot does not imply player/enemy update or
         /// renderer wiring exists. Mission unlock bits are never mutated.
         var playable: Bool { false }
@@ -212,6 +213,7 @@ enum MissionWave568 {
         let loot=Float(classic)*1.08 / Float(b.sectorRockCount+incoming)
         return Encounter(rocks:rocks,fighters:fighters,robots:robots,objective:goal,
              initialReinforcements:incoming,nextIncomingSeconds:goal == .waves ? 16 : 12,
-             lootYieldScale:loot,isAmigaShowroom:isAmiga,sector:level)
+             lootYieldScale:loot,isAmigaShowroom:isAmiga,sector:level,
+             randomState:random)
     }
 }
