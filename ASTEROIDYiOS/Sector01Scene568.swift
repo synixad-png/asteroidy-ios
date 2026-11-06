@@ -6,7 +6,8 @@ import SwiftUI
 /// This screen renders the genuine 270249-triangle indexed planet, with the
 /// same audited material buffers and three original textures as in the atlas.
 /// The source-derived initial Game.Wave() snapshot is now prepared before
-/// opening this screen, but its actors are not yet drawn/stepped in gameplay.
+/// opening this screen. Original initial ASTEROIDS are now drawn and
+/// animated by native Metal using source procedural rock geometry.
 /// This is not complete flight, enemy AI, hit detection or victory/defeat.
 struct Sector01Scene568: View {
     let entry: Sector01Entry568
@@ -38,7 +39,8 @@ struct Sector01Scene568: View {
             ZStack {
                 Color(red:0.006,green:0.018,blue:0.035)
                     .ignoresSafeArea()
-                Sector01CarbonisPreview568(yawOffset:yaw,pitchOffset:pitch)
+                Sector01CarbonisPreview568(yawOffset:yaw,pitchOffset:pitch,
+                    initialRocks:preparedWave.encounter.rocks)
                     .frame(width:geo.size.width,height:geo.size.height)
                     .contentShape(Rectangle())
                     .gesture(DragGesture(minimumDistance:3)
@@ -117,7 +119,7 @@ struct Sector01Scene568: View {
                     .padding(.vertical,7)
                     .background(.black.opacity(0.75))
 
-                    Text("ETAP C: INICJALNA WAVE PRZYGOTOWANA Z ORYGINALNYCH REGUŁ. PRZECIWNICY NIE SĄ JESZCZE RENDEROWANI ANI STEROWANI PRZEZ AI; LOT, KOLIZJE I UKOŃCZENIE MISJI SĄ W TRAKCIE PORTOWANIA.")
+                    Text("ETAP C: ASTEROIDY WAVE SĄ RYSOWANE I PORUSZAJĄ SIĘ NA PRAWDZIWEJ PLANECIE. MYŚLIWCE/ROBOTY, AI, LOT STATKU, KOLIZJE I UKOŃCZENIE MISJI NIE SĄ JESZCZE WDROŻONE.")
                         .font(.system(size:compact ? 9 : 11,design:.monospaced))
                         .foregroundStyle(.yellow)
                         .frame(maxWidth:.infinity,alignment:.leading)
