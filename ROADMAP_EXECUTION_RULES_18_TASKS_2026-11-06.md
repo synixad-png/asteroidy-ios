@@ -1,3 +1,67 @@
+
+## BIEŻĄCA REALIZACJA: B i C — wybór misji oraz oryginalna planeta 01, 06.11.2026
+
+Po poleceniu użytkownika, aby **doprowadzić port do ukończenia zamiast
+powtarzać w kółko testy W3**, prace funkcjonalne przywrócono na
+pierwszy plan. Otwarty test menu z etapu A nie może bez końca
+blokować niezależnych prac B/C. Nie zmienia się przy tym zakresu,
+nazewnictwa ani kolejności kamieni A–J i 18 zadań — usterka A
+pozostaje jawna i musi zostać usunięta przed finalnym wydaniem.
+
+**Etap B — wdrożona funkcja wyboru sektorów, weryfikacja urządzeń
+jeszcze otwarta:**
+- `W3MainMenu568.swift` oraz `App.swift`: klikalny atlas 26
+  sektorów z faktycznym wyborem przez `NOWA GRA` i `KAMPANIA`;
+  źródłowe 26 nazw z `MissionCatalog568.swift`, stany ukończenia,
+  zablokowania i wybranego sektora.
+- `CampaignProgress556.swift`: `selectUnlocked` wyłącznie
+  według `Windows/src/Orbit50.cs`, w tym reguły 26-po-24.
+  Stan wybranego sektora jest zapisywany osobno w UserDefaults,
+  bez zaliczania misji ani nieuczciwego odblokowywania.
+- [Kompilacja iOS i testy `CampaignSelection568Tests.swift` PASS
+  42220854317](https://github.com/synixad-png/asteroidy-ios/actions/runs/42220854317).
+  Dotknięcie sektorów przez prawdziwy UI na fizycznych
+  urządzeniach pozostaje niezweryfikowane.
+
+**Etap C — prawdziwa CARBONIS 01, nie wygenerowana atrapa:**
+- `Tools/prepare_v568_carbonis_sector01.py` wyodrębnia z
+  archiwów v568 siatkę **270 249 trójkątów / 137 067 unikatowych
+  wierzchołków / 810 747 indeksów**, grupy materiałów,
+  UV, mapę wysokości 512×256 oraz oryginalne 3 tekstury.
+- Reprezentacja GPU **9 822 204 B** przez oryginalne
+  indeksy, bez rozwinięcia do **38 915 856 B**; oryginalna
+  topologia i wszystkie UV zachowane 1:1.
+- `Sector01CarbonisPreview568.swift` i
+  `Sector01Carbonis568.metal` dodają natywny podgląd
+  autentycznej planety po wybraniu misji 01. Renderer
+  wymaga oryginalnych plików SHA-pinned i pokazuje jawne
+  oznaczenie, że to **podgląd**, nie ukończona misja.
+- [Źródłowy test Carbonis PASS
+  42222217173](https://github.com/synixad-png/asteroidy-ios/actions/runs/42222217173)
+  oraz [natywna kompilacja Swift/Metal + wszystkie
+  regresje walki PASS 42223077726](https://github.com/synixad-png/asteroidy-ios/actions/runs/42223077726).
+  Natywna interakcja z podglądem na urządzeniu i
+  pełne oświetlenie PBR nadal wymagają testów/portu.
+
+**Następna praca:** podłączyć rzeczywisty
+`LaunchOrbitMission50` / `StartHubMission261` do
+sektora CARBONIS 01, kamera + źródłowy stan misji,
+walka/kolizje i zakończenie rozgrywki, a potem 25
+pozostałych planet. Nie wolno nazywać sceny diagnostycznej
+gotową misją.
+
+**Postęp bieżący (szacunkowy, ostrożny): 28% wykonano (+1 pp),
+72% pozostało.** Zmiany 18 pozycji: zadanie 4 **22% (+2)**,
+zadanie 12 **7% (+2)**, zadanie 13 **34% (+4)**,
+zadanie 14 **14% (+4)**, pozostałe bez zmian. Pełna stała
+tabela w [PORT_STATUS_18_TASKS.md](PORT_STATUS_18_TASKS.md).
+Historia niżej dotyczy starszych raportów 27% i nie jest
+już aktualnym nagłówkiem postępu.
+
+Nowego IPA na tym etapie nie wydano; ostatni
+`W3_MENU_NAV` na Dysku Google jest starszym snapshotem.
+[Techniczny raport nowych funkcji](Reports/V568_STAGE_B_SELECTION_C_CARBONIS_SOURCE_2026-11-06.md).
+
 # ASTEROIDY iOS — zasady realizacji zatwierdzonego harmonogramu 18 zadań
 Data: 2026-11-06. Uzupełnienie, nie zamiana `PORT_STATUS_18_TASKS.md`.
 
