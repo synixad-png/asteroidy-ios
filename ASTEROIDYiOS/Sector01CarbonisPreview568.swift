@@ -243,8 +243,17 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     shooterSpec.depthAttachmentPixelFormat = .depth32Float
                     shooterPipeline=try device.makeRenderPipelineState(
                         descriptor:shooterSpec)
-                    destructionRenderer=try CarbonisExplosion524Renderer(
-                        device:device,library:library)
+                    // Original Explosion524.InitExplosion524 catches an
+                    // unavailable GPU volume path without hiding the
+                    // playable planet. Keep impact sparks/3D metal debris.
+                    do {
+                        destructionRenderer=try CarbonisExplosion524Renderer(
+                            device:device,library:library)
+                    } catch {
+                        destructionRenderer=nil
+                        NSLog("CARBONIS Explosion524 volumetric Metal unavailable: %@",
+                              String(describing:error))
+                    }
                     if let tracer=library.makeFunction(name:"sector01CombatTracer568") {
                         let tracerSpec=MTLRenderPipelineDescriptor()
                         tracerSpec.vertexFunction=v
