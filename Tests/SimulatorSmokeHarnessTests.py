@@ -30,7 +30,7 @@ assert 'SIMCTL_CHILD_ASTEROIDY_RENDER_VERIFY' in source
 assert 'ASTEROIDY_Vanguard431_RenderProof.json' in source
 assert "proof_path.unlink(missing_ok=True)" in source
 assert source.index("proof_path.unlink(missing_ok=True)") < source.index('["xcrun","simctl","launch",udid,PACKAGE]')
-assert source.index("proof_path.unlink(missing_ok=True)") < source.index("validate_render_proof(proof)")
+assert source.index("proof_path.unlink(missing_ok=True)") < source.rindex("            validate_render_proof(proof)")
 assert '["xcrun","simctl","get_app_container",udid,PACKAGE,"data"]' in source
 assert "Tools/verify_simulator_render_snapshot.swift" in source
 assert 'reports/f"{kind}_real_pixels.txt",check=False)' in source
