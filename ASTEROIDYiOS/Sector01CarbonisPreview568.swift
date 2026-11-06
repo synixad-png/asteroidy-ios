@@ -518,10 +518,18 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             SIMD4<Float>(pose[4],pose[5],pose[6],pose[7]),
                             SIMD4<Float>(pose[8],pose[9],pose[10],pose[11]),
                             SIMD4<Float>(pose[12],pose[13],pose[14],pose[15])))
+                        // GpuRobot70.ShooterMesh71: a telegraphed shot
+                        // enlarges ONLY emissive cores material 5/6 by 15%.
+                        // The rest of the original hull remains unchanged.
+                        let brightCore=matrix * simd_float4x4(
+                            diagonal:SIMD4<Float>(1.15,1.15,1.15,1))
                         for (material,range) in shooter.ranges.enumerated()
                             where !range.isEmpty {
+                            let showWarning=enemy.telegraph>0 &&
+                                (material==5 || material==6)
+                            let partMatrix=showWarning ? brightCore : matrix
                             uniforms=Uniforms(
-                                mvp:worldView*matrix,model:matrix,
+                                mvp:worldView*partMatrix,model:partMatrix,
                                 material:UInt32(material),glow:0)
                             encoder.setVertexBytes(&uniforms,
                                 length:MemoryLayout<Uniforms>.stride,index:1)
