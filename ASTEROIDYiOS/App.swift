@@ -71,8 +71,8 @@ struct GameView: View {
     @StateObject private var input = FlightInput()
     @State private var showCampaign = false
     @State private var campaign = CampaignStore556.load()
-    // Source C279 sector inspection remains separate from the Boreas
-    // diagnostic simulation. This is not StartHubMission261 or a win state.
+    // Native CARBONIS first mission runs an original source-driven state,
+    // isolated from Boreas diagnostic scenes and unported later sectors.
     @State private var sourceSector01: Sector01Entry568?
     @State private var sourceSector01Setup: Sector01PreparedWave568?
     @State private var reopenAtlasAfterCarbonis = false
@@ -82,12 +82,14 @@ struct GameView: View {
             selectedSector:sector,campaign:campaign,
             hasOriginalC279Assets:Sector01CarbonisPreview568.isAvailable)
         else { return }
-        // Actual original Game.Wave initial spawn for the selected C279
-        // world; the flight/AI runtime remains explicitly unported.
+        // Original Game.Wave plus replay-safe real service profile.
+        let sourceShop=Sector01Shop568.load()
         guard let preparedWave=Sector01PreparedWave568.prepare(
             entry:entry,campaign:campaign,
             hasOriginalC279Assets:Sector01CarbonisPreview568.isAvailable,
-            difficulty:.normal,seed:Int32.random(in:0...Int32.max))
+            difficulty:.normal,seed:Int32.random(in:0...Int32.max),
+            currentLives:sourceShop.lives,startingLives:3,
+            shopProfile:sourceShop)
         else { return }
         input.releaseHeldControls()
         input.gameplayPaused = true
@@ -115,6 +117,13 @@ struct GameView: View {
                         input.gameplayPaused = true
                         showCampaign = false
                         showMainMenu = true
+                    },onMissionCompleted:{ report in
+                        // Only the real Game.FinishLevel source outcome can
+                        // persist completed sector 1 and its token reward.
+                        var changed=campaign
+                        _ = Sector01MissionSettlement568.commit(
+                            report,campaign:&changed)
+                        campaign=changed
                     },preparedWave:preparedWave)
                 } else if showMainMenu {
                     W3MainMenu568(progress:campaign,selectMission:{ sector in
@@ -347,7 +356,8 @@ struct GameView: View {
 
 // Real unlocked-only 26-sector selection from Orbit50.MissionUnlocked50.
 // LaunchOrbitMission50 / StartHubMission261 combat are NOT ported yet.
-// Entering sector01 renders its original planet, without fake mission wins.
+// Full CARBONIS first mission completion is earned from the actual
+// combat world; later sectors are still under active porting.
 struct CampaignAtlas556: View {
     let progress: CampaignProgress556
     let dismiss: () -> Void
@@ -390,7 +400,7 @@ struct CampaignAtlas556: View {
                                 .font(.system(size:10,design:.monospaced))
                                 .foregroundStyle(.secondary)
                         }
-                        Text("PODGLĄD — START MISJI I KOLIZJE PLANETY: ETAP C")
+                        Text("GRAJ W CARBONIS 01 · UKOŃCZENIE ODBLOKOWUJE SEKTOR 02")
                             .font(.system(size:10,design:.monospaced))
                             .foregroundStyle(.secondary)
                     }
@@ -441,7 +451,7 @@ struct CampaignAtlas556: View {
                 if progress.selectedSector == 1 &&
                    progress.unlocked(1) &&
                    Sector01CarbonisPreview568.isAvailable {
-                    Button("WEJDŹ NA CARBONIS 01 / ŹRÓDŁOWA SCENA 3D") {
+                    Button("ROZPOCZNIJ CARBONIS 01 / PEŁNA WALKA") {
                         onInspect(1)
                     }
                     .font(.system(size:12,weight:.bold,design:.monospaced))
@@ -450,7 +460,7 @@ struct CampaignAtlas556: View {
                     .background(.orange,in:RoundedRectangle(cornerRadius:7))
                     .accessibilityIdentifier("campaign-enter-source-sector01")
                 }
-                Text("ETAP C: PLANETA ŹRÓDŁOWA — WALKA I UKOŃCZENIE MISJI NIEPODŁĄCZONE")
+                Text("SEKTOR 01: WALKA, RAPORT, ŻETONY I ZAPIS · POZOSTAŁE SEKTORY W OPRACOWANIU")
                     .font(.system(size:11,weight:.bold,design:.monospaced))
                     .foregroundStyle(.orange)
             }
