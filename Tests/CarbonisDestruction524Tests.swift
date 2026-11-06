@@ -129,9 +129,10 @@ import Foundation
         }
         do {
             let noise=CarbonisExplosionNoise524.originalBytes()
+            let expectedPrefix:[UInt8]=[132,115,213,242,193,41,90,88,
+                20,228,61,160,71,45,110,76]
             check(noise.count==262144 &&
-                  Array(noise.prefix(16))==
-                  [132,115,213,242,193,41,90,88,20,228,61,160,71,45,110,76],
+                  Array(noise.prefix(16))==expectedPrefix,
                   "literal source Explosion524 C# Xorshift seed and 16 byte prefix")
             check(noise.reduce(0) {$0+Int($1)}==33412184,
                   "source 64^3 8-bit GPU volume content full checksum")
