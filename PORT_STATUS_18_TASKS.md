@@ -1,3 +1,36 @@
+## AKTUALNY ETAP — 06.11.2026: drugi oryginalny myśliwiec i 450 profili AI
+
+**Projekt implementacyjnie: 36% (+1 pp), pozostało 64%.** Bez zmian w niezmiennej liście 18 zadań. Dodano `ShipMesh(1,false)` z oryginalnego Windows v568 jako odrębny model proceduralny myśliwca o 5521 trójkątach, 8 grupach materiałów i własnych skrzydłach, działkach oraz barwach (pierwszy myśliwiec nadal 5345 trójkątów). Metal posiada osobne bufory dla źródłowych typów 0 i 1; inne brakujące typy nie są zastępowane atrapami. Oryginalna animacja ostrzeżenia powiększa tylko świecące rdzenie 5/6 o 15%, nie cały kadłub.
+
+Dodatkowo `ShooterTactics71.swift` przenosi reguły `EnemyTactics71.cs` dla sześciu rodzajów przeciwników, 25 poziomów i 3 trudności; `CarbonisCombat568` korzysta z nich dla bieżącego sektora 01 bez zmiany zachowania pierwszej fali. **Zweryfikowano:** [GitHub Actions 42260834217](https://github.com/synixad-png/asteroidy-ios/actions/runs/42260834217) `verify-combat-no-ipa` **PASS**, 97 301 asercji geometrii i 6307 asercji reguł AI. Nowsza kontrola rdzeni Metal ma osobny przebieg; macOS dla obecnej rewizji jeszcze niezweryfikowany. **Starszy [IPA 42259012837](https://github.com/synixad-png/asteroidy-ios/actions/runs/42259012837) zbudowano poprawnie (26,3 MB), ale nie zawiera tych nowych zmian.** Nie przeprowadzono interaktywnego testu iPhone/iPad.
+
+[Raport techniczny](Reports/V568_SOURCE_SHOOTER_KIND1_450_TACTICS_2026-11-06.md). Poziomy 2–25, bossowie, kompletna kampania, audio, wszystkie statki i materiały nie są ukończone. Typ 1 jest przygotowany dla późniejszych sektorów; CARBONIS 01 nadal spawnuje wyłącznie typ 0.
+
+| Nr | Stałe zadanie | Poprzednio | Obecnie | Zmiana |
+|---:|---|---:|---:|---:|
+| 1 | Kompilacja i infrastruktura iOS | 88% | 88% | 0 pp |
+| 2 | Silnik graficzny Metal | 89% | 89% | 0 pp |
+| 3 | Materiały PBR, tekstury i oświetlenie | 25% | 25% | 0 pp |
+| 4 | Statki, planety i zasoby 3D | 28% | **32%** | **+4 pp** |
+| 5 | Animacje modeli GLB | 35% | 35% | 0 pp |
+| 6 | Fizyka lotu i poruszanie po planetach | 41% | 41% | 0 pp |
+| 7 | Kolizje, obrażenia i zniszczenia (dotychczasowy moduł) | 100% | 100% | 0 pp |
+| 8 | Asteroidy i fale walki (dotychczasowy moduł) | 100% | 100% | 0 pp |
+| 9 | Bronie i trafienia | 18% | 18% | 0 pp |
+| 10 | Przeciwnicy i AI | 8% | **11%** | **+3 pp** |
+| 11 | Bossowie i ich mechaniki | 0% | 0% | 0 pp |
+| 12 | Komplet misji planetarnych | 22% | 22% | 0 pp |
+| 13 | Kampania — 26 sektorów atlasu | 35% | 35% | 0 pp |
+| 14 | Menu W3, HUD i ustawienia | 19% | 19% | 0 pp |
+| 15 | Dźwięki i muzyka | 0% | 0% | 0 pp |
+| 16 | Zapisywanie i wczytywanie gry | 20% | 20% | 0 pp |
+| 17 | Sterowanie | 41% | 41% | 0 pp |
+| 18 | Optymalizacja i testy | 12% | **14%** | **+2 pp** |
+
+**Dalsza praca według A–J:** kontrola kompilacji bieżącego kodu w Xcode, realne włączenie klas kolejnych przeciwników na zgodnych sektorach, a później właściwe cele, bossowie, broń, audio, zapis i testy urządzeń. Poniżej wcześniejsze raporty 35%, 33%, 31% itd. są historią, nie nowym harmonogramem.
+
+---
+
 ## NAJNOWSZY ETAP 06.11.2026 — źródłowe myśliwce CARBONIS 3D i fizyka Physics68
 
 **Cały port implementacyjnie: 35% (+2 pp), pozostało 65%.** W bieżącym etapie dodano pełną proceduralną geometrię myśliwca typu 0, współdzieloną w Metal przez cztery jednostki, oraz pierścienie ostrzegające przed strzałem. AI poziomu 1 bazuje teraz na `EnemyTactics71.cs`, a kolizje statku, odrzut po trafieniu, priorytet trafień, zasłanianie przez asteroidy, punktacja i 18 nietrwałych odłamków na `Physics68.cs`, `HitBug` i `Game.Split`. Zachowano mechanizmy i zasoby dotychczasowej CARBONIS C279 bez ingerencji w samą geometrię planety.
