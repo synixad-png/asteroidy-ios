@@ -21,6 +21,9 @@ assert 'SourceW3Images568.pair' in menu
 assert "SHA256.hash(data:bytes)" in menu
 assert "Image(uiImage:images.background)" in menu
 assert "Image(uiImage:image)" in menu
+assert 'verified("W3Background568Original","dat",' in menu
+assert 'verified("W3Logo568Original","dat",' in menu
+assert "UIImage(data:bytes)" in menu
 assert '"hasOriginalW3BackgroundImage": SourceW3Images568.pair != nil' in menu
 assert '"hasOriginalW3LogoImage": SourceW3Images568.pair != nil' in menu
 with tempfile.TemporaryDirectory() as temp:
@@ -45,6 +48,15 @@ with tempfile.TemporaryDirectory() as temp:
 # This CI checkout may not yet include the original user-uploaded archive.
 if (ROOT/stage.ARCHIVE).is_file():
     with tempfile.TemporaryDirectory() as tmp:
-        assert stage.prepare(ROOT,Path(tmp)/"Assets",required=True)
+        dest=Path(tmp)/"Assets"
+        assert stage.prepare(ROOT,dest,required=True)
+        with zipfile.ZipFile(ROOT/stage.ARCHIVE) as original:
+            for name,stored in (
+                ("W3Background568.jpg","W3Background568Original.dat"),
+                ("W3Logo568.png","W3Logo568Original.dat")):
+                assert (dest/stored).read_bytes()==original.read(name)
+                assert hashlib.sha256((dest/stored).read_bytes()).hexdigest()==stage.FILES[name][1]
+        assert not (dest/"W3Logo568.png").exists()
+        assert not (dest/"W3Background568.jpg").exists()
 print("PASS: missing W3 sources remain explicitly incomplete, forged sources rejected")
 print("PASS: native menu reads only shared source SHA256-verified W3 JPEG/PNG")
