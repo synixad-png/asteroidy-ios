@@ -13,6 +13,7 @@ on:
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'Tools/prepare_v568_w3_original_assets.py'
+      - 'Tests/V568W3MenuSourceImagesTests.py'
       - 'ASTEROIDY_v568_W3_ORIGINAL_MENU_ASSETS.zip'
       - 'Tests/V568W3NativeMenuContract.py'
       - 'Tests/IOSInterruptedTouchSourceContract.py'
@@ -70,6 +71,8 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
           swiftc -frontend -parse ASTEROIDYiOS/SourcePlayerShip367.swift
+      - name: Verify SHA256 source W3 JPEG and PNG and reject lookalikes
+        run: python3 Tests/V568W3MenuSourceImagesTests.py
       - name: Verify source v568 W3 menu start and real navigation contracts
         run: python3 Tests/V568W3NativeMenuContract.py
       - name: Regress original v568 PlayerShip367 optional runtime model and source-matching skin
