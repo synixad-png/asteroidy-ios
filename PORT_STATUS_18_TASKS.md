@@ -4,7 +4,7 @@
 
 W `GameView` po legalnym wyborze CARBONIS 01 tworzony jest teraz snapshot `MissionStart261` i `MissionWave568`, przekazywany do `Sector01Scene568`. Scena pokazuje **rzeczywiste dane 13 asteroid / 4 myśliwców / 0 robotów** dla normalnej trudności, bez fikcyjnych odblokowań. Po powrocie do atlasu snapshot jest usuwany. W źródłowym `Windows/src/Game.cs` `CampaignLength=25`, dlatego 26. pozycja atlasu nie jest automatycznie traktowana jako dodatkowy poziom `Wave()`.
 
-**Weryfikacja:** Swift/Linux na lokalnych odpowiednikach zależności — **909 testów generatora + 12 testów bramki PASS**, 12 kontroli spójności repozytorium PASS, archiwum v568 CRC PASS. CI GitHub zostało uzupełnione, ale jego końcowy wynik oraz natywne wykonanie na iPhone/iPad dla tej rewizji **nie zostały jeszcze potwierdzone**. Bez nowego IPA.
+**Weryfikacja:** Swift/Linux na lokalnych odpowiednikach zależności — **909 testów początkowej WAVE + 633 testy Action38 SpawnIncoming + 12 testów bramki PASS = 1554 asercje**, kontrole spójności repozytorium PASS, archiwum v568 CRC PASS. CI GitHub zostało uzupełnione, ale jego końcowy wynik oraz natywne wykonanie na iPhone/iPad dla tej rewizji **nie zostały jeszcze potwierdzone**. Bez nowego IPA.
 
 | Nr | Stałe zadanie | Było | Jest | Zmiana |
 |---:|---|---:|---:|---:|
@@ -26,6 +26,8 @@ W `GameView` po legalnym wyborze CARBONIS 01 tworzony jest teraz snapshot `Missi
 | 16 | Zapisywanie gry | 20% | 20% | 0 pp |
 | 17 | Sterowanie | 35% | 35% | 0 pp |
 | 18 | Optymalizacja i testy | 10% | 10% | 0 pp |
+
+**Ukończono także czysty moduł posiłków `MissionIncoming568`:** kontynuuje stan C# Random po pierwszej fali, odtwarza limity 2 skał, zegary `StepAction` i powiadomienie 1,6 s. Scheduler został dołączony do przygotowania CARBONIS i testów CI, ale **jeszcze nie działa w aktywnej pętli misji**. Nowy kod nie zmienił źródłowych modeli ani mechanizmów zadań 7/8.
 
 **Następne w C/D:** aktywne renderowanie wygenerowanych statków/asteroid w C279, fizyka lotu i kamera, zintegrowana pętla AI, rzeczywiste `SpawnIncoming()`, broń, kolizje i wynik misji. Nie zamykać C ani D przed tym etapem. [Raport źródłowy i ograniczenia](Reports/V568_STAGE_C_WAVE_PREPARED_2026-11-06.md).
 
