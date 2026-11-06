@@ -15,6 +15,9 @@ on:
       - 'Tests/V568W3HomePlanet290Tests.py'
       - 'ASTEROIDYiOS/W3HomePlanetMetal568.swift'
       - 'ASTEROIDYiOS/W3HomePlanet290.metal'
+      - 'ASTEROIDYiOS/W3HomeShipPreview568.swift'
+      - 'ASTEROIDYiOS/Ship.metal'
+      - 'Tests/V568W3HomeShipSourceContract.py'
       - 'ASTEROIDY_v568_W3_ORIGINAL_MENU_ASSETS.zip'
       - 'Tests/V568W3MenuSourceImagesTests.py'
 
@@ -46,6 +49,7 @@ jobs:
           python3 -m py_compile Tools/run_w3_native_menu_simulator_capture.py
           python3 -m py_compile Tools/convert_v568_w3_home_planet290.py Tools/prepare_v568_w3_home_planet290.py
           python3 Tests/V568W3HomePlanet290Tests.py | tee reports/w3-NewHome290-source-planet.txt
+          python3 Tests/V568W3HomeShipSourceContract.py | tee reports/w3-source-vanguard-ship.txt
           swift Tools/verify_simulator_render_snapshot.swift --self-test | tee reports/w3-screenshot-detector.txt
       - name: Require exact v568 W3 background/logo, verify CRC and both SHA256
         timeout-minutes: 3
@@ -125,6 +129,7 @@ jobs:
             reports/*.log
             reports/*_W3_appearance_proof.json
             reports/*_W3_NewHome290_GPU_proof.json
+            reports/*_W3_Vanguard431_GPU_proof.json
             reports/*_VERIFIED_ASTEROIDY_W3_NATIVE.png
             reports/selected-devices.json
           if-no-files-found: ignore
