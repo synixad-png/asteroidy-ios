@@ -451,3 +451,26 @@ fragment float4 sourceVanguardTexturedToonFragment431(
               smoothstep(0.10f,0.30f,d);
     return float4(clamp(base.rgb*(band+rim),0.0f,1.0f),base.a);
 }
+
+
+// v568 W3 HOME's actual default ShipType=1 source Vanguard431 preview.
+// Reuse the EXACT sourceVanguardVertex431 geometry/UV pipeline above.
+// GpuW3HomeReal333.cs draws source fighter material group 0;
+// GpuShip.cs calls BeginToon60(true,true) for that group, i.e. SMOOTH
+// band=0.25+0.78*d, not the 3-step fighter diagnostic toon branch.
+// Engine plume / custom modules are not claimed as ported here.
+fragment float4 w3HomeVanguardFragment431(
+    FighterSourceRaster431 in [[stage_in]],
+    texture2d<float> originalBaseColor [[texture(0)]]) {
+    constexpr sampler sourceUV(address::clamp_to_edge,filter::linear);
+    float4 base=in.color*originalBaseColor.sample(sourceUV,in.uv);
+    float3 n=normalize(in.eyeNormal);
+    const float3 key=normalize(float3(-0.6f,0.8f,1.4f));
+    float d=max(0.0f,dot(n,key));
+    float band=0.25f+0.78f*d;
+    float3 view=normalize(-in.eyePosition);
+    float rim=0.10f*smoothstep(0.72f,0.86f,
+                    1.0f-max(0.0f,dot(n,view)))*
+                    smoothstep(0.10f,0.30f,d);
+    return float4(clamp(base.rgb*(band+rim),0.0f,1.0f),base.a);
+}
