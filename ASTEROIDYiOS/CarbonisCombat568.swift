@@ -338,7 +338,28 @@ struct CarbonisCombat568 {
                 flight.velocity=player.velocity
                 rocks[i].position=rock.position
                 rocks[i].velocity=rock.velocity
-                suffer(18)
+                // Game.Step rock collision / Shop ShieldCharges:
+                // purchased armor reflects the rock (radius+32) and
+                // grants .8 s, not generic one-second shot immunity.
+                if shieldCharges>0 && invincible<=0 {
+                    shieldCharges-=1
+                    invincible=0.8
+                    let delta=Sphere67.delta(
+                        target:rocks[i].position,origin:flight.position)
+                    let dist=sqrt(delta.lengthSquared)
+                    let away=dist>0.1
+                        ? delta*(1/dist)
+                        : Vec2(x:cos(flight.heading+Float.pi),
+                               y:sin(flight.heading+Float.pi))
+                    let point=Sphere67.offset(flight.position,
+                        by:away*(rocks[i].radius+32))
+                    let rebound=max(55,sqrt(rocks[i].velocity.lengthSquared))
+                    rocks[i].position=point
+                    rocks[i].velocity=CarbonisBodyContact68.transported(
+                        away*rebound,from:flight.position,to:point)
+                } else {
+                    suffer(18)
+                }
                 if phase != .playing {return}
             }
         }
