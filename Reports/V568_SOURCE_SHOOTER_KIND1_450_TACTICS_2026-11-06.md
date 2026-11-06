@@ -32,3 +32,9 @@ Data: 6 listopada 2026. Baza: `synixad-png/asteroidy-ios`, historyczne źródła
 ## Następne działanie
 
 Zweryfikować najnowszy test skalowania świecącego rdzenia myśliwca, ponowić Xcode na obecnej rewizji, a następnie rozpocząć kolejny istniejący typ przeciwnika wyłącznie na podstawie `ShipMesh(2,false)`. Nie używać zastępczych GLB ani wyników testów z nieprawidłowych buildów.
+
+## Końcowa kontrola tego etapu
+
+[Najnowszy test pełnej regresji CARBONIS — 42261182143](https://github.com/synixad-png/asteroidy-ios/actions/runs/42261182143): `verify-combat-no-ipa` **SUCCESS**, obejmuje również efekt skalowania rdzeni 1,15× i aktualny kontrakt UI/Metal. Natywny macOS pozostaje niezależnym testem do potwierdzenia.
+
+Po tym wyniku uruchomiono [nową kompilację IPA 42261831842](https://github.com/synixad-png/asteroidy-ios/actions/runs/42261831842) dla commita `1f2d30bfa465ccc6b63ff858d267de80fed10c6d`, który zawiera źródłowy typ 1, reguły 450 profili i rdzenie ostrzegawcze. W chwili raportowania workflow nadal się wykonuje; nie ma jeszcze potwierdzonego artefaktu dla tej rewizji. Poprzednio zweryfikowany IPA `42259012837` pozostaje osobnym, starszym plikiem.
