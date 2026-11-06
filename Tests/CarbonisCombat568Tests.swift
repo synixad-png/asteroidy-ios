@@ -103,6 +103,32 @@ import Foundation
                 velocity:Vec2(x:0,y:0),radius:9,
                 size:3,tier:0,health:1,originalHealth:2))==50,
               "Source size3 rock score includes original HP")
+        var terminal=CarbonisCombat568(prepared)
+        terminal.rocks=[SphereAsteroid556(
+            position:Vec2(x:490,y:360),
+            velocity:Vec2(x:0,y:0),radius:10,size:1,tier:0,
+            health:1,originalHealth:1)]
+        terminal.shooters=[]
+        terminal.bullets=[pulse]
+        terminal.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                      shooting:false,dt:1.0/60)
+        check(terminal.rocks.count==18,
+              "Game.SpawnTerminalShards187 creates exactly 18 source pieces")
+        check(terminal.rocks.allSatisfy({
+              $0.fragment && $0.shardLife>=1.3 &&
+              $0.shardLife<=2.5 && $0.mass==0.09
+              }),"terminal shards preserve source lifetime and physical mass")
+        check(terminal.score==100,"source size1 asteroid score")
+        check(terminal.phase == .playing,
+              "terminal debris must delay source MissionCleared")
+        for _ in 0..<460 {
+            terminal.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                          shooting:false,dt:1.0/120)
+        }
+        check(terminal.rocks.isEmpty,
+              "terminal debris expires after original 1.3-2.5 seconds")
+        check(terminal.phase == .victory,
+              "source 0.2-second clear hold starts only after debris gone")
         check(campaign.completedMask==0,"no fake campaign completion")
         print("PASS \(checks) live Carbonis C279 flight, shot, hit, victory and defeat checks")
     }
