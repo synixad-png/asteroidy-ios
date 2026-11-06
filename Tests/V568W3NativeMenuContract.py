@@ -92,6 +92,9 @@ assert "CarbonisShooterMesh71.typeOne()" in carbonis
 assert "sourceShooters[kind]=(buffer,mesh.ranges)" in carbonis
 assert "for enemy in session.game.shooters {" in carbonis
 assert "guard let shooter=sourceShooters[enemy.core.type]" in carbonis
+assert "enemy.telegraph>0" in carbonis
+assert "material==5 || material==6" in carbonis
+assert "diagonal:SIMD4<Float>(1.15,1.15,1.15,1)" in carbonis
 assert "sector01ShooterFragment71" in rock_metal
 assert "Turn72" in source_combat or "turn72(" in source_combat
 assert "fighter.phase+0.4" in source_combat
