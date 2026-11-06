@@ -71,6 +71,21 @@ struct GameView: View {
     @StateObject private var input = FlightInput()
     @State private var showCampaign = false
     @State private var campaign = CampaignStore556.load()
+    // Source C279 sector inspection remains separate from the Boreas
+    // diagnostic simulation. This is not StartHubMission261 or a win state.
+    @State private var sourceSector01: Sector01Entry568?
+
+    private func inspectSourceSector(_ sector: Int) {
+        guard let entry=Sector01Entry568.open(
+            selectedSector:sector,campaign:campaign,
+            hasOriginalC279Assets:Sector01CarbonisPreview568.isAvailable)
+        else { return }
+        input.releaseHeldControls()
+        input.gameplayPaused = true
+        showCampaign = false
+        sourceSector01 = entry
+        showMainMenu = true
+    }
     // The genuine W3 navigation is the normal entry point.
     // Existing source-GPU verification remains an explicit simulator mode.
     @State private var showMainMenu =
@@ -79,11 +94,21 @@ struct GameView: View {
     var body: some View {
         GeometryReader { g in
             ZStack {
-                if showMainMenu {
+                if let sourceEntry=sourceSector01 {
+                    Sector01Scene568(entry:sourceEntry,returnToAtlas:{
+                        sourceSector01 = nil
+                        input.releaseHeldControls()
+                        input.gameplayPaused = true
+                        showCampaign = false
+                        showMainMenu = true
+                    })
+                } else if showMainMenu {
                     W3MainMenu568(progress:campaign,selectMission:{ sector in
                         if campaign.selectUnlocked(sector) {
                             CampaignStore556.save(campaign)
                         }
+                    },inspectSector: { sector in
+                        inspectSourceSector(sector)
                     },openDiagnostic:{
                         input.releaseHeldControls()
                         input.gameplayPaused = false
@@ -284,7 +309,8 @@ struct GameView: View {
                                          if campaign.selectUnlocked(sector) {
                                              CampaignStore556.save(campaign)
                                          }
-                                     })
+                                     },
+                                     onInspect: { sector in inspectSourceSector(sector) })
                 }
                 }
             }.frame(width: g.size.width, height: g.size.height)
