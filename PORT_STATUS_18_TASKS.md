@@ -1,3 +1,36 @@
+## AKTUALNY ETAP — 06.11.2026: CARBONIS 01 — od realnej walki do zapisu, nagród i serwisu
+
+**Cały port: 38% wykonano implementacyjnie (+2 pp), 62% pozostało.** Lista 18 stałych zadań jest niezmienna; zmieniają się wyłącznie poparte kodem i testami procenty. **To nie jest 100% pierwszej misji na urządzeniu.** Nie uruchomiono najnowszej rewizji na fizycznym iPhonie, nie potwierdzono kompletnych oryginalnych SFX ani wizualnej zgodności z Windows v568.
+
+Wdrożono dla wyłącznie pierwszej misji CARBONIS C279: oryginalną falę 13 asteroid i 4 myśliwców, pełniejsze `Physics68` i respawn, pierścienie żetonów na planetarnym GPU oraz radarze, rzeczywiste zbieranie i rozliczanie `DropLoot/MovePickup68`, `FinishLevel` (premia 12 żetonów), opóźniony raport `LevelSummary166` (4,2 s), zapis ukończenia `CampaignStore556`, trwałe odblokowanie sektora02, odporność na replay/dwukrotne naliczenie, natywny serwis sześciu oryginalnych ulepszeń i ich działanie w walce (Twin, Scatter, Power, Rapid, shield, życie), zapis portfela, ekwipunku, pozostałych żyć i osłon. Przy porażce można ponowić pierwszą misję bez fałszywej wygranej. Nie dodano grywalnej drugiej misji ani bossów.
+
+**Dowód:** [GitHub Actions 42269114054](https://github.com/synixad-png/asteroidy-ios/actions/runs/42269114054) — **PASS `verify-sphere-linux`**, w tym **335 kroków faktycznej symulacji 120 Hz**, 18 testów integracyjnych źródłowej fali do trwałego rozliczenia oraz 41 kontroli serwisu/replay. Test używa deterministycznie kierowanych strzałów i weryfikuje rzeczywiste trafienia oraz warunki zwycięstwa, ale **nie dowodzi ręcznej gry na iPhonie**. `compile-device` dla najnowszej rewizji był **queued** podczas przygotowania raportu; źródłowy IPA dla tej rewizji nie jest jeszcze potwierdzony. [Pełny raport](Reports/V568_CARBONIS01_FINISH_REWARDS_SERVICE_E2E_2026-11-06.md).
+
+| Nr | Stałe zadanie | Poprzednio | Obecnie | Zmiana |
+|---:|---|---:|---:|---:|
+| 1 | Kompilacja i infrastruktura iOS | 88% | 88% | 0 pp |
+| 2 | Silnik graficzny Metal | 89% | 89% | 0 pp |
+| 3 | Materiały PBR, tekstury i oświetlenie | 25% | 25% | 0 pp |
+| 4 | Statki, planety i zasoby 3D | 32% | 32% | 0 pp |
+| 5 | Animacje modeli GLB | 35% | 35% | 0 pp |
+| 6 | Fizyka lotu i poruszanie po planetach | 41% | **43%** | **+2 pp** |
+| 7 | Kolizje, obrażenia i zniszczenia (dotychczasowy moduł) | 100% | 100% | 0 pp |
+| 8 | Asteroidy i fale walki (dotychczasowy moduł) | 100% | 100% | 0 pp |
+| 9 | Bronie i trafienia | 18% | **24%** | **+6 pp** |
+| 10 | Przeciwnicy i AI | 11% | 11% | 0 pp |
+| 11 | Bossowie i ich mechaniki | 0% | 0% | 0 pp |
+| 12 | Komplet misji planetarnych | 22% | **30%** | **+8 pp** |
+| 13 | Kampania — 26 sektorów atlasu | 35% | **37%** | **+2 pp** |
+| 14 | Menu W3, HUD i ustawienia | 19% | **24%** | **+5 pp** |
+| 15 | Dźwięki i muzyka | 0% | 0% | 0 pp |
+| 16 | Zapisywanie i wczytywanie gry | 20% | **32%** | **+12 pp** |
+| 17 | Sterowanie | 41% | 41% | 0 pp |
+| 18 | Optymalizacja i testy | 14% | **18%** | **+4 pp** |
+
+**Następny etap pracy nad tą samą pierwszą misją:** sprawdzić najnowszy build Xcode i IPA, usunąć ewentualne błędy, zweryfikować dotyk/wyniki/serwis/ponowne wejście na urządzeniu, a następnie przenieść oryginalne `CombatSound/Sounds79` oraz brakujące źródłowe efekty bez substytutów. Nie rozpoczynać prac nad planetą02, dopóki CARBONIS 01 nie jest faktycznie domknięty.
+
+---
+
 ## AKTUALNY ETAP — 06.11.2026: drugi oryginalny myśliwiec i 450 profili AI
 
 **Projekt implementacyjnie: 36% (+1 pp), pozostało 64%.** Bez zmian w niezmiennej liście 18 zadań. Dodano `ShipMesh(1,false)` z oryginalnego Windows v568 jako odrębny model proceduralny myśliwca o 5521 trójkątach, 8 grupach materiałów i własnych skrzydłach, działkach oraz barwach (pierwszy myśliwiec nadal 5345 trójkątów). Metal posiada osobne bufory dla źródłowych typów 0 i 1; inne brakujące typy nie są zastępowane atrapami. Oryginalna animacja ostrzeżenia powiększa tylko świecące rdzenie 5/6 o 15%, nie cały kadłub.
