@@ -62,6 +62,13 @@ assert "@State private var sourceSector01Setup: Sector01PreparedWave568?" in app
 assert "sourceSector01Setup = nil" in app
 assert "preparedWave.encounter.rocks.count" in source_scene
 assert "preparedWave.encounter.fighters.count" in source_scene
+incoming_wave=(root/"ASTEROIDYiOS/MissionIncoming568.swift").read_text()
+assert "random = encounter.randomState" in incoming_wave
+assert "incomingLeft = encounter.initialReinforcements" in incoming_wave
+assert "let count=min(2,incomingLeft)" in incoming_wave
+assert "if objective == .clear && activeRocks == 0 && activeEnemies == 0" in incoming_wave
+assert "incoming:MissionIncoming568(from:encounter,difficulty:difficulty)" in prepared_wave
+
 assert "PRZECIWNICY NIE SĄ JESZCZE RENDEROWANI ANI STEROWANI PRZEZ AI" in source_scene
 
 assert "Sector01Entry568.open(" in app
