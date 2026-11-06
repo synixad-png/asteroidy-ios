@@ -182,3 +182,34 @@ iPhone+iPad, regresje 7/8, zgodność z W3 v568
 Dopiero po tej bramce etap B — w pełni funkcjonalny wybór misji.
 
 **Nie tworzono IPA.**
+
+### Uzupełnienie etapu A — oryginalne obrazy W3 i ponowienie Apple testu
+
+Z pełnego archiwum PC **v568** przygotowano dokładnie dwa pliki
+menu (bez zmian zawartości) w 857501-bajtowym ZIP
+`ASTEROIDY_v568_W3_ORIGINAL_MENU_ASSETS.zip`. Ten ZIP **nie
+znajduje się jeszcze w repozytorium GitHub**; obecny connector
+repozytorium przyjmuje edycje tekstowe, a oryginalnych binarnych
+JPEG/PNG nie wgrywano innym kanałem. Paczka jest przygotowana
+do jednorazowego ręcznego wgrania do katalogu głównego.
+`Tools/prepare_v568_w3_original_assets.py` po jej wgraniu
+automatycznie sprawdza CRC i SHA-256 oraz stage'uje oba oryginały
+do `ASTEROIDYiOS/Assets`; `SourceW3Images568` zachowuje
+jedną współdzieloną parę obrazów i nie akceptuje zamienników.
+Test `Tests/V568W3MenuSourceImagesTests.py` weryfikuje
+odrzucanie obcych plików i jawnie oznacza brak pakietu.
+
+Poprzedni przebieg autentycznych ekranów
+[42193792251](https://github.com/synixad-png/asteroidy-ios/actions/runs/42193792251)
+zakończył się niepowodzeniem z powodu
+`xcrun simctl install` — **ENVIRONMENT TIMEOUT 85 s**.
+Wcześniejsze testy Xcode/Metal i kontraktów menu przeszły.
+Nie klasyfikować timeoutu instalacji jako błędu shaderów/SwiftUI.
+Skrypt ma teraz twardy limit 300 s na instalację (bez wyłączania
+globalnego timeoutu). Uruchomiony jest nowy
+[workflow 42194736690](https://github.com/synixad-png/asteroidy-ios/actions/runs/42194736690)
+dla obu symulatorów. Nie zaliczać screenshotów, jeżeli joby
+nie zakończą się `success` i nie będzie zweryfikowanych PNG.
+
+**Etap A nadal otwarty. Zadanie 14 nadal 10%, zmiana 0 pp.
+27% całego projektu, 73% pozostało. IPA nie generowano.**
