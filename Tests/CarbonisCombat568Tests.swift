@@ -27,6 +27,33 @@ import Foundation
         check(sim.rocks.count<500 && sim.shooters.count<=4,"combat bounded including genuine rock splits")
         check(sim.bullets.count<20,"Pulse shot interval and lifetimes")
         check(sim.flight.camera.focus.length>0.99,"following camera")
+        // Right-half touch semantics: finger down instantly enables
+        // Source Pulse, holding continues normal cooldown-based firing,
+        // lifting ends shooting without stopping the independent flight.
+        var touchFire=CarbonisCombat568(prepared)
+        touchFire.invincible=5
+        let still=Vec2(x:0,y:0)
+        touchFire.step(move:still,aim:still,shooting:false,dt:1/120)
+        check(touchFire.bullets.isEmpty,"right side untouched: no auto-fire")
+        touchFire.step(move:still,aim:still,shooting:true,dt:1/120)
+        check(touchFire.bullets.count==1,
+              "first right-side contact fires immediately without a button")
+        for _ in 0..<24 {
+            touchFire.step(move:still,aim:still,shooting:true,dt:1/120)
+        }
+        check(touchFire.bullets.count>=2,
+              "holding right side repeats Pulse via original shot cadence")
+        let emitted=touchFire.bullets.count
+        let positionBefore=touchFire.flight.position
+        for _ in 0..<12 {
+            touchFire.step(move:Vec2(x:1,y:0),aim:still,
+                           shooting:false,dt:1/120)
+        }
+        check(touchFire.bullets.count<=emitted,
+              "releasing right side immediately stops adding new shots")
+        check(CarbonisCombat568.distance(
+              touchFire.flight.position,positionBefore)>0,
+              "left flight remains operational after right-side release")
         var contact=CarbonisCombat568(prepared)
         contact.invincible=0
         contact.rocks=[SphereAsteroid556(position:contact.flight.position,
