@@ -1,5 +1,5 @@
 #include <metal_stdlib>
-using namespace metal
+using namespace metal;
 
 // CARBONIS v568 C279 original INDEXED vertex stream.
 // 137067 unique vertices, 810747 source indices, 2 original groups.
