@@ -12,6 +12,11 @@ on:
       - 'Tests/PlanetDamageLab556Tests.swift'
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
+      - 'ASTEROIDYiOS/W3HomePlanetMetal568.swift'
+      - 'ASTEROIDYiOS/W3HomePlanet290.metal'
+      - 'Tools/convert_v568_w3_home_planet290.py'
+      - 'Tools/prepare_v568_w3_home_planet290.py'
+      - 'Tests/V568W3HomePlanet290Tests.py'
       - 'Tools/prepare_v568_w3_original_assets.py'
       - 'Tests/V568W3MenuSourceImagesTests.py'
       - 'ASTEROIDY_v568_W3_ORIGINAL_MENU_ASSETS.zip'
@@ -69,6 +74,7 @@ jobs:
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3HomePlanetMetal568.swift
           swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
           swiftc -frontend -parse ASTEROIDYiOS/SourcePlayerShip367.swift
       - name: Verify SHA256 source W3 JPEG and PNG and reject lookalikes
