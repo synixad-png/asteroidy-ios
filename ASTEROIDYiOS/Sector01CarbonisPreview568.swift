@@ -460,35 +460,6 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 return result
             }
 
-            /// Small surface-following native Pulse and hostile shot streaks.
-            /// Positions and tangents come from the actual combat projectiles.
-            /// This is a basic beam renderer, not full PC particle parity.
-            static func shotVertices(_ shots:[CarbonisCombat568.Projectile])
-                -> [Float] {
-                let shell=SphereSurfaceStamp556.normalizedShellRadius+0.005
-                var output:[Float]=[]
-                output.reserveCapacity(shots.count*72)
-                for shot in shots {
-                    let n=Sphere67.normal(shot.point)
-                    let direction=Sphere67.vector(
-                        shot.point,shot.velocity).normalized
-                    let side=SphereVector3.cross(direction,n).normalized
-                    let p=n*shell
-                    let ahead=direction*0.055
-                    let width=side*0.010
-                    let a=p-ahead-width,b=p+ahead-width
-                    let c=p+ahead+width,d=p-ahead+width
-                    let color:[Float]=shot.hostile
-                        ? [1,0.18,0.06,0.95] : [0.22,0.90,1,0.98]
-                    for v in [a,b,c,a,c,d] {
-                        output.append(contentsOf:[
-                            v.x,v.y,v.z,n.x,n.y,n.z,
-                            color[0],color[1],color[2],color[3],0,0])
-                    }
-                }
-                return output
-            }
-
             func mtkView(_ view:MTKView,drawableSizeWillChange size:CGSize) {}
             func draw(in view:MTKView) {
                 guard let drawable=view.currentDrawable,
@@ -676,9 +647,40 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 if let session=gameSession,let tracer=tracerPipeline,
                    let cameraMatrix=vp {
                     let shots=session.game.bullets+session.game.hostileShots
-                    var values=Self.shotVertices(shots)
-                    values.append(contentsOf:Self.warningVertices(
-                        session.game.shooters))
+                    // Combat69: source player/hostile projectiles are six
+                    // segment, three-layer geodesic luminous ribbons
+                    // with true constant-pixel round 3D projectile cores.
+                    if let fxPipeline=projectilePipeline {
+                        var fx=CarbonisProjectileFX69.vertices(
+                            shots,camera:session.game.flight.camera,
+                            drawableHeight:Float(view.drawableSize.height))
+                        fx.append(contentsOf:
+                            CarbonisProjectileFX69.muzzleFlashes(
+                                session.game.shooters,
+                                camera:session.game.flight.camera,
+                                drawableHeight:Float(view.drawableSize.height)))
+                        if !fx.isEmpty,let buffer=fx.withUnsafeBytes({
+                            raw in raw.baseAddress.flatMap {
+                                gpu.makeBuffer(bytes:$0,
+                                    length:raw.count,options:[])
+                            }
+                        }) {
+                            uniforms=Uniforms(mvp:cameraMatrix,
+                                model:matrix_identity_float4x4,
+                                material:2,glow:1)
+                            encoder.setRenderPipelineState(fxPipeline)
+                            encoder.setDepthStencilState(noDepthWrite)
+                            encoder.setVertexBuffer(buffer,offset:0,index:0)
+                            encoder.setVertexBytes(&uniforms,
+                                length:MemoryLayout<Uniforms>.stride,index:1)
+                            encoder.setFragmentBytes(&uniforms,
+                                length:MemoryLayout<Uniforms>.stride,index:1)
+                            encoder.drawPrimitives(type:.triangle,
+                                vertexStart:0,vertexCount:fx.count/12)
+                            encoder.setDepthStencilState(depth)
+                        }
+                    }
+                    var values=Self.warningVertices(session.game.shooters)
                     values.append(contentsOf:Self.tokenVertices(
                         session.game.tokenPickups))
                     // Source particle bursts, radius-animated lights,
