@@ -60,3 +60,16 @@ Bezpośredni plik IPA został też przygotowany lokalnie jako
   nie zastępować loadera źródłowego losową sceną demo.
 - **Dotychczasowy postęp**: cały projekt **27% / pozostało 73%**,
   zadanie 14 **10% (+0 pp)**; 7 i 8 chronione przed regresją.
+
+## Bezpośredni plik IPA na prywatnym Dysku Google
+
+Dodatkowo przesłano **sam zweryfikowany plik `.ipa`** bez
+zewnętrznego ZIP-a:
+[ASTEROIDY_v568_W3_MENU_NAV_iPhone_iPad_UNSIGNED.ipa](https://drive.google.com/file/d/1SFMg2sOZFvhL3IAwSu_t8JO-BJU4TX5i/view?usp=drivesdk).
+Google Drive potwierdził jego rozmiar **14 103 697 B**,
+identyczny z weryfikowanym IPA z GitHub. Źródłowy SHA-256
+tego IPA jest zapisany wyżej, wraz z kontrolą w pobranym
+artefakcie. Google identyfikuje ten plik jako
+`application/x-zip`, ponieważ wewnętrznie IPA jest
+archiwum ZIP, ale **nazwa pliku i jego zawartość to
+prawidłowy `.ipa`**. Jest niepodpisany.
