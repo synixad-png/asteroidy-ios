@@ -24,11 +24,13 @@ final class FlightInput: ObservableObject {
     // test sector, NOT a port of the complete original mission.
     @Published var planetPreview = true
     // Explicit optional v568 ship 3. Never replace the default Vanguard556.
-    @Published var sourceShip367Preview = false
+    @Published var sourceShip367Preview =
+        ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] == "1"
     // Real IntroScene41 camera/planet/ship positions, but cinematic
     // GPU rock meshes still need source-specific geometric detail.
     // An explicit rendering preview, NEVER a mission completion.
-    @Published var introPreview41 = true
+    @Published var introPreview41 =
+        ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] != "1"
     @Published var introProgress41: Float = 0
     // Source-defined diagnostic cases: ordinary rocks (1), timed waves
     // (9/17) and AmigaOnly266 perpetual bouncing balls (25).
