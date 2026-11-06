@@ -46,6 +46,7 @@ struct W3MainMenu568: View {
     }
 
     let progress: CampaignProgress556
+    let selectMission: (Int) -> Void
     let openDiagnostic: () -> Void
     @State private var page: Page?
     // Same Y/X globe rotation axes as the source W3 NewHome290 preview.
@@ -385,7 +386,9 @@ struct W3MainMenu568: View {
                     Text("ATLAS 26 SEKTORÓW — PODGLĄD, BEZ URUCHAMIANIA MISJI")
                         .font(.system(size:10,design:.monospaced))
                         .foregroundStyle(muted)
-                    CampaignAtlas556(progress:progress,dismiss:{page=nil})
+                    CampaignAtlas556(progress:progress,
+                                     dismiss:{page=nil},
+                                     onSelect:selectMission)
                 } else {
                     Text(message(for:item))
                         .font(.system(size:compact ? 12 : 15,design:.monospaced))
