@@ -41,6 +41,7 @@ struct CarbonisCombat568 {
     var shooterKills:Int=0
     private var random:MissionWave568.SourceRandom
     private var completed=false
+    private var sourceClearHold:Float=0
     private(set) var lastContactCount=0
 
     init(_ prepared:Sector01PreparedWave568) {
@@ -122,10 +123,18 @@ struct CarbonisCombat568 {
         }
         // MissionCleared69: objective Clear plus absence of rock and bug
         // threats and all reinforcements, not a timer-based fake win.
-        if rocks.filter({$0.shardLife<=0}).isEmpty &&
-           shooters.isEmpty && incoming.incomingLeft==0 &&
-           hostileShots.isEmpty && !completed {
-            completed=true;phase = .victory
+        let allThreatsCleared=rocks.filter({$0.shardLife<=0}).isEmpty &&
+            shooters.isEmpty && incoming.incomingLeft==0 &&
+            hostileShots.isEmpty
+        if allThreatsCleared && !completed {
+            // Game.cs:276: original spherical NextWave > .20s victory
+            // staging; a transient empty rock list cannot instantly win.
+            sourceClearHold+=dt
+            if sourceClearHold>0.20 {
+                completed=true;phase = .victory
+            }
+        } else {
+            sourceClearHold=0
         }
     }
 
