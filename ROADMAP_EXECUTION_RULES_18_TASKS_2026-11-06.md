@@ -1,3 +1,9 @@
+## NAJNOWSZY ETAP REALIZACJI C → D: źródłowa fala CARBONIS, 06.11.2026
+
+**30% wykonane / 70% pozostało.** Kamienie A–J i zakres 18 zadań bez zmiany. Zakończono obecny podzakres tworzenia autentycznej początkowej `Wave()` v568: skały, uzbrojeni myśliwce, robotyczne węże, klasy i poziomy HP, przydziały posiłków oraz generator C# Random. `Sector01PreparedWave568` łączy `MissionStart261` i `MissionWave568` z natywnym wejściem do oryginalnej planety C279. 909+12 lokalnych testów Swift PASS (z testowymi odpowiednikami zależności); docelowe GitHub CI i natywny iPhone niezweryfikowane. [Raport wdrożenia](Reports/V568_STAGE_C_WAVE_PREPARED_2026-11-06.md).
+
+**Następna bramka:** rzeczywisty runtime C279 — dynamiczne renderowanie i fizyka wygenerowanych obiektów, AI, `SpawnIncoming()`, sterowanie statkiem, broń i zakończenie misji. Stare testy menu nie zastępują tego wdrożenia. Oryginalny kod bazowy v568 to pełny ZIP Windows/SteamOS znaleziony w Bibliotece; błędne wcześniejsze ustalenie o braku źródłowej `Wave()` zostało sprostowane. Nie generowano nowego IPA. Starsze wpisy poniżej dokumentują historię.
+
 ## NAJNOWSZY STAN — 06.11.2026, etap C: prawdziwa geometria i próbnik terenu CARBONIS
 
 **29% całego projektu / 71% pozostało.** W kolejności A–J nadal realizowany jest C (CARBONIS 01). Bez zmiany stałej listy 18 zadań i procentów względem ostatniego raportu.
