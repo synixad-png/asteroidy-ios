@@ -4,7 +4,7 @@
 
 **33% całego portu ukończone implementacyjnie / 67% pozostało.** Kod pierwszej misji CARBONIS 01 zawiera teraz autentyczny model statku VANGUARD v568, kamerę za statkiem, natywne sterowanie dotykowe, strzelanie, radar i HUD, symulowanych czterech wrogów, poruszające się źródłowe asteroidy, obrażenia, trzy życia oraz końcowy stan zwycięstwa/przegranej. To nie oznacza ukończenia 25 misji PC ani całego projektu; przeciwnicy nie mają jeszcze swoich oryginalnych siatek 3D, pozostałe planety, bossowie, audio i część mechanik wciąż czekają.
 
-Na wyraźne polecenie użytkownika przygotowano kompilację **niepodpisanego iPhone/iPad IPA**. Najnowszy znany przebieg [GitHub Actions 42247230721](https://github.com/synixad-png/asteroidy-ios/actions/runs/42247230721) testuje kod Swift przed Xcode i pakuje sprawdzony IPA tylko po prawidłowej kompilacji. **Wyniku Xcode i istnienia nowego artefaktu na tym etapie nie potwierdzono.** [Raport](Reports/V568_CARBONIS_LIVE_COMBAT_2026-11-06.md) | [Harmonogram 18 zadań](PORT_STATUS_18_TASKS.md).
+Na wyraźne polecenie użytkownika przygotowano kompilację **niepodpisanego iPhone/iPad IPA**. Najnowszy przebieg [GitHub Actions 42247840690](https://github.com/synixad-png/asteroidy-ios/actions/runs/42247840690) na `macos-15-intel` (Linux PASS, macOS Xcode oczekuje w kolejce) testuje kod Swift przed Xcode i pakuje sprawdzony IPA tylko po prawidłowej kompilacji. **Wyniku Xcode i istnienia nowego artefaktu na tym etapie nie potwierdzono.** [Raport](Reports/V568_CARBONIS_LIVE_COMBAT_2026-11-06.md) | [Harmonogram 18 zadań](PORT_STATUS_18_TASKS.md).
 
 Dalsze prace: autentyczna siatka myśliwców z ShipMesh/BossMesh65 i integracja brakujących mechanik oraz pozostałych sektorów.
 
