@@ -1,5 +1,14 @@
 # ASTEROIDY iOS — natywny port Swift/Metal (projekt w trakcie rozwoju)
 
+## Aktualizacja 06.11.2026 — pierwszy źródłowy myśliwiec 3D, kolizje i trafienia
+
+**Port: 35% zaimplementowane / 65% pozostało.** CARBONIS 01 ma teraz w kodzie cztery proceduralne myśliwce typu 0 pochodzące z oryginalnego `Windows/src/ShipMesh.cs` i `BossMesh65/GpuRobot70`, ze wspólną siatką Metal i ośmioma materiałami. AI `EnemyTactics71` porusza nimi i ostrzega przed ostrzałem; `Physics68` rozwiązuje fizyczne zderzenia oraz odrzuty; broń Pulse uwzględnia zasłanianie myśliwców przez asteroidy, prawidłową punktację i 18 krótkotrwałych fragmentów małej skały. Pierwsza misja jest więc rozwijana na prawdziwym kodzie, nie atrapach.
+
+**[Testy GitHub Swift/Linux: PASS — 42256245496](https://github.com/synixad-png/asteroidy-ios/actions/runs/42256245496)** obejmują nową siatkę, fizykę oraz reguły pierwszej misji. **Xcode, GPU Apple i nowy IPA nie zostały potwierdzone** — zadanie macOS pozostaje w kolejce. To nie oznacza kompletnego portu 25 misji ani gotowego wydania iOS. [Raport techniczny](Reports/V568_CARBONIS_SOURCE_FIGHTERS_PHYSICS_SHARDS_2026-11-06.md) · [Stały harmonogram](PORT_STATUS_18_TASKS.md).
+
+Poniżej pozostawiono historyczne wpisy 33%, 31% i wcześniejsze.
+
+
 ## Aktualny stan 06.11.2026 — grywalna misja CARBONIS w kodzie, weryfikacja IPA
 
 **33% całego portu ukończone implementacyjnie / 67% pozostało.** Kod pierwszej misji CARBONIS 01 zawiera teraz autentyczny model statku VANGUARD v568, kamerę za statkiem, natywne sterowanie dotykowe, strzelanie, radar i HUD, symulowanych czterech wrogów, poruszające się źródłowe asteroidy, obrażenia, trzy życia oraz końcowy stan zwycięstwa/przegranej. To nie oznacza ukończenia 25 misji PC ani całego projektu; przeciwnicy nie mają jeszcze swoich oryginalnych siatek 3D, pozostałe planety, bossowie, audio i część mechanik wciąż czekają.
