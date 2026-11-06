@@ -11,3 +11,10 @@ Nie dodano żadnych arbitralnych ustawień silników — w zweryfikowanej częś
 
 ## Testy / pozostałe
 Linux Swift source radius/negative cases PASS. Dalsze bramki: pełna regresja Swift, kompilacja natywna Xcode/Metal na Apple runnerze, oryginalne zasoby w .app, konstrukcja i integralność unsigned IPA, rzeczywisty wizualny test na fizycznym urządzeniu NIE przeprowadzony. `PORT_STATUS_18_TASKS.md` utrzymuje 18 zadań i 38% bez zmiany.
+
+## Wynik wydania
+
+- GitHub Actions: [42289576566](https://github.com/synixad-png/asteroidy-ios/actions/runs/42289576566) — SUCCESS (Linux regresja + macOS Xcode Swift/Metal Release, arm64).
+- Artefakt: [13539047406](https://github.com/synixad-png/asteroidy-ios/actions/runs/42289576566/artifacts/13539047406); IPA 27 059 072 B, SHA-256 `b870ee6ef43c3c5e719fcd176d23fc0990f227aa07a5a059649faf662a91fad4`.
+- Sprawdzenia lokalne po pobraniu: ZIP artefaktu CRC PASS; ZIP wewnętrznego IPA CRC PASS; `CFBundleExecutable=ASTEROIDY iOS` (Mach-O arm64); UIDeviceFamily [1,2], `iPhoneOS`; `default.metallib`, oryginalne siatki Vanguard/C279 obecne. W oryginalnym C279 137 067 pozycji z `carbonis279.mesh.gz` test promienia/normalizacji PASS.
+- Nadal NIE przeprowadzono instalacji, uruchomienia ani wizualnej weryfikacji na fizycznym iPhone/iPad. IPA niepodpisany.
