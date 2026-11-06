@@ -6,8 +6,9 @@ Windows/src/RendererW3Home328.cs sha256
  a696603703583df5e4363106389833d6fd9aaa59fd6b73fa5e1aec3f71f4a966
 Windows/src/UiW3Shared.cs sha256
  47ac224bd9bc8874826e24c75eda56ea7b2527043b281a562ac65f0af7b91a50
-Native UI is a stage-A partial implementation; 3D planet and original
-W3 background/logo are not claimed as already ported.
+Stage A native UI contains source-verified background/logo, real NewHome290
+and Vanguard431 Metal previews; full PC shader parity and physical taps are
+not claimed until tested.
 """
 from pathlib import Path
 import re
@@ -50,9 +51,14 @@ assert 'hangar_h55.glb' in menu
 assert 'Wczytanie rzeczywistego zapisu' in menu
 # Navigation is fully handled in one native SwiftUI view, without
 # silently connecting unavailable menu actions to test gameplay.
+assert "ScrollView(.vertical)" in menu
+assert "minHeight:44" in menu
+assert 'accessibilityIdentifier("w3-home-navigation")' in menu
+assert "accessibilityAddTraits(.isButton)" in menu
+assert "accessibilityLabel(item.rawValue)" in menu
 assert "page=item" in menu and "page=nil" in menu
 assert "switch item" in menu
 assert "if item == .campaign || item == .newGame" in menu
 print("PASS: 7 source v568 W3 home actions, native menu entry, safe visible routes")
 print("PASS: simulator GPU verification opt-outs remain, diagnostics and collisions protected")
-print("LIMIT: real W3 background/logo, native source planet and touchscreen screenshot pending")
+print("LIMIT: actual iPhone/iPad seven-button XCTest and full PC W3 pixel parity are separately gated")
