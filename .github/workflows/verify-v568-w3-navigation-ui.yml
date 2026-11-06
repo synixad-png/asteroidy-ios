@@ -105,5 +105,6 @@ jobs:
           path: |
             reports/*.txt
             reports/*.log
+            reports/W3-Actual-*.xcresult
           if-no-files-found: ignore
           retention-days: 7
