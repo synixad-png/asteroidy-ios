@@ -64,6 +64,7 @@ final class CarbonisExplosion524Renderer {
                 result.replace(
                     region:MTLRegionMake3D(0,0,0,64,64,64),
                     mipmapLevel:0,
+                    slice:0,
                     withBytes:address,
                     bytesPerRow:64,bytesPerImage:4096)
             }
