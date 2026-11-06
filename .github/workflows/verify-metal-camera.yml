@@ -12,6 +12,7 @@ on:
       - 'ASTEROIDYiOS/SourceFighterToon60.swift'
       - 'ASTEROIDYiOS/SourceVanguardMesh431.swift'
       - 'Tests/SourceVanguardMesh431Tests.swift'
+      - 'Tests/OriginalVanguard431InstalledAssetsTests.py'
       - 'Tests/SourceVanguardTextureContract431.py'
       - 'Tools/verify_original_vanguard_resources.py'
       - 'Tests/ReleaseGateVanguard431Tests.py'
@@ -152,6 +153,11 @@ jobs:
           set -eu
           python3 Tests/ReleaseGateVanguard431Tests.py
           python3 Tests/PrepareVanguardPackTests.py
+      - name: Positive validation of the user's actual v568 Vanguard mesh and texture files
+        run: |
+          set -eu
+          python3 Tests/OriginalVanguard431InstalledAssetsTests.py
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets
       - name: Source Vanguard v4311 exact UV stream parser and optional original JPEG material
         run: |
           set -eu
