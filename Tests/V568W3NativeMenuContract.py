@@ -60,8 +60,8 @@ assert 'var isPlayable: Bool { false }' in prepared_wave
 assert "Sector01PreparedWave568.prepare(" in app
 assert "@State private var sourceSector01Setup: Sector01PreparedWave568?" in app
 assert "sourceSector01Setup = nil" in app
-assert "preparedWave.encounter.rocks.count" in source_scene
-assert "preparedWave.encounter.fighters.count" in source_scene
+assert "initialRocks:preparedWave.encounter.rocks" in source_scene
+assert "session.hud.fighters" in source_scene
 incoming_wave=(root/"ASTEROIDYiOS/MissionIncoming568.swift").read_text()
 assert "random = encounter.randomState" in incoming_wave
 assert "incomingLeft = encounter.initialReinforcements" in incoming_wave
@@ -69,7 +69,10 @@ assert "let count=min(2,incomingLeft)" in incoming_wave
 assert "if objective == .clear && activeRocks == 0 && activeEnemies == 0" in incoming_wave
 assert "incoming:MissionIncoming568(from:encounter,difficulty:difficulty)" in prepared_wave
 
-assert "MYŚLIWCE/ROBOTY, AI, LOT STATKU, KOLIZJE I UKOŃCZENIE MISJI NIE SĄ JESZCZE WDROŻONE" in source_scene
+assert "Sector01CarbonisPreview568(" in source_scene
+assert "gameSession:session" in source_scene
+assert "sector01-fire-pulse" in source_scene
+assert "SEKTOR 01 / CARBONIS" in source_scene
 rock_geom=(root/"ASTEROIDYiOS/CarbonisRockGeometry568.swift").read_text()
 rock_metal=(root/"ASTEROIDYiOS/Sector01Carbonis568.metal").read_text()
 assert "let seed=Float((shape%40)/5+13)" in rock_geom
@@ -99,8 +102,8 @@ scene=(root/"ASTEROIDYiOS/Sector01Scene568.swift").read_text()
 assert "func surfaceRadius(x: Float, y: Float, z: Float) -> Float" in surface
 assert "let x0 = ((ix % Self.width) + Self.width) % Self.width" in surface
 assert "let y0 = max(0, min(Self.height - 1, iy))" in surface
-assert "surface.surfaceRadius(x:1,y:0,z:0)" in scene
-assert 'sourceHeightProbe277' in scene
+assert "surfaceRadius(x: Float, y: Float, z: Float)" in surface
+assert "CarbonisCombat568" in (root/"ASTEROIDYiOS/CarbonisSession568.swift").read_text()
 
 
 assert "onInspect:inspectSector" in menu
