@@ -32,9 +32,9 @@ vertex W3Home290Output w3Home290Vertex(
     W3Home290Output o;
     o.position=u.mvp*float4(position,1.0f);
     o.viewPosition=(u.model*float4(position,1.0f)).xyz;
-    o.normal=normalize(float3x3(u.model.columns[0].xyz,
-                                      u.model.columns[1].xyz,
-                                      u.model.columns[2].xyz)*normal);
+    o.normal=normalize(float3x3(u.model[0].xyz,
+                                      u.model[1].xyz,
+                                      u.model[2].xyz)*normal);
     o.color=float4(mesh[i+6],mesh[i+7],mesh[i+8],mesh[i+9]);
     o.uv=float2(mesh[i+10],mesh[i+11]);
     return o;
