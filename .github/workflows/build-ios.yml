@@ -8,6 +8,45 @@ on:
       - '.github/workflows/build-ios.yml'
 
 jobs:
+  expose-build-run:
+    if: ${{ github.event.repository.private == false }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Expose user-requested IPA run identifier
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner,repo}=context.repo;
+            const path='Reports/LAST_REQUESTED_IPA_RUN.md';
+            const text=[
+              '# User requested iOS IPA build',
+              '',
+              'Run ID: '+context.runId,
+              'Commit: '+context.sha,
+              'Actions: https://github.com/'+owner+'/'+repo+'/actions/runs/'+context.runId,
+              'Status: requested; consult latest GitHub Actions jobs/artifacts',
+              'Signing: unsigned IPA, device signing required'
+            ].join('\\n')+'\\n';
+            let sha;
+            try {
+              const current=await github.rest.repos.getContent({owner,repo,path});
+              sha=current.data.sha;
+            } catch(error) {
+              if(error.status!==404) core.warning(String(error));
+            }
+            try {
+              await github.rest.repos.createOrUpdateFileContents({
+                owner,repo,path,branch:'main',
+                sha,
+                message:'Expose requested iPhone IPA workflow run id',
+                content:Buffer.from(text).toString('base64')
+              });
+              core.info('Latest IPA run recorded in '+path);
+            } catch(error) {
+              core.warning('Could not record run id: '+String(error));
+            }
   verify-sphere-linux:
     if: ${{ github.event.repository.private == false }}
     runs-on: ubuntu-latest
