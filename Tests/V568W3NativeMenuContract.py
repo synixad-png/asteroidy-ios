@@ -79,6 +79,7 @@ assert "let seed=Float((shape%40)/5+13)" in rock_geom
 assert "sourceVertexCount=20*16*3" in rock_geom
 assert "static func stoneNormal(" in rock_geom
 assert 'sector01SourceRockFragment568' in rock_metal
+carbonis=(root/"ASTEROIDYiOS/Sector01CarbonisPreview568.swift").read_text()
 source_drone=(root/"ASTEROIDYiOS/CarbonisShooterMesh71.swift").read_text()
 source_combat=(root/"ASTEROIDYiOS/CarbonisCombat568.swift").read_text()
 assert "static func typeZero()->Mesh" in source_drone
