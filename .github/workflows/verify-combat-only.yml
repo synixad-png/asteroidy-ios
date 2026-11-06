@@ -134,6 +134,11 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift Tests/Sector01PreparedWave568Tests.swift -o /tmp/sector01-wave-entry-tests
           /tmp/sector01-wave-entry-tests
+      - name: Verify PC v568 source rock geometry for real C279 rendering (no IPA)
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/CarbonisRockGeometry568.swift Tests/CarbonisRockGeometry568Tests.swift -o /tmp/carbonis-rock-mesh-tests
+          /tmp/carbonis-rock-mesh-tests
       - name: Verify real Carbonis277 terrain lookup against original C279 height-map (no IPA)
         run: |
           set -euo pipefail
