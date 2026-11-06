@@ -1,12 +1,13 @@
 import Foundation
 
 /// Original v568 Windows/src/GpuRobot70.cs + BossMesh65.cs "drone"
-/// constructor, ship kind 0, delegated to Windows/src/ShipMesh.cs.
+/// constructor: type 0 uses ShipMesh(0,false), type 1 uses
+/// ShipMesh(1,false) (NOT the playable Vanguard431 GLB).
 /// CARBONIS L1 uses Shooter71 type=0 ONLY (EnemyTier71 = 0).
 /// All triangles are built from the procedural source primitives, with
 /// 12 floats per corner for the existing Metal vertex pipeline. Coordinates,
 /// per-part materials and authored source proportions are preserved.
-/// More advanced levels use other source kinds and are not represented here.
+/// Later enemy kinds 2–5 remain unported.
 enum CarbonisShooterMesh71 {
     struct P {
         var x: Float, y: Float, z: Float
@@ -70,6 +71,7 @@ enum CarbonisShooterMesh71 {
         return 0.5*(term0+term1+term2+term3)
     }
     private struct Builder {
+        let kind:Int
         var faces=[Triangle]()
         mutating func t(_ a:P,_ b:P,_ c:P,_ material:Int) {
             let aa=a*1.06,bb=b*1.06,cc=c*1.06
@@ -103,7 +105,7 @@ enum CarbonisShooterMesh71 {
             var center=P()
             for p in outline { center=center+p }
             center=center*(1/Float(outline.count))
-            let crown:Float=0.034
+            let crown:Float=kind==0 ? 0.034 : 0.045
             center.z+=crown
             var edge=[P](),lower=[P]()
             for i in 0..<outline.count {
@@ -163,9 +165,15 @@ enum CarbonisShooterMesh71 {
             }
         }
         mutating func body() {
-            let ys:[Float]=[-1.12,-0.72,-0.22,0.48,1.16,1.72,2.14]
-            let widths:[Float]=[0.20,0.27,0.29,0.24,0.15,0.075,0.008]
-            let tops:[Float]=[0.14,0.20,0.24,0.26,0.15,0.07,0.005]
+            let ys:[Float]=kind==0
+                ? [-1.12,-0.72,-0.22,0.48,1.16,1.72,2.14]
+                : [-1.08,-0.72,-0.22,0.38,1.02,1.48,1.94]
+            let widths:[Float]=kind==0
+                ? [0.20,0.27,0.29,0.24,0.15,0.075,0.008]
+                : [0.30,0.43,0.44,0.34,0.23,0.13,0.012]
+            let tops:[Float]=kind==0
+                ? [0.14,0.20,0.24,0.26,0.15,0.07,0.005]
+                : [0.16,0.24,0.25,0.27,0.18,0.09,0.006]
             var last=CarbonisShooterMesh71.ring(ys[0],widths[0],-0.13,tops[0])
             poly(last,1,true)
             for row in 1..<ys.count {
@@ -188,6 +196,10 @@ enum CarbonisShooterMesh71 {
             poly(last,0,false)
         }
         mutating func wing(_ sign:Int) {
+            if kind==1 {
+                wingTypeOne(sign)
+                return
+            }
             var top=[P(0.19,0.40,0.05),P(0.88,-0.84,0.01),
                      P(0.73,-1.10,0.02),P(0.20,-0.82,0.09)]
             for i in top.indices { top[i].x*=Float(sign) }
@@ -196,6 +208,31 @@ enum CarbonisShooterMesh71 {
             box(s*0.50,-0.62,0.056,0.07,0.54,0.018,4)
             box(s*0.72,-0.84,0.025,0.10,0.20,0.025,5)
         }
+        /// Windows/src/ShipMesh.cs:60-65: distinct angular wing and
+        /// titanium inlay of the SECOND source drone type.
+        mutating func wingTypeOne(_ sign:Int) {
+            let s=Float(sign)
+            var outline=[P(0.27,0.64,0.025),P(1.19,-0.23,-0.03),
+                         P(1.32,-0.83,-0.055),P(0.95,-0.99,-0.04),
+                         P(0.29,-0.76,0.025)]
+            for i in outline.indices { outline[i].x*=s }
+            wingPlate(outline,sign,0.085)
+            let a=P(s*0.49,0.24,0.038)
+            let b=P(s*1.12,-0.38,-0.012)
+            let c=P(s*1.16,-0.57,-0.026)
+            let d=P(s*0.45,-0.02,0.044)
+            if sign>0 {q(a,d,c,b,4)} else {q(a,b,c,d,4)}
+            box(s*0.78,-0.66,-0.016,0.28,0.20,0.025,1)
+            box(s*0.78,-0.66,0.011,0.19,0.11,0.008,3)
+            for k in 0..<3 {
+                box(s*(0.65+Float(k)*0.065),-0.80,-0.005,
+                    0.034,0.095,0.008,4)
+            }
+            box(s*1.21,-0.76,0.004,0.055,0.20,0.04,1)
+            box(s*1.21,-0.72,0.044,0.035,0.075,0.012,
+                sign<0 ? 4:5)
+        }
+
         mutating func engine(_ sign:Int) {
             let x=Float(sign)*0.43,z:Float=0.035
             tube(x,z,[-0.42,-0.64,-0.94,-1.17],[0.14,0.22,0.205,0.18],1,32)
@@ -215,7 +252,7 @@ enum CarbonisShooterMesh71 {
             box(x,-0.46,0.17,0.14,0.28,0.065,0)
         }
         mutating func gun(_ sign:Int) {
-            let x=Float(sign)*0.62
+            let x=Float(sign)*(kind==0 ? 0.62 : 0.93)
             tube(x,0.045,[0.48,0.37,0.14,-0.17,-0.43,-0.66],
                  [0.025,0.05,0.075,0.085,0.065,0.03],1,16)
             tube(x,0.045,[0.35,0.37,0.40],[0.066,0.066,0.044],3,16)
@@ -277,8 +314,9 @@ enum CarbonisShooterMesh71 {
                     box(s*0.23,-0.73+k*0.075,0.25,0.075,0.025,0.024,1)
                     box(s*0.23,-0.73+k*0.075,0.275,0.06,0.009,0.006,3)
                 }
-                box(s*0.55,-0.82,0.065,0.08,0.15,0.035,3)
-                box(s*0.55,-0.80,0.102,0.045,0.03,0.01,sign<0 ? 4:5)
+                let detailX=s*(kind==0 ? 0.55 : 1.05)
+                box(detailX,-0.82,0.065,0.08,0.15,0.035,3)
+                box(detailX,-0.80,0.102,0.045,0.03,0.01,sign<0 ? 4:5)
                 box(s*0.14,0.62,0.23,0.026,0.23,0.018,3)
             }
             box(0,-0.46,0.27,0.035,0.18,0.18,3)
@@ -298,17 +336,22 @@ enum CarbonisShooterMesh71 {
                 box(s*0.30,0.73,0.12,0.035,0.12,0.01,5)
             }
             canopy()
-            box(0,-0.66,0.30,0.055,0.42,0.30,3)
+            if kind==0 {
+                box(0,-0.66,0.30,0.055,0.42,0.30,3)
+            }
             box(0,1.30,0.11,0.07,0.22,0.018,4)
             box(0,-0.63,0.247,0.075,0.38,0.025,7)
             detail()
         }
     }
 
-    private static let palette:[(Float,Float,Float)] = [
-        (100,115,130),(32,40,52),(240,100,45),(145,164,180),
-        (255,80,45),(255,80,45),(255,80,45),(255,80,45)
-    ]
+    /// GpuRobot70.cs:5-6: source drone color grouping. All material
+    /// slots 4–7 share (255,80+kind*12,45); kind 0/1 differ.
+    private static func palette(_ kind:Int)->[(Float,Float,Float)] {
+        let accent:Float=Float(80+kind*12)
+        return [(100,115,130),(32,40,52),(240,100,45),(145,164,180),
+                (255,accent,45),(255,accent,45),(255,accent,45),(255,accent,45)]
+    }
     private struct Key:Hashable {
         let x:Int,y:Int,z:Int,material:Int
         init(_ p:P,_ mat:Int) {
@@ -318,9 +361,16 @@ enum CarbonisShooterMesh71 {
             material=mat
         }
     }
-    static func typeZero()->Mesh {
-        var builder=Builder()
+    static func typeZero()->Mesh {build(kind:0)}
+    static func typeOne()->Mesh {build(kind:1)}
+
+    /// Only source types actually implemented in this function may be used.
+    /// The playable player craft is handled separately by Vanguard431Source.
+    private static func build(kind:Int)->Mesh {
+        precondition(kind==0 || kind==1)
+        var builder=Builder(kind:kind)
         builder.build()
+        let palette=palette(kind)
         // Source ShipMesh.CacheNormal and Add: smooth only 1,2,3,7,
         // with per-material/per-position normalization threshold dot>.74.
         var normals:[Key:[P]] = [:]
