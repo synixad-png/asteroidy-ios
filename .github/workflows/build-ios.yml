@@ -274,6 +274,13 @@ jobs:
           /tmp/ios-asset-tests ASTEROIDYiOS/Assets/Vanguard556.as3d
       - name: Install XcodeGen
         run: brew install xcodegen
+      - name: Stage original 26-sector v568 Carbonis C279 and source W3 assets
+        run: |
+          set -euo pipefail
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_w3_home_planet290.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets
+          echo 'Verified real CARBONIS C279 and W3 assets staged for unsigned IPA.'
       - name: Generate native Xcode project
         run: xcodegen generate
       - name: Compile iPhone/iPad device build (unsigned)
