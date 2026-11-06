@@ -93,6 +93,7 @@ final class OriginalAudioAV568: ObservableObject {
     // Original MusicAudio.cs: voice announcements interrupt one another.
     private var spokenVoices:[AVAudioPlayer]=[]
     private var musicDuck:Float=1
+    private var missionPhase:CarbonisCombat568.Phase = .playing
     private var masterMusicVolume:Float {
         Float(settings.musicPercent)/100*0.8*musicDuck
     }
@@ -156,7 +157,8 @@ final class OriginalAudioAV568: ObservableObject {
             switch context {
             case .menu:
                 if !previewStopped {playTrack(previewActive ? (pendingPreviewIndex ?? lastPreviewIndex) : 0)}
-            case .mission(let sector):playTrack(OriginalAudioCatalog568.missionTrack(sector))
+            case .mission(let sector):
+                playTrack(missionPhase == .playing ? OriginalAudioCatalog568.missionTrack(sector) : 0)
             case .diagnostic:break
             }
         }
@@ -347,6 +349,7 @@ final class OriginalAudioAV568: ObservableObject {
         previewActive=false
         pendingPreviewIndex=nil
         musicDuck=1
+        missionPhase = .playing
         context = .mission(sector)
         // MusicAudio.cs:79 idle power .16, full thrust 1.0, no audio
         // generation in the Metal render loop.
@@ -363,6 +366,7 @@ final class OriginalAudioAV568: ObservableObject {
     // the normal current-level track and live engine audio.
     func missionPhase568(_ phase:CarbonisCombat568.Phase) {
         guard case .mission(let sector) = context else {return}
+        missionPhase=phase
         switch phase {
         case .playing:
             musicDuck=1
@@ -402,7 +406,7 @@ final class OriginalAudioAV568: ObservableObject {
             music?.pause()
             effects.forEach { $0.pause() }
         } else {
-            if case .mission = context {
+            if case .mission = context, missionPhase == .playing {
                 enginePlayback52.setPower(engineLevel52,
                     effectsVolume:Float(settings.effectsPercent)/100)
                 enginePlayback52.start()
@@ -413,7 +417,7 @@ final class OriginalAudioAV568: ObservableObject {
                 case .menu:
                     if !previewStopped {playTrack(previewActive ? (pendingPreviewIndex ?? lastPreviewIndex) : 0)}
                 case .mission(let sector):
-                    playTrack(OriginalAudioCatalog568.missionTrack(sector))
+                    playTrack(missionPhase == .playing ? OriginalAudioCatalog568.missionTrack(sector) : 0)
                 case .diagnostic: break
                 }
             }
