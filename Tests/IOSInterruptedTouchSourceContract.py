@@ -15,4 +15,14 @@ assert ".onEnded { _ in input.shooting = false }" in s
 assert ".onEnded { _ in input.tarczaHeld = false }" in s
 assert "input.steer = 0; input.thrust = 0" in s
 print("PASS: source touch-hold state resets on foreground interruption and campaign overlay")
+
+renderer = Path("ASTEROIDYiOS/MetalRenderer.swift").read_text(encoding="utf-8")
+assert "@Published var gameplayPaused = false" in s
+assert "input.gameplayPaused = phase != .active || showCampaign" in s
+assert "input.gameplayPaused = visible || scenePhase != .active" in s
+assert "let elapsed = input.gameplayPaused ? 0.0 : frameElapsed" in renderer
+assert renderer.index("lastTime = now") < renderer.index("let elapsed = input.gameplayPaused")
+assert "fixedClock.advance(elapsed:elapsed)" in renderer
+assert "introTime41+Float(elapsed)" in renderer
+print("PASS: campaign/background pauses simulation and cinematic clock without a catch-up")
 print("LIMIT: source contract only; requires native iOS touch interruption test")
