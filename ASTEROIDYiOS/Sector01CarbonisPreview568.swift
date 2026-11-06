@@ -193,6 +193,26 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     guard let buffer=newBuffer else {throw SourceError.metal}
                     rockBuffers[shape]=buffer
                 }
+                // Original playable Vanguard, not W3 lookalike geometry.
+                // W3 and combat use the same SHA-locked source mesh and JPEG.
+                if gameSession != nil {
+                    let parsed=try SourceVanguardMesh431(
+                        data:Self.verified("Vanguard431Source.mesh"))
+                    craftBuffer=try Self.makeBuffer(parsed.vertices,device:device)
+                    craftVertexCount=parsed.vertexCount
+                    craftTexture=try texLoader.newTexture(
+                        data:Self.verified("Vanguard431Base.jpg"),options:opts)
+                    guard let fighterFragment=library.makeFunction(
+                        name:"sector01SourceCraftFragment568") else {
+                        throw SourceError.metal
+                    }
+                    let fighterSpec=MTLRenderPipelineDescriptor()
+                    fighterSpec.vertexFunction=v
+                    fighterSpec.fragmentFunction=fighterFragment
+                    fighterSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
+                    fighterSpec.depthAttachmentPixelFormat = .depth32Float
+                    craftPipeline=try device.makeRenderPipelineState(descriptor:fighterSpec)
+                }
                 let ds=MTLDepthStencilDescriptor()
                 ds.depthCompareFunction = .lessEqual
                 ds.isDepthWriteEnabled=true
