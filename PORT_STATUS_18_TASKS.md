@@ -1,3 +1,36 @@
+## NOWY ETAP 06.11.2026 — pierwsza interaktywna misja CARBONIS 01 (kod wdrożony, IPA weryfikowane)
+
+**33% projektu ukończone implementacyjnie (+2 pp) / 67% pozostało.** Po wcześniejszym kroku 31% wdrożono źródłowy VANGUARD431 w scenie CARBONIS C279 z kamerą Sphere67, sterowaniem L/P bez widocznych analogów, osobnym przyciskiem ognia, klatkową symulacją pocisków i myśliwców z oryginalnej WAVE, rozpadem asteroid, uszkodzeniami, śmiercią, 0,2s warunkiem zwycięstwa i radarem rzeczywistych zagrożeń. `CarbonisSession568` jest wspólnym stanem logiki i Metal; nie jest to niezależna demonstracja Boreas. Zasoby planety z czterech audytowanych ZIP są teraz przygotowywane również podczas budowania IPA.
+
+**Aktualne testy:** poprzedni przebieg [GitHub Actions 42246582810](https://github.com/synixad-png/asteroidy-ios/actions/runs/42246582810) ma `verify-sphere-linux` **SUCCESS**, natomiast zadanie natywnego macOS `compile-device` nie miało jeszcze potwierdzonego zakończenia. Najnowszy workflow wymaga przejścia smoke testu rzeczywistego `CarbonisCombat568` na Linux przed Xcode. **Nie ma jeszcze potwierdzonego działającego IPA**, nie przeprowadzono interaktywnego testu iPhone/iPad.
+
+**Wyraźne granice:** gra na CARBONIS jest zaimplementowana w kodzie, ale oryginalne modele myśliwców (`ShipMesh/GpuRobot70`) nadal nie są renderowane w 3D; ich pozycje AI i pociski działają w symulacji i są pokazane na radarze. Nie ukończono 24 pozostałych misji PC, bonusowego widoku atlasu nr 26, bossów, pełnego uzbrojenia, efektów, audio, zapisu i testów GPU. Zwycięstwo próbnego sektora nie oznacza zaktualizowanej kampanii. [Raport prac](Reports/V568_CARBONIS_LIVE_COMBAT_2026-11-06.md).
+
+| Nr | Stałe zadanie | Było | Jest | Zmiana |
+|---:|---|---:|---:|---:|
+| 1 | Kompilacja i infrastruktura iOS | 88% | 88% | 0 pp |
+| 2 | Silnik graficzny Metal | 89% | 89% | 0 pp |
+| 3 | Materiały PBR, tekstury i oświetlenie | 25% | 25% | 0 pp |
+| 4 | Statki, planety i zasoby 3D | 24% | 24% | 0 pp |
+| 5 | Animacje modeli GLB | 35% | 35% | 0 pp |
+| 6 | Fizyka lotu i poruszanie po planetach | 35% | **41%** | **+6 pp** |
+| 7 | Kolizje, obrażenia i zniszczenia (dotychczasowy moduł) | 100% | 100% | 0 pp |
+| 8 | Asteroidy i fale walki (dotychczasowy moduł) | 100% | 100% | 0 pp |
+| 9 | Bronie i trafienia | 10% | **13%** | **+3 pp** |
+| 10 | Przeciwnicy i AI | 0% | **3%** | **+3 pp** |
+| 11 | Bossowie i ich mechaniki | 0% | 0% | 0 pp |
+| 12 | Komplet misji planetarnych | 12% | **18%** | **+6 pp** |
+| 13 | Kampania — 26 sektorów atlasu | 35% | 35% | 0 pp |
+| 14 | Menu W3, HUD i ustawienia | 15% | **19%** | **+4 pp** |
+| 15 | Dźwięki i muzyka | 0% | 0% | 0 pp |
+| 16 | Zapisywanie i wczytywanie gry | 20% | 20% | 0 pp |
+| 17 | Sterowanie | 35% | **41%** | **+6 pp** |
+| 18 | Optymalizacja i testy | 10% | 10% | 0 pp |
+
+**Dalsza kolejność A–J:** najpierw potwierdzić build iOS/IPA i działanie sterowania, następnie źródłowe modele myśliwców na C279, dalej oryginalne AI/zbrojenie/kolizje, cele, pozostałe misje, bossowie, audio, zapis i testy. Starsze 31% poniżej to historia, nie aktualny stan.
+
+---
+
 ## AKTUALNY POSTĘP 06.11.2026 — źródłowe asteroidy C279 w natywnym Metal
 
 **Całość: 31% wykonane (+1 pp), 69% pozostało.** Etap C: scena CARBONIS korzysta z rzeczywistego zestawu asteroid `MissionWave568`. W `Sector01CarbonisPreview568` zaimplementowano proceduralne siatki `RockVertices75`, buforowane według kształtu, źródłowe osadzenie `StampSphere67`, toon z `GpuRockInstancing75` i rzeczywiste klatkowe `SphereAsteroid556.advance(dt:)`. Oryginalne indeksy 810 747, 2 grupy materiałów, UV i 3 tekstury C279 zostały nietknięte.
