@@ -19,6 +19,9 @@ struct CarbonisCombat568 {
         var hostile: Bool
         // Gpu EnemyShots71 / ShooterShotDamage96: first CARBONIS = 8.
         var damage:Int = 8
+        var pierce:Int = 1
+        var hitRockSeeds:[Int] = []
+        var hitShooterPhases:[Float] = []
     }
     struct Shooter {
         var core: MissionWave568.Fighter
@@ -48,6 +51,10 @@ struct CarbonisCombat568 {
     var hull:Int=60
     var armor:Int=25
     var lives:Int=3
+    var shieldCharges:Int=0
+    let selectedWeapon:Sector01Shop568.Weapon
+    let upgradeLevel:Int
+    let rapidLevel:Int
     var score:Int=0
     var collectedLootTokens:Int=0
     private var lootCarry:Float=0
@@ -75,6 +82,11 @@ struct CarbonisCombat568 {
         isReplay=prepared.isReplay
         lives=prepared.reset.lives
         invincible=prepared.reset.invincibleSeconds
+        let profile=prepared.shopProfile
+        selectedWeapon=profile.weapon
+        upgradeLevel=profile.upgradeLevel
+        rapidLevel=profile.rapidLevel
+        shieldCharges=profile.shieldCharges
     }
     static func unit(_ a:Vec2)->Vec2 {
         let n=sqrt(a.lengthSquared)
@@ -92,12 +104,20 @@ struct CarbonisCombat568 {
     mutating func suffer(_ damage:Int) {
         guard phase == .playing && invincible<=0 else{return}
         lastContactCount += 1
+        // BossTunnelGame.HitByBoss original purchased shield intercept:
+        // 1 charge, one second immunity, no armor/hull damage.
+        if shieldCharges>0 {
+            shieldCharges-=1
+            invincible=1
+            return
+        }
         let blocked=min(armor,damage)
         armor-=blocked
         hull-=damage-blocked
         invincible=0.8
         if hull>0 {return}
         lives-=1
+        shieldCharges=0
         if lives<=0 {phase = .defeat; hull=0;return}
         hull=60;armor=25;invincible=3
         flight.position=Vec2(x:640,y:360)
@@ -131,14 +151,8 @@ struct CarbonisCombat568 {
              objectivePosition:Vec2(x:640,y:420))
         rocks.append(contentsOf:additions)
         updateShooters(dt:dt)
-        if shooting && cooldown<=0 {
-            cooldown=0.16 // Game.ShotIntervalBase97 Pulse, rank 1
-            let forward=Vec2(x:cos(flight.heading),y:sin(flight.heading))
-            let nose=Sphere67.offset(flight.position,by:forward*20)
-            let vel=Sphere67.components(nose,Sphere67.transport(
-                Sphere67.vector(flight.position,forward*610+flight.velocity),
-                from:Sphere67.normal(flight.position),to:Sphere67.normal(nose)))
-            bullets.append(Projectile(point:nose,velocity:vel,life:1.1,hostile:false))
+        if shooting && cooldown<=0 && bullets.count<=140 {
+            fireSourceWeapon()
         }
         stepShots(dt:dt)
         // Original Physics68.ShipContacts68: always resolve physical
@@ -464,14 +478,54 @@ struct CarbonisCombat568 {
         }
     }
 
+    /// Game.Fire / ShotIntervalBase97: real first-level shop weapons,
+    /// including relative Twin barrels, Scatter fan, high-power pierce.
+    private mutating func fireSourceWeapon() {
+        let base:Float=selectedWeapon == .scatter ? 0.31 :
+                         selectedWeapon == .twin ? 0.20 : 0.16
+        let reduction:Float=selectedWeapon == .scatter ? 0.03 : 0.02
+        cooldown=max(0.075,
+            (base-reduction*Float(upgradeLevel-1)) /
+            (1+Float(rapidLevel)*0.15))
+        let count=selectedWeapon == .twin ? 2 :
+                  selectedWeapon == .scatter
+                    ? (upgradeLevel==3 ? 5:3) : 1
+        let direction=Vec2(x:cos(flight.heading),
+                           y:sin(flight.heading))
+        let side=Vec2(x:-direction.y,y:direction.x)
+        for index in 0..<count {
+            let offset:Float=selectedWeapon == .scatter ?
+                (Float(index)-Float(count-1)*0.5)*0.16 : 0
+            let angle=flight.heading+offset
+            let heading=Vec2(x:cos(angle),y:sin(angle))
+            var origin=Sphere67.offset(flight.position,by:direction*20)
+            if selectedWeapon == .twin {
+                origin=Sphere67.offset(origin,
+                    by:side*(index==0 ? -9:9))
+            }
+            let raw=heading*(610+Float(upgradeLevel-1)*95)
+                +flight.velocity
+            let velocity=CarbonisBodyContact68.transported(
+                raw,from:flight.position,to:origin)
+            let damage=selectedWeapon == .pulse && upgradeLevel==3 ? 2 : 1
+            let pierce=upgradeLevel==3 &&
+                (selectedWeapon != .scatter || index==count/2) ? 2:1
+            bullets.append(Projectile(
+                point:origin,velocity:velocity,life:1.1,
+                hostile:false,damage:damage,pierce:pierce))
+        }
+    }
+
     /// Source Physics68.cs:77 ImpactRock68: Pulse transfers momentum and
     /// torque to the *actual* Rock state; it is not damage-only shooting.
     /// Level-one Pulse has one damage and one pierce, so transfer=1.
     static func impactRock68(_ rock:inout SphereAsteroid556,
                              shot:Projectile) {
         guard rock.mass>0 && rock.radius>0 else{return}
+        let transfer:Float=shot.pierce>1 ? 0.20 : 1
         let momentum=CarbonisBodyContact68.transported(
-            shot.velocity,from:shot.point,to:rock.position)*0.055
+            shot.velocity,from:shot.point,to:rock.position) *
+            (0.055*Float(max(1,shot.damage))*transfer)
         var lever=Sphere67.delta(target:shot.point,origin:rock.position)
         let length=sqrt(lever.lengthSquared)
         if length>rock.radius {
@@ -509,6 +563,7 @@ struct CarbonisCombat568 {
             var shooterIndex:Int?=nil
             var firstShooter:Float=2
             for j in shooters.indices {
+                if shot.hitShooterPhases.contains(shooters[j].phase) {continue}
                 if let time=Self.projectedHit71(
                     shot,target:shooters[j].core.position,radius:16,dt:dt),
                     time<firstShooter {
@@ -529,8 +584,9 @@ struct CarbonisCombat568 {
                         shot.velocity,from:shot.point,
                         to:shooters[j].core.position)*0.035
                     shooters[j].velocity=shooters[j].velocity+recoil
-                    shooters[j].core.hp-=1
+                    shooters[j].core.hp-=shot.damage
                     impact=true
+                    bullets[i].hitShooterPhases.append(shooters[j].phase)
                     if shooters[j].core.hp<=0 {
                         let destroyed=shooters.remove(at:j)
                         shooterKills+=1
@@ -557,7 +613,8 @@ struct CarbonisCombat568 {
                 // not the first array element, regardless of draw order.
                 var hitIndex:Int?=nil
                 var first:Float=2
-                for j in rocks.indices where rocks[j].shardLife<=0 {
+                for j in rocks.indices where rocks[j].shardLife<=0 &&
+                    !shot.hitRockSeeds.contains(rocks[j].shapeSeed) {
                     let travel=shot.velocity*dt
                     let delta=Sphere67.delta(target:rocks[j].position,
                                              origin:shot.point)
@@ -568,8 +625,9 @@ struct CarbonisCombat568 {
                 }
                 if let j=hitIndex {
                     Self.impactRock68(&rocks[j],shot:shot)
-                    rocks[j].health-=1
+                    rocks[j].health-=shot.damage
                     impact=true
+                    bullets[i].hitRockSeeds.append(rocks[j].shapeSeed)
                     if rocks[j].health<=0 {
                         let removed=rocks.remove(at:j)
                         rocksDestroyed+=1
@@ -579,8 +637,14 @@ struct CarbonisCombat568 {
                     }
                 }
             }
-            if impact {bullets.remove(at:i);continue}
-            var moved=shot
+            if impact {
+                if bullets[i].pierce<=1 {
+                    bullets.remove(at:i)
+                    continue
+                }
+                bullets[i].pierce-=1
+            }
+            var moved=bullets[i]
             moved.point=Sphere67.advance(shot.point,velocity:&moved.velocity,dt:dt)
             moved.life-=dt
             if moved.life<=0 {bullets.remove(at:i)}else{bullets[i]=moved}
