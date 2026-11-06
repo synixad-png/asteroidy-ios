@@ -44,7 +44,15 @@ assert "MissionCatalog568.title(for:progress.selectedSector)" in app
 assert 'accessibilityIdentifier("campaign-26-sector-selector")' in app
 assert 'accessibilityIdentifier("campaign-sector-' in app
 assert ".disabled(!available)" in app
-assert "START MISJI: JESZCZE NIEPODŁĄCZONY" in app
+assert "ETAP C: PLANETA ŹRÓDŁOWA — WALKA I UKOŃCZENIE MISJI NIEPODŁĄCZONE" in app
+assert "WEJDŹ NA CARBONIS 01 / ŹRÓDŁOWA SCENA 3D" in app
+assert 'accessibilityIdentifier("campaign-enter-source-sector01")' in app
+assert "if let sourceEntry=sourceSector01" in app
+assert "Sector01Scene568(entry:sourceEntry,returnToAtlas:" in app
+assert "Sector01Entry568.open(" in app
+assert "hasOriginalC279Assets:Sector01CarbonisPreview568.isAvailable" in app
+assert "onInspect:inspectSector" in menu
+assert "onInspect: { sector in inspectSourceSector(sector) }" in app
 assert "onOpen" not in menu  # no invented campaign loader
 assert 'openDiagnostic()' in menu
 assert "import WebKit" not in menu and "WKWebView(" not in menu
@@ -67,6 +75,6 @@ assert "accessibilityLabel(item.rawValue)" in menu
 assert "page=item" in menu and "page=nil" in menu
 assert "switch item" in menu
 assert "if item == .campaign || item == .newGame" in menu
-print("PASS: 7 W3 native actions and real 26-sector unlocked-only persistent mission selection")
+print("PASS: 7 W3 native actions, 26-sector source selection and genuine C279 scene transition")
 print("PASS: simulator GPU verification opt-outs remain, diagnostics and collisions protected")
 print("LIMIT: actual iPhone/iPad seven-button XCTest and full PC W3 pixel parity are separately gated")
