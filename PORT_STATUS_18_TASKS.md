@@ -1,3 +1,13 @@
+## UZUPEŁNIENIE 06.11.2026 — pierwsza część źródłowego StartHubMission261 (bez nowego IPA)
+
+**Kod wdrożony:** `ASTEROIDYiOS/MissionStart261.swift` portuje sam etap przygotowania stanu z oryginalnego `PortingReferenceCode/v568/Windows/src/Orbit50.cs`, wiersze 58–78 (archiwum audytu v568): kontrolę 26 sektorów i blokad, reset statku/kamery, pięciu zbiorów obiektów, bossów, zdrowia i czasu, przywrócenie żyć oraz dokładnie `4.5 s` ochrony dla poziomów 1–4 i `3 s` dla 5–26. Moduł nie zmienia zapisu ani bitów ukończenia.
+
+**Testy:** `Tests/MissionStart261Tests.swift` zawiera 171 asercji; analogiczny test kompilowany i uruchomiony lokalnie w Swift/Linux dał PASS. Workflow `verify-combat-only.yml` został uzupełniony o kompilację/uruchomienie testu oraz kompilację iOS bez IPA; końcowy wynik GitHub Actions dla nowej rewizji nie został jeszcze potwierdzony.
+
+**Granica funkcjonalności:** zgodnie z oryginałem następne wywołania to `Wave()` i `BeginLevelIntro()`. Nie zostały jeszcze przeniesione, podobnie jak rzeczywisty lot/walka w sektorze C279. Nowy moduł przygotowujący **nie jest jeszcze podłączony do ekranu CARBONIS**, aby nie pokazywać pozornego startu gry. Następny krok: port źródłowej `Wave()` i inicjalizacja rzeczywistego runtime misji, a potem integracja z widokiem. Zamrożone mechanizmy 7/8 pozostawiono bez zmian.
+
+**Procenty bez zmian:** 29% całego projektu / 71% pozostało. Sama pierwsza część inicjalizacji nie uzasadnia zwiększenia procentu całej gry. **Nie wygenerowano IPA.** Commity: `c6749960`, `674fd4fa`, `8ea6ac5d`.
+
 # ASTEROIDY iOS — stały harmonogram portowania
 
 ## UZUPEŁNIENIE 06.11.2026 — bezpieczeństwo wejścia do CARBONIS (bez zmiany postępu)
