@@ -47,7 +47,7 @@ try:
     assert "Self.rotateXDegrees(sphereFlight.flight.visualPitch)" in metal
     assert "let shipModel=craft *" in metal
     assert "mvp:vp*shipModel,model:shipModel" in metal
-    assert "PlayerShip367 has already applied StandardSize369=.714" in metal
+    assert "PlayerShip363 has already applied StandardSize369=.714" in metal
     z,info=entries["PortingResources/v568/Shared/assets/player_ship367.mesh.gz"]
     gpu,face,metadata=ship.convert(z.read(info))
     mins=[float("inf")]*3
