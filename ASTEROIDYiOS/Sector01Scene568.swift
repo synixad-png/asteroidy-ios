@@ -5,12 +5,13 @@ import SwiftUI
 ///
 /// This screen renders the genuine 270249-triangle indexed planet, with the
 /// same audited material buffers and three original textures as in the atlas.
-/// It is *not* a replacement for Game.StartHubMission261, the real Wave(),
-/// spherical ship flight or PC mission success/defeat. No fake enemies,
-/// completion flags, reward or saved mission progress are generated.
+/// The source-derived initial Game.Wave() snapshot is now prepared before
+/// opening this screen, but its actors are not yet drawn/stepped in gameplay.
+/// This is not complete flight, enemy AI, hit detection or victory/defeat.
 struct Sector01Scene568: View {
     let entry: Sector01Entry568
     let returnToAtlas: () -> Void
+    let preparedWave: Sector01PreparedWave568
 
     @State private var yaw: Float = 0
     @State private var pitch: Float = 0
@@ -90,6 +91,15 @@ struct Sector01Scene568: View {
                         VStack(alignment:.leading,spacing:4) {
                             Text("270 249 TRÓJKĄTÓW / 2 MATERIAŁY")
                                 .foregroundStyle(.cyan)
+                            Text("WAVE: " +
+                                 String(preparedWave.encounter.rocks.count) +
+                                 " ASTEROID · " +
+                                 String(preparedWave.encounter.fighters.count) +
+                                 " MYŚLIWCE · " +
+                                 String(preparedWave.encounter.robots.count) +
+                                 " ROBOTY")
+                                .foregroundStyle(.orange)
+                                .accessibilityIdentifier("sector01-source-wave-prepared")
                             Text(Self.sourceHeightProbe277.map {
                                 "MAPA TERENU 512×256 / ODCZYT +X: " +
                                 String(format:"%.5f",$0)
@@ -107,7 +117,7 @@ struct Sector01Scene568: View {
                     .padding(.vertical,7)
                     .background(.black.opacity(0.75))
 
-                    Text("ETAP C: WIDOK PRAWDZIWEJ PLANETY. LOT, FALA WALKI, KOLIZJE TERENU I UKOŃCZENIE MISJI SĄ JESZCZE W TRAKCIE PORTOWANIA.")
+                    Text("ETAP C: INICJALNA WAVE PRZYGOTOWANA Z ORYGINALNYCH REGUŁ. PRZECIWNICY NIE SĄ JESZCZE RENDEROWANI ANI STEROWANI PRZEZ AI; LOT, KOLIZJE I UKOŃCZENIE MISJI SĄ W TRAKCIE PORTOWANIA.")
                         .font(.system(size:compact ? 9 : 11,design:.monospaced))
                         .foregroundStyle(.yellow)
                         .frame(maxWidth:.infinity,alignment:.leading)
