@@ -334,6 +334,26 @@ struct CampaignAtlas556: View {
                     .font(.system(size:11,weight:.semibold,design:.monospaced))
                     .foregroundStyle(.cyan)
                     .accessibilityIdentifier("campaign-selected-planet")
+                if progress.selectedSector == 1 {
+                    VStack(alignment:.leading,spacing:5) {
+                        Text("CARBONIS — ORYGINALNA PLANETA 3D / ŹRÓDŁOWA SIATKA")
+                            .font(.system(size:10,weight:.semibold,design:.monospaced))
+                            .foregroundStyle(.orange)
+                        if Sector01CarbonisPreview568.isAvailable {
+                            Sector01CarbonisPreview568()
+                                .frame(height:166)
+                                .accessibilityLabel("Źródłowa planeta CARBONIS, podgląd 3D")
+                        } else {
+                            Text("BRAK ZWERYFIKOWANEJ SIATKI C279 W PAKIECIE")
+                                .font(.system(size:10,design:.monospaced))
+                                .foregroundStyle(.secondary)
+                        }
+                        Text("PODGLĄD — START MISJI I KOLIZJE PLANETY: ETAP C")
+                            .font(.system(size:10,design:.monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth:.infinity,alignment:.leading)
+                }
                 LazyVGrid(columns:columns,spacing:8) {
                     ForEach(1...CampaignProgress556.missionCount,id:\.self) { sector in
                         let finished=progress.completed(sector)
