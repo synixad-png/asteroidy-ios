@@ -32,11 +32,13 @@ assert '["xcrun","simctl","get_app_container",udid,PACKAGE,"data"]' in source
 assert "Tools/verify_simulator_render_snapshot.swift" in source
 assert 'reports/f"{kind}_real_pixels.txt",check=False)' in source
 assert 'raise AppValidationFailed(f"{kind}: scene pixel evidence missing")' in source
-assert 'run_command(["xcrun","simctl","bootstatus",udid,"-b"],125,' in source
+assert 'run_command(["xcrun","simctl","bootstatus",udid,"-b"],540,' in source
 assert 'run_command(["xcrun","simctl","install",udid,str(app)],85,' in source
 assert '["xcrun","simctl","launch",udid,PACKAGE],50,' in source
 assert "PACKAGE = \"com.synixad.asteroidyios\"" in source
 assert "run_command([" in source
+assert 'parser.add_argument("--only",choices=["IPHONE","IPAD","BOTH"],' in source
+assert 'if kind not in kinds:' in source
 
 # Exercise the ACTUAL schema validator, not a static-only regex.
 import importlib.util
