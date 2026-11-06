@@ -99,6 +99,13 @@ struct CarbonisCombat568 {
         elapsed+=dt; cooldown=max(0,cooldown-dt)
         invincible=max(0,invincible-dt)
         flight.tick(move:move,aim:aim,dt:dt)
+        // Game.cs:240 — terminal debris expires BEFORE advancing rocks.
+        for i in rocks.indices.reversed() {
+            if rocks[i].shardLife>0 {
+                rocks[i].shardLife-=dt
+                if rocks[i].shardLife<=0 {rocks.remove(at:i)}
+            }
+        }
         // Source Game.Step: spherical rock WorldAdvance67 and spin.
         for i in rocks.indices {rocks[i].advance(dt:dt)}
         let additions=incoming.step(dt:dt,isPlaying:true,ship:flight.position,
@@ -121,7 +128,7 @@ struct CarbonisCombat568 {
         resolveShipContacts()
         // MissionCleared69: objective Clear plus absence of rock and bug
         // threats and all reinforcements, not a timer-based fake win.
-        let allThreatsCleared=rocks.filter({$0.shardLife<=0}).isEmpty &&
+        let allThreatsCleared=rocks.isEmpty &&
             shooters.isEmpty && incoming.incomingLeft==0 &&
             hostileShots.isEmpty
         if allThreatsCleared && !completed {
@@ -178,6 +185,12 @@ struct CarbonisCombat568 {
     /// Physics68.SplitPhysical68: each large rock produces two physical
     /// spherical fragments with perpendicular 19-unit momentum and transport.
     private mutating func splitRock(_ parent:SphereAsteroid556) {
+        // Game.Split() makes 18 physical terminal shards from each size-1
+        // asteroid; they expire without score or further splitting.
+        if parent.size==1 {
+            spawnTerminalShards187(parent)
+            return
+        }
         guard parent.size>1,
               let balance=CombatBalance556(level:1,difficulty:.normal,
                                            spherical:true) else{return}
@@ -206,6 +219,37 @@ struct CarbonisCombat568 {
                 spin:parent.spin+sign*0.35,angle:parent.angle,
                 originalHealth:Rock.healthFor(size:nextSize,tier:tier),
                 shapeSeed:random.next()))
+        }
+    }
+
+    /// Game.cs:206-224 SpawnTerminalShards187. Exactly 18 short-lived
+    /// shape-bearing rocks with zero score; don't invent particle decals.
+    private mutating func spawnTerminalShards187(_ parent:SphereAsteroid556) {
+        let pieces=18
+        if rocks.count>220 {return}
+        let basis=CombatBalance556(level:1,difficulty:.normal,
+                                   spherical:true)
+        for i in 0..<pieces {
+            let a=Float(2)*Float.pi*Float(i)/Float(pieces)
+                + random.float(-0.10,0.10)
+            let dir=Vec2(x:cos(a),y:sin(a))
+            let position=Sphere67.offset(parent.position,
+                by:dir*random.float(2,7))
+            let sourceVelocity=parent.velocity
+                + dir*random.float(42,115)
+            let velocity=CarbonisBodyContact68.transported(
+                sourceVelocity,from:parent.position,to:position)
+            let rotation=random.float(-5,5)
+            let shape=random.next()
+            let scale=random.float(0.10,0.23)
+            let life=random.float(1.3,2.5)
+            rocks.append(SphereAsteroid556(
+                position:position,velocity:velocity,
+                radius:10*1.12*scale,size:1,tier:0,
+                health:basis?.sphericalRockHealth(size:1,tier:0) ?? 2,
+                fragment:true,shardLife:life,mass:0.09,
+                spin:rotation,angle:parent.angle,
+                originalHealth:1,shapeSeed:shape))
         }
     }
 
