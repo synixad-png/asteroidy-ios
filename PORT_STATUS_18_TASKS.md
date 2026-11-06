@@ -1,3 +1,9 @@
+## Kompilacja natywna Xcode — diagnoza i poprawka API Metal (06.11.2026)
+
+[Run 42283783569](https://github.com/synixad-png/asteroidy-ios/actions/runs/42283783569) zakończył się **FAIL** podczas natywnej kompilacji `compile-device`, mimo PASS bramki Linux. Rzeczywisty log Xcode wskazał jedno konkretne miejsce: `CarbonisExplosion524Renderer.swift:66:34` — `missing argument for parameter 'slice' in call`. W [commicie 6d212ed](https://github.com/synixad-png/asteroidy-ios/commit/6d212ed987ac89c84c590a68fd793a3b39ba6a0b) uzupełniono wymagany `slice:0` przy `MTLTexture.replace(region:mipmapLevel:slice:withBytes:bytesPerRow:bytesPerImage:)` dla 64³ tekstury szumu. Nie zmieniono shadera, ustawień, kolizji ani mechaniki. Automatyczna ponowna weryfikacja **bez IPA**: [GitHub Actions 42285668117](https://github.com/synixad-png/asteroidy-ios/actions/runs/42285668117), wynik natywnej kompilacji i Apple GPU **do potwierdzenia**. Testy interakcji ustawień na symulatorach [42285229667](https://github.com/synixad-png/asteroidy-ios/actions/runs/42285229667) także nie są jeszcze zaliczone. **Postęp: 38% / 62% pozostało (+0 pp).**
+
+---
+
 ## CARBONIS 01 — weryfikacja interakcji i zapisu ustawień W3 (06.11.2026)
 
 **38% portu wykonane / 62% pozostało (+0 pp).** Dodano natywny iOS XCTest na Apple Simulator iPhone/iPad sprawdzający obie zakładki WYBUCHY 3D i POCISKI: preset ASTEROIDA (92% rozmiaru i 11 kłębów), jakość BALANCED, jasność światła 0–400%, przełącznik mieszania kolorów oraz zapis po faktycznym zamknięciu i ponownym uruchomieniu procesu aplikacji. Dodano wyłącznie identyfikatory dostępności wartości istniejących kontrolek; bez zmian GPU/Metal, fizyki, hitboxów i broni. Naprawiono przestarzałą asercję dawnego podglądowego tytułu atlasu, która nie odpowiada już grywalnemu CARBONIS 01. Testy są podłączone do obecnego workflow `verify-v568-w3-navigation-ui.yml`, **bez tworzenia IPA**.
