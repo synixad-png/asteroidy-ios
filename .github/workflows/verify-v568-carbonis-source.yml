@@ -1,0 +1,28 @@
+name: ASTEROIDY v568 sector 01 CARBONIS indexed source authenticity (NO IPA)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Tools/prepare_v568_carbonis_sector01.py'
+      - 'Tests/V568CarbonisIndexedSourceTests.py'
+      - '.github/workflows/verify-v568-carbonis-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-sector01:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate exactly original C279 2-material mesh/UV/index/heightmap
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile Tools/prepare_v568_carbonis_sector01.py Tests/V568CarbonisIndexedSourceTests.py
+          python3 Tests/V568CarbonisIndexedSourceTests.py
+      - name: Verify no IPA created
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(find . -name '*.ipa' -print -quit)"
