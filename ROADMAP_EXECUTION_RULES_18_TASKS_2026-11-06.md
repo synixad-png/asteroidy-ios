@@ -1,3 +1,13 @@
+## ZATWIERDZONY NOWY ETAP C — CARBONIS 01 od startu do raportu i serwisu (06.11.2026)
+
+**38% kodu portu wdrożono (+2 pp) / 62% całego portu pozostało.** Zachowano *dokładnie tę samą* listę 18 zadań oraz kolejność A–J. Zamknięto etap źródłowej logiki pierwszej misji: od oryginalnej fali C279, poprzez fizykę, uszkodzenia, ulepszoną broń, zabicie rzeczywistych przeciwników, zbieranie żetonów, warunek `FinishLevel`, raport 4,2 s, aż do trwałego zapisu nagród, odblokowania sektora 02, serwisu oraz replay bez kolejnej wypłaty. Przeciwnicy i planety kolejnych sektorów **nie** są jeszcze portowane w tym etapie.
+
+**Testy:** [GitHub Actions 42269114054 — Swift/Linux SUCCESS](https://github.com/synixad-png/asteroidy-ios/actions/runs/42269114054), w tym 18 testów integracyjnych `Sector01FullMission568Tests.swift` na 335 faktycznych krokach symulacji 120 Hz i 41 asercji `Sector01MissionFinish568Tests.swift`. Testy używają kierowanych skryptem strzałów, a nie gry dotykowej. Natywny test Xcode i wizualny/sterowania iPhone dla najnowszej rewizji pozostają niepotwierdzone; oryginalne SFX/efekty nadal brakujące. [Stały harmonogram i wskaźniki](PORT_STATUS_18_TASKS.md) · [Raport techniczny pierwszej misji](Reports/V568_CARBONIS01_FINISH_REWARDS_SERVICE_E2E_2026-11-06.md).
+
+**Następny rozpoczęty punkt należy domknąć przed dalszym:** Xcode/IPA dla nowego źródła, naprawy z logów, iOS scenariusz CARBONIS → wygrana → 4,2 s → serwis → atlas → restart z trwałym stanem; uzupełnić tylko źródłowe dźwięki i efekty sektora 01. Nie przechodzić teraz do trzeciego typu myśliwca ani do tworzenia sektora 02.
+
+---
+
 ## AKTUALNY ETAP C/D — 06.11.2026: źródłowe typy 0 i 1 oraz wspólne reguły AI
 
 **36% zrealizowano implementacyjnie / 64% pozostało**, względem poprzednich 35% (+1 pp). Zachowana pełna lista 18 pozycji i kolejność A–J. Port `ShipMesh(1,false)` tworzy odrębną źródłową siatkę typu 1 (5521 trójkątów i 8 materiałów) obok niezmienionego typu 0 (5345 trójkątów). Metal nie tworzy atrap dla niewdrożonych typów 2–5, a części świecącego rdzenia (5/6) skaluje o 15% wyłącznie podczas ostrzeżenia o strzale, zgodnie z `GpuRobot70.cs:17`. Nowy `ShooterTactics71.swift` przenosi `EnemyTactics71.cs` dla 25 poziomów × 6 rodzajów × 3 trudności bez udawania, że wszystkie misje są już dostępne.
