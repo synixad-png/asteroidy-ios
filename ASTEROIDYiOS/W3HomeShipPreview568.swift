@@ -175,8 +175,7 @@ struct W3HomeShipPreview568: UIViewRepresentable {
                     * Self.ry(elapsed * 42 * .pi/180)
                     * Self.rz(sin(elapsed * 0.71) * 8 * .pi/180)
                     * Self.scale(0.34)
-                let aspect=Float(max(1,view.drawableSize.width)/
-                                 max(1,view.drawableSize.height))
+                let aspect = Float(max(1.0, view.drawableSize.width) / max(1.0, view.drawableSize.height))
                 var uniforms=Uniforms(
                     mvp:Self.perspective(aspect)*model,model:model,
                     eyeView:matrix_identity_float4x4)
