@@ -1,3 +1,13 @@
+## AKTUALIZACJA 06.11.2026 — rzeczywisty teren C279, etap C bez sztucznego ukończenia
+
+**Projekt: 29% wykonane / 71% pozostało (zmiana 0 pp). Stałe 18 zadań i ich dotychczasowe wartości bez zmian.** Ostatnia funkcja: `CarbonisSurface277.swift` — dokładny odczyt oryginalnej mapy wysokości CARBONIS 512×256 na podstawie `Carbonis277.cs:56–65` i `PlanetMesh.cs:193`. Inspektor planety korzysta z rzeczywistego wyniku `surfaceRadius(x:1,y:0,z:0)`; bramka wejścia wymaga również SHA-256 rzeczywistej mapy C279. Pozostają nienaruszone źródłowe indeksy, UV, materiały i blokady misji.
+
+**Weryfikacja:** oryginalna mapa 524296 B, SHA-256 `3ce9a0456d23a5b88de718e7fd8fe6560cb53cd112a31ecc876e6200a762cb39`; lokalne testy Swift/Linux 27/27 PASS na oryginalnym zasobie, włączone również do GitHub Actions bez IPA. **Natywny wynik iOS/Xcode tej rewizji niepotwierdzony.** To tylko próbnik terenu, nie działający kontroler kolizji statku.
+
+**Następna rzeczywista praca:** pozyskanie z pełnego oryginału definicji `Wave()`, kompletna inicjalizacja rzeczywistych fal i fizyki misji; następnie połączenie `SurfaceRadius` z lotem/kolizjami na CARBONIS. W dostępnym archiwum v568 jest `StartHubMission261`, ale nie ma definicji `Wave()` — nie wolno jej zgadywać. Nowego IPA nie wydano.
+
+[Pełny raport źródłowy](Reports/V568_STAGE_C_CARBONIS_TERRAIN_SOURCE_2026-11-06.md).
+
 ## UZUPEŁNIENIE 06.11.2026 — pierwsza część źródłowego StartHubMission261 (bez nowego IPA)
 
 **Kod wdrożony:** `ASTEROIDYiOS/MissionStart261.swift` portuje sam etap przygotowania stanu z oryginalnego `PortingReferenceCode/v568/Windows/src/Orbit50.cs`, wiersze 58–78 (archiwum audytu v568): kontrolę 26 sektorów i blokad, reset statku/kamery, pięciu zbiorów obiektów, bossów, zdrowia i czasu, przywrócenie żyć oraz dokładnie `4.5 s` ochrony dla poziomów 1–4 i `3 s` dla 5–26. Moduł nie zmienia zapisu ani bitów ukończenia.
