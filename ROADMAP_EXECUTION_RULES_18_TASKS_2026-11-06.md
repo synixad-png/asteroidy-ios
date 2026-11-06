@@ -666,3 +666,37 @@ i [GPU 42212331152](https://github.com/synixad-png/asteroidy-ios/actions/runs/42
 Nie zastępują one wyniku rzeczywistego testu na urządzeniu.
 **A pozostaje otwarty, B nie rozpoczęto. 18 punktów bez zmiany:
 nr 14 = 10% (+0 pp), całość 27%, pozostaje 73%.**
+
+
+### 06.11.2026 — W3 MENU NAV: wydanie IPA ukończone i zweryfikowane
+
+Jednorazowy, wyraźnie zlecony przez użytkownika build
+[GitHub Actions 42212773252](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212773252)
+zakończył się **SUCCESS** na runnerze `macos-15-intel`.
+Przygotowano **niepodpisany** plik iOS ARM64 na iPhone/iPad
+`ASTEROIDY_v568_W3_MENU_NAV_iPhone_iPad_UNSIGNED.ipa`,
+rozmiar **14 103 697 B**, SHA-256
+`9b16daf6e045220140505ebbed99cf24befadbea8c0b7b2d8a1080df7b5c98ce`.
+Zapisano kontrolę oryginalnych siedmiu zasobów W3/H290/Vanguard,
+`Payload`, architektury, `UIDeviceFamily`, integralności
+ZIP/CRC i ponownie zweryfikowano hash po pobraniu artefaktu.
+
+**Dostarczenie:** użytkownik ma prywatną
+[kopię ZIP z IPA na Dysku Google](https://drive.google.com/file/d/1VyqprYPbt6KLGIqwKzgwrHzAGGqrGSyH/view?usp=drivesdk)
+o rozmiarze **13 943 090 B**. W ZIP znajduje się
+pełny plik IPA do rozpakowania, nie podpisany IPA zainstalowany
+na urządzeniu. Dokładny
+[raport wydania](Reports/V568_W3_MENU_NAV_IPA_RELEASE_2026-11-06.md)
+i [GitHub artifact 13500341359](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212773252/artifacts/13500341359).
+Snapshot kodu `1ebd88d37bd5cf0bb2b26ce961e067f4764b002c`
+zawiera natywną, przewijaną siedmioelementową nawigację W3
+z dostępnością i polami dotykowymi 44 pt, bez zmian świata gry.
+
+**Etap A NIEZAMKNIĘTY** — rzeczywiste natywne XCTest iPhone/iPad
+[42212331207](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331207)
+oraz oddzielna walidacja GPU
+[42212331152](https://github.com/synixad-png/asteroidy-ios/actions/runs/42212331152)
+wciąż nie zakończone; kompilacja IPA nie stanowi dowodu
+obsługi wszystkich przycisków na fizycznym urządzeniu.
+**B jeszcze nie rozpoczęto; 18 zadań zachowane,
+nr 14 = 10% (+0 pp), całość 27%, pozostało 73%.**
