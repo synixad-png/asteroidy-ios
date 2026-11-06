@@ -80,8 +80,11 @@ final class CarbonisExplosion524Renderer {
     /// fragment program samples actual 3D density through the bound.
     func render(_ state:CarbonisDestruction524,time:Float,
                 camera:SphereCamera67,vp:simd_float4x4,
+                settings:CarbonisVisualSettings568,
                 into encoder:MTLRenderCommandEncoder) {
-        let events=state.visibleExplosions(at:time)
+        let events=state.visibleExplosions(
+            at:time,maxCount:settings.simultaneousVolumes,
+            duration:settings.explosionDuration)
         if events.isEmpty {return}
         let outer=SphereCameraView556.originalPlanetOuterRadius
         let shell=(outer+15)/outer
@@ -101,8 +104,11 @@ final class CarbonisExplosion524Renderer {
                 right=SphereVector3(x:1,y:0,z:0)
             }
             let up=SphereVector3.cross(front,right).normalized
-            let radius=event.scale*0.55/outer
-            let extent=radius*5.1
+            // Explosion524.cs:197,203 — both the projected radius
+            // and the shader uScale obey the original "ROZMIAR 3D" slider.
+            let scale=settings.factor(0)
+            let radius=event.scale*scale*0.55/outer
+            let extent=radius*5.1*scale
             let bottomLeft=center-right*extent-up*extent
             let bottomRight=center+right*extent-up*extent
             let topRight=center+right*extent+up*extent
@@ -118,10 +124,13 @@ final class CarbonisExplosion524Renderer {
             put(topRight,1,1);put(topLeft,0,1)
             var params=Parameters(
                 mvp:vp,age:age,
-                scale:1.0,fire:1.35,smoke:1.0,
-                chaos:1.3,spread:1.25,
+                scale:scale,
+                fire:settings.factor(2),smoke:settings.factor(3),
+                chaos:settings.factor(4),spread:settings.factor(5),
                 seed:event.spawned*0.13,
-                lobes:13,steps:22,kind:UInt32(event.kind))
+                lobes:UInt32(settings.value(1)),
+                steps:UInt32(settings.raySamples),
+                kind:UInt32(event.kind))
             vertices.withUnsafeBytes { raw in
                 if let address=raw.baseAddress {
                     encoder.setVertexBytes(address,length:raw.count,index:0)
