@@ -78,7 +78,7 @@ ck('func reserveWrite() -> Int?' in slots and
    'func retainCurrent() -> Int' in slots and
    'func release(_ slot: Int)' in slots,
    'GPU read/write separation regressed')
-ck('@Published var introPreview41 = true' in app and
+ck('@Published var introPreview41 =\n        ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] != "1"' in app and
    '@Published var planetPreview = true' in app,
    'Original cinematic and Boreas test switch should remain reachable')
 print('PASS: original GpuIntro41 weatherTime65 drives Boreas glTF morph')
