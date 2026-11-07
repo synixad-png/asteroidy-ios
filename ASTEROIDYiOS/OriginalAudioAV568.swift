@@ -679,6 +679,8 @@ final class OriginalAudioAV568: ObservableObject {
         guard case .mission = context, introMissionSector568 == nil,
               missionPhase == .playing else {return}
         missionUserPaused=paused
+        // Original MusicBank.AllowPreparation becomes true in Mode.Paused.
+        musicGate.setAllowed(paused && !suspended)
         musicDuck=paused ? 0.55 : 1
         if fadeTimer != nil {updateMusicFade()}
         else {music?.volume=masterMusicVolume}
