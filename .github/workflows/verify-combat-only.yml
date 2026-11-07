@@ -1,5 +1,12 @@
 name: ASTEROIDY iOS - Swift combat tests ONLY (no IPA)
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/verify-combat-only.yml'
+      - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/CarbonisRockGeometry568.swift'
+      - 'Tests/CarbonisRockGeometry568Tests.swift'
+      - 'Tests/RockShapeWarmup568Contract.py'
   workflow_dispatch:
   push:
     branches: [main]
@@ -56,6 +63,7 @@ on:
       - 'ASTEROIDYiOS/CarbonisSurface277.swift'
       - 'ASTEROIDYiOS/CarbonisRockGeometry568.swift'
       - 'Tests/CarbonisRockGeometry568Tests.swift'
+      - 'Tests/RockShapeWarmup568Contract.py'
       - 'ASTEROIDYiOS/CarbonisShooterMesh71.swift'
       - 'Tests/CarbonisShooterMesh71Tests.swift'
       - 'ASTEROIDYiOS/ShooterTactics71.swift'
@@ -141,6 +149,7 @@ on:
 
 jobs:
   publish-combat-verify-run:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -377,6 +386,7 @@ jobs:
       - name: Verify PC v568 source rock geometry for real C279 rendering (no IPA)
         run: |
           set -euo pipefail
+          python3 Tests/RockShapeWarmup568Contract.py
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/CarbonisRockGeometry568.swift Tests/CarbonisRockGeometry568Tests.swift -o /tmp/carbonis-rock-mesh-tests
           /tmp/carbonis-rock-mesh-tests
       - name: Verify real Carbonis277 terrain lookup against original C279 height-map (no IPA)

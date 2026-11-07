@@ -364,8 +364,17 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 rockFallbackSpec.depthAttachmentPixelFormat = .depth32Float
                 rockFallbackPipeline=try device.makeRenderPipelineState(
                     descriptor:rockFallbackSpec)
-                // Cache original procedural geometry per shape, never each frame.
-                for shape in Set(initialRocks.map { CarbonisRockGeometry568.shape(for:$0) }) {
+                // Pre-create every source-reachable shape before the first
+                // playable mission frame. Physics68 splitting must never
+                // synthesize new geometry or create MTLBuffer while firing.
+                // The W3 menu-only preview retains its original lazy scope.
+                let initialShapes=Set(initialRocks.map {
+                    CarbonisRockGeometry568.shape(for:$0)
+                })
+                let preloadShapes:Set<Int> = gameSession == nil
+                    ? initialShapes
+                    : Set(0..<CarbonisRockGeometry568.sourceShapeCount)
+                for shape in preloadShapes.sorted() {
                     let values=CarbonisRockGeometry568.vertices(shape:shape)
                     let newBuffer=values.withUnsafeBytes { bytes in
                         bytes.baseAddress.flatMap {

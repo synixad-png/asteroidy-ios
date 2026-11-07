@@ -31,6 +31,9 @@ enum CarbonisRockGeometry568 {
         11,10,2,10,7,6,7,1,8,3,9,4,3,4,2,3,2,6,3,6,8,
         3,8,9,4,9,5,2,4,11,6,2,10,8,6,7,9,8,1
     ]
+    // shapeSeed has 8 source seeds, tier 5 values, and fragment 2 states.
+    // Exactly 80 source-derived shapes are reachable in combat.
+    static let sourceShapeCount=8*5*2
     static let sourceVertexCount=20*16*3
     static let gpuStride=12
     private static let palette:[V3] = [
