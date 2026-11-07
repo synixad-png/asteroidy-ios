@@ -93,6 +93,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let planetAtmosphereCount:Int
             private let planetGlowCount:Int
             private let visualSettings=CarbonisVisualSettings568.load()
+            private let lava287=SourceLavaLightSettings287.load()
             private let planetFx568=SourcePlanetGraphicsSettings568.load()
             private let shipScale472=SourceShipScale472.load()
             private let missionTerrainScale523:Float
@@ -136,6 +137,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 var glow:Float=1.0
                 // Windows GpuToon60.cs:202 original solar terminator 436.
                 var planetSunNight:SIMD4<Float>=SIMD4<Float>(0,0,1,1)
+                // Original CarbonisCombined469 with Menu139 #45.
+                var lavaBoost287:Float=1.8
             }
             // Exact ABI of Ship.metal FighterPlasmaUniform491.
             private struct EngineUniforms491 {
@@ -619,6 +622,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     gameSession?.game.elapsed ?? t)
                 uniforms.planetSunNight=SIMD4<Float>(
                     sourceSun.0,sourceSun.1,sourceSun.2,sourceSun.3)
+                uniforms.lavaBoost287=lava287.intensity
                 encoder.setRenderPipelineState(pipeline)
                 encoder.setDepthStencilState(depth)
                 encoder.setCullMode(.none)

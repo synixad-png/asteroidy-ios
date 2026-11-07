@@ -49,6 +49,9 @@ on:
       - 'ASTEROIDYiOS/SourceShipScale472.swift'
       - 'Tests/SourceShipScale472Tests.swift'
       - 'Tests/ShipScale472IntegrationContract.py'
+      - 'ASTEROIDYiOS/SourceLavaLightSettings287.swift'
+      - 'Tests/SourceLavaLightSettings287Tests.swift'
+      - 'Tests/SourceLavaLight287SourceContract.py'
       - 'ASTEROIDYiOS/SourcePlanetAtmosphere568.swift'
       - 'ASTEROIDYiOS/SourcePlanetAtmosphere568.metal'
       - 'Tests/SourcePlanetAtmosphere568Tests.swift'
@@ -155,6 +158,12 @@ jobs:
           swiftc ASTEROIDYiOS/SourceShipScale472.swift Tests/SourceShipScale472Tests.swift -o /tmp/source-ship472
           /tmp/source-ship472
           python3 Tests/ShipScale472IntegrationContract.py
+      - name: Verify original lava emission 287 and single-pass source Carbonis469
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourceLavaLightSettings287.swift Tests/SourceLavaLightSettings287Tests.swift -o /tmp/ios-lava287
+          /tmp/ios-lava287
+          python3 Tests/SourceLavaLight287SourceContract.py
       - name: Verify source GpuPlanet Atmosphere47, Glow and Menu139 #2 / #55-57
         run: |
           set -euo pipefail

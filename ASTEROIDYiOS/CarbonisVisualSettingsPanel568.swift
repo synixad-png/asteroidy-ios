@@ -9,6 +9,7 @@ struct CarbonisVisualSettingsPanel568: View {
 
     @State private var profile=CarbonisVisualSettings568.load()
     @State private var planetProfile=SourcePlanetGraphicsSettings568.load()
+    @State private var lava287=SourceLavaLightSettings287.load()
     @State private var shipScale472=SourceShipScale472.load()
     @State private var tab:Int=0
     @State private var previewRevision=0
@@ -21,6 +22,10 @@ struct CarbonisVisualSettingsPanel568: View {
         change(&profile)
         profile.clampAll()
         profile.save()
+    }
+    private func saveLava(_ value:Int) {
+        lava287.setBrightness(value)
+        lava287.save()
     }
     private func savePlanet(_ change:(inout SourcePlanetGraphicsSettings568)->Void) {
         change(&planetProfile)
@@ -311,7 +316,29 @@ struct CarbonisVisualSettingsPanel568: View {
                     .tint(cyan)
                     .accessibilityIdentifier("w3-planet-night-brightness-437")
             }
-            Text("ORIGINAL: WINDOWS/src/Menu139.cs #55–57; GPUToon60.cs TERMINATOR DNIA/NOCY. WARTOŚCI 0–400%, KROK 5%.")
+            VStack(alignment:.leading,spacing:4) {
+                HStack {
+                    Text("JASNOŚĆ EMISJI LAWY")
+                    Spacer()
+                    Text("\(lava287.brightnessPercent)%")
+                        .foregroundStyle(gold)
+                        .accessibilityIdentifier("w3-planet-lava-brightness-value-287")
+                }
+                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .foregroundStyle(.white)
+                Slider(value:Binding(
+                    get:{Double(lava287.brightnessPercent)},
+                    set:{v in saveLava(Int(v.rounded()))}),
+                    in:0...400,step:5)
+                    .tint(cyan)
+                    .accessibilityIdentifier("w3-planet-lava-brightness-287")
+            }
+            Text("ORYGINALNE MENU: PLANETY / #45 — EMISJA LAWY CARBONIS, POŚWIATA LAWY NEWHOME ORAZ MATERIAŁY LAWOWE INNYCH PLANET, GDY ICH RENDERERY ZOSTANĄ PRZENIESIONE.")
+                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .foregroundStyle(muted)
+            Text("ORIGINAL: WINDOWS/src/Menu139.cs #45, #55–57. LAWĘ REGULUJE SKALA 0–400%, KROK 5%, DOMYŚLNIE 180%.")
+                .font(.system(size:9,design:.monospaced))
+                .foregroundStyle(muted)
                 .font(.system(size:9,design:.monospaced))
                 .foregroundStyle(muted)
             Spacer(minLength:0)

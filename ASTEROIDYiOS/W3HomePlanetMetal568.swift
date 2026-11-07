@@ -70,6 +70,7 @@ struct W3HomePlanetMetal568: UIViewRepresentable {
             private let baseTexture: MTLTexture
             private let glowTexture: MTLTexture
             private let started = ProcessInfo.processInfo.systemUptime
+            private let lava287=SourceLavaLightSettings287.load()
             private var proofScheduled=false
             var yaw:Float=0
             var pitch:Float=0
@@ -190,7 +191,8 @@ struct W3HomePlanetMetal568: UIViewRepresentable {
                     * Self.rotationX(pitch)
                     * Self.rotationY(yaw + elapsed*0.19)
                 let projection=Self.orthographic(aspect:aspect)
-                var uniform=Uniforms(mvp:projection*model,model:model)
+                var uniform=Uniforms(mvp:projection*model,model:model,
+                                     glowPower:lava287.intensity)
                 encoder.setRenderPipelineState(pipeline)
                 encoder.setDepthStencilState(depth)
                 encoder.setCullMode(.none) // Do not drop unknown original front-face order.

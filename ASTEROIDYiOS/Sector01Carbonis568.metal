@@ -11,6 +11,7 @@ struct CarbonisSectorUniforms568 {
     uint material;
     float glow;
     float4 planetSunNight;
+    float lavaBoost287;
 };
 struct CarbonisSectorRaster568 {
     float4 position [[position]];
@@ -49,18 +50,30 @@ fragment float4 sector01CarbonisFragment568(
     constexpr sampler sourceSampler(coord::normalized,address::repeat,
                                     filter::linear);
     float4 albedo=in.color;
-    if(u.material==0u) albedo*=base.sample(sourceSampler,in.uv);
+    if(u.material==0u){
+        // Windows/src/GpuPlanet.cs CarbonisCombined469: exact emission
+        // heat mask, color-channel ratios and irradiance contribution.
+        // Compose on the same surface pass. Never draw overlapping
+        // co-planar emissive triangles or replace the original textures.
+        float4 sourceBase=base.sample(sourceSampler,in.uv);
+        float3 hot=emission.sample(sourceSampler,in.uv).rgb;
+        float3 ambient=irradiance.sample(sourceSampler,in.uv).rgb;
+        float heat469=max(max(hot.r,hot.g),hot.b);
+        float mask469=smoothstep(0.12f,0.46f,heat469);
+        float strength469=clamp(u.lavaBoost287,0.0f,4.0f);
+        float irradiation469=min(1.0f,u.lavaBoost287*0.45f)*0.38f;
+        float3 combined469=clamp(
+            sourceBase.rgb+
+            hot*strength469*mask469*float3(1.0f,0.8f,0.5f)+
+            ambient*irradiation469,0.0f,1.0f);
+        albedo.rgb*=combined469;
+        albedo.a*=sourceBase.a;
+    }
     float sunlight=max(0.0f,dot(normalize(in.normal),
                        normalize(float3(-0.6f,0.8f,1.4f))));
-    float3 lit=albedo.rgb*(0.24f+sunlight*0.72f);
-    if(u.material==0u){
-        // These are the authentic unmodified CARBONIS texture samples.
-        // This is deliberately a conservative pre-PBR preview, not fake
-        // claim of parity with Windows v568 GpuPlanet Carbonis shader.
-        float3 ambient=irradiance.sample(sourceSampler,in.uv).rgb;
-        float3 hot=emission.sample(sourceSampler,in.uv).rgb;
-        lit+=albedo.rgb*ambient*0.10f+hot*u.glow*0.38f;
-    }
+    // Lighting remains a partial iOS port, but source emission/irradiance
+    // composition and its user value are no longer arbitrary approximations.
+    float3 lit=clamp(albedo.rgb,0.0f,1.0f)*(0.24f+sunlight*0.72f);
     // Windows GpuToon60.cs:202: terminator on the *planet only*.
     // Disabled source light uses night factor 1, preserving the
     // previous planet appearance; actors/ship/rock are unchanged.
