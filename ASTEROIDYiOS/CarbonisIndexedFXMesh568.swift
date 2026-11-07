@@ -9,8 +9,10 @@ struct CarbonisIndexedFXMesh568 {
     var indices:[UInt32]=[]
     var vertexCount:Int {vertices.count/12}
     var indexCount:Int {indices.count}
-    var transferBytes:Int {vertices.count*MemoryLayout<Float>.size+
-                           indices.count*MemoryLayout<UInt32>.size}
+    var transferBytes:Int {
+        vertices.count*MemoryLayout<Float>.size
+            + indices.count*MemoryLayout<UInt32>.size
+    }
     func expandedTriangles()->[Float] {
         var expanded:[Float]=[]
         expanded.reserveCapacity(indices.count*12)
