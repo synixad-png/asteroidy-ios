@@ -42,7 +42,9 @@ assert "budget.pieceLimit(state.pieces.count)" in mesh
 assert "for event in state.visibleExplosions(" in mesh
 assert "aspect:aspect," in scene.split(
     "CarbonisExplosion524Meshes.vertices(",1)[1].split("))",1)[0]
-assert "SourceVisibleSurface73.possiblyVisible(" in visible
+assert "static func possiblyVisible(" in visible
+assert "let hLimit=depth*(1+margin)+radius *" in visible
+assert "let vLimit=depth*(1+margin)+radius *" in visible
 assert "CarbonisIOSFXBudget568" not in combat
 assert "SourceGeodesicStep568" not in combat
 assert "if !visible" not in combat
