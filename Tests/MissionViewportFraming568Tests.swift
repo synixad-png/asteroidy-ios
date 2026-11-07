@@ -18,7 +18,19 @@ import Foundation
             aspect:19.5/9.0,sourceVerticalFocal:2)
         close(iphone.vertical,2,"iPhone 19.5:9 visuals unmodified")
         close(iphone.horizontal,2/(19.5/9.0),
-              "iPhone horizontal field unchanged")
+              "iPhone horizontal field follows real screen aspect")
+        // Actual iPhone 15 Pro Max panel is 2796x1290 pixels;
+        // SwiftUI landscape logical size is 932x430 points.
+        // Full Metal scene fills the physical display; only UI is inset.
+        let iphone15ProMax=MissionViewportFraming568.focals(
+            aspect:932.0/430.0,sourceVerticalFocal:2)
+        close(iphone15ProMax.vertical,pc.vertical,
+              "iPhone 15 Pro Max wide display never stretches globe")
+        close(iphone15ProMax.horizontal,2/(932.0/430.0),
+              "19.5:9 must expose more horizontal scene than 16:9")
+        precondition(iphone15ProMax.horizontal<pc.horizontal,
+            "real iPhone 15 Pro Max scene expands horizontally, not crops")
+        n+=1
         let ipad=MissionViewportFraming568.focals(
             aspect:4.0/3.0,sourceVerticalFocal:2)
         close(ipad.horizontal,pc.horizontal,
