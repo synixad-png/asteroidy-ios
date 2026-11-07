@@ -65,8 +65,7 @@ import Foundation
         }
         check(groundError<0.000002,
               "indexed ground fans preserve source RGB, alpha, radius, vertical lift")
-        let groundSaved=1-Double(indexedGround.transferBytes)/
-                Double(originalGround.count*4)
+        let groundSaved=1-Double(indexedGround.transferBytes) / Double(originalGround.count*4)
         check(groundSaved>0.50 && groundSaved<0.70,
               "four radial light layers reduce vertex upload without visual loss")
         print(String(format:
@@ -86,10 +85,11 @@ import Foundation
         check(!CarbonisProjectileFX69.groundLights(
               shots,settings:profile).isEmpty,
               "original 400 percent lights remain safely bounded")
-        check(CarbonisProjectileFX69.indexedGroundLights(
-              shots,settings:profile).expandedTriangles().count==
-              CarbonisProjectileFX69.groundLights(
-                  shots,settings:profile).count,
+        let fourHundredLegacyCount=CarbonisProjectileFX69.groundLights(
+            shots,settings:profile).count
+        let fourHundredIndexedCount=CarbonisProjectileFX69.indexedGroundLights(
+            shots,settings:profile).expandedTriangles().count
+        check(fourHundredIndexedCount == fourHundredLegacyCount,
               "optimized ground-light geometry retains source 400 percent brightness")
         profile.projectileColor=2
         profile.projectileMixed=false
