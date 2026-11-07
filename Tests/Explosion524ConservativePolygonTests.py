@@ -45,7 +45,14 @@ assert "float activeRadius=bound*0.98f;" in shader
 assert "float reach2=activeRadius*activeRadius-pixelRadius2;" in shader
 assert "static let sourceDiscSides=24" in host
 assert "vertexCount:Self.sourceDiscSides*3" in host
-assert "let pointA=center+right*(a.x*2*extent)+up*(a.y*2*extent)" in host
+# The polygon is now immutable and GPU-resident. The vertex shader
+# constructs precisely the same camera-facing world points from event
+# center/right/up (the previous per-frame CPU pointA formula).
+assert "private static let sourceDiscMesh:[SIMD2<Float>]" in host
+assert "encoder.setVertexBuffer(discVertexBuffer,offset:0,index:0)" in host
+assert "u.right.xyz*(offset.x*2.0f*u.centerExtent.w)" in shader
+assert "u.up.xyz*(offset.y*2.0f*u.centerExtent.w)" in shader
+assert "o.uv=offset+0.5f;" in shader
 print(f"PASS {samples} original source nonzero pixels retained by exact-bound 24-gon")
 print(f"PASS source alpha discard proof; {100*fraction_saved:.2f}% fewer raster pixels per large explosion bound")
 print("LIMIT: analytical raster-area reduction, NOT a measured device FPS increase")
