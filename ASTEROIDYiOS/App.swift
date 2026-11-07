@@ -70,7 +70,6 @@ struct GameView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var input = FlightInput()
     @StateObject private var audio = OriginalAudioAV568()
-    @State private var showCampaign = false
     @State private var campaign = CampaignStore556.load()
     // Native CARBONIS first mission runs an original source-driven state,
     // isolated from Boreas diagnostic scenes and unported later sectors.
@@ -94,7 +93,6 @@ struct GameView: View {
         else { return }
         input.releaseHeldControls()
         input.gameplayPaused = true
-        showCampaign = false
         reopenAtlasAfterCarbonis = false
         sourceSector01Setup = preparedWave
         sourceSector01 = entry
@@ -118,7 +116,6 @@ struct GameView: View {
                         audio.returnToMenu()
                         input.releaseHeldControls()
                         input.gameplayPaused = true
-                        showCampaign = false
                         showMainMenu = true
                     },onMissionCompleted:{ report in
                         // Only the real Game.FinishLevel source outcome can
@@ -179,16 +176,22 @@ struct GameView: View {
                         .foregroundStyle(.cyan)
                         Button("MENU W3") {
                             input.releaseHeldControls()
-                            showCampaign = false
                             input.gameplayPaused = true
                             showMainMenu = true
                             audio.returnToMenu()
                         }
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.cyan)
-                        Button("KAMPANIA") { showCampaign = true }
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.cyan)
+                        Button("KAMPANIA / W3") {
+                            input.releaseHeldControls()
+                            reopenAtlasAfterCarbonis = true
+                            input.gameplayPaused = true
+                            showMainMenu = true
+                            audio.returnToMenu()
+                        }
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.cyan)
+                        .accessibilityIdentifier("diagnostic-return-w3-campaign")
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, 12)
@@ -346,31 +349,17 @@ struct GameView: View {
                     }
                 }
                 .foregroundStyle(.white)
-                if showCampaign {
-                    CampaignAtlas556(progress: campaign,
-                                     dismiss: { showCampaign = false },
-                                     onSelect: { sector in
-                                         if campaign.selectUnlocked(sector) {
-                                             CampaignStore556.save(campaign)
-                                         }
-                                     },
-                                     onInspect: { sector in inspectSourceSector(sector) })
-                }
                 }
             }.frame(width: g.size.width, height: g.size.height)
         }
         .onAppear { audio.prepareMenuAtStartup() }
         .onChange(of: scenePhase) { phase in
             audio.sceneIsActive(phase == .active)
-            input.gameplayPaused = phase != .active || showCampaign || showMainMenu
+            input.gameplayPaused = phase != .active || showMainMenu
             if phase != .active { input.releaseHeldControls() }
         }
-        .onChange(of: showCampaign) { visible in
-            input.gameplayPaused = visible || showMainMenu || scenePhase != .active
-            if visible { input.releaseHeldControls() }
-        }
         .onChange(of: showMainMenu) { visible in
-            input.gameplayPaused = visible || showCampaign || scenePhase != .active
+            input.gameplayPaused = visible || scenePhase != .active
             if visible { input.releaseHeldControls() }
             if visible && sourceSector01 == nil { audio.returnToMenu() }
         }
@@ -393,10 +382,12 @@ struct CampaignAtlas556: View {
             VStack(alignment:.leading,spacing:12) {
                 HStack {
                     Text("KAMPANIA / 26 SEKTORÓW")
-                        .font(.system(.headline,design:.monospaced))
+                        .font(.system(size:18,weight:.bold,design:.monospaced))
+                        .foregroundStyle(Color(red:0.89,green:0.67,blue:0.31))
                     Spacer()
-                    Button("ZAMKNIJ",action:dismiss)
-                        .accessibilityLabel("Zamknij atlas misji")
+                    Text("ATLAS / W3")
+                        .font(.system(size:11,design:.monospaced))
+                        .foregroundStyle(Color(red:0.39,green:0.75,blue:0.79))
                 }
                 Text("UKOŃCZONE: \(progress.completedCount) / 26")
                     .font(.system(.subheadline,design:.monospaced))
@@ -450,13 +441,15 @@ struct CampaignAtlas556: View {
                                              finished ? Color.green :
                                              available ? Color.cyan : Color.gray)
                             .frame(maxWidth:.infinity,minHeight:48)
-                            .background(current ? Color.orange.opacity(0.2)
-                                        : Color.white.opacity(0.07),
-                                        in:RoundedRectangle(cornerRadius:8))
+                            .background(current
+                                ? Color(red:0.11,green:0.077,blue:0.031)
+                                : Color(red:0.013,green:0.055,blue:0.081))
                             .overlay {
-                                RoundedRectangle(cornerRadius:8)
-                                    .stroke(current ? Color.orange : Color.clear,
-                                            lineWidth:2)
+                                Rectangle()
+                                    .stroke(current
+                                        ? Color(red:0.89,green:0.67,blue:0.31)
+                                        : Color(red:0.39,green:0.75,blue:0.79).opacity(0.22),
+                                            lineWidth:current ? 2 : 1)
                             }
                         }
                         .buttonStyle(.plain)
@@ -480,7 +473,7 @@ struct CampaignAtlas556: View {
                     .font(.system(size:12,weight:.bold,design:.monospaced))
                     .foregroundStyle(.black)
                     .frame(maxWidth:.infinity,minHeight:46)
-                    .background(.orange,in:RoundedRectangle(cornerRadius:7))
+                    .background(Color(red:0.89,green:0.67,blue:0.31))
                     .accessibilityIdentifier("campaign-enter-source-sector01")
                 }
                 Text("SEKTOR 01: WALKA, RAPORT, ŻETONY I ZAPIS · POZOSTAŁE SEKTORY W OPRACOWANIU")
@@ -489,9 +482,10 @@ struct CampaignAtlas556: View {
             }
             .padding(18)
         }
-        .frame(maxWidth:740,maxHeight:550)
-        .background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:18))
-        .padding(12)
+        .frame(maxWidth:.infinity,maxHeight:.infinity)
+        .background(Color(red:0.006,green:0.027,blue:0.047).opacity(0.96))
+        .overlay(Rectangle().stroke(
+            Color(red:0.39,green:0.75,blue:0.79).opacity(0.24),lineWidth:1))
         .accessibilityElement(children:.contain)
         .accessibilityIdentifier("campaign-26-sector-selector")
     }
