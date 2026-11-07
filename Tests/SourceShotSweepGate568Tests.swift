@@ -70,6 +70,61 @@ import Foundation
             precondition(gate.mayReach(target,radius:4),
                          "polar/seam source shot wrongfully culled")
         }
+        // Benchmark the REAL original sweep against the fast
+        // conservative prefilter on the same CPU and same source data.
+        // Do not treat Linux Swift timing as iPhone/iPad Metal FPS.
+        let benchmarkShots:(Int) = 28
+        let benchmarkTargets:(Int) = 64
+        let rounds=6
+        var shotSamples:[CarbonisCombat568.Projectile]=[]
+        var targetSamples:[Vec2]=[]
+        for _ in 0..<benchmarkShots {
+            shotSamples.append(CarbonisCombat568.Projectile(
+                point:point(),
+                velocity:Vec2(x:(sample()-0.5)*1600,
+                              y:(sample()-0.5)*1600),
+                life:1,hostile:false,kind:0))
+        }
+        for _ in 0..<benchmarkTargets {targetSamples.append(point())}
+        var baselineHits=0
+        let baselineStart=ProcessInfo.processInfo.systemUptime
+        for _ in 0..<rounds {
+            for shot in shotSamples {
+                for target in targetSamples {
+                    if CarbonisCombat568.projectedHit71(
+                        shot,target:target,radius:20,dt:1/120) != nil {
+                        baselineHits+=1
+                    }
+                }
+            }
+        }
+        let baselineMs=(ProcessInfo.processInfo.systemUptime-baselineStart)*1000
+        var fastHits=0
+        var broadphasePassed=0
+        let fastStart=ProcessInfo.processInfo.systemUptime
+        for _ in 0..<rounds {
+            for shot in shotSamples {
+                let gate=CarbonisCombat568.ShotSweepGate568(
+                    shot:shot,dt:1/120)
+                for target in targetSamples {
+                    if !gate.mayReach(target,radius:20) {continue}
+                    broadphasePassed+=1
+                    if CarbonisCombat568.projectedHit71(
+                        shot,target:target,radius:20,dt:1/120) != nil {
+                        fastHits+=1
+                    }
+                }
+            }
+        }
+        let fastMs=(ProcessInfo.processInfo.systemUptime-fastStart)*1000
+        precondition(baselineHits==fastHits,
+            "broadphase changed a source projectile hit in CPU benchmark")
+        print(String(format:
+            "CPU reference collision microbenchmark %d candidate checks: old %.2f ms, conservative gate %.2f ms",
+            benchmarkShots*benchmarkTargets*rounds,baselineMs,fastMs))
+        print("Exact source hits preserved:",fastHits,
+              "narrow tests after gate:",broadphasePassed)
+        print("CPU microbenchmark is NOT on-device FPS or GPU timing")
         print("PASS 47,000 original source projectile hit gates and polar/seam checks")
         print("Original hits preserved:",originalHits,
               "broadphase discarded:",rejected,"of",candidates,
