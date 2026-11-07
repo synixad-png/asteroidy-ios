@@ -57,7 +57,7 @@ for token in ("missionUserPaused=paused",
               "engineLevel52=0.16",
               "restoreAudioAfterActivation568(rebuildPlayer:false)"):
     assert token in pauseAudio,token
-assert "guard !suspended, !missionUserPaused" in audio
+assert "guard !suspended, !audioInterrupted, !missionUserPaused" in audio
 assert "missionUserPaused ? 0 : max(0,min(1,raw))" in audio
 assert "missionPhase == .playing && !missionUserPaused" in audio
 assert "let wasSuspended=suspended" in audio
