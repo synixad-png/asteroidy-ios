@@ -218,7 +218,15 @@ struct GameView: View {
                     },onMissionPhase:{ phase in
                         audio.missionPhase568(phase)
                     },onReplay:{
-                        audio.missionPhase568(.playing)
+                        // A retry starts a NEW real mission, so replay
+                        // must pass through Intro41 again before creating
+                        // the fresh combat scene. Do not re-grant tokens
+                        // for a sector already completed in the profile.
+                        var retry=preparedWave
+                        retry.isReplay=campaign.completed(sourceEntry.sector)
+                            || preparedWave.isReplay
+                        sourceSector01Setup=retry
+                        beginMissionIntro568(sector:sourceEntry.sector)
                     },preparedWave:preparedWave)
                     }
                 } else if showMainMenu {
