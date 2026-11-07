@@ -1,3 +1,11 @@
+## ETAP — 07.11.2026: naprawa zanikającego dźwięku po blokadzie ekranu iPada
+
+**Zgłoszenie użytkownika:** dźwięk jest słyszalny podczas gry, ale po wygaszeniu i odblokowaniu iPada nie wraca. Usterka występowała już przed IPA #138 — **nie wynika z optymalizacji asteroid**. W oryginalnym kodzie iOS `sceneIsActive(true)` wznawiało odtwarzacze bez uprzedniego przywrócenia zdezaktywowanej sesji `AVAudioSession`.
+
+**Naprawa wprowadzona:** `OriginalAudioAV568.swift` reaktywuje sesję, obsługuje `AVAudioSession.interruptionNotification` i spóźnione przerwanie po blokadzie, przywraca oryginalną muzykę/Intro43; `OriginalEnginePlayback52.swift` weryfikuje stan rzeczywistego silnika audio, a nie wyłącznie flagę programu. Zachowano utwory, DSP, dźwięki SFX, ustawienia, fizykę, sterowanie i geometrię. [PR #3](https://github.com/synixad-png/asteroidy-ios/pull/3) scalony `fe473b2`, [CI #416](https://github.com/synixad-png/asteroidy-ios/actions/runs/42413506428) **2/2 PASS** — iOS Swift/Metal oraz pełna regresja. [Budowanie IPA #139](https://github.com/synixad-png/asteroidy-ios/actions/runs/42413786602) uruchomione. [Raport techniczny](Reports/V568_IOS_AUDIO_LOCK_SCREEN_RESUME_2026-11-07.md).
+
+**Ograniczenie:** skuteczność odblokowania i przywrócenia dźwięku musi zostać sprawdzona na fizycznym iPadzie; nie deklarować jej wyłącznie po kompilacji. **Harmonogram 18 zadań bez zmian: 38% wykonane / 62% pozostało.**
+
 ## ETAP — 07.11.2026: preloading geometrii asteroid bez chwilowego generowania podczas trafień
 
 **Wdrożono po audycie źródeł i testach:** inicjalizator renderera misji CARBONIS przygotowuje wszystkie **80** osiągalnych oryginalnych wariantów StoneSubdivide56/RockVertices75 (8 ziaren × 5 poziomów × 2 stany fragmentacji) przed pierwszą klatką misji; podczas podziału i trafienia nie powinien już tworzyć brakujących oryginalnych `MTLBuffer`. Menu W3 zachowuje lżejsze przygotowanie początkowych skał, bez zmiany wzorów geometrii i fizyki. Pełne źródłowe testy obu uruchomień PR **2/2 PASS**, w tym wszystkie 80 wariantów i natywny Swift/Metal. [PR #2](https://github.com/synixad-png/asteroidy-ios/pull/2) scalono jako `a92df9ee`. [Raport techniczny](Reports/V568_IOS_ROCK_GEOMETRY_COLD_START_PRELOAD_2026-11-07.md).
