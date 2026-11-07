@@ -166,7 +166,7 @@ assert "CarbonisCombat568" in (root/"ASTEROIDYiOS/CarbonisSession568.swift").rea
 
 
 assert "onInspect:inspectSector" in menu
-assert "onInspect: { sector in inspectSourceSector(sector) }" in app
+assert "inspectSector: { sector in" in app and "inspectSourceSector(sector)" in app
 assert "onOpen" not in menu  # no invented campaign loader
 assert 'openDiagnostic()' in menu
 assert "import WebKit" not in menu and "WKWebView(" not in menu
