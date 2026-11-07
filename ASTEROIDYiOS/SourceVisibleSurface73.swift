@@ -13,8 +13,7 @@ import Foundation
 /// Screen extents use the exact iPad/iPhone viewport projection.
 enum SourceVisibleSurface73 {
     static let innerTerrainRadius:Float=0.80
-    static let shellRadius:Float=
-        (SphereCameraView556.originalPlanetOuterRadius+15)
+    static let shellRadius:Float = (SphereCameraView556.originalPlanetOuterRadius+15)
         / SphereCameraView556.originalPlanetOuterRadius
 
     static func possiblyVisible(_ point:Vec2,worldRadius:Float,
