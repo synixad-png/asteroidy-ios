@@ -76,11 +76,13 @@ expected=["mvp","centerExtent","right","up","age","scale","fire",
           "smoke","chaos","spread","seed","lobes","steps","kind"]
 # Compare declarations, not substrings: "up" appears in the English
 # word "supplied" in a comment, so naive .index("up") is invalid.
-import re
-swift_fields=re.findall(r"\\bvar\\s+(\\w+)\\s*:",p)
+swift_fields=[
+    line.strip().split("var ",1)[1].split(":",1)[0]
+    for line in p.splitlines() if line.strip().startswith("var ")
+]
 assert swift_fields==expected,(swift_fields,expected)
-metal_body=re.sub(r"//[^\\n]*","",g)
-metal_body=" ".join(metal_body.split())
+metal_body=" ".join(
+    " ".join(line.split("//",1)[0] for line in g.splitlines()).split())
 assert ("float4x4 mvp; float4 centerExtent; float4 right; float4 up;"
         " float age,scale,fire,smoke,chaos,spread,seed;"
         " uint lobeCount,stepCount,kind;") in metal_body
