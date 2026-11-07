@@ -877,7 +877,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     let lightMesh=CarbonisProjectileFX69.indexedGroundLights(
                         session.game.bullets+session.game.hostileShots,
                         settings:visualSettings,budget:fxBudget)
-                    projectileMeshMs+=(ProcessInfo.processInfo.systemUptime-
+                    projectileMeshMs+=(ProcessInfo.processInfo.systemUptime -
                                        groundMeshStarted)*1000
                     if lightMesh.indexCount>0,
                        let verts=fxStream568.upload(
@@ -1104,7 +1104,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                                 fx.indices.append(UInt32(i))
                             }
                         }
-                        projectileMeshMs+=(ProcessInfo.processInfo.systemUptime-
+                        projectileMeshMs+=(ProcessInfo.processInfo.systemUptime -
                                            projectileMeshStarted)*1000
                         if fx.indexCount>0,
                            let verts=fxStream568.upload(
@@ -1140,7 +1140,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             camera:session.game.flight.camera,
                             aspect:aspect,
                             settings:visualSettings,budget:fxBudget))
-                    destructionMeshMs=(ProcessInfo.processInfo.systemUptime-
+                    destructionMeshMs=(ProcessInfo.processInfo.systemUptime -
                                          destructionMeshStarted)*1000
                     if !values.isEmpty,
                        let buffer=fxStream568.upload(
