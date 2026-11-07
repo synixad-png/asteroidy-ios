@@ -557,6 +557,18 @@ final class OriginalAudioAV568: ObservableObject {
         music?.stop(); activeMusicIndex = nil
         effects.removeAll()
     }
+    /// Short one-shot sounds must never be resumed mid-impact after iOS
+    /// suspended the app. More importantly, AVAudioPlayer.prepareToPlay()
+    /// from before a lock does not guarantee its decoder/queue still works.
+    /// Drop all such players; rebuild only the SAME original M4A on the
+    /// next shot/explosion, with no resynthesis or FPS-heavy full bank reload.
+    private func invalidateSuspendedEffects568() {
+        effects.forEach { $0.stop() }
+        effects.removeAll(keepingCapacity:true)
+        spokenVoices.forEach { $0.stop() }
+        spokenVoices.removeAll(keepingCapacity:true)
+        prewarmedEffects.removeAll(keepingCapacity:true)
+    }
     // Apple may deactivate an AVAudioSession while the iPad is locked.
     // Calling AVAudioPlayer.play() alone on the previously paused player
     // does not reliably restore the underlying audio route/session.
@@ -578,6 +590,9 @@ final class OriginalAudioAV568: ObservableObject {
         switch type {
         case .began:
             audioInterrupted=true
+            // Even an interruption without scenePhase backgrounding may
+            // invalidate short SFX queues (Control Center/Siri/call).
+            invalidateSuspendedEffects568()
             guard !suspended else {return}
             enginePlayback52.stop()
             intro43Player?.pause()
@@ -619,19 +634,27 @@ final class OriginalAudioAV568: ObservableObject {
             }
             return
         }
-        if case .mission = context, missionPhase == .playing && !missionUserPaused {
-            enginePlayback52.setPower(engineLevel52,
-                effectsVolume:Float(settings.effectsPercent)/100)
-            enginePlayback52.start()
+        // Resume music first. Starting the 44.1 kHz engine allocates and
+        // primes DSP buffers; defer this until the source song is started
+        // to minimise the brief silence after unlocking the iPad.
+        defer {
+            if case .mission = context, missionPhase == .playing &&
+                !missionUserPaused && introMissionSector568 == nil {
+                enginePlayback52.setPower(engineLevel52,
+                    effectsVolume:Float(settings.effectsPercent)/100)
+                enginePlayback52.start()
+            }
         }
         // Never undo MusicLibrary STOP or a user-selected 0% volume.
         guard settings.musicPercent>0 else {return}
         if let current=music,let index=activeMusicIndex {
             if rebuildPlayer,let file=urls[index] {
-                // AVAudioPlayer can report isPlaying=true while the old
-                // audio queue remains silent after an iPad lock. Only on a
-                // real OS reactivation or deliberate pause->resume, reopen
-                // the SAME cached source WAV at the current PCM time.
+                // Give the paused original player an immediate chance to
+                // sound after AVAudioSession activation, BEFORE reopening
+                // the same WAV. This overlaps decoder preparation with
+                // existing audio, reducing the audible unlock gap. Still
+                // replace it: iOS may report isPlaying=true while silent.
+                _=current.play()
                 do {
                     let replacement=try AVAudioPlayer(contentsOf:file)
                     replacement.numberOfLoops = -1
@@ -689,9 +712,11 @@ final class OriginalAudioAV568: ObservableObject {
             enginePlayback52.stop()
         } else {
             engineLevel52=0.16
-            // Deliberate PAUZA -> KONTYNUUJ also repairs players left
-            // silent by a previous iPad lock, without regenerating sound.
-            restoreAudioAfterActivation568(rebuildPlayer:true)
+            // After a normal manual PAUZA, the active song never stopped:
+            // do NOT reopen a long PCM WAV on every KONTYNUUJ (gap).
+            // Real iOS screen suspension already triggers rebuildPlayer:true
+            // in sceneIsActive and in the interruption recovery path.
+            restoreAudioAfterActivation568(rebuildPlayer:false)
         }
     }
     func sceneIsActive(_ active: Bool) {
@@ -709,7 +734,7 @@ final class OriginalAudioAV568: ObservableObject {
             // iOS backgrounding must not leave an outgoing track playing.
             finishMusicFade()
             music?.pause()
-            effects.forEach { $0.pause() }
+            invalidateSuspendedEffects568()
         } else {
             // Lock -> unlock: the app is foreground again, but AVAudioSession
             // may still be deactivated. Restore it BEFORE any player/engine.
@@ -761,11 +786,28 @@ final class OriginalAudioAV568: ObservableObject {
                              code==60 ? 0.38 : (40...45).contains(code) ? 0.32 : 0.55
             player.volume = Float(settings.effectsPercent)/100 * gain
             player.prepareToPlay()
+            // Never ignore a failed .play(). A cached SFX queue may have
+            // gone stale after a real iOS interruption even when its
+            // isPlaying flag looked usable. Reopen the SAME bundled sample.
+            var audiblePlayer=player
+            if !player.play() {
+                let fresh=try AVAudioPlayer(contentsOf:file)
+                fresh.currentTime=0
+                fresh.volume=player.volume
+                fresh.prepareToPlay()
+                guard fresh.play() else {
+                    prewarmedEffects[stem]?.removeAll { $0 === player }
+                    sourceStatus="IOS SFX \(code) — NIE MOŻNA ODTWORZYĆ"
+                    return
+                }
+                prewarmedEffects[stem]?.removeAll { $0 === player }
+                prewarmedEffects[stem,default:[]].append(fresh)
+                audiblePlayer=fresh
+            }
             effects.removeAll { !$0.isPlaying }
             if effects.count>=16 { effects.removeFirst().stop() }
-            effects.append(player)
-            if (50...57).contains(code) {spokenVoices.append(player)}
-            player.play()
+            effects.append(audiblePlayer)
+            if (50...57).contains(code) {spokenVoices.append(audiblePlayer)}
         } catch {
             sourceStatus = "SFX \(code) — BŁĄD ORYGINALNEGO PLIKU"
         }
