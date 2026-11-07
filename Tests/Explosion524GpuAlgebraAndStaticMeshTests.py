@@ -74,11 +74,16 @@ p=host.split("private struct Parameters {",1)[1].split("}",1)[0]
 g=metal.split("struct CarbonisExplosion524Uniforms {",1)[1].split("};",1)[0]
 expected=["mvp","centerExtent","right","up","age","scale","fire",
           "smoke","chaos","spread","seed","lobes","steps","kind"]
-assert [p.index(x) for x in expected]==sorted(p.index(x) for x in expected)
-assert [g.index("lobeCount" if x=="lobes" else
-                "stepCount" if x=="steps" else x) for x in expected]==sorted(
-       g.index("lobeCount" if x=="lobes" else
-               "stepCount" if x=="steps" else x) for x in expected)
+# Compare declarations, not substrings: "up" appears in the English
+# word "supplied" in a comment, so naive .index("up") is invalid.
+import re
+swift_fields=re.findall(r"\\bvar\\s+(\\w+)\\s*:",p)
+assert swift_fields==expected,(swift_fields,expected)
+metal_body=re.sub(r"//[^\\n]*","",g)
+metal_body=" ".join(metal_body.split())
+assert ("float4x4 mvp; float4 centerExtent; float4 right; float4 up;"
+        " float age,scale,fire,smoke,chaos,spread,seed;"
+        " uint lobeCount,stepCount,kind;") in metal_body
 
 # Crucially, the canonical vertices are produced outside render() only
 # once in init(), with a permanent Metal GPU buffer and no per-frame copy.
