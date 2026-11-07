@@ -84,7 +84,16 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var previousRockFrame: TimeInterval?
             private let depth:MTLDepthStencilState
             private let noDepthWrite:MTLDepthStencilState
+            // Source v568: 3D cap drawn after planet; additive halo only
+            // for 2D menu preview, exactly as GpuSphere67/PlanetScreen.
+            private let planetAtmospherePipeline:MTLRenderPipelineState
+            private let planetGlowPipeline:MTLRenderPipelineState
+            private let planetAtmosphereBuffer:MTLBuffer
+            private let planetGlowBuffer:MTLBuffer
+            private let planetAtmosphereCount:Int
+            private let planetGlowCount:Int
             private let visualSettings=CarbonisVisualSettings568.load()
+            private let planetFx568=SourcePlanetGraphicsSettings568.load()
             private let missionTerrainScale523:Float
             private let vertexBuffer:MTLBuffer
             private let indexBuffer:MTLBuffer
@@ -124,6 +133,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 var model:simd_float4x4
                 var material:UInt32=0
                 var glow:Float=1.0
+                // Windows GpuToon60.cs:202 original solar terminator 436.
+                var planetSunNight:SIMD4<Float>=SIMD4<Float>(0,0,1,1)
             }
             // Exact ABI of Ship.metal FighterPlasmaUniform491.
             private struct EngineUniforms491 {
@@ -203,6 +214,62 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 spec.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
                 spec.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
                 pipeline=try device.makeRenderPipelineState(descriptor:spec)
+                // Exact GpuPlanet.cs Atmosphere47: source-alpha RGB,
+                // depth tested with writes disabled after the terrain pass.
+                guard let atmosphereVertex=library.makeFunction(
+                        name:"sourcePlanetAtmosphereVertex568"),
+                      let atmosphereFragment=library.makeFunction(
+                        name:"sourcePlanetAtmosphereFragment568"),
+                      let glowVertex=library.makeFunction(
+                        name:"sourcePlanetGlowVertex568"),
+                      let glowFragment=library.makeFunction(
+                        name:"sourcePlanetGlowFragment568")
+                else {throw SourceError.metal}
+                let atmosphereSpec=MTLRenderPipelineDescriptor()
+                atmosphereSpec.vertexFunction=atmosphereVertex
+                atmosphereSpec.fragmentFunction=atmosphereFragment
+                atmosphereSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
+                atmosphereSpec.depthAttachmentPixelFormat = .depth32Float
+                let atmBlend=atmosphereSpec.colorAttachments[0]!
+                atmBlend.isBlendingEnabled=true
+                atmBlend.sourceRGBBlendFactor = .sourceAlpha
+                atmBlend.destinationRGBBlendFactor = .oneMinusSourceAlpha
+                atmBlend.sourceAlphaBlendFactor = .sourceAlpha
+                atmBlend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
+                planetAtmospherePipeline=try device.makeRenderPipelineState(
+                    descriptor:atmosphereSpec)
+                let glowSpec=MTLRenderPipelineDescriptor()
+                glowSpec.vertexFunction=glowVertex
+                glowSpec.fragmentFunction=glowFragment
+                glowSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
+                glowSpec.depthAttachmentPixelFormat = .depth32Float
+                let glowBlend=glowSpec.colorAttachments[0]!
+                glowBlend.isBlendingEnabled=true
+                glowBlend.sourceRGBBlendFactor = .one
+                glowBlend.destinationRGBBlendFactor = .one
+                glowBlend.sourceAlphaBlendFactor = .one
+                glowBlend.destinationAlphaBlendFactor = .one
+                planetGlowPipeline=try device.makeRenderPipelineState(
+                    descriptor:glowSpec)
+                let cap=SourcePlanetAtmosphere568.atmosphere(
+                    tint:SourcePlanetAtmosphere568.carbonisTint)
+                let halo=SourcePlanetAtmosphere568.glow(
+                    tint:SourcePlanetAtmosphere568.carbonisTint)
+                planetAtmosphereCount=cap.count/
+                    SourcePlanetAtmosphere568.atmosphereVertexStride
+                planetGlowCount=halo.count/
+                    SourcePlanetAtmosphere568.glowVertexStride
+                guard let capGPU=cap.withUnsafeBytes({ data in
+                    data.baseAddress.flatMap {
+                        device.makeBuffer(bytes:$0,length:data.count,options:[])
+                    }
+                }),let haloGPU=halo.withUnsafeBytes({ data in
+                    data.baseAddress.flatMap {
+                        device.makeBuffer(bytes:$0,length:data.count,options:[])
+                    }
+                }) else {throw SourceError.metal}
+                planetAtmosphereBuffer=capGPU
+                planetGlowBuffer=haloGPU
                 let rockSpec=MTLRenderPipelineDescriptor()
                 rockSpec.vertexFunction=v
                 rockSpec.fragmentFunction=rockFragment
@@ -532,6 +599,25 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 var uniforms=Uniforms(mvp:vp.map{$0*terrainModel} ??
                                        Self.previewMVP(aspect,terrainModel),
                                        model:terrainModel)
+                // PlanetScreen draws the additive ring BEFORE terrain,
+                // while sphere combat draws only its 3D atmosphere cap.
+                if gameSession == nil && planetFx568.glowEnabled {
+                    let sourceRadius:Float=1/missionTerrainScale523
+                    var haloCenterScale=SIMD4<Float>(
+                        0,0,sourceRadius/(1.42*max(0.35,aspect)),
+                        sourceRadius/1.42)
+                    encoder.setRenderPipelineState(planetGlowPipeline)
+                    encoder.setDepthStencilState(noDepthWrite)
+                    encoder.setVertexBuffer(planetGlowBuffer,offset:0,index:0)
+                    encoder.setVertexBytes(&haloCenterScale,
+                        length:MemoryLayout<SIMD4<Float>>.stride,index:1)
+                    encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                        vertexCount:planetGlowCount)
+                }
+                let sourceSun=planetFx568.sourceSun(
+                    gameSession?.game.elapsed ?? t)
+                uniforms.planetSunNight=SIMD4<Float>(
+                    sourceSun.0,sourceSun.1,sourceSun.2,sourceSun.3)
                 encoder.setRenderPipelineState(pipeline)
                 encoder.setDepthStencilState(depth)
                 encoder.setCullMode(.none)
@@ -553,6 +639,39 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 encoder.drawIndexedPrimitives(type:.triangle,indexCount:7035,
                     indexType:.uint32,indexBuffer:indexBuffer,
                     indexBufferOffset:803712*MemoryLayout<UInt32>.stride)
+                if planetFx568.glowEnabled {
+                    let atmosphereModel:simd_float4x4
+                    if let session=gameSession {
+                        // Windows GpuPlanet.cs Atmosphere47 faces the eye.
+                        // The source SphereCameraView556 already defines
+                        // the normalized orbit camera's real local axes.
+                        let f=SphereCameraView556(
+                            camera:session.game.flight.camera)
+                        atmosphereModel=simd_float4x4(columns:(
+                            SIMD4<Float>(f.right.x,f.right.y,f.right.z,0),
+                            SIMD4<Float>(f.up.x,f.up.y,f.up.z,0),
+                            SIMD4<Float>(f.back.x,f.back.y,f.back.z,0),
+                            SIMD4<Float>(0,0,0,1)))
+                    } else {
+                        var origin=matrix_identity_float4x4
+                        origin.columns.3.z = -5
+                        let sourceRadius:Float=1/missionTerrainScale523
+                        atmosphereModel=origin*simd_float4x4(
+                            diagonal:SIMD4<Float>(
+                                sourceRadius,sourceRadius,sourceRadius,1))
+                    }
+                    var capMVP=vp.map{$0*atmosphereModel} ??
+                        Self.previewMVP(aspect,atmosphereModel)
+                    encoder.setRenderPipelineState(planetAtmospherePipeline)
+                    encoder.setDepthStencilState(noDepthWrite)
+                    encoder.setVertexBuffer(
+                        planetAtmosphereBuffer,offset:0,index:0)
+                    encoder.setVertexBytes(&capMVP,
+                        length:MemoryLayout<simd_float4x4>.stride,index:1)
+                    encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                        vertexCount:planetAtmosphereCount)
+                    encoder.setDepthStencilState(depth)
+                }
 
                 // Original GpuSphere67.DrawProjectileGroundLights170:
                 // source four colored radial lights on the planet surface,

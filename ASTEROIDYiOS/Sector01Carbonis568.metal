@@ -10,6 +10,7 @@ struct CarbonisSectorUniforms568 {
     float4x4 model;
     uint material;
     float glow;
+    float4 planetSunNight;
 };
 struct CarbonisSectorRaster568 {
     float4 position [[position]];
@@ -17,6 +18,7 @@ struct CarbonisSectorRaster568 {
     float4 color;
     float2 uv;
     float3 eyePosition;
+    float3 planetPosition;
 };
 vertex CarbonisSectorRaster568 sector01CarbonisVertex568(
     uint id [[vertex_id]],
@@ -34,6 +36,7 @@ vertex CarbonisSectorRaster568 sector01CarbonisVertex568(
     o.color=float4(mesh[i+6],mesh[i+7],mesh[i+8],mesh[i+9]);
     o.uv=float2(mesh[i+10],mesh[i+11]);
     o.eyePosition=(u.model*float4(p,1)).xyz;
+    o.planetPosition=p;
     return o;
 }
 fragment float4 sector01CarbonisFragment568(
@@ -58,6 +61,13 @@ fragment float4 sector01CarbonisFragment568(
         float3 hot=emission.sample(sourceSampler,in.uv).rgb;
         lit+=albedo.rgb*ambient*0.10f+hot*u.glow*0.38f;
     }
+    // Windows GpuToon60.cs:202: terminator on the *planet only*.
+    // Disabled source light uses night factor 1, preserving the
+    // previous planet appearance; actors/ship/rock are unchanged.
+    float h436=dot(normalize(in.planetPosition),
+                   normalize(u.planetSunNight.xyz));
+    float k436=smoothstep(-0.14f,0.18f,h436);
+    lit*=mix(clamp(u.planetSunNight.w,0.0f,1.0f),1.0f,k436);
     return float4(clamp(lit,0.0f,1.0f),clamp(albedo.a,0.0f,1.0f));
 }
 
