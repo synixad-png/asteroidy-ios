@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Inspect 58 SOURCE-generated v568 audio assets, optionally in an Xcode .app.
-Reject broken/missing assets, duplicate stems, silent synthetic stand-ins.
-This does not prove audible fidelity on physical Apple hardware.
+"""Inspect 43 bundled original SFX/voice/intro assets and reject recorded
+music files. The source-native Swift synthesis generates all 15 tracks at run time.
+Physical Apple hardware playback remains unverified.
 """
 from pathlib import Path
 import argparse
@@ -10,10 +10,9 @@ import struct
 def expected():
     sounds=[f"SFX{code}_{v}.m4a" for code in (*range(10,15),*range(20,23),30) for v in range(3)]
     sounds += [f"SFX{code}_0.m4a" for code in (*range(40,46),60)]
-    sounds += [f"Music{i}.m4a" for i in range(15)]
     sounds += [f"Voice{i}.m4a" for i in (0,1,2,3,4,6,7)]
     sounds += ["Intro43.m4a","SYNTH_LICENSES.txt"]
-    assert len(sounds)==58 and len(set(sounds))==58
+    assert len(sounds)==43 and len(set(sounds))==43
     return sounds
 
 p=argparse.ArgumentParser()
@@ -30,10 +29,11 @@ for name in expected():
             head=stream.read(24)
         assert len(head)>=12 and head[4:8]==b"ftyp",(name,head[:12])
         assert file.stat().st_size>2000,(name,"AAC truncated")
-        if name.startswith("Music"):
-            assert file.stat().st_size>100_000,(name,"not a source music track")
 assert sorted(x.name for x in root.iterdir() if x.is_file())==sorted(expected()),"unexpected files"
-print("PASS original v568 source-generated assets: 15 music + 34 SFX + 7 voices + intro + licenses = 58")
+assert not list(root.glob("Music*.m4a")),"Bundled recordings instead of runtime synthesis"
+native=Path("ASTEROIDYiOS/OriginalMusicSynth568.swift")
+assert native.is_file() and "embeddedZigBase64" in native.read_text() and "static let count=15" in native.read_text()
+print("PASS 43 bundled SFX/voice/intro assets; 15 original music tracks generated at runtime (no AAC in IPA)")
 if args.app is not None:
     app=Path(args.app)
     assert (app/"Info.plist").is_file(),app
@@ -44,4 +44,5 @@ if args.app is not None:
         if name.endswith(".m4a"):
             with found[0].open("rb") as stream:
                 assert stream.read(8)[4:8]==b"ftyp"
-    print("PASS Xcode .app actually bundles all 58 original v568 assets once each")
+    assert not list(app.rglob("Music*.m4a")),"Xcode app still contains prerecordings"
+    print("PASS Xcode .app bundles 43 audio resources and no prerecorded music")

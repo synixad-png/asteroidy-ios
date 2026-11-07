@@ -41,8 +41,8 @@ extension Notification.Name {
 
 /// Original Windows MusicSynth.cs: 15 tracks, including menu tracks 0 and 1.
 /// C# source is archived without modifications under SourceExact568 in repo.
-/// The deterministic C# generates PCM at build time. The iOS runtime loads
-/// AAC transcodes in the same 2-phase order and does not invent any audio.
+/// The native Swift port synthesizes the original v568 music at EVERY launch.
+/// No Music0..14 AAC resources are bundled in IPA; the PCM WAV output is temporary.
 enum OriginalAudioCatalog568 {
     static let names = ["Astral Gate", "Orbital Pulse", "Crystal Hive",
                         "Nyx Protocol", "Event Horizon", "Solar Serpent",
@@ -71,9 +71,26 @@ enum OriginalAudioCatalog568 {
     }
 }
 
-/// Audible implementation backed by ACTUAL original v568 C# output.
-/// No substitute melodies, no file generation on render/audio thread.
+/// Audible implementation: native source-equivalent 15-track synthesis on a
+/// background worker at launch, using original PCM mastering and temporary WAV.
+/// No substitute melodies and no generation on audio/render/touch threads.
 /// Original SFX variations use MusicMix.variation++ modulo 3.
+private final class SourceBackgroundMusicGate568 {
+    private let condition=NSCondition()
+    private var allowed=true
+    func setAllowed(_ yes:Bool) {
+        condition.lock()
+        allowed=yes
+        if yes { condition.broadcast() }
+        condition.unlock()
+    }
+    func awaitAllowed() {
+        condition.lock()
+        while !allowed { condition.wait() }
+        condition.unlock()
+    }
+}
+
 final class OriginalAudioAV568: ObservableObject {
     @Published private(set) var sourceStatus = "PRZYGOTOWYWANIE EFEKTÓW"
     @Published private(set) var stage = 0
@@ -109,6 +126,7 @@ final class OriginalAudioAV568: ObservableObject {
     private var sounds: [String:URL] = [:]
     private let worker = DispatchQueue(label: "synixad.asteroidy.audio568.source-pack",
                                        qos: .userInitiated)
+    private let musicGate=SourceBackgroundMusicGate568()
     private var settingsObserver: NSObjectProtocol?
     private var previewObserver: NSObjectProtocol?
     private var stopObserver: NSObjectProtocol?
@@ -207,11 +225,39 @@ final class OriginalAudioAV568: ObservableObject {
                 self.stage = 1
                 self.sourceStatus = "ASTRAL GATE — PIERWSZY UTWÓR MENU"
             }
+            // The original MusicBank creates a private temporary PCM bank
+            // on every application launch. Remove previous crash leftovers;
+            // these files are not packaged with the app and never persist
+            // as a permanent downloaded soundtrack.
+            let tmp=FileManager.default.temporaryDirectory
+            let fm=FileManager.default
+            let outputDirectory=tmp.appendingPathComponent(
+                "Asteroidy-music31-\(UUID().uuidString)",isDirectory:true)
+            do {
+                for item in try fm.contentsOfDirectory(at:tmp,
+                     includingPropertiesForKeys:nil) where
+                     item.lastPathComponent.hasPrefix("Asteroidy-music31-") {
+                    try? fm.removeItem(at:item)
+                }
+                try fm.createDirectory(at:outputDirectory,
+                    withIntermediateDirectories:true)
+            } catch { missing.append("Katalog PCM: \(error.localizedDescription)") }
             var menu: [Int:URL] = [:]
             for index in 0...1 {
-                if let file = OriginalAudioCatalog568.resource("Music\(index)") {
-                    menu[index] = file
-                } else { missing.append("Music\(index)") }
+                let file:URL?
+                do {
+                    file=try OriginalMusicSynth568.generate(track:index,
+                        destination:outputDirectory.appendingPathComponent("Music\(index).wav")) {
+                        [weak self] message in
+                        DispatchQueue.main.async { [weak self] in
+                            self?.sourceStatus="\(OriginalAudioCatalog568.names[index]): \(message)"
+                        }
+                    }
+                } catch {
+                    file=nil
+                    missing.append("Music\(index): \(error.localizedDescription)")
+                }
+                if let file {menu[index]=file}
                 let completed = index+1
                 let readyCount = menu.count
                 let menuSnapshot = menu
@@ -246,20 +292,30 @@ final class OriginalAudioAV568: ObservableObject {
                     }
                 }
             }
-            // Original background phase: remaining tracks 2...14 are
-            // prepared only after menu startup, never block menu/gameplay.
+            // Original MusicBank.Prepare(false): synthesizes remaining 13
+            // tracks after menu is ready; pause preparation during combat.
+            // Avoid decoding 13 long WAVs into RAM: open only on demand.
             for index in 2..<OriginalAudioCatalog568.names.count {
-                guard let file = OriginalAudioCatalog568.resource("Music\(index)")
-                else { continue }
-                // This work runs on the background audio queue after W3
-                // has opened: prebuffer track, not just save its URL.
-                let preparedTrack=try? AVAudioPlayer(contentsOf:file)
-                preparedTrack?.numberOfLoops = -1
-                preparedTrack?.prepareToPlay()
+                self.musicGate.awaitAllowed()
+                let file:URL
+                do {
+                    file=try OriginalMusicSynth568.generate(track:index,
+                        destination:outputDirectory.appendingPathComponent("Music\(index).wav")) {
+                        [weak self] message in
+                        self?.musicGate.awaitAllowed()
+                        DispatchQueue.main.async { [weak self] in
+                            self?.sourceStatus="\(OriginalAudioCatalog568.names[index]): \(message)"
+                        }
+                    }
+                } catch {
+                    DispatchQueue.main.async { [weak self] in
+                        self?.missingAssets.append("Music\(index): \(error.localizedDescription)")
+                    }
+                    continue
+                }
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
                     self.urls[index] = file
-                    if let preparedTrack { self.prewarmedMusic[index]=preparedTrack }
                     self.backgroundPrepared += 1
                     if !self.suspended,
                        case .menu = self.context,
@@ -331,6 +387,7 @@ final class OriginalAudioAV568: ObservableObject {
         }
     }
     func returnToMenu() {
+        musicGate.setAllowed(!suspended)
         previewStopped=false
         previewActive=false
         pendingPreviewIndex=nil
@@ -345,6 +402,7 @@ final class OriginalAudioAV568: ObservableObject {
     }
     func enterMission(_ sector: Int) {
         guard (1...26).contains(sector) else { return }
+        musicGate.setAllowed(false)
         previewStopped=false
         previewActive=false
         pendingPreviewIndex=nil
@@ -369,6 +427,7 @@ final class OriginalAudioAV568: ObservableObject {
         missionPhase=phase
         switch phase {
         case .playing:
+            musicGate.setAllowed(false)
             musicDuck=1
             engineLevel52=0.16
             if !suspended {
@@ -378,6 +437,7 @@ final class OriginalAudioAV568: ObservableObject {
                 playTrack(OriginalAudioCatalog568.missionTrack(sector))
             }
         case .victory,.defeat:
+            musicGate.setAllowed(!suspended)
             musicDuck = phase == .defeat ? 0.4 : 1
             engineLevel52=0
             enginePlayback52.stop()
@@ -399,6 +459,12 @@ final class OriginalAudioAV568: ObservableObject {
     }
     func sceneIsActive(_ active: Bool) {
         suspended = !active
+        switch context {
+        case .mission:
+            musicGate.setAllowed(active && missionPhase != .playing)
+        case .menu,.diagnostic:
+            musicGate.setAllowed(active)
+        }
         if !active {
             enginePlayback52.stop()
             // iOS backgrounding must not leave an outgoing track playing.
