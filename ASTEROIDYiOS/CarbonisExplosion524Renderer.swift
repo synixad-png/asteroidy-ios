@@ -160,6 +160,7 @@ final class CarbonisExplosion524Renderer {
     func render(_ state:CarbonisDestruction524,time:Float,
                 camera:SphereCamera67,vp:simd_float4x4,
                 settings:CarbonisVisualSettings568,
+                aspect:Float?=nil,
                 budget:CarbonisIOSFXBudget568 = .original,
                 into encoder:MTLRenderCommandEncoder) {
         let events=state.visibleExplosions(
@@ -169,12 +170,29 @@ final class CarbonisExplosion524Renderer {
         let outer=SphereCameraView556.originalPlanetOuterRadius
         let shell=(outer+15)/outer
         let eye=SphereCameraView556(camera:camera).eye
+        let visibilityFrame=aspect.map { _ in
+            SphereCameraView556(camera:camera)
+        }
         encoder.setRenderPipelineState(pipeline)
         encoder.setDepthStencilState(noDepthWrite)
         encoder.setCullMode(.none)
         encoder.setFragmentTexture(noise,index:0)
         for event in events {
             let age=time-event.spawned
+            // Explosion524.cs:197,203 — source physical bound uses the
+            // very same scale as the GPU shader and ROZMIAR 3D slider.
+            let scale=settings.factor(0)
+            let radius=event.scale*scale*0.55/outer
+            let extent=radius*5.1*scale
+            // The billboard's actual disc radius is <= extent. Cover
+            // its complete 3D bound with a much larger world sphere,
+            // including the original 1.1-unit surface lift. Reject
+            // ONLY volumes fully outside camera+terrain visibility:
+            // no raymarch or geometry is submitted for invisible deaths.
+            if let aspect,let frame=visibilityFrame,
+               !SourceVisibleSurface73.possiblyVisible(
+                    event.point,worldRadius:extent*1.6+0.03,
+                    camera:frame,aspect:aspect) {continue}
             let normal=Sphere67.normal(event.point)
             let center=normal*(shell+1.1/outer)
             let front=(eye-center).normalized
@@ -184,11 +202,6 @@ final class CarbonisExplosion524Renderer {
                 right=SphereVector3(x:1,y:0,z:0)
             }
             let up=SphereVector3.cross(front,right).normalized
-            // Explosion524.cs:197,203 — both the projected radius
-            // and the shader uScale obey the original "ROZMIAR 3D" slider.
-            let scale=settings.factor(0)
-            let radius=event.scale*scale*0.55/outer
-            let extent=radius*5.1*scale
             // UV and world positions are related by the same affine
             // mapping as the original four quad corners. Every surviving
             // fragment receives the unchanged source (x,y,z) ray sample.
