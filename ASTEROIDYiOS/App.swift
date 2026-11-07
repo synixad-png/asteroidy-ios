@@ -215,6 +215,8 @@ struct GameView: View {
                         audio.sourceEffect(code)
                     },onEnginePower:{ power in
                         audio.sourceEnginePower(power)
+                    },onMissionPause:{ paused in
+                        audio.missionUserPause568(paused)
                     },onMissionPhase:{ phase in
                         audio.missionPhase568(phase)
                     },onReplay:{
