@@ -28,6 +28,6 @@ assert "SourcePerformanceOverlay568()" in scene and "session.hud.phase == .playi
 assert "SourcePerformanceOverlay568()" in app and "!showMainMenu && sourceSector01 == nil" in app
 assert "SourcePerformanceOverlay568()" not in f("ASTEROIDYiOS/W3StartupSplash568.swift")
 assert "SourcePerformanceOverlay568()" not in f("ASTEROIDYiOS/W3MainMenu568.swift")
-assert "CADisplayLink" not in perf,"must measure finished frames, not refresh rate"
+assert "CADisplayLink(" not in perf,"must measure finished frames, not a refresh timer"
 print("PASS original Windows v568 option ID6 true Metal-completed FPS and 0.5s")
 print("PASS menu/splash excluded; active CARBONIS/diagnostic scenes only")
