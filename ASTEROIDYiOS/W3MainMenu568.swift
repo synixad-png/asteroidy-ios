@@ -84,26 +84,31 @@ struct W3MainMenu568: View {
                         startPoint:.topLeading,endPoint:.bottomTrailing)
                         .ignoresSafeArea()
                 }
+                // Source ProgramW3Native315.cs + UiW3NativeLayout315.cs:
+                // home and every submenu are separate W3 screens, NEVER
+                // the old menu overlaid as a dark modal atop W3 home.
                 VStack(spacing:0) {
                     header(compact:compact)
-                    HStack(alignment:.top,spacing:compact ? 10 : 20) {
-                        navigation(compact:compact)
-                            .frame(width:min(264,max(174,proxy.size.width * 0.245)))
-                        radar(compact:compact)
+                    if let shown=page {
+                        panel(for:shown,compact:compact)
                             .frame(maxWidth:.infinity,maxHeight:.infinity)
-                        if proxy.size.width > 850 {
-                            telemetry
-                                .frame(width:min(215,proxy.size.width * 0.18))
+                            .transition(.opacity.combined(with:.move(edge:.trailing)))
+                    } else {
+                        HStack(alignment:.top,spacing:compact ? 10 : 20) {
+                            navigation(compact:compact)
+                                .frame(width:min(206,max(153,proxy.size.width * 0.162)))
+                            radar(compact:compact)
+                                .frame(maxWidth:.infinity,maxHeight:.infinity)
+                            if proxy.size.width > 850 {
+                                telemetry
+                                    .frame(width:min(215,proxy.size.width * 0.18))
+                            }
                         }
-                    }
-                    .padding(.horizontal,pad)
-                    .padding(.vertical,compact ? 7 : 16)
-                    footer(compact:compact)
-                }
-                if let shown=page {
-                    panel(for:shown,compact:compact)
-                        .padding(compact ? 10 : 24)
+                        .padding(.horizontal,pad)
+                        .padding(.vertical,compact ? 7 : 16)
                         .transition(.opacity)
+                    }
+                    footer(compact:compact)
                 }
             }
         }
@@ -195,7 +200,9 @@ struct W3MainMenu568: View {
             ForEach(0..<Page.allCases.count,id:\.self) { index in
                 let item=Page.allCases[index]
                 Button {
-                    page=item
+                    // Actual W3 destination replaces HOME rather than
+                    // launching the pre-W3 modal navigation layer.
+                    withAnimation(.easeInOut(duration:0.35)) {page=item}
                 } label: {
                     HStack(spacing:10) {
                         Text(String(format:"%02d",index+1))
@@ -370,53 +377,121 @@ struct W3MainMenu568: View {
         }
     }
 
+    // Original W3 subpages have their own full-screen chrome, not iOS
+    // native sheet/material overlays and not the pre-W3 CampaignAtlas shell.
     @ViewBuilder private func panel(for item:Page,compact:Bool) -> some View {
-        ZStack {
-            Color.black.opacity(0.86).ignoresSafeArea()
-            VStack(spacing:10) {
-                HStack {
-                    Text(item.rawValue)
-                        .font(.system(size:compact ? 17 : 22,
+        GeometryReader { area in
+            VStack(alignment:.leading,spacing:compact ? 8 : 14) {
+                HStack(spacing:12) {
+                    Text("SYNIXAD / "+item.rawValue)
+                        .font(.system(size:compact ? 16 : 22,
                                       weight:.bold,design:.monospaced))
                         .foregroundStyle(gold)
                     Spacer()
-                    Button("WSTECZ") { page=nil }
-                        .foregroundStyle(cyan)
-                        .accessibilityIdentifier("w3-panel-back")
-                }
-                Rectangle().fill(cyan.opacity(0.45)).frame(height:1)
-                if item == .campaign || item == .newGame {
-                    // 26-sector atlas selects real unlocked missions.
-                    // Sector01 now starts the genuine first level of combat,
-                    // while the 24 later playable sectors remain unported.
-                    Text("ATLAS 26 SEKTORÓW — CARBONIS 01: WALKA, WYNIKI I SERWIS")
-                        .font(.system(size:10,design:.monospaced))
+                    Text("W3 / v568")
+                        .font(.system(size:compact ? 9 : 11,design:.monospaced))
                         .foregroundStyle(muted)
+                    Button("WSTECZ") {
+                        withAnimation(.easeInOut(duration:0.35)) { page=nil }
+                    }
+                    .font(.system(size:compact ? 11 : 13,
+                                  weight:.bold,design:.monospaced))
+                    .foregroundStyle(cyan)
+                    .padding(.horizontal,12)
+                    .frame(minHeight:38)
+                    .background(Color(red:0.014,green:0.056,blue:0.085))
+                    .overlay(Rectangle().stroke(cyan.opacity(0.55),lineWidth:1))
+                    .accessibilityIdentifier("w3-panel-back")
+                }
+                Rectangle().fill(cyan.opacity(0.36)).frame(height:1)
+                if item == .settings {
+                    // Windows Menu139 v555: all 17 original left-rail
+                    // categories, with implemented iOS engine bindings.
+                    CarbonisVisualSettingsPanel568(compact:compact)
+                        .frame(maxWidth:.infinity,maxHeight:.infinity)
+                } else if item == .campaign {
                     CampaignAtlas556(progress:progress,
                                      dismiss:{page=nil},
                                      onSelect:selectMission,
                                      onInspect:inspectSector)
-                } else if item == .settings {
-                    // Real original Menu139 WYBUCHY 3D / POCISKI tabs,
-                    // not an inert W3 placeholder or a different game UI.
-                    CarbonisVisualSettingsPanel568(compact:compact)
+                        .frame(maxWidth:.infinity,maxHeight:.infinity)
+                } else if item == .newGame {
+                    newGamePage(compact:compact)
                 } else {
-                    Text(message(for:item))
-                        .font(.system(size:compact ? 12 : 15,design:.monospaced))
-                        .foregroundStyle(paper)
-                        .frame(maxWidth:.infinity,alignment:.leading)
-                    Spacer(minLength:10)
+                    // Original W3 frame is retained even for an unported
+                    // action; never pretend the underlying gameplay exists.
+                    VStack(alignment:.leading,spacing:14) {
+                        Text("PANEL OPERACYJNY / "+item.rawValue)
+                            .font(.system(size:compact ? 11 : 15,
+                                          weight:.bold,design:.monospaced))
+                            .foregroundStyle(gold)
+                        Rectangle().fill(cyan.opacity(0.24)).frame(height:1)
+                        Text(message(for:item))
+                            .font(.system(size:compact ? 12 : 15,design:.monospaced))
+                            .foregroundStyle(paper)
+                            .fixedSize(horizontal:false,vertical:true)
+                        if item == .continueGame {
+                            Button("OTWÓRZ KAMPANIĘ") {
+                                withAnimation(.easeInOut(duration:0.35)) {
+                                    page = .campaign
+                                }
+                            }
+                            .foregroundStyle(gold)
+                            .accessibilityIdentifier("w3-continue-open-campaign")
+                        }
+                        Spacer(minLength:0)
+                    }
+                    .frame(maxWidth:.infinity,maxHeight:.infinity,
+                           alignment:.topLeading)
+                    .padding(compact ? 13 : 22)
+                    .background(Color(red:0.006,green:0.026,blue:0.049).opacity(0.94))
+                    .overlay(Rectangle().stroke(cyan.opacity(0.22),lineWidth:1))
                 }
             }
-            .padding(compact ? 14 : 24)
-            .frame(maxWidth:780,maxHeight:compact ? CGFloat.infinity : 570)
-            .background(Color(red:0.016,green:0.048,blue:0.08))
-            .overlay {
-                Rectangle().stroke(gold.opacity(0.5),lineWidth:1)
-            }
+            .padding(.horizontal,compact ? 12 : 24)
+            .padding(.vertical,compact ? 9 : 16)
+            .frame(width:area.size.width,height:area.size.height)
         }
-        .accessibilityElement(children: .contain)
+        .accessibilityElement(children:.contain)
         .accessibilityIdentifier("w3-panel-\(item.id)")
+    }
+
+    // Native Windows ProgramW3Native315.cs has a distinct "new" page,
+    // separate from the 26-sector campaign atlas. Co-op and new-profile
+    // overwrite semantics are not ported, so these are NOT fake controls.
+    private func newGamePage(compact:Bool) -> some View {
+        VStack(alignment:.leading,spacing:compact ? 10 : 17) {
+            Text("NOWA GRA / KONFIGURACJA")
+                .font(.system(size:compact ? 14 : 20,
+                              weight:.bold,design:.monospaced))
+                .foregroundStyle(gold)
+            Text("ORYGINAŁ W3: 1 GRACZ / 2 GRACZY · ŁATWY / NORMALNY / TRUDNY · URUCHOM MISJĘ")
+                .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                .foregroundStyle(muted)
+            Rectangle().fill(cyan.opacity(0.28)).frame(height:1)
+            Text("Pełna procedura nowej gry, wybór trudności i tryb 2 graczy wymagają jeszcze przeniesienia profili i startu kampanii z Windows v568. Nie nadpisuję istniejącego zapisu ani nie uruchamiam potajemnie sektora testowego.")
+                .font(.system(size:compact ? 11 : 14,design:.monospaced))
+                .foregroundStyle(paper)
+                .fixedSize(horizontal:false,vertical:true)
+            Button("PRZEJDŹ DO KAMPANII / CARBONIS 01") {
+                withAnimation(.easeInOut(duration:0.35)) {
+                    page = .campaign
+                }
+            }
+            .font(.system(size:compact ? 11 : 13,
+                          weight:.bold,design:.monospaced))
+            .foregroundStyle(.black)
+            .padding(.horizontal,16)
+            .frame(minHeight:42)
+            .background(gold)
+            .accessibilityIdentifier("w3-new-open-campaign")
+            Spacer(minLength:0)
+        }
+        .frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.topLeading)
+        .padding(compact ? 13 : 22)
+        .background(Color(red:0.006,green:0.026,blue:0.049).opacity(0.94))
+        .overlay(Rectangle().stroke(cyan.opacity(0.22),lineWidth:1))
+        .accessibilityIdentifier("w3-new-game-source-panel")
     }
 
     private func message(for item:Page) -> String {
