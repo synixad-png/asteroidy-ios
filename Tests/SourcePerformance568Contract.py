@@ -28,6 +28,11 @@ assert "SourcePerformanceOverlay568()" in scene and "session.hud.phase == .playi
 assert "SourcePerformanceOverlay568()" in app and "!showMainMenu && sourceSector01 == nil" in app
 assert "SourcePerformanceOverlay568()" not in f("ASTEROIDYiOS/W3StartupSplash568.swift")
 assert "SourcePerformanceOverlay568()" not in f("ASTEROIDYiOS/W3MainMenu568.swift")
+assert "SourcePerformance568.shared.recordCPU(" in car
+assert "simulationMs:simulationMs,waitMs:waitMs" in car
+assert "func recordCPU(" in perf
+assert '?? "n/d"' in perf, "do not label GPU as cadence when timestamps unavailable"
+assert "cpuSimulationTotal" in perf and "cpuWaitTotal" in perf
 assert "CADisplayLink(" not in perf,"must measure finished frames, not a refresh timer"
 print("PASS original Windows v568 option ID6 true Metal-completed FPS and 0.5s")
 print("PASS menu/splash excluded; active CARBONIS/diagnostic scenes only")

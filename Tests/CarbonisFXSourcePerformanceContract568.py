@@ -40,9 +40,9 @@ assert "values,as:.debrisVertices" in scene
 # and four-layer ground lights; reduced iOS mode deliberately cuts them.
 budget=(root/"ASTEROIDYiOS/CarbonisIOSFXBudget568.swift").read_text()
 assert "static let original=Self(reduced:false)" in budget
-assert "reduced ? min(10,original) : original" in budget
-assert "reduced ? min(7,original) : original" in budget
-assert "reduced ? [2] : [0,1,2,3]" in budget
+assert "explosionsReduced ? max(0,(original*10+11)/22) : original" in budget
+assert "explosionsReduced ? max(0,(original+1)/2) : original" in budget
+assert "projectilesReduced ? [2] : [0,1,2,3]" in budget
 assert "steps:UInt32(budget.raySamples(settings.raySamples))" in host
 assert "lobes:UInt32(budget.gasLobes(settings.value(1)))" in host
 assert "sector01ExplosionFragment524" in vol
