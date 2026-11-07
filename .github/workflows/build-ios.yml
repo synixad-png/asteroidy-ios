@@ -37,6 +37,7 @@ on:
       - 'Tests/CarbonisIOSFXBudgetSourceContract568.py'
       - 'ASTEROIDYiOS/CarbonisExplosion524Renderer.swift'
       - 'ASTEROIDYiOS/Sector01Explosion524.metal'
+      - 'Tests/Explosion524GpuAlgebraAndStaticMeshTests.py'
       - 'Tests/CarbonisFXSourcePerformanceContract568.py'
       - 'Tests/Explosion524ConservativePolygonTests.py'
       - 'Tests/CarbonisProjectileFX69Tests.swift'
@@ -121,6 +122,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 Tests/Explosion524OptimizedRayBoundsTests.py
+          python3 Tests/Explosion524GpuAlgebraAndStaticMeshTests.py
           swiftc ASTEROIDYiOS/SourceLavaLightSettings287.swift Tests/SourceLavaLightSettings287Tests.swift -o /tmp/lava287-test
           /tmp/lava287-test
           python3 Tests/SourceLavaLight287SourceContract.py
