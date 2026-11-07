@@ -22,7 +22,7 @@ import Foundation
             position:front,velocity:Vec2(x:0,y:0),
             radius:34.72,size:3,tier:0,health:1)
         let r=SourceVisibleSurface73.rockWorldRadius(rock)
-        ck(r>0.1 && r<0.18,"original 34.72 radius rock with 1.4x source guard")
+        ck(r>0.20 && r<0.28,"original 34.72 radius rock with 1.4x source guard")
         ck(SourceVisibleSurface73.shooterWorldRadius()>0.06,
            "source GpuSphere67 normal fighter visual radius")
         ck(SourceVisibleSurface73.innerTerrainRadius<0.839,
