@@ -182,6 +182,86 @@ enum CarbonisProjectileFX69 {
              outerColor:rgba(RGB(r:230/255,g:246/255,b:1),66/255),
              slices:24,camera:camera,&into)
     }
+    // Exact source rings with indexed, shared corners. No change to
+    // source tessellation counts (32/28/24), radial alpha or world size.
+    private static func indexedDisc(_ p:SphereVector3,
+                                    inner:Float,outer:Float,
+                                    innerColor:[Float],outerColor:[Float],
+                                    slices:Int,
+                                    camera:SphereCameraView556,
+                                    _ mesh:inout CarbonisIndexedFXMesh568) {
+        let forward=(camera.eye-p).normalized
+        var right=SphereVector3.cross(camera.up,forward).normalized
+        if right.length<0.01 {right=camera.right}
+        let up=SphereVector3.cross(forward,right).normalized
+        func point(_ radius:Float,_ angle:Float)->SphereVector3 {
+            p+(right*cos(angle)+up*sin(angle))*radius
+        }
+        let first=UInt32(mesh.vertexCount)
+        for i in 0...slices {
+            let a=Float(i)*2*Float.pi/Float(slices)
+            vert(point(outer,a),outerColor,&mesh.vertices)
+            vert(point(inner,a),innerColor,&mesh.vertices)
+        }
+        for i in 0..<slices {
+            let a=first+UInt32(i*2)
+            let b=a+2
+            mesh.indices.append(contentsOf:[a,a+1,b+1,a,b+1,b])
+        }
+    }
+
+    private static func indexedOrb(_ shot:CarbonisCombat568.Projectile,
+                                   tint:RGB,glow:Bool,
+                                   camera:SphereCameraView556,
+                                   drawableHeight:Float,
+                                   _ mesh:inout CarbonisIndexedFXMesh568) {
+        let p=worldPoint(shot.point,shot.hostile ? 2.8:3.0)
+        let corePx:Float=shot.hostile ?
+            (shot.kind==3 ? 3.9:3.3) :
+            (shot.kind==3 ? 4.2:3.6)
+        let core=corePx/pxPerWorld(p,camera:camera,height:drawableHeight)
+        if glow {
+            indexedDisc(p,inner:core*0.67,outer:core*2.3,
+                innerColor:rgba(tint,48/255),outerColor:rgba(tint,0),
+                slices:32,camera:camera,&mesh)
+        }
+        indexedDisc(p,inner:core*0.30,outer:core,
+            innerColor:rgba(tint,178/255),outerColor:rgba(tint,0),
+            slices:28,camera:camera,&mesh)
+        indexedDisc(p,inner:0,outer:core*0.48,
+            innerColor:rgba(RGB(r:249/255,g:253/255,b:1),250/255),
+            outerColor:rgba(RGB(r:230/255,g:246/255,b:1),66/255),
+            slices:24,camera:camera,&mesh)
+    }
+
+    /// Production Metal path. Same ordered triangle stream as vertices()
+    /// but 2 indexed corners per ring step instead of 6 full GPU vertices.
+    static func indexedVertices(_ shots:[CarbonisCombat568.Projectile],
+                                camera:SphereCamera67,
+                                drawableHeight:Float,glow:Bool=true)
+        -> CarbonisIndexedFXMesh568 {
+        var mesh=CarbonisIndexedFXMesh568()
+        mesh.vertices.reserveCapacity(shots.count*3500)
+        mesh.indices.reserveCapacity(shots.count*650)
+        let view=SphereCameraView556(camera:camera)
+        for shot in shots {
+            let tint=shot.hostile ? hostileTint(shot.kind) :
+                                      playerTint(shot.kind)
+            // Ribbon strips remain untouched, including their six
+            // geodesic subdivisions and three different alpha layers.
+            let begin=mesh.vertexCount
+            ribbon(shot,tint:tint,width:glow ? 1:0,camera:view,
+                   drawableHeight:drawableHeight,&mesh.vertices)
+            let end=mesh.vertexCount
+            if end>begin {
+                for v in begin..<end {mesh.indices.append(UInt32(v))}
+            }
+            indexedOrb(shot,tint:tint,glow:glow,camera:view,
+                       drawableHeight:drawableHeight,&mesh)
+        }
+        return mesh
+    }
+
     static func vertices(_ shots:[CarbonisCombat568.Projectile],
                          camera:SphereCamera67,
                          drawableHeight:Float,glow:Bool=true)->[Float] {
@@ -258,6 +338,72 @@ enum CarbonisProjectileFX69 {
     }
     /// Combat69: EnemyShots72 muzzle emission at enemy +18 local units,
     /// during its original 0.10 seconds after actual firing.
+    private static func indexedGroundDisc(
+        _ point:Vec2,radius:Float,tint:RGB,alpha:Float,
+        lift:Float,slices:Int,
+        _ mesh:inout CarbonisIndexedFXMesh568) {
+        let center=worldPoint(point,0.4+lift*0.10)
+        let basis=Sphere67.basis(point)
+        let scale=(outer+15)/Sphere67.radius/outer
+        let first=UInt32(mesh.vertexCount)
+        let centerColor=rgba(tint,alpha)
+        let edgeColor=rgba(tint,0)
+        vert(center,centerColor,&mesh.vertices)
+        for i in 0...slices {
+            let angle=2*Float.pi*Float(i)/Float(slices)
+            let offset=(basis.east*cos(angle)+basis.south*sin(angle))
+                *radius*scale
+            vert(center+offset,edgeColor,&mesh.vertices)
+        }
+        for i in 0..<slices {
+            mesh.indices.append(contentsOf:[
+                first,first+UInt32(i+1),first+UInt32(i+2)])
+        }
+    }
+
+    /// Four *unchanged* physical-source sphere light fans per shot.
+    /// Indexed sectors share each ring edge; blend and triangle winding
+    /// are identical to groundLights(), including all 4 radii and lifts.
+    static func indexedGroundLights(
+        _ shots:[CarbonisCombat568.Projectile],
+        settings:CarbonisVisualSettings568
+    )->CarbonisIndexedFXMesh568 {
+        var mesh=CarbonisIndexedFXMesh568()
+        let brightness=settings.projectileBrightnessFactor
+        if brightness<=0 {return mesh}
+        mesh.vertices.reserveCapacity(shots.count*1250)
+        mesh.indices.reserveCapacity(shots.count*276)
+        let radiusScale=0.85+brightness*0.55
+        let powerScale=brightness*3.2
+        let widths:[Float]=[3.9,2.4,1.5,0.85]
+        let weights:[Float]=[0.18,0.55,1.10,1.80]
+        let lifts:[Float]=[3.0,1.35,0.55,0.10]
+        let slices=[28,24,22,18]
+        for shot in shots {
+            let native=shot.hostile ? hostileTint(shot.kind) :
+                                        playerTint(shot.kind)
+            let tint=groundTint(native,settings:settings)
+            let radius:Float=shot.hostile ?
+                (shot.kind==2 ? 17.5 : shot.kind==3 ? 19:15.5) :
+                (shot.kind==3 ? 20.5 :
+                 shot.kind==4 ? 17.5 :
+                 shot.kind==2 ? 16:14.5)
+            let strength:Float=shot.hostile ?
+                (shot.kind==2 ? 0.30:shot.kind==3 ? 0.34:0.26) :
+                (shot.kind==3 ? 0.42 :
+                 shot.kind==4 ? 0.32 :
+                 shot.kind==2 ? 0.28:0.24)
+            for layer in 0..<4 {
+                indexedGroundDisc(shot.point,
+                    radius:radius*widths[layer]*radiusScale,
+                    tint:tint,
+                    alpha:min(1,strength*weights[layer]*powerScale),
+                    lift:(shot.hostile ? 1.6:1.2)+lifts[layer],
+                    slices:slices[layer],&mesh)
+            }
+        }
+        return mesh
+    }
     static func muzzleFlashes(
         _ shooters:[CarbonisCombat568.Shooter],
         camera:SphereCamera67,drawableHeight:Float)->[Float] {
