@@ -180,3 +180,72 @@ fragment float4 sector01ShooterFragment71(
                      + 0.40f*smoothstep(0.70f,0.72f,light);
     return float4(clamp(albedo*band,0.0f,1.0f),in.color.a);
 }
+
+
+// Windows v568 GpuIntro41.cs DrawDetailedResearchWreck211 + GpuSphere67
+// DrawCombatResearchWreck214. Original position/normal/RGBA attributes;
+// element #11 only identifies the source warning-lamp animation phase.
+struct CombatWreckUniforms214 {
+    float4x4 mvp;
+    float4x4 model;
+    float4 sunAndTime; // v269 directional PlanetSun71 and g.Time
+};
+struct CombatWreckRaster214 {
+    float4 position [[position]];
+    float3 normal;
+    float4 color;
+    float phase [[flat]];
+};
+vertex CombatWreckRaster214 combatWreckTriangleVertex214(
+    uint id [[vertex_id]],
+    device const float *mesh [[buffer(0)]],
+    constant CombatWreckUniforms214 &u [[buffer(1)]]) {
+    const uint i=id*11u;
+    float3 p=float3(mesh[i],mesh[i+1],mesh[i+2]);
+    CombatWreckRaster214 v;
+    v.position=u.mvp*float4(p,1);
+    float3x3 axes=float3x3(u.model[0].xyz,
+                         u.model[1].xyz,
+                         u.model[2].xyz);
+    v.normal=normalize(axes*float3(mesh[i+3],mesh[i+4],mesh[i+5]));
+    v.color=float4(mesh[i+6],mesh[i+7],mesh[i+8],mesh[i+9]);
+    v.phase=mesh[i+10];
+    return v;
+}
+fragment float4 combatWreckTriangleFragment214(
+    CombatWreckRaster214 in [[stage_in]],
+    constant CombatWreckUniforms214 &u [[buffer(1)]]) {
+    float3 tint=in.color.rgb;
+    if(in.phase > -50.0f) {
+        // Exact WreckWarningLamp213: 0.50 + 0.50*sin(g.Time*4.8+phase)
+        float pulse=0.5f+0.5f*sin(u.sunAndTime.w*4.8f+in.phase);
+        tint *= 0.45f+0.55f*pulse;
+    }
+    float3 n=normalize(in.normal);
+    // GpuPlanet.cs PlanetSun71, planetAmbient269 and planetFill269,
+    // GpuShip.cs keyDiffuse/fillPosition source values.
+    float main=max(0.0f,dot(n,normalize(u.sunAndTime.xyz)));
+    float fill=max(0.0f,dot(n,normalize(float3(1.0f,-0.3f,0.45f))));
+    float3 factor=float3(0.045f,0.06f,0.09f)
+        +main*float3(0.90f,0.95f,1.0f)
+        +fill*float3(0.06f,0.09f,0.13f);
+    return float4(clamp(tint*factor,0.0f,1.0f),in.color.a);
+}
+struct CombatWreckLineRaster214 {
+    float4 position [[position]];
+    float4 color;
+};
+vertex CombatWreckLineRaster214 combatWreckLineVertex214(
+    uint id [[vertex_id]],
+    device const float *mesh [[buffer(0)]],
+    constant CombatWreckUniforms214 &u [[buffer(1)]]) {
+    const uint i=id*7u;
+    CombatWreckLineRaster214 v;
+    v.position=u.mvp*float4(mesh[i],mesh[i+1],mesh[i+2],1.0f);
+    v.color=float4(mesh[i+3],mesh[i+4],mesh[i+5],mesh[i+6]);
+    return v;
+}
+fragment float4 combatWreckLineFragment214(
+    CombatWreckLineRaster214 in [[stage_in]]) {
+    return in.color;
+}
