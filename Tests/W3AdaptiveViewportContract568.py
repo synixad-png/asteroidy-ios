@@ -52,6 +52,13 @@ assert "layout.safeLeft+(compact ? 12 : 24)" in m
 assert "layout.safeRight+(compact ? 12 : 24)" in m
 assert "layout.headerHeight" in m and "layout.footerHeight" in m
 assert "layout.safeBottom" in m
+new_game=m.split("private func newGamePage(compact:Bool)",1)[1].split(
+    "private func message(for item:Page)",1)[0]
+assert "ScrollView(.vertical)" in new_game
+assert 'Button("URUCHOM MISJĘ")' in new_game
+assert 'accessibilityIdentifier("w3-new-start-source")' in new_game
+assert 'accessibilityIdentifier("w3-new-confirmation")' in new_game
+assert 'accessibilityIdentifier("w3-new-game-source-panel")' in new_game
 assert "layout.safeLeft+side" in c
 assert "layout.safeRight+side" in c
 assert "layout.safeBottom" in c
