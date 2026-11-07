@@ -627,6 +627,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 }
                 let size=view.drawableSize
                 let aspect=Float(max(1,size.width)/max(1,size.height))
+                let visibilityFrame=gameSession.map {
+                    SphereCameraView556(camera:$0.game.flight.camera)
+                }
                 let vp:simd_float4x4?=gameSession.map {
                     Self.viewProjection($0.game.flight.camera,aspect:aspect)
                 }
@@ -757,6 +760,16 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 if !activeRocks.isEmpty {
                     encoder.setRenderPipelineState(rockPipeline)
                     for rock in activeRocks {
+                        // GpuSphere67.cs:133 originally culls rock meshes
+                        // when their complete bound is offscreen or hidden
+                        // behind source planet interior. Old iOS drew all.
+                        if let visibilityFrame,
+                           !SourceVisibleSurface73.possiblyVisible(
+                               rock.position,
+                               worldRadius:SourceVisibleSurface73.rockWorldRadius(rock),
+                               camera:visibilityFrame,aspect:aspect) {
+                            continue
+                        }
                         let shape=CarbonisRockGeometry568.shape(for:rock)
                         if rockBuffers[shape] == nil {
                             // Physics68 splits create new source shapes; cache once.
@@ -787,6 +800,13 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                    let shooterPipeline=shooterPipeline {
                     encoder.setRenderPipelineState(shooterPipeline)
                     for enemy in session.game.shooters {
+                        if let visibilityFrame,
+                           !SourceVisibleSurface73.possiblyVisible(
+                               enemy.core.position,
+                               worldRadius:SourceVisibleSurface73.shooterWorldRadius(),
+                               camera:visibilityFrame,aspect:aspect) {
+                            continue
+                        }
                         guard let shooter=sourceShooters[enemy.core.type] else {
                             continue
                         }
