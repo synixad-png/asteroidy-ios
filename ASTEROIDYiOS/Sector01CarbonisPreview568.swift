@@ -602,7 +602,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 // PlanetScreen draws the additive ring BEFORE terrain,
                 // while sphere combat draws only its 3D atmosphere cap.
                 if gameSession == nil && planetFx568.glowEnabled {
-                    let sourceRadius:Float=1/missionTerrainScale523
+                    let sourceRadius:Float = 1 / missionTerrainScale523
                     var haloCenterScale=SIMD4<Float>(
                         0,0,sourceRadius/(1.42*max(0.35,aspect)),
                         sourceRadius/1.42)
@@ -655,7 +655,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     } else {
                         var origin=matrix_identity_float4x4
                         origin.columns.3.z = -5
-                        let sourceRadius:Float=1/missionTerrainScale523
+                        let sourceRadius:Float = 1 / missionTerrainScale523
                         atmosphereModel=origin*simd_float4x4(
                             diagonal:SIMD4<Float>(
                                 sourceRadius,sourceRadius,sourceRadius,1))
