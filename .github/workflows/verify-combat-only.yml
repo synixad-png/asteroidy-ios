@@ -2,7 +2,7 @@ name: ASTEROIDY iOS - Swift combat tests ONLY (no IPA)
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, feature/audio568-combat-cooperative-pause-20261107]
     paths:
       - '.github/workflows/verify-combat-only.yml'
       - 'ASTEROIDYiOS/CombatVerifiedEncounter556.swift'
@@ -22,6 +22,9 @@ on:
       - 'Tests/MissionIntro41SourceContract568.py'
       - 'ASTEROIDYiOS/OriginalAudioLifecycle568.swift'
       - 'ASTEROIDYiOS/OriginalAudioAV568.swift'
+      - 'ASTEROIDYiOS/OriginalMusicSynth568.swift'
+      - 'Tests/OriginalMusicSynth568Tests.swift'
+      - 'Tests/OriginalMusicCombatPause568Contract.py'
       - 'ASTEROIDYiOS/OriginalMusicTransition568.swift'
       - 'Tests/OriginalMusicTransition568Tests.swift'
       - 'ASTEROIDYiOS/OriginalEngineDSP52.swift'
@@ -233,6 +236,12 @@ jobs:
         run: |
           swiftc ASTEROIDYiOS/OriginalMusicTransition568.swift Tests/OriginalMusicTransition568Tests.swift -o /tmp/v568-music-fade
           /tmp/v568-music-fade
+      - name: Verify no combat FPS contention from original 13 background music synth jobs
+        run: |
+          set -euo pipefail
+          python3 Tests/OriginalMusicCombatPause568Contract.py
+          swiftc -O ASTEROIDYiOS/OriginalMusicSynth568.swift Tests/OriginalMusicSynth568Tests.swift -o /tmp/music568-combat-pauses
+          /tmp/music568-combat-pauses
       - name: Verify original v568 audio startup order, lazy mission, cache and no replacements
         run: |
           swiftc ASTEROIDYiOS/OriginalAudioLifecycle568.swift Tests/OriginalAudioLifecycle568Tests.swift -o /tmp/original-audio-v568
