@@ -23,6 +23,13 @@ Nie dopisano wybuchów do `App.swift`, `CarbonisCombat568.swift`, `Sector01Scene
 
 **Ważne:** nie ma na tym etapie testu pikselowego obrazu ani benchmarku fizycznego iPhone/iPad. Mniej instrukcji i kopii nie jest tożsame z potwierdzonym wzrostem FPS z 35 do 60. Raport o PASS/FAIL Xcode, przygotowaniu IPA i artefakcie podać dopiero z faktycznych wyników Actions.
 
+## Wyniki weryfikacji gałęzi przed wydaniem
+- [GitHub Actions #397](https://github.com/synixad-png/asteroidy-ios/actions/runs/42395393809): **3/3 zadania PASS** (kompilacja Swift/Metal w Xcode, wszystkie testy walki i źródłowy kontrakt geometrii).
+- **70 000 porównań w precyzji float32**: maksymalny błąd względny `0.000000221` (2,21×10⁻⁷), limit testu 3×10⁻⁶ — **PASS**.
+- Stary i nowy wachlarz: 72 współrzędne narożników i ten sam zakres UV, test oryginalnej obwiedni 250 000 punktów — **PASS**.
+- Optymalizacja źródłowych granic raymarchingu: 2 648 776 zbadanych próbek, w tym 985 640 matematycznie zerowych pominiętych — **PASS**, bez cięcia faktycznego efektu.
+- Natywny build urządzeniowego IPA i obserwacja GPU/termiki na fizycznym urządzeniu to **oddzielna kontrola po połączeniu do main**.
+
 ## Następny krok
 Ukończyć test całego native ARM64 IPA oraz odczytać na fizycznym urządzeniu GPU ms / CPU ms / FX CPU W przy podobnej liczbie nakładających się eksplozji. Jeżeli GPU nadal dominuje, konieczny jest Metal Debugger/Performance HUD, a nie przypadkowa redukcja próbek lub liczby efektów.
 
