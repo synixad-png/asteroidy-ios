@@ -1,3 +1,11 @@
+## ETAP — 07.11.2026: source instancing asteroid Metal (FPS CARBONIS)
+
+**Wykonano w aktualnym kodzie iOS:** usunięto odrębne wywołanie renderowania dla każdej widocznej asteroidy w CARBONIS na rzecz jednego `drawPrimitives(instanceCount:)` na grupę źródłowych siatek o tym samym shape, zgodnie z podejściem oryginalnego `GpuRockInstancing75`. Zachowano indywidualne macierze MVP/model, oryginalne kolory, pasma toon/rim, obrót, siatki 960-wierzchołkowe i SourceVisibleSurface73. Bufory instancji chroni 3-klatkowa pula Metal; przy niepowodzeniu alokacji zachowana jest pierwotna ścieżka rysowania. Kod gry, fizyka, wybuchy i suwaki W3 nietknięte.
+
+**Dowód:** [commit instancing 58c23989](https://github.com/synixad-png/asteroidy-ios/commit/58c239890500bdc824196f8294abf1f97c059190), [raport techniczny](Reports/V568_IOS_GPU_ROCK_INSTANCING_2026-11-07.md). Źródłowa regresja Swift/Linux i kontrolna natywna kompilacja iOS/Metal **PASS**. Uruchomiony pełny workflow IPA: [GitHub Actions #124](https://github.com/synixad-png/asteroidy-ios/actions/runs/42379339918). W osobnym workflow testów naprawiono brakujące moduły `CarbonisIOSFXBudget568` oraz `CarbonisIndexedFXMesh568` w samodzielnym `swiftc`, bez zmiany gameplayu.
+
+**Niepotwierdzone:** realny zysk FPS ani spadki 60→35 FPS na fizycznym iPhone/iPad; wyniku nie wolno zgadywać. **Harmonogram bez sztucznego wzrostu:** 18 zadań, 38% wykonane i 62% pozostało, zadanie 14 nadal 26%, do domknięcia zadania 18 konieczne pomiary na urządzeniu.
+
 ## ETAP — 07.11.2026: audyt FPS całej aktywnej ścieżki CARBONIS, realne poprawki i porządek ustawień
 
 **Wydanie po audycie:** [GitHub Actions 42377930287](https://github.com/synixad-png/asteroidy-ios/actions/runs/42377930287) 4/4 SUCCESS, IPA ARM64 iPhone/iPad 28 423 961 B, SHA-256 `2115c831f0deac1b545b915b18abdadc554b0f1b93d3461a6cd4deff5fdc024f`, [artefakt 13576548730](https://github.com/synixad-png/asteroidy-ios/actions/runs/42377930287/artifacts/13576548730). Niezależne porównanie źródłowe Windows BGRA / Metal RGB — 10 000 próbek, maksymalna różnica 0 bajtów, [Linux SUCCESS 42378649398](https://github.com/synixad-png/asteroidy-ios/actions/runs/42378649398). Brak pomiaru FPS na fizycznym iOS, nie deklarować 60 FPS.
