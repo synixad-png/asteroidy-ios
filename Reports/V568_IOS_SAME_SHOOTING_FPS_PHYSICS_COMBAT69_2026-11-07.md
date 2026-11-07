@@ -22,7 +22,14 @@
 - `Tests/SourceShotCollisionAndDrawing568Contract.py` i aktualny `Tests/CarbonisFXSourcePerformanceContract568.py`: kontrakty dotyczą odpowiedzialnych modułów, źródłowej balistyki i bieżącego strumieniowania GPU, włącznie z oryginalnymi parametrami.
 - Zostają pełne testy CARBONIS 01, historii 26 sektorów, kolizji, odgłosów, zmian profilu, GPU i macierz regresji gry.
 
-**Wyniki poszczególnych GitHub Actions podać dopiero po faktycznym zakończeniu.** Kompilacja źródeł Swift/Metal na macOS i pełny build urządzeniowy IPA to dwa oddzielne wymagania; bez rzeczywistego testu iPhone/iPad nie ma dowodu, że FPS przy samych strzałach wzrosło z np. 35 do 60.
+## Wykonane i potwierdzone testy porównawcze
+- [GitHub Actions #405](https://github.com/synixad-png/asteroidy-ios/actions/runs/42404255441): **3/3 PASS** — kontrolna kompilacja Swift/Metal na macOS, testy całej fizyki i misji oraz oryginalne pociski.
+- Spośród 45 000 losowych sprawdzeń **30 763 (68,36%)** kandydatów okazało się niemożliwych do trafienia i zostało odfiltrowanych. **Wszystkie 13 063** oryginalnie wykryte trafienia przeszły nowy filtr. Dodatkowo potwierdzono **2 000** przypadków przejść przez bieguny i szew geograficzny.
+- Pomiar tego samego kodu CPU na GitHub Linux Swift dla **10 752** identycznych kandydatów: **6,94 ms** dotychczasowego sprawdzania → **1,89 ms** po zastosowaniu konserwatywnego filtra, **3,67× szybciej w tym konkretnym fragmencie**. Liczba faktycznych trafień identyczna (30). Jedynie **48** kandydatów dotarło do kosztownego wąskiego testu. Nie jest to pomiar całej gry ani GPU urządzenia.
+- Rozwinięte listy trójkątów oryginalnych smug, wszystkich 3 rdzeni i 4 pełnych warstw oświetlenia zostały porównane z legacy `CarbonisProjectileFX69.vertices/groundLights`: **27 sprawdzeń PASS**, tolerancja każdego elementu `<0.000002`. Źródłowo indeksowana geometria redukuje przesyłanie danych względem nieindeksowanej listy o **51,47% dla pocisków** i **55,43% dla świateł** w tym zestawie. Jest to łączna oszczędność obecnego indeksowanego toru względem legacy, a nie przyrost wyłącznie niniejszego commita.
+- Najnowszy wariant dodatkowo pomija krótkotrwałe tablice Swift przy zapisie współrzędnych/indeksów; test tej końcowej zmiany i kompilacja urządzeniowego IPA są rozdzielone od #405 i muszą mieć własny wynik przed zamknięciem wydania.
+
+**Kompilacja źródeł Swift/Metal i pełny build urządzeniowy IPA to oddzielne wymagania; bez rzeczywistego testu iPhone/iPad nie ma dowodu, że FPS przy samych strzałach wzrosło z np. 35 do 60.**
 
 ## Co dalej
 1. Przejść testy zgodności źródeł + raport różnicy CPU w identycznym środowisku.
