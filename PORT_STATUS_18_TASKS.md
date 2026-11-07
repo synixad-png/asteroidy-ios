@@ -1,3 +1,11 @@
+## ETAP — 07.11.2026: usunięcie mieszanki starego menu i nowego W3
+
+**Wykonano:** audyt oryginalnego `RendererW3Home328.cs`, `ProgramW3Native315.cs`, `UiW3NativeLayout315.cs`, `Menu139.cs` oraz 44 ekranów W3. Usunięto stare modalne przejścia kampanii, zastąpiono 6 poziomych zakładek listą 17 źródłowych kategorii (6 działających, 11 jeszcze nieprzeniesionych), rozdzielono NOWA GRA od KAMPANIA, schowano `SCENA TESTOWA` w tryb diagnostyczny, odwzorowano 1,25-sekundowe przejście zasłoną. Zachowano oryginalne 7 przycisków, tło/logo, NewHome290, Vanguard431 i wszystkie działające ustawienia. To **etap usuwania regresji**, a nie ogłoszenie ukończenia 44 ekranów.
+
+**Audyt i szczegóły:** [Reports/V568_W3_MENU_MIXED_LEGACY_AUDIT_2026-11-07.md](Reports/V568_W3_MENU_MIXED_LEGACY_AUDIT_2026-11-07.md). Testy Swift/Xcode, źródłowe i simulator XCTest prowadzone przez GitHub Actions; brak testu fizycznego urządzenia. Nie generowano IPA przy samych poprawkach menu. Historyczne 18 etapów i 38%/62% bez sztucznego zwiększania postępu.
+
+---
+
 ## WYDANIE IPA — 07.11.2026: optymalizacja Explosion524 + lawa v287
 
 **Wersja:** zachowany numer bazowy v568, nowa rzeczywista kompilacja iPhone/iPad `7f82c7d2d95210f4a153694404bfb2f485c1edc6`. Zweryfikowany [GitHub Actions run 42355169830](https://github.com/synixad-png/asteroidy-ios/actions/runs/42355169830), trzy jobs **SUCCESS**, artefakt `13567093577` `ASTEROIDY-iOS-device-unsigned-ipa` dostępny w sekcji Artifacts (ZIP zawiera `ASTEROIDY_iOS_UNSIGNED.ipa`). Właściwy IPA: **28 275 180 bajtów / 28,28 MB**, SHA-256 `587e95a69df17d3f5d0c9337c1faa0cdc3244e8b932d22d91145a222661426fb`. Sprawdzono ZIP CRC, Mach-O ARM64, `UIDeviceFamily=[1,2]`, `com.synixad.asteroidyios`, zgodność z sumą SHA raportu, 0 nagrań `Music*.m4a`, oryginalna muzyka syntetyzowana podczas uruchomienia.
