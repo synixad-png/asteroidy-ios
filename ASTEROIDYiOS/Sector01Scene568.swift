@@ -180,6 +180,17 @@ struct Sector01Scene568: View {
                         .background(.black.opacity(0.9))
                         .allowsHitTesting(false)
                 }
+
+                // Windows Renderer.cs:200: performance overlay only during
+                // active combat, not victory/defeat/service screens.
+                if session.hud.phase == .playing && !showingService {
+                    SourcePerformanceOverlay568()
+                        .frame(maxWidth:.infinity,maxHeight:.infinity,
+                               alignment:.bottomTrailing)
+                        .padding(.trailing,compact ? 15 : 28)
+                        .padding(.bottom,compact ? 74 : 102)
+                        .allowsHitTesting(false)
+                }
                 if showingService {
                     Color.black.opacity(0.88).ignoresSafeArea()
                     Sector01ShopPanel568(onReturnAtlas:returnToAtlas)

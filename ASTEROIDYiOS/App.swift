@@ -399,6 +399,16 @@ struct GameView: View {
                 }
                 .foregroundStyle(.white)
                 }
+                // The original does not display FPS in W3 main menu.
+                // The diagnostic scene is separate from CARBONIS mission.
+                if !showMainMenu && sourceSector01 == nil {
+                    SourcePerformanceOverlay568()
+                        .frame(maxWidth:.infinity,maxHeight:.infinity,
+                               alignment:.bottomTrailing)
+                        .padding(.trailing,14)
+                        .padding(.bottom,18)
+                        .allowsHitTesting(false)
+                }
             }.frame(width: g.size.width, height: g.size.height)
         }
         .onAppear { audio.prepareMenuAtStartup() }

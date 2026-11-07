@@ -13,6 +13,7 @@ struct CarbonisVisualSettingsPanel568: View {
     @State private var shipScale472=SourceShipScale472.load()
     @State private var tab:Int=11
     @State private var previewRevision=0
+    @ObservedObject private var performance=SourcePerformance568.shared
 
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.39,green:0.75,blue:0.79)
@@ -131,6 +132,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     }
                     Rectangle().fill(cyan.opacity(0.28)).frame(height:1)
                     switch tab {
+                    case 0: sourceGraphicsPage
                     case 11: explosionPage
                     case 16: projectilePage
                     case 1: OriginalAudioSettingsPanel568(compact:compact)
@@ -180,6 +182,33 @@ struct CarbonisVisualSettingsPanel568: View {
         .buttonStyle(.plain)
         .accessibilityLabel(title)
         .accessibilityIdentifier(legacyTestID(index))
+    }
+    // Windows/src/Menu139.cs OptionLabels228[6] = "Licznik wydajności".
+    // ShowPerformance defaults false; Renderer.cs:200 deliberately omits
+    // W3 HOME, SHOP and summary frames. This is a REAL toggled counter,
+    // not an inert iOS settings decoration.
+    private var sourceGraphicsPage:some View {
+        VStack(alignment:.leading,spacing:compact ? 9 : 15) {
+            header("GRAFIKA / ORYGINALNY LICZNIK WYDAJNOŚCI")
+            Toggle("LICZNIK WYDAJNOŚCI (POMIAR FPS)",isOn:Binding(
+                get:{performance.enabled},
+                set:{value in performance.setEnabled(value)}))
+                .tint(cyan)
+                .font(.system(size:compact ? 10 : 13,
+                              weight:.semibold,design:.monospaced))
+                .foregroundStyle(.white)
+                .accessibilityIdentifier("w3-source-show-performance-006")
+            Text(performance.enabled ? "WŁĄCZONY" : "WYŁĄCZONY")
+                .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                .foregroundStyle(gold)
+                .accessibilityIdentifier("w3-source-fps-enabled-value")
+            Text("ŹRÓDŁO: WINDOWS v568 / MENU139 ID 6 · GPU RENDERER / 0,5 s. ZAPIS AUTOMATYCZNY. LICZNIK POJAWIA SIĘ WYŁĄCZNIE W GRZE, NIE W MENU.")
+                .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                .foregroundStyle(muted)
+                .fixedSize(horizontal:false,vertical:true)
+            Spacer(minLength:0)
+        }
+        .accessibilityIdentifier("w3-source-graphics-settings")
     }
     private var unavailableSourceCategory:some View {
         VStack(alignment:.leading,spacing:12) {

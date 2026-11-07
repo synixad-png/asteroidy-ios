@@ -1502,6 +1502,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 }
             }
             command.present(drawable)
+            SourcePerformance568.shared.watch(command)
             command.commit()
             return
         }
@@ -1773,6 +1774,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             }
             encoder.endEncoding()
             command.present(drawable)
+            SourcePerformance568.shared.watch(command)
             command.commit()
             if ProcessInfo.processInfo.environment["ASTEROIDY_IOS_PROFILE"] == "1",
                now - lastTelemetryLog > 5.0 {

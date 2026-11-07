@@ -937,6 +937,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         }
                     }
                 }
+                if gameSession != nil {
+                    SourcePerformance568.shared.watch(command)
+                }
                 command.commit()
             }
         }
