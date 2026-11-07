@@ -351,8 +351,7 @@ enum CarbonisProjectileFX69 {
         vert(center,centerColor,&mesh.vertices)
         for i in 0...slices {
             let angle=2*Float.pi*Float(i)/Float(slices)
-            let offset=(basis.east*cos(angle)+basis.south*sin(angle))
-                *radius*scale
+            let offset=(basis.east*cos(angle)+basis.south*sin(angle)) * radius * scale
             vert(center+offset,edgeColor,&mesh.vertices)
         }
         for i in 0..<slices {
