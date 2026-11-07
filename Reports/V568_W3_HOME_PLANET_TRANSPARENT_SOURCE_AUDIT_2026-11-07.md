@@ -26,5 +26,13 @@ Data: 07.11.2026
 - Automatyczne testy aktywnych przycisków W3: [GitHub Actions 42364176793](https://github.com/synixad-png/asteroidy-ios/actions/runs/42364176793). Na iPhonie nie znaleziono dostępnego symulatora (środowisko `simctl`, nie jest to dowód błędu w aplikacji).
 - Nie badano obrazu na rzeczywistym iPhonie ani iPadzie. Brak deklaracji zgodności pixel-perfect ze źródłem.
 
+## Wynik wydania natywnego IPA po poprawce planety
+
+**Pełny build Xcode: SUCCESS** — [GitHub Actions 42364176842](https://github.com/synixad-png/asteroidy-ios/actions/runs/42364176842), źródłowy commit `90ebfa72f93cdb33cf80305bc78f037d6267c7df`. Wszystkie cztery jobs zakończone sukcesem, w tym oryginalne testy W3, źródłowe regresje walki oraz kompilacja i pakowanie iPhoneOS ARM64.
+
+Artefakt [13570489111](https://github.com/synixad-png/asteroidy-ios/actions/runs/42364176842/artifacts/13570489111) zawiera `ASTEROIDY_iOS_UNSIGNED.ipa`, **28 368 889 B**, SHA-256 `316369747976ad4c7bc63fe7bc896d31991389b37e1a35388303426bde2801fc`. Suma zgodna z `reports/SHA256SUMS.txt`; CRC ZIP artefaktu i wewnętrznego IPA PASS; Info.plist `com.synixad.asteroidyios`, iOS 17.0, `UIDeviceFamily=[1,2]`, Mach-O ARM64. IPA wymaga podpisania.
+
+**Test obrazu:** w [run 42364176785](https://github.com/synixad-png/asteroidy-ios/actions/runs/42364176785) iPad 10th generation uruchomił faktyczną aplikację (PID z `simctl launch`) i zapisał niezastąpiony cudzym materiałem zrzut wstępny. Rzeczywisty zrzut otrzymał pozytywny test niepustych pikseli, lecz nie powstał na czas marker `W3MainMenu568.onAppear`, dlatego test prawidłowo oznaczono jako **INCONCLUSIVE/FAIL** i nie opublikowano obrazu jako potwierdzonego W3. Pierwotny skrypt testował ten marker po **5 s**, co nie uwzględnia oryginalnej generacji dwóch utworów menu. W commicie `bd40d3725fcab9d208d264cb01341f2b0cdee227` zmieniono wyłącznie test oczekiwania: do **240 s** na *prawdziwy marker aplikacji*, następnie zrzut i oddzielny dowód działania GPU; żadnych sztucznych obrazów ani wyłączania muzyki. Ponowny przebieg: [run 42365045431](https://github.com/synixad-png/asteroidy-ios/actions/runs/42365045431). Nie ogłaszać wizualnego PASS bez jego zakończenia. Brak jeszcze testu na fizycznym urządzeniu.
+
 ## Harmonogram i następny krok
 18 stałych zadań bez zmian. Wskaźnik portu 38% / 62% pozostało, zadanie 14 (Menu W3, HUD i ustawienia) 25% (+0 pp). Dalszym warunkiem potwierdzenia wyglądu jest wykonanie realnego zrzutu z działania iPada i iPhone'a lub test fizyczny.
