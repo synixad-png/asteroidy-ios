@@ -46,6 +46,9 @@ on:
       - 'ASTEROIDYiOS/CarbonisCombat568.swift'
       - 'ASTEROIDYiOS/CarbonisVisualSettings568.swift'
       - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
+      - 'ASTEROIDYiOS/SourcePlanetAtmosphere568.swift'
+      - 'ASTEROIDYiOS/SourcePlanetAtmosphere568.metal'
+      - 'Tests/SourcePlanetAtmosphere568Tests.swift'
       - 'ASTEROIDYiOS/CarbonisExplosion524Preview568.swift'
       - 'ASTEROIDYiOS/CarbonisProjectileFX69.swift'
       - 'Tests/CarbonisVisualSettings568Tests.swift'
@@ -143,6 +146,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Swift compiler
         run: swift --version
+      - name: Verify source GpuPlanet Atmosphere47, Glow and Menu139 #2 / #55-57
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourcePlanetAtmosphere568.swift Tests/SourcePlanetAtmosphere568Tests.swift -o /tmp/original-source-planet-glow568
+          /tmp/original-source-planet-glow568
       - name: Verify all 58 original v568 generated sound resources (no IPA)
         run: python3 Tools/verify_original_audio568_assets.py
       - name: Verify MusicAudio.cs engine/flame original DSP seeds and PCM on Swift/Linux
