@@ -63,17 +63,23 @@ for token in (
     'let atmoScale=IntroOrbit41.introPlanetScale',
     'encoder.setRenderPipelineState(atmospherePipeline)',
     'encoder.setDepthStencilState(atmosphereDepthState)',
-    'drawMesh(atmosphereMesh,atmoModel,unlit:1)',
+    'drawMesh(missionCarbonis',
 ):
     check(token in cinematic,'IntroAtmosphere47 not linked into the real Metal scene: '+token)
 stages=['drawMesh(mesh,planetModel)',
         'drawMesh(shipMesh,craft)',
         'encoder.setRenderPipelineState(atmospherePipeline)',
-        'drawMesh(atmosphereMesh,atmoModel,unlit:1)',
+        'drawMesh(missionCarbonis',
         'encoder.endEncoding()']
 positions=[cinematic.index(t) for t in stages]
 check(positions==sorted(positions) and len(set(positions))==len(positions),
       'Source GpuIntro41 must draw atmosphere after planet and craft, before presentation')
+check('carbonisAtmosphereMesh568' in cinematic and
+      '? carbonisAtmosphereMesh568 : atmosphereMesh' in cinematic,
+      'C279 must use its own source 0xEC4E19 glow, Boreas retains 0x95DBFF')
+check('236.0/255.0' in renderer and '78.0/255.0' in renderer and
+      '25.0/255.0' in renderer,
+      'Original CARBONIS PlanetBiome glow #EC4E19 was altered')
 # Shared no-write depth state is also used by the NEW additive engine
 # flames before the atmosphere. Its first occurrence is therefore
 # legitimately before the atmosphere pipeline. The atmosphere-specific
@@ -81,7 +87,7 @@ check(positions==sorted(positions) and len(set(positions))==len(positions),
 atmosphere_stage=cinematic[cinematic.index(
     'encoder.setRenderPipelineState(atmospherePipeline)'):]
 check(atmosphere_stage.index('encoder.setDepthStencilState(atmosphereDepthState)') <
-      atmosphere_stage.index('drawMesh(atmosphereMesh,atmoModel,unlit:1)'),
+      atmosphere_stage.index('drawMesh(missionCarbonis'),
       'Atmosphere must depth-test without writing AFTER plasma rendering')
 check('if (in.unlit > 0.5) return in.color;' in shader,
       'Atmosphere must preserve original unlit source RGBA, not opaque PBR')
