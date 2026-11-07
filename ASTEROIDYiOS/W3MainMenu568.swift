@@ -155,7 +155,7 @@ struct W3MainMenu568: View {
                     .accessibilityLabel("Oryginalne logo ASTEROIDY W3")
             }
             VStack(alignment:.leading,spacing:2) {
-                Text("SYNIXAD SYSTEMS")
+                Text("SYNIXAD SYSTEMS / PROTOTYP INTERFEJSU")
                     .font(.system(size:compact ? 13 : 18,
                                   weight:.heavy,design:.monospaced))
                     .foregroundStyle(gold)
@@ -357,15 +357,20 @@ struct W3MainMenu568: View {
 
     private func footer(compact:Bool) -> some View {
         HStack(spacing:8) {
-            Text("ASTEROIDY / NATYWNY PORT W3")
+            Text("DOTKNIJ FUNKCJĘ / W3 · NAWIGACJA NATYWNA")
                 .foregroundStyle(muted)
             Spacer()
-            Button("SCENA TESTOWA") {
-                openDiagnostic()
+            Text("UI W3 / METAL")
+                .foregroundStyle(gold)
+            // Windows ProgramW3Native315 does NOT display a test-scene
+            // entry in the normal W3 HOME. It must never lead users
+            // into the older diagnostic arena unintentionally.
+            if ProcessInfo.processInfo.environment["ASTEROIDY_DEBUG_MENU"] == "1" {
+                Button("SCENA TESTOWA") { openDiagnostic() }
+                    .fontWeight(.bold)
+                    .foregroundStyle(gold)
+                    .accessibilityIdentifier("w3-open-diagnostic")
             }
-            .fontWeight(.bold)
-            .foregroundStyle(gold)
-            .accessibilityIdentifier("w3-open-diagnostic")
         }
         .accessibilityElement(children: .contain)
         .font(.system(size:compact ? 9 : 11,design:.monospaced))

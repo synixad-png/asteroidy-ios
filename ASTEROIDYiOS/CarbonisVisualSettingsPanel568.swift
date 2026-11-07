@@ -105,6 +105,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     .frame(maxWidth:.infinity,alignment:.leading)
                 }
                 .scrollIndicators(.hidden)
+                .accessibilityIdentifier("w3-effects-tabs-524-285")
                 .onAppear {scroll.scrollTo(tab,anchor:.center)}
                 .onChange(of:tab) { value in
                     withAnimation(.easeInOut(duration:0.2)) {
@@ -115,7 +116,6 @@ struct CarbonisVisualSettingsPanel568: View {
             .frame(width:compact ? 126 : 174)
             .background(Color(red:0.006,green:0.025,blue:0.045).opacity(0.94))
             .overlay(Rectangle().stroke(cyan.opacity(0.28),lineWidth:1))
-            .accessibilityIdentifier("w3-effects-tabs-524-285")
             ScrollView {
                 VStack(alignment:.leading,spacing:compact ? 8 : 13) {
                     HStack {
