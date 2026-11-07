@@ -70,6 +70,42 @@ import Foundation
         precondition(state.lights.count==2 && state.lights[0].life==0.9,
             "visual visibility changed original game event state")
 
+        // Real CPU microbenchmark of JUST the math, not Metal FPS.
+        // Both loops do the same 2,400 x 6 source path points. No
+        // unstable wall-clock threshold is used to pass the test.
+        let repeats=5
+        let oldStart=ProcessInfo.processInfo.systemUptime
+        var oldSum:Float=0
+        for _ in 0..<repeats {
+            for (origin,destination) in pairs {
+                let d=Sphere67.delta(target:destination,origin:origin)
+                for step in 1...6 {
+                    let p=Sphere67.normal(Sphere67.offset(
+                        origin,by:d*(Float(step)/6)))
+                    oldSum += p.x*0.13+p.y*0.17+p.z*0.19
+                }
+            }
+        }
+        let oldElapsed=(ProcessInfo.processInfo.systemUptime-oldStart)*1000
+        let newStart=ProcessInfo.processInfo.systemUptime
+        var newSum:Float=0
+        for _ in 0..<repeats {
+            for (origin,destination) in pairs {
+                var arc=SourceGeodesicStep568(
+                    from:origin,to:destination,steps:6)
+                for _ in 0..<6 {
+                    let p=arc.nextUnit()
+                    newSum += p.x*0.13+p.y*0.17+p.z*0.19
+                }
+            }
+        }
+        let newElapsed=(ProcessInfo.processInfo.systemUptime-newStart)*1000
+        precondition(abs(oldSum-newSum)<0.12,
+            "fast geodesic changed mathematically identical source path")
+        print(String(format:
+            "CPU microbenchmark source math (Linux Swift, %.0f geodesic points): old %.1f ms, new %.1f ms",
+            Double(count*6*repeats),oldElapsed,newElapsed))
+        print("Benchmark does NOT predict iOS Metal FPS or thermal behavior")
         print("PASS 2,400 original source great-circle ribbons x6 = 14,400 points")
         print("PASS original 32x6 near ring identical, far-side hidden ring omitted")
         print(String(format:"Max unit-sphere error %.9f (limit 0.000050)", worst))
