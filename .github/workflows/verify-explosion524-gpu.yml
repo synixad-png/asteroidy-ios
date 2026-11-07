@@ -7,6 +7,7 @@ on:
       - '.github/workflows/verify-explosion524-gpu.yml'
       - 'ASTEROIDYiOS/CarbonisExplosion524Renderer.swift'
       - 'ASTEROIDYiOS/Sector01Explosion524.metal'
+      - 'Tests/Explosion524OptimizedRayBoundsTests.py'
   workflow_dispatch:
 
 jobs:
@@ -17,6 +18,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+      - name: Verify zero-opacity raymarch sample trimming against source formula
+        run: python3 Tests/Explosion524OptimizedRayBoundsTests.py
       - name: Parse changed Swift and compile explosion shader for iphoneos
         run: |
           set -euo pipefail
