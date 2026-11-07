@@ -4,7 +4,7 @@ import UIKit
 
 // The two original v568 W3 JPEG/PNG byte streams are stored as .dat to avoid\n// Xcode image optimization, then decoded by UIImage(data:) once across all flat
 // native menu screens. Never load mismatched or unverified images.
-private enum SourceW3Images568 {
+enum SourceW3Images568 {
     static let pair: (background: UIImage, logo: UIImage)? = {
         func verified(_ name: String,_ ext: String,_ expected: String) -> UIImage? {
             let url=Bundle.main.url(forResource:name,withExtension:ext)

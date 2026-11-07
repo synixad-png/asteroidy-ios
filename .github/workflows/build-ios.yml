@@ -88,6 +88,12 @@ jobs:
           swiftc ASTEROIDYiOS/MissionViewportFraming568.swift Tests/MissionViewportFraming568Tests.swift -o /tmp/mission-frame568
           /tmp/mission-frame568
           python3 Tests/MissionViewportFraming568Contract.py
+      - name: Verify source Windows v568 music-first persistent W3 press-Enter splash
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/W3StartupPolicy568.swift Tests/W3StartupPolicy568Tests.swift -o /tmp/w3-startup568
+          /tmp/w3-startup568
+          python3 Tests/W3StartupContract568.py
       - name: Verify original C279 terrain radius v523 before IPA build
         run: |
           swiftc ASTEROIDYiOS/CarbonisMissionPlanet523.swift Tests/CarbonisMissionPlanet523Tests.swift -o /tmp/carbonis-mission-scale-523

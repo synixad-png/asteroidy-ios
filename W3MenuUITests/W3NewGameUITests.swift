@@ -5,6 +5,7 @@ final class W3NewGameUITests: XCTestCase {
     func testDifficultyPlayersAndSafeCancel() {
         let app=XCUIApplication()
         XCUIDevice.shared.orientation = .landscapeRight
+        app.launchEnvironment["ASTEROIDY_W3_MENU_VERIFY"]="1"
         app.launch()
         let newGame=app.buttons["w3-home-0"]
         XCTAssertTrue(newGame.waitForExistence(timeout:30))

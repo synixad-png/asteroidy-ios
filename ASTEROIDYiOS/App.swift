@@ -132,6 +132,11 @@ struct GameView: View {
         showMainMenu=true
         return true
     }
+    // Windows Program.cs:94 + UiW3NativeLayout315.DrawW3Splash323:
+    // music preparation -> persistent press-Enter W3 splash -> HOME.
+    // Existing explicit GPU/UI verification still enters its requested scene.
+    @State private var startupSplashPassed568 = W3StartupPolicy568
+        .skipForDiagnostic(ProcessInfo.processInfo.environment)
     // The genuine W3 navigation is the normal entry point.
     // Existing source-GPU verification remains an explicit simulator mode.
     @State private var showMainMenu =
@@ -173,6 +178,7 @@ struct GameView: View {
                     if !audio.startupComplete {
                         OriginalAudioLoadingView568(audio:audio)
                     } else {
+                    ZStack {
                     W3MainMenu568(progress:campaign,selectMission:{ sector in
                         if campaign.selectUnlocked(sector) {
                             CampaignStore556.save(campaign)
@@ -187,6 +193,15 @@ struct GameView: View {
                         showMainMenu = false
                     },openCampaignOnEntry:reopenAtlasAfterCarbonis,
                     startNewGame:startNewGameFromW3)
+                        .allowsHitTesting(startupSplashPassed568)
+                        .accessibilityHidden(!startupSplashPassed568)
+                    if !startupSplashPassed568 {
+                        W3StartupSplash568(onContinue:{
+                            startupSplashPassed568=true
+                        })
+                        .zIndex(1)
+                    }
+                    }
                     }
                 } else {
                 MetalScene(input: input)
