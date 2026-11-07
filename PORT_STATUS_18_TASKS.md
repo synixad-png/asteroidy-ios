@@ -1,4 +1,16 @@
-## AKTUALNY ETAP — 06.11.2026: oryginalne audio v568 po integracji menu i CARBONIS 01
+## AKTUALNY ETAP — 07.11.2026: oryginalna synteza muzyki uruchamiana na iPhone/iPad
+
+**Wykonano:** zamiast dołączać 15 AAC do IPA, przeniesiono oryginalny generator `Windows/src/MusicSynth.cs`, `SynthDsp.cs`, `SynthCoefficients.cs`, `SynthRandom.cs`, `MusicMaster.cs` na natywny Swift `ASTEROIDYiOS/OriginalMusicSynth568.swift` z oryginalną tablicą zig, filtrami SOS, aranżacjami 128 taktów, FFT 131072, masterem liniowym 44,1 kHz stereo. Synteza zachodzi **przy każdym uruchomieniu aplikacji**, nie podczas budowania; pierwsze dwa utwory przed menu, następne 13 w tle z pauzą podczas aktywnej walki. PCM trafia do prywatnego katalogu tymczasowego, czyszczonego przy kolejnym uruchomieniu; nagrania muzyczne AAC nie są częścią instalatora. Pozostają 34 SFX, 7 głosów PL, Intro43 i licencje (43 zasoby), dźwięk silnika, 2-sekundowy crossfade, STOP/REPLAY oraz podpięcie CARBONIS 01.
+
+**Testy:** pełne utwory 0 Astral Gate oraz 14 Stellar Bloom wygenerowane natywnie; korelacje z poprzednim odniesieniem AAC odpowiednio **0,99968** i **0,99979** (różnice m.in. z kompresji AAC). Testy 5 różnych aranżacji i deterministycznego PCM PASS, Linux/testy fizyki PASS, macOS Xcode/Metal iPhoneOS ARM64 PASS, 43 zasoby w `.app` i **0 plików Music*.m4a** PASS, ZIP/CRC IPA PASS. Uruchomienie i odsłuch na fizycznym iOS **nieprzeprowadzone**. Uwaga: źródłowa synteza zapisuje czasowe nieskompresowane PCM, więc podczas działania gra może zająć znaczną ilość miejsca tymczasowego; to nie zwiększa rozmiaru IPA.
+
+**Nowy IPA:** [GitHub Actions 42317382424](https://github.com/synixad-png/asteroidy-ios/actions/runs/42317382424) SUCCESS; artefakt 13551214705; **28 236 206 bajtów** (28,24 MB), SHA-256 `852dcf7de6b9d086200b11d88b5eb85edaa9ed7bd3174f30f44dec63cade28d9`, niepodpisany, iPhone i iPad. Poprzedni IPA 111 561 436 bajtów: oszczędność **83 325 230 bajtów (74,69%)**. GitHub commit implementacji `73dfc18d0ec64391d8f3babe4387f0056a8fdcd0`.
+
+**Harmonogram niezmieniony:** 18 zadań; łączny postęp nadal **38%, pozostało 62%**; zadanie 15 nadal **60%** do czasu odsłuchu na fizycznym iOS, pełnej synchronizacji Intro43 i przeniesienia pozostałych wyzwalaczy 25 sektorów. Te liczby nie zostały podniesione samą kompilacją.
+
+---
+
+## ARCHIWUM — 06.11.2026: etap z nagraniami AAC przed korektą generatora
 
 **Status:** oryginalna muzyka oraz efekty są już w kodzie i repozytorium iOS, nie jest to jednak potwierdzenie odsłuchu na fizycznym iPhonie/iPadzie. Odnaleziono pełną paczkę `Asteroidy_v568_ZRODLA_Windows_SteamOS_BEZ_EXE_BEZ_HANGARU.zip` w Bibliotece ChatGPT; wcześniejsze stwierdzenie o braku źródeł dotyczyło tylko czterech częściowych ZIP-ów GitHub i **jest nieaktualne**.
 
