@@ -12,6 +12,7 @@ scene=read("ASTEROIDYiOS/Sector01CarbonisPreview568.swift")
 combat=read("ASTEROIDYiOS/CarbonisCombat568.swift")
 visible=read("ASTEROIDYiOS/SourceVisibleSurface73.swift")
 budget=read("ASTEROIDYiOS/CarbonisIOSFXBudget568.swift")
+volume=read("ASTEROIDYiOS/CarbonisExplosion524Renderer.swift")
 assert "struct SourceGeodesicStep568 {" in mesh
 assert "let dot=max(-1,min(1,SphereVector3.dot(a,b)))" in mesh
 assert "angle=atan2(length,dot)" in mesh
@@ -57,6 +58,12 @@ assert "destructionMeshTotal+=destructionMeshMs" in perf
 assert 'FX CPU P %.1f / W %.1f ms' in perf
 assert "completed.gpuStartTime" in perf and "completed.gpuEndTime" in perf
 assert 'UserDefaults.standard.set(value,forKey:Self.sourceKey)' in perf
+assert "let selected=max(0,min(17,count))" in volume
+assert "for i in 0..<selected" in volume
+assert "result.reserveCapacity(selected)" in volume
+assert "count:budget.gasLobes(settings.value(1))" in volume
+assert ".prefix(budget.gasLobes" not in volume
+assert "let k=fi+0.5" in volume and "let y:Float=1-2*k/17" in volume
 assert "let sourceSky568:SourceCombatSky568?" in scene
 assert "let sourceWreck214:SourceCombatWreck214?" in scene
 print("PASS source 6-step geodesic FX, 32-edge rings, same width and event lifetime")
