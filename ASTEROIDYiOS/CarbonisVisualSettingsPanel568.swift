@@ -8,6 +8,7 @@ struct CarbonisVisualSettingsPanel568: View {
     let compact:Bool
 
     @State private var profile=CarbonisVisualSettings568.load()
+    @State private var planetProfile=SourcePlanetGraphicsSettings568.load()
     @State private var tab:Int=0
     @State private var previewRevision=0
 
@@ -19,6 +20,11 @@ struct CarbonisVisualSettingsPanel568: View {
         change(&profile)
         profile.clampAll()
         profile.save()
+    }
+    private func savePlanet(_ change:(inout SourcePlanetGraphicsSettings568)->Void) {
+        change(&planetProfile)
+        planetProfile.clampAll()
+        planetProfile.save()
     }
     private func doubleValue(_ idx:Int)->Binding<Double> {
         Binding(get:{Double(profile.value(idx))},
@@ -48,10 +54,14 @@ struct CarbonisVisualSettingsPanel568: View {
 
     var body:some View {
         VStack(alignment:.leading,spacing:compact ? 6:10) {
-            HStack(spacing:8) {
-                tabButton("WYBUCHY 3D",index:0)
-                tabButton("POCISKI",index:1)
-                tabButton("AUDIO",index:2)
+            ScrollView(.horizontal,showsIndicators:false) {
+                HStack(spacing:8) {
+                    tabButton("WYBUCHY 3D",index:0)
+                    tabButton("POCISKI",index:1)
+                    tabButton("AUDIO",index:2)
+                    tabButton("PLANETY",index:3)
+                    tabButton("POSTPROCES",index:4)
+                }
             }
             .accessibilityIdentifier("w3-effects-tabs-524-285")
             ScrollView {
@@ -60,8 +70,12 @@ struct CarbonisVisualSettingsPanel568: View {
                         explosionPage
                     } else if tab==1 {
                         projectilePage
-                    } else {
+                    } else if tab==2 {
                         OriginalAudioSettingsPanel568(compact:compact)
+                    } else if tab==3 {
+                        planetPage
+                    } else {
+                        postprocessPage
                     }
                 }
                 .padding(.bottom,14)
@@ -245,4 +259,74 @@ struct CarbonisVisualSettingsPanel568: View {
         }
         .accessibilityIdentifier("w3-projectile-settings")
     }
+    // Menu139.cs: source PLANETY tab, original IDs #55 / #56 / #57.
+    // This is the same profile that the actual C279 Metal renderer reads.
+    private var planetPage:some View {
+        VStack(alignment:.leading,spacing:compact ? 10:18) {
+            header("ORYGINALNE USTAWIENIA PLANET / v436–437")
+            Toggle("ŚWIATŁO PLANETY",isOn:Binding(
+                get:{planetProfile.planetLightEnabled},
+                set:{v in savePlanet{$0.planetLightEnabled=v}}))
+                .tint(cyan)
+                .foregroundStyle(.white)
+                .accessibilityIdentifier("w3-planet-light-436")
+            VStack(alignment:.leading,spacing:4) {
+                HStack {
+                    Text("ŚWIATŁO PLANETY / PRĘDKOŚĆ")
+                    Spacer()
+                    Text("\(planetProfile.planetLightSpeed)%")
+                        .foregroundStyle(gold)
+                }
+                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .foregroundStyle(.white)
+                Slider(value:Binding(
+                    get:{Double(planetProfile.planetLightSpeed)},
+                    set:{v in savePlanet{$0.planetLightSpeed=Int(v)}}),
+                    in:0...400,step:5)
+                    .tint(cyan)
+                    .accessibilityIdentifier("w3-planet-light-speed-436")
+            }
+            VStack(alignment:.leading,spacing:4) {
+                HStack {
+                    Text("ŚWIATŁO PLANETY / JASNOŚĆ NOCY")
+                    Spacer()
+                    Text("\(planetProfile.planetNightBrightness)%")
+                        .foregroundStyle(gold)
+                }
+                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .foregroundStyle(.white)
+                Slider(value:Binding(
+                    get:{Double(planetProfile.planetNightBrightness)},
+                    set:{v in savePlanet{$0.planetNightBrightness=Int(v)}}),
+                    in:0...400,step:5)
+                    .tint(cyan)
+                    .accessibilityIdentifier("w3-planet-night-brightness-437")
+            }
+            Text("ORIGINAL: WINDOWS/src/Menu139.cs #55–57; GPUToon60.cs TERMINATOR DNIA/NOCY. WARTOŚCI 0–400%, KROK 5%.")
+                .font(.system(size:9,design:.monospaced))
+                .foregroundStyle(muted)
+            Spacer(minLength:0)
+        }
+        .accessibilityIdentifier("w3-original-planet-settings-436")
+    }
+    private var postprocessPage:some View {
+        VStack(alignment:.leading,spacing:compact ? 10:18) {
+            header("ORYGINALNE USTAWIENIA POSTPROCES / #2")
+            Toggle("GLOW — POŚWIATA",isOn:Binding(
+                get:{planetProfile.glowEnabled},
+                set:{v in savePlanet{$0.glowEnabled=v}}))
+                .tint(cyan)
+                .foregroundStyle(.white)
+                .accessibilityIdentifier("w3-source-planet-glow-256")
+            Text("PRZEŁĄCZNIK ORYGINAŁU: WŁĄCZA / WYŁĄCZA POŚWIATĘ I ATMOSFERĘ PLANETY. SAM MODEL 3D, EMISJA TEKSTURY ORAZ ŚWIATŁO POCISKÓW POZOSTAJĄ NIENARUSZONE.")
+                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .foregroundStyle(muted)
+            Text("ŹRÓDŁO: WINDOWS/src/Renderer.cs OPTION #2; GpuPlanet.cs Atmosphere47; GpuPlanetAnimation.cs GlowVertex.")
+                .font(.system(size:9,design:.monospaced))
+                .foregroundStyle(gold)
+            Spacer(minLength:0)
+        }
+        .accessibilityIdentifier("w3-original-postprocess-glow-256")
+    }
+
 }
