@@ -1,1 +1,7 @@
-# User-requested iPhone/iPad build\n\nRun ID: 42377747149\nCommit: 41e5b9c248dd1e53a7795e55e52a269ac7912eed\nStatus: GitHub Actions running; check job conclusion before claiming IPA.\n
+# User requested iOS IPA build
+
+Run ID: 42377930287
+Commit: 541d3cccbffe9125e635ddc49591cbf34c55d07c
+Actions: https://github.com/synixad-png/asteroidy-ios/actions/runs/42377930287
+Status: requested; consult latest GitHub Actions jobs/artifacts
+Signing: unsigned IPA, device signing required
