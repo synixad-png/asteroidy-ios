@@ -36,6 +36,15 @@ Pełny build ARM64 IPA pozostaje osobną kontrolą; wyniki GPU/FPS na fizycznym 
 - Pełne urządzeniowe Xcode iOS ARM64 IPA i sprawdzenie `Tools/verify_ipa.py`, CRC, zawartości `Payload`.
 - **Fizyczny iPad/iPhone**: przy zimnym uruchomieniu spróbować serii trafień podczas pierwszych 2–3 minut oraz po 3 minutach, z `CPU`, `SYM`, `WAIT`, `FX CPU P/W`, `GPU ms` i FPS; bez tego nie twierdzić, że stutter jest definitywnie usunięty.
 
+## Wynik wydania urządzeniowego
+
+- [**GitHub Actions #137**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42408945096) — **4/4 PASS**. `xcodebuild Release -sdk iphoneos` **BUILD SUCCEEDED**, kompilator Apple Metal PASS.
+- Commit dokładnie użyty do IPA: `99da170c8c2b5a5b5c2eee2b0bcb1cf62cd4fbc9`.
+- [Artefakt IPA dla iPhone/iPad](https://github.com/synixad-png/asteroidy-ios/actions/runs/42408945096/artifacts/13589017064), nazwa `ASTEROIDY-iOS-device-unsigned-ipa`. Zewnętrzny ZIP GitHub: **27 999 687 bajtów**, SHA-256 **zewnętrznego ZIP**, nie wewnętrznego IPA: `0aa13e012d438b7a4109915b9a43831eb6578989f6a3e09f532099b669a05c42`. Niepodpisany plik w archiwum: `ASTEROIDY_iOS_UNSIGNED.ipa`.
+- `unzip -t` i `Tools/verify_ipa.py` — **PASS**: `Payload`, `Info.plist`, architektura ARM64 dla urządzeń fizycznych, iPhone/iPad, iOS 17.0+, komplet zasobów, CRC. 43 oryginalne audio SFX/głosy/intro i brak nagranych utworów muzycznych w IPA; generacja 15 utworów w runtime zachowana.
+- [**Natywne testy i pełna regresja walki #410**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42408945112) — **3/3 PASS**.
+- Nadal nie przeprowadzono interaktywnej próby zimnego startu na iPadzie Pro ani iPhonie. Brak dowodu, że usunięto pełny spadek 15 FPS. Drugim potwierdzonym *mechanizmem mogącym powodować jednorazowe przycięcia* jest leniwe tworzenie nowych wariantów geometrii asteroid: w `Sector01CarbonisPreview568.swift` wczytuje się wstępnie tylko kształty początkowych asteroid, a kolejne `CarbonisRockGeometry568.vertices(shape:)` i `MTLBuffer` powstają przy pierwszym pojawieniu się nowego wariantu. Mechanizm nie był zmieniany w tym wydaniu, aby sprawdzić osobno efekt poprawki audio.
+
 ## Ryzyko i brak zmian
 
 Gate jest kooperacyjny i zatrzymuje pracę między bezpiecznymi porcjami DSP; nie ingeruje w głos aktualnie odtwarzany, efekty trafień ani w szablon muzyki. Pamięć pośrednia częściowo zsyntetyzowanego utworu może pozostawać zajęta podczas wstrzymania — jest to osobny, mierzalny temat, nie powód do zmiany modelu audio bez testu. Nie poprawiono/nie pogorszono wydajności GPU bezpośrednio; celem jest usunięcie konkurencji obliczeniowej i nieprzewidzianych skoków FPS podczas fazy rozruchu.
