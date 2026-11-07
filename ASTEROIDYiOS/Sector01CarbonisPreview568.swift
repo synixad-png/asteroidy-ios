@@ -110,9 +110,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let missionTerrainScale523:Float
             private let vertexBuffer:MTLBuffer
             private let indexBuffer:MTLBuffer
-            private let base:MTLTexture
-            private let emissive:MTLTexture
-            private let irradiance:MTLTexture
+            // Source Windows v469 combines 3 maps ONCE. Keep only the
+            // resulting 4K texture after its one-time Metal compute bake.
+            private let carbonisCombined469:MTLTexture
             private let started=ProcessInfo.processInfo.systemUptime
             private let gameSession:CarbonisSession568?
             private var craftBuffer:MTLBuffer?
@@ -207,16 +207,54 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     .generateMipmaps:false,
                     .origin:MTKTextureLoader.Origin.topLeft
                 ]
-                base=try texLoader.newTexture(
+                let baseTex=try texLoader.newTexture(
                     data:Self.verified("Sector01CarbonisBase.dat"),
                     options:opts)
-                emissive=try texLoader.newTexture(
+                let emissionTex=try texLoader.newTexture(
                     data:Self.verified("Sector01CarbonisEmissive.dat"),
                     options:opts)
-                irradiance=try texLoader.newTexture(
+                let irradianceTex=try texLoader.newTexture(
                     data:Self.verified("Sector01CarbonisIrradiance.dat"),
                     options:opts)
                 let library=try device.makeDefaultLibrary(bundle:.main)
+                // The original GpuPlanet.cs:175-225 builds this color+lava
+                // texture once and only changes it when the lava slider
+                // changes. Previous iOS evaluated all three source maps
+                // and complex smoothsteps for each *planet fragment*.
+                guard baseTex.width==emissionTex.width,
+                      baseTex.height==emissionTex.height,
+                      let baker=library.makeFunction(
+                          name:"sector01SourceCarbonisBake469")
+                else {throw SourceError.metal}
+                let bakedDesc=MTLTextureDescriptor.texture2DDescriptor(
+                    pixelFormat:.rgba8Unorm,width:baseTex.width,
+                    height:baseTex.height,mipmapped:false)
+                bakedDesc.usage=[.shaderRead,.shaderWrite]
+                bakedDesc.storageMode = .private
+                guard let baked=device.makeTexture(descriptor:bakedDesc),
+                      let bakeCommand=q.makeCommandBuffer(),
+                      let bakeEncoder=bakeCommand.makeComputeCommandEncoder()
+                else {throw SourceError.metal}
+                let bakeState=try device.makeComputePipelineState(
+                    function:baker)
+                bakeEncoder.setComputePipelineState(bakeState)
+                bakeEncoder.setTexture(baseTex,index:0)
+                bakeEncoder.setTexture(emissionTex,index:1)
+                bakeEncoder.setTexture(irradianceTex,index:2)
+                bakeEncoder.setTexture(baked,index:3)
+                var boost287=SourceLavaLightSettings287.load().intensity
+                bakeEncoder.setBytes(&boost287,length:MemoryLayout<Float>.stride,
+                                     index:0)
+                bakeEncoder.dispatchThreads(
+                    MTLSize(width:baseTex.width,height:baseTex.height,depth:1),
+                    threadsPerThreadgroup:MTLSize(width:8,height:8,depth:1))
+                bakeEncoder.endEncoding()
+                bakeCommand.commit()
+                bakeCommand.waitUntilCompleted()
+                guard bakeCommand.status == .completed else {
+                    throw SourceError.metal
+                }
+                carbonisCombined469=baked
                 guard let v=library.makeFunction(name:"sector01CarbonisVertex568"),
                       let f=library.makeFunction(name:"sector01CarbonisFragment568"),
                       let rockFragment=library.makeFunction(name:"sector01SourceRockFragment568")
@@ -671,9 +709,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 encoder.setFrontFacing(.counterClockwise)
                 encoder.setCullMode(.back)
                 encoder.setVertexBuffer(vertexBuffer,offset:0,index:0)
-                encoder.setFragmentTexture(base,index:0)
-                encoder.setFragmentTexture(emissive,index:1)
-                encoder.setFragmentTexture(irradiance,index:2)
+                // One sampled RGBA texture, as in source PC v469.
+                // No recurring emission/irradiance fetches in gameplay.
+                encoder.setFragmentTexture(carbonisCombined469,index:0)
                 encoder.setVertexBytes(&uniforms,
                     length:MemoryLayout<Uniforms>.stride,index:1)
                 encoder.setFragmentBytes(&uniforms,

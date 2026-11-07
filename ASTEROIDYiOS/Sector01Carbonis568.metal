@@ -43,31 +43,18 @@ vertex CarbonisSectorRaster568 sector01CarbonisVertex568(
 fragment float4 sector01CarbonisFragment568(
     CarbonisSectorRaster568 in [[stage_in]],
     constant CarbonisSectorUniforms568 &u [[buffer(1)]],
-    texture2d<float> base [[texture(0)]],
-    texture2d<float> emission [[texture(1)]],
-    texture2d<float> irradiance [[texture(2)]])
+    texture2d<float> combined [[texture(0)]])
 {
     constexpr sampler sourceSampler(coord::normalized,address::repeat,
                                     filter::linear);
     float4 albedo=in.color;
     if(u.material==0u){
-        // Windows/src/GpuPlanet.cs CarbonisCombined469: exact emission
-        // heat mask, color-channel ratios and irradiance contribution.
-        // Compose on the same surface pass. Never draw overlapping
-        // co-planar emissive triangles or replace the original textures.
-        float4 sourceBase=base.sample(sourceSampler,in.uv);
-        float3 hot=emission.sample(sourceSampler,in.uv).rgb;
-        float3 ambient=irradiance.sample(sourceSampler,in.uv).rgb;
-        float heat469=max(max(hot.r,hot.g),hot.b);
-        float mask469=smoothstep(0.12f,0.46f,heat469);
-        float strength469=clamp(u.lavaBoost287,0.0f,4.0f);
-        float irradiation469=min(1.0f,u.lavaBoost287*0.45f)*0.38f;
-        float3 combined469=clamp(
-            sourceBase.rgb+
-            hot*strength469*mask469*float3(1.0f,0.8f,0.5f)+
-            ambient*irradiation469,0.0f,1.0f);
-        albedo.rgb*=combined469;
-        albedo.a*=sourceBase.a;
+        // Source Windows v469: source maps were COMBINED ONCE at
+        // creation/brightness change. The 3-source blend formula
+        // runs in sector01SourceCarbonisBake469, not once per fragment.
+        float4 sourceCombined=combined.sample(sourceSampler,in.uv);
+        albedo.rgb*=sourceCombined.rgb;
+        albedo.a*=sourceCombined.a;
     }
     float sunlight=max(0.0f,dot(normalize(in.normal),
                        normalize(float3(-0.6f,0.8f,1.4f))));
