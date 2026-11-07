@@ -8,7 +8,7 @@ import Metal
 final class CarbonisFXStreamingBuffers568 {
     enum Role:Int,CaseIterable {
         case groundVertices,groundIndices,projectileVertices,
-             projectileIndices,debrisVertices
+             projectileIndices,debrisVertices,rockInstances
     }
     private let gpu:MTLDevice
     private let inFlight=DispatchSemaphore(value:3)

@@ -49,5 +49,27 @@ assert "sector01ExplosionFragment524" in vol
 assert "for(uint i=first;i<last;i++)" in vol
 assert "for(uint i=0;i<17u;++i)" in vol
 assert "if(transmittance<0.02f)break;" in vol
+# GpuRockInstancing75: identical per-instance shader math with fewer
+# draw calls when multiple visible source rocks share the original shape.
+metal=read("ASTEROIDYiOS/Sector01Carbonis568.metal")
+assert "sector01RockInstancedVertex568" in metal
+assert "sector01RockInstancedFragment568" in metal
+assert "uint instanceIndex [[instance_id]]" in metal
+assert "instances[instanceIndex]" in metal
+assert "instances[in.instanceIndex]" in metal
+assert "rockInstances" in stream
+assert "groups[shape,default:[]].append(rockUniforms)" in scene
+assert "for shape in groups.keys.sorted()" in scene
+assert "instances,as:.rockInstances" in scene
+assert "instanceCount:batch.count" in scene
+assert "rockFallbackPipeline" in scene
+assert "SourceVisibleSurface73.possiblyVisible(" in scene
+# Compare the complete arithmetic of the old fragment and the instanced
+# fragment, not just names; source toon bands and rim must remain identical.
+def lighting(name):
+    return metal.split("fragment float4 "+name+"(",1)[1].split(
+        "float3 n=normalize(in.normal);",1)[1].split("\n}",1)[0]
+assert lighting("sector01SourceRockFragment568") == lighting(
+    "sector01RockInstancedFragment568"),"source toon light regression"
 print("PASS genuine indexed GPU projectile/ground-light batches and GPU-fenced ring buffers")
 print("PASS full source quality preserved as reversible mode; reduced iOS mode explicitly cuts only visual detail")

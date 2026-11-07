@@ -88,6 +88,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let queue:MTLCommandQueue
             private let pipeline:MTLRenderPipelineState
             private let rockPipeline:MTLRenderPipelineState
+            private let rockFallbackPipeline:MTLRenderPipelineState
             private var rockBuffers: [Int:MTLBuffer] = [:]
             private var activeRocks: [SphereAsteroid556]
             private var previousRockFrame: TimeInterval?
@@ -267,7 +268,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 carbonisBakePipeline469=bakeState
                 guard let v=library.makeFunction(name:"sector01CarbonisVertex568"),
                       let f=library.makeFunction(name:"sector01CarbonisFragment568"),
-                      let rockFragment=library.makeFunction(name:"sector01SourceRockFragment568")
+                      let rockFragment=library.makeFunction(name:"sector01SourceRockFragment568"),
+                      let rockVertexInstanced=library.makeFunction(name:"sector01RockInstancedVertex568"),
+                      let rockFragmentInstanced=library.makeFunction(name:"sector01RockInstancedFragment568")
                 else {throw SourceError.metal}
                 let spec=MTLRenderPipelineDescriptor()
                 spec.vertexFunction=v
@@ -337,11 +340,20 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 planetAtmosphereBuffer=capGPU
                 planetGlowBuffer=haloGPU
                 let rockSpec=MTLRenderPipelineDescriptor()
-                rockSpec.vertexFunction=v
-                rockSpec.fragmentFunction=rockFragment
+                rockSpec.vertexFunction=rockVertexInstanced
+                rockSpec.fragmentFunction=rockFragmentInstanced
                 rockSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
                 rockSpec.depthAttachmentPixelFormat = .depth32Float
                 rockPipeline=try device.makeRenderPipelineState(descriptor:rockSpec)
+                // Preserve the exact old per-rock draw path if instance
+                // buffer allocation fails; game objects never disappear.
+                let rockFallbackSpec=MTLRenderPipelineDescriptor()
+                rockFallbackSpec.vertexFunction=v
+                rockFallbackSpec.fragmentFunction=rockFragment
+                rockFallbackSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
+                rockFallbackSpec.depthAttachmentPixelFormat = .depth32Float
+                rockFallbackPipeline=try device.makeRenderPipelineState(
+                    descriptor:rockFallbackSpec)
                 // Cache original procedural geometry per shape, never each frame.
                 for shape in Set(initialRocks.map { CarbonisRockGeometry568.shape(for:$0) }) {
                     let values=CarbonisRockGeometry568.vertices(shape:shape)
@@ -844,14 +856,12 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     }
                 }
 
-                // Original Game.Wave asteroid shapes, not billboard/GLB stand-ins.
-                // C279 stays unchanged; rock meshes share one cached VBO per shape.
+                // GpuRockInstancing75: one Metal draw per visible *shape*.
+                // Individual source model/MVP and 960-vertex procedural
+                // geometry are preserved; Physics68 and combat are untouched.
                 if !activeRocks.isEmpty {
-                    encoder.setRenderPipelineState(rockPipeline)
+                    var groups:[Int:[Uniforms]]=[:]
                     for rock in activeRocks {
-                        // GpuSphere67.cs:133 originally culls rock meshes
-                        // when their complete bound is offscreen or hidden
-                        // behind source planet interior. Old iOS drew all.
                         if let visibilityFrame,
                            !SourceVisibleSurface73.possiblyVisible(
                                rock.position,
@@ -869,18 +879,55 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                                 }
                             }
                         }
-                        guard let buffer=rockBuffers[shape] else {continue}
+                        guard rockBuffers[shape] != nil else {continue}
                         let rockMatrix=model*Self.sourceRockModel(rock)
-                        uniforms=Uniforms(mvp:vp.map{$0*rockMatrix} ??
-                                          Self.previewMVP(aspect,rockMatrix),
-                                          model:rockMatrix,material:2,glow:0)
-                        encoder.setVertexBuffer(buffer,offset:0,index:0)
-                        encoder.setVertexBytes(&uniforms,
-                            length:MemoryLayout<Uniforms>.stride,index:1)
-                        encoder.setFragmentBytes(&uniforms,
-                            length:MemoryLayout<Uniforms>.stride,index:1)
-                        encoder.drawPrimitives(type:.triangle,vertexStart:0,
-                            vertexCount:CarbonisRockGeometry568.sourceVertexCount)
+                        let rockUniforms=Uniforms(
+                            mvp:vp.map{$0*rockMatrix} ??
+                                Self.previewMVP(aspect,rockMatrix),
+                            model:rockMatrix,material:2,glow:0)
+                        groups[shape,default:[]].append(rockUniforms)
+                    }
+                    if !groups.isEmpty {
+                        var instances:[Uniforms]=[]
+                        instances.reserveCapacity(activeRocks.count)
+                        var batches:[(shape:Int,start:Int,count:Int)]=[]
+                        for shape in groups.keys.sorted() {
+                            guard let records=groups[shape] else {continue}
+                            batches.append((shape,instances.count,records.count))
+                            instances.append(contentsOf:records)
+                        }
+                        if let gpuInstances=fxStream568.upload(
+                            instances,as:.rockInstances) {
+                            encoder.setRenderPipelineState(rockPipeline)
+                            for batch in batches {
+                                guard let vertex=rockBuffers[batch.shape] else {continue}
+                                let offset=batch.start*MemoryLayout<Uniforms>.stride
+                                encoder.setVertexBuffer(vertex,offset:0,index:0)
+                                encoder.setVertexBuffer(gpuInstances,offset:offset,index:1)
+                                encoder.setFragmentBuffer(gpuInstances,offset:offset,index:1)
+                                encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                                    vertexCount:CarbonisRockGeometry568.sourceVertexCount,
+                                    instanceCount:batch.count)
+                            }
+                        } else {
+                            // The original render path remains available on
+                            // allocation failure rather than dropping rocks.
+                            encoder.setRenderPipelineState(rockFallbackPipeline)
+                            for batch in batches {
+                                guard let vertex=rockBuffers[batch.shape] else {continue}
+                                encoder.setVertexBuffer(vertex,offset:0,index:0)
+                                for i in batch.start..<(batch.start+batch.count) {
+                                    var original=instances[i]
+                                    encoder.setVertexBytes(&original,
+                                        length:MemoryLayout<Uniforms>.stride,index:1)
+                                    encoder.setFragmentBytes(&original,
+                                        length:MemoryLayout<Uniforms>.stride,index:1)
+                                    encoder.drawPrimitives(type:.triangle,
+                                        vertexStart:0,
+                                        vertexCount:CarbonisRockGeometry568.sourceVertexCount)
+                                }
+                            }
+                        }
                     }
                 }
                 // GpuRobot70.DrawShooter71: kind0/1 independently authored

@@ -91,6 +91,53 @@ fragment float4 sector01SourceRockFragment568(
     return float4(clamp(ink,0.0f,1.0f),in.color.a);
 }
 
+// GpuRockInstancing75: shared original mesh with per-instance transforms.
+// This path uses the same instance Uniforms ABI as the legacy rock renderer.
+struct CarbonisRockRasterInstanced568 {
+    float4 position [[position]];
+    float3 normal;
+    float4 color;
+    float3 eyePosition;
+    uint instanceIndex [[flat]];
+};
+vertex CarbonisRockRasterInstanced568 sector01RockInstancedVertex568(
+    uint id [[vertex_id]],
+    uint instanceIndex [[instance_id]],
+    device const float *mesh [[buffer(0)]],
+    device const CarbonisSectorUniforms568 *instances [[buffer(1)]])
+{
+    const CarbonisSectorUniforms568 u=instances[instanceIndex];
+    const uint i=id*12u;
+    const float3 p=float3(mesh[i],mesh[i+1],mesh[i+2]);
+    CarbonisRockRasterInstanced568 o;
+    o.position=u.mvp*float4(p,1);
+    float3x3 axes=float3x3(u.model[0].xyz,
+                         u.model[1].xyz,
+                         u.model[2].xyz);
+    o.normal=normalize(axes*float3(mesh[i+3],mesh[i+4],mesh[i+5]));
+    o.color=float4(mesh[i+6],mesh[i+7],mesh[i+8],mesh[i+9]);
+    o.eyePosition=(u.model*float4(p,1)).xyz;
+    o.instanceIndex=instanceIndex;
+    return o;
+}
+fragment float4 sector01RockInstancedFragment568(
+    CarbonisRockRasterInstanced568 in [[stage_in]],
+    device const CarbonisSectorUniforms568 *instances [[buffer(1)]])
+{
+    const CarbonisSectorUniforms568 u=instances[in.instanceIndex];
+    float3 n=normalize(in.normal);
+    float3 light=normalize((u.model*float4(-0.6f,0.8f,1.4f,0)).xyz);
+    float diffuse=max(0.0f,dot(n,light));
+    float band=0.25f
+        +0.33f*smoothstep(0.30f,0.32f,diffuse)
+        +0.40f*smoothstep(0.70f,0.72f,diffuse);
+    float3 eye=normalize(-in.eyePosition);
+    float rim=0.10f*smoothstep(0.72f,0.86f,
+        1.0f-max(0.0f,dot(n,eye)))*smoothstep(0.1f,0.3f,diffuse);
+    float3 ink=in.color.rgb*(band+rim);
+    return float4(clamp(ink,0.0f,1.0f),in.color.a);
+}
+
 // Source Vanguard431 textured model in the actual CARBONIS gameplay scene.
 // Retains original UV/vertex RGBA, reuses the fragment conventions of the
 // existing source W3 Vanguard431, distinct from the planet's three textures.
