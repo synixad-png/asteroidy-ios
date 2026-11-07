@@ -1127,6 +1127,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             session.game.destruction,
                             time:session.game.elapsed,
                             camera:session.game.flight.camera,
+                            aspect:aspect,
                             settings:visualSettings,budget:fxBudget))
                     if !values.isEmpty,
                        let buffer=fxStream568.upload(
