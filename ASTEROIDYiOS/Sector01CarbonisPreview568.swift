@@ -93,6 +93,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let planetAtmosphereCount:Int
             private let planetGlowCount:Int
             private let visualSettings=CarbonisVisualSettings568.load()
+            private let fxBudget=CarbonisIOSFXBudget568.load()
             private let lava287=SourceLavaLightSettings287.load()
             private let planetFx568=SourcePlanetGraphicsSettings568.load()
             private let shipScale472=SourceShipScale472.load()
@@ -694,7 +695,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                    let groundPipeline=projectileGroundPipeline {
                     let lightMesh=CarbonisProjectileFX69.indexedGroundLights(
                         session.game.bullets+session.game.hostileShots,
-                        settings:visualSettings)
+                        settings:visualSettings,budget:fxBudget)
                     if lightMesh.indexCount>0,
                        let verts=fxStream568.upload(
                            lightMesh.vertices,as:.groundVertices),
@@ -842,7 +843,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         time:session.game.elapsed,
                         camera:session.game.flight.camera,
                         vp:worldView,settings:visualSettings,
-                        into:encoder)
+                        budget:fxBudget,into:encoder)
                 }
                 if let session=gameSession,let tracer=tracerPipeline,
                    let cameraMatrix=vp {
@@ -853,7 +854,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     if let fxPipeline=projectilePipeline {
                         var fx=CarbonisProjectileFX69.indexedVertices(
                             shots,camera:session.game.flight.camera,
-                            drawableHeight:Float(view.drawableSize.height))
+                            drawableHeight:Float(view.drawableSize.height),
+                            glow:fxBudget.drawBulletGlow)
                         // Source enemy muzzle flashes retain all 24 slices.
                         let muzzles=CarbonisProjectileFX69.muzzleFlashes(
                             session.game.shooters,
@@ -897,7 +899,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             session.game.destruction,
                             time:session.game.elapsed,
                             camera:session.game.flight.camera,
-                            settings:visualSettings))
+                            settings:visualSettings,budget:fxBudget))
                     if !values.isEmpty,
                        let buffer=fxStream568.upload(
                            values,as:.debrisVertices) {
