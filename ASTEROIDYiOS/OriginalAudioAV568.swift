@@ -481,6 +481,10 @@ final class OriginalAudioAV568: ObservableObject {
     // to song 0; GameOver attenuates music to 40%. A replay restores
     // the normal current-level track and live engine audio.
     func missionPhase568(_ phase:CarbonisCombat568.Phase) {
+        // A pending retry's old SwiftUI onChange may arrive just after
+        // Intro41 starts. It must NOT restart the battle song or engine
+        // underneath the original Intro43 soundtrack.
+        guard introMissionSector568 == nil else {return}
         guard case .mission(let sector) = context else {return}
         missionPhase=phase
         switch phase {
