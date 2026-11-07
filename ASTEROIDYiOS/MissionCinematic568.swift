@@ -12,6 +12,7 @@ struct MissionCinematic568:View {
     @State private var committed=false
     @FocusState private var keyboardFocused:Bool
     @StateObject private var pad=W3StartupGamepad568()
+    @State private var safeInsets=W3ScreenInsets568()
 
     private var progress:Float {
         min(1,max(0,input.introProgress41/IntroOrbit41.duration))
@@ -32,7 +33,10 @@ struct MissionCinematic568:View {
     }
     var body:some View {
         GeometryReader { geo in
-            let compact=geo.size.height<540
+            let layout=W3AdaptiveViewport568(
+                width:geo.size.width,height:geo.size.height,
+                insets:safeInsets)
+            let compact=layout.compact
             let side:CGFloat=compact ? 18 : 33
             let gold=Color(red:0.89,green:0.67,blue:0.31)
             let cyan=Color(red:0.39,green:0.75,blue:0.79)
@@ -56,8 +60,10 @@ struct MissionCinematic568:View {
                                           design:.monospaced))
                             .foregroundStyle(cyan)
                     }
-                    .padding(.horizontal,side)
-                    .frame(height:compact ? 50 : 74)
+                    .padding(.leading,layout.safeLeft+side)
+                    .padding(.trailing,layout.safeRight+side)
+                    .padding(.top,layout.safeTop)
+                    .frame(height:layout.headerHeight)
                     .frame(maxWidth:.infinity)
                     .background(Color.black.opacity(0.70))
                     .overlay(alignment:.bottom) {
@@ -83,7 +89,7 @@ struct MissionCinematic568:View {
                     .background(Color(red:0.016,green:0.050,blue:0.078)
                         .opacity(0.80))
                     .overlay(Rectangle().stroke(cyan.opacity(0.48),lineWidth:1))
-                    .padding(.leading,side)
+                    .padding(.leading,layout.safeLeft+side)
                     .padding(.top,compact ? 12 : 26)
 
                     Spacer(minLength:0)
@@ -129,8 +135,10 @@ struct MissionCinematic568:View {
                     }
                     .font(.system(size:compact ? 9 : 12,
                                   weight:.semibold,design:.monospaced))
-                    .padding(.horizontal,side)
-                    .padding(.vertical,compact ? 12 : 20)
+                    .padding(.leading,layout.safeLeft+side)
+                    .padding(.trailing,layout.safeRight+side)
+                    .padding(.top,compact ? 12 : 20)
+                    .padding(.bottom,(compact ? 12 : 20)+layout.safeBottom)
                     .background(Color.black.opacity(0.78))
                     .overlay(alignment:.top) {
                         Rectangle().fill(gold.opacity(0.65)).frame(height:1)
@@ -149,7 +157,13 @@ struct MissionCinematic568:View {
                     .allowsHitTesting(false)
             }
             .frame(width:geo.size.width,height:geo.size.height)
+            .background {
+                W3SafeAreaReader568(insets:$safeInsets)
+                    .frame(width:0,height:0)
+                    .allowsHitTesting(false)
+            }
         }
+        .ignoresSafeArea()
         .focusable(true)
         .focused($keyboardFocused)
         // Windows Program.cs Enter skips Intro without changing campaign.
