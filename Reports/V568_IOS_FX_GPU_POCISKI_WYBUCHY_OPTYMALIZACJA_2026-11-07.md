@@ -25,7 +25,7 @@ Zachowano wszystkie warstwy wstęg, segmentację geodezyjną, kolory wroga i gra
 - `Tests/CarbonisProjectileFX69Tests.swift`: nowa siatka indeksowana rozwinięta do kolejnych trójkątów. Liczby liczb Float identyczne jak w starym rendererze, maksymalna różnica `< 0.000002`, wszystkie warstwy zachowane, wariant jasności 0 i 400%. W CI: **FX optimized: 45.59% projectile / 55.43% ground-light upload bytes saved**.
 - `Tests/Explosion524ConservativePolygonTests.py`: **250 000** losowych punktów w dysku o oryginalnie niezerowej przezroczystości; wszystkie w nowym wielokącie. Matematycznie wykazano, że poza nowym dyskiem flash ma alfa poniżej oryginalnego progu odcięcia 0,012. Redukcja powierzchni **24,13%**.
 - `Tests/CarbonisFXSourcePerformanceContract568.py`: obecność natywnego indeksowanego rysowania, trzech buforów klatkowych z ochroną przed nadpisaniem i nienaruszonych 13 płatów/22 kroków.
-- Kompletna regresja gry w workflow (statek, kolizje, obrażenia, CARBONIS, zapis, W3, muzyka), cztery zakończone jobs **SUCCESS**; natywny shader i cały iPhoneOS ARM64 **skomplikowane prawidłowo**.
+- Kompletna regresja gry w workflow (statek, kolizje, obrażenia, CARBONIS, zapis, W3, muzyka), cztery zakończone jobs **SUCCESS**; natywny shader i cały iPhoneOS ARM64 **skompilowane prawidłowo**.
 - Brak testu optycznego i wydajnościowego na fizycznym iPhonie/iPadzie. Wynik 35→60 FPS nie został potwierdzony. `SourcePerformance568` pozwala zweryfikować realny FPS podczas tej samej intensywnej walki; na urządzeniu wynik zależy także od rozdzielczości, modelu GPU, temperatury i obciążenia sceny.
 
 ## D. Prawdziwy IPA
