@@ -5,6 +5,68 @@ import Foundation
 /// Matches source event lifetimes, colors, dimensions and triangle facets.
 /// OpenGL SphereLine67 was 6-segment line rasterization; Metal expands each
 /// segment into a thin depth-tested quad (not a 2D HUD overlay).
+/// Same six great-circle steps as Windows SphereLine67, evaluated as
+/// a recurrence on unit vectors. This avoids repeated longitude/latitude
+/// inverse conversions, trigonometry and Sphere67.offset on EACH
+/// sub-segment of every 32-edge explosion light ring.
+/// It does NOT change subdivision count, line width or the game state.
+struct SourceGeodesicStep568 {
+    let origin:SphereVector3
+    let destination:SphereVector3
+    let tangent:SphereVector3
+    let cosIncrement:Float
+    let sinIncrement:Float
+    let steps:Int
+    private(set) var index=0
+    private var c:Float=1
+    private var s:Float=0
+
+    init(from:Vec2,to:Vec2,steps:Int=6) {
+        precondition(steps>0)
+        let a=Sphere67.normal(from)
+        let b=Sphere67.normal(to)
+        let dot=max(-1,min(1,SphereVector3.dot(a,b)))
+        let residual=b-a*dot
+        let length=residual.length
+        let angle:Float
+        let direction:SphereVector3
+        let end:SphereVector3
+        if length<0.000001 {
+            if dot<0 {
+                // Same original antipodal fallback as Sphere67.delta:
+                // travel pi*Sphere67.radius in local east direction.
+                angle=Float.pi
+                direction=Sphere67.basis(from).east
+                end=b
+            } else {
+                angle=0
+                direction=SphereVector3(x:0,y:0,z:0)
+                end=a
+            }
+        } else {
+            angle=atan2(length,dot)
+            direction=residual/length
+            end=b
+        }
+        origin=a
+        destination=end
+        tangent=direction
+        cosIncrement=cos(angle/Float(steps))
+        sinIncrement=sin(angle/Float(steps))
+        self.steps=steps
+    }
+    mutating func nextUnit() -> SphereVector3 {
+        precondition(index<steps)
+        index+=1
+        if index==steps {return destination}
+        let nextC=c*cosIncrement-s*sinIncrement
+        let nextS=s*cosIncrement+c*sinIncrement
+        c=nextC
+        s=nextS
+        return origin*c+tangent*s
+    }
+}
+
 enum CarbonisExplosion524Meshes {
     private static let outer:Float=SphereCameraView556.originalPlanetOuterRadius
     private static let shell:Float=(outer+15)/outer
@@ -46,11 +108,14 @@ enum CarbonisExplosion524Meshes {
     /// SphereLine67: seven points -> exactly six geodesic subdivisions.
     private static func sphereLine(from:Vec2,to:Vec2,color:[Float],
                                    into out:inout [Float]) {
-        let delta=Sphere67.delta(target:to,origin:from)
-        var last=Sphere67.normal(from)*(shell+lineLift)
-        for j in 1...6 {
-            let at=Sphere67.offset(from,by:delta*(Float(j)/6))
-            let current=Sphere67.normal(at)*(shell+lineLift)
+        // Source SphereLine67 always draws exactly six geodesic pieces.
+        // The old path reprojected six geographic coordinates per line.
+        // A unit-vector great-circle recurrence is mathematically the
+        // same original arc and needs only one angular sin/cos pair.
+        var arc=SourceGeodesicStep568(from:from,to:to,steps:6)
+        var last=arc.origin*(shell+lineLift)
+        for _ in 0..<6 {
+            let current=arc.nextUnit()*(shell+lineLift)
             stripe(last,current,color:color,width:0.006,
                    into:&out)
             last=current
