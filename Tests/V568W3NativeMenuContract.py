@@ -196,7 +196,7 @@ assert "ASTEROIDY_DEBUG_MENU" in menu
 assert 'Button("SCENA TESTOWA")' in menu
 assert 'Button("WSTECZ")' in menu
 assert 'if let shown=page {' in menu
-assert "17-category" in menu
+assert "CarbonisVisualSettingsPanel568(compact:compact)" in menu
 settings=(root/"ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift").read_text()
 tabs=[
  "GRAFIKA","DŹWIĘK","STEROWANIE","ROZGRYWKA","INTERFEJS",
