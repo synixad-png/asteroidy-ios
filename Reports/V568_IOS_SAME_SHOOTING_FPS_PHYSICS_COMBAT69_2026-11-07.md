@@ -31,6 +31,14 @@
 
 **Kompilacja źródeł Swift/Metal i pełny build urządzeniowy IPA to oddzielne wymagania; bez rzeczywistego testu iPhone/iPad nie ma dowodu, że FPS przy samych strzałach wzrosło z np. 35 do 60.**
 
+## Wydanie kompletne — finalne GitHub Actions
+- [**IPA #136 — build iPhone/iPad ARM64**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42404992031): **4/4 PASS**, w tym testy źródłowe sektora CARBONIS, kompilacja Apple Metal oraz `xcodebuild Release -sdk iphoneos` z wynikiem **BUILD SUCCEEDED**.
+- Zweryfikowany SHA źródłowego commita będącego podstawą IPA: `7f60e9515e34a014cca8b3fb2ea82912395b30a9`.
+- [**Artefakt IPA #136**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42404992031/artifacts/13587322531) — `ASTEROIDY-iOS-device-unsigned-ipa`. GitHub dostarcza ZIP **27 997 100 bajtów** zawierający `ASTEROIDY_iOS_UNSIGNED.ipa`; SHA-256 **ZEWNĘTRZNEGO ZIP GitHub**, nie IPA: `1818b54123e78c7388bd21fb292da6a1cbba81d71387330ceae8358bdbb6e7d9`.
+- Oryginalny `unzip -t` IPA: **PASS (CRC)**, `Tools/verify_ipa.py`: **PASS** — `Payload`, `Info.plist`, fizyczne ARM64, minimalny iOS 17.0, `UIDeviceFamily` iPhone/iPad, zasoby. Potwierdzone 43 źródłowe nagrania SFX/głosów, generowane w runtime 15 utworów, bez dodatkowych zapisanych plików muzycznych.
+- [CI źródeł #407](https://github.com/synixad-png/asteroidy-ios/actions/runs/42404635881): 3/3 PASS po ostatnich zmianach optymalizacyjnych; [#408](https://github.com/synixad-png/asteroidy-ios/actions/runs/42404991956) natywna kontrolna kompilacja i testy walki PASS, ale pomocnicze publikowanie statusu testu na GitHub FAIL. To nie był błąd kodu strzałów; osobny pełny build #136 jest PASS.
+- **Żadnego interaktywnego testu na fizycznym iPhonie 15 Pro Max ani iPadzie Pro nie wykonano.** Nie potwierdzono spadku liczby milisekund GPU ani FPS na urządzeniu; nie wolno deklarować osiągnięcia stałych 60 FPS.
+
 ## Co dalej
 1. Przejść testy zgodności źródeł + raport różnicy CPU w identycznym środowisku.
 2. Skopiować wyłącznie te konkretne, sprawdzone pliki do `main` bez regresji optymalizacji Explosion524.
