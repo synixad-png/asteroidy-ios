@@ -1,3 +1,15 @@
+## ETAP — 07.11.2026: audyt FPS całej aktywnej ścieżki CARBONIS, realne poprawki i porządek ustawień
+
+**Użytkownik potwierdził brak mierzalnej poprawy po dwóch wcześniejszych optymalizacjach.** Audyt porównał realny kod uruchamianej misji w `Sector01CarbonisPreview568.swift` z oryginalnym `Windows/src/GpuPlanet.cs` oraz `GpuSphere67.cs`; przyczyna dokładnych spadków do 35 FPS nie jest jeszcze rozpoznana na fizycznym urządzeniu, więc nie wolno deklarować stabilnych 60 FPS.
+
+**Wykonano:** (1) buforowany raz i na zmianę jasności *CarbonisCombined469* — połączenie trzech oryginalnych map CARBONIS (RGB 4096×2048 + RGB 4096×2048 + irradiance 1024×512) w jedną teksturę Metal, zamiast trzech próbników i dodatkowych równań dla każdej klatki; (2) wyłączenie zbędnego blendingu nieprzezroczystej planety; (3) konserwatywne odrzucanie renderowania ukrytych asteroid i myśliwców bez ingerencji w fizykę; (4) rozdzielenie wcześniejszego błędnego przełącznika `GRAFIKA` między właściwe kategorie `WYBUCHY 3D` i `POCISKI`, osobne zapisy i migracja wyboru; (5) przywrócenie realnego wpływu oryginalnych suwaków na tryb oszczędny, spójny podgląd Metal oraz aktualizacja ustawień w misji co 0,25 s; (6) uczciwa diagnostyka GPU ms albo `n/d`, CPU ms, symulacja ms i czekanie na drawable. **WAŻNA KOREKTA:** Windows `GpuPlanet.cs:251` wyłącza GL_CULL_FACE, natomiast iOS stosuje osobne optymalizacyjne culling; to nie jest źródłowo identyczny stan i wymaga testu wizualnego. Całe oryginalne C279 ma 270249 trójkątów z orientacją na zewnątrz i 137067 nieprzezroczystych wierzchołków.
+
+**Otwarta rozbieżność:** Windows stosuje instancing asteroid od odpowiedniego progu, a aktywny renderer iOS nadal wykonuje osobne wywołania draw dla poszczególnych widocznych skał. Nie wdrażano hipotetycznego rozwiązania bez pomiaru czasu CPU. Pełne 26-sektorowe wydanie iOS nadal nie istnieje; audyt obejmuje aktualnie działającą misję CARBONIS. [Raport techniczny](Reports/V568_IOS_AUDYT_FPS_CALA_SCIEZKA_CARBONIS_2026-11-07.md).
+
+**Harmonogram pozostaje bez zawyżania procentów:** 18 zadań, **38%** zrealizowane / **62%** pozostało; zadanie 14 nadal **26% (0 pp)**. Weryfikacja z urządzenia iPhone/iPad i dokładne 35→60 FPS: **niepotwierdzone**.
+
+---
+
 ## ETAP — 07.11.2026: rzeczywiste ograniczenie efektów iOS (odpowiedź na spadki 60→35 FPS)
 
 **Zlecenie:** poprzednia optymalizacja siatek i GPU nie podniosła FPS na urządzeniu użytkownika; tym razem **celowo zmniejszono wizualny koszt** w realnym rendererze CARBONIS, bez dotykania liczby pocisków, zasięgu, fizyki, zadawania obrażeń i warunków ukończenia misji.
