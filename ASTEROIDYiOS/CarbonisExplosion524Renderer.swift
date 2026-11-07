@@ -58,15 +58,10 @@ final class CarbonisExplosion524Renderer {
                 0.13*sin(a*1.6+fi),
                 a*a*0.06*(0.4+direction.y),
                 0.07*cos(a*2+fi))
-            let radius=(0.30+0.31*hash524(fi*2.71+9))*
-                (0.59+1.35*sqrt(a+0.025))*scale
-            let pulse=0.60+0.4*sin(fi*1.9+
-                a*(1.1+hash524(fi)*2))
-            let fireAmplitude=pulse*
-                exp(-a*(0.55+hash524(fi+13)*0.6))*
-                (1.2+0.4*hash524(fi+4))
-            let smokeAmplitude=(0.38+0.45*hash524(fi+17))*
-                (0.22+a*0.78)
+            let radius=(0.30+0.31*hash524(fi*2.71+9))*(0.59+1.35*sqrt(a+0.025))*scale
+            let pulse=0.60+0.4*sin(fi*1.9+a*(1.1+hash524(fi)*2))
+            let fireAmplitude=pulse*exp(-a*(0.55+hash524(fi+13)*0.6))*(1.2+0.4*hash524(fi+4))
+            let smokeAmplitude=(0.38+0.45*hash524(fi+17))*(0.22+a*0.78)
             result.append(Lobe(
                 directionFire:SIMD4<Float>(
                     direction.x,direction.y,direction.z,fireAmplitude),
