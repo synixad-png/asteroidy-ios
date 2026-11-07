@@ -532,75 +532,83 @@ struct W3MainMenu568: View {
     // Windows ProgramW3Native315.cs:348-354 and v342 explicit
     // non-destructive confirmation. No fictional iOS co-op.
     private func newGamePage(compact:Bool) -> some View {
-        VStack(alignment:.leading,spacing:compact ? 9 : 16) {
-            Text("NOWA GRA / KONFIGURACJA")
-                .font(.system(size:compact ? 14 : 20,
-                              weight:.bold,design:.monospaced))
-                .foregroundStyle(gold)
-            Text("ZAŁOGA")
-                .font(.system(size:compact ? 10 : 12,weight:.bold,design:.monospaced))
-                .foregroundStyle(cyan)
-            HStack(spacing:10) {
-                ForEach([1,2],id:\.self) { count in
-                    Button(count==1 ? "1 GRACZ" : "2 GRACZY") {
-                        newPlayers568=count
-                        newGameLaunchFailed568=false
+        // iPhone 15 Pro Max landscape has only ~330pt central height
+        // after the source W3 chrome and bottom home-indicator inset.
+        // Scroll the REAL source controls; do not scale/tuck away the
+        // difficulty, crew, start button or profile confirmation.
+        ScrollView(.vertical) {
+            VStack(alignment:.leading,spacing:compact ? 9 : 16) {
+                Text("NOWA GRA / KONFIGURACJA")
+                    .font(.system(size:compact ? 14 : 20,
+                                  weight:.bold,design:.monospaced))
+                    .foregroundStyle(gold)
+                Text("ZAŁOGA")
+                    .font(.system(size:compact ? 10 : 12,weight:.bold,design:.monospaced))
+                    .foregroundStyle(cyan)
+                HStack(spacing:10) {
+                    ForEach([1,2],id:\.self) { count in
+                        Button(count==1 ? "1 GRACZ" : "2 GRACZY") {
+                            newPlayers568=count
+                            newGameLaunchFailed568=false
+                        }
+                        .font(.system(size:compact ? 10 : 13,weight:.semibold,design:.monospaced))
+                        .foregroundStyle(newPlayers568==count ? .black : paper)
+                        .padding(.horizontal,14).frame(minHeight:40)
+                        .background(newPlayers568==count ? gold : Color(red:0.03,green:0.09,blue:0.13))
+                        .accessibilityIdentifier("w3-new-players-\(count)")
                     }
-                    .font(.system(size:compact ? 10 : 13,weight:.semibold,design:.monospaced))
-                    .foregroundStyle(newPlayers568==count ? .black : paper)
-                    .padding(.horizontal,14).frame(minHeight:40)
-                    .background(newPlayers568==count ? gold : Color(red:0.03,green:0.09,blue:0.13))
-                    .accessibilityIdentifier("w3-new-players-\(count)")
                 }
-            }
-            Text("TRUDNOŚĆ")
-                .font(.system(size:compact ? 10 : 12,weight:.bold,design:.monospaced))
-                .foregroundStyle(cyan)
-            HStack(spacing:10) {
-                ForEach(CombatBalance556.Difficulty.allCases,id:\.rawValue) { mode in
-                    Button(mode == .easy ? "ŁATWY" : mode == .normal ? "NORMALNY" : "TRUDNY") {
-                        newDifficulty568=mode
-                        newGameLaunchFailed568=false
+                Text("TRUDNOŚĆ")
+                    .font(.system(size:compact ? 10 : 12,weight:.bold,design:.monospaced))
+                    .foregroundStyle(cyan)
+                HStack(spacing:10) {
+                    ForEach(CombatBalance556.Difficulty.allCases,id:\.rawValue) { mode in
+                        Button(mode == .easy ? "ŁATWY" : mode == .normal ? "NORMALNY" : "TRUDNY") {
+                            newDifficulty568=mode
+                            newGameLaunchFailed568=false
+                        }
+                        .font(.system(size:compact ? 10 : 13,weight:.semibold,design:.monospaced))
+                        .foregroundStyle(newDifficulty568==mode ? .black : paper)
+                        .padding(.horizontal,12).frame(minHeight:40)
+                        .background(newDifficulty568==mode ? gold : Color(red:0.03,green:0.09,blue:0.13))
+                        .accessibilityIdentifier("w3-new-difficulty-\(mode.rawValue)")
                     }
-                    .font(.system(size:compact ? 10 : 13,weight:.semibold,design:.monospaced))
-                    .foregroundStyle(newDifficulty568==mode ? .black : paper)
-                    .padding(.horizontal,12).frame(minHeight:40)
-                    .background(newDifficulty568==mode ? gold : Color(red:0.03,green:0.09,blue:0.13))
-                    .accessibilityIdentifier("w3-new-difficulty-\(mode.rawValue)")
                 }
-            }
-            Text("VANGUARD / ŻYCIA NA START: \(SourceNewGame568.startingLives(difficulty:newDifficulty568))")
-                .font(.system(size:compact ? 10 : 12,design:.monospaced))
-                .foregroundStyle(paper)
-            if newPlayers568==2 {
-                Text("TRYB 2 GRACZY: NIEGOTOWY — brak drugiego statku, sterowania i oryginalnej synchronizacji. Start jest zablokowany.")
+                Text("VANGUARD / ŻYCIA NA START: \(SourceNewGame568.startingLives(difficulty:newDifficulty568))")
                     .font(.system(size:compact ? 10 : 12,design:.monospaced))
-                    .foregroundStyle(.orange)
-                    .fixedSize(horizontal:false,vertical:true)
-            } else {
-                Text("Uruchamia prawdziwą misję CARBONIS 01. Oryginalny 62-sekundowy prolog Story359 nie jest jeszcze przeniesiony na iOS.")
-                    .font(.system(size:compact ? 9 : 11,design:.monospaced))
-                    .foregroundStyle(muted)
-                    .fixedSize(horizontal:false,vertical:true)
+                    .foregroundStyle(paper)
+                if newPlayers568==2 {
+                    Text("TRYB 2 GRACZY: NIEGOTOWY — brak drugiego statku, sterowania i oryginalnej synchronizacji. Start jest zablokowany.")
+                        .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal:false,vertical:true)
+                } else {
+                    Text("Uruchamia prawdziwą misję CARBONIS 01. Oryginalny 62-sekundowy prolog Story359 nie jest jeszcze przeniesiony na iOS.")
+                        .font(.system(size:compact ? 9 : 11,design:.monospaced))
+                        .foregroundStyle(muted)
+                        .fixedSize(horizontal:false,vertical:true)
+                }
+                Button("URUCHOM MISJĘ") { requestNewGame568() }
+                    .font(.system(size:compact ? 12 : 14,weight:.bold,design:.monospaced))
+                    .foregroundStyle(.black)
+                    .padding(.horizontal,18)
+                    .frame(minHeight:44)
+                    .background(gold)
+                    .disabled(newPlayers568 != 1)
+                    .opacity(newPlayers568==1 ? 1 : 0.5)
+                    .accessibilityIdentifier("w3-new-start-source")
+                if newGameLaunchFailed568 {
+                    Text("Nie udało się zabezpieczyć profilu lub brakuje zweryfikowanych zasobów CARBONIS. Dane poprzedniej gry pozostają bez zmian.")
+                        .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal:false,vertical:true)
+                }
+                Spacer(minLength:0)
             }
-            Button("URUCHOM MISJĘ") { requestNewGame568() }
-                .font(.system(size:compact ? 12 : 14,weight:.bold,design:.monospaced))
-                .foregroundStyle(.black)
-                .padding(.horizontal,18)
-                .frame(minHeight:44)
-                .background(gold)
-                .disabled(newPlayers568 != 1)
-                .opacity(newPlayers568==1 ? 1 : 0.5)
-                .accessibilityIdentifier("w3-new-start-source")
-            if newGameLaunchFailed568 {
-                Text("Nie udało się zabezpieczyć profilu lub brakuje zweryfikowanych zasobów CARBONIS. Dane poprzedniej gry pozostają bez zmian.")
-                    .font(.system(size:compact ? 10 : 12,design:.monospaced))
-                    .foregroundStyle(.orange)
-                    .fixedSize(horizontal:false,vertical:true)
-            }
-            Spacer(minLength:0)
+            .padding(compact ? 13 : 22)
+            .frame(maxWidth:.infinity,alignment:.topLeading)
         }
-        .padding(compact ? 13 : 22)
+        .scrollIndicators(.hidden)
         .frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.topLeading)
         .background(Color(red:0.006,green:0.026,blue:0.049).opacity(0.94))
         .overlay(Rectangle().stroke(cyan.opacity(0.22),lineWidth:1))
