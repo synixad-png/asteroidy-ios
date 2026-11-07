@@ -7,7 +7,6 @@ on:
       - 'ASTEROIDYiOS/CarbonisRockGeometry568.swift'
       - 'Tests/CarbonisRockGeometry568Tests.swift'
       - 'Tests/RockShapeWarmup568Contract.py'
-      - 'Tests/RockShapeWarmup568Contract.py'
   workflow_dispatch:
   push:
     branches: [main]
@@ -64,6 +63,7 @@ on:
       - 'ASTEROIDYiOS/CarbonisSurface277.swift'
       - 'ASTEROIDYiOS/CarbonisRockGeometry568.swift'
       - 'Tests/CarbonisRockGeometry568Tests.swift'
+      - 'Tests/RockShapeWarmup568Contract.py'
       - 'ASTEROIDYiOS/CarbonisShooterMesh71.swift'
       - 'Tests/CarbonisShooterMesh71Tests.swift'
       - 'ASTEROIDYiOS/ShooterTactics71.swift'
