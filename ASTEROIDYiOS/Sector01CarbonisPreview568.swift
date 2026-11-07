@@ -104,15 +104,21 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var visualSettings=CarbonisVisualSettings568.load()
             private var fxBudget=CarbonisIOSFXBudget568.load()
             private var nextVisualReload:TimeInterval=0
-            private let lava287=SourceLavaLightSettings287.load()
+            private var lava287=SourceLavaLightSettings287.load()
             private let planetFx568=SourcePlanetGraphicsSettings568.load()
             private let shipScale472=SourceShipScale472.load()
             private let missionTerrainScale523:Float
             private let vertexBuffer:MTLBuffer
             private let indexBuffer:MTLBuffer
-            // Source Windows v469 combines 3 maps ONCE. Keep only the
-            // resulting 4K texture after its one-time Metal compute bake.
-            private let carbonisCombined469:MTLTexture
+            // Windows GpuPlanet.cs:CarbonisCombined469 caches one combined
+            // map until source brightness changes. Retain original textures
+            // solely for a rare brightness-triggered re-bake. The ordinary
+            // planet fragment continues sampling ONE combined map.
+            private let carbonisBase469:MTLTexture
+            private let carbonisEmissive469:MTLTexture
+            private let carbonisIrradiance469:MTLTexture
+            private let carbonisBakePipeline469:MTLComputePipelineState
+            private var carbonisCombined469:MTLTexture
             private let started=ProcessInfo.processInfo.systemUptime
             private let gameSession:CarbonisSession568?
             private var craftBuffer:MTLBuffer?
@@ -255,6 +261,10 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     throw SourceError.metal
                 }
                 carbonisCombined469=baked
+                carbonisBase469=baseTex
+                carbonisEmissive469=emissionTex
+                carbonisIrradiance469=irradianceTex
+                carbonisBakePipeline469=bakeState
                 guard let v=library.makeFunction(name:"sector01CarbonisVertex568"),
                       let f=library.makeFunction(name:"sector01CarbonisFragment568"),
                       let rockFragment=library.makeFunction(name:"sector01SourceRockFragment568")
@@ -455,6 +465,39 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 noDepthWrite=noWrite
                 super.init()
             }
+            /// Rebuild only when PLANETY → JASNOŚĆ EMISJI LAWY changes.
+            /// A fresh texture avoids overwriting texels still being sampled
+            /// by an in-flight frame; Metal command buffers retain textures
+            /// until GPU completion. This command commits before this
+            /// frame's render command on the same serial Metal queue.
+            private func rebakeCarbonis469(_ newBrightness:Float) {
+                let desc=MTLTextureDescriptor.texture2DDescriptor(
+                    pixelFormat:.rgba8Unorm,width:carbonisBase469.width,
+                    height:carbonisBase469.height,mipmapped:false)
+                desc.storageMode = .private
+                desc.usage=[.shaderRead,.shaderWrite]
+                guard let next=gpu.makeTexture(descriptor:desc),
+                      let command=queue.makeCommandBuffer(),
+                      let encoder=command.makeComputeCommandEncoder() else {
+                    NSLog("CARBONIS 469 live lava rebake unavailable; original texture retained")
+                    return
+                }
+                encoder.setComputePipelineState(carbonisBakePipeline469)
+                encoder.setTexture(carbonisBase469,index:0)
+                encoder.setTexture(carbonisEmissive469,index:1)
+                encoder.setTexture(carbonisIrradiance469,index:2)
+                encoder.setTexture(next,index:3)
+                var intensity=newBrightness
+                encoder.setBytes(&intensity,length:MemoryLayout<Float>.stride,
+                                 index:0)
+                encoder.dispatchThreads(
+                    MTLSize(width:next.width,height:next.height,depth:1),
+                    threadsPerThreadgroup:MTLSize(width:8,height:8,depth:1))
+                encoder.endEncoding()
+                command.commit()
+                carbonisCombined469=next
+            }
+
             static func rotateY(_ angle:Float) -> simd_float4x4 {
                 let c=cos(angle),s=sin(angle)
                 return simd_float4x4(columns:(
@@ -643,6 +686,11 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     // same live renderer without reloading 3D assets.
                     visualSettings=CarbonisVisualSettings568.load()
                     fxBudget=CarbonisIOSFXBudget568.load()
+                    let newLava=SourceLavaLightSettings287.load()
+                    if newLava != lava287 {
+                        rebakeCarbonis469(newLava.intensity)
+                        lava287=newLava
+                    }
                     nextVisualReload=now+0.25
                 }
                 let physicsStart=ProcessInfo.processInfo.systemUptime
