@@ -750,10 +750,13 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 uniforms.lavaBoost287=lava287.intensity
                 encoder.setRenderPipelineState(pipeline)
                 encoder.setDepthStencilState(depth)
-                // Audited ORIGINAL C279: all 270249 triangles have outward
-                // CCW winding; no inverted faces. Original Windows source
-                // enables GL_CULL_FACE for the solid planet. Cull only
-                // the unseen back surface, restore .none for effects/actors.
+                // iOS-only optimization, NOT a Windows raster-state copy:
+                // original Windows GpuPlanet.cs DrawCarbonis277:251 calls
+                // disable(GL_CULL_FACE), preserving double-sided rendering.
+                // Source C279: all 270249 triangles have outward winding.
+                // We cull rear-facing surfaces on iOS to reduce the heavy
+                // planet cost; visual parity on actual devices is NOT proven.
+                // Restore .none for all other geometry.
                 encoder.setFrontFacing(.counterClockwise)
                 encoder.setCullMode(.back)
                 encoder.setVertexBuffer(vertexBuffer,offset:0,index:0)

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Audit original C279 planet *all triangles* before enabling safe Metal culling.
+"""Audit ORIGINAL C279 *all* triangle windings and alpha.
 
-Requires exact source binary assets staged by prepare_v568_carbonis_sector01.
-This proves winding and vertex alpha from the actual shipped planet.
-It does NOT claim any measured iPhone FPS gain.
+Windows GpuPlanet.cs:251 actually DISABLES GL_CULL_FACE. iOS enables
+backface culling as a deliberately different performance optimization
+because every C279 face points outward, not as 'Windows state parity'.
+A physical device visual parity test is still necessary.
 """
 import hashlib,struct,pathlib
 root=pathlib.Path(__file__).resolve().parents[1]
@@ -46,5 +47,6 @@ assert "albedo.a*=sourceCombined.a;" in metal
 base=(assets/"Sector01CarbonisBase.dat").read_bytes()
 assert base.startswith(bytes.fromhex("ffd8")), "source RGB base texture must be JPEG (no alpha)"
 print(f"PASS original C279: {front} outward faces / {back} inward / {flat} degenerate; {len(alpha)} opaque vertices, source JPEG")
-print("PASS source PC opaque C279 Metal backface state and transparent preview isolation")
+print("PASS iOS-only backface culling on outward C279 and opaque game drawable")
+print("NOTE ORIGINAL WINDOWS disables GL_CULL_FACE on C279; source visual parity must be tested")
 print("LIMIT: source winding/alpha proof; GPU FPS and visual output require physical iOS validation")
