@@ -9,6 +9,19 @@ on:
     paths:
       - '.github/workflows/build-ios.yml'
       - 'ASTEROIDYiOS/W3StartupSplash568.swift'
+      - 'ASTEROIDYiOS/W3AdaptiveViewport568.swift'
+      - 'ASTEROIDYiOS/SourceFPSAccumulator568.swift'
+      - 'ASTEROIDYiOS/SourcePerformance568.swift'
+      - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
+      - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/MetalRenderer.swift'
+      - 'ASTEROIDYiOS/Sector01Scene568.swift'
+      - 'ASTEROIDYiOS/W3MainMenu568.swift'
+      - 'ASTEROIDYiOS/App.swift'
+      - 'Tests/W3AdaptiveViewport568Tests.swift'
+      - 'Tests/SourceFPSAccumulator568Tests.swift'
+      - 'Tests/W3AdaptiveViewportContract568.py'
+      - 'Tests/SourcePerformance568Contract.py'
       - 'ASTEROIDYiOS/W3StartupPolicy568.swift'
       - 'Tests/W3StartupPolicy568Tests.swift'
       - 'Tests/W3StartupContract568.py'
@@ -102,6 +115,15 @@ jobs:
         run: |
           set -euo pipefail
           python3 Tests/V568W3PlanetTransparentSourceContract.py
+      - name: Verify original W3 4:3 adaptive viewport and real FPS source option ID 6
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/W3AdaptiveViewport568.swift Tests/W3AdaptiveViewport568Tests.swift -o /tmp/w3-viewport568
+          /tmp/w3-viewport568
+          swiftc ASTEROIDYiOS/SourceFPSAccumulator568.swift Tests/SourceFPSAccumulator568Tests.swift -o /tmp/w3-fps568
+          /tmp/w3-fps568
+          python3 Tests/W3AdaptiveViewportContract568.py
+          python3 Tests/SourcePerformance568Contract.py
       - name: Verify original C279 terrain radius v523 before IPA build
         run: |
           swiftc ASTEROIDYiOS/CarbonisMissionPlanet523.swift Tests/CarbonisMissionPlanet523Tests.swift -o /tmp/carbonis-mission-scale-523
