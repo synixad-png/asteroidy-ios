@@ -112,6 +112,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var tracerPipeline:MTLRenderPipelineState?
             private var projectilePipeline:MTLRenderPipelineState?
             private var projectileGroundPipeline:MTLRenderPipelineState?
+            private lazy var fxStream568=CarbonisFXStreamingBuffers568(device:gpu)
             // Explosion524 v568: one 3D noise texture and one Metal
             // pipeline for all actual rock/enemy death events.
             private var destructionRenderer:CarbonisExplosion524Renderer?
@@ -579,6 +580,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                       let command=queue.makeCommandBuffer(),
                       let encoder=command.makeRenderCommandEncoder(descriptor:pass)
                 else {return}
+                fxStream568.beginFrame()
                 let now=ProcessInfo.processInfo.systemUptime
                 if let session=gameSession {
                     session.frame(at:now)
@@ -690,27 +692,27 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 // brightness/color/mixing follow the saved settings.
                 if let session=gameSession,let cameraMatrix=vp,
                    let groundPipeline=projectileGroundPipeline {
-                    let lights=CarbonisProjectileFX69.groundLights(
+                    let lightMesh=CarbonisProjectileFX69.indexedGroundLights(
                         session.game.bullets+session.game.hostileShots,
                         settings:visualSettings)
-                    if !lights.isEmpty,let buffer=lights.withUnsafeBytes({
-                        raw in raw.baseAddress.flatMap {
-                            gpu.makeBuffer(bytes:$0,
-                                length:raw.count,options:[])
-                        }
-                    }) {
+                    if lightMesh.indexCount>0,
+                       let verts=fxStream568.upload(
+                           lightMesh.vertices,as:.groundVertices),
+                       let index=fxStream568.upload(
+                           lightMesh.indices,as:.groundIndices) {
                         uniforms=Uniforms(mvp:cameraMatrix,
                             model:matrix_identity_float4x4,
                             material:2,glow:1)
                         encoder.setDepthStencilState(noDepthWrite)
                         encoder.setRenderPipelineState(groundPipeline)
-                        encoder.setVertexBuffer(buffer,offset:0,index:0)
+                        encoder.setVertexBuffer(verts,offset:0,index:0)
                         encoder.setVertexBytes(&uniforms,
                             length:MemoryLayout<Uniforms>.stride,index:1)
                         encoder.setFragmentBytes(&uniforms,
                             length:MemoryLayout<Uniforms>.stride,index:1)
-                        encoder.drawPrimitives(type:.triangle,vertexStart:0,
-                            vertexCount:lights.count/12)
+                        encoder.drawIndexedPrimitives(type:.triangle,
+                            indexCount:lightMesh.indexCount,indexType:.uint32,
+                            indexBuffer:index,indexBufferOffset:0)
                         encoder.setDepthStencilState(depth)
                     }
                 }
@@ -849,32 +851,39 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     // segment, three-layer geodesic luminous ribbons
                     // with true constant-pixel round 3D projectile cores.
                     if let fxPipeline=projectilePipeline {
-                        var fx=CarbonisProjectileFX69.vertices(
+                        var fx=CarbonisProjectileFX69.indexedVertices(
                             shots,camera:session.game.flight.camera,
                             drawableHeight:Float(view.drawableSize.height))
-                        fx.append(contentsOf:
-                            CarbonisProjectileFX69.muzzleFlashes(
-                                session.game.shooters,
-                                camera:session.game.flight.camera,
-                                drawableHeight:Float(view.drawableSize.height)))
-                        if !fx.isEmpty,let buffer=fx.withUnsafeBytes({
-                            raw in raw.baseAddress.flatMap {
-                                gpu.makeBuffer(bytes:$0,
-                                    length:raw.count,options:[])
+                        // Source enemy muzzle flashes retain all 24 slices.
+                        let muzzles=CarbonisProjectileFX69.muzzleFlashes(
+                            session.game.shooters,
+                            camera:session.game.flight.camera,
+                            drawableHeight:Float(view.drawableSize.height))
+                        if !muzzles.isEmpty {
+                            let first=fx.vertexCount
+                            fx.vertices.append(contentsOf:muzzles)
+                            for i in first..<fx.vertexCount {
+                                fx.indices.append(UInt32(i))
                             }
-                        }) {
+                        }
+                        if fx.indexCount>0,
+                           let verts=fxStream568.upload(
+                               fx.vertices,as:.projectileVertices),
+                           let indices=fxStream568.upload(
+                               fx.indices,as:.projectileIndices) {
                             uniforms=Uniforms(mvp:cameraMatrix,
                                 model:matrix_identity_float4x4,
                                 material:2,glow:1)
                             encoder.setRenderPipelineState(fxPipeline)
                             encoder.setDepthStencilState(noDepthWrite)
-                            encoder.setVertexBuffer(buffer,offset:0,index:0)
+                            encoder.setVertexBuffer(verts,offset:0,index:0)
                             encoder.setVertexBytes(&uniforms,
                                 length:MemoryLayout<Uniforms>.stride,index:1)
                             encoder.setFragmentBytes(&uniforms,
                                 length:MemoryLayout<Uniforms>.stride,index:1)
-                            encoder.drawPrimitives(type:.triangle,
-                                vertexStart:0,vertexCount:fx.count/12)
+                            encoder.drawIndexedPrimitives(type:.triangle,
+                                indexCount:fx.indexCount,indexType:.uint32,
+                                indexBuffer:indices,indexBufferOffset:0)
                             encoder.setDepthStencilState(depth)
                         }
                     }
@@ -890,11 +899,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             camera:session.game.flight.camera,
                             settings:visualSettings))
                     if !values.isEmpty,
-                       let buffer=values.withUnsafeBytes({ bytes in
-                           bytes.baseAddress.flatMap {
-                               gpu.makeBuffer(bytes:$0,length:bytes.count,options:[])
-                           }
-                       }) {
+                       let buffer=fxStream568.upload(
+                           values,as:.debrisVertices) {
                         uniforms=Uniforms(mvp:cameraMatrix,
                                           model:matrix_identity_float4x4,
                                           material:2,glow:1)
@@ -940,6 +946,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 if gameSession != nil {
                     SourcePerformance568.shared.watch(command)
                 }
+                fxStream568.completeFrame(command)
                 command.commit()
             }
         }
