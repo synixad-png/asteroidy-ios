@@ -52,6 +52,11 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private var sourceDrawProofScheduled = false
     let atmosphereDepthState: MTLDepthStencilState
     private let atmosphereMesh: GPUModel
+    private let carbonisAtmosphereMesh568: GPUModel
+    // Source C279 is loaded only for a real sector-01 flight cinematic;
+    // the level-5 Boreas diagnostic remains a separate original scene.
+    private var carbonisIntroPlanet568: CarbonisIntroPlanet568?
+    private var carbonisIntroLoadAttempted568 = false
     private let shipMesh: GPUModel
     private let asteroidMesh: GPUModel
     private let bulletMesh: GPUModel
@@ -275,6 +280,17 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let atmosphericSource=IntroAtmosphere47.geometry()
         atmosphereMesh=try Self.makeMesh(
             device,atmosphericSource.vertices,atmosphericSource.indices)
+        // PlanetBiome.ForLevel(1) => Carbonis277, Glow #EC4E19.
+        // Keep exact Atmosphere47 positions/alpha; change ONLY the
+        // authenticated per-planet colour of the light scatter.
+        var carbonisHaze=atmosphericSource.vertices
+        for i in carbonisHaze.indices {
+            carbonisHaze[i].color.x=236.0/255.0
+            carbonisHaze[i].color.y=78.0/255.0
+            carbonisHaze[i].color.z=25.0/255.0
+        }
+        carbonisAtmosphereMesh568=try Self.makeMesh(
+            device,carbonisHaze,atmosphericSource.indices)
         guard let url = Bundle.main.url(forResource:"Vanguard556",withExtension:"as3d")
             ?? Bundle.main.url(forResource:"Vanguard556",withExtension:"as3d",subdirectory:"Assets") else {
             throw NSError(domain:"ASTEROIDY iOS",code:3,userInfo:[NSLocalizedDescriptionKey:"Brak autentycznego modelu Vanguard556.as3d w aplikacji"])
@@ -969,10 +985,17 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         wasIntroPreview41=input.introPreview41
         if input.introPreview41 {
-            // The unfinished port replays, rather than invents an
-            // unsupported transition into a supposedly complete mission.
-            introTime41=(introTime41+Float(elapsed))
-                .truncatingRemainder(dividingBy:IntroOrbit41.duration)
+            if input.missionIntroSector == 1 {
+                // Game.StepIntro (Intro41.cs) is NOT a looping preview.
+                // Exactly one 16-second pass; the owning mission view
+                // observes 16.0 and transfers into real CARBONIS combat.
+                introTime41=min(IntroOrbit41.duration,
+                                introTime41+Float(elapsed))
+            } else {
+                // The explicitly selected old debug preview may loop.
+                introTime41=(introTime41+Float(elapsed))
+                    .truncatingRemainder(dividingBy:IntroOrbit41.duration)
+            }
         }
         if input.sectorTraining != previousSectorTraining {
             previousSectorTraining = input.sectorTraining
@@ -1336,25 +1359,52 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                     translation*Self.scale(rock.size*inv))
             }
             let center=IntroOrbit41.planetCenter*inv
-            let planetModel=Self.translation(center.x,center.y,center.z) *
-                Self.scale(IntroOrbit41.introPlanetScale) *
-                Self.rotateXDegrees(-18) *
-                Self.rotateYDegrees(IntroOrbit41.planetRotationDegrees(
-                    level:IntroOrbit41.boreasSourceLevel,
-                    time:introTime41))
-            // IntroScene41 sets weatherTime65=time before DrawPlanetSolid.
-            // The real GLB morph was previously frozen in this preview.
-            // On wrap (16 -> 0) the upload scheduler detects the rewind.
-            uploadBoreasMorphIfNeeded(seconds:Double(introTime41))
-            // Reuse the actual source Boreas GLB converted mesh and
-            // the existing safe triple-buffer lifetime management.
-            let slot=planetBufferSlots.retainCurrent()
-            command.addCompletedHandler { [planetBufferSlots] _ in
-                planetBufferSlots.release(slot)
+            let missionCarbonis=input.missionIntroSector == 1
+            // GpuIntro41.CinematicIntro41 draws the selected sector's
+            // REAL planet. The historical debug preview was fixed to
+            // level 5 Boreas, so it cannot stand in for CARBONIS 01.
+            if missionCarbonis {
+                if !carbonisIntroLoadAttempted568 {
+                    carbonisIntroLoadAttempted568=true
+                    do {
+                        carbonisIntroPlanet568=try CarbonisIntroPlanet568(
+                            device:device,queue:queue)
+                    } catch {
+                        NSLog("Intro41 source CARBONIS C279 cannot load: %@",
+                              String(describing:error))
+                        DispatchQueue.main.async { [weak input] in
+                            input?.rendererError =
+                                "Brak oryginalnej planety CARBONIS w Intro41"
+                        }
+                    }
+                }
+                if let carbonis=carbonisIntroPlanet568 {
+                    let model=Self.translation(center.x,center.y,center.z) *
+                        Self.scale(carbonis.introNormalizedScale) *
+                        Self.rotateXDegrees(-18) *
+                        Self.rotateYDegrees(IntroOrbit41.planetRotationDegrees(
+                            level:1,time:introTime41))
+                    carbonis.draw(encoder:encoder,mvp:vp,
+                                  model:model,time:introTime41)
+                }
+            } else {
+                let planetModel=Self.translation(center.x,center.y,center.z) *
+                    Self.scale(IntroOrbit41.introPlanetScale) *
+                    Self.rotateXDegrees(-18) *
+                    Self.rotateYDegrees(IntroOrbit41.planetRotationDegrees(
+                        level:IntroOrbit41.boreasSourceLevel,
+                        time:introTime41))
+                // Unmodified level-5 Boreas diagnostic with its real
+                // glTF animation and triple-buffered source geometry.
+                uploadBoreasMorphIfNeeded(seconds:Double(introTime41))
+                let slot=planetBufferSlots.retainCurrent()
+                command.addCompletedHandler { [planetBufferSlots] _ in
+                    planetBufferSlots.release(slot)
+                }
+                let mesh=GPUModel(vertices:planetVertexBuffers[slot],
+                                  indices:planetIndices,count:planetIndexCount)
+                drawMesh(mesh,planetModel)
             }
-            let mesh=GPUModel(vertices:planetVertexBuffers[slot],
-                              indices:planetIndices,count:planetIndexCount)
-            drawMesh(mesh,planetModel)
 
             // Original IntroScene41.CraftOrientation local axes.
             let a=IntroOrbit41.craftOrientationColumns(introTime41)
@@ -1442,8 +1492,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             // Original GpuIntro41.cs:494 draws DrawAtmosphere47 AFTER
             // the planet AND fighter. It is a 3D dome facing the true
             // source camera, depth-tested with depth writes disabled.
-            // This is the level-5 Boreas preview: use its verified
-            // PlanetBiome.Glow (#95DBFF), not a fabricated colour.
+            // PlanetBiome.ForLevel decides the authentic atmosphere:
+            // CARBONIS #EC4E19, diagnostic BOREAS #95DBFF.
             let atmoAxes=IntroAtmosphere47.basis(
                 center:IntroOrbit41.planetCenter,
                 eye:IntroOrbit41.frame(introTime41).eye)
@@ -1462,7 +1512,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             ))
             encoder.setRenderPipelineState(atmospherePipeline)
             encoder.setDepthStencilState(atmosphereDepthState)
-            drawMesh(atmosphereMesh,atmoModel,unlit:1)
+            drawMesh(missionCarbonis
+                     ? carbonisAtmosphereMesh568 : atmosphereMesh,
+                     atmoModel,unlit:1)
             encoder.endEncoding()
 
             // GitHub iOS SIMULATOR ONLY: prove the original textured
