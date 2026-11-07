@@ -5,6 +5,68 @@ import Foundation
 /// Matches source event lifetimes, colors, dimensions and triangle facets.
 /// OpenGL SphereLine67 was 6-segment line rasterization; Metal expands each
 /// segment into a thin depth-tested quad (not a 2D HUD overlay).
+/// Same six great-circle steps as Windows SphereLine67, evaluated as
+/// a recurrence on unit vectors. This avoids repeated longitude/latitude
+/// inverse conversions, trigonometry and Sphere67.offset on EACH
+/// sub-segment of every 32-edge explosion light ring.
+/// It does NOT change subdivision count, line width or the game state.
+struct SourceGeodesicStep568 {
+    let origin:SphereVector3
+    let destination:SphereVector3
+    let tangent:SphereVector3
+    let cosIncrement:Float
+    let sinIncrement:Float
+    let steps:Int
+    private(set) var index=0
+    private var c:Float=1
+    private var s:Float=0
+
+    init(from:Vec2,to:Vec2,steps:Int=6) {
+        precondition(steps>0)
+        let a=Sphere67.normal(from)
+        let b=Sphere67.normal(to)
+        let dot=max(-1,min(1,SphereVector3.dot(a,b)))
+        let residual=b-a*dot
+        let length=residual.length
+        let angle:Float
+        let direction:SphereVector3
+        let end:SphereVector3
+        if length<0.000001 {
+            if dot<0 {
+                // Same original antipodal fallback as Sphere67.delta:
+                // travel pi*Sphere67.radius in local east direction.
+                angle=Float.pi
+                direction=Sphere67.basis(from).east
+                end=b
+            } else {
+                angle=0
+                direction=SphereVector3(x:0,y:0,z:0)
+                end=a
+            }
+        } else {
+            angle=atan2(length,dot)
+            direction=residual/length
+            end=b
+        }
+        origin=a
+        destination=end
+        tangent=direction
+        cosIncrement=cos(angle/Float(steps))
+        sinIncrement=sin(angle/Float(steps))
+        self.steps=steps
+    }
+    mutating func nextUnit() -> SphereVector3 {
+        precondition(index<steps)
+        index+=1
+        if index==steps {return destination}
+        let nextC=c*cosIncrement-s*sinIncrement
+        let nextS=s*cosIncrement+c*sinIncrement
+        c=nextC
+        s=nextS
+        return origin*c+tangent*s
+    }
+}
+
 enum CarbonisExplosion524Meshes {
     private static let outer:Float=SphereCameraView556.originalPlanetOuterRadius
     private static let shell:Float=(outer+15)/outer
@@ -46,11 +108,14 @@ enum CarbonisExplosion524Meshes {
     /// SphereLine67: seven points -> exactly six geodesic subdivisions.
     private static func sphereLine(from:Vec2,to:Vec2,color:[Float],
                                    into out:inout [Float]) {
-        let delta=Sphere67.delta(target:to,origin:from)
-        var last=Sphere67.normal(from)*(shell+lineLift)
-        for j in 1...6 {
-            let at=Sphere67.offset(from,by:delta*(Float(j)/6))
-            let current=Sphere67.normal(at)*(shell+lineLift)
+        // Source SphereLine67 always draws exactly six geodesic pieces.
+        // The old path reprojected six geographic coordinates per line.
+        // A unit-vector great-circle recurrence is mathematically the
+        // same original arc and needs only one angular sin/cos pair.
+        var arc=SourceGeodesicStep568(from:from,to:to,steps:6)
+        var last=arc.origin*(shell+lineLift)
+        for _ in 0..<6 {
+            let current=arc.nextUnit()*(shell+lineLift)
             stripe(last,current,color:color,width:0.006,
                    into:&out)
             last=current
@@ -163,12 +228,28 @@ enum CarbonisExplosion524Meshes {
 
     static func vertices(_ state:CarbonisDestruction524,
                          time:Float,camera:SphereCamera67,
+                         aspect:Float?=nil,
                          settings:CarbonisVisualSettings568 = .init(),
                          budget:CarbonisIOSFXBudget568 = .original)->[Float] {
         var out:[Float]=[]
         out.reserveCapacity(budget.reduced ? 18000 : 60000)
+        // Original GpuSphere67.VisibleSurface73: invisible cosmetic
+        // sprites must never incur 32x6 source geodesic ring tessellation.
+        // The optional aspect is supplied ONLY by live gameplay: source
+        // unit tests and preview calls with nil still render EVERYTHING.
+        // Bounds are deliberately larger than the source surface
+        // footprint, including edge-of-screen and horizon glow.
+        let visibility=aspect.map { _ in SphereCameraView556(camera:camera) }
+        func visible(_ point:Vec2,_ worldRadius:Float)->Bool {
+            guard let aspect,let visibility else {return true}
+            return SourceVisibleSurface73.possiblyVisible(
+                point,worldRadius:worldRadius,
+                camera:visibility,aspect:aspect)
+        }
         for p in state.particles.suffix(
                 budget.particleLimit(state.particles.count)) {
+            // Max source trail 200*0.024 screen units, plus line width.
+            if !visible(p.point,0.06) {continue}
             let alpha=max(0,min(1,p.life/max(p.maxLife,0.00001)))
             let color=p.kind==1 ?
                 rgba(1,0.647,0,alpha) : rgba(0,1,1,alpha)
@@ -177,6 +258,10 @@ enum CarbonisExplosion524Meshes {
             sphereLine(from:back,to:p.point,color:color,into:&out)
         }
         for light in state.lights where light.life>0 {
+            // Source radius expands from 10 to 75 sphere arc units:
+            // 75/(720/pi)*(shell+lift)=0.363 in normalized 3D.
+            // Conservative 0.45 margin also covers stripe width.
+            if !visible(light.point,0.45) {continue}
             if state.nearDestruction(light.point,time:time) {continue}
             let fraction=max(0,min(1,
                 light.life/max(light.maxLife,0.00001)))
@@ -188,6 +273,9 @@ enum CarbonisExplosion524Meshes {
         }
         for piece in state.pieces.suffix(
                 budget.pieceLimit(state.pieces.count)) {
+            // Original small spark/shard geometry, generously bounded:
+            // clip only if the *entire* cosmetic element is invisible.
+            if !visible(piece.point,max(0.30,piece.size*0.04)) {continue}
             if piece.kind==0 {
                 let along=Vec2(x:cos(piece.angle)*piece.size,
                                y:sin(piece.angle)*piece.size)

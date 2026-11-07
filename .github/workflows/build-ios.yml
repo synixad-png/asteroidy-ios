@@ -31,6 +31,8 @@ on:
       - 'Tests/SourceVisibleSurface73Tests.swift'
       - 'Tests/CarbonisPlanetOpaqueCull568.py'
       - 'ASTEROIDYiOS/CarbonisExplosion524Meshes.swift'
+      - 'Tests/SourceGeodesicFX568Tests.swift'
+      - 'Tests/FXCPUGeodesicSourceContract568.py'
       - 'Tests/CarbonisIOSFXBudget568Tests.swift'
       - 'Tests/CarbonisIOSFXBudgetSourceContract568.py'
       - 'ASTEROIDYiOS/CarbonisExplosion524Renderer.swift'
@@ -293,8 +295,11 @@ jobs:
       - name: Verify original v568 rock / enemy explosion recipes, 3D fragment geometry and exact 64x64x64 GPU noise
         run: |
           set -euo pipefail
-          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/CarbonisExplosionNoise524.swift ASTEROIDYiOS/CarbonisExplosion524Meshes.swift ASTEROIDYiOS/CarbonisIOSFXBudget568.swift ASTEROIDYiOS/CarbonisVisualSettings568.swift Tests/CarbonisDestruction524Tests.swift -o /tmp/ios-c279-explosion524-test
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/CarbonisExplosionNoise524.swift ASTEROIDYiOS/CarbonisExplosion524Meshes.swift ASTEROIDYiOS/MissionViewportFraming568.swift ASTEROIDYiOS/SourceVisibleSurface73.swift ASTEROIDYiOS/CarbonisIOSFXBudget568.swift ASTEROIDYiOS/CarbonisVisualSettings568.swift Tests/CarbonisDestruction524Tests.swift -o /tmp/ios-c279-explosion524-test
           /tmp/ios-c279-explosion524-test
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/CarbonisExplosionNoise524.swift ASTEROIDYiOS/CarbonisExplosion524Meshes.swift ASTEROIDYiOS/MissionViewportFraming568.swift ASTEROIDYiOS/SourceVisibleSurface73.swift ASTEROIDYiOS/CarbonisIOSFXBudget568.swift ASTEROIDYiOS/CarbonisVisualSettings568.swift Tests/SourceGeodesicFX568Tests.swift -o /tmp/source-geodesic-fx568
+          /tmp/source-geodesic-fx568
+          python3 Tests/FXCPUGeodesicSourceContract568.py
       - name: Verify live Carbonis level-one flight and source combat
         run: |
           set -euo pipefail

@@ -35,14 +35,22 @@ final class CarbonisExplosion524Renderer {
     }
 
     private static func lobes(age:Float,
-                              settings:CarbonisVisualSettings568)->[Lobe] {
+                              settings:CarbonisVisualSettings568,
+                              count:Int)->[Lobe] {
         let a=max(0,age)
         let scale=settings.factor(0)
         let spread=settings.factor(5)
         let lAge:Float=0.96*(1-exp(-a*1.62))
+        // Source formula still indexes the original 17 available lobes.
+        // CPU used to compute all 17 every frame even when the original
+        // preset selected 13 or economical iOS selected only 7.
+        // Metal consumes ONLY the prefix requested by gasLobes; stop
+        // computing unseen lobes before expensive trig/exp and avoid
+        // a second Array(prefix) allocation.
+        let selected=max(0,min(17,count))
         var result:[Lobe]=[]
-        result.reserveCapacity(17)
-        for i in 0..<17 {
+        result.reserveCapacity(selected)
+        for i in 0..<selected {
             let fi=Float(i)
             let k=fi+0.5
             let y:Float=1-2*k/17
@@ -152,6 +160,7 @@ final class CarbonisExplosion524Renderer {
     func render(_ state:CarbonisDestruction524,time:Float,
                 camera:SphereCamera67,vp:simd_float4x4,
                 settings:CarbonisVisualSettings568,
+                aspect:Float?=nil,
                 budget:CarbonisIOSFXBudget568 = .original,
                 into encoder:MTLRenderCommandEncoder) {
         let events=state.visibleExplosions(
@@ -161,12 +170,29 @@ final class CarbonisExplosion524Renderer {
         let outer=SphereCameraView556.originalPlanetOuterRadius
         let shell=(outer+15)/outer
         let eye=SphereCameraView556(camera:camera).eye
+        let visibilityFrame=aspect.map { _ in
+            SphereCameraView556(camera:camera)
+        }
         encoder.setRenderPipelineState(pipeline)
         encoder.setDepthStencilState(noDepthWrite)
         encoder.setCullMode(.none)
         encoder.setFragmentTexture(noise,index:0)
         for event in events {
             let age=time-event.spawned
+            // Explosion524.cs:197,203 — source physical bound uses the
+            // very same scale as the GPU shader and ROZMIAR 3D slider.
+            let scale=settings.factor(0)
+            let radius=event.scale*scale*0.55/outer
+            let extent=radius*5.1*scale
+            // The billboard's actual disc radius is <= extent. Cover
+            // its complete 3D bound with a much larger world sphere,
+            // including the original 1.1-unit surface lift. Reject
+            // ONLY volumes fully outside camera+terrain visibility:
+            // no raymarch or geometry is submitted for invisible deaths.
+            if let aspect,let frame=visibilityFrame,
+               !SourceVisibleSurface73.possiblyVisible(
+                    event.point,worldRadius:extent*1.6+0.03,
+                    camera:frame,aspect:aspect) {continue}
             let normal=Sphere67.normal(event.point)
             let center=normal*(shell+1.1/outer)
             let front=(eye-center).normalized
@@ -176,11 +202,6 @@ final class CarbonisExplosion524Renderer {
                 right=SphereVector3(x:1,y:0,z:0)
             }
             let up=SphereVector3.cross(front,right).normalized
-            // Explosion524.cs:197,203 — both the projected radius
-            // and the shader uScale obey the original "ROZMIAR 3D" slider.
-            let scale=settings.factor(0)
-            let radius=event.scale*scale*0.55/outer
-            let extent=radius*5.1*scale
             // UV and world positions are related by the same affine
             // mapping as the original four quad corners. Every surviving
             // fragment receives the unchanged source (x,y,z) ray sample.
@@ -216,8 +237,8 @@ final class CarbonisExplosion524Renderer {
                                    index:1)
             encoder.setFragmentBytes(&params,length:MemoryLayout<Parameters>.stride,
                                      index:1)
-            let prepared=Array(Self.lobes(age:age,settings:settings)
-                .prefix(budget.gasLobes(settings.value(1))))
+            let prepared=Self.lobes(age:age,settings:settings,
+                count:budget.gasLobes(settings.value(1)))
             prepared.withUnsafeBytes { raw in
                 if let address=raw.baseAddress {
                     encoder.setFragmentBytes(address,length:raw.count,index:2)

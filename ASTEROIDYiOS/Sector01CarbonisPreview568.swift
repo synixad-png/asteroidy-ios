@@ -725,6 +725,10 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 }
                 previousRockFrame=now
                 let simulationMs=(ProcessInfo.processInfo.systemUptime-physicsStart)*1000
+                // Instrument CPU-side geometry generation with the
+                // EXISTING FPS overlay, not a new graphics setting.
+                var projectileMeshMs:Double=0
+                var destructionMeshMs:Double=0
                 let t=Float(now-started)
                 var model=matrix_identity_float4x4
                 if gameSession == nil {
@@ -869,9 +873,12 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 // brightness/color/mixing follow the saved settings.
                 if let session=gameSession,let cameraMatrix=vp,
                    let groundPipeline=projectileGroundPipeline {
+                    let groundMeshStarted=ProcessInfo.processInfo.systemUptime
                     let lightMesh=CarbonisProjectileFX69.indexedGroundLights(
                         session.game.bullets+session.game.hostileShots,
                         settings:visualSettings,budget:fxBudget)
+                    projectileMeshMs+=(ProcessInfo.processInfo.systemUptime -
+                                       groundMeshStarted)*1000
                     if lightMesh.indexCount>0,
                        let verts=fxStream568.upload(
                            lightMesh.vertices,as:.groundVertices),
@@ -1071,6 +1078,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         time:session.game.elapsed,
                         camera:session.game.flight.camera,
                         vp:worldView,settings:visualSettings,
+                        aspect:aspect,
                         budget:fxBudget,into:encoder)
                 }
                 if let session=gameSession,let tracer=tracerPipeline,
@@ -1080,6 +1088,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     // segment, three-layer geodesic luminous ribbons
                     // with true constant-pixel round 3D projectile cores.
                     if let fxPipeline=projectilePipeline {
+                        let projectileMeshStarted=ProcessInfo.processInfo.systemUptime
                         var fx=CarbonisProjectileFX69.indexedVertices(
                             shots,camera:session.game.flight.camera,
                             drawableHeight:Float(view.drawableSize.height),
@@ -1096,6 +1105,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                                 fx.indices.append(UInt32(i))
                             }
                         }
+                        projectileMeshMs+=(ProcessInfo.processInfo.systemUptime -
+                                           projectileMeshStarted)*1000
                         if fx.indexCount>0,
                            let verts=fxStream568.upload(
                                fx.vertices,as:.projectileVertices),
@@ -1122,12 +1133,16 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         session.game.tokenPickups))
                     // Source particle bursts, radius-animated lights,
                     // metal CombatPieces125 and Explosion524 3D shards.
+                    let destructionMeshStarted=ProcessInfo.processInfo.systemUptime
                     values.append(contentsOf:
                         CarbonisExplosion524Meshes.vertices(
                             session.game.destruction,
                             time:session.game.elapsed,
                             camera:session.game.flight.camera,
+                            aspect:aspect,
                             settings:visualSettings,budget:fxBudget))
+                    destructionMeshMs=(ProcessInfo.processInfo.systemUptime -
+                                         destructionMeshStarted)*1000
                     if !values.isEmpty,
                        let buffer=fxStream568.upload(
                            values,as:.debrisVertices) {
@@ -1176,7 +1191,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 if gameSession != nil {
                     SourcePerformance568.shared.recordCPU(
                         workMs:(ProcessInfo.processInfo.systemUptime-acquired)*1000,
-                        simulationMs:simulationMs,waitMs:waitMs)
+                        simulationMs:simulationMs,waitMs:waitMs,
+                        projectileMeshMs:projectileMeshMs,
+                        destructionMeshMs:destructionMeshMs)
                     SourcePerformance568.shared.watch(command)
                 }
                 fxStream568.completeFrame(command)

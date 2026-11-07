@@ -21,6 +21,10 @@ final class SourcePerformance568: ObservableObject {
     private var cpuWorkTotal:Double=0
     private var cpuSimulationTotal:Double=0
     private var cpuWaitTotal:Double=0
+    // CPU build times only; GPU raster/shading is measured separately
+    // by actual gpuStartTime/gpuEndTime, never guessed from FPS.
+    private var projectileMeshTotal:Double=0
+    private var destructionMeshTotal:Double=0
     private var cpuSamples:Int=0
 
     private init() {
@@ -36,6 +40,8 @@ final class SourcePerformance568: ObservableObject {
         cpuWorkTotal=0
         cpuSimulationTotal=0
         cpuWaitTotal=0
+        projectileMeshTotal=0
+        destructionMeshTotal=0
         cpuSamples=0
         lock.unlock()
         enabled=value
@@ -46,15 +52,20 @@ final class SourcePerformance568: ObservableObject {
 
     /// CPU stopwatch from the actual Metal callback, collected only when
     /// FPS measurement is switched on. It is not GPU counter time.
-    func recordCPU(workMs:Double,simulationMs:Double,waitMs:Double) {
+    func recordCPU(workMs:Double,simulationMs:Double,waitMs:Double,
+                   projectileMeshMs:Double=0,destructionMeshMs:Double=0) {
         guard workMs.isFinite && simulationMs.isFinite &&
-              waitMs.isFinite && workMs>=0 && simulationMs>=0 && waitMs>=0
+              waitMs.isFinite && workMs>=0 && simulationMs>=0 && waitMs>=0 &&
+              projectileMeshMs.isFinite && destructionMeshMs.isFinite &&
+              projectileMeshMs>=0 && destructionMeshMs>=0
         else {return}
         lock.lock()
         if sampling {
             cpuWorkTotal+=workMs
             cpuSimulationTotal+=simulationMs
             cpuWaitTotal+=waitMs
+            projectileMeshTotal+=projectileMeshMs
+            destructionMeshTotal+=destructionMeshMs
             cpuSamples+=1
         }
         lock.unlock()
@@ -87,11 +98,14 @@ final class SourcePerformance568: ObservableObject {
                 cpuWorkTotal=0
                 cpuSimulationTotal=0
                 cpuWaitTotal=0
+                projectileMeshTotal=0
+                destructionMeshTotal=0
                 cpuSamples=0
             }
             guard cpuSamples>0 else{return []}
             let n=Double(cpuSamples)
-            return [cpuWorkTotal/n,cpuSimulationTotal/n,cpuWaitTotal/n]
+            return [cpuWorkTotal/n,cpuSimulationTotal/n,cpuWaitTotal/n,
+                    projectileMeshTotal/n,destructionMeshTotal/n]
         }
         lock.unlock()
         guard let sample=next else{return}
@@ -99,13 +113,19 @@ final class SourcePerformance568: ObservableObject {
         let gpuText=sample.averageGPUms.map {
             String(format:"%.1f", $0)
         } ?? "n/d"
-        let cpuText=cpu?.count==3
+        let cpuText=cpu?.count==5
             ? String(format:"CPU %.1f (SYM %.1f / WAIT %.1f) ms",
                      cpu![0],cpu![1],cpu![2])
             : "CPU n/d"
+        // These are wall-clock CPU calculations of geometry, NOT
+        // independent GPU pass timings. No new W3 configuration toggle.
+        let fxText=cpu?.count==5
+            ? String(format:"FX CPU P %.1f / W %.1f ms",
+                     cpu![3],cpu![4])
+            : "FX CPU n/d"
         // Never call 1/FPS GPU time if Metal GPU timestamps are unavailable.
         // Cadence and GPU execution are distinct, especially at 35 FPS.
-        let newText="\(fps) FPS · GPU \(gpuText) ms\n"+cpuText
+        let newText="\(fps) FPS · GPU \(gpuText) ms\n"+cpuText+"\n"+fxText
         DispatchQueue.main.async { [weak self] in
             guard let self, self.enabled else{return}
             self.label=newText

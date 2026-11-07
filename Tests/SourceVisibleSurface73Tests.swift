@@ -11,6 +11,9 @@ import Foundation
             ck(SourceVisibleSurface73.possiblyVisible(
                 front,worldRadius:0.15,camera:view,aspect:aspect),
                "foreground sphere actor must never be culled")
+            ck(SourceVisibleSurface73.possiblyVisible(
+                front,worldRadius:0.45,camera:view,aspect:aspect),
+               "large source destruction ring centered on-screen must stay visible")
             ck(!SourceVisibleSurface73.possiblyVisible(
                 back,worldRadius:0.09,camera:view,aspect:aspect),
                "far-side small sphere actor is completely behind terrain")
