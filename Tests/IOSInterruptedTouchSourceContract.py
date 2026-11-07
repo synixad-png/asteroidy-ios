@@ -9,7 +9,14 @@ body = release.group(1)
 for assignment in ("thrust = 0", "steer = 0", "shooting = false", "tarczaHeld = false"):
     assert assignment in body, f"Interrupted input persists: {assignment}"
 assert "@Environment(\\.scenePhase) private var scenePhase" in s
-assert "if phase != .active { input.releaseHeldControls() }" in s
+# Both original touch-pad inputs and the separate pre-mission cinematic
+# must release held controls. The old single-line exact-string check
+# was overly restrictive after the source Intro41 implementation.
+assert "if phase != .active {" in s
+assert "input.releaseHeldControls()" in s.split(
+    "if phase != .active {",1)[1].split("}",1)[0]
+assert "missionIntroInput568.releaseHeldControls()" in s.split(
+    "if phase != .active {",1)[1].split("}",1)[0]
 assert "if visible { input.releaseHeldControls() }" in s
 assert ".onEnded { _ in input.shooting = false }" in s
 assert ".onEnded { _ in input.tarczaHeld = false }" in s
