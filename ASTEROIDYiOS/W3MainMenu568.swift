@@ -156,8 +156,10 @@ struct W3MainMenu568: View {
             }
             VStack(alignment:.leading,spacing:2) {
                 Text("SYNIXAD SYSTEMS / PROTOTYP INTERFEJSU")
-                    .font(.system(size:compact ? 13 : 18,
+                    .font(.system(size:compact ? 9 : 11,
                                   weight:.heavy,design:.monospaced))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(gold)
                 Text("ORBITAL NAVIGATION SYSTEM")
                     .font(.system(size:compact ? 9 : 11,design:.monospaced))
