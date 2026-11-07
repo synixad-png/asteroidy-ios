@@ -114,11 +114,16 @@ private enum SourceDsp568 {
         "acid:2540": [0.01770951737673852,0.03541903475347704,0.01770951737673852,1.0,-1.573382017717818,0.7653826983150236,1.0,-2.0,1.0,1.0,-1.803796065511466,0.8632156083402197],
         "acid:2750": [0.020455686039867506,0.04091137207973501,0.020455686039867506,1.0,-1.526482735617017,0.7489413309838112,1.0,-2.0,1.0,1.0,-1.7832766786318317,0.8524756314467693],
     ]
-    static func filtered(_ input:[Float],_ key:String) -> [Float] {
+    static func filtered(_ input:[Float],_ key:String,
+                         checkpoint:()->Void={}) -> [Float] {
         guard let sos=filters[key] else {preconditionFailure("Missing original source SOS filter: \(key)")}
         var out=[Float](repeating:0,count:input.count)
         var z=[Double](repeating:0,count:sos.count/3)
         for i in input.indices {
+            // Two full-song mastering passes operate on millions of
+            // samples. Yield on a deterministic block boundary while
+            // combat is active; do not touch SOS coefficients or audio.
+            if (i & 16383)==0 {checkpoint()}
             var v=Double(input[i])
             for j in stride(from:0,to:sos.count,by:6) {
                 let q=j/3
@@ -423,7 +428,8 @@ private final class SourceReverb568 {
     }
     func render(_ source:SourceBus568, impulse:SourceBus568,
                 main:inout SourceBus568,space:SourceBus568,
-                progress:(String)->Void) {
+                progress:(String)->Void,
+                checkpoint:()->Void={}) {
         let frames=source.left.count,irLen=impulse.left.count
         var hr=[Double](repeating:0,count:n),hi=[Double](repeating:0,count:n)
         for i in 0..<irLen {hr[i]=Double(impulse.left[i]);hi[i]=Double(impulse.right[i])}
@@ -440,6 +446,9 @@ private final class SourceReverb568 {
         var carryL=[Float](repeating:0,count:irLen-1),carryR=carryL
         var at=0
         while at<frames {
+            // FFT convolution has the largest contiguous CPU bursts.
+            // The source overlap/add result is unchanged across a wait.
+            checkpoint()
             if (at/hop)%8==0 {progress("Pogłos stereo — \(at*100/frames)%")}
             for i in 0..<n {re[i]=0;im[i]=0}
             let count=min(hop,frames-at)
@@ -490,11 +499,13 @@ enum OriginalMusicSynth568 {
         Int((Double(countBars)*4*60/Double(bpm[track])*Double(rate)).rounded(.toNearestOrEven))
     }
     static func generate(track:Int, zigURL:URL? = nil, destination:URL,
-                         testBars:Int=128,progress:(String)->Void={_ in}) throws -> URL {
+                         testBars:Int=128,checkpoint:()->Void={},
+                         progress:(String)->Void={_ in}) throws -> URL {
         guard (0..<count).contains(track), testBars>0, testBars<=bars else {throw SynthError568.invalidTrack}
         let v=track,r=Double(rate),key=keys[v],voice=v<5 ? v : 1,driving=v != 0
         let beat=60/Double(bpm[v]),bar=beat*4
         let frames=Int((Double(testBars)*bar*r).rounded(.toNearestOrEven))
+        checkpoint()
         var rng=try SourceRng568(track:v,zigURL:zigURL)
         var main=SourceBus568(frames),space=SourceBus568(frames),delay=SourceBus568(frames)
         let kick=SourceDsp568.kick()
@@ -503,6 +514,9 @@ enum OriginalMusicSynth568 {
         var bass:[Int:[Float]]=[:],acid:[Int:[Float]]=[:],pads:[Int:SourceBus568]=[:]
         progress("Synteza barw i aranżacji")
         for b in 0..<testBars {
+            // The source 8-bar progress callback may run seconds apart.
+            // One checkpoint per bar makes pausing prompt and lossless.
+            checkpoint()
             if b%8==0 {progress("Synteza aranżacji — takt \(b+1) / \(testBars)")}
             let section=sections[b/8],breakdown=sections[b/8]==4
             let strength=strengths[section]*(driving ? 1 : 0.65)
@@ -564,16 +578,27 @@ enum OriginalMusicSynth568 {
             }
         }
         for repeatIndex in 1..<6 {
+            checkpoint()
             let shift=Int(beat*0.75*Double(repeatIndex)*r),gain=Float(pow(0.52,Double(repeatIndex)))
             for side in 0..<2 {
                 let source=repeatIndex%2==1 ? (side==0 ? delay.right : delay.left) : (side==0 ? delay.left : delay.right)
                 if shift<frames {
-                    if side==0 {for i in 0..<(frames-shift) {main.left[shift+i]+=source[i]*gain}}
-                    else {for i in 0..<(frames-shift) {main.right[shift+i]+=source[i]*gain}}
+                    if side==0 {
+                        for i in 0..<(frames-shift) {
+                            if (i & 16383)==0 {checkpoint()}
+                            main.left[shift+i]+=source[i]*gain
+                        }
+                    } else {
+                        for i in 0..<(frames-shift) {
+                            if (i & 16383)==0 {checkpoint()}
+                            main.right[shift+i]+=source[i]*gain
+                        }
+                    }
                 }
             }
         }
         for i in 0..<frames {
+            if (i & 16383)==0 {checkpoint()}
             let duck=Float(SourceDsp568.sidechain(i,beat))
             space.left[i]*=duck;space.right[i]*=duck
         }
@@ -594,25 +619,32 @@ enum OriginalMusicSynth568 {
         }
         progress("Pogłos i przestrzeń stereo")
         for i in 0..<frames {
+            if (i & 16383)==0 {checkpoint()}
             delay.left[i]=space.left[i]+delay.left[i]*0.23
             delay.right[i]=space.right[i]+delay.right[i]*0.23
         }
-        SourceReverb568().render(delay,impulse:impulse,main:&main,space:space,progress:progress)
+        SourceReverb568().render(delay,impulse:impulse,main:&main,space:space,
+                                  progress:progress,checkpoint:checkpoint)
         // Release unused buses before mastering/writing the PCM file.
         delay=SourceBus568(0);space=SourceBus568(0);impulse=SourceBus568(0)
-        main.left=SourceDsp568.filtered(main.left,"highpass:25")
-        main.right=SourceDsp568.filtered(main.right,"highpass:25")
+        main.left=SourceDsp568.filtered(main.left,"highpass:25",
+                                         checkpoint:checkpoint)
+        main.right=SourceDsp568.filtered(main.right,"highpass:25",
+                                          checkpoint:checkpoint)
         progress("Mastering i przygotowanie pętli")
-        try masterToWave(main,destination:destination)
+        try masterToWave(main,destination:destination,
+                         checkpoint:checkpoint)
         return destination
     }
-    private static func masterToWave(_ bus:SourceBus568,destination:URL)throws {
+    private static func masterToWave(_ bus:SourceBus568,destination:URL,
+                                     checkpoint:()->Void={})throws {
         let n=bus.left.count
         guard n>1,n==bus.right.count else{throw SynthError568.invalidPCM}
         var energy=0.0,peak=0.0
         // One global linear gain for the whole 128-bar song, exactly
         // MusicMaster.Render, not a sample-wise dynamic compressor.
         for i in 0..<n {
+            if (i & 16383)==0 {checkpoint()}
             let intro=min(1,Double(i)/(Double(rate)*2.5))
             let outro=min(1,Double(n-1-i)/(Double(rate)*7))
             let edge=sin(intro*Double.pi/2)*sin(outro*Double.pi/2)
@@ -647,6 +679,8 @@ enum OriginalMusicSynth568 {
         let frameChunk=8192
         var samples=[Int16](repeating:0,count:frameChunk*2)
         for base in stride(from:0,to:n,by:frameChunk) {
+            // Never continue large PCM writes into active gameplay.
+            checkpoint()
             let count=min(frameChunk,n-base)
             for j in 0..<count {
                 let i=base+j

@@ -25,6 +25,23 @@ import Foundation
         _=try OriginalMusicSynth568.generate(track:0,destination:b,testBars:1)
         let ba=try Data(contentsOf:a),bb=try Data(contentsOf:b)
         precondition(ba==bb,"Source synth must be deterministic")
+        // Future mission tracks must be pausable while combat runs.
+        // Pause checkpoints may NEVER change source PCM even by 1 byte.
+        let old=dir.appendingPathComponent("BackgroundOriginal.wav")
+        let gated=dir.appendingPathComponent("BackgroundGated.wav")
+        _=try OriginalMusicSynth568.generate(
+            track:2,destination:old,testBars:1)
+        var checkpoints=0
+        _=try OriginalMusicSynth568.generate(
+            track:2,destination:gated,testBars:1,
+            checkpoint:{checkpoints+=1})
+        precondition(checkpoints>20,
+            "full-song synthesis must cooperate frequently with combat")
+        let oldPCM=try Data(contentsOf:old)
+        let gatedPCM=try Data(contentsOf:gated)
+        precondition(oldPCM==gatedPCM,
+            "combat checkpoints must not change any byte of source music")
+        print("PASS source music combat checkpoints: \(checkpoints) waits, WAV byte parity")
         print("PASS source synthesis, five arrangements, deterministic repeat")
     }
 }
