@@ -80,7 +80,7 @@ jobs:
               f.write(udid+"\n")
           PY
       - name: Tap seven W3 actions and test native explosion/projectile settings after relaunch
-        timeout-minutes: 23
+        timeout-minutes: 29
         shell: bash
         run: |
           set -euo pipefail
@@ -91,6 +91,7 @@ jobs:
             -destination "platform=iOS Simulator,id=$UDID" \
             -parallel-testing-enabled NO \
             -only-testing:ASTEROIDYW3UITests/W3MenuNavigationUITests \
+            -only-testing:ASTEROIDYW3UITests/W3StartupSplashUITests \
             -only-testing:ASTEROIDYW3UITests/CarbonisVisualSettingsUITests \
             -derivedDataPath "$PWD/build/W3Touch" \
             -resultBundlePath "$PWD/reports/W3-Actual-${{ matrix.device }}.xcresult" \
