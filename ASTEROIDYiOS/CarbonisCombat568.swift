@@ -672,6 +672,42 @@ struct CarbonisCombat568 {
         rock.spin=max(-2.5,min(2.5,rock.spin+angular/inertial))
     }
 
+    /// Broadphase for the EXISTING original sphere-projectile swept
+    /// collision test. This is NOT a new hit model: it can reject only
+    /// targets strictly farther away than |velocity|*dt+targetRadius.
+    /// On a unit sphere, chord distance <= great-circle arc distance.
+    /// That inequality makes the chord cap conservative even across
+    /// longitude wrapping, poles, and antipodal coordinates.
+    ///
+    /// Source GpuSphere67 / Combat69 still decides every actual hit
+    /// using Sphere67.delta + CombatCollision556.segmentHit unchanged.
+    struct ShotSweepGate568 {
+        let origin:Vec2
+        let sourceNormal:SphereVector3
+        let travelDistance:Float
+
+        init(shot:Projectile,dt:Float) {
+            origin=Sphere67.canonical(shot.point)
+            sourceNormal=Sphere67.normal(origin)
+            travelDistance=sqrt(shot.velocity.lengthSquared)*max(0,dt)
+        }
+        func mayReach(_ target:Vec2,radius:Float)->Bool {
+            // 1/4 source unit is a conservative round-off guard, not a
+            // change in the source projectile's actual hit radius.
+            let reach=travelDistance+max(0,radius)+0.25
+            if !reach.isFinite {return true}
+            if reach>=Float.pi*Sphere67.radius {return true}
+            let canonical=Sphere67.canonical(target)
+            // Any great-circle arc is at least the absolute change
+            // in latitude (Sphere67.height/pi source units).
+            if abs(canonical.y-origin.y)>reach {return false}
+            let normal=Sphere67.normal(canonical)
+            let chord=normal-sourceNormal
+            let bound=reach/Sphere67.radius
+            return SphereVector3.dot(chord,chord)<=bound*bound
+        }
+    }
+
     /// BossTunnelGame.cs:96 HitBug: source projected closest-contact time
     /// and the rock occlusion check before accepting an enemy hit.
     static func projectedHit71(_ shot:Projectile,target:Vec2,
@@ -692,6 +728,7 @@ struct CarbonisCombat568 {
     private mutating func stepShots(dt:Float) {
         for i in bullets.indices.reversed() {
             let shot=bullets[i]
+            let gate=ShotSweepGate568(shot:shot,dt:dt)
             var impact=false
             // The source selects the earliest projected hit on a shooter,
             // then permits it only if NO rock intersects earlier.
@@ -699,6 +736,7 @@ struct CarbonisCombat568 {
             var firstShooter:Float=2
             for j in shooters.indices {
                 if shot.hitShooterPhases.contains(shooters[j].phase) {continue}
+                if !gate.mayReach(shooters[j].core.position,radius:16) {continue}
                 if let time=Self.projectedHit71(
                     shot,target:shooters[j].core.position,radius:16,dt:dt),
                     time<firstShooter {
@@ -709,6 +747,9 @@ struct CarbonisCombat568 {
             if let j=shooterIndex {
                 let blocked=rocks.contains { rock in
                     guard rock.shardLife<=0 else {return false}
+                    guard gate.mayReach(rock.position,
+                                        radius:rock.radius+2)
+                    else {return false}
                     guard let time=Self.projectedHit71(
                         shot,target:rock.position,radius:rock.radius+2,dt:dt)
                     else {return false}
@@ -760,6 +801,9 @@ struct CarbonisCombat568 {
                 var first:Float=2
                 for j in rocks.indices where rocks[j].shardLife<=0 &&
                     !shot.hitRockSeeds.contains(rocks[j].shapeSeed) {
+                    guard gate.mayReach(rocks[j].position,
+                                        radius:rocks[j].radius+2)
+                    else {continue}
                     let travel=shot.velocity*dt
                     let delta=Sphere67.delta(target:rocks[j].position,
                                              origin:shot.point)
@@ -802,7 +846,9 @@ struct CarbonisCombat568 {
         }
         for i in hostileShots.indices.reversed() {
             let shot=hostileShots[i]
-            if Self.hit(shot,flight.position,radius:11.2+4.5,dt:dt) {
+            let gate=ShotSweepGate568(shot:shot,dt:dt)
+            if gate.mayReach(flight.position,radius:11.2+4.5) &&
+               Self.hit(shot,flight.position,radius:11.2+4.5,dt:dt) {
                 hostileShots.remove(at:i);suffer(shot.damage);continue
             }
             var moved=shot

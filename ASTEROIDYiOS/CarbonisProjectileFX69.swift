@@ -16,6 +16,82 @@ enum CarbonisProjectileFX69 {
     private static let outer=SphereCameraView556.originalPlanetOuterRadius
     private static let shell=SphereSurfaceStamp556.normalizedShellRadius
 
+    /// Source Combat69 / GpuSphere67 uses exactly these ring counts.
+    /// The same sin/cos values previously recomputed for EVERY active
+    /// shot on EVERY frame now live in one immutable geometry table.
+    /// This is geometry caching, not lower fidelity or fewer layers.
+    private static let sourceCircles:[Int:[SIMD2<Float>]] = {
+        var result:[Int:[SIMD2<Float>]]=[:]
+        for slices in [12,18,22,24,28,32] {
+            result[slices]=(0...slices).map { i in
+                let a=Float(i)*2*Float.pi/Float(slices)
+                return SIMD2<Float>(cos(a),sin(a))
+            }
+        }
+        return result
+    }()
+
+    private static func unitCircle(_ slices:Int)->[SIMD2<Float>] {
+        if let cached=sourceCircles[slices] {return cached}
+        // Preserve the source formula even if a future original preset
+        // introduces a different segmentation count.
+        return (0...slices).map { i in
+            let a=Float(i)*2*Float.pi/Float(slices)
+            return SIMD2<Float>(cos(a),sin(a))
+        }
+    }
+
+
+    // GroundLight170 used a different (but algebraically equal) order
+    // of Float multiplication from ShotOrb151. Keep its exact source
+    // order for pixel-level/float32 parity, rather than approximating.
+    private static let sourceGroundCircles:[Int:[SIMD2<Float>]] = {
+        var result:[Int:[SIMD2<Float>]]=[:]
+        for slices in [12,18,22,24,28] {
+            result[slices]=(0...slices).map { i in
+                let angle=2*Float.pi*Float(i)/Float(slices)
+                return SIMD2<Float>(cos(angle),sin(angle))
+            }
+        }
+        return result
+    }()
+
+    private static func groundCircle(_ slices:Int)->[SIMD2<Float>] {
+        if let cached=sourceGroundCircles[slices] {return cached}
+        return (0...slices).map { i in
+            let angle=2*Float.pi*Float(i)/Float(slices)
+            return SIMD2<Float>(cos(angle),sin(angle))
+        }
+    }
+
+    private struct GroundFrame {
+        let normal:SphereVector3
+        let east:SphereVector3
+        let south:SphereVector3
+        let scale:Float
+        init(_ point:Vec2) {
+            normal=Sphere67.normal(point)
+            let basis=Sphere67.basis(point)
+            east=basis.east
+            south=basis.south
+            scale=(outer+15)/Sphere67.radius/outer
+        }
+    }
+
+    private struct OrbFrame {
+        let center:SphereVector3
+        let right:SphereVector3
+        let up:SphereVector3
+        init(_ center:SphereVector3,camera:SphereCameraView556) {
+            self.center=center
+            let forward=(camera.eye-center).normalized
+            var right=SphereVector3.cross(camera.up,forward).normalized
+            if right.length<0.01 {right=camera.right}
+            self.right=right
+            up=SphereVector3.cross(forward,right).normalized
+        }
+    }
+
     static let presets:[RGB]=[
         RGB(r:1,g:1,b:1),
         RGB(r:92/255,g:190/255,b:1),
@@ -60,9 +136,14 @@ enum CarbonisProjectileFX69 {
     private static func vert(_ p:SphereVector3,_ color:[Float],
                              _ into:inout [Float]) {
         let n=p.normalized
-        into.append(contentsOf:[
-            p.x,p.y,p.z,n.x,n.y,n.z,
-            color[0],color[1],color[2],color[3],0,0])
+        // Every live shot emitted a new twelve-Float temporary array
+        // for EACH vertex. Append directly to the already reserved
+        // source format: XYZ / NXYZ / RGBA / UV (unchanged bytes).
+        into.append(p.x);into.append(p.y);into.append(p.z)
+        into.append(n.x);into.append(n.y);into.append(n.z)
+        into.append(color[0]);into.append(color[1])
+        into.append(color[2]);into.append(color[3])
+        into.append(0);into.append(0)
     }
     private static func tri(_ a:SphereVector3,_ b:SphereVector3,
                             _ c:SphereVector3,_ color:[Float],
@@ -80,6 +161,87 @@ enum CarbonisProjectileFX69 {
         let p=a-side,q=b-side,r=b+side,t=a+side
         tri(p,q,r,color,&into);tri(p,r,t,color,&into)
     }
+
+    /// The very same six source Combat69 geodesic ribbons, now indexed:
+    /// each strip has four unique corners instead of duplicating six.
+    /// The six great-circle endpoints are evaluated with one angular
+    /// recurrence rather than twelve geographic reprojections per shot.
+    /// Exact legacy ribbon() remains below as the independent oracle.
+    private static func indexedLine(_ a:SphereVector3,_ b:SphereVector3,
+                                    _ width:Float,_ color:[Float],
+                                    _ eye:SphereVector3,
+                                    _ mesh:inout CarbonisIndexedFXMesh568) {
+        let travel=b-a
+        if travel.length<0.000001 {return}
+        let center=(a+b)*0.5
+        let side=SphereVector3.cross(travel,eye-center).normalized *
+            max(0.000005,width*0.5)
+        let first=UInt32(mesh.vertexCount)
+        vert(a-side,color,&mesh.vertices)
+        vert(b-side,color,&mesh.vertices)
+        vert(b+side,color,&mesh.vertices)
+        vert(a+side,color,&mesh.vertices)
+        mesh.indices.append(first);mesh.indices.append(first+1)
+        mesh.indices.append(first+2);mesh.indices.append(first)
+        mesh.indices.append(first+2);mesh.indices.append(first+3)
+    }
+
+    private static func indexedRibbon(
+        _ shot:CarbonisCombat568.Projectile,
+        tint:RGB,width:Float,camera:SphereCameraView556,
+        drawableHeight:Float,
+        _ mesh:inout CarbonisIndexedFXMesh568) {
+        let trailing=shot.hostile ? Float(-0.025) : Float(-0.024)
+        let tail=Sphere67.offset(shot.point,by:shot.velocity*trailing)
+        let start=Sphere67.normal(tail)
+        let destination=Sphere67.normal(shot.point)
+        let dot=max(-1,min(1,SphereVector3.dot(start,destination)))
+        let residual=destination-start*dot
+        let length=residual.length
+        // Original Sphere67.delta takes the local east direction at
+        // an exact antipode; preserve that mathematical exception.
+        let tangent=length>0.000001 ? residual/length :
+            (dot<0 ? Sphere67.basis(tail).east :
+                SphereVector3(x:0,y:0,z:0))
+        let angle=length>0.000001 ? atan2(length,dot) :
+            (dot<0 ? Float.pi : 0)
+        let stepAngle=angle/6
+        let cStep=cos(stepAngle),sStep=sin(stepAngle)
+        var c:Float=1,s:Float=0
+        let surface=shell+3.3/outer
+        var last=start*surface
+        let sourceWidth=shot.hostile ?
+            (shot.kind==2 ? Float(3.3) : shot.kind==3 ? 3.5:3.1)
+            : (shot.kind==3 ? Float(3.6):3.1)
+        let outerWidth:Float=shot.hostile ? 2.45:2.50
+        let middleWidth:Float=shot.hostile ? 1.45:1.40
+        let innerWidth:Float=shot.hostile ? 0.67:0.70
+        let outerColor=rgba(tint,27/255)
+        let middleColor=rgba(tint,shot.hostile ? 160/255:165/255)
+        let innerColor=rgba(RGB(r:242/255,g:251/255,b:1),
+                            shot.hostile ? 235/255:240/255)
+        for segment in 0..<6 {
+            let nc=c*cStep-s*sStep
+            let ns=s*cStep+c*sStep
+            c=nc
+            s=ns
+            let end=segment==5 ? destination*surface :
+                (start*c+tangent*s)*surface
+            let px=pxPerWorld((last+end)*0.5,camera:camera,
+                              height:drawableHeight)
+            let perWorld=sourceWidth/px
+            if width>0 {
+                indexedLine(last,end,perWorld*outerWidth,
+                    outerColor,camera.eye,&mesh)
+            }
+            indexedLine(last,end,perWorld*middleWidth,
+                middleColor,camera.eye,&mesh)
+            indexedLine(last,end,perWorld*innerWidth,
+                innerColor,camera.eye,&mesh)
+            last=end
+        }
+    }
+
     private static func worldPoint(_ point:Vec2,_ height:Float)->SphereVector3 {
         Sphere67.normal(point)*(shell+height/outer)
     }
@@ -184,29 +346,23 @@ enum CarbonisProjectileFX69 {
     }
     // Exact source rings with indexed, shared corners. No change to
     // source tessellation counts (32/28/24), radial alpha or world size.
-    private static func indexedDisc(_ p:SphereVector3,
+    private static func indexedDisc(_ frame:OrbFrame,
                                     inner:Float,outer:Float,
                                     innerColor:[Float],outerColor:[Float],
                                     slices:Int,
-                                    camera:SphereCameraView556,
                                     _ mesh:inout CarbonisIndexedFXMesh568) {
-        let forward=(camera.eye-p).normalized
-        var right=SphereVector3.cross(camera.up,forward).normalized
-        if right.length<0.01 {right=camera.right}
-        let up=SphereVector3.cross(forward,right).normalized
-        func point(_ radius:Float,_ angle:Float)->SphereVector3 {
-            p+(right*cos(angle)+up*sin(angle))*radius
-        }
         let first=UInt32(mesh.vertexCount)
-        for i in 0...slices {
-            let a=Float(i)*2*Float.pi/Float(slices)
-            vert(point(outer,a),outerColor,&mesh.vertices)
-            vert(point(inner,a),innerColor,&mesh.vertices)
+        for direction in unitCircle(slices) {
+            let axis=frame.right*direction.x+frame.up*direction.y
+            vert(frame.center+axis*outer,outerColor,&mesh.vertices)
+            vert(frame.center+axis*inner,innerColor,&mesh.vertices)
         }
         for i in 0..<slices {
             let a=first+UInt32(i*2)
             let b=a+2
-            mesh.indices.append(contentsOf:[a,a+1,b+1,a,b+1,b])
+            mesh.indices.append(a);mesh.indices.append(a+1)
+            mesh.indices.append(b+1);mesh.indices.append(a)
+            mesh.indices.append(b+1);mesh.indices.append(b)
         }
     }
 
@@ -220,18 +376,21 @@ enum CarbonisProjectileFX69 {
             (shot.kind==3 ? 3.9:3.3) :
             (shot.kind==3 ? 4.2:3.6)
         let core=corePx/pxPerWorld(p,camera:camera,height:drawableHeight)
+        // The three original 32/28/24-radius fans share one camera
+        // orientation; formerly this was recalculated three times.
+        let frame=OrbFrame(p,camera:camera)
         if glow {
-            indexedDisc(p,inner:core*0.67,outer:core*2.3,
+            indexedDisc(frame,inner:core*0.67,outer:core*2.3,
                 innerColor:rgba(tint,48/255),outerColor:rgba(tint,0),
-                slices:32,camera:camera,&mesh)
+                slices:32,&mesh)
         }
-        indexedDisc(p,inner:core*0.30,outer:core,
+        indexedDisc(frame,inner:core*0.30,outer:core,
             innerColor:rgba(tint,178/255),outerColor:rgba(tint,0),
-            slices:28,camera:camera,&mesh)
-        indexedDisc(p,inner:0,outer:core*0.48,
+            slices:28,&mesh)
+        indexedDisc(frame,inner:0,outer:core*0.48,
             innerColor:rgba(RGB(r:249/255,g:253/255,b:1),250/255),
             outerColor:rgba(RGB(r:230/255,g:246/255,b:1),66/255),
-            slices:24,camera:camera,&mesh)
+            slices:24,&mesh)
     }
 
     /// Production Metal path. Same ordered triangle stream as vertices()
@@ -247,15 +406,11 @@ enum CarbonisProjectileFX69 {
         for shot in shots {
             let tint=shot.hostile ? hostileTint(shot.kind) :
                                       playerTint(shot.kind)
-            // Ribbon strips remain untouched, including their six
-            // geodesic subdivisions and three different alpha layers.
-            let begin=mesh.vertexCount
-            ribbon(shot,tint:tint,width:glow ? 1:0,camera:view,
-                   drawableHeight:drawableHeight,&mesh.vertices)
-            let end=mesh.vertexCount
-            if end>begin {
-                for v in begin..<end {mesh.indices.append(UInt32(v))}
-            }
+            // The original six geodesic steps, 3 alpha layers and
+            // source widths are unchanged; only shared vertex/index
+            // storage and the equivalent great-circle math differ.
+            indexedRibbon(shot,tint:tint,width:glow ? 1:0,camera:view,
+                          drawableHeight:drawableHeight,&mesh)
             indexedOrb(shot,tint:tint,glow:glow,camera:view,
                        drawableHeight:drawableHeight,&mesh)
         }
@@ -339,24 +494,23 @@ enum CarbonisProjectileFX69 {
     /// Combat69: EnemyShots72 muzzle emission at enemy +18 local units,
     /// during its original 0.10 seconds after actual firing.
     private static func indexedGroundDisc(
-        _ point:Vec2,radius:Float,tint:RGB,alpha:Float,
+        _ frame:GroundFrame,radius:Float,tint:RGB,alpha:Float,
         lift:Float,slices:Int,
         _ mesh:inout CarbonisIndexedFXMesh568) {
-        let center=worldPoint(point,0.4+lift*0.10)
-        let basis=Sphere67.basis(point)
-        let scale=(outer+15)/Sphere67.radius/outer
+        let center=frame.normal*(shell+(0.4+lift*0.10)/outer)
         let first=UInt32(mesh.vertexCount)
         let centerColor=rgba(tint,alpha)
         let edgeColor=rgba(tint,0)
         vert(center,centerColor,&mesh.vertices)
-        for i in 0...slices {
-            let angle=2*Float.pi*Float(i)/Float(slices)
-            let offset=(basis.east*cos(angle)+basis.south*sin(angle)) * radius * scale
+        for direction in groundCircle(slices) {
+            let offset=(frame.east*direction.x+frame.south*direction.y) *
+                radius * frame.scale
             vert(center+offset,edgeColor,&mesh.vertices)
         }
         for i in 0..<slices {
-            mesh.indices.append(contentsOf:[
-                first,first+UInt32(i+1),first+UInt32(i+2)])
+            mesh.indices.append(first)
+            mesh.indices.append(first+UInt32(i+1))
+            mesh.indices.append(first+UInt32(i+2))
         }
     }
 
@@ -380,6 +534,9 @@ enum CarbonisProjectileFX69 {
         let lifts:[Float]=[3.0,1.35,0.55,0.10]
         let slices=[28,24,22,18]
         for shot in shots {
+            // Four original ground-light radii share the very same
+            // spherical basis; no per-layer recalculation or temp mesh.
+            let frame=GroundFrame(shot.point)
             let native=shot.hostile ? hostileTint(shot.kind) :
                                         playerTint(shot.kind)
             let tint=groundTint(native,settings:settings)
@@ -394,7 +551,7 @@ enum CarbonisProjectileFX69 {
                  shot.kind==4 ? 0.32 :
                  shot.kind==2 ? 0.28:0.24)
             for layer in budget.groundLightLayers {
-                indexedGroundDisc(shot.point,
+                indexedGroundDisc(frame,
                     radius:radius*widths[layer]*radiusScale,
                     tint:tint,
                     alpha:min(1,strength*weights[layer]*powerScale),

@@ -16,13 +16,23 @@ vol=read("ASTEROIDYiOS/Sector01Explosion524.metal")
 host=read("ASTEROIDYiOS/CarbonisExplosion524Renderer.swift")
 assert "static func indexedVertices(" in projectiles
 assert "static func indexedGroundLights(" in projectiles
-assert "indexedDisc(p,inner:core*0.67,outer:core*2.3" in projectiles
-assert "slices:32,camera:camera,&mesh" in projectiles
-assert "slices:28,camera:camera,&mesh" in projectiles
-assert "slices:24,camera:camera,&mesh" in projectiles
+# The original 32/28/24 projectile circles now share one camera
+# frame and immutable source unit-circle LUT instead of recomputing
+# all trig on every shot; all original rings remain rendered.
+assert "indexedDisc(frame,inner:core*0.67,outer:core*2.3" in projectiles
+assert "slices:32,&mesh" in projectiles
+assert "slices:28,&mesh" in projectiles
+assert "slices:24,&mesh" in projectiles
+assert "private static let sourceCircles:[Int:[SIMD2<Float>]]" in projectiles
+assert "private static let sourceGroundCircles:[Int:[SIMD2<Float>]]" in projectiles
 assert "for layer in 0..<4" in projectiles
 assert "let slices=[28,24,22,18]" in projectiles
-assert "mesh.indices.append(contentsOf:[" in projectiles
+# Direct UInt32 appends avoid allocating a temporary Swift array
+# for every radial triangle while preserving exactly 3 or 6 indices.
+assert "mesh.indices.append(first);mesh.indices.append(first+1)" in projectiles
+assert "mesh.indices.append(first+UInt32(i+1))" in projectiles
+assert "mesh.indices.append(b+1);mesh.indices.append(a)" in projectiles
+assert "into.append(p.x);into.append(p.y);into.append(p.z)" in projectiles
 assert "expandedTriangles()" in indices
 assert "private let inFlight=DispatchSemaphore(value:3)" in stream
 assert "inFlight.wait()" in stream
