@@ -136,9 +136,14 @@ enum CarbonisProjectileFX69 {
     private static func vert(_ p:SphereVector3,_ color:[Float],
                              _ into:inout [Float]) {
         let n=p.normalized
-        into.append(contentsOf:[
-            p.x,p.y,p.z,n.x,n.y,n.z,
-            color[0],color[1],color[2],color[3],0,0])
+        // Every live shot emitted a new twelve-Float temporary array
+        // for EACH vertex. Append directly to the already reserved
+        // source format: XYZ / NXYZ / RGBA / UV (unchanged bytes).
+        into.append(p.x);into.append(p.y);into.append(p.z)
+        into.append(n.x);into.append(n.y);into.append(n.z)
+        into.append(color[0]);into.append(color[1])
+        into.append(color[2]);into.append(color[3])
+        into.append(0);into.append(0)
     }
     private static func tri(_ a:SphereVector3,_ b:SphereVector3,
                             _ c:SphereVector3,_ color:[Float],
@@ -176,8 +181,9 @@ enum CarbonisProjectileFX69 {
         vert(b-side,color,&mesh.vertices)
         vert(b+side,color,&mesh.vertices)
         vert(a+side,color,&mesh.vertices)
-        mesh.indices.append(contentsOf:[
-            first,first+1,first+2,first,first+2,first+3])
+        mesh.indices.append(first);mesh.indices.append(first+1)
+        mesh.indices.append(first+2);mesh.indices.append(first)
+        mesh.indices.append(first+2);mesh.indices.append(first+3)
     }
 
     private static func indexedRibbon(
@@ -354,7 +360,9 @@ enum CarbonisProjectileFX69 {
         for i in 0..<slices {
             let a=first+UInt32(i*2)
             let b=a+2
-            mesh.indices.append(contentsOf:[a,a+1,b+1,a,b+1,b])
+            mesh.indices.append(a);mesh.indices.append(a+1)
+            mesh.indices.append(b+1);mesh.indices.append(a)
+            mesh.indices.append(b+1);mesh.indices.append(b)
         }
     }
 
@@ -500,8 +508,9 @@ enum CarbonisProjectileFX69 {
             vert(center+offset,edgeColor,&mesh.vertices)
         }
         for i in 0..<slices {
-            mesh.indices.append(contentsOf:[
-                first,first+UInt32(i+1),first+UInt32(i+2)])
+            mesh.indices.append(first)
+            mesh.indices.append(first+UInt32(i+1))
+            mesh.indices.append(first+UInt32(i+2))
         }
     }
 
