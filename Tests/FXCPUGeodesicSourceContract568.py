@@ -46,6 +46,17 @@ assert "CarbonisIOSFXBudget568" not in combat
 assert "SourceGeodesicStep568" not in combat
 assert "if !visible" not in combat
 assert "static let reducedDefault=Self(reduced:true)" in budget
+perf=read("ASTEROIDYiOS/SourcePerformance568.swift")
+assert "projectileMeshMs:projectileMeshMs" in scene
+assert "destructionMeshMs:destructionMeshMs" in scene
+assert "let groundMeshStarted=" in scene
+assert "let projectileMeshStarted=" in scene
+assert "let destructionMeshStarted=" in scene
+assert "projectileMeshTotal+=projectileMeshMs" in perf
+assert "destructionMeshTotal+=destructionMeshMs" in perf
+assert 'FX CPU P %.1f / W %.1f ms' in perf
+assert "completed.gpuStartTime" in perf and "completed.gpuEndTime" in perf
+assert 'UserDefaults.standard.set(value,forKey:Self.sourceKey)' in perf
 assert "let sourceSky568:SourceCombatSky568?" in scene
 assert "let sourceWreck214:SourceCombatWreck214?" in scene
 print("PASS source 6-step geodesic FX, 32-edge rings, same width and event lifetime")
