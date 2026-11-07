@@ -15,6 +15,13 @@ final class SourcePerformance568: ObservableObject {
     private let lock=NSLock()
     private var sampling:Bool
     private var meter=SourceFPSAccumulator568()
+    // Real timings measured around the actual CARBONIS Metal draw loop.
+    // Work excludes waiting for CAMetalDrawable/three in-flight buffers.
+    // Simulation is a subset of CPU work, not an additional cost.
+    private var cpuWorkTotal:Double=0
+    private var cpuSimulationTotal:Double=0
+    private var cpuWaitTotal:Double=0
+    private var cpuSamples:Int=0
 
     private init() {
         let saved=UserDefaults.standard.bool(forKey:Self.sourceKey)
@@ -26,12 +33,32 @@ final class SourcePerformance568: ObservableObject {
         lock.lock()
         sampling=value
         meter.reset()
+        cpuWorkTotal=0
+        cpuSimulationTotal=0
+        cpuWaitTotal=0
+        cpuSamples=0
         lock.unlock()
         enabled=value
         label="Metal GPU · POMIAR..."
         UserDefaults.standard.set(value,forKey:Self.sourceKey)
     }
     func toggle() {setEnabled(!enabled)}
+
+    /// CPU stopwatch from the actual Metal callback, collected only when
+    /// FPS measurement is switched on. It is not GPU counter time.
+    func recordCPU(workMs:Double,simulationMs:Double,waitMs:Double) {
+        guard workMs.isFinite && simulationMs.isFinite &&
+              waitMs.isFinite && workMs>=0 && simulationMs>=0 && waitMs>=0
+        else {return}
+        lock.lock()
+        if sampling {
+            cpuWorkTotal+=workMs
+            cpuSimulationTotal+=simulationMs
+            cpuWaitTotal+=waitMs
+            cpuSamples+=1
+        }
+        lock.unlock()
+    }
 
     /// Register completion only if measurement is actually requested.
     /// No CADisplayLink fake refresh-number; each record corresponds to
@@ -55,12 +82,30 @@ final class SourcePerformance568: ObservableObject {
         guard sampling else {lock.unlock();return}
         let next=meter.completedFrame(
             at:ProcessInfo.processInfo.systemUptime,gpuMs:gpuMs)
+        let cpu:[Double]?=next.map { _ in
+            defer {
+                cpuWorkTotal=0
+                cpuSimulationTotal=0
+                cpuWaitTotal=0
+                cpuSamples=0
+            }
+            guard cpuSamples>0 else{return []}
+            let n=Double(cpuSamples)
+            return [cpuWorkTotal/n,cpuSimulationTotal/n,cpuWaitTotal/n]
+        }
         lock.unlock()
         guard let sample=next else{return}
         let fps=Int(sample.framesPerSecond.rounded())
-        let timeMs=sample.averageGPUms ?? sample.cadenceMs
-        let newText=String(format:"Metal GPU · %d FPS · %.1f ms",
-                           fps,timeMs)
+        let gpuText=sample.averageGPUms.map {
+            String(format:"%.1f", $0)
+        } ?? "n/d"
+        let cpuText=cpu?.count==3
+            ? String(format:"CPU %.1f (SYM %.1f / WAIT %.1f) ms",
+                     cpu![0],cpu![1],cpu![2])
+            : "CPU n/d"
+        // Never call 1/FPS GPU time if Metal GPU timestamps are unavailable.
+        // Cadence and GPU execution are distinct, especially at 35 FPS.
+        let newText="\(fps) FPS · GPU \(gpuText) ms\n"+cpuText
         DispatchQueue.main.async { [weak self] in
             guard let self, self.enabled else{return}
             self.label=newText
@@ -75,7 +120,7 @@ struct SourcePerformanceOverlay568:View {
     var body:some View {
         if performance.enabled {
             Text(performance.label)
-                .font(.system(size:11,weight:.semibold,design:.monospaced))
+                .font(.system(size:10,weight:.semibold,design:.monospaced))
                 .foregroundStyle(.cyan)
                 .monospacedDigit()
                 .padding(.horizontal,9)
