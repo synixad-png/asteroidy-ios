@@ -11,6 +11,13 @@ struct CarbonisExplosion524Uniforms {
     float age,scale,fire,smoke,chaos,spread,seed;
     uint lobeCount,stepCount,kind;
 };
+// Invariant per-lobe data is calculated once per event on CPU, rather than
+// re-evaluated at every pixel AND every depth sample on mobile GPU.
+struct CarbonisExplosion524Lobe {
+    float4 directionFire;  // xyz direction, w thermal amplitude
+    float4 centerRadius;   // xyz time-dependent center, w lobe radius
+    float4 smokePhase;     // x smoke amplitude, y granularity phase
+};
 struct CarbonisExplosion524Raster {
     float4 position [[position]];
     float2 uv;
@@ -44,7 +51,8 @@ inline float3 explosionDirection524(uint j) {
 }
 inline float3 explosionField524(float3 p,float age,
     texture3d<float,access::sample> noise,
-    constant CarbonisExplosion524Uniforms &u)
+    constant CarbonisExplosion524Uniforms &u,
+    constant CarbonisExplosion524Lobe *lobes)
 {
     float fire=0.0f,smoke=0.0f,shadow=0.0f;
     float cl=u.chaos;
@@ -56,7 +64,6 @@ inline float3 explosionField524(float3 p,float age,
         float3(5.0f,3.0f,age*0.4f),noise);
     float3 warp=float3(coarse,medium,fine)-0.5f;
     float3 q=p+warp*0.24f*cl;
-    float lAge=0.96f*(1.0f-exp(-age*1.62f));
     float centerRadius=0.23f+0.21f*age;
     float3 neck=float3(0.08f*sin(age*3.0f),
                          -0.10f+age*0.22f,0.0f);
@@ -65,20 +72,12 @@ inline float3 explosionField524(float3 p,float age,
     fire+=center*0.85f;
     for(uint i=0;i<17u;++i) {
         if(i>=u.lobeCount)break;
-        float fi=float(i);
-        float3 d=explosionDirection524(i);
-        d.y=d.y*0.75f+0.18f;
-        d=normalize(d+float3(
-            0.20f*sin(fi*2.73f),0.14f*cos(fi*3.17f),
-            0.16f*sin(fi*1.32f)));
-        float speed=(0.96f+0.82f*explosionHash524(fi*4.37f+2.0f))
-            *u.spread;
-        float3 c=d*speed*lAge*1.48f+
-            float3(0.13f*sin(age*1.6f+fi),
-                   age*age*0.06f*(0.4f+d.y),
-                   0.07f*cos(age*2.0f+fi));
-        float radius=(0.30f+0.31f*explosionHash524(fi*2.71f+9.0f))
-            *(0.59f+1.35f*sqrt(age+0.025f))*u.scale;
+        float4 df=lobes[i].directionFire;
+        float4 cr=lobes[i].centerRadius;
+        float4 sp=lobes[i].smokePhase;
+        float3 d=df.xyz;
+        float3 c=cr.xyz;
+        float radius=cr.w;
         float3 delta=q-c;
         float along=dot(delta,d);
         float3 transverse=delta-d*along;
@@ -86,16 +85,11 @@ inline float3 explosionField524(float3 p,float age,
             +along*along/(radius*radius*2.0f);
         float edge=exp(-shape*1.05f);
         float granular=clamp(mix(coarse,medium,0.55f)
-            +0.23f*sin(fi*2.31f+dot(p-c,d)*3.7f+age*1.35f),
-            0.0f,1.0f);
-        edge*=mix(0.49f,1.45f,smoothstep(0.23f,0.71f,granular));
-        float pulse=0.60f+0.4f*sin(fi*1.9f+
-            age*(1.1f+explosionHash524(fi)*2.0f));
-        float f=edge*pulse*exp(-age*
-            (0.55f+explosionHash524(fi+13.0f)*0.6f));
-        fire+=f*(1.2f+0.4f*explosionHash524(fi+4.0f));
-        smoke+=edge*(0.38f+0.45f*explosionHash524(fi+17.0f))
-            *(0.22f+age*0.78f);
+            +0.23f*sin(sp.y+dot(p-c,d)*3.7f),0.0f,1.0f);
+        edge*=mix(0.49f,1.45f,
+            smoothstep(0.23f,0.71f,granular));
+        fire+=edge*df.w;
+        smoke+=edge*sp.x;
         shadow+=edge*max(0.0f,0.6f-granular)*(1.0f+age*0.3f);
     }
     float grain=coarse*0.40f+medium*0.38f+fine*0.22f;
@@ -119,7 +113,8 @@ inline float3 explosionThermal524(float heat) {
 fragment float4 sector01ExplosionFragment524(
     CarbonisExplosion524Raster in [[stage_in]],
     constant CarbonisExplosion524Uniforms &u [[buffer(1)]],
-    texture3d<float,access::sample> noise [[texture(0)]])
+    texture3d<float,access::sample> noise [[texture(0)]],
+    constant CarbonisExplosion524Lobe *lobes [[buffer(2)]])
 {
     float age=max(0.0f,u.age);
     if(age>4.8f)discard_fragment();
@@ -130,11 +125,23 @@ fragment float4 sector01ExplosionFragment524(
     float3 accum=float3(0.0f);
     float transmittance=1.0f;
     float step=2.0f*bound/float(max(1u,u.stepCount));
-    for(uint i=0u;i<48u;i++) {
-        if(i>=u.stepCount)break;
+    // Opacity is EXACTLY zero for length(p) >= 0.98*bound in the
+    // original smoothstep below. Trim those empty ray samples without
+    // changing sample positions, colors, smoke or alpha.
+    float activeRadius=bound*0.98f;
+    float reach2=activeRadius*activeRadius-dot(xy,xy);
+    uint first=0u,last=0u;
+    if(reach2>0.0f) {
+        float reach=sqrt(reach2);
+        float startIndex=ceil((bound-reach)/step-0.5f);
+        float endIndex=ceil((bound+reach)/step-0.5f);
+        first=uint(clamp(startIndex,0.0f,float(u.stepCount)));
+        last=uint(clamp(endIndex,0.0f,float(u.stepCount)));
+    }
+    for(uint i=first;i<last;i++) {
         float z=-bound+(float(i)+0.5f)*step;
         float3 p=float3(xy,z);
-        float3 fields=explosionField524(p,age,noise,u);
+        float3 fields=explosionField524(p,age,noise,u,lobes);
         float fire=fields.x*u.fire;
         float smoke=fields.y*u.smoke;
         float heat=clamp(fire*0.85f,0.0f,1.0f);

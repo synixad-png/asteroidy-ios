@@ -20,6 +20,59 @@ final class CarbonisExplosion524Renderer {
         var steps:UInt32
         var kind:UInt32
     }
+    // All three SIMD4<Float> fields match three Metal float4 fields.
+    // This precomputation keeps source Explosion524 formulas and removes
+    // repeated lobe trigonometry/exponentials from GPU depth samples.
+    private struct Lobe {
+        var directionFire:SIMD4<Float>
+        var centerRadius:SIMD4<Float>
+        var smokePhase:SIMD4<Float>
+    }
+
+    private static func hash524(_ n:Float)->Float {
+        let value=sin(n*97.23+12.4)*43758.5453
+        return value-floor(value)
+    }
+
+    private static func lobes(age:Float,
+                              settings:CarbonisVisualSettings568)->[Lobe] {
+        let a=max(0,age)
+        let scale=settings.factor(0)
+        let spread=settings.factor(5)
+        let lAge:Float=0.96*(1-exp(-a*1.62))
+        var result:[Lobe]=[]
+        result.reserveCapacity(17)
+        for i in 0..<17 {
+            let fi=Float(i)
+            let k=fi+0.5
+            let y:Float=1-2*k/17
+            let azimuth=k*2.399963
+            let r=sqrt(max(0,1-y*y))
+            var direction=SIMD3<Float>(cos(azimuth)*r,y,sin(azimuth)*r)
+            direction.y=direction.y*0.75+0.18
+            direction=simd_normalize(direction+SIMD3<Float>(
+                0.20*sin(fi*2.73),0.14*cos(fi*3.17),
+                0.16*sin(fi*1.32)))
+            let speed=(0.96+0.82*hash524(fi*4.37+2))*spread
+            let center=direction*(speed*lAge*1.48)+SIMD3<Float>(
+                0.13*sin(a*1.6+fi),
+                a*a*0.06*(0.4+direction.y),
+                0.07*cos(a*2+fi))
+            let radius=(0.30+0.31*hash524(fi*2.71+9))*(0.59+1.35*sqrt(a+0.025))*scale
+            let pulse=0.60+0.4*sin(fi*1.9+a*(1.1+hash524(fi)*2))
+            let fireAmplitude=pulse*exp(-a*(0.55+hash524(fi+13)*0.6))*(1.2+0.4*hash524(fi+4))
+            let smokeAmplitude=(0.38+0.45*hash524(fi+17))*(0.22+a*0.78)
+            result.append(Lobe(
+                directionFire:SIMD4<Float>(
+                    direction.x,direction.y,direction.z,fireAmplitude),
+                centerRadius:SIMD4<Float>(
+                    center.x,center.y,center.z,radius),
+                smokePhase:SIMD4<Float>(
+                    smokeAmplitude,fi*2.31+a*1.35,0,0)))
+        }
+        return result
+    }
+
     private let pipeline:MTLRenderPipelineState
     private let noise:MTLTexture
     private let noDepthWrite:MTLDepthStencilState
@@ -141,6 +194,12 @@ final class CarbonisExplosion524Renderer {
                                    index:1)
             encoder.setFragmentBytes(&params,length:MemoryLayout<Parameters>.stride,
                                      index:1)
+            let prepared=Self.lobes(age:age,settings:settings)
+            prepared.withUnsafeBytes { raw in
+                if let address=raw.baseAddress {
+                    encoder.setFragmentBytes(address,length:raw.count,index:2)
+                }
+            }
             encoder.drawPrimitives(type:.triangle,vertexStart:0,vertexCount:6)
         }
     }
