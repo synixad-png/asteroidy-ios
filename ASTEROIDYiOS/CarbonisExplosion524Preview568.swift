@@ -7,6 +7,7 @@ import simd
 struct CarbonisExplosion524Preview568: UIViewRepresentable {
     let settings:CarbonisVisualSettings568
     let revision:Int
+    let budget:CarbonisIOSFXBudget568
 
     func makeCoordinator()->Coordinator {Coordinator()}
     func makeUIView(context:Context)->MTKView {
@@ -23,7 +24,7 @@ struct CarbonisExplosion524Preview568: UIViewRepresentable {
         if let device=view.device {
             do {
                 let renderer=try Renderer(device:device,settings:settings,
-                                          revision:revision)
+                                          revision:revision,budget:budget)
                 context.coordinator.renderer=renderer
                 view.delegate=renderer
             } catch {
@@ -35,7 +36,7 @@ struct CarbonisExplosion524Preview568: UIViewRepresentable {
     }
     func updateUIView(_ view:MTKView,context:Context) {
         guard let renderer=context.coordinator.renderer else {return}
-        renderer.update(settings:settings,revision:revision)
+        renderer.update(settings:settings,revision:revision,budget:budget)
     }
 
     final class Coordinator {
@@ -47,11 +48,13 @@ struct CarbonisExplosion524Preview568: UIViewRepresentable {
         private var started=ProcessInfo.processInfo.systemUptime
         private var settings:CarbonisVisualSettings568
         private var revision:Int
+        private var budget:CarbonisIOSFXBudget568
         private let center=Vec2(x:640,y:360)
         private var state=CarbonisDestruction524()
 
         init(device:MTLDevice,
-             settings:CarbonisVisualSettings568,revision:Int) throws {
+             settings:CarbonisVisualSettings568,revision:Int,
+             budget:CarbonisIOSFXBudget568) throws {
             enum Setup:Error {case missing}
             guard let command=device.makeCommandQueue(),
                   let library=try? device.makeDefaultLibrary(bundle:.main)
@@ -61,6 +64,7 @@ struct CarbonisExplosion524Preview568: UIViewRepresentable {
                 device:device,library:library)
             self.settings=settings
             self.revision=revision
+            self.budget=budget
             super.init()
             reset()
         }
@@ -70,12 +74,14 @@ struct CarbonisExplosion524Preview568: UIViewRepresentable {
             state.explosion(at:center,kind:settings.type,scale:14,time:0)
         }
         func update(settings:CarbonisVisualSettings568,
-                    revision:Int) {
+                    revision:Int,budget:CarbonisIOSFXBudget568) {
             let typeChanged=self.settings.type != settings.type
             let revisionChanged=self.revision != revision
+            let budgetChanged=self.budget != budget
             self.settings=settings
             self.revision=revision
-            if typeChanged || revisionChanged {reset()}
+            self.budget=budget
+            if typeChanged || revisionChanged || budgetChanged {reset()}
         }
         func mtkView(_ view:MTKView,
                      drawableSizeWillChange size:CGSize) {}
@@ -105,7 +111,12 @@ struct CarbonisExplosion524Preview568: UIViewRepresentable {
                     descriptor:pass)
             else {return}
             let now=ProcessInfo.processInfo.systemUptime
-            let duration=max(4.1,Double(settings.explosionDuration))
+            // The quality option also controls the genuine Metal preview.
+            // Short blasts replay instead of leaving an empty demo window.
+            let duration=budget.explosionsReduced
+                ? Double(budget.explosionDuration(
+                    settings.explosionDuration)+0.3)
+                : max(4.1,Double(settings.explosionDuration))
             let age=Float((now-started).truncatingRemainder(
                 dividingBy:duration))
             var camera=SphereCamera67(at:center)
@@ -120,7 +131,7 @@ struct CarbonisExplosion524Preview568: UIViewRepresentable {
             let height=Float(max(1,view.drawableSize.height))
             explosions.render(state,time:age,camera:camera,
                 vp:projection(camera,aspect:width/height),
-                settings:settings,into:encoder)
+                settings:settings,budget:budget,into:encoder)
             encoder.endEncoding()
             command.present(drawable)
             command.commit()
