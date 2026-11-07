@@ -54,6 +54,8 @@ import Foundation
         }
         precondition(originalHits>7500,"insufficient positive collision proof")
         precondition(rejected>20000,"broadphase skipped no expensive candidates")
+        precondition(polarCases>1500 && seamCases>1500,
+            "randomized sweep missed enough pole/seam coverage")
         // Additional exact border/pole checks with different wraps.
         for i in 0..<2000 {
             let origin=Vec2(x:i%2==0 ? 1279.8 : 0.2,
@@ -73,8 +75,8 @@ import Foundation
         // Benchmark the REAL original sweep against the fast
         // conservative prefilter on the same CPU and same source data.
         // Do not treat Linux Swift timing as iPhone/iPad Metal FPS.
-        let benchmarkShots:(Int) = 28
-        let benchmarkTargets:(Int) = 64
+        let benchmarkShots=28
+        let benchmarkTargets=64
         let rounds=6
         var shotSamples:[CarbonisCombat568.Projectile]=[]
         var targetSamples:[Vec2]=[]
