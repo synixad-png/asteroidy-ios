@@ -102,8 +102,20 @@ ck(intro.index('let point=origin+planetCenter-eye') <
 ck('static let boreasSourceLevel = 5' in intro and
    'level:IntroOrbit41.boreasSourceLevel,' in metal,
    'Real PlanetAssetBytes463 loads Boreas at original game.Level=5, not 1')
-ck('level:1,time:introTime41' not in metal,
-   'Hard-coded level=1 incorrectly rotates the Boreas GLB in cinematic')
+# The new fully playable sector-01 cinematic uses real CARBONIS C279.
+# Level=1 is correct ONLY for the source C279 branch, while the old
+# Boreas-GLB diagnostic MUST remain level 5 with animated morph frames.
+# The former global negative check incorrectly rejected this valid branch.
+planetBlock=intro_metal.split('if missionCarbonis {',1)[1].split(
+    '            // Original IntroScene41.CraftOrientation local axes.',1)[0]
+carbonisBranch,boreasBranch=planetBlock.split('            } else {',1)
+ck('level:1,time:introTime41' in carbonisBranch and
+   'carbonis.draw(encoder:encoder,mvp:vp,' in carbonisBranch,
+   'Mission 01 must render the original C279 with source planet level 1')
+ck('level:1,time:introTime41' not in boreasBranch and
+   'level:IntroOrbit41.boreasSourceLevel,' in boreasBranch and
+   'uploadBoreasMorphIfNeeded(seconds:Double(introTime41))' in boreasBranch,
+   'Boreas diagnostic must retain level 5 and animated glTF source')
 ck('@Published var introPreview41 =\n        ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] != "1"' in app,
    'The new source cinematic must be initially visible, not old training arena')
 ck('@Published var planetPreview = true' in app,
