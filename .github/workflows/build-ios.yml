@@ -14,6 +14,9 @@ on:
       - 'ASTEROIDYiOS/SourcePerformance568.swift'
       - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/Sector01Carbonis568.metal'
+      - 'ASTEROIDYiOS/CarbonisCombined469Bake.metal'
+      - 'Tests/CarbonisCombined469BakeTests.py'
       - 'ASTEROIDYiOS/CarbonisIndexedFXMesh568.swift'
       - 'ASTEROIDYiOS/CarbonisFXStreamingBuffers568.swift'
       - 'ASTEROIDYiOS/CarbonisProjectileFX69.swift'
@@ -227,6 +230,10 @@ jobs:
           /tmp/sphere-sector-full
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift Tests/SphereCombatBatch556Tests.swift -o /tmp/sphere-combat-full
           /tmp/sphere-combat-full
+      - name: Verify source Windows v469 Carbonis combined map now baked once, not recalculated for every frame
+        run: |
+          set -euo pipefail
+          python3 Tests/CarbonisCombined469BakeTests.py
       - name: Verify real CARBONIS first-sector completion, wallet, replay, unlock and service
         run: |
           set -euo pipefail
@@ -484,6 +491,11 @@ jobs:
           test -s /tmp/explosion524-v568.air
           test -s /tmp/carbonis469-v568.air
           test -s /tmp/newhome293-v568.air
+      - name: Verify one-time source CarbonisCombined469 Metal compute shader with Apple compiler
+        run: |
+          set -euo pipefail
+          xcrun -sdk iphoneos metal -c ASTEROIDYiOS/CarbonisCombined469Bake.metal -o /tmp/C279-combined469.air
+          test -s /tmp/C279-combined469.air
       - name: Compile iPhone/iPad device build (unsigned)
         run: |
           xcodebuild -project ASTEROIDYiOS.xcodeproj \

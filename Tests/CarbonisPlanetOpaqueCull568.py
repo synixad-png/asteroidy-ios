@@ -42,7 +42,7 @@ assert "encoder.setFrontFacing(.counterClockwise)" in swift
 assert "encoder.setCullMode(.back)" in swift
 assert "encoder.setCullMode(.none)" in swift
 assert "let gameplay=gameSession != nil" in swift
-assert "albedo.a*=sourceBase.a;" in metal
+assert "albedo.a*=sourceCombined.a;" in metal
 base=(assets/"Sector01CarbonisBase.dat").read_bytes()
 assert base.startswith(bytes.fromhex("ffd8")), "source RGB base texture must be JPEG (no alpha)"
 print(f"PASS original C279: {front} outward faces / {back} inward / {flat} degenerate; {len(alpha)} opaque vertices, source JPEG")
