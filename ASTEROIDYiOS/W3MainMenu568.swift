@@ -80,7 +80,6 @@ struct W3MainMenu568: View {
                 width:proxy.size.width,height:proxy.size.height,
                 insets:safeInsets)
             let compact=layout.compact
-            let pad:CGFloat=compact ? 12 : 24
             ZStack {
                 if let images=SourceW3Images568.pair {
                     Image(uiImage:images.background)
