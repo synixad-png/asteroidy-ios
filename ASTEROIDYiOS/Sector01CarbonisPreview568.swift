@@ -88,6 +88,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let queue:MTLCommandQueue
             private let pipeline:MTLRenderPipelineState
             private let rockPipeline:MTLRenderPipelineState
+            // GpuSphere67.SphereScene67 calls IntroSky FIRST, before
+            // DrawPlanetSolid. Same original source renderer on iOS.
+            private let sourceSky568:SourceCombatSky568?
             private let rockFallbackPipeline:MTLRenderPipelineState
             private var rockBuffers: [Int:MTLBuffer] = [:]
             private var activeRocks: [SphereAsteroid556]
@@ -194,6 +197,10 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 activeRocks=initialRocks
                 gpu=device
                 self.gameSession=gameSession
+                // The W3 planet-only menu preview stays transparent and
+                // has NO sky. Only real playable CARBONIS combat gets it.
+                sourceSky568=try gameSession != nil
+                    ? SourceCombatSky568(device:device) : nil
                 guard let q=device.makeCommandQueue() else {throw SourceError.metal}
                 queue=q
                 let vertices=try Self.verified("Sector01CarbonisVertices.bin")
@@ -730,6 +737,19 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 }
                 let vp:simd_float4x4?=gameSession.map {
                     Self.viewProjection($0.game.flight.camera,aspect:aspect)
+                }
+                // Original GpuSphere67.cs:420:
+                // clear -> IntroSky(24 far clouds, three real distant
+                // planets, black hole, 12 near clouds, 1500 stars and
+                // 5 rays) -> DrawPlanetSolid -> DrawCombatResearchWreck214.
+                // Sky has depth ALWAYS/no writes; source terrain has
+                // normal depth test and occludes the distant objects.
+                if let session=gameSession,let sourceVP=vp {
+                    sourceSky568?.draw(
+                        encoder:encoder,camera:session.game.flight.camera,
+                        vp:sourceVP,time:session.game.elapsed,
+                        aspect:aspect,drawableHeight:Float(size.height),
+                        glow:planetFx568.glowEnabled,nebula:true,rays:true)
                 }
                 // Only the combat planet takes the v523 radius transform;
                 // NewHome290 and the PlanetScreen preview are separate.
