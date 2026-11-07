@@ -17,6 +17,18 @@ W `ASTEROIDYiOS/OriginalAudioAV568.swift`:
 3. **`Tests/OriginalMusicSynth568Tests.swift`:** 5 oryginalnych aranżacji, deterministyczność, zawartość poprawnego WAV oraz NOWY test porównujący ścieżkę z checkpointami i bez — **bajtowo identyczny WAV** oraz wielokrotne wezwania checkpointów.
 4. **`Tests/OriginalMusicCombatPause568Contract.py`:** zapewnia niezmienność pierwszych dwóch ścieżek, 13 pozostałych, QoS, gate w misji, 128 taktów/44.1 kHz i regularne checkpointy, bez zmian w kodzie misji, efektów, pocisków, planet i interfejsu.
 
+## Potwierdzone wyniki GitHub Actions
+
+[**Kontrola gałęzi #409**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42408520112): **3/3 zadania PASS**, w tym natywna kompilacja iOS Swift/Metal na macOS i pełna macierz testów walki, pocisków, fizyki i misji.
+
+Wyniki oryginalnego generatora:
+- `PASS source music combat checkpoints: 67 waits, WAV byte parity` — dla próbki utworu z oddzielnego przebiegu z 67 kontrolami zatrzymania i przebiegu bez nich wynikowe pliki WAV były **identyczne bajtowo**.
+- `PASS source music track 0, 1, 4, 7, 14` — oryginalne 44,1 kHz stereo WAV w pełnym pięcioutworowym teście.
+- `PASS source synthesis, five arrangements, deterministic repeat`.
+- `PASS 2 original startup menu tracks keep priority; 13 full source songs move to utility queue`.
+
+Pełny build ARM64 IPA pozostaje osobną kontrolą; wyniki GPU/FPS na fizycznym urządzeniu nie były mierzone.
+
 ## Potwierdzenia wymagane przed zamknięciem
 
 - Native Swift/Metal compile oraz testy grafiki/misji: kontrola `verify-combat-only.yml`.
