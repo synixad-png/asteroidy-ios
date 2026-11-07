@@ -55,12 +55,13 @@ for token in ("missionUserPaused=paused",
               "music?.volume=masterMusicVolume",
               "engineLevel52=0","enginePlayback52.stop()",
               "engineLevel52=0.16",
-              "restoreAudioAfterActivation568(rebuildPlayer:true)"):
+              "restoreAudioAfterActivation568(rebuildPlayer:false)"):
     assert token in pauseAudio,token
 assert "guard !suspended, !missionUserPaused" in audio
 assert "missionUserPaused ? 0 : max(0,min(1,raw))" in audio
 assert "missionPhase == .playing && !missionUserPaused" in audio
 assert "let wasSuspended=suspended" in audio
+assert "invalidateSuspendedEffects568()" in audio
 assert "restoreAudioAfterActivation568(rebuildPlayer:wasSuspended)" in audio
 assert "if rebuildPlayer,let file=urls[index]" in audio
 assert "replacement.currentTime=max(0,current.currentTime)" in audio
