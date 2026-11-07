@@ -67,7 +67,8 @@ struct Sector01Scene568: View {
         session.release()
         userPaused=false
         session.paused=true
-        onMissionPause(false)
+        // returnToAtlas -> OriginalAudioAV568.returnToMenu() changes
+        // the context atomically. Do not briefly restart combat sound.
         onEnginePower(0)
         onSurvivalChanged(session.game.lives,session.game.shieldCharges)
         returnToAtlas()
@@ -382,7 +383,6 @@ struct Sector01Scene568: View {
         }
         .onDisappear {
             onEnginePower(0)
-            onMissionPause(false)
             session.onAudioEvents=nil
             session.paused=true
             session.release()
