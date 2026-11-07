@@ -58,6 +58,11 @@ assert "destructionMeshTotal+=destructionMeshMs" in perf
 assert 'FX CPU P %.1f / W %.1f ms' in perf
 assert "completed.gpuStartTime" in perf and "completed.gpuEndTime" in perf
 assert 'UserDefaults.standard.set(value,forKey:Self.sourceKey)' in perf
+assert "if let aspect,let frame=visibilityFrame," in volume
+assert "event.point,worldRadius:extent*1.6+0.03," in volume
+assert "aspect:aspect," in scene.split(
+    "explosion.render(session.game.destruction,",1)[1].split(
+    "budget:fxBudget,into:encoder)",1)[0]
 assert "let selected=max(0,min(17,count))" in volume
 assert "for i in 0..<selected" in volume
 assert "result.reserveCapacity(selected)" in volume
