@@ -109,8 +109,8 @@ final class SourceCombatWreck214 {
         if ringDepth<=0.4 {return}
         let inv=1/SphereCameraView556.originalPlanetOuterRadius
         // GpuSphere67.cs:392: Eye+SkyDirection*900+Right*80+Up*52
-        let origin=basis.eye+ringSky221*(900*inv)+
-                   basis.right*(80*inv)+basis.up*(52*inv)
+        let origin=basis.eye + ringSky221*(900*inv) +
+                   basis.right*(80*inv) + basis.up*(52*inv)
         let delta=(origin-basis.eye) / inv
         let eyeDepth = -V.dot(basis.back,delta)
         if eyeDepth<=0.4 {return}
