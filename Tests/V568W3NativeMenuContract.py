@@ -186,7 +186,9 @@ assert "minHeight:44" in menu
 assert 'accessibilityIdentifier("w3-home-navigation")' in menu
 assert "accessibilityAddTraits(.isButton)" in menu
 assert "accessibilityLabel(item.rawValue)" in menu
-assert "page=item" in menu and "page=nil" in menu
+assert "navigateW3(item)" in menu and "navigateW3(nil)" in menu
+assert "page=destination" in menu and "w3WipeAmount327" in menu
+assert "duration:0.45" in menu and "duration:0.80" in menu
 assert "switch item" in menu
 assert "else if item == .campaign {" in menu
 assert "else if item == .newGame {" in menu
