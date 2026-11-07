@@ -53,9 +53,9 @@ enum SourceVisibleSurface73 {
         let margin:Float=0.08
         let horizontal=abs(p.x)*focal.horizontal
         let vertical=abs(p.y)*focal.vertical
-        let hLimit=depth*(1+margin)+radius*
+        let hLimit=depth*(1+margin)+radius *
             sqrt(1+focal.horizontal*focal.horizontal)
-        let vLimit=depth*(1+margin)+radius*
+        let vLimit=depth*(1+margin)+radius *
             sqrt(1+focal.vertical*focal.vertical)
         return horizontal<=hLimit && vertical<=vLimit
     }
