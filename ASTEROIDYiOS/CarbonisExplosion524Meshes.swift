@@ -229,11 +229,27 @@ enum CarbonisExplosion524Meshes {
     static func vertices(_ state:CarbonisDestruction524,
                          time:Float,camera:SphereCamera67,
                          settings:CarbonisVisualSettings568 = .init(),
-                         budget:CarbonisIOSFXBudget568 = .original)->[Float] {
+                         budget:CarbonisIOSFXBudget568 = .original,
+                         aspect:Float?=nil)->[Float] {
         var out:[Float]=[]
         out.reserveCapacity(budget.reduced ? 18000 : 60000)
+        // Original GpuSphere67.VisibleSurface73: invisible cosmetic
+        // sprites must never incur 32x6 source geodesic ring tessellation.
+        // The optional aspect is supplied ONLY by live gameplay: source
+        // unit tests and preview calls with nil still render EVERYTHING.
+        // Bounds are deliberately larger than the source surface
+        // footprint, including edge-of-screen and horizon glow.
+        let visibility=aspect.map { _ in SphereCameraView556(camera:camera) }
+        func visible(_ point:Vec2,_ worldRadius:Float)->Bool {
+            guard let aspect,let visibility else {return true}
+            return SourceVisibleSurface73.possiblyVisible(
+                point,worldRadius:worldRadius,
+                camera:visibility,aspect:aspect)
+        }
         for p in state.particles.suffix(
                 budget.particleLimit(state.particles.count)) {
+            // Max source trail 200*0.024 screen units, plus line width.
+            if !visible(p.point,0.06) {continue}
             let alpha=max(0,min(1,p.life/max(p.maxLife,0.00001)))
             let color=p.kind==1 ?
                 rgba(1,0.647,0,alpha) : rgba(0,1,1,alpha)
@@ -242,6 +258,10 @@ enum CarbonisExplosion524Meshes {
             sphereLine(from:back,to:p.point,color:color,into:&out)
         }
         for light in state.lights where light.life>0 {
+            // Source radius expands from 10 to 75 sphere arc units:
+            // 75/(720/pi)*(shell+lift)=0.363 in normalized 3D.
+            // Conservative 0.45 margin also covers stripe width.
+            if !visible(light.point,0.45) {continue}
             if state.nearDestruction(light.point,time:time) {continue}
             let fraction=max(0,min(1,
                 light.life/max(light.maxLife,0.00001)))
@@ -253,6 +273,9 @@ enum CarbonisExplosion524Meshes {
         }
         for piece in state.pieces.suffix(
                 budget.pieceLimit(state.pieces.count)) {
+            // Original small spark/shard geometry, generously bounded:
+            // clip only if the *entire* cosmetic element is invisible.
+            if !visible(piece.point,max(0.30,piece.size*0.04)) {continue}
             if piece.kind==0 {
                 let along=Vec2(x:cos(piece.angle)*piece.size,
                                y:sin(piece.angle)*piece.size)
