@@ -31,7 +31,7 @@ final class CarbonisExplosion524Renderer {
     private struct Lobe {
         var directionFire:SIMD4<Float>
         var centerRadius:SIMD4<Float>
-        var smokePhase:SIMD4<Float>
+        var smokeShape:SIMD4<Float>
     }
 
     private static func hash524(_ n:Float)->Float {
@@ -78,7 +78,7 @@ final class CarbonisExplosion524Renderer {
             // These two divisors were calculated for EVERY GPU pixel,
             // for EVERY depth step and for EVERY lobe. They depend only
             // on this lobe's radius and can be computed once on CPU.
-            // Existing smokePhase.z/.w were unused padding.
+            // Existing smokeShape.z/.w were unused padding.
             let squaredRadius=radius*radius
             let transverseInverse=1/(squaredRadius*0.56)
             let longitudinalInverse=1/(squaredRadius*2)
@@ -87,7 +87,7 @@ final class CarbonisExplosion524Renderer {
                     direction.x,direction.y,direction.z,fireAmplitude),
                 centerRadius:SIMD4<Float>(
                     center.x,center.y,center.z,radius),
-                smokePhase:SIMD4<Float>(
+                smokeShape:SIMD4<Float>(
                     smokeAmplitude,fi*2.31+a*1.35,
                     transverseInverse,longitudinalInverse)))
         }
