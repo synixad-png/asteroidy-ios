@@ -42,16 +42,23 @@ struct CarbonisIOSFXBudget568:Equatable {
     }
 
     func volumeCount(_ original:Int)->Int {
-        explosionsReduced ? min(1,original) : original
+        // Original 3/4/6 volumes remain distinguishable as 1/2/2.
+        explosionsReduced ? max(0,(original+2)/3) : original
     }
     func raySamples(_ original:Int)->Int {
-        explosionsReduced ? min(10,original) : original
+        // GAMEPLAY 22 -> 10, BALANCED 32 -> 15, SHOWCASE 48 -> 22.
+        // Unlike the prior hard min(10), original quality buttons work.
+        explosionsReduced ? max(0,(original*10+11)/22) : original
     }
     func gasLobes(_ original:Int)->Int {
-        explosionsReduced ? min(7,original) : original
+        // The original 5..17 clump slider remains responsive: 5->3,
+        // default 13->7, 17->9, not hard-clamped to the same 7.
+        explosionsReduced ? max(0,(original+1)/2) : original
     }
     func explosionDuration(_ original:Float)->Float {
-        explosionsReduced ? min(1.9,original) : original
+        // Original duration slider still affects the on-screen lifetime.
+        // Default 4.2 seconds -> 1.89 seconds (55% shorter).
+        explosionsReduced ? original*0.45 : original
     }
     func particleLimit(_ original:Int)->Int {
         explosionsReduced ? min(96,original) : original
@@ -60,7 +67,9 @@ struct CarbonisIOSFXBudget568:Equatable {
         explosionsReduced ? min(48,original) : original
     }
     func shardLimit(_ original:Int)->Int {
-        explosionsReduced ? min(12,original) : original
+        // Source odlamki 0..100% stays meaningful even in light mode:
+        // default 35->12, maximum 70->25, and 0 remains truly off.
+        explosionsReduced ? (original*35+50)/100 : original
     }
     var drawBulletGlow:Bool {!projectilesReduced}
     var groundLightLayers:[Int] {
