@@ -1,5 +1,5 @@
 # ASTEROIDY CARBONIS source combat CI
 
-Run ID: 42357121133
-Commit: c769ba609c5c7752871928f05e9d3144688f653d
-Actions: https://github.com/synixad-png/asteroidy-ios/actions/runs/42357121133
+Run ID: 42357177324
+Commit: a3f98c08f5ff95e0e60fed7c25482727f911e3e4
+Actions: https://github.com/synixad-png/asteroidy-ios/actions/runs/42357177324
