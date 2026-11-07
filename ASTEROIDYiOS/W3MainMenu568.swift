@@ -67,6 +67,7 @@ struct W3MainMenu568: View {
     @State private var planetDragYaw: Float=0
     @State private var planetDragPitch: Float=0
     @State private var planetDragging=false
+    @State private var safeInsets=W3ScreenInsets568()
 
     private let gold = Color(red: 0.89, green: 0.67, blue: 0.31)
     private let cyan = Color(red: 0.39, green: 0.75, blue: 0.79)
@@ -75,8 +76,11 @@ struct W3MainMenu568: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let compact = proxy.size.height < 540
-            let pad: CGFloat = compact ? 12 : 24
+            let layout=W3AdaptiveViewport568(
+                width:proxy.size.width,height:proxy.size.height,
+                insets:safeInsets)
+            let compact=layout.compact
+            let pad:CGFloat=compact ? 12 : 24
             ZStack {
                 if let images=SourceW3Images568.pair {
                     Image(uiImage:images.background)
@@ -98,34 +102,39 @@ struct W3MainMenu568: View {
                 // home and every submenu are separate W3 screens, NEVER
                 // the old menu overlaid as a dark modal atop W3 home.
                 VStack(spacing:0) {
-                    header(compact:compact)
+                    header(compact:compact,layout:layout)
                     if let shown=page {
-                        panel(for:shown,compact:compact)
+                        panel(for:shown,compact:compact,layout:layout)
                             .frame(maxWidth:.infinity,maxHeight:.infinity)
                             // W3 pages use only the verified 0.45 + 0.80 s shutter.
                     } else {
                         HStack(alignment:.top,spacing:compact ? 10 : 20) {
                             navigation(compact:compact)
-                                .frame(width:min(206,max(153,proxy.size.width * 0.162)))
+                                .frame(width:min(206,max(153,layout.usableWidth * 0.162)))
                             radar(compact:compact)
                                 .frame(maxWidth:.infinity,maxHeight:.infinity)
-                            if proxy.size.width > 850 {
+                            // iPhone 15 Pro Max is 932pt wide in landscape,
+                            // but its actual safe content can be <850pt.
+                            // Do not let the extra telemetry column crush
+                            // the genuine transparent 3D NewHome290 globe.
+                            if layout.usableWidth > 850 {
                                 telemetry
                                     .frame(width:min(215,proxy.size.width * 0.18))
                             }
                         }
-                        .padding(.horizontal,pad)
+                        .padding(.leading,layout.leadingPadding)
+                        .padding(.trailing,layout.trailingPadding)
                         .padding(.vertical,compact ? 7 : 16)
                         // HOME also uses that shutter; no extra iOS fade.
                     }
-                    footer(compact:compact)
+                    footer(compact:compact,layout:layout)
                 }
                 if w3Wiping327 {
                     // W3 native left-to-right shutter, NOT old modal
                     // fade or duplicated full-screen background assets.
                     GeometryReader { canvas in
-                        let top:CGFloat = compact ? 52 : 74
-                        let bottom:CGFloat = compact ? 37 : 68
+                        let top:CGFloat = layout.headerHeight
+                        let bottom:CGFloat = layout.footerHeight
                         HStack(spacing:0) {
                             if w3WipeFromRight327 {Spacer(minLength:0)}
                             Rectangle()
@@ -145,6 +154,11 @@ struct W3MainMenu568: View {
                     .allowsHitTesting(true)
                     .accessibilityHidden(true)
                 }
+            }
+            .background {
+                W3SafeAreaReader568(insets:$safeInsets)
+                    .frame(width:0,height:0)
+                    .allowsHitTesting(false)
             }
         }
         // Match the music-first startup on 4:3: background, header and
@@ -208,7 +222,8 @@ struct W3MainMenu568: View {
         }
     }
 
-    private func header(compact:Bool) -> some View {
+    private func header(compact:Bool,
+                        layout:W3AdaptiveViewport568) -> some View {
         HStack(spacing:12) {
             if let image=SourceW3Images568.pair?.logo {
                 Image(uiImage:image)
@@ -239,8 +254,10 @@ struct W3MainMenu568: View {
                     .foregroundStyle(cyan)
             }
         }
-        .padding(.horizontal,compact ? 14 : 26)
-        .frame(height:compact ? 52 : 74)
+        .padding(.leading,layout.safeLeft+(compact ? 14 : 26))
+        .padding(.trailing,layout.safeRight+(compact ? 14 : 26))
+        .padding(.top,layout.safeTop)
+        .frame(height:layout.headerHeight)
         .background(Color(red:0.004,green:0.027,blue:0.048).opacity(0.96))
         .overlay(alignment:.bottom) { Rectangle().fill(cyan.opacity(0.25)).frame(height:1) }
     }
@@ -390,7 +407,8 @@ struct W3MainMenu568: View {
         .overlay { Rectangle().stroke(cyan.opacity(0.2),lineWidth:1) }
     }
 
-    private func footer(compact:Bool) -> some View {
+    private func footer(compact:Bool,
+                        layout:W3AdaptiveViewport568) -> some View {
         HStack(spacing:8) {
             Text("DOTKNIJ FUNKCJĘ / W3 · NAWIGACJA NATYWNA")
                 .foregroundStyle(muted)
@@ -409,8 +427,10 @@ struct W3MainMenu568: View {
         }
         .accessibilityElement(children: .contain)
         .font(.system(size:compact ? 9 : 11,design:.monospaced))
-        .padding(.horizontal,compact ? 14 : 26)
-        .frame(height:compact ? 37 : 68)
+        .padding(.leading,layout.safeLeft+(compact ? 14 : 26))
+        .padding(.trailing,layout.safeRight+(compact ? 14 : 26))
+        .padding(.bottom,layout.safeBottom)
+        .frame(height:layout.footerHeight)
         .background(Color(red:0.004,green:0.027,blue:0.048))
         .overlay(alignment:.top) {
             Rectangle().fill(cyan.opacity(0.25)).frame(height:1)
@@ -419,7 +439,8 @@ struct W3MainMenu568: View {
 
     // Original W3 subpages have their own full-screen chrome, not iOS
     // native sheet/material overlays and not the pre-W3 CampaignAtlas shell.
-    @ViewBuilder private func panel(for item:Page,compact:Bool) -> some View {
+    @ViewBuilder private func panel(for item:Page,compact:Bool,
+                                    layout:W3AdaptiveViewport568) -> some View {
         GeometryReader { area in
             VStack(alignment:.leading,spacing:compact ? 8 : 14) {
                 HStack(spacing:12) {
@@ -486,7 +507,8 @@ struct W3MainMenu568: View {
                     .overlay(Rectangle().stroke(cyan.opacity(0.22),lineWidth:1))
                 }
             }
-            .padding(.horizontal,compact ? 12 : 24)
+            .padding(.leading,layout.safeLeft+(compact ? 12 : 24))
+            .padding(.trailing,layout.safeRight+(compact ? 12 : 24))
             .padding(.vertical,compact ? 9 : 16)
             .frame(width:area.size.width,height:area.size.height)
         }
