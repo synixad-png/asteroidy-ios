@@ -37,6 +37,8 @@ assert 'case .began:' in interrupt and 'case .ended:' in interrupt
 assert 'audioInterrupted=true' in interrupt and 'audioInterrupted=false' in interrupt
 assert 'enginePlayback52.stop()' in interrupt
 assert 'intro43Player?.pause()' in interrupt and 'music?.pause()' in interrupt
+assert 'AVAudioSessionInterruptionWasSuspendedKey' in interrupt
+assert 'if wasSuspended {' in interrupt # never steal active calls
 assert 'DispatchQueue.main.async' in interrupt  # delayed iOS suspension signal
 assert 'if !suspended {restoreAudioAfterActivation568()}' in interrupt
 
