@@ -27,7 +27,12 @@ assert "private static let sourceCircles:[Int:[SIMD2<Float>]]" in projectiles
 assert "private static let sourceGroundCircles:[Int:[SIMD2<Float>]]" in projectiles
 assert "for layer in 0..<4" in projectiles
 assert "let slices=[28,24,22,18]" in projectiles
-assert "mesh.indices.append(contentsOf:[" in projectiles
+# Direct UInt32 appends avoid allocating a temporary Swift array
+# for every radial triangle while preserving exactly 3 or 6 indices.
+assert "mesh.indices.append(first);mesh.indices.append(first+1)" in projectiles
+assert "mesh.indices.append(first+UInt32(i+1))" in projectiles
+assert "mesh.indices.append(b+1);mesh.indices.append(a)" in projectiles
+assert "into.append(p.x);into.append(p.y);into.append(p.z)" in projectiles
 assert "expandedTriangles()" in indices
 assert "private let inFlight=DispatchSemaphore(value:3)" in stream
 assert "inFlight.wait()" in stream
