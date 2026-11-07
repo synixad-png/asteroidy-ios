@@ -18,6 +18,10 @@ on:
       - 'ASTEROIDYiOS/CarbonisFXStreamingBuffers568.swift'
       - 'ASTEROIDYiOS/CarbonisProjectileFX69.swift'
       - 'ASTEROIDYiOS/CarbonisIOSFXBudget568.swift'
+      - 'ASTEROIDYiOS/CarbonisExplosion524Preview568.swift'
+      - 'ASTEROIDYiOS/SourceVisibleSurface73.swift'
+      - 'Tests/SourceVisibleSurface73Tests.swift'
+      - 'Tests/CarbonisPlanetOpaqueCull568.py'
       - 'ASTEROIDYiOS/CarbonisExplosion524Meshes.swift'
       - 'Tests/CarbonisIOSFXBudget568Tests.swift'
       - 'Tests/CarbonisIOSFXBudgetSourceContract568.py'
@@ -117,6 +121,11 @@ jobs:
           swiftc ASTEROIDYiOS/MissionViewportFraming568.swift Tests/MissionViewportFraming568Tests.swift -o /tmp/mission-frame568
           /tmp/mission-frame568
           python3 Tests/MissionViewportFraming568Contract.py
+      - name: Verify authentic GpuSphere67 VisibleSurface73 culls only fully hidden actors in source frusta
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/MissionViewportFraming568.swift ASTEROIDYiOS/SourceVisibleSurface73.swift Tests/SourceVisibleSurface73Tests.swift -o /tmp/ios-source-visible73
+          /tmp/ios-source-visible73
       - name: Verify source Windows v568 music-first persistent W3 press-Enter splash
         run: |
           set -euo pipefail
@@ -450,6 +459,10 @@ jobs:
           python3 Tools/prepare_v568_w3_home_planet290.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets
           echo 'Verified real CARBONIS C279 and W3 assets staged for unsigned IPA.'
+      - name: Audit every source C279 planet triangle, alpha and PC Metal culling before IPA
+        run: |
+          set -euo pipefail
+          python3 Tests/CarbonisPlanetOpaqueCull568.py
       - name: Verify 43 source SFX/voices and runtime 15-track synthesizer before device build
         run: |
           set -euo pipefail
