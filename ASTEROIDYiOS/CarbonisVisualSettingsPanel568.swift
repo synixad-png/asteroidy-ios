@@ -207,29 +207,6 @@ struct CarbonisVisualSettingsPanel568: View {
                 .font(.system(size:compact ? 10 : 12,design:.monospaced))
                 .foregroundStyle(muted)
                 .fixedSize(horizontal:false,vertical:true)
-            Rectangle().fill(cyan.opacity(0.25)).frame(height:1)
-            header("WYDAJNOŚĆ iOS / OGRANICZANIE EFEKTÓW")
-            Toggle("TRYB WYDAJNOŚCI iOS — MNIEJ EFEKTÓW",
-                   isOn:Binding(
-                    get:{iosFX.reduced},
-                    set:{enabled in
-                        iosFX.reduced=enabled
-                        iosFX.save()
-                    }))
-                .tint(cyan)
-                .font(.system(size:compact ? 10 : 13,
-                              weight:.semibold,design:.monospaced))
-                .foregroundStyle(.white)
-                .accessibilityIdentifier("ios-fx-reduced-default-on")
-            Text(iosFX.reduced ? "AKTYWNY — OGRANICZONE WYBUCHY I ŚWIATŁA"
-                               : "NIEAKTYWNY — PEŁNE ORYGINALNE EFEKTY")
-                .font(.system(size:compact ? 10 : 12,design:.monospaced))
-                .foregroundStyle(gold)
-                .accessibilityIdentifier("ios-fx-reduced-status")
-            Text("OPCJA TYLKO DLA iOS, NIE WYSTĘPUJE W ORYGINALE WINDOWS. WŁĄCZONA DOMYŚLNIE. 1 WYBUCH 3D ZAMIAST 3, 10 PRÓBEK ZAMIAST 22, 7 KŁĘBÓW ZAMIAST 13, KRÓTSZE EKSPLOZJE, 1 WARSTWA ŚWIATŁA ZAMIAST 4 ORAZ MNIEJ ODŁAMKÓW. LICZBA POCISKÓW, OBRAŻENIA I FIZYKA BEZ ZMIAN. NOWE USTAWIENIE OBOWIĄZUJE OD PONOWNEGO WEJŚCIA W MISJĘ.")
-                .font(.system(size:compact ? 9 : 11,design:.monospaced))
-                .foregroundStyle(muted)
-                .fixedSize(horizontal:false,vertical:true)
             Spacer(minLength:0)
         }
         .accessibilityIdentifier("w3-source-graphics-settings")
@@ -297,6 +274,23 @@ struct CarbonisVisualSettingsPanel568: View {
                     .accessibilityValue(profile.quality==index ? "wybrany":"niewybrany")
                 }
             }
+            Toggle("iOS · OGRANICZ WYBUCHY 3D",isOn:Binding(
+                get:{iosFX.explosionsReduced},
+                set:{enabled in
+                    iosFX.explosionsReduced=enabled
+                    iosFX.save()
+                    previewRevision+=1
+                }))
+                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .foregroundStyle(.white)
+                .tint(cyan)
+                .accessibilityIdentifier("ios-explosions-reduced")
+            Text(iosFX.explosionsReduced
+                ? "iOS OSZCZĘDNY · MNIEJ WOLUMENÓW, PRÓBEK I ODŁAMKÓW"
+                : "ORYGINALNA PEŁNA JAKOŚĆ WYBUCHÓW")
+                .font(.system(size:compact ? 9:10,design:.monospaced))
+                .foregroundStyle(muted)
+                .accessibilityIdentifier("ios-explosions-reduced-status")
             ForEach(0..<8,id:\.self) { i in
                 VStack(alignment:.leading,spacing:2) {
                     HStack {
@@ -337,7 +331,8 @@ struct CarbonisVisualSettingsPanel568: View {
             // Actual native Explosion524 volume shader in a dedicated
             // Metal viewport. No simulated SwiftUI fire sprites.
             CarbonisExplosion524Preview568(
-                settings:profile,revision:previewRevision)
+                settings:profile,revision:previewRevision,
+                budget:iosFX)
                 .frame(height:compact ? 124:194)
                 .background(Color.black.opacity(0.6))
                 .accessibilityIdentifier("w3-explosion-metal-preview")
@@ -357,6 +352,22 @@ struct CarbonisVisualSettingsPanel568: View {
     private var projectilePage:some View {
         VStack(alignment:.leading,spacing:compact ? 12:18) {
             header("ORYGINALNE USTAWIENIA POCISKÓW / GPU 285")
+            Toggle("iOS · OGRANICZ ŚWIATŁO POCISKÓW",isOn:Binding(
+                get:{iosFX.projectilesReduced},
+                set:{enabled in
+                    iosFX.projectilesReduced=enabled
+                    iosFX.save()
+                }))
+                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .foregroundStyle(.white)
+                .tint(cyan)
+                .accessibilityIdentifier("ios-projectiles-reduced")
+            Text(iosFX.projectilesReduced
+                ? "iOS OSZCZĘDNY · 1 WARSTWA ŚWIATŁA, BEZ ZEWNĘTRZNEJ POŚWIATY"
+                : "ORYGINALNE 4 WARSTWY ŚWIATŁA I PEŁNA POŚWIATA")
+                .font(.system(size:compact ? 9:10,design:.monospaced))
+                .foregroundStyle(muted)
+                .accessibilityIdentifier("ios-projectiles-reduced-status")
             VStack(alignment:.leading,spacing:4) {
                 HStack {
                     Text("JASNOŚĆ OŚWIETLENIA POCISKÓW")
