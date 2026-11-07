@@ -125,7 +125,7 @@ struct W3MainMenu568: View {
                     // fade or duplicated full-screen background assets.
                     GeometryReader { canvas in
                         let top:CGFloat = compact ? 52 : 74
-                        let bottom:CGFloat = compact ? 37 : 52
+                        let bottom:CGFloat = compact ? 37 : 68
                         HStack(spacing:0) {
                             if w3WipeFromRight327 {Spacer(minLength:0)}
                             Rectangle()
@@ -147,6 +147,10 @@ struct W3MainMenu568: View {
                 }
             }
         }
+        // Match the music-first startup on 4:3: background, header and
+        // footer use the actual fullscreen viewport, not iPad safe-area
+        // letterbox margins that lower the source y=0 W3 top bar.
+        .ignoresSafeArea()
         // Keep native buttons accessible to VoiceOver and XCTest.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("asteroidy-w3-main-menu")
@@ -406,7 +410,7 @@ struct W3MainMenu568: View {
         .accessibilityElement(children: .contain)
         .font(.system(size:compact ? 9 : 11,design:.monospaced))
         .padding(.horizontal,compact ? 14 : 26)
-        .frame(height:compact ? 37 : 52)
+        .frame(height:compact ? 37 : 68)
         .background(Color(red:0.004,green:0.027,blue:0.048))
         .overlay(alignment:.top) {
             Rectangle().fill(cyan.opacity(0.25)).frame(height:1)

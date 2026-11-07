@@ -54,98 +54,142 @@ struct W3StartupSplash568: View {
         }
     }
 
-    private var sourcePage:some View {
-        ZStack(alignment:.topLeading) {
-            // Source header 0..74; footer 652..720.
-            Rectangle()
-                .fill(Color(red:1/255,green:8/255,blue:14/255).opacity(0.969))
-                .frame(width:1280,height:74)
-                .position(x:640,y:37)
-            Rectangle().fill(muted.opacity(0.40))
-                .frame(width:1280,height:1).position(x:640,y:74)
+    // Source W3Header/W3Footer chrome fills the *actual* screen.
+    // Unlike the former scaled 1280x720 sheet, no 4:3 letterboxing:
+    // the header starts at physical y=0 and footer ends at y=height.
+    private func sourceHeader(_ layout:W3AdaptiveViewport568)->some View {
+        let scale=layout.sourceScale
+        return HStack(spacing:layout.compact ? 7 : 18) {
             if let logo=SourceW3Images568.pair?.logo {
-                Image(uiImage:logo).resizable().aspectRatio(contentMode:.fit)
-                    .frame(width:186,height:54)
-                    .position(x:131,y:44)
+                Image(uiImage:logo).resizable().scaledToFit()
+                    .frame(width:layout.headerLogoWidth,
+                           height:layout.headerHeight*0.73)
             }
             Rectangle().fill(cyan.opacity(0.3))
-                .frame(width:1,height:38).position(x:246,y:37)
-            Text("S Y N I X A D   S Y S T E M S")
-                .font(.system(size:15,weight:.bold,design:.monospaced))
-                .foregroundStyle(gold)
-                .frame(width:440,alignment:.leading).position(x:484,y:29)
-            Text("ORBITAL NAVIGATION SYSTEM")
-                .font(.system(size:13,design:.monospaced))
-                .foregroundStyle(paper)
-                .frame(width:440,alignment:.leading).position(x:484,y:51)
-            Text("TRYB START").font(.system(size:14,design:.monospaced))
-                .foregroundStyle(paper)
-                .frame(width:320,alignment:.trailing).position(x:1080,y:38)
-
-            Text("NOWY SYSTEM NAWIGACJI")
-                .font(.system(size:17,weight:.medium,design:.monospaced))
-                .foregroundStyle(gold)
-                .frame(width:440).position(x:640,y:213)
-            if let logo=SourceW3Images568.pair?.logo {
-                let height=350*logo.size.height/max(1,logo.size.width)
-                Image(uiImage:logo).resizable().aspectRatio(contentMode:.fit)
-                    .frame(width:350,height:height)
-                    .position(x:640,y:234+height/2)
-                    .accessibilityHidden(true)
+                .frame(width:1,height:layout.headerHeight*0.51)
+            VStack(alignment:.leading,spacing:3) {
+                Text("S Y N I X A D   S Y S T E M S")
+                    .font(.system(size:15*scale,weight:.bold,design:.monospaced))
+                    .foregroundStyle(gold)
+                Text("ORBITAL NAVIGATION SYSTEM")
+                    .font(.system(size:13*scale,design:.monospaced))
+                    .foregroundStyle(paper)
             }
-            Text("ORBITAL NAVIGATION SYSTEM")
-                .font(.system(size:18,weight:.medium,design:.monospaced))
-                .foregroundStyle(cyan)
-                .frame(width:460).position(x:640,y:367)
-            TimelineView(.animation(minimumInterval:1.0/30.0,
-                                    paused:stage != .waiting)) { timeline in
-                Button(action:proceed) {
-                    Text("NACIŚNIJ ENTER / START")
-                        .font(.system(size:21,weight:.semibold,design:.monospaced))
-                        .foregroundStyle(Color(red:202/255,green:219/255,
-                                               blue:224/255).opacity(
-                            W3StartupPolicy568.referencePromptAlpha(
-                                timeline.date.timeIntervalSinceReferenceDate)))
-                        .frame(width:382,height:48)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .position(x:640,y:416)
-                .accessibilityIdentifier("w3-startup-enter")
-                .accessibilityLabel("Naciśnij Enter albo dotknij, aby wejść do menu")
-            }
-            Rectangle().fill(muted.opacity(0.7))
-                .frame(width:326,height:1).position(x:640,y:442)
-            Text("TERMINAL // SYNIXAD COMMAND")
-                .font(.system(size:14,design:.monospaced))
-                .foregroundStyle(muted)
-                .frame(width:480,alignment:.leading).position(x:300,y:634)
-            Text("STATUS POŁĄCZENIA: AKTYWNY")
-                .font(.system(size:14,design:.monospaced))
-                .foregroundStyle(muted)
-                .frame(width:430,alignment:.trailing).position(x:1003,y:634)
-            Rectangle()
-                .fill(Color(red:1/255,green:8/255,blue:14/255).opacity(0.969))
-                .frame(width:1280,height:68)
-                .position(x:640,y:686)
-            Rectangle().fill(muted.opacity(0.42))
-                .frame(width:1280,height:1).position(x:640,y:652)
-            Text("STRZAŁKI / DPAD WYBÓR     ·     ENTER / A ZATWIERDŹ")
-                .font(.system(size:14,design:.monospaced))
+            .lineLimit(1)
+            .minimumScaleFactor(0.62)
+            Spacer(minLength:5)
+            Text("TRYB START")
+                .font(.system(size:14*scale,design:.monospaced))
                 .foregroundStyle(paper)
-                .frame(width:950,alignment:.leading)
-                .position(x:514,y:680)
-            Text("UI W3 / OPENGL")
-                .font(.system(size:13,design:.monospaced))
-                .foregroundStyle(gold)
-                .frame(width:165,alignment:.trailing).position(x:1170,y:680)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
         }
-        .frame(width:1280,height:720)
+        .padding(.horizontal,layout.compact ? 12 : 26)
+        .frame(width:layout.width,height:layout.headerHeight)
+        .background(Color(red:1/255,green:8/255,blue:14/255).opacity(0.969))
+        .overlay(alignment:.bottom) {
+            Rectangle().fill(muted.opacity(0.40)).frame(height:1)
+        }
+        .accessibilityIdentifier("w3-startup-header-top")
+    }
+
+    private func sourceFooter(_ layout:W3AdaptiveViewport568)->some View {
+        HStack(spacing:8) {
+            Text("STRZAŁKI / DPAD WYBÓR     ·     ENTER / A ZATWIERDŹ")
+                .font(.system(size:14*layout.sourceScale,design:.monospaced))
+                .foregroundStyle(paper)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+            Spacer(minLength:4)
+            Text("UI W3 / OPENGL")
+                .font(.system(size:13*layout.sourceScale,design:.monospaced))
+                .foregroundStyle(gold)
+                .lineLimit(1)
+        }
+        .padding(.horizontal,layout.compact ? 12 : 26)
+        .frame(width:layout.width,height:layout.footerHeight)
+        .background(Color(red:1/255,green:8/255,blue:14/255).opacity(0.969))
+        .overlay(alignment:.top) {
+            Rectangle().fill(muted.opacity(0.42)).frame(height:1)
+        }
+        .accessibilityIdentifier("w3-startup-footer-bottom")
+    }
+
+    private func sourcePage(_ layout:W3AdaptiveViewport568)->some View {
+        VStack(spacing:0) {
+            sourceHeader(layout)
+            GeometryReader { center in
+                let scale=layout.sourceScale
+                ZStack {
+                    VStack(spacing:layout.compact ? 7 : 17) {
+                        Text("NOWY SYSTEM NAWIGACJI")
+                            .font(.system(size:17*scale,weight:.medium,
+                                          design:.monospaced))
+                            .foregroundStyle(gold)
+                        if let logo=SourceW3Images568.pair?.logo {
+                            Image(uiImage:logo).resizable().scaledToFit()
+                                .frame(width:layout.centerLogoWidth)
+                                .accessibilityHidden(true)
+                        }
+                        Text("ORBITAL NAVIGATION SYSTEM")
+                            .font(.system(size:18*scale,weight:.medium,
+                                          design:.monospaced))
+                            .foregroundStyle(cyan)
+                        TimelineView(.animation(minimumInterval:1.0/30.0,
+                                     paused:stage != .waiting)) { timeline in
+                            Button(action:proceed) {
+                                Text("NACIŚNIJ ENTER / START")
+                                    .font(.system(size:21*scale,weight:.semibold,
+                                                  design:.monospaced))
+                                    .foregroundStyle(
+                                        Color(red:202/255,green:219/255,
+                                              blue:224/255).opacity(
+                                            W3StartupPolicy568.referencePromptAlpha(
+                                                timeline.date.timeIntervalSinceReferenceDate)))
+                                    .frame(minHeight:layout.compact ? 32 : 48)
+                                    .frame(maxWidth:.infinity)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("w3-startup-enter")
+                            .accessibilityLabel(
+                                "Naciśnij Enter albo dotknij, aby wejść do menu")
+                        }
+                        Rectangle().fill(muted.opacity(0.7))
+                            .frame(width:min(326,layout.width*0.45),height:1)
+                    }
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+                    .frame(maxWidth:.infinity,maxHeight:.infinity)
+                    .padding(.bottom,layout.compact ? 11 : 35)
+                    VStack(spacing:0) {
+                        Spacer(minLength:0)
+                        HStack(spacing:8) {
+                            Text("TERMINAL // SYNIXAD COMMAND")
+                            Spacer(minLength:4)
+                            Text("STATUS POŁĄCZENIA: AKTYWNY")
+                        }
+                        .font(.system(size:14*scale,design:.monospaced))
+                        .foregroundStyle(muted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.65)
+                        .padding(.horizontal,layout.compact ? 12 : 26)
+                        .padding(.bottom,layout.compact ? 7 : 12)
+                    }
+                    .allowsHitTesting(false)
+                }
+                .frame(width:center.size.width,height:center.size.height)
+            }
+            .frame(height:layout.contentHeight)
+            sourceFooter(layout)
+        }
+        .frame(width:layout.width,height:layout.height)
     }
 
     var body:some View {
         GeometryReader { geo in
-            let fit=min(geo.size.width/1280,geo.size.height/720)
+            let layout=W3AdaptiveViewport568(
+                width:geo.size.width,height:geo.size.height)
             ZStack {
                 if stage != .uncover {
                     if let images=SourceW3Images568.pair {
@@ -158,23 +202,21 @@ struct W3StartupSplash568: View {
                     } else {
                         Color(red:0.006,green:0.02,blue:0.035)
                     }
-                    sourcePage
-                        .scaleEffect(fit)
-                        .frame(width:geo.size.width,height:geo.size.height)
+                    sourcePage(layout)
                 }
                 if stage != .waiting {
-                    // Reference wipe covers/unveils only y=66..666.
-                    // One solid native curtain, no second menu image.
+                    // Source reference shutter covers between the anchored
+                    // header and footer. iPad 4:3 does not re-center bars.
                     Rectangle().fill(Color(red:4/255,green:16/255,
                                             blue:27/255).opacity(0.988))
                         .frame(width:geo.size.width * (stage == .cover
                             ? wipe : 1-wipe),
-                               height:geo.size.height*600/720)
+                               height:layout.contentHeight)
                         .position(
                             x:stage == .cover
                               ? geo.size.width*wipe/2
                               : geo.size.width*(wipe+(1-wipe)/2),
-                            y:geo.size.height*366/720)
+                            y:layout.headerHeight+layout.contentHeight/2)
                         .accessibilityHidden(true)
                 }
                 // Shield underlying menu input even while the curtain unveils.
