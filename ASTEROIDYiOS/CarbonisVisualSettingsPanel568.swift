@@ -14,6 +14,7 @@ struct CarbonisVisualSettingsPanel568: View {
     @State private var tab:Int=11
     @State private var previewRevision=0
     @ObservedObject private var performance=SourcePerformance568.shared
+    @State private var iosFX=CarbonisIOSFXBudget568.load()
 
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.39,green:0.75,blue:0.79)
@@ -204,6 +205,29 @@ struct CarbonisVisualSettingsPanel568: View {
                 .accessibilityIdentifier("w3-source-fps-enabled-value")
             Text("ŹRÓDŁO: WINDOWS v568 / MENU139 ID 6 · GPU RENDERER / 0,5 s. ZAPIS AUTOMATYCZNY. LICZNIK POJAWIA SIĘ WYŁĄCZNIE W GRZE, NIE W MENU.")
                 .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                .foregroundStyle(muted)
+                .fixedSize(horizontal:false,vertical:true)
+            Rectangle().fill(cyan.opacity(0.25)).frame(height:1)
+            header("WYDAJNOŚĆ iOS / OGRANICZANIE EFEKTÓW")
+            Toggle("TRYB WYDAJNOŚCI iOS — MNIEJ EFEKTÓW",
+                   isOn:Binding(
+                    get:{iosFX.reduced},
+                    set:{enabled in
+                        iosFX.reduced=enabled
+                        iosFX.save()
+                    }))
+                .tint(cyan)
+                .font(.system(size:compact ? 10 : 13,
+                              weight:.semibold,design:.monospaced))
+                .foregroundStyle(.white)
+                .accessibilityIdentifier("ios-fx-reduced-default-on")
+            Text(iosFX.reduced ? "AKTYWNY — OGRANICZONE WYBUCHY I ŚWIATŁA"
+                               : "NIEAKTYWNY — PEŁNE ORYGINALNE EFEKTY")
+                .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                .foregroundStyle(gold)
+                .accessibilityIdentifier("ios-fx-reduced-status")
+            Text("OPCJA TYLKO DLA iOS, NIE WYSTĘPUJE W ORYGINALE WINDOWS. WŁĄCZONA DOMYŚLNIE. 1 WYBUCH 3D ZAMIAST 3, 10 PRÓBEK ZAMIAST 22, 7 KŁĘBÓW ZAMIAST 13, KRÓTSZE EKSPLOZJE, 1 WARSTWA ŚWIATŁA ZAMIAST 4 ORAZ MNIEJ ODŁAMKÓW. LICZBA POCISKÓW, OBRAŻENIA I FIZYKA BEZ ZMIAN. NOWE USTAWIENIE OBOWIĄZUJE OD PONOWNEGO WEJŚCIA W MISJĘ.")
+                .font(.system(size:compact ? 9 : 11,design:.monospaced))
                 .foregroundStyle(muted)
                 .fixedSize(horizontal:false,vertical:true)
             Spacer(minLength:0)

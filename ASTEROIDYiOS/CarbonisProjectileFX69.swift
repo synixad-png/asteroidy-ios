@@ -365,7 +365,8 @@ enum CarbonisProjectileFX69 {
     /// are identical to groundLights(), including all 4 radii and lifts.
     static func indexedGroundLights(
         _ shots:[CarbonisCombat568.Projectile],
-        settings:CarbonisVisualSettings568
+        settings:CarbonisVisualSettings568,
+        budget:CarbonisIOSFXBudget568 = .original
     )->CarbonisIndexedFXMesh568 {
         var mesh=CarbonisIndexedFXMesh568()
         let brightness=settings.projectileBrightnessFactor
@@ -392,13 +393,13 @@ enum CarbonisProjectileFX69 {
                 (shot.kind==3 ? 0.42 :
                  shot.kind==4 ? 0.32 :
                  shot.kind==2 ? 0.28:0.24)
-            for layer in 0..<4 {
+            for layer in budget.groundLightLayers {
                 indexedGroundDisc(shot.point,
                     radius:radius*widths[layer]*radiusScale,
                     tint:tint,
                     alpha:min(1,strength*weights[layer]*powerScale),
                     lift:(shot.hostile ? 1.6:1.2)+lifts[layer],
-                    slices:slices[layer],&mesh)
+                    slices:budget.groundSlices(slices[layer]),&mesh)
             }
         }
         return mesh
