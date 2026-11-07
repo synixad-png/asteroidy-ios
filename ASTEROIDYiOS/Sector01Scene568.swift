@@ -11,6 +11,7 @@ struct Sector01Scene568: View {
     let onSurvivalChanged:(Int,Int)->Void
     let onAudioEvent:(Int)->Void
     let onEnginePower:(Float)->Void
+    let onMissionPause:(Bool)->Void
     let onMissionPhase:(CarbonisCombat568.Phase)->Void
     let onReplay:()->Void
     let preparedWave:Sector01PreparedWave568
@@ -18,12 +19,16 @@ struct Sector01Scene568: View {
     @StateObject private var session:CarbonisSession568
     @State private var completionReported=false
     @State private var showingService=false
+    // Windows v568 Game.Mode.Paused / PausedFrom=Playing:
+    // user pause is independent from an iOS lock-screen suspension.
+    @State private var userPaused=false
 
     init(entry:Sector01Entry568,returnToAtlas:@escaping ()->Void,
          onMissionCompleted:@escaping (Sector01MissionSummary568)->Void,
          onSurvivalChanged:@escaping (Int,Int)->Void,
          onAudioEvent:@escaping (Int)->Void = {_ in},
          onEnginePower:@escaping (Float)->Void = {_ in},
+         onMissionPause:@escaping (Bool)->Void = {_ in},
          onMissionPhase:@escaping (CarbonisCombat568.Phase)->Void = {_ in},
          onReplay:@escaping ()->Void = {},
          preparedWave:Sector01PreparedWave568) {
@@ -33,12 +38,40 @@ struct Sector01Scene568: View {
         self.onSurvivalChanged=onSurvivalChanged
         self.onAudioEvent=onAudioEvent
         self.onEnginePower=onEnginePower
+        self.onMissionPause=onMissionPause
         self.onMissionPhase=onMissionPhase
         self.onReplay=onReplay
         self.preparedWave=preparedWave
         _session=StateObject(wrappedValue:CarbonisSession568(prepared:preparedWave))
     }
     private func clamp(_ a:Float)->Float {max(-1,min(1,a))}
+    // Source Windows/src/BossTunnelGame.cs: Pause/Resume. Physics in
+    // CarbonisSession568.frame is already gated by session.paused.
+    private func pauseMission568() {
+        guard !userPaused && session.game.phase == .playing else {return}
+        session.release()
+        userPaused=true
+        session.paused=true
+        onEnginePower(0)
+        onMissionPause(true)
+    }
+    private func resumeMission568() {
+        guard userPaused else {return}
+        session.release() // never resurrect a held auto-fire after pause
+        userPaused=false
+        session.paused=scenePhase != .active
+        onMissionPause(false)
+        if scenePhase == .active {onEnginePower(0.16)}
+    }
+    private func exitMission568() {
+        session.release()
+        userPaused=false
+        session.paused=true
+        onMissionPause(false)
+        onEnginePower(0)
+        onSurvivalChanged(session.game.lives,session.game.shieldCharges)
+        returnToAtlas()
+    }
     private var movement:some Gesture {
         DragGesture(minimumDistance:0).onChanged { v in
             session.input(move:Vec2(x:clamp(Float(v.translation.width)/110),
@@ -90,12 +123,17 @@ struct Sector01Scene568: View {
                                 .foregroundStyle(.cyan)
                         }
                         Spacer()
-                        Button("WRÓĆ DO MAPY") {
-                            session.release(); session.paused=true
-                            onSurvivalChanged(session.game.lives,
-                                              session.game.shieldCharges)
-                            returnToAtlas()
+                        if session.hud.phase == .playing && !showingService {
+                            Button("PAUZA") {pauseMission568()}
+                                .font(.system(size:compact ? 10:13,weight:.bold,
+                                              design:.monospaced))
+                                .padding(10)
+                                .foregroundStyle(Color(red:0.10,green:0.15,blue:0.20))
+                                .background(Color(red:0.88,green:0.67,blue:0.31),
+                                            in:RoundedRectangle(cornerRadius:6))
+                                .accessibilityIdentifier("sector01-pause-button")
                         }
+                        Button("WRÓĆ DO MAPY") {exitMission568()}
                         .font(.system(size:compact ? 10:13,weight:.bold,design:.monospaced))
                         .padding(10)
                         .foregroundStyle(.white)
@@ -256,6 +294,54 @@ struct Sector01Scene568: View {
                     }
                     .frame(maxWidth:650,maxHeight:compact ? 400:550)
                 }
+                // Source Windows/src/RendererW3Pause317.cs: translucent
+                // full-screen modal over the FROZEN real 3D mission.
+                // Save/Load/Highscores remain absent until their source
+                // behaviour is genuinely ported; do not display dead keys.
+                if userPaused && session.hud.phase == .playing && !showingService {
+                    Color.black.opacity(0.80).ignoresSafeArea()
+                        .accessibilityIdentifier("sector01-pause-touch-blocker")
+                    VStack(alignment:.leading,spacing:compact ? 11:18) {
+                        Text("SYNIXAD // SYSTEM ROZGRYWKI")
+                            .font(.system(size:compact ? 10:12,weight:.bold,
+                                          design:.monospaced))
+                            .foregroundStyle(Color(red:0.55,green:0.77,blue:0.80))
+                        Text("GRA WSTRZYMANA")
+                            .font(.system(size:compact ? 23:35,weight:.heavy,
+                                          design:.monospaced))
+                            .foregroundStyle(.white)
+                        Text("SYTUACJA ZACHOWANA / CZAS ROZGRYWKI ZATRZYMANY")
+                            .font(.system(size:compact ? 10:13,
+                                          design:.monospaced))
+                            .foregroundStyle(.gray)
+                        Divider().overlay(Color(red:0.88,green:0.67,blue:0.31))
+                        Button("KONTYNUUJ") {resumeMission568()}
+                            .frame(maxWidth:.infinity)
+                            .padding(compact ? 9:13)
+                            .background(Color(red:0.88,green:0.67,blue:0.31),
+                                        in:RoundedRectangle(cornerRadius:5))
+                            .foregroundStyle(Color(red:0.07,green:0.13,blue:0.17))
+                            .accessibilityIdentifier("sector01-resume-button")
+                        Button("WYJDŹ DO MENU") {exitMission568()}
+                            .frame(maxWidth:.infinity)
+                            .padding(compact ? 9:13)
+                            .background(Color(red:0.05,green:0.15,blue:0.22),
+                                        in:RoundedRectangle(cornerRadius:5))
+                            .foregroundStyle(.white)
+                            .accessibilityIdentifier("sector01-pause-exit-button")
+                        Text("SEKTOR 01    PUNKTY \(session.hud.score)    ŻYCIA \(session.hud.lives)")
+                            .font(.system(size:compact ? 10:12,design:.monospaced))
+                            .foregroundStyle(.gray)
+                    }
+                    .font(.system(size:compact ? 13:16,weight:.bold,design:.monospaced))
+                    .padding(compact ? 16:28)
+                    .frame(maxWidth:min(geo.size.width-32,650))
+                    .background(Color(red:0.02,green:0.05,blue:0.09),
+                                in:RoundedRectangle(cornerRadius:12))
+                    .overlay(RoundedRectangle(cornerRadius:12)
+                        .stroke(Color(red:0.24,green:0.38,blue:0.44),lineWidth:1))
+                    .accessibilityIdentifier("sector01-source-pause-overlay")
+                }
             }
         }
         // Source CompleteMission50: persist only after the genuine
@@ -274,7 +360,7 @@ struct Sector01Scene568: View {
         // Subscribe to actual simulation HUD updates at 10 Hz, not the
         // render thread. Physics and touch control remain unchanged.
         .onChange(of:session.hud.seconds) { _ in
-            let engine:Float=session.game.phase == .playing
+            let engine:Float=session.game.phase == .playing && !userPaused
                 ? (session.move.lengthSquared>0.01 ? 1 : 0.16) : 0
             onEnginePower(engine)
         }
@@ -286,7 +372,7 @@ struct Sector01Scene568: View {
                 session.paused=true
             } else {
                 session.release()
-                session.paused=false
+                session.paused=userPaused
             }
         }
         .onAppear {
@@ -296,6 +382,7 @@ struct Sector01Scene568: View {
         }
         .onDisappear {
             onEnginePower(0)
+            onMissionPause(false)
             session.onAudioEvents=nil
             session.paused=true
             session.release()
