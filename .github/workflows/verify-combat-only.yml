@@ -11,6 +11,9 @@ on:
       - 'ASTEROIDYiOS/PlanetDamageLab556.swift'
       - 'Tests/PlanetDamageLab556Tests.swift'
       - 'ASTEROIDYiOS/App.swift'
+      - 'ASTEROIDYiOS/CarbonisIntroPlanet568.swift'
+      - 'ASTEROIDYiOS/MissionCinematic568.swift'
+      - 'Tests/MissionIntro41SourceContract568.py'
       - 'ASTEROIDYiOS/OriginalAudioLifecycle568.swift'
       - 'ASTEROIDYiOS/OriginalAudioAV568.swift'
       - 'ASTEROIDYiOS/OriginalMusicTransition568.swift'
@@ -150,6 +153,10 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Verify authentic pre-mission Intro41 route and source Carbonis globe
+        run: |
+          set -euo pipefail
+          python3 Tests/MissionIntro41SourceContract568.py
       - name: Verify Swift compiler
         run: swift --version
       - name: Verify source STATEK v472 70–150% separate visual scales and unchanged combat physics
