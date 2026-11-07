@@ -34,6 +34,10 @@ on:
       - 'Tests/Explosion524ConservativePolygonTests.py'
       - 'Tests/CarbonisProjectileFX69Tests.swift'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
+      - 'ASTEROIDYiOS/CarbonisIntroPlanet568.swift'
+      - 'ASTEROIDYiOS/MissionCinematic568.swift'
+      - 'ASTEROIDYiOS/OriginalAudioAV568.swift'
+      - 'Tests/MissionIntro41SourceContract568.py'
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/App.swift'
@@ -129,6 +133,10 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/MissionViewportFraming568.swift ASTEROIDYiOS/SourceVisibleSurface73.swift Tests/SourceVisibleSurface73Tests.swift -o /tmp/ios-source-visible73
           /tmp/ios-source-visible73
+      - name: Verify original source Intro41 arrival, C279, Intro43, 16 second route
+        run: |
+          set -euo pipefail
+          python3 Tests/MissionIntro41SourceContract568.py
       - name: Verify source Windows v568 music-first persistent W3 press-Enter splash
         run: |
           set -euo pipefail
