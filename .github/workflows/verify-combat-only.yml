@@ -70,6 +70,8 @@ on:
       - 'ASTEROIDYiOS/CarbonisDestruction524.swift'
       - 'ASTEROIDYiOS/CarbonisExplosionNoise524.swift'
       - 'ASTEROIDYiOS/CarbonisExplosion524Meshes.swift'
+      - 'Tests/SourceGeodesicFX568Tests.swift'
+      - 'Tests/FXCPUGeodesicSourceContract568.py'
       - 'ASTEROIDYiOS/CarbonisExplosion524Renderer.swift'
       - 'ASTEROIDYiOS/Sector01Explosion524.metal'
       - 'Tests/CarbonisDestruction524Tests.swift'
@@ -295,8 +297,11 @@ jobs:
       - name: Verify source Game, HitBug and Explosion524 real death events plus 3D geometric shards and exact noise
         run: |
           set -euo pipefail
-          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/CarbonisExplosionNoise524.swift ASTEROIDYiOS/CarbonisExplosion524Meshes.swift ASTEROIDYiOS/CarbonisVisualSettings568.swift ASTEROIDYiOS/CarbonisIOSFXBudget568.swift Tests/CarbonisDestruction524Tests.swift -o /tmp/carbonis-explosion524-tests
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/CarbonisExplosionNoise524.swift ASTEROIDYiOS/CarbonisExplosion524Meshes.swift ASTEROIDYiOS/MissionViewportFraming568.swift ASTEROIDYiOS/SourceVisibleSurface73.swift ASTEROIDYiOS/CarbonisVisualSettings568.swift ASTEROIDYiOS/CarbonisIOSFXBudget568.swift Tests/CarbonisDestruction524Tests.swift -o /tmp/carbonis-explosion524-tests
           /tmp/carbonis-explosion524-tests
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/CarbonisExplosionNoise524.swift ASTEROIDYiOS/CarbonisExplosion524Meshes.swift ASTEROIDYiOS/MissionViewportFraming568.swift ASTEROIDYiOS/SourceVisibleSurface73.swift ASTEROIDYiOS/CarbonisVisualSettings568.swift ASTEROIDYiOS/CarbonisIOSFXBudget568.swift Tests/SourceGeodesicFX568Tests.swift -o /tmp/source-geodesic-fx568
+          /tmp/source-geodesic-fx568
+          python3 Tests/FXCPUGeodesicSourceContract568.py
       - name: Verify 12 original Explosion524 W3 settings and 3 projectile light settings are saved, clamped and preset-accurate
         run: |
           set -euo pipefail
