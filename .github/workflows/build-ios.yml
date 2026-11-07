@@ -137,6 +137,10 @@ jobs:
         run: |
           set -euo pipefail
           python3 Tests/MissionIntro41SourceContract568.py
+          swiftc -frontend -parse ASTEROIDYiOS/MissionCinematic568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisIntroPlanet568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/App.swift
+          swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
       - name: Verify source Windows v568 music-first persistent W3 press-Enter splash
         run: |
           set -euo pipefail
