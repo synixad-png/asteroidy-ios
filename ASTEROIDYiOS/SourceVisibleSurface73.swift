@@ -42,13 +42,22 @@ enum SourceVisibleSurface73 {
         let focal=MissionViewportFraming568.focals(
             aspect:aspect,
             sourceVerticalFocal:SphereProjection556.sourceVerticalFocal)
-        let conservativeDepth=max(0.001,depth-radius)
-        let x=(abs(p.x)+radius)*focal.horizontal/conservativeDepth
-        let y=(abs(p.y)+radius)*focal.vertical/conservativeDepth
-        // 25 source pixels of extension on each side (GpuSphere67:37),
-        // with additional safety for off-axis perspective distortion.
+        // The old (abs(center)+radius)/(depth-radius) expression
+        // incorrectly rejected a large luminous ring EVEN WHEN ITS
+        // CENTRE WAS ON SCREEN. It tests full containment, not whether
+        // any part of the sphere intersects the view. The correct
+        // conservative frustum/plane test below uses the exact support
+        // radius of a sphere against each perspective side plane:
+        // |x|*fx-depth <= r*sqrt(1+fx*fx), likewise for y.
+        // Only an ENTIRELY invisible object may skip rendering.
         let margin:Float=0.08
-        return x<=1+margin && y<=1+margin
+        let horizontal=abs(p.x)*focal.horizontal
+        let vertical=abs(p.y)*focal.vertical
+        let hLimit=depth*(1+margin)+radius*
+            sqrt(1+focal.horizontal*focal.horizontal)
+        let vLimit=depth*(1+margin)+radius*
+            sqrt(1+focal.vertical*focal.vertical)
+        return horizontal<=hLimit && vertical<=vLimit
     }
 
     static func rockWorldRadius(_ rock:SphereAsteroid556)->Float {
