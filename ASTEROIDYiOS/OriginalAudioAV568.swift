@@ -569,12 +569,16 @@ final class OriginalAudioAV568: ObservableObject {
             intro43Player?.pause()
             finishMusicFade()
             music?.pause()
-            // A delayed "began" may arrive AFTER unlocking a suspended app.
-            // Re-check on the main queue; a genuine ongoing interruption
-            // rejects session activation and will be handled by "ended".
-            DispatchQueue.main.async { [weak self] in
-                guard let self, !self.suspended, self.audioInterrupted else {return}
-                self.restoreAudioAfterActivation568()
+            // iOS may deliver a "began" for a PAST app suspension only
+            // after unlock. Recover this case on the main queue, but never
+            // steal audio during a real incoming call/Siri interruption.
+            let wasSuspended=(note.userInfo?[AVAudioSessionInterruptionWasSuspendedKey]
+                              as? Bool) == true
+            if wasSuspended {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, !self.suspended, self.audioInterrupted else {return}
+                    self.restoreAudioAfterActivation568()
+                }
             }
         case .ended:
             audioInterrupted=false
