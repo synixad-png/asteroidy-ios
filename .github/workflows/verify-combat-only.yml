@@ -2,7 +2,7 @@ name: ASTEROIDY iOS - Swift combat tests ONLY (no IPA)
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, feature/ios-fx-cpu-geodesic-visibility-20261107]
     paths:
       - '.github/workflows/verify-combat-only.yml'
       - 'ASTEROIDYiOS/CombatVerifiedEncounter556.swift'
