@@ -98,6 +98,10 @@ jobs:
           swiftc ASTEROIDYiOS/W3StartupPolicy568.swift Tests/W3StartupPolicy568Tests.swift -o /tmp/w3-startup568
           /tmp/w3-startup568
           python3 Tests/W3StartupContract568.py
+      - name: Verify transparent planet-only original W3 HomePlanetPreview333
+        run: |
+          set -euo pipefail
+          python3 Tests/V568W3PlanetTransparentSourceContract.py
       - name: Verify original C279 terrain radius v523 before IPA build
         run: |
           swiftc ASTEROIDYiOS/CarbonisMissionPlanet523.swift Tests/CarbonisMissionPlanet523Tests.swift -o /tmp/carbonis-mission-scale-523

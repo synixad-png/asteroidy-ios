@@ -30,8 +30,13 @@ struct W3HomePlanetMetal568: UIViewRepresentable {
 
     func makeUIView(context: Context) -> MTKView {
         let view=MTKView(frame:.zero,device:MTLCreateSystemDefaultDevice())
+        // GPU source preview clears DEPTH only. A separate Metal view must
+        // keep its color attachment fully transparent instead of drawing a
+        // black/offscreen panel over the shared W3 background.
         view.isOpaque=false
+        view.layer.isOpaque=false
         view.backgroundColor = .clear
+        view.layer.backgroundColor = UIColor.clear.cgColor
         view.clearColor=MTLClearColor(red:0,green:0,blue:0,alpha:0)
         view.colorPixelFormat = .bgra8Unorm
         view.depthStencilPixelFormat = .depth32Float
@@ -180,9 +185,17 @@ struct W3HomePlanetMetal568: UIViewRepresentable {
             func draw(in view:MTKView) {
                 guard let drawable=view.currentDrawable,
                       let pass=view.currentRenderPassDescriptor,
-                      let command=queue.makeCommandBuffer(),
-                      let encoder=command.makeRenderCommandEncoder(descriptor:pass)
+                      let command=queue.makeCommandBuffer()
                 else {return}
+                // Reproduce original GL depth-only preview semantics in
+                // an independent alpha-composited Metal layer. Clearing to
+                // transparent alpha=0 is required between frames, otherwise
+                // the view can appear as an opaque rectangle on iPad.
+                pass.colorAttachments[0].loadAction = .clear
+                pass.colorAttachments[0].clearColor =
+                    MTLClearColor(red:0,green:0,blue:0,alpha:0)
+                guard let encoder=command.makeRenderCommandEncoder(
+                        descriptor:pass) else {return}
                 let size=view.drawableSize
                 let aspect=Float(max(1,size.width)/max(1,size.height))
                 let elapsed=Float(ProcessInfo.processInfo.systemUptime-started)

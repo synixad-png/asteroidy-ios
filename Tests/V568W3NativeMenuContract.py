@@ -172,9 +172,16 @@ assert 'openDiagnostic()' in menu
 assert "import WebKit" not in menu and "WKWebView(" not in menu
 assert "W3HomePlanetMetal568.isAvailable" in menu
 assert "W3HomePlanetMetal568(yaw:planetYaw,pitch:planetPitch)" in menu
-assert "ORYGINALNA PLANETA NEWHOME290 / 3D METAL" in menu
-assert "MODEL PLANETY 3D — BRAK ZASOBÓW" in menu
-assert "Radar W3 z oryginalną planetą 3D NewHome290" in menu
+assert "Oryginalna planeta 3D NewHome290 na przezroczystym tle" in menu
+# The source GPU preview has no overlaid radar, captions or fallback disk.
+area=menu.split("private func radar(compact:Bool)",1)[1].split(
+    "private var telemetry: some View",1)[0]
+assert "W3HomePlanetMetal568(yaw:planetYaw,pitch:planetPitch)" in area
+assert not any(x in area for x in (
+    "RoundedRectangle(", "Ellipse(", "Rectangle(", ".stroke(",
+    ".fill(", "Text(", "ForEach(", "RADAR / SYSTEM NAWIGACJI",
+    "W3 v568", "ORYGINALNA PLANETA NEWHOME290 / 3D METAL"))
+
 assert "Brak zweryfikowanego oryginalnego modelu planety" in menu
 assert "W3HomeShipPreview568()" in menu
 assert 'hangar_h55.glb' in menu

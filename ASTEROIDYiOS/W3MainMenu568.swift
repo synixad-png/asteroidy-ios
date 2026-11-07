@@ -301,26 +301,16 @@ struct W3MainMenu568: View {
         .accessibilityIdentifier("w3-home-navigation")
     }
 
-    // The source H290 globe is a real independent Metal render in the middle;
-// reference W3 radar/orbit lines remain native vector UI overlays.
+    // Windows/src/GpuW3HomeReal333.cs:32-59 — HomePlanetPreview333:
+    // the real GPU globe is composited directly over the W3 background.
+    // glClear(GL_DEPTH_BUFFER_BIT) only. The four backdrop rings and axes
+    // in RendererW3Home328.DrawHomePlanetBackdrop333 belong exclusively
+    // to the non-GPU fallback; the GPU path must not draw a radar frame,
+    // reticle, decorative orbit ellipse, panel tint, or captions here.
     private func radar(compact:Bool) -> some View {
         GeometryReader { geo in
             let diameter=min(geo.size.width * 0.76,geo.size.height * 0.78)
             ZStack {
-                RoundedRectangle(cornerRadius:5)
-                    .fill(Color(red:0.009,green:0.036,blue:0.061).opacity(0.85))
-                RoundedRectangle(cornerRadius:5)
-                    .stroke(cyan.opacity(0.24),lineWidth:1)
-                ForEach(1...5,id:\.self) { i in
-                    Circle()
-                        .stroke(cyan.opacity(0.09+Double(i)*0.035),lineWidth:1)
-                        .frame(width:diameter*CGFloat(i)/5,
-                               height:diameter*CGFloat(i)/5)
-                }
-                Rectangle().fill(cyan.opacity(0.22))
-                    .frame(width:diameter*1.07,height:1)
-                Rectangle().fill(cyan.opacity(0.22))
-                    .frame(width:1,height:diameter*1.07)
                 if W3HomePlanetMetal568.isAvailable {
                     W3HomePlanetMetal568(yaw:planetYaw,pitch:planetPitch)
                         .frame(width:diameter,height:diameter)
@@ -332,8 +322,8 @@ struct W3MainMenu568: View {
                                     planetDragPitch=planetPitch
                                     planetDragging=true
                                 }
-                                // Normalize drag distance to the original 455 px
-                                // W3 preview. No change to the gameplay camera.
+                                // Preserve the already-tested original 455 px
+                                // W3 user interaction mapping and planet mesh.
                                 let dx=Float(value.translation.width)
                                     * 455 / Float(max(1,diameter))
                                 let dy=Float(value.translation.height)
@@ -345,36 +335,16 @@ struct W3MainMenu568: View {
                             .onEnded { _ in planetDragging=false })
                         .accessibilityLabel(
                             "Oryginalna planeta NewHome290 v568. Przeciągnij, aby obracać.")
-                } else {
-                    Circle()
-                        .fill(Color(red:0.023,green:0.113,blue:0.158))
-                        .frame(width:diameter*0.36,height:diameter*0.36)
-                        .overlay { Circle().stroke(gold.opacity(0.5),lineWidth:1) }
                 }
-                Ellipse()
-                    .stroke(gold.opacity(0.85),lineWidth:1.5)
-                    .frame(width:diameter*0.97,height:diameter*0.38)
-                    .rotationEffect(.degrees(-24))
-                VStack {
-                    HStack {
-                        Text("RADAR / SYSTEM NAWIGACJI")
-                        Spacer()
-                        Text("W3 v568")
-                    }
-                    .font(.system(size:compact ? 8 : 11,design:.monospaced))
-                    .foregroundStyle(muted)
-                    Spacer()
-                    Text(W3HomePlanetMetal568.isAvailable ? "ORYGINALNA PLANETA NEWHOME290 / 3D METAL" : "MODEL PLANETY 3D — BRAK ZASOBÓW")
-                        .font(.system(size:compact ? 8 : 10,design:.monospaced))
-                        .foregroundStyle(gold)
-                }
-                .padding(12)
+                // Intentionally draw nothing if a source-verified model
+                // is unavailable; never substitute a fake planet graphic.
             }
+            .frame(width:geo.size.width,height:geo.size.height)
         }
         .accessibilityLabel(
             W3HomePlanetMetal568.isAvailable
-                ? "Radar W3 z oryginalną planetą 3D NewHome290"
-                : "Radar W3. Brak zweryfikowanego oryginalnego modelu planety")
+                ? "Oryginalna planeta 3D NewHome290 na przezroczystym tle"
+                : "Brak zweryfikowanego oryginalnego modelu planety")
     }
 
     private var telemetry: some View {
