@@ -94,6 +94,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let planetGlowCount:Int
             private let visualSettings=CarbonisVisualSettings568.load()
             private let planetFx568=SourcePlanetGraphicsSettings568.load()
+            private let shipScale472=SourceShipScale472.load()
             private let missionTerrainScale523:Float
             private let vertexBuffer:MTLBuffer
             private let indexBuffer:MTLBuffer
@@ -780,7 +781,13 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                    let texture=craftTexture,
                    let fighterPipeline=craftPipeline,
                    let worldView=vp {
-                    let shipMatrix=Self.craftModel(session.game.flight)
+                    // Windows/src/GpuSphere67.cs CraftSphere67 applies the
+                    // visual MissionShipScale472 AFTER source StampSphere67.
+                    // Reuse this very same model for exhaust sockets 491,
+                    // without touching collision size or geodesic movement.
+                    let pct=shipScale472.missionFactor
+                    let shipMatrix=Self.craftModel(session.game.flight) *
+                        simd_float4x4(diagonal:SIMD4<Float>(pct,pct,pct,1))
                     uniforms=Uniforms(mvp:worldView*shipMatrix,
                                       model:shipMatrix,material:2,glow:0)
                     encoder.setRenderPipelineState(fighterPipeline)

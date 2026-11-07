@@ -14,6 +14,9 @@ private struct GPUModel {
 // while the real C# v556 simulation and PBR shaders remain to be ported.
 final class MetalRenderer: NSObject, MTKViewDelegate {
     let input: FlightInput
+    // Original separate visual-only scale; IntroScene41 cinematic is not
+    // affected, exactly as the source uses it only in CraftSphere67/Orbit50.
+    private let shipScale472=SourceShipScale472.load()
     let device: MTLDevice
     let queue: MTLCommandQueue
     let pipeline: MTLRenderPipelineState
@@ -1711,7 +1714,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 size:SphereSurfaceStamp556.sourceCraftRadius)
             let shipModel=craft *
                 Self.rotateYDegrees(sphereFlight.flight.visualBank) *
-                Self.rotateXDegrees(sphereFlight.flight.visualPitch)
+                Self.rotateXDegrees(sphereFlight.flight.visualPitch) *
+                Self.scale(shipScale472.missionFactor)
             if input.sourceShip367Preview {
                 // Original Windows/src/GpuSphere67.cs CraftSphere67 uses the
                 // same tangent basis and ShipContactRadius * Scale67 * .65.

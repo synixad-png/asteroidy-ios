@@ -9,6 +9,7 @@ struct CarbonisVisualSettingsPanel568: View {
 
     @State private var profile=CarbonisVisualSettings568.load()
     @State private var planetProfile=SourcePlanetGraphicsSettings568.load()
+    @State private var shipScale472=SourceShipScale472.load()
     @State private var tab:Int=0
     @State private var previewRevision=0
 
@@ -25,6 +26,11 @@ struct CarbonisVisualSettingsPanel568: View {
         change(&planetProfile)
         planetProfile.clampAll()
         planetProfile.save()
+    }
+    private func saveShipScale(_ update:(inout SourceShipScale472)->Void) {
+        update(&shipScale472)
+        shipScale472.clampAll()
+        shipScale472.save()
     }
     private func doubleValue(_ idx:Int)->Binding<Double> {
         Binding(get:{Double(profile.value(idx))},
@@ -61,6 +67,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     tabButton("AUDIO",index:2)
                     tabButton("PLANETY",index:3)
                     tabButton("POSTPROCES",index:4)
+                    tabButton("STATEK",index:5)
                 }
             }
             .accessibilityIdentifier("w3-effects-tabs-524-285")
@@ -74,8 +81,10 @@ struct CarbonisVisualSettingsPanel568: View {
                         OriginalAudioSettingsPanel568(compact:compact)
                     } else if tab==3 {
                         planetPage
-                    } else {
+                    } else if tab==4 {
                         postprocessPage
+                    } else {
+                        shipSizePage
                     }
                 }
                 .padding(.bottom,14)
@@ -327,6 +336,56 @@ struct CarbonisVisualSettingsPanel568: View {
             Spacer(minLength:0)
         }
         .accessibilityIdentifier("w3-original-postprocess-glow-256")
+    }
+
+    // Source Windows/src/Menu139.cs OptionGroups139 STATEK, IDs 100 and 101.
+    // 17 choices from 70% through 150%, increments 5%, default 100%.
+    private var shipSizePage:some View {
+        VStack(alignment:.leading,spacing:compact ? 10:18) {
+            header("ORYGINALNA SKALA WIZUALNA STATKU / v472")
+            VStack(alignment:.leading,spacing:5) {
+                HStack {
+                    Text("STATEK / SKALA W MISJACH")
+                    Spacer()
+                    Text("\(shipScale472.missionPercent)%")
+                        .foregroundStyle(gold)
+                        .accessibilityIdentifier("w3-ship-mission-scale-value-472")
+                }
+                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .foregroundStyle(.white)
+                Slider(value:Binding(
+                    get:{Double(shipScale472.missionPercent)},
+                    set:{value in saveShipScale{$0.setMission(Int(value.rounded()))}}),
+                    in:70...150,step:5)
+                    .tint(cyan)
+                    .accessibilityIdentifier("w3-ship-mission-scale-slider-472")
+            }
+            VStack(alignment:.leading,spacing:5) {
+                HStack {
+                    Text("STATEK / SKALA W ŚWIECIE ORBITALNYM")
+                    Spacer()
+                    Text("\(shipScale472.orbitPercent)%")
+                        .foregroundStyle(gold)
+                        .accessibilityIdentifier("w3-ship-orbit-scale-value-472")
+                }
+                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .foregroundStyle(.white)
+                Slider(value:Binding(
+                    get:{Double(shipScale472.orbitPercent)},
+                    set:{value in saveShipScale{$0.setOrbit(Int(value.rounded()))}}),
+                    in:70...150,step:5)
+                    .tint(cyan)
+                    .accessibilityIdentifier("w3-ship-orbit-scale-slider-472")
+            }
+            Text("ZAKRES ORYGINAŁU: 70–150%, KROK 5%, DOMYŚLNIE 100%. ZMIANA DOTYCZY WYŁĄCZNIE WIDOCZNEJ GEOMETRII I DYSZ; NIE ZMIENIA KOLIZJI, PRĘDKOŚCI ANI OBRAŻEŃ.")
+                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .foregroundStyle(muted)
+            Text("ŹRÓDŁO: Menu139.cs #100/#101; Renderer.cs; GpuSphere67.CraftSphere67; Orbit50.cs:318.")
+                .font(.system(size:9,design:.monospaced))
+                .foregroundStyle(gold)
+            Spacer(minLength:0)
+        }
+        .accessibilityIdentifier("w3-source-ship-scale-settings-472")
     }
 
 }
