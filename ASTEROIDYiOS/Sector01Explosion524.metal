@@ -121,15 +121,21 @@ fragment float4 sector01ExplosionFragment524(
     float bound=min(5.1f,max(2.6f,
         1.9f+age*1.55f*u.spread))*u.scale;
     float2 xy=(in.uv-0.5f)*2.0f*bound;
-    if(dot(xy,xy)>bound*bound)discard_fragment();
+    // This radius is the *exact* zero-opacity support from source
+    // smoothstep(bound*0.70, bound*0.98, length(p)).
+    // Outside it all ray samples have zero alpha. The source flash
+    // alone is strictly below the existing 0.012 alpha-discard gate
+    // for every supported source scale >= 45%.
+    float activeRadius=bound*0.98f;
+    float pixelRadius2=dot(xy,xy);
+    if(pixelRadius2>=activeRadius*activeRadius)discard_fragment();
     float3 accum=float3(0.0f);
     float transmittance=1.0f;
     float step=2.0f*bound/float(max(1u,u.stepCount));
     // Opacity is EXACTLY zero for length(p) >= 0.98*bound in the
     // original smoothstep below. Trim those empty ray samples without
     // changing sample positions, colors, smoke or alpha.
-    float activeRadius=bound*0.98f;
-    float reach2=activeRadius*activeRadius-dot(xy,xy);
+    float reach2=activeRadius*activeRadius-pixelRadius2;
     uint first=0u,last=0u;
     if(reach2>0.0f) {
         float reach=sqrt(reach2);

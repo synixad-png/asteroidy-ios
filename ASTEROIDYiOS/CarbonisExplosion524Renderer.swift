@@ -73,6 +73,23 @@ final class CarbonisExplosion524Renderer {
         return result
     }
 
+    // Original quad covers a unit square. The volume's actually
+    // contributing region is exactly the disc radius 0.49 in UV:
+    // original smoothstep forces zero opacity at 0.98*bound and
+    // out-of-circle flash falls below the source alpha-discard gate.
+    // A circumscribed 24-gon covers the *entire* nonzero source domain,
+    // while avoiding fragment invocations in ~24% empty quad pixels.
+    // Precompute unit directions once; 3D raymarch, 13 lobes, noise,
+    // glow, alpha, sampling quality and event life remain identical.
+    static let sourceDiscSides=24
+    private static let sourceDiscCorners:[SIMD2<Float>] = {
+        let radius:Float=0.49/cos(Float.pi/Float(sourceDiscSides))
+            + 0.00001
+        return (0...sourceDiscSides).map { i in
+            let a=2*Float.pi*Float(i)/Float(sourceDiscSides)
+            return SIMD2<Float>(radius*cos(a),radius*sin(a))
+        }
+    }()
     private let pipeline:MTLRenderPipelineState
     private let noise:MTLTexture
     private let noDepthWrite:MTLDepthStencilState
@@ -163,19 +180,23 @@ final class CarbonisExplosion524Renderer {
             let scale=settings.factor(0)
             let radius=event.scale*scale*0.55/outer
             let extent=radius*5.1*scale
-            let bottomLeft=center-right*extent-up*extent
-            let bottomRight=center+right*extent-up*extent
-            let topRight=center+right*extent+up*extent
-            let topLeft=center-right*extent+up*extent
+            // UV and world positions are related by the same affine
+            // mapping as the original four quad corners. Every surviving
+            // fragment receives the unchanged source (x,y,z) ray sample.
             var vertices:[Float]=[]
-            vertices.reserveCapacity(30)
+            vertices.reserveCapacity(Self.sourceDiscSides*3*5)
             func put(_ point:SphereVector3,_ x:Float,_ y:Float) {
-                vertices.append(contentsOf:[
-                    point.x,point.y,point.z,x,y])
+                vertices.append(contentsOf:[point.x,point.y,point.z,x,y])
             }
-            put(bottomLeft,0,0);put(bottomRight,1,0)
-            put(topRight,1,1);put(bottomLeft,0,0)
-            put(topRight,1,1);put(topLeft,0,1)
+            for i in 0..<Self.sourceDiscSides {
+                let a=Self.sourceDiscCorners[i]
+                let b=Self.sourceDiscCorners[i+1]
+                let pointA=center+right*(a.x*2*extent)+up*(a.y*2*extent)
+                let pointB=center+right*(b.x*2*extent)+up*(b.y*2*extent)
+                put(center,0.5,0.5)
+                put(pointA,0.5+a.x,0.5+a.y)
+                put(pointB,0.5+b.x,0.5+b.y)
+            }
             var params=Parameters(
                 mvp:vp,age:age,
                 scale:scale,
@@ -200,7 +221,8 @@ final class CarbonisExplosion524Renderer {
                     encoder.setFragmentBytes(address,length:raw.count,index:2)
                 }
             }
-            encoder.drawPrimitives(type:.triangle,vertexStart:0,vertexCount:6)
+            encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                                   vertexCount:Self.sourceDiscSides*3)
         }
     }
 }
