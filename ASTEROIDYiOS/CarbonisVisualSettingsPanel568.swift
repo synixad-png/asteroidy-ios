@@ -83,7 +83,7 @@ struct CarbonisVisualSettingsPanel568: View {
         case 7:return "w3-effects-tab-3"
         case 14:return "w3-effects-tab-4"
         case 13:return "w3-effects-tab-5"
-        default:return "w3-original-category-\\(sourceIndex)"
+        default:return "w3-original-category-\(sourceIndex)"
         }
     }
     var body:some View {
@@ -97,7 +97,7 @@ struct CarbonisVisualSettingsPanel568: View {
                             .foregroundStyle(gold)
                             .padding(.horizontal,7)
                             .padding(.vertical,9)
-                        ForEach(0..<sourceTabs139.count,id:\\.self) { i in
+                        ForEach(0..<sourceTabs139.count,id:\.self) { i in
                             tabButton(sourceTabs139[i],index:i)
                                 .id(i)
                         }
@@ -124,7 +124,7 @@ struct CarbonisVisualSettingsPanel568: View {
                                           weight:.bold,design:.monospaced))
                             .foregroundStyle(gold)
                         Spacer()
-                        Text("W3 / #\\(tab)")
+                        Text("W3 / #\(tab)")
                             .font(.system(size:compact ? 8 : 10,
                                           design:.monospaced))
                             .foregroundStyle(muted)
