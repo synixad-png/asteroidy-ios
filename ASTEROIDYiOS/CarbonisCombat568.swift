@@ -59,6 +59,7 @@ struct CarbonisCombat568 {
     var armor:Int=25
     var lives:Int=3
     var shieldCharges:Int=0
+    let difficulty:CombatBalance556.Difficulty
     let selectedWeapon:Sector01Shop568.Weapon
     let upgradeLevel:Int
     let rapidLevel:Int
@@ -100,6 +101,7 @@ struct CarbonisCombat568 {
         isReplay=prepared.isReplay
         lives=prepared.reset.lives
         invincible=prepared.reset.invincibleSeconds
+        difficulty=prepared.difficulty
         let profile=prepared.shopProfile
         selectedWeapon=profile.weapon
         upgradeLevel=profile.upgradeLevel
@@ -414,7 +416,7 @@ struct CarbonisCombat568 {
             return
         }
         guard parent.size>1,
-              let balance=CombatBalance556(level:1,difficulty:.normal,
+              let balance=CombatBalance556(level:1,difficulty:difficulty,
                                            spherical:true) else{return}
         let speed=sqrt(parent.velocity.lengthSquared)
         let sideways=speed>0.00001
@@ -449,7 +451,7 @@ struct CarbonisCombat568 {
     private mutating func spawnTerminalShards187(_ parent:SphereAsteroid556) {
         let pieces=18
         if rocks.count>220 {return}
-        let basis=CombatBalance556(level:1,difficulty:.normal,
+        let basis=CombatBalance556(level:1,difficulty:difficulty,
                                    spherical:true)
         for i in 0..<pieces {
             let a=Float(2)*Float.pi*Float(i)/Float(pieces)
@@ -484,13 +486,14 @@ struct CarbonisCombat568 {
 
     private mutating func updateShooters(dt:Float) {
         let player=flight.position
-        let dangerSpeed:Float=1.1
+        let dangerSpeed:Float=difficulty == .easy ? 0.86 :
+            difficulty == .normal ? 1.10 : 1.32
         for i in shooters.indices {
             var fighter=shooters[i]
-            // CARBONIS is level1, normal. Future stage contexts must
-            // supply their own level; don't claim 25 live missions.
+            // CARBONIS remains level 1, but the W3 NEW GAME difficulty
+            // reaches actual fighter tactics (not only the spawn wave).
             let tactics=ShooterTactics71(
-                level:1,type:fighter.core.type,difficulty:1)
+                level:1,type:fighter.core.type,difficulty:difficulty.rawValue)
             let speed=tactics.sourceSpeed
             let delta=Sphere67.delta(target:player,origin:fighter.core.position)
             let dir=Self.unit(delta)

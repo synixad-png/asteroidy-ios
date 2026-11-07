@@ -7,6 +7,7 @@ struct Sector01PreparedWave568 {
     let reset: MissionStart261.Snapshot
     let encounter: MissionWave568.Encounter
     let incoming: MissionIncoming568
+    let difficulty:CombatBalance556.Difficulty
     /// Game.BeginRewards57: replay in a selected hub mission grants no
     /// further token rewards. The original completion bit is immutable.
     var isReplay:Bool = false
@@ -35,6 +36,7 @@ struct Sector01PreparedWave568 {
                 ship: Vec2(x:640,y:360)) else { return nil }
         return Self(reset:reset,encounter:encounter,
                     incoming:MissionIncoming568(from:encounter,difficulty:difficulty),
+                    difficulty:difficulty,
                     isReplay:campaign.completed(1),
                     shopProfile:shopProfile)
     }

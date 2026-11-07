@@ -87,8 +87,11 @@ struct GameView: View {
         guard let preparedWave=Sector01PreparedWave568.prepare(
             entry:entry,campaign:campaign,
             hasOriginalC279Assets:Sector01CarbonisPreview568.isAvailable,
-            difficulty:.normal,seed:Int32.random(in:0...Int32.max),
-            currentLives:sourceShop.lives,startingLives:3,
+            difficulty:SourceNewGame568.selection().difficulty,
+            seed:Int32.random(in:0...Int32.max),
+            currentLives:sourceShop.lives,
+            startingLives:SourceNewGame568.startingLives(
+                difficulty:SourceNewGame568.selection().difficulty),
             shopProfile:sourceShop)
         else { return }
         input.releaseHeldControls()
@@ -98,6 +101,36 @@ struct GameView: View {
         sourceSector01 = entry
         audio.enterMission(sector)
         showMainMenu = true
+    }
+
+    // Original W3 start action: preserve an active profile before reset.
+    // Current iOS supports one actual CARBONIS ship. Source 2-player
+    // gameplay and the 62-second story cinematic are NOT yet ported.
+    private func startNewGameFromW3(_ choice:SourceNewGameSelection568)->Bool {
+        guard choice.players==1,
+              Sector01CarbonisPreview568.isAvailable else {return false}
+        let fresh=CampaignProgress556()
+        guard let entry=Sector01Entry568.open(
+                  selectedSector:1,campaign:fresh,
+                  hasOriginalC279Assets:true) else {return false}
+        let freshShop=Sector01Shop568.State(
+            lives:SourceNewGame568.startingLives(difficulty:choice.difficulty))
+        guard let prepared=Sector01PreparedWave568.prepare(
+            entry:entry,campaign:fresh,hasOriginalC279Assets:true,
+            difficulty:choice.difficulty,
+            seed:Int32.random(in:0...Int32.max),
+            currentLives:freshShop.lives,startingLives:freshShop.lives,
+            shopProfile:freshShop) else {return false}
+        guard SourceNewGame568.create(choice) else {return false}
+        campaign=CampaignStore556.load()
+        input.releaseHeldControls()
+        input.gameplayPaused=true
+        reopenAtlasAfterCarbonis=false
+        sourceSector01Setup=prepared
+        sourceSector01=entry
+        audio.enterMission(1)
+        showMainMenu=true
+        return true
     }
     // The genuine W3 navigation is the normal entry point.
     // Existing source-GPU verification remains an explicit simulator mode.
@@ -152,7 +185,8 @@ struct GameView: View {
                         reopenAtlasAfterCarbonis = false
                         audio.stopForDiagnostic()
                         showMainMenu = false
-                    },openCampaignOnEntry:reopenAtlasAfterCarbonis)
+                    },openCampaignOnEntry:reopenAtlasAfterCarbonis,
+                    startNewGame:startNewGameFromW3)
                     }
                 } else {
                 MetalScene(input: input)

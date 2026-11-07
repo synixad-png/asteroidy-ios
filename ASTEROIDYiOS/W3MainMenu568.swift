@@ -50,7 +50,12 @@ struct W3MainMenu568: View {
     let inspectSector: (Int) -> Void
     let openDiagnostic: () -> Void
     let openCampaignOnEntry: Bool
+    let startNewGame: (SourceNewGameSelection568)->Bool
     @State private var page: Page?
+    @State private var newPlayers568=1
+    @State private var newDifficulty568=SourceNewGame568.selection().difficulty
+    @State private var confirmNewGame568=false
+    @State private var newGameLaunchFailed568=false
     // Windows UiW3NativeLayout315.cs BeginW3NativeTransition327:
     // 1.25 s total, 36% left-side cover + 64% right-side uncover.
     @State private var w3Wiping327 = false
@@ -515,39 +520,124 @@ struct W3MainMenu568: View {
         .accessibilityIdentifier("w3-panel-\(item.id)")
     }
 
-    // Native Windows ProgramW3Native315.cs has a distinct "new" page,
-    // separate from the 26-sector campaign atlas. Co-op and new-profile
-    // overwrite semantics are not ported, so these are NOT fake controls.
+    private func requestNewGame568() {
+        guard newPlayers568==1 else {return}
+        newGameLaunchFailed568=false
+        if SourceNewGame568.hasActiveProfile() {
+            confirmNewGame568=true
+        } else {
+            launchNewGame568()
+        }
+    }
+    private func launchNewGame568() {
+        confirmNewGame568=false
+        newGameLaunchFailed568 = !startNewGame(SourceNewGameSelection568(
+            players:newPlayers568,difficulty:newDifficulty568))
+    }
+    // Windows ProgramW3Native315.cs:348-354 and v342 explicit
+    // non-destructive confirmation. No fictional iOS co-op.
     private func newGamePage(compact:Bool) -> some View {
-        VStack(alignment:.leading,spacing:compact ? 10 : 17) {
+        VStack(alignment:.leading,spacing:compact ? 9 : 16) {
             Text("NOWA GRA / KONFIGURACJA")
                 .font(.system(size:compact ? 14 : 20,
                               weight:.bold,design:.monospaced))
                 .foregroundStyle(gold)
-            Text("ORYGINAŁ W3: 1 GRACZ / 2 GRACZY · ŁATWY / NORMALNY / TRUDNY · URUCHOM MISJĘ")
-                .font(.system(size:compact ? 10 : 12,design:.monospaced))
-                .foregroundStyle(muted)
-            Rectangle().fill(cyan.opacity(0.28)).frame(height:1)
-            Text("Pełna procedura nowej gry, wybór trudności i tryb 2 graczy wymagają jeszcze przeniesienia profili i startu kampanii z Windows v568. Nie nadpisuję istniejącego zapisu ani nie uruchamiam potajemnie sektora testowego.")
-                .font(.system(size:compact ? 11 : 14,design:.monospaced))
-                .foregroundStyle(paper)
-                .fixedSize(horizontal:false,vertical:true)
-            Button("PRZEJDŹ DO KAMPANII / CARBONIS 01") {
-                navigateW3(.campaign)
+            Text("ZAŁOGA")
+                .font(.system(size:compact ? 10 : 12,weight:.bold,design:.monospaced))
+                .foregroundStyle(cyan)
+            HStack(spacing:10) {
+                ForEach([1,2],id:\.self) { count in
+                    Button(count==1 ? "1 GRACZ" : "2 GRACZY") {
+                        newPlayers568=count
+                        newGameLaunchFailed568=false
+                    }
+                    .font(.system(size:compact ? 10 : 13,weight:.semibold,design:.monospaced))
+                    .foregroundStyle(newPlayers568==count ? .black : paper)
+                    .padding(.horizontal,14).frame(minHeight:40)
+                    .background(newPlayers568==count ? gold : Color(red:0.03,green:0.09,blue:0.13))
+                    .accessibilityIdentifier("w3-new-players-\(count)")
+                }
             }
-            .font(.system(size:compact ? 11 : 13,
-                          weight:.bold,design:.monospaced))
-            .foregroundStyle(.black)
-            .padding(.horizontal,16)
-            .frame(minHeight:42)
-            .background(gold)
-            .accessibilityIdentifier("w3-new-open-campaign")
+            Text("TRUDNOŚĆ")
+                .font(.system(size:compact ? 10 : 12,weight:.bold,design:.monospaced))
+                .foregroundStyle(cyan)
+            HStack(spacing:10) {
+                ForEach(CombatBalance556.Difficulty.allCases,id:\.rawValue) { mode in
+                    Button(mode == .easy ? "ŁATWY" : mode == .normal ? "NORMALNY" : "TRUDNY") {
+                        newDifficulty568=mode
+                        newGameLaunchFailed568=false
+                    }
+                    .font(.system(size:compact ? 10 : 13,weight:.semibold,design:.monospaced))
+                    .foregroundStyle(newDifficulty568==mode ? .black : paper)
+                    .padding(.horizontal,12).frame(minHeight:40)
+                    .background(newDifficulty568==mode ? gold : Color(red:0.03,green:0.09,blue:0.13))
+                    .accessibilityIdentifier("w3-new-difficulty-\(mode.rawValue)")
+                }
+            }
+            Text("VANGUARD / ŻYCIA NA START: \(SourceNewGame568.startingLives(difficulty:newDifficulty568))")
+                .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                .foregroundStyle(paper)
+            if newPlayers568==2 {
+                Text("TRYB 2 GRACZY: NIEGOTOWY — brak drugiego statku, sterowania i oryginalnej synchronizacji. Start jest zablokowany.")
+                    .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal:false,vertical:true)
+            } else {
+                Text("Uruchamia prawdziwą misję CARBONIS 01. Oryginalny 62-sekundowy prolog Story359 nie jest jeszcze przeniesiony na iOS.")
+                    .font(.system(size:compact ? 9 : 11,design:.monospaced))
+                    .foregroundStyle(muted)
+                    .fixedSize(horizontal:false,vertical:true)
+            }
+            Button("URUCHOM MISJĘ") { requestNewGame568() }
+                .font(.system(size:compact ? 12 : 14,weight:.bold,design:.monospaced))
+                .foregroundStyle(.black)
+                .padding(.horizontal,18)
+                .frame(minHeight:44)
+                .background(gold)
+                .disabled(newPlayers568 != 1)
+                .opacity(newPlayers568==1 ? 1 : 0.5)
+                .accessibilityIdentifier("w3-new-start-source")
+            if newGameLaunchFailed568 {
+                Text("Nie udało się zabezpieczyć profilu lub brakuje zweryfikowanych zasobów CARBONIS. Dane poprzedniej gry pozostają bez zmian.")
+                    .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal:false,vertical:true)
+            }
             Spacer(minLength:0)
         }
-        .frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.topLeading)
         .padding(compact ? 13 : 22)
+        .frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.topLeading)
         .background(Color(red:0.006,green:0.026,blue:0.049).opacity(0.94))
         .overlay(Rectangle().stroke(cyan.opacity(0.22),lineWidth:1))
+        .overlay {
+            if confirmNewGame568 {
+                ZStack {
+                    Color.black.opacity(0.82)
+                    VStack(spacing:16) {
+                        Text("NOWA KAMPANIA / ZABEZPIECZENIE PROFILU")
+                            .font(.system(size:compact ? 13 : 18,weight:.bold,design:.monospaced))
+                            .foregroundStyle(gold)
+                        Text("Obecny profil zostanie najpierw zapisany w kopii bezpieczeństwa. Ręczne zapisy, ustawienia grafiki i muzyki pozostaną nietknięte.")
+                            .font(.system(size:compact ? 10 : 13,design:.monospaced))
+                            .foregroundStyle(paper)
+                            .multilineTextAlignment(.center)
+                        HStack(spacing:16) {
+                            Button("ANULUJ") {confirmNewGame568=false}
+                                .accessibilityIdentifier("w3-new-cancel-confirmation")
+                            Button("POTWIERDŹ NOWĄ GRĘ") {launchNewGame568()}
+                                .accessibilityIdentifier("w3-new-accept-confirmation")
+                        }
+                        .font(.system(size:compact ? 11 : 14,weight:.bold,design:.monospaced))
+                        .foregroundStyle(cyan)
+                    }
+                    .padding(24)
+                    .frame(maxWidth:600)
+                    .background(Color(red:0.02,green:0.05,blue:0.08))
+                    .overlay(Rectangle().stroke(gold,lineWidth:1))
+                }
+                .accessibilityIdentifier("w3-new-confirmation")
+            }
+        }
         .accessibilityIdentifier("w3-new-game-source-panel")
     }
 
