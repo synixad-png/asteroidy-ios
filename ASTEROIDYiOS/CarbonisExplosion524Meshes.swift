@@ -122,6 +122,7 @@ enum CarbonisExplosion524Meshes {
     private static func volumetricShards(
         _ event:CarbonisDestruction524.Explosion,time:Float,
         camera:SphereCamera67,settings:CarbonisVisualSettings568,
+        budget:CarbonisIOSFXBudget568,
         into out:inout [Float]) {
         let age=time-event.spawned
         if age<0.1 || age>3.8 {return}
@@ -134,7 +135,7 @@ enum CarbonisExplosion524Meshes {
         let up=SphereVector3.cross(front,right).normalized
         let life=max(0,1-age/3.8)
         let spread=settings.factor(5)
-        for i in 0..<settings.shardCount {
+        for i in 0..<budget.shardLimit(settings.shardCount) {
             let seed=Float(i+1)
             let dx=hash524(seed*3+2)*2-1
             let dy=hash524(seed*5+4)*2-1
@@ -162,10 +163,12 @@ enum CarbonisExplosion524Meshes {
 
     static func vertices(_ state:CarbonisDestruction524,
                          time:Float,camera:SphereCamera67,
-                         settings:CarbonisVisualSettings568 = .init())->[Float] {
+                         settings:CarbonisVisualSettings568 = .init(),
+                         budget:CarbonisIOSFXBudget568 = .original)->[Float] {
         var out:[Float]=[]
-        out.reserveCapacity(60000)
-        for p in state.particles {
+        out.reserveCapacity(budget.reduced ? 18000 : 60000)
+        for p in state.particles.suffix(
+                budget.particleLimit(state.particles.count)) {
             let alpha=max(0,min(1,p.life/max(p.maxLife,0.00001)))
             let color=p.kind==1 ?
                 rgba(1,0.647,0,alpha) : rgba(0,1,1,alpha)
@@ -183,7 +186,8 @@ enum CarbonisExplosion524Meshes {
             ring(at:light.point,radius:10+(1-fraction)*65,
                  color:color,into:&out)
         }
-        for piece in state.pieces {
+        for piece in state.pieces.suffix(
+                budget.pieceLimit(state.pieces.count)) {
             if piece.kind==0 {
                 let along=Vec2(x:cos(piece.angle)*piece.size,
                                y:sin(piece.angle)*piece.size)
@@ -201,10 +205,10 @@ enum CarbonisExplosion524Meshes {
             }
         }
         for event in state.visibleExplosions(
-            at:time,maxCount:settings.simultaneousVolumes,
-            duration:settings.explosionDuration) {
+            at:time,maxCount:budget.volumeCount(settings.simultaneousVolumes),
+            duration:budget.explosionDuration(settings.explosionDuration)) {
             volumetricShards(event,time:time,camera:camera,
-                             settings:settings,into:&out)
+                             settings:settings,budget:budget,into:&out)
         }
         return out
     }

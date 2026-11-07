@@ -152,10 +152,11 @@ final class CarbonisExplosion524Renderer {
     func render(_ state:CarbonisDestruction524,time:Float,
                 camera:SphereCamera67,vp:simd_float4x4,
                 settings:CarbonisVisualSettings568,
+                budget:CarbonisIOSFXBudget568 = .original,
                 into encoder:MTLRenderCommandEncoder) {
         let events=state.visibleExplosions(
-            at:time,maxCount:settings.simultaneousVolumes,
-            duration:settings.explosionDuration)
+            at:time,maxCount:budget.volumeCount(settings.simultaneousVolumes),
+            duration:budget.explosionDuration(settings.explosionDuration))
         if events.isEmpty {return}
         let outer=SphereCameraView556.originalPlanetOuterRadius
         let shell=(outer+15)/outer
@@ -203,8 +204,8 @@ final class CarbonisExplosion524Renderer {
                 fire:settings.factor(2),smoke:settings.factor(3),
                 chaos:settings.factor(4),spread:settings.factor(5),
                 seed:event.spawned*0.13,
-                lobes:UInt32(settings.value(1)),
-                steps:UInt32(settings.raySamples),
+                lobes:UInt32(budget.gasLobes(settings.value(1))),
+                steps:UInt32(budget.raySamples(settings.raySamples)),
                 kind:UInt32(event.kind))
             vertices.withUnsafeBytes { raw in
                 if let address=raw.baseAddress {
@@ -215,7 +216,8 @@ final class CarbonisExplosion524Renderer {
                                    index:1)
             encoder.setFragmentBytes(&params,length:MemoryLayout<Parameters>.stride,
                                      index:1)
-            let prepared=Self.lobes(age:age,settings:settings)
+            let prepared=Array(Self.lobes(age:age,settings:settings)
+                .prefix(budget.gasLobes(settings.value(1))))
             prepared.withUnsafeBytes { raw in
                 if let address=raw.baseAddress {
                     encoder.setFragmentBytes(address,length:raw.count,index:2)
