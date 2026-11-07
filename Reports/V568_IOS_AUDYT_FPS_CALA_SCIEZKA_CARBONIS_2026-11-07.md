@@ -1,5 +1,13 @@
 # ASTEROIDY iOS v568 — audyt FPS CARBONIS i ustawień (7 listopada 2026)
 
+## Zakończone wydanie iOS — rzeczywista kompilacja
+
+- [GitHub Actions **42377930287**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42377930287): **4/4 SUCCESS**, w tym natywna kompilacja Release Xcode/Metal dla iPhone/iPad ARM64, pełna regresja Linux, source music/audio, certyfikacja spakowanego IPA.
+- Źródła aplikacji z kompilacji: `541d3cccbffe9125e635ddc49591cbf34c55d07c`. Kolejne commity po tym SHA zmieniały wyłącznie test porównawczy BGRA i dokumentację, nie pliki aplikacji.
+- [Artefakt 13576548730](https://github.com/synixad-png/asteroidy-ios/actions/runs/42377930287/artifacts/13576548730): `ASTEROIDY_iOS_UNSIGNED.ipa` **28 423 961 bajtów**. SHA256: `2115c831f0deac1b545b915b18abdadc554b0f1b93d3461a6cd4deff5fdc024f` zgodne z `reports/SHA256SUMS.txt`. ZIP CRC i IPA CRC PASS, bundle `com.synixad.asteroidyios`, Mach-O ARM64, iOS 17.0+, `UIDeviceFamily [1,2]`.
+- [Dodatkowa niezależna weryfikacja źródłowa 42378649398](https://github.com/synixad-png/asteroidy-ios/actions/runs/42378649398): Linux **SUCCESS**; porównano **10 000** losowych przypadków oryginalnego Windows BGRA integer formula z odrębnym Metal RGB compute formula, największa różnica kanału **0/255**. Zastąpiono wcześniejszy błędny test porównujący identyczną funkcję z nią samą. Kompilacja 423779 obejmuje ten sam kod aplikacji; poźniejszy commit zmienia wyłącznie test.
+- **Nie wykonano testu na fizycznym iPhonie/iPadzie i nie ma wyniku 35→60 FPS.** IPA wymaga podpisania przed instalacją.
+
 ## Potwierdzone w prawdziwych plikach oryginalnego Windows iOS
 
 | Badany etap | Oryginalny Windows | Port iOS przed audytem | Po audycie |
