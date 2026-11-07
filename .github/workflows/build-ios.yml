@@ -54,6 +54,7 @@ on:
       - 'Tests/OriginalMusicCombatPause568Contract.py'
       - 'Tests/IOSAudioLockResume568Contract.py'
       - 'Tests/IOSSourceCombatPause568Contract.py'
+      - 'Tests/IOSShotExplosionAudioResume568Contract.py'
       - 'Tests/MissionIntro41SourceContract568.py'
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
@@ -521,6 +522,7 @@ jobs:
           python3 Tests/OriginalMusicCombatPause568Contract.py
           python3 Tests/IOSAudioLockResume568Contract.py
           python3 Tests/IOSSourceCombatPause568Contract.py
+          python3 Tests/IOSShotExplosionAudioResume568Contract.py
           swiftc -O ASTEROIDYiOS/OriginalMusicSynth568.swift Tests/OriginalMusicSynth568Tests.swift -o /tmp/v568-native-music-synthesis
           /tmp/v568-native-music-synthesis
           swiftc ASTEROIDYiOS/OriginalMusicTransition568.swift Tests/OriginalMusicTransition568Tests.swift -o /tmp/v568-music-crossfade

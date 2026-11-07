@@ -38,6 +38,7 @@ assert 'audioInterrupted=true' in interrupt and 'audioInterrupted=false' in inte
 assert 'enginePlayback52.stop()' in interrupt
 assert 'intro43Player?.pause()' in interrupt and 'music?.pause()' in interrupt
 assert 'AVAudioSessionInterruptionWasSuspendedKey' in interrupt
+assert 'invalidateSuspendedEffects568()' in interrupt
 assert 'if wasSuspended {' in interrupt # never steal active calls
 assert 'DispatchQueue.main.async' in interrupt  # delayed iOS suspension signal
 assert 'if !suspended {restoreAudioAfterActivation568(rebuildPlayer:true)}' in interrupt
@@ -48,6 +49,7 @@ assert 'guard !suspended, reactivateAudioSession568() else {return}' in restore
 assert restore.index('reactivateAudioSession568()')<restore.index('intro43Player?.play()')
 assert restore.index('reactivateAudioSession568()')<restore.index('enginePlayback52.start()')
 assert restore.index('reactivateAudioSession568()')<restore.index('current.play()')
+assert 'defer {' in restore and 'enginePlayback52.start()' in restore
 assert 'introMissionSector568 != nil' in restore and 'return' in restore
 assert 'AVAudioPlayer(contentsOf:file)' in restore # recreate original intro
 assert 'prewarmedMusic.removeValue(forKey:index)' in restore
@@ -63,7 +65,7 @@ lifecycle=segment(audio,'    func sceneIsActive(_ active: Bool) {',
 assert 'suspended = !active' in lifecycle
 assert 'musicGate.setAllowed(active && missionPhase != .playing)' in lifecycle
 for needle in ('enginePlayback52.stop()','intro43Player?.pause()',
-               'music?.pause()','effects.forEach { $0.pause() }'):
+               'music?.pause()','invalidateSuspendedEffects568()'):
     assert needle in lifecycle
 assert 'restoreAudioAfterActivation568(rebuildPlayer:wasSuspended)' in lifecycle
 assert 'music?.play()' not in lifecycle # session must reactivate FIRST
