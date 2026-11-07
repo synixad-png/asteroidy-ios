@@ -16,6 +16,59 @@ enum CarbonisProjectileFX69 {
     private static let outer=SphereCameraView556.originalPlanetOuterRadius
     private static let shell=SphereSurfaceStamp556.normalizedShellRadius
 
+    /// Source Combat69 / GpuSphere67 uses exactly these ring counts.
+    /// The same sin/cos values previously recomputed for EVERY active
+    /// shot on EVERY frame now live in one immutable geometry table.
+    /// This is geometry caching, not lower fidelity or fewer layers.
+    private static let sourceCircles:[Int:[SIMD2<Float>]] = {
+        var result:[Int:[SIMD2<Float>]]=[:]
+        for slices in [12,18,22,24,28,32] {
+            result[slices]=(0...slices).map { i in
+                let a=Float(i)*2*Float.pi/Float(slices)
+                return SIMD2<Float>(cos(a),sin(a))
+            }
+        }
+        return result
+    }()
+
+    private static func unitCircle(_ slices:Int)->[SIMD2<Float>] {
+        if let cached=sourceCircles[slices] {return cached}
+        // Preserve the source formula even if a future original preset
+        // introduces a different segmentation count.
+        return (0...slices).map { i in
+            let a=Float(i)*2*Float.pi/Float(slices)
+            return SIMD2<Float>(cos(a),sin(a))
+        }
+    }
+
+    private struct GroundFrame {
+        let normal:SphereVector3
+        let east:SphereVector3
+        let south:SphereVector3
+        let scale:Float
+        init(_ point:Vec2) {
+            normal=Sphere67.normal(point)
+            let basis=Sphere67.basis(point)
+            east=basis.east
+            south=basis.south
+            scale=(outer+15)/Sphere67.radius/outer
+        }
+    }
+
+    private struct OrbFrame {
+        let center:SphereVector3
+        let right:SphereVector3
+        let up:SphereVector3
+        init(_ center:SphereVector3,camera:SphereCameraView556) {
+            self.center=center
+            let forward=(camera.eye-center).normalized
+            var right=SphereVector3.cross(camera.up,forward).normalized
+            if right.length<0.01 {right=camera.right}
+            self.right=right
+            up=SphereVector3.cross(forward,right).normalized
+        }
+    }
+
     static let presets:[RGB]=[
         RGB(r:1,g:1,b:1),
         RGB(r:92/255,g:190/255,b:1),
@@ -184,24 +237,16 @@ enum CarbonisProjectileFX69 {
     }
     // Exact source rings with indexed, shared corners. No change to
     // source tessellation counts (32/28/24), radial alpha or world size.
-    private static func indexedDisc(_ p:SphereVector3,
+    private static func indexedDisc(_ frame:OrbFrame,
                                     inner:Float,outer:Float,
                                     innerColor:[Float],outerColor:[Float],
                                     slices:Int,
-                                    camera:SphereCameraView556,
                                     _ mesh:inout CarbonisIndexedFXMesh568) {
-        let forward=(camera.eye-p).normalized
-        var right=SphereVector3.cross(camera.up,forward).normalized
-        if right.length<0.01 {right=camera.right}
-        let up=SphereVector3.cross(forward,right).normalized
-        func point(_ radius:Float,_ angle:Float)->SphereVector3 {
-            p+(right*cos(angle)+up*sin(angle))*radius
-        }
         let first=UInt32(mesh.vertexCount)
-        for i in 0...slices {
-            let a=Float(i)*2*Float.pi/Float(slices)
-            vert(point(outer,a),outerColor,&mesh.vertices)
-            vert(point(inner,a),innerColor,&mesh.vertices)
+        for direction in unitCircle(slices) {
+            let axis=frame.right*direction.x+frame.up*direction.y
+            vert(frame.center+axis*outer,outerColor,&mesh.vertices)
+            vert(frame.center+axis*inner,innerColor,&mesh.vertices)
         }
         for i in 0..<slices {
             let a=first+UInt32(i*2)
@@ -220,18 +265,21 @@ enum CarbonisProjectileFX69 {
             (shot.kind==3 ? 3.9:3.3) :
             (shot.kind==3 ? 4.2:3.6)
         let core=corePx/pxPerWorld(p,camera:camera,height:drawableHeight)
+        // The three original 32/28/24-radius fans share one camera
+        // orientation; formerly this was recalculated three times.
+        let frame=OrbFrame(p,camera:camera)
         if glow {
-            indexedDisc(p,inner:core*0.67,outer:core*2.3,
+            indexedDisc(frame,inner:core*0.67,outer:core*2.3,
                 innerColor:rgba(tint,48/255),outerColor:rgba(tint,0),
-                slices:32,camera:camera,&mesh)
+                slices:32,&mesh)
         }
-        indexedDisc(p,inner:core*0.30,outer:core,
+        indexedDisc(frame,inner:core*0.30,outer:core,
             innerColor:rgba(tint,178/255),outerColor:rgba(tint,0),
-            slices:28,camera:camera,&mesh)
-        indexedDisc(p,inner:0,outer:core*0.48,
+            slices:28,&mesh)
+        indexedDisc(frame,inner:0,outer:core*0.48,
             innerColor:rgba(RGB(r:249/255,g:253/255,b:1),250/255),
             outerColor:rgba(RGB(r:230/255,g:246/255,b:1),66/255),
-            slices:24,camera:camera,&mesh)
+            slices:24,&mesh)
     }
 
     /// Production Metal path. Same ordered triangle stream as vertices()
@@ -339,19 +387,17 @@ enum CarbonisProjectileFX69 {
     /// Combat69: EnemyShots72 muzzle emission at enemy +18 local units,
     /// during its original 0.10 seconds after actual firing.
     private static func indexedGroundDisc(
-        _ point:Vec2,radius:Float,tint:RGB,alpha:Float,
+        _ frame:GroundFrame,radius:Float,tint:RGB,alpha:Float,
         lift:Float,slices:Int,
         _ mesh:inout CarbonisIndexedFXMesh568) {
-        let center=worldPoint(point,0.4+lift*0.10)
-        let basis=Sphere67.basis(point)
-        let scale=(outer+15)/Sphere67.radius/outer
+        let center=frame.normal*(shell+(0.4+lift*0.10)/outer)
         let first=UInt32(mesh.vertexCount)
         let centerColor=rgba(tint,alpha)
         let edgeColor=rgba(tint,0)
         vert(center,centerColor,&mesh.vertices)
-        for i in 0...slices {
-            let angle=2*Float.pi*Float(i)/Float(slices)
-            let offset=(basis.east*cos(angle)+basis.south*sin(angle)) * radius * scale
+        for direction in unitCircle(slices) {
+            let offset=(frame.east*direction.x+frame.south*direction.y)
+                * radius * frame.scale
             vert(center+offset,edgeColor,&mesh.vertices)
         }
         for i in 0..<slices {
@@ -380,6 +426,9 @@ enum CarbonisProjectileFX69 {
         let lifts:[Float]=[3.0,1.35,0.55,0.10]
         let slices=[28,24,22,18]
         for shot in shots {
+            // Four original ground-light radii share the very same
+            // spherical basis; no per-layer recalculation or temp mesh.
+            let frame=GroundFrame(shot.point)
             let native=shot.hostile ? hostileTint(shot.kind) :
                                         playerTint(shot.kind)
             let tint=groundTint(native,settings:settings)
@@ -394,7 +443,7 @@ enum CarbonisProjectileFX69 {
                  shot.kind==4 ? 0.32 :
                  shot.kind==2 ? 0.28:0.24)
             for layer in budget.groundLightLayers {
-                indexedGroundDisc(shot.point,
+                indexedGroundDisc(frame,
                     radius:radius*widths[layer]*radiusScale,
                     tint:tint,
                     alpha:min(1,strength*weights[layer]*powerScale),
