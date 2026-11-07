@@ -1,3 +1,13 @@
+## ETAP — 07.11.2026: poprawka kadrowania CARBONIS iPad 4:3 (bez zmiany geometrii)
+
+**Poprawiono:** w natywnym `Sector01CarbonisPreview568.swift` projekcja gameplay `viewProjection` zachowuje źródłową poziomą szerokość kadru gry Windows v568 1280×720 przy ekranie iPada 4:3. Przy 4:3 pionowy współczynnik projekcji `2.0` → `1.5` (75%), a poziomy pozostaje `1.125`. iPhone o proporcjach co najmniej 16:9 zachowuje dotychczasowe parametry. **Nie przeskalowano planety, poświaty ani geometrii; cały gameplay i Atmosphere47 nadal używają wspólnej macierzy projekcji.** Zachowano v523 promień terenu i źródłowe materiały, UV, hitboxy, sterowanie oraz osobny podgląd atlasu. To dopasowanie viewportu iOS, nie modyfikacja zasad oryginalnej gry.
+
+**Testy:** `MissionViewportFraming568Tests.swift` i `MissionViewportFraming568Contract.py` wraz z dotychczasowymi testami Linux PASS. Natywna kompilacja Xcode 16.4 iPhoneOS ARM64, iPhone/iPad (iOS 17+) **SUCCESS** w [GitHub Actions 42360663465](https://github.com/synixad-png/asteroidy-ios/actions/runs/42360663465). Artefakt [13569324989](https://github.com/synixad-png/asteroidy-ios/actions/runs/42360663465/artifacts/13569324989) zawiera niepodpisany IPA: 28 341 137 B, SHA-256 `1cffc3a63199e72bf75fe2edb3ad3d617cef967b40d6e65121ea7ef1b44450bd`; CRC, Info.plist, Mach-O PASS. Zmiana kodu [c3627bc](https://github.com/synixad-png/asteroidy-ios/commit/c3627bc03014677fb8e37ae259d758fe7bec4e42).
+
+**Niepotwierdzone:** rzeczywisty obraz i test manualny na fizycznym iPadzie; IPA wymaga podpisania. Nie przedstawiać matematycznego testu dopasowania widoku jako zrzutu ekranowego urządzenia. **Harmonogram niezmieniony: 18 zadań, 38% portu / 62% pozostało; zadanie 14 24% (0 pp).** [Pełny raport techniczny](Reports/V568_IOS_CARBONIS_IPAD_4X3_VIEWPORT_2026-11-07.md).
+
+---
+
 ## ETAP — 07.11.2026: NOWA GRA, źródłowa trudność i rzeczywisty IPA iPhone/iPad
 
 **Ukończono kod i zbudowano zweryfikowany, niepodpisany IPA dla iPhone/iPad.** Wybór trudności wpływa na rzeczywistą CARBONIS 01, nowe dane profilu powstają dopiero po wymaganym backupie starego stanu, a 2P jest blokowany, nie symulowany. Niepełny pozostaje oryginalny 62-sekundowy prolog oraz 2-graczowa fizyka/sterowanie. Nowe źródła: [commit 7eb3b99c](https://github.com/synixad-png/asteroidy-ios/commit/7eb3b99cbe1384ec5d2b37ca4baf7ffe39082fcf). Kompilacja iOS: [GitHub Actions 42359364204](https://github.com/synixad-png/asteroidy-ios/actions/runs/42359364204) SUCCESS, [artefakt IPA 13568504263](https://github.com/synixad-png/asteroidy-ios/actions/runs/42359364204/artifacts/13568504263). Sam IPA ma 28 340 966 bajtów, CRC+SHA PASS, ARM64 iPhone/iPad. Brak testu fizycznego; iPhone simctl nie był dostępny na runnerze.
