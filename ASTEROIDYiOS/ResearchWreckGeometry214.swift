@@ -59,7 +59,7 @@ enum ResearchWreckGeometry214 {
                            q.x,q.y,q.z,gray,gray,gray,1]
         }
         private static func hash217(_ a:Float,_ b:Float,_ c:Float)->Float {
-            let v=sin(Double(a)*12.9898+Double(b)*78.233+
+            let v=sin(Double(a)*12.9898 + Double(b)*78.233 +
                       Double(c)*37.719)*43758.5453
             return Float(v-floor(v))
         }
@@ -254,7 +254,7 @@ enum ResearchWreckGeometry214 {
                        _ cols:Int,_ rows:Int,_ r:Float,_ g:Float,_ b:Float) {
             metalPanel(x,y,z,sx,sy,sz,r,g,b)
             for c in 0..<cols {
-                let tx=x-sx*0.38+
+                let tx=x-sx*0.38 +
                     (cols<=1 ? 0 : Float(c)*(sx*0.76/Float(cols-1)))
                 box(tx,y,z+sz*0.52,
                     max(0.16,sx*0.04),max(0.18,sy*0.86),
@@ -262,7 +262,7 @@ enum ResearchWreckGeometry214 {
                     g*0.97+0.03,b*1.02+0.02)
             }
             for row in 0..<rows {
-                let ty=y-sy*0.34+
+                let ty=y-sy*0.34 +
                     (rows<=1 ? 0 : Float(row)*(sy*0.68/Float(rows-1)))
                 box(x,ty,z+sz*0.49,
                     max(0.20,sx*0.84),max(0.14,sy*0.06),
@@ -392,7 +392,7 @@ enum ResearchWreckGeometry214 {
                 let x=20+118*t+jx*(7+41*t)
                 let y=14*t+jy*(6+28*t)+5.2*sin(t*7.2+Float(seed)*0.01)
                 let z=7+15*t+jz*(6+36*t)+2.6*cos(t*8)
-                let r=(0.88+Self.spaceRand207(seed,i,55)*3.8)*
+                let r=(0.88+Self.spaceRand207(seed,i,55)*3.8) *
                     (1-0.62*t)
                 let sy=r*(i%5==0 ? 1.12:0.72)
                 let sz=r*(i%4==0 ? 1.28:0.88)
