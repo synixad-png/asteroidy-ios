@@ -210,6 +210,8 @@ jobs:
           /tmp/boreas-damage-lab556
       - name: Syntax-parse active SwiftUI and Metal renderer (NO iOS build or IPA)
         run: |
+          swiftc -frontend -parse ASTEROIDYiOS/MissionCinematic568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisIntroPlanet568.swift
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
