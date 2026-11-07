@@ -48,9 +48,11 @@ on:
       - 'ASTEROIDYiOS/CarbonisIntroPlanet568.swift'
       - 'ASTEROIDYiOS/MissionCinematic568.swift'
       - 'ASTEROIDYiOS/OriginalAudioAV568.swift'
+      - 'ASTEROIDYiOS/OriginalEnginePlayback52.swift'
       - 'ASTEROIDYiOS/OriginalMusicSynth568.swift'
       - 'Tests/OriginalMusicSynth568Tests.swift'
       - 'Tests/OriginalMusicCombatPause568Contract.py'
+      - 'Tests/IOSAudioLockResume568Contract.py'
       - 'Tests/MissionIntro41SourceContract568.py'
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
@@ -516,6 +518,7 @@ jobs:
           set -euo pipefail
           python3 Tools/verify_original_audio568_assets.py
           python3 Tests/OriginalMusicCombatPause568Contract.py
+          python3 Tests/IOSAudioLockResume568Contract.py
           swiftc -O ASTEROIDYiOS/OriginalMusicSynth568.swift Tests/OriginalMusicSynth568Tests.swift -o /tmp/v568-native-music-synthesis
           /tmp/v568-native-music-synthesis
           swiftc ASTEROIDYiOS/OriginalMusicTransition568.swift Tests/OriginalMusicTransition568Tests.swift -o /tmp/v568-music-crossfade

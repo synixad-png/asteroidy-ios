@@ -28,7 +28,17 @@ final class OriginalEnginePlayback52 {
     }
     func start() {
         queue.async { [weak self] in
-            guard let self, !self.running else{return}
+            guard let self else{return}
+            // AVAudioEngine can be stopped by iOS while our own "running"
+            // flag is still true. Never assume audio is audible after lock.
+            if self.running && self.audio.isRunning && self.player.isPlaying {
+                return
+            }
+            if self.running {
+                self.running=false
+                self.player.stop()
+                self.audio.stop()
+            }
             do {
                 try AVAudioSession.sharedInstance().setCategory(.ambient,mode:.default)
                 try AVAudioSession.sharedInstance().setActive(true)

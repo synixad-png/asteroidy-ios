@@ -125,6 +125,9 @@ final class OriginalAudioAV568: ObservableObject {
     private var variant = 0
     private var started = false
     private var suspended = false
+    // iOS deactivates an audio session when locking/suspending the app.
+    // Audio playback must be restored explicitly after the scene is active.
+    private var audioInterrupted = false
     private var activeMusicIndex: Int?
     private var urls: [Int:URL] = [:]
     private var sounds: [String:URL] = [:]
@@ -141,6 +144,7 @@ final class OriginalAudioAV568: ObservableObject {
     private var stopObserver: NSObjectProtocol?
     private var replayObserver: NSObjectProtocol?
     private var restoreObserver: NSObjectProtocol?
+    private var interruptionObserver: NSObjectProtocol?
     private var lastPreviewIndex=1
     private var previewActive=false
     private var pendingPreviewIndex:Int?
@@ -164,10 +168,14 @@ final class OriginalAudioAV568: ObservableObject {
         restoreObserver = NotificationCenter.default.addObserver(
             forName:.originalMusicRestore568,object:nil,queue:.main
         ) { [weak self] _ in self?.restoreMenuMusic() }
+        interruptionObserver = NotificationCenter.default.addObserver(
+            forName:AVAudioSession.interruptionNotification,
+            object:AVAudioSession.sharedInstance(),queue:.main
+        ) { [weak self] note in self?.handleSystemAudioInterruption568(note) }
     }
     deinit {
         for observer in [settingsObserver,previewObserver,stopObserver,
-                         replayObserver,restoreObserver] {
+                         replayObserver,restoreObserver,interruptionObserver] {
             if let observer {NotificationCenter.default.removeObserver(observer)}
         }
     }
@@ -370,7 +378,7 @@ final class OriginalAudioAV568: ObservableObject {
         previousMusic?.volume=master*gains.outgoing
         if elapsed>=OriginalMusicTransition568.duration {finishMusicFade()}
     }
-    private func playTrack(_ index: Int) {
+    private func playTrack(_ index: Int,resumeAt:TimeInterval=0) {
         guard introMissionSector568 == nil, startupComplete,
               !suspended, settings.musicPercent>0,
               let url = urls[index] else { return }
@@ -381,7 +389,7 @@ final class OriginalAudioAV568: ObservableObject {
             try AVAudioSession.sharedInstance().setCategory(.ambient,mode:.default)
             try AVAudioSession.sharedInstance().setActive(true)
             let player = try prewarmedMusic[index] ?? AVAudioPlayer(contentsOf:url)
-            player.currentTime=0
+            player.currentTime=max(0,resumeAt)
             player.numberOfLoops = -1
             player.volume = outgoing == nil ? masterMusicVolume : 0
             player.prepareToPlay()
@@ -535,6 +543,100 @@ final class OriginalAudioAV568: ObservableObject {
         music?.stop(); activeMusicIndex = nil
         effects.removeAll()
     }
+    // Apple may deactivate an AVAudioSession while the iPad is locked.
+    // Calling AVAudioPlayer.play() alone on the previously paused player
+    // does not reliably restore the underlying audio route/session.
+    private func reactivateAudioSession568() -> Bool {
+        do {
+            let session=AVAudioSession.sharedInstance()
+            try session.setCategory(.ambient,mode:.default)
+            try session.setActive(true)
+            audioInterrupted=false
+            return true
+        } catch {
+            sourceStatus="SESJA AUDIO IOS — WZNOWIENIE: \(error.localizedDescription)"
+            return false
+        }
+    }
+    private func handleSystemAudioInterruption568(_ note:Notification) {
+        guard let raw=note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type=AVAudioSession.InterruptionType(rawValue:raw) else {return}
+        switch type {
+        case .began:
+            audioInterrupted=true
+            guard !suspended else {return}
+            enginePlayback52.stop()
+            intro43Player?.pause()
+            finishMusicFade()
+            music?.pause()
+            // iOS may deliver a "began" for a PAST app suspension only
+            // after unlock. Recover this case on the main queue, but never
+            // steal audio during a real incoming call/Siri interruption.
+            let wasSuspended=(note.userInfo?[AVAudioSessionInterruptionWasSuspendedKey]
+                              as? Bool) == true
+            if wasSuspended {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, !self.suspended, self.audioInterrupted else {return}
+                    self.restoreAudioAfterActivation568()
+                }
+            }
+        case .ended:
+            audioInterrupted=false
+            if !suspended {restoreAudioAfterActivation568()}
+        @unknown default: break
+        }
+    }
+    private func restoreAudioAfterActivation568() {
+        guard !suspended, reactivateAudioSession568() else {return}
+        if introMissionSector568 != nil {
+            // Preserve the original Intro43 instead of starting menu/mission
+            // music beneath the still-active 16-second cinematic.
+            guard settings.musicPercent>0 else {return}
+            if intro43Player?.play() != true,
+               let file=OriginalAudioCatalog568.resource("Intro43"),
+               let replacement=try? AVAudioPlayer(contentsOf:file) {
+                let position=intro43Player?.currentTime ?? 0
+                replacement.currentTime=max(0,position)
+                replacement.numberOfLoops=0
+                replacement.volume=masterMusicVolume
+                replacement.prepareToPlay()
+                intro43Player=replacement
+                _=replacement.play()
+            }
+            return
+        }
+        if case .mission = context, missionPhase == .playing {
+            enginePlayback52.setPower(engineLevel52,
+                effectsVolume:Float(settings.effectsPercent)/100)
+            enginePlayback52.start()
+        }
+        // Never undo MusicLibrary STOP or a user-selected 0% volume.
+        guard settings.musicPercent>0 else {return}
+        if let current=music,let index=activeMusicIndex {
+            if current.isPlaying {return}
+            if current.play() {return} // continue at the old PCM position
+            // The AVAudioPlayer may have been invalidated by suspension.
+            // Reopen the SAME already-synthesized original WAV at its
+            // previous offset; no new synthesizer work or substitute track.
+            let offset=current.currentTime
+            current.stop()
+            music=nil
+            activeMusicIndex=nil
+            prewarmedMusic.removeValue(forKey:index)
+            playTrack(index,resumeAt:offset)
+        } else {
+            switch context {
+            case .menu:
+                if !previewStopped {
+                    playTrack(previewActive ? (pendingPreviewIndex ?? lastPreviewIndex) : 0)
+                }
+            case .mission(let sector):
+                playTrack(missionPhase == .playing ?
+                    OriginalAudioCatalog568.missionTrack(sector) : 0)
+            case .diagnostic: break
+            }
+        }
+    }
     func sceneIsActive(_ active: Bool) {
         suspended = !active
         switch context {
@@ -551,25 +653,9 @@ final class OriginalAudioAV568: ObservableObject {
             music?.pause()
             effects.forEach { $0.pause() }
         } else {
-            if introMissionSector568 != nil {
-                if settings.musicPercent>0 {intro43Player?.play()}
-                return // never start normal mission song under Intro43
-            }
-            if case .mission = context, missionPhase == .playing {
-                enginePlayback52.setPower(engineLevel52,
-                    effectsVolume:Float(settings.effectsPercent)/100)
-                enginePlayback52.start()
-            }
-            if music != nil, activeMusicIndex != nil { music?.play() }
-            else {
-                switch context {
-                case .menu:
-                    if !previewStopped {playTrack(previewActive ? (pendingPreviewIndex ?? lastPreviewIndex) : 0)}
-                case .mission(let sector):
-                    playTrack(missionPhase == .playing ? OriginalAudioCatalog568.missionTrack(sector) : 0)
-                case .diagnostic: break
-                }
-            }
+            // Lock -> unlock: the app is foreground again, but AVAudioSession
+            // may still be deactivated. Restore it BEFORE any player/engine.
+            restoreAudioAfterActivation568()
         }
     }
     func sourceEnginePower(_ raw:Float) {
