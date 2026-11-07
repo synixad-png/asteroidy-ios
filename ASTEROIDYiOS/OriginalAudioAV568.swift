@@ -128,8 +128,11 @@ final class OriginalAudioAV568: ObservableObject {
     private var activeMusicIndex: Int?
     private var urls: [Int:URL] = [:]
     private var sounds: [String:URL] = [:]
+    // The remaining 13 source music tracks are a background luxury:
+    // never give FFT/PCM synthesis the priority of touch+Metal combat.
+    // Menu tracks 0/1 are explicitly finished before the initial W3 gate.
     private let worker = DispatchQueue(label: "synixad.asteroidy.audio568.source-pack",
-                                       qos: .userInitiated)
+                                       qos: .utility)
     private let musicGate=SourceBackgroundMusicGate568()
     private var settingsObserver: NSObjectProtocol?
     private var previewObserver: NSObjectProtocol?
@@ -305,8 +308,13 @@ final class OriginalAudioAV568: ObservableObject {
                 let file:URL
                 do {
                     file=try OriginalMusicSynth568.generate(track:index,
-                        destination:outputDirectory.appendingPathComponent("Music\(index).wav")) {
-                        [weak self] message in
+                        destination:outputDirectory.appendingPathComponent("Music\(index).wav"),
+                        checkpoint:{ [weak self] in
+                            // Pause inside real synthesis/reverb/mastering
+                            // chunks, not only every eight arrangement bars.
+                            // Keep original PCM and all 15 tracks unchanged.
+                            self?.musicGate.awaitAllowed()
+                        }) { [weak self] message in
                         self?.musicGate.awaitAllowed()
                         DispatchQueue.main.async { [weak self] in
                             self?.sourceStatus="\(OriginalAudioCatalog568.names[index]): \(message)"
