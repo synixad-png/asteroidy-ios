@@ -104,6 +104,10 @@ final class OriginalAudioAV568: ObservableObject {
     private var settings = OriginalAudioSettings568.load()
     private var music: AVAudioPlayer?
     private var previousMusic:AVAudioPlayer?
+    // Original MusicAudio.TrackFor(Mode.Intro) is the separate 16s
+    // IntroMusic43.Track=15, not an ordinary synthesized mission song.
+    private var intro43Player:AVAudioPlayer?
+    private var introMissionSector568:Int?
     private var fadeTimer:Timer?
     private var fadeStart:TimeInterval=0
     private var effects: [AVAudioPlayer] = []
@@ -166,6 +170,7 @@ final class OriginalAudioAV568: ObservableObject {
         settings = OriginalAudioSettings568.load()
         if fadeTimer != nil {updateMusicFade()}
         else {music?.volume=masterMusicVolume}
+        intro43Player?.volume=masterMusicVolume
         enginePlayback52.setPower(engineLevel52,
             effectsVolume:Float(settings.effectsPercent)/100)
         // Original MusicMix uses a live value, not a one-time volume at start.
@@ -353,7 +358,8 @@ final class OriginalAudioAV568: ObservableObject {
         if elapsed>=OriginalMusicTransition568.duration {finishMusicFade()}
     }
     private func playTrack(_ index: Int) {
-        guard startupComplete, !suspended, settings.musicPercent>0,
+        guard introMissionSector568 == nil, startupComplete,
+              !suspended, settings.musicPercent>0,
               let url = urls[index] else { return }
         if activeMusicIndex==index, music?.isPlaying==true { return }
         finishMusicFade()
@@ -386,7 +392,59 @@ final class OriginalAudioAV568: ObservableObject {
             finishMusicFade()
         }
     }
+    /// Windows Intro41.BeginLevelIntro / MusicAudio.TrackFor:
+    /// play the AUTHENTIC 16-second Intro43 PCM converted to M4A, not
+    /// song 1 and not a synthetic cinematic approximation.
+    func beginMissionIntro568(sector:Int) {
+        guard (1...26).contains(sector) else {return}
+        intro43Player?.stop()
+        intro43Player=nil
+        introMissionSector568=sector
+        context = .mission(sector)
+        missionPhase = .playing
+        musicGate.setAllowed(false)
+        previewStopped=false
+        previewActive=false
+        pendingPreviewIndex=nil
+        musicDuck=1
+        engineLevel52=0
+        enginePlayback52.stop()
+        finishMusicFade()
+        music?.stop()
+        music=nil
+        activeMusicIndex=nil
+        if let file=OriginalAudioCatalog568.resource("Intro43") {
+            do {
+                let player=try AVAudioPlayer(contentsOf:file)
+                player.numberOfLoops=0
+                player.volume=masterMusicVolume
+                player.prepareToPlay()
+                intro43Player=player
+                if !suspended && settings.musicPercent>0 {
+                    player.play()
+                }
+            } catch {
+                sourceStatus="INTRO43 ORYGINALNE — BŁĄD: \(error)"
+            }
+        } else {
+            sourceStatus="BRAK ORYGINALNEGO INTRO43"
+        }
+    }
+
+    /// Original FinishIntro -> MusicMix.TrackFor(Mode.Playing).
+    /// Called exactly once, on automatic 16s completion or Skip.
+    func finishMissionIntro568(sector:Int) {
+        guard introMissionSector568==sector else {return}
+        intro43Player?.stop()
+        intro43Player=nil
+        introMissionSector568=nil
+        enterMission(sector)
+    }
+
     func returnToMenu() {
+        intro43Player?.stop()
+        intro43Player=nil
+        introMissionSector568=nil
         musicGate.setAllowed(!suspended)
         previewStopped=false
         previewActive=false
@@ -449,6 +507,9 @@ final class OriginalAudioAV568: ObservableObject {
         }
     }
     func stopForDiagnostic() {
+        intro43Player?.stop()
+        intro43Player=nil
+        introMissionSector568=nil
         engineLevel52=0
         enginePlayback52.stop()
         context = .diagnostic
@@ -467,11 +528,16 @@ final class OriginalAudioAV568: ObservableObject {
         }
         if !active {
             enginePlayback52.stop()
+            intro43Player?.pause()
             // iOS backgrounding must not leave an outgoing track playing.
             finishMusicFade()
             music?.pause()
             effects.forEach { $0.pause() }
         } else {
+            if introMissionSector568 != nil {
+                if settings.musicPercent>0 {intro43Player?.play()}
+                return // never start normal mission song under Intro43
+            }
             if case .mission = context, missionPhase == .playing {
                 enginePlayback52.setPower(engineLevel52,
                     effectsVolume:Float(settings.effectsPercent)/100)
