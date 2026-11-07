@@ -90,4 +90,14 @@ final class W3MenuNavigationUITests: XCTestCase {
                       "Returning from 3D diagnostic must show actual W3 menu")
         XCTAssertFalse(app.buttons["w3-panel-back"].exists)
     }
+
+    func testProductionW3HasNoLegacyDiagnostic() {
+        // Only the explicit ASTEROIDY_DEBUG_MENU switch may expose the
+        // older 3D diagnostic. Default W3 must not mix legacy UI in.
+        let app=launchW3()
+        XCTAssertFalse(app.buttons["w3-open-diagnostic"].exists,
+                       "Normal W3 HOME must not expose the legacy diagnostic")
+        XCTAssertFalse(app.staticTexts["ARENA • DIAGNOSTYKA"].exists,
+                       "Legacy arena UI must not overlay normal W3 HOME")
+    }
 }

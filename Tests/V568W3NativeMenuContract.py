@@ -195,6 +195,9 @@ assert "else if item == .newGame {" in menu
 assert "newGamePage(compact:compact)" in menu
 assert "Color.black.opacity(0.86).ignoresSafeArea()" not in menu
 assert "ASTEROIDY_DEBUG_MENU" in menu
+assert 'if ProcessInfo.processInfo.environment["ASTEROIDY_DEBUG_MENU"] == "1" {' in menu
+assert ".transition(.opacity.combined(with:.move(edge:.trailing)))" not in menu
+assert ".transition(.opacity)" not in menu
 assert 'Button("SCENA TESTOWA")' in menu
 assert 'Button("WSTECZ")' in menu
 assert 'if let shown=page {' in menu

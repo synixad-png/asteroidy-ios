@@ -97,7 +97,7 @@ struct W3MainMenu568: View {
                     if let shown=page {
                         panel(for:shown,compact:compact)
                             .frame(maxWidth:.infinity,maxHeight:.infinity)
-                            .transition(.opacity.combined(with:.move(edge:.trailing)))
+                            // W3 pages use only the verified 0.45 + 0.80 s shutter.
                     } else {
                         HStack(alignment:.top,spacing:compact ? 10 : 20) {
                             navigation(compact:compact)
@@ -111,7 +111,7 @@ struct W3MainMenu568: View {
                         }
                         .padding(.horizontal,pad)
                         .padding(.vertical,compact ? 7 : 16)
-                        .transition(.opacity)
+                        // HOME also uses that shutter; no extra iOS fade.
                     }
                     footer(compact:compact)
                 }
