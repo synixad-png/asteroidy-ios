@@ -9,6 +9,11 @@ import simd
 final class CarbonisExplosion524Renderer {
     private struct Parameters {
         var mvp:simd_float4x4
+        // World-space billboard supplied only once per volume.
+        // The original 24-gon mesh is immutable and GPU resident.
+        var centerExtent:SIMD4<Float>
+        var right:SIMD4<Float>
+        var up:SIMD4<Float>
         var age:Float
         var scale:Float
         var fire:Float
@@ -70,13 +75,21 @@ final class CarbonisExplosion524Renderer {
             let pulse=0.60+0.4*sin(fi*1.9+a*(1.1+hash524(fi)*2))
             let fireAmplitude=pulse*exp(-a*(0.55+hash524(fi+13)*0.6))*(1.2+0.4*hash524(fi+4))
             let smokeAmplitude=(0.38+0.45*hash524(fi+17))*(0.22+a*0.78)
+            // These two divisors were calculated for EVERY GPU pixel,
+            // for EVERY depth step and for EVERY lobe. They depend only
+            // on this lobe's radius and can be computed once on CPU.
+            // Existing smokePhase.z/.w were unused padding.
+            let squaredRadius=radius*radius
+            let transverseInverse=1/(squaredRadius*0.56)
+            let longitudinalInverse=1/(squaredRadius*2)
             result.append(Lobe(
                 directionFire:SIMD4<Float>(
                     direction.x,direction.y,direction.z,fireAmplitude),
                 centerRadius:SIMD4<Float>(
                     center.x,center.y,center.z,radius),
                 smokePhase:SIMD4<Float>(
-                    smokeAmplitude,fi*2.31+a*1.35,0,0)))
+                    smokeAmplitude,fi*2.31+a*1.35,
+                    transverseInverse,longitudinalInverse)))
         }
         return result
     }
@@ -98,6 +111,22 @@ final class CarbonisExplosion524Renderer {
             return SIMD2<Float>(radius*cos(a),radius*sin(a))
         }
     }()
+    // Immutable polygon is constructed once, not reconstructed and
+    // transmitted as 360 world-space floats per rendered explosion.
+    // Vertex positions depend on event center/right/up supplied in
+    // Parameters; all source disc corners and UVs are unchanged.
+    private static let sourceDiscMesh:[SIMD2<Float>] = {
+        var mesh:[SIMD2<Float>]=[]
+        mesh.reserveCapacity(sourceDiscSides*3)
+        for i in 0..<sourceDiscSides {
+            mesh.append(.zero)
+            mesh.append(sourceDiscCorners[i])
+            mesh.append(sourceDiscCorners[i+1])
+        }
+        return mesh
+    }()
+
+    private let discVertexBuffer:MTLBuffer
     private let pipeline:MTLRenderPipelineState
     private let noise:MTLTexture
     private let noDepthWrite:MTLDepthStencilState
@@ -153,6 +182,13 @@ final class CarbonisExplosion524Renderer {
         guard let depth=device.makeDepthStencilState(descriptor:ds)
         else {throw Setup.failed}
         noDepthWrite=depth
+        guard let disc=Self.sourceDiscMesh.withUnsafeBytes({ raw in
+            raw.baseAddress.flatMap {
+                device.makeBuffer(bytes:$0,length:raw.count,
+                                  options:.storageModeShared)
+            }
+        }) else {throw Setup.failed}
+        discVertexBuffer=disc
     }
 
     /// Camera-facing 3D *bound* as in Explosion524.cs:185-220; the
@@ -177,6 +213,7 @@ final class CarbonisExplosion524Renderer {
         encoder.setDepthStencilState(noDepthWrite)
         encoder.setCullMode(.none)
         encoder.setFragmentTexture(noise,index:0)
+        encoder.setVertexBuffer(discVertexBuffer,offset:0,index:0)
         for event in events {
             let age=time-event.spawned
             // Explosion524.cs:197,203 — source physical bound uses the
@@ -202,25 +239,16 @@ final class CarbonisExplosion524Renderer {
                 right=SphereVector3(x:1,y:0,z:0)
             }
             let up=SphereVector3.cross(front,right).normalized
-            // UV and world positions are related by the same affine
-            // mapping as the original four quad corners. Every surviving
-            // fragment receives the unchanged source (x,y,z) ray sample.
-            var vertices:[Float]=[]
-            vertices.reserveCapacity(Self.sourceDiscSides*3*5)
-            func put(_ point:SphereVector3,_ x:Float,_ y:Float) {
-                vertices.append(contentsOf:[point.x,point.y,point.z,x,y])
-            }
-            for i in 0..<Self.sourceDiscSides {
-                let a=Self.sourceDiscCorners[i]
-                let b=Self.sourceDiscCorners[i+1]
-                let pointA=center+right*(a.x*2*extent)+up*(a.y*2*extent)
-                let pointB=center+right*(b.x*2*extent)+up*(b.y*2*extent)
-                put(center,0.5,0.5)
-                put(pointA,0.5+a.x,0.5+a.y)
-                put(pointB,0.5+b.x,0.5+b.y)
-            }
+            // The GPU derives the same world coordinates directly
+            // from preloaded canonical vertices and this event's basis.
+            // No per-frame mesh allocation or setVertexBytes copy.
             var params=Parameters(
-                mvp:vp,age:age,
+                mvp:vp,
+                centerExtent:SIMD4<Float>(
+                    center.x,center.y,center.z,extent),
+                right:SIMD4<Float>(right.x,right.y,right.z,0),
+                up:SIMD4<Float>(up.x,up.y,up.z,0),
+                age:age,
                 scale:scale,
                 fire:settings.factor(2),smoke:settings.factor(3),
                 chaos:settings.factor(4),spread:settings.factor(5),
@@ -228,11 +256,6 @@ final class CarbonisExplosion524Renderer {
                 lobes:UInt32(budget.gasLobes(settings.value(1))),
                 steps:UInt32(budget.raySamples(settings.raySamples)),
                 kind:UInt32(event.kind))
-            vertices.withUnsafeBytes { raw in
-                if let address=raw.baseAddress {
-                    encoder.setVertexBytes(address,length:raw.count,index:0)
-                }
-            }
             encoder.setVertexBytes(&params,length:MemoryLayout<Parameters>.stride,
                                    index:1)
             encoder.setFragmentBytes(&params,length:MemoryLayout<Parameters>.stride,
