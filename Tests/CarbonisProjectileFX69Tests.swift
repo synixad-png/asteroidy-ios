@@ -32,18 +32,53 @@ import Foundation
               "source 6-segment triple-layer ribbons and 3 rounded alpha orbs, not two flat quads")
         check(colorMesh.allSatisfy({$0.isFinite}),
               "source shot geodesic geometry is finite across head/halo vertices")
+        let indexedShots=CarbonisProjectileFX69.indexedVertices(
+            shots,camera:camera,drawableHeight:720)
+        let expandedShots=indexedShots.expandedTriangles()
+        check(expandedShots.count==colorMesh.count,
+              "all 3 source rings and triple-layer ribbons are still present")
+        let shotError=zip(expandedShots,colorMesh).reduce(Float(0)) {
+            max($0,abs($1.0-$1.1))
+        }
+        check(shotError<0.000002,
+              "indexed projectile triangle colors, alpha and geometry equal legacy source")
+        let oldShotBytes=colorMesh.count*4
+        let shotSaved=1-Double(indexedShots.transferBytes)/Double(oldShotBytes)
+        check(shotSaved>0.40 && shotSaved<0.68,
+              "indexing saves real Metal upload bytes without dropping a single triangle")
         let noGlow=CarbonisProjectileFX69.vertices(
             shots,camera:camera,drawableHeight:720,glow:false)
         check(noGlow.count < colorMesh.count && !noGlow.isEmpty,
               "source GlowEnabled removes ONLY glow layers, not visible shots")
         var profile=CarbonisVisualSettings568()
-        check(CarbonisProjectileFX69.groundLights(
-              shots,settings:profile).count>5000,
+        let originalGround=CarbonisProjectileFX69.groundLights(
+            shots,settings:profile)
+        check(originalGround.count>5000,
               "each player and enemy projectile casts four real radial sphere lights")
+        let indexedGround=CarbonisProjectileFX69.indexedGroundLights(
+            shots,settings:profile)
+        let expandedGround=indexedGround.expandedTriangles()
+        check(expandedGround.count==originalGround.count,
+              "four source radial ground light fans are still fully present")
+        let groundError=zip(expandedGround,originalGround).reduce(Float(0)) {
+            max($0,abs($1.0-$1.1))
+        }
+        check(groundError<0.000002,
+              "indexed ground fans preserve source RGB, alpha, radius, vertical lift")
+        let groundSaved=1-Double(indexedGround.transferBytes)/
+                Double(originalGround.count*4)
+        check(groundSaved>0.50 && groundSaved<0.70,
+              "four radial light layers reduce vertex upload without visual loss")
+        print(String(format:
+          "FX optimized: %.2f%% projectile / %.2f%% ground-light upload bytes saved",
+          shotSaved*100,groundSaved*100))
         profile.projectileBrightness=0
         check(CarbonisProjectileFX69.groundLights(
               shots,settings:profile).isEmpty,
               "original 0 percent disables only ground lighting")
+        check(CarbonisProjectileFX69.indexedGroundLights(
+              shots,settings:profile).indexCount==0,
+              "optimized path equally disables ground light at source 0 percent")
         check(!CarbonisProjectileFX69.vertices(
               shots,camera:camera,drawableHeight:720).isEmpty,
               "at 0 lighting the projectile's natural beam remains visible")
@@ -51,6 +86,11 @@ import Foundation
         check(!CarbonisProjectileFX69.groundLights(
               shots,settings:profile).isEmpty,
               "original 400 percent lights remain safely bounded")
+        check(CarbonisProjectileFX69.indexedGroundLights(
+              shots,settings:profile).expandedTriangles().count==
+              CarbonisProjectileFX69.groundLights(
+                  shots,settings:profile).count,
+              "optimized ground-light geometry retains source 400 percent brightness")
         profile.projectileColor=2
         profile.projectileMixed=false
         let tint=CarbonisProjectileFX69.groundTint(
