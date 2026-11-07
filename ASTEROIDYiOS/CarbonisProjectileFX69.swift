@@ -41,6 +41,29 @@ enum CarbonisProjectileFX69 {
         }
     }
 
+
+    // GroundLight170 used a different (but algebraically equal) order
+    // of Float multiplication from ShotOrb151. Keep its exact source
+    // order for pixel-level/float32 parity, rather than approximating.
+    private static let sourceGroundCircles:[Int:[SIMD2<Float>]] = {
+        var result:[Int:[SIMD2<Float>]]=[:]
+        for slices in [12,18,22,24,28] {
+            result[slices]=(0...slices).map { i in
+                let angle=2*Float.pi*Float(i)/Float(slices)
+                return SIMD2<Float>(cos(angle),sin(angle))
+            }
+        }
+        return result
+    }()
+
+    private static func groundCircle(_ slices:Int)->[SIMD2<Float>] {
+        if let cached=sourceGroundCircles[slices] {return cached}
+        return (0...slices).map { i in
+            let angle=2*Float.pi*Float(i)/Float(slices)
+            return SIMD2<Float>(cos(angle),sin(angle))
+        }
+    }
+
     private struct GroundFrame {
         let normal:SphereVector3
         let east:SphereVector3
@@ -133,6 +156,86 @@ enum CarbonisProjectileFX69 {
         let p=a-side,q=b-side,r=b+side,t=a+side
         tri(p,q,r,color,&into);tri(p,r,t,color,&into)
     }
+
+    /// The very same six source Combat69 geodesic ribbons, now indexed:
+    /// each strip has four unique corners instead of duplicating six.
+    /// The six great-circle endpoints are evaluated with one angular
+    /// recurrence rather than twelve geographic reprojections per shot.
+    /// Exact legacy ribbon() remains below as the independent oracle.
+    private static func indexedLine(_ a:SphereVector3,_ b:SphereVector3,
+                                    _ width:Float,_ color:[Float],
+                                    _ eye:SphereVector3,
+                                    _ mesh:inout CarbonisIndexedFXMesh568) {
+        let travel=b-a
+        if travel.length<0.000001 {return}
+        let center=(a+b)*0.5
+        let side=SphereVector3.cross(travel,eye-center).normalized *
+            max(0.000005,width*0.5)
+        let first=UInt32(mesh.vertexCount)
+        vert(a-side,color,&mesh.vertices)
+        vert(b-side,color,&mesh.vertices)
+        vert(b+side,color,&mesh.vertices)
+        vert(a+side,color,&mesh.vertices)
+        mesh.indices.append(contentsOf:[
+            first,first+1,first+2,first,first+2,first+3])
+    }
+
+    private static func indexedRibbon(
+        _ shot:CarbonisCombat568.Projectile,
+        tint:RGB,width:Float,camera:SphereCameraView556,
+        drawableHeight:Float,
+        _ mesh:inout CarbonisIndexedFXMesh568) {
+        let trailing=shot.hostile ? Float(-0.025) : Float(-0.024)
+        let tail=Sphere67.offset(shot.point,by:shot.velocity*trailing)
+        let start=Sphere67.normal(tail)
+        let destination=Sphere67.normal(shot.point)
+        let dot=max(-1,min(1,SphereVector3.dot(start,destination)))
+        let residual=destination-start*dot
+        let length=residual.length
+        // Original Sphere67.delta takes the local east direction at
+        // an exact antipode; preserve that mathematical exception.
+        let tangent=length>0.000001 ? residual/length :
+            (dot<0 ? Sphere67.basis(tail).east :
+                SphereVector3(x:0,y:0,z:0))
+        let angle=length>0.000001 ? atan2(length,dot) :
+            (dot<0 ? Float.pi : 0)
+        let stepAngle=angle/6
+        let cStep=cos(stepAngle),sStep=sin(stepAngle)
+        var c:Float=1,s:Float=0
+        let surface=shell+3.3/outer
+        var last=start*surface
+        let sourceWidth=shot.hostile ?
+            (shot.kind==2 ? Float(3.3) : shot.kind==3 ? 3.5:3.1)
+            : (shot.kind==3 ? Float(3.6):3.1)
+        let outerWidth:Float=shot.hostile ? 2.45:2.50
+        let middleWidth:Float=shot.hostile ? 1.45:1.40
+        let innerWidth:Float=shot.hostile ? 0.67:0.70
+        let outerColor=rgba(tint,27/255)
+        let middleColor=rgba(tint,shot.hostile ? 160/255:165/255)
+        let innerColor=rgba(RGB(r:242/255,g:251/255,b:1),
+                            shot.hostile ? 235/255:240/255)
+        for segment in 0..<6 {
+            let nc=c*cStep-s*sStep
+            let ns=s*cStep+c*sStep
+            c=nc
+            s=ns
+            let end=segment==5 ? destination*surface :
+                (start*c+tangent*s)*surface
+            let px=pxPerWorld((last+end)*0.5,camera:camera,
+                              height:drawableHeight)
+            let perWorld=sourceWidth/px
+            if width>0 {
+                indexedLine(last,end,perWorld*outerWidth,
+                    outerColor,camera.eye,&mesh)
+            }
+            indexedLine(last,end,perWorld*middleWidth,
+                middleColor,camera.eye,&mesh)
+            indexedLine(last,end,perWorld*innerWidth,
+                innerColor,camera.eye,&mesh)
+            last=end
+        }
+    }
+
     private static func worldPoint(_ point:Vec2,_ height:Float)->SphereVector3 {
         Sphere67.normal(point)*(shell+height/outer)
     }
@@ -295,15 +398,11 @@ enum CarbonisProjectileFX69 {
         for shot in shots {
             let tint=shot.hostile ? hostileTint(shot.kind) :
                                       playerTint(shot.kind)
-            // Ribbon strips remain untouched, including their six
-            // geodesic subdivisions and three different alpha layers.
-            let begin=mesh.vertexCount
-            ribbon(shot,tint:tint,width:glow ? 1:0,camera:view,
-                   drawableHeight:drawableHeight,&mesh.vertices)
-            let end=mesh.vertexCount
-            if end>begin {
-                for v in begin..<end {mesh.indices.append(UInt32(v))}
-            }
+            // The original six geodesic steps, 3 alpha layers and
+            // source widths are unchanged; only shared vertex/index
+            // storage and the equivalent great-circle math differ.
+            indexedRibbon(shot,tint:tint,width:glow ? 1:0,camera:view,
+                          drawableHeight:drawableHeight,&mesh)
             indexedOrb(shot,tint:tint,glow:glow,camera:view,
                        drawableHeight:drawableHeight,&mesh)
         }
@@ -395,9 +494,9 @@ enum CarbonisProjectileFX69 {
         let centerColor=rgba(tint,alpha)
         let edgeColor=rgba(tint,0)
         vert(center,centerColor,&mesh.vertices)
-        for direction in unitCircle(slices) {
-            let offset=(frame.east*direction.x+frame.south*direction.y)
-                * radius * frame.scale
+        for direction in groundCircle(slices) {
+            let offset=(frame.east*direction.x+frame.south*direction.y) *
+                radius * frame.scale
             vert(center+offset,edgeColor,&mesh.vertices)
         }
         for i in 0..<slices {
