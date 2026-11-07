@@ -21,7 +21,7 @@ Nie dopisano wybuchów do `App.swift`, `CarbonisCombat568.swift`, `Sector01Scene
 - `Tests/Explosion524OptimizedRayBoundsTests.py`: niezależnie pilnuje, by nie odrzucić jakiejkolwiek próbki niezerowej alfa.
 - Oryginalne testy fizyki, bronii, kolizji, dźwięku, HUD, misji i profilu nadal stanowią bramki CI.
 
-**Ważne:** nie ma na tym etapie testu pikselowego obrazu ani benchmarku fizycznego iPhone/iPad. Mniej instrukcji i kopii nie jest tożsame z potwierdzonym wzrostem FPS z 35 do 60. Raport o PASS/FAIL Xcode, przygotowaniu IPA i artefakcie podać dopiero z faktycznych wyników Actions.
+**Ważne:** nie wykonano testu pikselowego obrazu ani benchmarku fizycznego iPhone/iPad. Mniej instrukcji i kopii nie oznacza potwierdzonego wzrostu FPS z 35 do 60. Natywna kompilacja i raport IPA są potwierdzone niżej.
 
 ## Wyniki weryfikacji gałęzi przed wydaniem
 - [GitHub Actions #397](https://github.com/synixad-png/asteroidy-ios/actions/runs/42395393809): **3/3 zadania PASS** (kompilacja Swift/Metal w Xcode, wszystkie testy walki i źródłowy kontrakt geometrii).
@@ -34,3 +34,12 @@ Nie dopisano wybuchów do `App.swift`, `CarbonisCombat568.swift`, `Sector01Scene
 Ukończyć test całego native ARM64 IPA oraz odczytać na fizycznym urządzeniu GPU ms / CPU ms / FX CPU W przy podobnej liczbie nakładających się eksplozji. Jeżeli GPU nadal dominuje, konieczny jest Metal Debugger/Performance HUD, a nie przypadkowa redukcja próbek lub liczby efektów.
 
 Harmonogram portu jest zachowany: **18 niezmiennych zadań, 38% ukończone / 62% pozostało**.
+
+## Finalny wynik wydania
+- [GitHub Actions #134 — Xcode iPhone/iPad IPA](https://github.com/synixad-png/asteroidy-ios/actions/runs/42395864027): **4/4 PASS**, commit źródłowy `d7bb3e701cc2b085210f840908f25b72da0dd5c7`.
+- **Xcode Release / iPhoneOS ARM64 — BUILD SUCCEEDED**. Nowy `Sector01Explosion524.metal` skompilowano przy użyciu kompilatora Metal firmy Apple.
+- [Pobierz niepodpisane IPA w artefakcie](https://github.com/synixad-png/asteroidy-ios/actions/runs/42395864027/artifacts/13583633282): w archiwum GitHub `ASTEROIDY-iOS-device-unsigned-ipa.zip` znajduje się `ASTEROIDY_iOS_UNSIGNED.ipa`. Rozmiar zewnętrznego artefaktu ZIP: **27 967 024 B**.
+- SHA-256 **zewnętrznego artefaktu GitHub ZIP**, nie samego IPA: `2f784cbd978ccf6529c3bb2df669ac6ac147e6b4c8dc4927b6dd887e19fa9288`.
+- GitHub `unzip -t` / `Tools/verify_ipa.py` — **PASS**: ZIP CRC, `Payload`, ARM64, iPhone/iPad, iOS 17.0+, zasoby, bundle `com.synixad.asteroidyios`; plik IPA pozostaje niepodpisany.
+- [GitHub Actions #398 — główna gałąź testów bojowych](https://github.com/synixad-png/asteroidy-ios/actions/runs/42395864016): **3/3 PASS**.
+- **Brak testów interaktywnych na fizycznym iPhone/iPadzie. Wzrost FPS nie został zmierzony**, wygląd wybuchów w ruchu wymaga porównania przez użytkownika.
