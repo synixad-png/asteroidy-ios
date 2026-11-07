@@ -32,6 +32,7 @@ on:
       - 'ASTEROIDYiOS/OriginalMusicSynth568.swift'
       - 'Tests/OriginalMusicSynth568Tests.swift'
       - 'Tests/OriginalMusicCombatPause568Contract.py'
+      - 'Tests/IOSAudioLockResume568Contract.py'
       - 'ASTEROIDYiOS/OriginalMusicTransition568.swift'
       - 'Tests/OriginalMusicTransition568Tests.swift'
       - 'ASTEROIDYiOS/OriginalEngineDSP52.swift'
@@ -253,6 +254,8 @@ jobs:
           /tmp/music568-combat-pauses
       - name: Verify original v568 audio startup order, lazy mission, cache and no replacements
         run: |
+          set -euo pipefail
+          python3 Tests/IOSAudioLockResume568Contract.py
           swiftc ASTEROIDYiOS/OriginalAudioLifecycle568.swift Tests/OriginalAudioLifecycle568Tests.swift -o /tmp/original-audio-v568
           /tmp/original-audio-v568
           swiftc -frontend -parse ASTEROIDYiOS/OriginalAudioAV568.swift
