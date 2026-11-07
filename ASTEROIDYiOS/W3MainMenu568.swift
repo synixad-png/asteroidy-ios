@@ -51,6 +51,11 @@ struct W3MainMenu568: View {
     let openDiagnostic: () -> Void
     let openCampaignOnEntry: Bool
     @State private var page: Page?
+    // Windows UiW3NativeLayout315.cs BeginW3NativeTransition327:
+    // 1.25 s total, 36% left-side cover + 64% right-side uncover.
+    @State private var w3Wiping327 = false
+    @State private var w3WipeAmount327: CGFloat = 0
+    @State private var w3WipeFromRight327 = false
     // Same Y/X globe rotation axes as the source W3 NewHome290 preview.
     @State private var planetYaw: Float=0
     @State private var planetPitch: Float=0
@@ -110,6 +115,31 @@ struct W3MainMenu568: View {
                     }
                     footer(compact:compact)
                 }
+                if w3Wiping327 {
+                    // W3 native left-to-right shutter, NOT old modal
+                    // fade or duplicated full-screen background assets.
+                    GeometryReader { canvas in
+                        let top:CGFloat = compact ? 52 : 74
+                        let bottom:CGFloat = compact ? 37 : 52
+                        HStack(spacing:0) {
+                            if w3WipeFromRight327 {Spacer(minLength:0)}
+                            Rectangle()
+                                .fill(Color(red:0.016,green:0.050,blue:0.078))
+                                .frame(width:max(0,canvas.size.width*w3WipeAmount327))
+                                .overlay(alignment:
+                                         w3WipeFromRight327 ? .leading : .trailing) {
+                                    Rectangle().fill(gold)
+                                        .frame(width:2)
+                                }
+                            if !w3WipeFromRight327 {Spacer(minLength:0)}
+                        }
+                        .frame(width:canvas.size.width,
+                               height:max(0,canvas.size.height-top-bottom))
+                        .offset(y:top)
+                    }
+                    .allowsHitTesting(true)
+                    .accessibilityHidden(true)
+                }
             }
         }
         // Keep native buttons accessible to VoiceOver and XCTest.
@@ -141,6 +171,30 @@ struct W3MainMenu568: View {
                 withJSONObject: proof, options: [.sortedKeys]) {
                 try? data.write(to: folder.appendingPathComponent(
                     "ASTEROIDY_W3_MenuProof.json"), options: .atomic)
+            }
+        }
+    }
+
+    private func navigateW3(_ destination:Page?) {
+        guard !w3Wiping327 else {return}
+        w3Wiping327=true
+        w3WipeFromRight327=false
+        w3WipeAmount327=0
+        // Exact source W3 v10 two-phase reference:
+        // 1.25 seconds; .36 cover (.45 s), .64 uncover (.80 s);
+        // CSS cubic-bezier controls from UiW3NativeLayout315.cs.
+        withAnimation(.timingCurve(0.58,0.05,0.28,1,duration:0.45)) {
+            w3WipeAmount327=1
+        }
+        DispatchQueue.main.asyncAfter(deadline:.now()+0.45) {
+            page=destination
+            w3WipeFromRight327=true
+            withAnimation(.timingCurve(0.22,0.7,0.15,1,duration:0.80)) {
+                w3WipeAmount327=0
+            }
+            DispatchQueue.main.asyncAfter(deadline:.now()+0.80) {
+                w3Wiping327=false
+                w3WipeFromRight327=false
             }
         }
     }
@@ -204,7 +258,7 @@ struct W3MainMenu568: View {
                 Button {
                     // Actual W3 destination replaces HOME rather than
                     // launching the pre-W3 modal navigation layer.
-                    withAnimation(.easeInOut(duration:0.35)) {page=item}
+                    navigateW3(item)
                 } label: {
                     HStack(spacing:10) {
                         Text(String(format:"%02d",index+1))
@@ -399,7 +453,7 @@ struct W3MainMenu568: View {
                         .font(.system(size:compact ? 9 : 11,design:.monospaced))
                         .foregroundStyle(muted)
                     Button("WSTECZ") {
-                        withAnimation(.easeInOut(duration:0.35)) { page=nil }
+                        navigateW3(nil)
                     }
                     .font(.system(size:compact ? 11 : 13,
                                   weight:.bold,design:.monospaced))
@@ -439,9 +493,7 @@ struct W3MainMenu568: View {
                             .fixedSize(horizontal:false,vertical:true)
                         if item == .continueGame {
                             Button("OTWÓRZ KAMPANIĘ") {
-                                withAnimation(.easeInOut(duration:0.35)) {
-                                    page = .campaign
-                                }
+                                navigateW3(.campaign)
                             }
                             .foregroundStyle(gold)
                             .accessibilityIdentifier("w3-continue-open-campaign")
@@ -481,9 +533,7 @@ struct W3MainMenu568: View {
                 .foregroundStyle(paper)
                 .fixedSize(horizontal:false,vertical:true)
             Button("PRZEJDŹ DO KAMPANII / CARBONIS 01") {
-                withAnimation(.easeInOut(duration:0.35)) {
-                    page = .campaign
-                }
+                navigateW3(.campaign)
             }
             .font(.system(size:compact ? 11 : 13,
                           weight:.bold,design:.monospaced))
