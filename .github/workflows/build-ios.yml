@@ -82,6 +82,12 @@ jobs:
           swiftc ASTEROIDYiOS/SourceShipScale472.swift Tests/SourceShipScale472Tests.swift -o /tmp/ship472
           /tmp/ship472
           python3 Tests/ShipScale472IntegrationContract.py
+      - name: Confirm original 16:9 CARBONIS mission camera fits iPad and preserves iPhone + Atmosphere47
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/MissionViewportFraming568.swift Tests/MissionViewportFraming568Tests.swift -o /tmp/mission-frame568
+          /tmp/mission-frame568
+          python3 Tests/MissionViewportFraming568Contract.py
       - name: Verify original C279 terrain radius v523 before IPA build
         run: |
           swiftc ASTEROIDYiOS/CarbonisMissionPlanet523.swift Tests/CarbonisMissionPlanet523Tests.swift -o /tmp/carbonis-mission-scale-523

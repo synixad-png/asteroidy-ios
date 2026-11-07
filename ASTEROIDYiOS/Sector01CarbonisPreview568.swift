@@ -462,9 +462,16 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 let near=SphereProjection556.normalizedNear
                 let far=SphereProjection556.normalizedFar
                 let focal=SphereProjection556.sourceVerticalFocal
+                // GpuIntro41.cs:455 uses 1280×720 (16:9). Keep exactly
+                // its horizontal framing on narrower iPad landscape
+                // viewports, so C279 terrain AND Atmosphere47 fit together.
+                // iPhone viewports >= 16:9 retain the unchanged source
+                // vertical focal length. All mission actors share this VP.
+                let fitted=MissionViewportFraming568.focals(
+                    aspect:aspect,sourceVerticalFocal:focal)
                 let projection=simd_float4x4(columns:(
-                    SIMD4<Float>(focal/max(0.35,aspect),0,0,0),
-                    SIMD4<Float>(0,focal,0,0),
+                    SIMD4<Float>(fitted.horizontal,0,0,0),
+                    SIMD4<Float>(0,fitted.vertical,0,0),
                     SIMD4<Float>(0,0,far/(near-far),-1),
                     SIMD4<Float>(0,0,near*far/(near-far),0)))
                 return projection*view
