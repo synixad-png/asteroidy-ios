@@ -749,7 +749,7 @@ final class OriginalAudioAV568: ObservableObject {
         }
     }
     func sourceEffect(_ code: Int) {
-        guard !suspended, !missionUserPaused,
+        guard !suspended, !audioInterrupted, !missionUserPaused,
               settings.effectsPercent>0 else { return }
         // MusicMix.AddEffect uses one voice event per volley and 16 slots.
         let variation = variant
