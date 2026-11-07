@@ -18,7 +18,10 @@ kernel void sector01SourceCarbonisBake469(
     uint width=combined.get_width();
     uint height=combined.get_height();
     if(gid.x>=width || gid.y>=height) return;
-    constexpr sampler sourceSampler(coord::normalized,address::repeat,
+    // GpuPlanet.cs:185-191 resizes irradiance with GDI+ bilinear
+    // clamped edges, not a wrapped UV seam. Target base/emission already
+    // match source resolution; sample their texel centers unchanged.
+    constexpr sampler sourceSampler(coord::normalized,address::clamp_to_edge,
                                     filter::linear);
     float2 uv=(float2(gid)+0.5f)/float2(width,height);
     float4 sourceBase=base.sample(sourceSampler,uv);
