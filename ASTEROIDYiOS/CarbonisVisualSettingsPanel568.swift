@@ -11,7 +11,7 @@ struct CarbonisVisualSettingsPanel568: View {
     @State private var planetProfile=SourcePlanetGraphicsSettings568.load()
     @State private var lava287=SourceLavaLightSettings287.load()
     @State private var shipScale472=SourceShipScale472.load()
-    @State private var tab:Int=0
+    @State private var tab:Int=11
     @State private var previewRevision=0
 
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
@@ -63,61 +63,138 @@ struct CarbonisVisualSettingsPanel568: View {
                 set:{n in save{$0.projectileMixed=n}})
     }
 
+
+    // EXACT source order: Windows/src/Menu139.cs OptionTabs139 (v555).
+    // The original W3 presentation has a left vertical navigation rail,
+    // not the six horizontal legacy iOS tabs. Preserve all live settings.
+    private let sourceTabs139=[
+        "GRAFIKA","DŹWIĘK","STEROWANIE","ROZGRYWKA","INTERFEJS",
+        "DOSTĘPNOŚĆ","RĘKAWICE","PLANETY","BROŃ","HANGAR",
+        "GOLD MELTER","WYBUCHY 3D","SZYBY","STATEK",
+        "POSTPROCES","KOSMOS","POCISKI"
+    ]
+    private func legacyTestID(_ sourceIndex:Int)->String {
+        // Retain existing accessibility selectors for source-verified
+        // iOS UI tests without changing the real on-screen source order.
+        switch sourceIndex {
+        case 11:return "w3-effects-tab-0"
+        case 16:return "w3-effects-tab-1"
+        case 1:return "w3-effects-tab-2"
+        case 7:return "w3-effects-tab-3"
+        case 14:return "w3-effects-tab-4"
+        case 13:return "w3-effects-tab-5"
+        default:return "w3-original-category-\\(sourceIndex)"
+        }
+    }
     var body:some View {
-        VStack(alignment:.leading,spacing:compact ? 6:10) {
-            ScrollView(.horizontal,showsIndicators:false) {
-                HStack(spacing:8) {
-                    tabButton("WYBUCHY 3D",index:0)
-                    tabButton("POCISKI",index:1)
-                    tabButton("AUDIO",index:2)
-                    tabButton("PLANETY",index:3)
-                    tabButton("POSTPROCES",index:4)
-                    tabButton("STATEK",index:5)
+        HStack(alignment:.top,spacing:compact ? 8 : 16) {
+            ScrollViewReader { scroll in
+                ScrollView(.vertical) {
+                    VStack(alignment:.leading,spacing:2) {
+                        Text("KATEGORIE / W3")
+                            .font(.system(size:compact ? 9 : 11,
+                                weight:.bold,design:.monospaced))
+                            .foregroundStyle(gold)
+                            .padding(.horizontal,7)
+                            .padding(.vertical,9)
+                        ForEach(0..<sourceTabs139.count,id:\\.self) { i in
+                            tabButton(sourceTabs139[i],index:i)
+                                .id(i)
+                        }
+                    }
+                    .frame(maxWidth:.infinity,alignment:.leading)
                 }
-            }
-            .accessibilityIdentifier("w3-effects-tabs-524-285")
-            ScrollView {
-                VStack(alignment:.leading,spacing:compact ? 8:13) {
-                    if tab==0 {
-                        explosionPage
-                    } else if tab==1 {
-                        projectilePage
-                    } else if tab==2 {
-                        OriginalAudioSettingsPanel568(compact:compact)
-                    } else if tab==3 {
-                        planetPage
-                    } else if tab==4 {
-                        postprocessPage
-                    } else {
-                        shipSizePage
+                .scrollIndicators(.hidden)
+                .onAppear {scroll.scrollTo(tab,anchor:.center)}
+                .onChange(of:tab) { value in
+                    withAnimation(.easeInOut(duration:0.2)) {
+                        scroll.scrollTo(value,anchor:.center)
                     }
                 }
-                .padding(.bottom,14)
-                .frame(maxWidth:.infinity,alignment:.leading)
             }
+            .frame(width:compact ? 126 : 174)
+            .background(Color(red:0.006,green:0.025,blue:0.045).opacity(0.94))
+            .overlay(Rectangle().stroke(cyan.opacity(0.28),lineWidth:1))
+            .accessibilityIdentifier("w3-effects-tabs-524-285")
+            ScrollView {
+                VStack(alignment:.leading,spacing:compact ? 8 : 13) {
+                    HStack {
+                        Text(sourceTabs139[tab]+" / PARAMETRY")
+                            .font(.system(size:compact ? 11 : 14,
+                                          weight:.bold,design:.monospaced))
+                            .foregroundStyle(gold)
+                        Spacer()
+                        Text("W3 / #\\(tab)")
+                            .font(.system(size:compact ? 8 : 10,
+                                          design:.monospaced))
+                            .foregroundStyle(muted)
+                    }
+                    Rectangle().fill(cyan.opacity(0.28)).frame(height:1)
+                    switch tab {
+                    case 11: explosionPage
+                    case 16: projectilePage
+                    case 1: OriginalAudioSettingsPanel568(compact:compact)
+                    case 7: planetPage
+                    case 14: postprocessPage
+                    case 13: shipSizePage
+                    default: unavailableSourceCategory
+                    }
+                }
+                .padding(compact ? 10 : 17)
+                .frame(maxWidth:.infinity,alignment:.topLeading)
+            }
+            .background(Color(red:0.008,green:0.030,blue:0.054).opacity(0.94))
+            .overlay(Rectangle().stroke(cyan.opacity(0.22),lineWidth:1))
             .accessibilityIdentifier("w3-effects-scroll")
         }
         .frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.topLeading)
         .accessibilityIdentifier("w3-original-explosion-projectile-settings")
     }
-
     private func tabButton(_ title:String,index:Int)->some View {
         Button {
             tab=index
         } label:{
-            Text(title)
-                .font(.system(size:compact ? 10:12,
-                              weight:.bold,design:.monospaced))
-                .foregroundStyle(tab==index ? .black:cyan)
-                .padding(.horizontal,compact ? 11:15)
-                .padding(.vertical,compact ? 7:10)
-                .frame(maxWidth:.infinity)
-                .background(tab==index ? gold:Color.white.opacity(0.07))
-                .overlay(Rectangle().stroke(
-                    tab==index ? gold:cyan.opacity(0.35),lineWidth:1))
+            HStack(spacing:6) {
+                Rectangle()
+                    .fill(index==tab ? gold : cyan.opacity(0.2))
+                    .frame(width:3,height:22)
+                Text(title)
+                    .font(.system(size:compact ? 9 : 10,
+                                  weight:.semibold,design:.monospaced))
+                    .foregroundStyle(index==tab ? gold : muted)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+                Spacer(minLength:0)
+            }
+            .padding(.horizontal,compact ? 5 : 9)
+            .frame(maxWidth:.infinity,minHeight:compact ? 33 : 37,
+                   alignment:.leading)
+            .background(index==tab
+                ? Color(red:0.10,green:0.085,blue:0.060)
+                : Color.clear)
+            .overlay(alignment:.bottom) {
+                Rectangle().fill(cyan.opacity(0.10)).frame(height:1)
+            }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityIdentifier("w3-effects-tab-\(index)")
+        .accessibilityLabel(title)
+        .accessibilityIdentifier(legacyTestID(index))
+    }
+    private var unavailableSourceCategory:some View {
+        VStack(alignment:.leading,spacing:12) {
+            Text("ORYGINALNA KATEGORIA / "+sourceTabs139[tab])
+                .font(.system(size:compact ? 11 : 14,
+                              weight:.bold,design:.monospaced))
+                .foregroundStyle(gold)
+            Text("Ta kategoria występuje w oryginalnym Windows v568. Jej parametry nie są jeszcze podłączone do właściwego silnika iOS. Nie wyświetlam pozornych przełączników, które nie zmieniają działania gry.")
+                .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                .foregroundStyle(muted)
+                .fixedSize(horizontal:false,vertical:true)
+            Spacer(minLength:0)
+        }
+        .frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.topLeading)
+        .accessibilityIdentifier("w3-not-yet-ported-source-category")
     }
     private func header(_ title:String)->some View {
         Text(title)
