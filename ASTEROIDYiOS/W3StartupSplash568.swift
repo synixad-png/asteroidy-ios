@@ -31,8 +31,8 @@ struct W3StartupSplash568: View {
                       W3StartupPolicy568.sourceCoverSeconds)) {
             wipe = 1
         }
-        DispatchQueue.main.asyncAfter(deadline:.now()+
-                    W3StartupPolicy568.sourceCoverSeconds) {
+        DispatchQueue.main.asyncAfter(
+            deadline:.now() + W3StartupPolicy568.sourceCoverSeconds) {
             guard stage == .cover else{return}
             // At full cover, the already-mounted authentic W3 HOME replaces
             // the outgoing splash beneath the native left-to-right veil.
@@ -46,8 +46,8 @@ struct W3StartupSplash568: View {
                           W3StartupPolicy568.sourceUncoverSeconds)) {
                 wipe = 1
             }
-            DispatchQueue.main.asyncAfter(deadline:.now()+
-                        W3StartupPolicy568.sourceUncoverSeconds) {
+            DispatchQueue.main.asyncAfter(
+                deadline:.now() + W3StartupPolicy568.sourceUncoverSeconds) {
                 guard stage == .uncover else {return}
                 onContinue()
             }
@@ -188,8 +188,8 @@ struct W3StartupSplash568: View {
         .ignoresSafeArea()
         .focusable(true)
         .focused($keyboardFocused)
-        .onKeyPress(.return) { _ in proceed();return .handled }
-        .onKeyPress(.space) { _ in proceed();return .handled }
+        .onKeyPress(.return) {proceed();return .handled}
+        .onKeyPress(.space) {proceed();return .handled}
         .onAppear {
             keyboardFocused=true
             pad.start(onConfirm:proceed)
@@ -236,14 +236,14 @@ final class W3StartupGamepad568:ObservableObject {
         pad.buttonA.pressedChangedHandler = {[weak self] _,_,pressed in
             if pressed {DispatchQueue.main.async {self?.action?()}}
         }
-        pad.buttonMenu?.pressedChangedHandler = {[weak self] _,_,pressed in
+        pad.buttonMenu.pressedChangedHandler = {[weak self] _,_,pressed in
             if pressed {DispatchQueue.main.async {self?.action?()}}
         }
     }
     func stop() {
         for controller in configured {
             controller.extendedGamepad?.buttonA.pressedChangedHandler=nil
-            controller.extendedGamepad?.buttonMenu?.pressedChangedHandler=nil
+            controller.extendedGamepad?.buttonMenu.pressedChangedHandler=nil
         }
         configured.removeAll()
         subscriptions.forEach {NotificationCenter.default.removeObserver($0)}

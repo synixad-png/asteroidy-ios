@@ -27,7 +27,7 @@ assert ".onKeyPress(.return)" in view
 assert ".onKeyPress(.space)" in view
 assert "pad.start(onConfirm:proceed)" in view
 assert "pad.buttonA.pressedChangedHandler" in view
-assert "pad.buttonMenu?.pressedChangedHandler" in view
+assert "pad.buttonMenu.pressedChangedHandler" in view
 assert "pad.stop()" in view
 assert "stage == .waiting" in view
 assert "sourceCoverSeconds" in view and "sourceUncoverSeconds" in view
