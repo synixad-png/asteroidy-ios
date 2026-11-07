@@ -1,3 +1,11 @@
+## ETAP — 07.11.2026: NOWA GRA, źródłowa trudność i rzeczywisty IPA iPhone/iPad
+
+**Ukończono kod i zbudowano zweryfikowany, niepodpisany IPA dla iPhone/iPad.** Wybór trudności wpływa na rzeczywistą CARBONIS 01, nowe dane profilu powstają dopiero po wymaganym backupie starego stanu, a 2P jest blokowany, nie symulowany. Niepełny pozostaje oryginalny 62-sekundowy prolog oraz 2-graczowa fizyka/sterowanie. Nowe źródła: [commit 7eb3b99c](https://github.com/synixad-png/asteroidy-ios/commit/7eb3b99cbe1384ec5d2b37ca4baf7ffe39082fcf). Kompilacja iOS: [GitHub Actions 42359364204](https://github.com/synixad-png/asteroidy-ios/actions/runs/42359364204) SUCCESS, [artefakt IPA 13568504263](https://github.com/synixad-png/asteroidy-ios/actions/runs/42359364204/artifacts/13568504263). Sam IPA ma 28 340 966 bajtów, CRC+SHA PASS, ARM64 iPhone/iPad. Brak testu fizycznego; iPhone simctl nie był dostępny na runnerze.
+
+**Stałe wartości:** 38% portu / 62% pozostało, zadanie 14 nadal 24%. Lista 18 zadań pozostaje bez zmian.
+
+---
+
 ## ETAP — 07.11.2026: usunięcie mieszanki starego menu i nowego W3
 
 **Wykonano:** audyt oryginalnego `RendererW3Home328.cs`, `ProgramW3Native315.cs`, `UiW3NativeLayout315.cs`, `Menu139.cs` oraz 44 ekranów W3. Usunięto stare modalne przejścia kampanii, zastąpiono 6 poziomych zakładek listą 17 źródłowych kategorii (6 działających, 11 jeszcze nieprzeniesionych), rozdzielono NOWA GRA od KAMPANIA, schowano `SCENA TESTOWA` w tryb diagnostyczny, odwzorowano 1,25-sekundowe przejście zasłoną. Zachowano oryginalne 7 przycisków, tło/logo, NewHome290, Vanguard431 i wszystkie działające ustawienia. To **etap usuwania regresji**, a nie ogłoszenie ukończenia 44 ekranów.
