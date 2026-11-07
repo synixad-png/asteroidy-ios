@@ -10,6 +10,7 @@ on:
       - '.github/workflows/build-ios.yml'
       - 'ASTEROIDYiOS/W3StartupSplash568.swift'
       - 'ASTEROIDYiOS/W3AdaptiveViewport568.swift'
+      - 'ASTEROIDYiOS/W3SafeAreaReader568.swift'
       - 'ASTEROIDYiOS/SourceFPSAccumulator568.swift'
       - 'ASTEROIDYiOS/SourcePerformance568.swift'
       - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
