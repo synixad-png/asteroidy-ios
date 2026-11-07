@@ -8,7 +8,9 @@ import Foundation
   check(CarbonisRockGeometry568.ico.count==12,"original 12 vertices")
   check(CarbonisRockGeometry568.faces.count==60,"original 20 faces")
   var shapeZero:[Float]=[]
-  for shape in 0..<45 {
+  check(CarbonisRockGeometry568.sourceShapeCount==80,
+        "all eight seeds / five tiers / intact and fragment shapes")
+  for shape in 0..<CarbonisRockGeometry568.sourceShapeCount {
     let mesh=CarbonisRockGeometry568.vertices(shape:shape)
     check(mesh.count==CarbonisRockGeometry568.sourceVertexCount
           * CarbonisRockGeometry568.gpuStride,"source 2-subdiv 960 vertices")
@@ -33,6 +35,6 @@ import Foundation
         CarbonisRockGeometry568.vertices(shape:1),"armor colors")
   check(CarbonisRockGeometry568.vertices(shape:0) !=
         CarbonisRockGeometry568.vertices(shape:5),"source shape seed")
-  print("PASS \(count) source Carbonis rock geometry assertions for 45 variants")
+  print("PASS \(count) source Carbonis rock geometry assertions for all 80 variants")
  }
 }
