@@ -30,7 +30,7 @@ import Foundation
             // 1/3 of targets are chosen along the actual source swept
             // arc, including high latitudes/pole reflection.
             let b=near ? Sphere67.offset(
-                a,by:velocity*(dt*sample())+
+                a,by:velocity*(dt*sample()) +
                     Vec2(x:(sample()-0.5)*22,
                          y:(sample()-0.5)*22)) : point()
             let target=iteration%5==0
