@@ -16,6 +16,7 @@ struct W3StartupSplash568: View {
     @State private var stage=Stage.waiting
     @State private var wipe:CGFloat=0
     @StateObject private var pad=W3StartupGamepad568()
+    @State private var safeInsets=W3ScreenInsets568()
 
     private enum Stage {case waiting,cover,uncover}
     private let gold=Color(red:225/255,green:167/255,blue:77/255)
@@ -63,7 +64,7 @@ struct W3StartupSplash568: View {
             if let logo=SourceW3Images568.pair?.logo {
                 Image(uiImage:logo).resizable().scaledToFit()
                     .frame(width:layout.headerLogoWidth,
-                           height:layout.headerHeight*0.73)
+                           height:(layout.headerHeight-layout.safeTop)*0.73)
             }
             Rectangle().fill(cyan.opacity(0.3))
                 .frame(width:1,height:layout.headerHeight*0.51)
@@ -84,7 +85,9 @@ struct W3StartupSplash568: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.62)
         }
-        .padding(.horizontal,layout.compact ? 12 : 26)
+        .padding(.leading,layout.leadingPadding)
+        .padding(.trailing,layout.trailingPadding)
+        .padding(.top,layout.safeTop)
         .frame(width:layout.width,height:layout.headerHeight)
         .background(Color(red:1/255,green:8/255,blue:14/255).opacity(0.969))
         .overlay(alignment:.bottom) {
@@ -106,7 +109,9 @@ struct W3StartupSplash568: View {
                 .foregroundStyle(gold)
                 .lineLimit(1)
         }
-        .padding(.horizontal,layout.compact ? 12 : 26)
+        .padding(.leading,layout.leadingPadding)
+        .padding(.trailing,layout.trailingPadding)
+        .padding(.bottom,layout.safeBottom)
         .frame(width:layout.width,height:layout.footerHeight)
         .background(Color(red:1/255,green:8/255,blue:14/255).opacity(0.969))
         .overlay(alignment:.top) {
@@ -173,12 +178,16 @@ struct W3StartupSplash568: View {
                         .foregroundStyle(muted)
                         .lineLimit(1)
                         .minimumScaleFactor(0.65)
-                        .padding(.horizontal,layout.compact ? 12 : 26)
+                        .padding(.horizontal,layout.horizontalPadding)
                         .padding(.bottom,layout.compact ? 7 : 12)
                     }
                     .allowsHitTesting(false)
                 }
-                .frame(width:center.size.width,height:center.size.height)
+                // Center content in the window's unobstructed region;
+                // landscape Dynamic Island can occupy either edge.
+                .frame(width:layout.usableWidth,height:center.size.height)
+                .position(x:layout.safeLeft+layout.usableWidth/2,
+                          y:center.size.height/2)
             }
             .frame(height:layout.contentHeight)
             sourceFooter(layout)
@@ -189,7 +198,8 @@ struct W3StartupSplash568: View {
     var body:some View {
         GeometryReader { geo in
             let layout=W3AdaptiveViewport568(
-                width:geo.size.width,height:geo.size.height)
+                width:geo.size.width,height:geo.size.height,
+                insets:safeInsets)
             ZStack {
                 if stage != .uncover {
                     if let images=SourceW3Images568.pair {
@@ -224,6 +234,11 @@ struct W3StartupSplash568: View {
                     .allowsHitTesting(stage != .waiting)
             }
             .frame(width:geo.size.width,height:geo.size.height)
+            .background {
+                W3SafeAreaReader568(insets:$safeInsets)
+                    .frame(width:0,height:0)
+                    .allowsHitTesting(false)
+            }
             .contentShape(Rectangle())
             .onTapGesture {proceed()}
         }
