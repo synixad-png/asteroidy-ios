@@ -44,9 +44,18 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
     func makeUIView(context:Context) -> MTKView {
         let view=MTKView(frame:.zero,device:MTLCreateSystemDefaultDevice())
-        view.isOpaque=false
-        view.backgroundColor = .clear
-        view.clearColor=MTLClearColor(red:0,green:0,blue:0,alpha:0)
+        // Real source GpuSphere67.cs clears gameplay to an opaque scene.
+        // The diagnostic planet preview still needs its transparent layer.
+        // Do not blend the full-screen game drawable with the SwiftUI
+        // background: that forces unnecessary framebuffer composition.
+        let gameplay=gameSession != nil
+        view.isOpaque=gameplay
+        view.backgroundColor = gameplay
+            ? UIColor(red:0.008,green:0.014,blue:0.032,alpha:1)
+            : .clear
+        view.clearColor=gameplay
+            ? MTLClearColor(red:0.008,green:0.014,blue:0.032,alpha:1)
+            : MTLClearColor(red:0,green:0,blue:0,alpha:0)
         view.colorPixelFormat = .bgra8Unorm
         view.depthStencilPixelFormat = .depth32Float
         view.framebufferOnly=true
@@ -216,9 +225,11 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 spec.fragmentFunction=f
                 spec.colorAttachments[0].pixelFormat = .bgra8Unorm
                 spec.depthAttachmentPixelFormat = .depth32Float
-                spec.colorAttachments[0].isBlendingEnabled=true
-                spec.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
-                spec.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
+                // Original C279 vertex alpha is 1 for all 137067 points,
+                // base is JPEG (opaque), and original GpuSphere67.cs:420
+                // disables blending for the planet surface. Fragment shader
+                // produces alpha=1. This planet pass never needs blending.
+                spec.colorAttachments[0].isBlendingEnabled=false
                 pipeline=try device.makeRenderPipelineState(descriptor:spec)
                 // Exact GpuPlanet.cs Atmosphere47: source-alpha RGB,
                 // depth tested with writes disabled after the terrain pass.
@@ -635,7 +646,12 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 uniforms.lavaBoost287=lava287.intensity
                 encoder.setRenderPipelineState(pipeline)
                 encoder.setDepthStencilState(depth)
-                encoder.setCullMode(.none)
+                // Audited ORIGINAL C279: all 270249 triangles have outward
+                // CCW winding; no inverted faces. Original Windows source
+                // enables GL_CULL_FACE for the solid planet. Cull only
+                // the unseen back surface, restore .none for effects/actors.
+                encoder.setFrontFacing(.counterClockwise)
+                encoder.setCullMode(.back)
                 encoder.setVertexBuffer(vertexBuffer,offset:0,index:0)
                 encoder.setFragmentTexture(base,index:0)
                 encoder.setFragmentTexture(emissive,index:1)
@@ -654,6 +670,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 encoder.drawIndexedPrimitives(type:.triangle,indexCount:7035,
                     indexType:.uint32,indexBuffer:indexBuffer,
                     indexBufferOffset:803712*MemoryLayout<UInt32>.stride)
+                // Remaining original mixed-winding procedural meshes and
+                // camera-facing quads are independent of planet winding.
+                encoder.setCullMode(.none)
                 if planetFx568.glowEnabled {
                     let atmosphereModel:simd_float4x4
                     if let session=gameSession {
