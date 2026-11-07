@@ -114,6 +114,9 @@ final class OriginalAudioAV568: ObservableObject {
     // Original MusicAudio.cs: voice announcements interrupt one another.
     private var spokenVoices:[AVAudioPlayer]=[]
     private var musicDuck:Float=1
+    // Windows/src/BossTunnelGame.cs PausedFrom=Playing is independent
+    // of iOS background suspension. MusicAudio.cs ducks music to 55%.
+    private var missionUserPaused=false
     private var missionPhase:CarbonisCombat568.Phase = .playing
     private var masterMusicVolume:Float {
         Float(settings.musicPercent)/100*0.8*musicDuck
@@ -422,6 +425,7 @@ final class OriginalAudioAV568: ObservableObject {
         intro43Player=nil
         introMissionSector568=sector
         context = .mission(sector)
+        missionUserPaused=false
         missionPhase = .playing
         musicGate.setAllowed(false)
         previewStopped=false
@@ -466,6 +470,7 @@ final class OriginalAudioAV568: ObservableObject {
         intro43Player?.stop()
         intro43Player=nil
         introMissionSector568=nil
+        missionUserPaused=false
         musicGate.setAllowed(!suspended)
         previewStopped=false
         previewActive=false
@@ -481,6 +486,7 @@ final class OriginalAudioAV568: ObservableObject {
     }
     func enterMission(_ sector: Int) {
         guard (1...26).contains(sector) else { return }
+        missionUserPaused=false
         musicGate.setAllowed(false)
         previewStopped=false
         previewActive=false
@@ -492,10 +498,14 @@ final class OriginalAudioAV568: ObservableObject {
         // generation in the Metal render loop.
         engineLevel52=0.16
         if !suspended {
-            enginePlayback52.setPower(engineLevel52,
-                effectsVolume:Float(settings.effectsPercent)/100)
-            enginePlayback52.start()
-            playTrack(OriginalAudioCatalog568.missionTrack(sector))
+            // Keep session activation on the main thread BEFORE starting
+            // original DSP; never race two competing category changes.
+            if reactivateAudioSession568() {
+                enginePlayback52.setPower(engineLevel52,
+                    effectsVolume:Float(settings.effectsPercent)/100)
+                enginePlayback52.start()
+                playTrack(OriginalAudioCatalog568.missionTrack(sector))
+            }
         }
     }
     // MusicAudio.cs MusicMix.TrackFor: Victory and GameOver return
@@ -511,15 +521,18 @@ final class OriginalAudioAV568: ObservableObject {
         switch phase {
         case .playing:
             musicGate.setAllowed(false)
-            musicDuck=1
-            engineLevel52=0.16
-            if !suspended {
-                enginePlayback52.setPower(engineLevel52,
-                    effectsVolume:Float(settings.effectsPercent)/100)
-                enginePlayback52.start()
-                playTrack(OriginalAudioCatalog568.missionTrack(sector))
+            musicDuck=missionUserPaused ? 0.55 : 1
+            engineLevel52=missionUserPaused ? 0 : 0.16
+            if !suspended && !missionUserPaused {
+                if reactivateAudioSession568() {
+                    enginePlayback52.setPower(engineLevel52,
+                        effectsVolume:Float(settings.effectsPercent)/100)
+                    enginePlayback52.start()
+                    playTrack(OriginalAudioCatalog568.missionTrack(sector))
+                }
             }
         case .victory,.defeat:
+            missionUserPaused=false
             musicGate.setAllowed(!suspended)
             musicDuck = phase == .defeat ? 0.4 : 1
             engineLevel52=0
@@ -532,6 +545,7 @@ final class OriginalAudioAV568: ObservableObject {
         }
     }
     func stopForDiagnostic() {
+        missionUserPaused=false
         intro43Player?.stop()
         intro43Player=nil
         introMissionSector568=nil
@@ -577,16 +591,16 @@ final class OriginalAudioAV568: ObservableObject {
             if wasSuspended {
                 DispatchQueue.main.async { [weak self] in
                     guard let self, !self.suspended, self.audioInterrupted else {return}
-                    self.restoreAudioAfterActivation568()
+                    self.restoreAudioAfterActivation568(rebuildPlayer:true)
                 }
             }
         case .ended:
             audioInterrupted=false
-            if !suspended {restoreAudioAfterActivation568()}
+            if !suspended {restoreAudioAfterActivation568(rebuildPlayer:true)}
         @unknown default: break
         }
     }
-    private func restoreAudioAfterActivation568() {
+    private func restoreAudioAfterActivation568(rebuildPlayer:Bool=false) {
         guard !suspended, reactivateAudioSession568() else {return}
         if introMissionSector568 != nil {
             // Preserve the original Intro43 instead of starting menu/mission
@@ -605,7 +619,7 @@ final class OriginalAudioAV568: ObservableObject {
             }
             return
         }
-        if case .mission = context, missionPhase == .playing {
+        if case .mission = context, missionPhase == .playing && !missionUserPaused {
             enginePlayback52.setPower(engineLevel52,
                 effectsVolume:Float(settings.effectsPercent)/100)
             enginePlayback52.start()
@@ -613,6 +627,27 @@ final class OriginalAudioAV568: ObservableObject {
         // Never undo MusicLibrary STOP or a user-selected 0% volume.
         guard settings.musicPercent>0 else {return}
         if let current=music,let index=activeMusicIndex {
+            if rebuildPlayer,let file=urls[index] {
+                // AVAudioPlayer can report isPlaying=true while the old
+                // audio queue remains silent after an iPad lock. Only on a
+                // real OS reactivation or deliberate pause->resume, reopen
+                // the SAME cached source WAV at the current PCM time.
+                do {
+                    let replacement=try AVAudioPlayer(contentsOf:file)
+                    replacement.numberOfLoops = -1
+                    replacement.currentTime=max(0,current.currentTime)
+                    replacement.volume=masterMusicVolume
+                    replacement.prepareToPlay()
+                    if replacement.play() {
+                        current.stop()
+                        music=replacement
+                        prewarmedMusic[index]=replacement
+                        return
+                    }
+                } catch {
+                    sourceStatus="IOS AUDIO / WAV \(index): \(error.localizedDescription)"
+                }
+            }
             if current.isPlaying {return}
             if current.play() {return} // continue at the old PCM position
             // The AVAudioPlayer may have been invalidated by suspension.
@@ -637,7 +672,30 @@ final class OriginalAudioAV568: ObservableObject {
             }
         }
     }
+    /// Source Windows/src/BossTunnelGame.cs: Game.Pause/Resume.
+    /// Windows/src/MusicAudio.cs:79: music duck .55, engineLevel=0,
+    /// unchanged underlying mission track (PausedFrom=Mode.Playing).
+    func missionUserPause568(_ paused:Bool) {
+        guard case .mission = context, introMissionSector568 == nil,
+              missionPhase == .playing else {return}
+        missionUserPaused=paused
+        // Original MusicBank.AllowPreparation becomes true in Mode.Paused.
+        musicGate.setAllowed(paused && !suspended)
+        musicDuck=paused ? 0.55 : 1
+        if fadeTimer != nil {updateMusicFade()}
+        else {music?.volume=masterMusicVolume}
+        if paused {
+            engineLevel52=0
+            enginePlayback52.stop()
+        } else {
+            engineLevel52=0.16
+            // Deliberate PAUZA -> KONTYNUUJ also repairs players left
+            // silent by a previous iPad lock, without regenerating sound.
+            restoreAudioAfterActivation568(rebuildPlayer:true)
+        }
+    }
     func sceneIsActive(_ active: Bool) {
+        let wasSuspended=suspended
         suspended = !active
         switch context {
         case .mission:
@@ -655,18 +713,19 @@ final class OriginalAudioAV568: ObservableObject {
         } else {
             // Lock -> unlock: the app is foreground again, but AVAudioSession
             // may still be deactivated. Restore it BEFORE any player/engine.
-            restoreAudioAfterActivation568()
+            restoreAudioAfterActivation568(rebuildPlayer:wasSuspended)
         }
     }
     func sourceEnginePower(_ raw:Float) {
-        engineLevel52=max(0,min(1,raw))
+        engineLevel52=missionUserPaused ? 0 : max(0,min(1,raw))
         if case .mission = context, !suspended {
             enginePlayback52.setPower(engineLevel52,
                 effectsVolume:Float(settings.effectsPercent)/100)
         }
     }
     func sourceEffect(_ code: Int) {
-        guard !suspended, settings.effectsPercent>0 else { return }
+        guard !suspended, !missionUserPaused,
+              settings.effectsPercent>0 else { return }
         // MusicMix.AddEffect uses one voice event per volley and 16 slots.
         let variation = variant
         variant += 1

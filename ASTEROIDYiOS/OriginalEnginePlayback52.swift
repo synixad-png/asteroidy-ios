@@ -40,8 +40,10 @@ final class OriginalEnginePlayback52 {
                 self.audio.stop()
             }
             do {
-                try AVAudioSession.sharedInstance().setCategory(.ambient,mode:.default)
-                try AVAudioSession.sharedInstance().setActive(true)
+                // OriginalAudioAV568 owns activation of the shared iOS
+                // session before this serial DSP worker is restarted.
+                // Another setCategory/setActive here could race the mission
+                // AVAudioPlayer after unlocking the iPad.
                 try self.audio.start()
                 self.running=true
                 for _ in 0..<4 {self.schedule()}

@@ -33,6 +33,7 @@ on:
       - 'Tests/OriginalMusicSynth568Tests.swift'
       - 'Tests/OriginalMusicCombatPause568Contract.py'
       - 'Tests/IOSAudioLockResume568Contract.py'
+      - 'Tests/IOSSourceCombatPause568Contract.py'
       - 'ASTEROIDYiOS/OriginalMusicTransition568.swift'
       - 'Tests/OriginalMusicTransition568Tests.swift'
       - 'ASTEROIDYiOS/OriginalEngineDSP52.swift'
@@ -256,6 +257,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 Tests/IOSAudioLockResume568Contract.py
+          python3 Tests/IOSSourceCombatPause568Contract.py
           swiftc ASTEROIDYiOS/OriginalAudioLifecycle568.swift Tests/OriginalAudioLifecycle568Tests.swift -o /tmp/original-audio-v568
           /tmp/original-audio-v568
           swiftc -frontend -parse ASTEROIDYiOS/OriginalAudioAV568.swift
