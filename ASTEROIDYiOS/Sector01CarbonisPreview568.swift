@@ -255,9 +255,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     tint:SourcePlanetAtmosphere568.carbonisTint)
                 let halo=SourcePlanetAtmosphere568.glow(
                     tint:SourcePlanetAtmosphere568.carbonisTint)
-                planetAtmosphereCount=cap.count/
+                planetAtmosphereCount = cap.count /
                     SourcePlanetAtmosphere568.atmosphereVertexStride
-                planetGlowCount=halo.count/
+                planetGlowCount = halo.count /
                     SourcePlanetAtmosphere568.glowVertexStride
                 guard let capGPU=cap.withUnsafeBytes({ data in
                     data.baseAddress.flatMap {
