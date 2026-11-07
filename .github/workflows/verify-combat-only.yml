@@ -27,6 +27,11 @@ on:
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/MissionCatalog568.swift'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/SourceCombatSky568.swift'
+      - 'ASTEROIDYiOS/SourceCombatWreck214.swift'
+      - 'ASTEROIDYiOS/ResearchWreckGeometry214.swift'
+      - 'Tests/CombatOriginalSkyWreck214Contract.py'
+      - 'Tests/ResearchWreckGeometry214Tests.swift'
       - 'ASTEROIDYiOS/CarbonisMissionPlanet523.swift'
       - 'Tests/CarbonisMissionPlanet523Tests.swift'
       - 'ASTEROIDYiOS/Sector01Entry568.swift'
@@ -157,6 +162,12 @@ jobs:
         run: |
           set -euo pipefail
           python3 Tests/MissionIntro41SourceContract568.py
+      - name: Test original GpuSphere67 mission sky and ResearchWreck211 mesh
+        run: |
+          set -euo pipefail
+          python3 Tests/CombatOriginalSkyWreck214Contract.py
+          swiftc ASTEROIDYiOS/ResearchWreckGeometry214.swift Tests/ResearchWreckGeometry214Tests.swift -o /tmp/wreck211-mesh
+          /tmp/wreck211-mesh
       - name: Verify Swift compiler
         run: swift --version
       - name: Verify source STATEK v472 70–150% separate visual scales and unchanged combat physics
@@ -212,6 +223,9 @@ jobs:
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/MissionCinematic568.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisIntroPlanet568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourceCombatSky568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourceCombatWreck214.swift
+          swiftc -frontend -parse ASTEROIDYiOS/ResearchWreckGeometry214.swift
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
