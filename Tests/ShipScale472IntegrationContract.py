@@ -10,7 +10,8 @@ scale=read("ASTEROIDYiOS/SourceShipScale472.swift")
 for field in ("w3-ship-mission-scale-slider-472","w3-ship-orbit-scale-slider-472",
               "w3-ship-mission-scale-value-472","w3-ship-orbit-scale-value-472"):
     assert field in ui,("missing source ship UI",field)
-assert 'tabButton("STATEK",index:5)' in ui
+assert '"SZYBY","STATEK"' in ui and "case 13: shipSizePage" in ui
+assert 'case 13:return "w3-effects-tab-5"' in ui
 assert 'in:70...150,step:5' in ui and ui.count("in:70...150,step:5")==2
 assert "shipScale472.missionFactor" in main
 assert "Self.craftModel(session.game.flight) *" in main

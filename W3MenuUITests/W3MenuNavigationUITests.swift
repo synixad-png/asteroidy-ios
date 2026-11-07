@@ -54,22 +54,31 @@ final class W3MenuNavigationUITests: XCTestCase {
             XCTAssertTrue(back.waitForExistence(timeout: 15),
                           "W3 panel \(index) did not open")
             // Current source-locked atlas opens actual CARBONIS 01 gameplay.
-            if index==0 || index==2 {
-                XCTAssertTrue(
-                    app.staticTexts["ATLAS 26 SEKTORÓW — CARBONIS 01: WALKA, WYNIKI I SERWIS"]
-                        .waitForExistence(timeout: 8),
-                    "The source atlas must have the current playable CARBONIS title")
+            if index==0 {
+                XCTAssertTrue(app.otherElements["w3-new-game-source-panel"]
+                    .waitForExistence(timeout:8),
+                    "Source W3 new-game page must not be the old campaign modal")
+            }
+            if index==2 {
+                XCTAssertTrue(app.staticTexts["KAMPANIA / 26 SEKTORÓW"]
+                    .waitForExistence(timeout:8),
+                    "Source W3 campaign page must show the 26-sector atlas")
             }
             back.tap()
             XCTAssertTrue(button.waitForExistence(timeout: 10),
                           "Cannot navigate back to W3 menu from item \(index)")
             XCTAssertFalse(app.buttons["w3-panel-back"].exists,
-                           "Modal panel must be dismissed before next action")
+                           "W3 page must return to HOME before next action")
         }
     }
 
     func testDiagnosticSceneAndReturnToRealMenu() {
-        let app=launchW3()
+        let app=XCUIApplication()
+        app.launchEnvironment["ASTEROIDY_W3_MENU_VERIFY"]="1"
+        app.launchEnvironment["ASTEROIDY_DEBUG_MENU"]="1"
+        XCUIDevice.shared.orientation = .landscapeRight
+        app.launch()
+        _ = menuButton(app,index:0)
         let diagnostic=app.buttons["w3-open-diagnostic"]
         XCTAssertTrue(diagnostic.waitForExistence(timeout: 12))
         diagnostic.tap()

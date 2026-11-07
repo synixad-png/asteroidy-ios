@@ -31,8 +31,10 @@ check('Button(input.planetPreview ? "ARENA • DIAGNOSTYKA" : "BOREAS GLB • TE
       "The separate legacy flat diagnostic must still be reachable")
 check("input.planetPreview.toggle()" in app,
       "The source-scene/flat diagnostic switch was disconnected")
-check('Button("KAMPANIA")' in app and "CampaignAtlas556" in app,
-      "Existing separate campaign atlas must remain available")
+check('Button("KAMPANIA / W3")' in app and "CampaignAtlas556" in app,
+      "Existing source campaign atlas must remain accessible through W3")
+check("if showCampaign" not in app and ".ultraThinMaterial" not in app,
+      "Legacy standalone campaign overlay has been removed")
 check("input.planetTestLevel = 9" in app and
       "input.planetTestLevel = 17" in app and
       "input.planetTestLevel = 25" in app,

@@ -33,7 +33,8 @@ assert "showMainMenu = false" in app
 assert '"ASTEROIDY_RENDER_VERIFY"] != "1"' in app
 assert '"ASTEROIDY_SHIP367_VERIFY"] != "1"' in app
 assert "input.releaseHeldControls()" in app
-assert "input.gameplayPaused = visible || showCampaign || scenePhase != .active" in app
+assert "input.gameplayPaused = visible || scenePhase != .active" in app
+assert "if showCampaign" not in app
 assert "if showMainMenu {" in app
 assert app.index("if showMainMenu {")<app.index("MetalScene(input: input)")
 assert "CampaignAtlas556(progress:progress," in menu
@@ -187,7 +188,33 @@ assert "accessibilityAddTraits(.isButton)" in menu
 assert "accessibilityLabel(item.rawValue)" in menu
 assert "page=item" in menu and "page=nil" in menu
 assert "switch item" in menu
-assert "if item == .campaign || item == .newGame" in menu
+assert "else if item == .campaign {" in menu
+assert "else if item == .newGame {" in menu
+assert "newGamePage(compact:compact)" in menu
+assert "Color.black.opacity(0.86).ignoresSafeArea()" not in menu
+assert "ASTEROIDY_DEBUG_MENU" in menu
+assert 'Button("SCENA TESTOWA")' in menu
+assert 'Button("WSTECZ")' in menu
+assert 'if let shown=page {' in menu
+assert "17-category" in menu
+settings=(root/"ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift").read_text()
+tabs=[
+ "GRAFIKA","DŹWIĘK","STEROWANIE","ROZGRYWKA","INTERFEJS",
+ "DOSTĘPNOŚĆ","RĘKAWICE","PLANETY","BROŃ","HANGAR","GOLD MELTER",
+ "WYBUCHY 3D","SZYBY","STATEK","POSTPROCES","KOSMOS","POCISKI"]
+assert all('"'+t+'"' in settings for t in tabs)
+assert settings.index('"GRAFIKA"')<settings.index('"DŹWIĘK"')<settings.index('"PLANETY"')<settings.index('"STATEK"')<settings.index('"POCISKI"')
+assert "ScrollViewReader" in settings and "ScrollView(.vertical)" in settings
+assert "ScrollView(.horizontal,showsIndicators:false)" not in settings
+assert "case 11: explosionPage" in settings
+assert "case 16: projectilePage" in settings
+assert "case 1: OriginalAudioSettingsPanel568(compact:compact)" in settings
+assert "case 7: planetPage" in settings
+assert "case 13: shipSizePage" in settings
+assert "case 14: postprocessPage" in settings
+assert "unavailableSourceCategory" in settings
+assert "accessibilityIdentifier(\"w3-effects-tabs-524-285\")" in settings
+assert ".ultraThinMaterial" not in app
 print("PASS: 7 W3 native actions, 26-sector source selection and genuine C279 scene transition")
 print("PASS: simulator GPU verification opt-outs remain, diagnostics and collisions protected")
 print("LIMIT: actual iPhone/iPad seven-button XCTest and full PC W3 pixel parity are separately gated")

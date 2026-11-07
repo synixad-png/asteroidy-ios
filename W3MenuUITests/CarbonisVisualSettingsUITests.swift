@@ -9,9 +9,22 @@ final class CarbonisVisualSettingsUITests: XCTestCase {
         XCTAssertTrue(e.waitForExistence(timeout:15),"Original W3 control missing")
         let identified=app.scrollViews[scrollID]
         let scroll=identified.exists ? identified : app.scrollViews.firstMatch
-        for _ in 0..<9 {
+        let isCategory=e.identifier.hasPrefix("w3-effects-tab-")
+        let rail=app.scrollViews["w3-effects-tabs-524-285"]
+        for _ in 0..<12 {
             if e.isHittable {break}
-            if scroll.exists {scroll.swipeUp()}
+            if isCategory && rail.exists {
+                // Real W3 source order: AUDIO=1, PLANETY=7,
+                // EXPLOSIONS=11, STATEK=13, POCISKI=16.
+                if e.identifier=="w3-effects-tab-2"
+                   || e.identifier=="w3-effects-tab-3" {
+                    rail.swipeDown()
+                } else {
+                    rail.swipeUp()
+                }
+            } else if scroll.exists {
+                scroll.swipeUp()
+            }
         }
         if !e.isHittable {print("W3_FX_UI_TREE:\n",app.debugDescription)}
         XCTAssertTrue(e.isHittable,"Original W3 control is not touchable")
@@ -127,8 +140,8 @@ final class CarbonisVisualSettingsUITests: XCTestCase {
             let statek=app.buttons["w3-effects-tab-5"]
             XCTAssertTrue(statek.waitForExistence(timeout:10),
                           "Original source STATEK tab must exist")
-            for _ in 0..<5 where !statek.isHittable {
-                if strip.exists { strip.swipeLeft() }
+            for _ in 0..<12 where !statek.isHittable {
+                if strip.exists { strip.swipeUp() }
             }
             XCTAssertTrue(statek.isHittable,
                           "Original source STATEK tab must be touchable")
