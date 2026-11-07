@@ -638,8 +638,8 @@ final class OriginalAudioAV568: ObservableObject {
         // primes DSP buffers; defer this until the source song is started
         // to minimise the brief silence after unlocking the iPad.
         defer {
-            if case .mission = context, missionPhase == .playing &&
-                !missionUserPaused && introMissionSector568 == nil {
+            if case .mission = context, missionPhase == .playing && !missionUserPaused &&
+                introMissionSector568 == nil {
                 enginePlayback52.setPower(engineLevel52,
                     effectsVolume:Float(settings.effectsPercent)/100)
                 enginePlayback52.start()
