@@ -57,6 +57,10 @@ for token in (
 ):
     assert token in projectiles,token
 assert "ribbon(shot,tint:tint,width:" in projectiles  # reference legacy
+assert "into.append(p.x);into.append(p.y);into.append(p.z)" in projectiles
+assert "mesh.indices.append(first);mesh.indices.append(first+1)" in projectiles
+assert "mesh.indices.append(first+UInt32(i+1))" in projectiles
+assert "into.append(contentsOf:[" not in projectiles
 assert "indexedDisc(frame,inner:" in projectiles
 assert "indexedGroundDisc(frame," in projectiles
 assert "CarbonisProjectileFX69.indexedVertices(" in renderer
