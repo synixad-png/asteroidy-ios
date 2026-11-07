@@ -1078,6 +1078,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         time:session.game.elapsed,
                         camera:session.game.flight.camera,
                         vp:worldView,settings:visualSettings,
+                        aspect:aspect,
                         budget:fxBudget,into:encoder)
                 }
                 if let session=gameSession,let tracer=tracerPipeline,
