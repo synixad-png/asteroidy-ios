@@ -74,6 +74,7 @@ on:
       - 'Tests/FXCPUGeodesicSourceContract568.py'
       - 'ASTEROIDYiOS/CarbonisExplosion524Renderer.swift'
       - 'ASTEROIDYiOS/Sector01Explosion524.metal'
+      - 'Tests/Explosion524GpuAlgebraAndStaticMeshTests.py'
       - 'Tests/CarbonisDestruction524Tests.swift'
       - 'ASTEROIDYiOS/Sector01MissionSummary568.swift'
       - 'ASTEROIDYiOS/Sector01MissionSettlement568.swift'
@@ -170,6 +171,12 @@ jobs:
           python3 Tests/CombatOriginalSkyWreck214Contract.py
           swiftc ASTEROIDYiOS/ResearchWreckGeometry214.swift Tests/ResearchWreckGeometry214Tests.swift -o /tmp/wreck211-mesh
           /tmp/wreck211-mesh
+      - name: Verify source-exact Explosion524 static GPU geometry and precomputed GPU constants
+        run: |
+          set -euo pipefail
+          python3 Tests/Explosion524GpuAlgebraAndStaticMeshTests.py
+          python3 Tests/Explosion524ConservativePolygonTests.py
+          python3 Tests/Explosion524OptimizedRayBoundsTests.py
       - name: Verify Swift compiler
         run: swift --version
       - name: Verify source STATEK v472 70–150% separate visual scales and unchanged combat physics
