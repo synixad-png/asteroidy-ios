@@ -1,3 +1,13 @@
+## WYDANIE IPA — 07.11.2026: optymalizacja Explosion524 + lawa v287
+
+**Wersja:** zachowany numer bazowy v568, nowa rzeczywista kompilacja iPhone/iPad `7f82c7d2d95210f4a153694404bfb2f485c1edc6`. Zweryfikowany [GitHub Actions run 42355169830](https://github.com/synixad-png/asteroidy-ios/actions/runs/42355169830), trzy jobs **SUCCESS**, artefakt `13567093577` `ASTEROIDY-iOS-device-unsigned-ipa` dostępny w sekcji Artifacts (ZIP zawiera `ASTEROIDY_iOS_UNSIGNED.ipa`). Właściwy IPA: **28 275 180 bajtów / 28,28 MB**, SHA-256 `587e95a69df17d3f5d0c9337c1faa0cdc3244e8b932d22d91145a222661426fb`. Sprawdzono ZIP CRC, Mach-O ARM64, `UIDeviceFamily=[1,2]`, `com.synixad.asteroidyios`, zgodność z sumą SHA raportu, 0 nagrań `Music*.m4a`, oryginalna muzyka syntetyzowana podczas uruchomienia.
+
+**Otrzymane zmiany:** PR #1 optymalizacji wybuchów **MERGED do main**, source 17-lobe CPU precomputation i pomijanie próbek o zerowej nieprzezroczystości; źródłowa regulacja natężenia emisji lawy v287 0–400% / 5% / default 180%, podłączona do jednoprzejściowej tekstury CARBONIS469 i poświaty NewHome293, zakładka PLANETY; wcześniej wdrożone poświata i atmosfera oraz skala statku zachowane. Świetliki na nocnej półkuli **celowo niewdrożone**. Dalszy audyt w [Reports/V568_IOS_PLANET_FX_LAVA_AUDIT_2026-11-07.md](Reports/V568_IOS_PLANET_FX_LAVA_AUDIT_2026-11-07.md).
+
+**Ograniczenia:** Nie przeprowadzono porównawczego pomiaru FPS ani testu wyglądu na fizycznym iPhone/iPad, a opcje FERROFLUID (#85–87) oraz GLB PBR (#88–89) dotyczą nieprzeniesionych pełnych shaderów i scen, więc nie wstawiono nieaktywnych suwaków. IPA jest **niepodpisany**; instalacja wymaga podpisania. Nie podnoszono historycznego postępu 38% całego portu bez potwierdzenia brakujących scen.
+
+---
+
 ## ETAP — 07.11.2026: zweryfikowana optymalizacja wybuchów i autentyczna emisja lawy
 
 **Wykonano:** po [zielonym Metal/Xcode CI 42353888008](https://github.com/synixad-png/asteroidy-ios/actions/runs/42353888008) PR #1 optymalizacji Explosion524 włączono do main (bez usuwania efektów/odłamków). Na podstawie oryginalnego `Windows/src/GpuPlanet.cs:CarbonisCombined469`, `GpuNewHome290.cs`, `GpuToon60.cs` i `Menu139.cs #45` dodano regulowaną emisję lawy **0–400% krok 5, domyślnie 180%**, działającą na istniejącej źródłowej powierzchni CARBONIS C279 i poświacie NewHome290, bez nowych coplanarnych passów ani modyfikacji oryginalnych assetów. Nowy suwak jest w **USTAWIENIA > PLANETY** i zapisuje stan niezależnie od pozostałych opcji planet. Świetliki nie są wdrażane zgodnie z poleceniem użytkownika.
