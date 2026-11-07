@@ -1,3 +1,13 @@
+## ETAP — 07.11.2026: rozruch audio powodujący możliwe spadki FPS przy trafieniach
+
+**Nowa obserwacja użytkownika:** przy uruchomieniu iPada z ekranu głównego przez pierwsze 2–3 minuty trafienia obniżają FPS, a później przy identycznym strzelaniu i trafieniach stabilne 60 FPS. To wskazuje na konkurencyjne **prace w tle podczas zimnego startu**, nie udowadnia winy GPU ani wybuchów. Źródła potwierdziły, że po 2 utworach menu gra generuje w tle 13 oryginalnych utworów muzycznych 128 taktów × 44,1 kHz, obejmujących długie FFT/mastering/WAV. Dotąd przygotowanie korzystało z `qos:.userInitiated`, a blokada podczas misji sprawdzana była za rzadko.
+
+**Naprawa ograniczona do źródłowych modułów audio** `OriginalAudioAV568.swift` i `OriginalMusicSynth568.swift`: dwa oryginalne utwory menu zachowują szybkie przygotowanie `.userInitiated`, a pozostałe 13 pracuje w osobnej kolejce `.utility`. Dodano krótkie, bezpieczne checkpointy w syntezie/FFT/miksowaniu/masteringu i zapisie WAV, wykorzystujące istniejący `musicGate` podczas gry. **Nie zmieniono ani jednej formuły audio, próbek PCM, szybkostrzelności, wybuchów, kolizji, efektów, GPU ani konfiguracji iPada/iPhone'a.**
+
+**Dowody i zakres:** test porównuje WAV wygenerowany z checkpointem i bez niego **bajtowo**, zachowując 15 utworów, 128 taktów i 44,1 kHz. [Kontrola kodu audio na GitHub Actions #409](https://github.com/synixad-png/asteroidy-ios/actions/runs/42408520112): natywna kompilacja iOS Swift/Metal przeszła; pełne testy źródłowe są w toku. [Raport techniczny](Reports/V568_IOS_AUDIO_STARTUP_COMBAT_STUTTER_2026-11-07.md). Pozostaje potwierdzić pełne testy, build urządzeniowy IPA i **fizyczny pomiar pierwszych 2–3 minut** na iPadzie/iPhonie. Nie deklarować potwierdzonego zniknięcia spadków FPS bez testu na urządzeniu.
+
+**Harmonogram portu nadal ma dokładnie 18 zadań: 38% wykonane, 62% pozostało.**
+
 ## ETAP — 07.11.2026: konkretna optymalizacja SAMEGO STRZELANIA dla iPhone i iPad
 
 **Potwierdzony koszt źródłowy:** każdy aktywny pocisk w 120 Hz symulacji sprawdzał wszystkie skały/przeciwników, nawet geograficznie nieosiągalnych podczas danej klatki, z kosztownym `Sphere67.delta`. Niezależnie renderer wielokrotnie liczył sin/cos i pełne współrzędne geodezyjne dla pierścieni, smug i oświetlenia każdego strzału. Oba koszty istnieją nawet wtedy, gdy nie ma wybuchów.
