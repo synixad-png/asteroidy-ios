@@ -123,7 +123,7 @@ final class SourceCombatSky568 {
             SIMD4<Float>(2/(720*aspect),-2/720,0,0)
         )
         encoder.setDepthStencilState(skyDepthState)
-        let sourceCloudTexture=ensureCloudTextures55(camera:c)
+        let sourceCloudTexture=nebula ? ensureCloudTextures55(camera:c) : nil
         if let clouds=sourceCloudTexture {
             encoder.setRenderPipelineState(nebulaOverlayPipeline)
             encoder.setVertexBuffer(
@@ -160,7 +160,7 @@ final class SourceCombatSky568 {
             let y=(360-projected.screen.y)*2/720
             let frame=SIMD4<Float>(x,y,2/(720*aspect),-2/720)
             let layers=DeepSkyPlanets55.overlays(
-                style:style,scale:projected.scale,glow:true)
+                style:style,scale:projected.scale,glow:glow)
             var uniforms:[SIMD4<Float>]=[frame]
             uniforms.reserveCapacity(1+layers.count*3)
             for layer in layers {
@@ -193,7 +193,7 @@ final class SourceCombatSky568 {
             let screen=SIMD4<Float>(bx,by,2/(720*aspect),-2/720)
             let layers=BlackHoleSky55.overlays(
                 time:time,
-                scale:blackProjection.scale,glow:true)
+                scale:blackProjection.scale,glow:glow)
             var properties:[SIMD4<Float>]=[screen]
             properties.reserveCapacity(1+layers.count*3)
             for layer in layers {
@@ -252,7 +252,7 @@ final class SourceCombatSky568 {
         // GpuIntro41.cs:454: only draw solar effects when the source
         // 900-unit sky direction is in the original extended screen
         // bounds. SkyProject55 uses the camera rotation, NOT its eye.
-        if let sun=SphereSolarOverlay556.project(
+        if rays,let sun=SphereSolarOverlay556.project(
             camera:c) {
             let ndcX=(sun.x-640)*2/(720*aspect)
             let ndcY=(360-sun.y)*2/720
