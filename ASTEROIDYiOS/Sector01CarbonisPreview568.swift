@@ -101,8 +101,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let planetGlowBuffer:MTLBuffer
             private let planetAtmosphereCount:Int
             private let planetGlowCount:Int
-            private let visualSettings=CarbonisVisualSettings568.load()
-            private let fxBudget=CarbonisIOSFXBudget568.load()
+            private var visualSettings=CarbonisVisualSettings568.load()
+            private var fxBudget=CarbonisIOSFXBudget568.load()
+            private var nextVisualReload:TimeInterval=0
             private let lava287=SourceLavaLightSettings287.load()
             private let planetFx568=SourcePlanetGraphicsSettings568.load()
             private let shipScale472=SourceShipScale472.load()
@@ -587,13 +588,26 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
 
             func mtkView(_ view:MTKView,drawableSizeWillChange size:CGSize) {}
             func draw(in view:MTKView) {
+                let entered=ProcessInfo.processInfo.systemUptime
                 guard let drawable=view.currentDrawable,
                       let pass=view.currentRenderPassDescriptor,
                       let command=queue.makeCommandBuffer(),
                       let encoder=command.makeRenderCommandEncoder(descriptor:pass)
                 else {return}
                 fxStream568.beginFrame()
-                let now=ProcessInfo.processInfo.systemUptime
+                let acquired=ProcessInfo.processInfo.systemUptime
+                let waitMs=(acquired-entered)*1000
+                let now=acquired
+                if gameSession != nil && now>=nextVisualReload {
+                    // One-shot snapshots previously made all effects
+                    // sliders inert until a UIViewRepresentable rebuild.
+                    // Reading UserDefaults 4x/s applies changes to the
+                    // same live renderer without reloading 3D assets.
+                    visualSettings=CarbonisVisualSettings568.load()
+                    fxBudget=CarbonisIOSFXBudget568.load()
+                    nextVisualReload=now+0.25
+                }
+                let physicsStart=ProcessInfo.processInfo.systemUptime
                 if let session=gameSession {
                     session.frame(at:now)
                     activeRocks=session.game.rocks
@@ -602,6 +616,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     for index in activeRocks.indices {activeRocks[index].advance(dt:dt)}
                 }
                 previousRockFrame=now
+                let simulationMs=(ProcessInfo.processInfo.systemUptime-physicsStart)*1000
                 let t=Float(now-started)
                 var model=matrix_identity_float4x4
                 if gameSession == nil {
@@ -965,6 +980,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     }
                 }
                 if gameSession != nil {
+                    SourcePerformance568.shared.recordCPU(
+                        workMs:(ProcessInfo.processInfo.systemUptime-acquired)*1000,
+                        simulationMs:simulationMs,waitMs:waitMs)
                     SourcePerformance568.shared.watch(command)
                 }
                 fxStream568.completeFrame(command)
