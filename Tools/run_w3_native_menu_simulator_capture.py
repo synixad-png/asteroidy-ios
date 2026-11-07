@@ -71,7 +71,26 @@ def capture(app,reports,kind):
                               reports/f"{kind}_launch.txt",env=env)
         if PACKAGE not in launched:
             raise AppValidationFailed("Native W3 app did not launch")
-        time.sleep(5)
+        # The real OriginalAudioAV568 synthesizes and verifies two
+        # entire PCM menu pieces before SwiftUI mounts W3MainMenu568.
+        # A fixed 5-second delay is invalid (false negative on iPad).
+        # Wait for the *app-written* SwiftUI view-appearance marker; this
+        # does not fake a view, bypass audio or inject a screenshot.
+        # Use a bounded deadline and fail closed if W3 never appears.
+        started=time.monotonic()
+        deadline=started+240
+        while not proof.is_file() and time.monotonic()<deadline:
+            time.sleep(3)
+        elapsed=round(time.monotonic()-started,1)
+        (reports/f"{kind}_source_music_to_W3_wait.txt").write_text(
+            f"elapsed={elapsed}s; swiftuiProofExists={proof.is_file()}\\n",
+            encoding="utf-8")
+        if not proof.is_file():
+            raise AppValidationFailed(
+                f"Source music preparation did not reach W3 SwiftUI within {elapsed}s")
+        # The marker proves SwiftUI appeared, but the planet's Metal
+        # command buffer still needs its separate source GPU proof below.
+        time.sleep(1)
         run_command(["xcrun","simctl","io",udid,"screenshot",
                      "--type=png",str(candidate)],55,
                     reports/f"{kind}_screenshot.txt")

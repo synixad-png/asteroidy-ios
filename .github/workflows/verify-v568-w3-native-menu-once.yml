@@ -49,6 +49,7 @@ jobs:
           mkdir -p reports
           python3 Tests/V568W3NativeMenuContract.py | tee reports/w3-source-contract.txt
           python3 -m py_compile Tools/run_w3_native_menu_simulator_capture.py
+          python3 Tests/V568W3SimulatorAudioWaitContract.py
           python3 -m py_compile Tools/convert_v568_w3_home_planet290.py Tools/prepare_v568_w3_home_planet290.py
           python3 Tests/V568W3HomePlanet290Tests.py | tee reports/w3-NewHome290-source-planet.txt
           python3 Tests/V568W3HomeShipSourceContract.py | tee reports/w3-source-vanguard-ship.txt
