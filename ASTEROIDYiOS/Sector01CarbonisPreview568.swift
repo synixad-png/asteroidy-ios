@@ -91,6 +91,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             // GpuSphere67.SphereScene67 calls IntroSky FIRST, before
             // DrawPlanetSolid. Same original source renderer on iOS.
             private let sourceSky568:SourceCombatSky568?
+            private let sourceWreck214:SourceCombatWreck214?
             private let rockFallbackPipeline:MTLRenderPipelineState
             private var rockBuffers: [Int:MTLBuffer] = [:]
             private var activeRocks: [SphereAsteroid556]
@@ -201,6 +202,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 // has NO sky. Only real playable CARBONIS combat gets it.
                 sourceSky568=try gameSession != nil
                     ? SourceCombatSky568(device:device) : nil
+                sourceWreck214=try gameSession != nil
+                    ? SourceCombatWreck214(device:device,sector:1) : nil
                 guard let q=device.makeCommandQueue() else {throw SourceError.metal}
                 queue=q
                 let vertices=try Self.verified("Sector01CarbonisVertices.bin")
@@ -844,6 +847,21 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     encoder.drawPrimitives(type:.triangle,vertexStart:0,
                         vertexCount:planetAtmosphereCount)
                     encoder.setDepthStencilState(depth)
+                }
+
+                // Windows GpuSphere67.cs:420: AFTER atmosphere and
+                // BEFORE ground effects/rocks/ship, original detailed
+                // station wreck is anchored 900 units along the ringed
+                // sky-planet vector with camera right/up offsets 80/52.
+                // The "drift" is camera-relative exactly as in source,
+                // not a newly invented independent NPC or flying ship.
+                if let session=gameSession,let cameraMatrix=vp {
+                    sourceWreck214?.draw(encoder:encoder,
+                        camera:session.game.flight.camera,
+                        vp:cameraMatrix,time:session.game.elapsed,
+                        sourceSun:SIMD4<Float>(
+                            sourceSun.0,sourceSun.1,
+                            sourceSun.2,sourceSun.3))
                 }
 
                 // Original GpuSphere67.DrawProjectileGroundLights170:
