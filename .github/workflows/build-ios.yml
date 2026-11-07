@@ -8,6 +8,10 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/build-ios.yml'
+      - 'ASTEROIDYiOS/W3StartupSplash568.swift'
+      - 'ASTEROIDYiOS/W3StartupPolicy568.swift'
+      - 'Tests/W3StartupPolicy568Tests.swift'
+      - 'Tests/W3StartupContract568.py'
 
 jobs:
   verify-new-game-source:
