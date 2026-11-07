@@ -21,7 +21,7 @@ struct CarbonisExplosion524Uniforms {
 struct CarbonisExplosion524Lobe {
     float4 directionFire;  // xyz direction, w thermal amplitude
     float4 centerRadius;   // xyz time-dependent center, w lobe radius
-    float4 smokePhase;     // x smoke, y phase, z/w inverse radius² factors
+    float4 smokeShape;     // x smoke, y phase, z/w inverse radius² factors
 };
 struct CarbonisExplosion524Raster {
     float4 position [[position]];
@@ -85,7 +85,7 @@ inline float3 explosionField524(float3 p,float age,
         if(i>=u.lobeCount)break;
         float4 df=lobes[i].directionFire;
         float4 cr=lobes[i].centerRadius;
-        float4 sp=lobes[i].smokePhase;
+        float4 sp=lobes[i].smokeShape;
         float3 d=df.xyz;
         float3 c=cr.xyz;
         // Original divide-by-radius² values are supplied once per
