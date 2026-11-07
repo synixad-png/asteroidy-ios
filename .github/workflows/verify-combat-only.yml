@@ -2,7 +2,7 @@ name: ASTEROIDY iOS - Swift combat tests ONLY (no IPA)
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, feature/iphone15-pro-max-19p5-fullscreen-safe-layout-20261107]
     paths:
       - '.github/workflows/verify-combat-only.yml'
       - 'ASTEROIDYiOS/CombatVerifiedEncounter556.swift'
@@ -13,6 +13,12 @@ on:
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/CarbonisIntroPlanet568.swift'
       - 'ASTEROIDYiOS/MissionCinematic568.swift'
+      - 'ASTEROIDYiOS/W3AdaptiveViewport568.swift'
+      - 'ASTEROIDYiOS/W3SafeAreaReader568.swift'
+      - 'ASTEROIDYiOS/W3StartupSplash568.swift'
+      - 'Tests/W3AdaptiveViewport568Tests.swift'
+      - 'Tests/W3AdaptiveViewportContract568.py'
+      - 'Tests/MissionViewportFraming568Tests.swift'
       - 'Tests/MissionIntro41SourceContract568.py'
       - 'ASTEROIDYiOS/OriginalAudioLifecycle568.swift'
       - 'ASTEROIDYiOS/OriginalAudioAV568.swift'
@@ -177,6 +183,18 @@ jobs:
           python3 Tests/Explosion524GpuAlgebraAndStaticMeshTests.py
           python3 Tests/Explosion524ConservativePolygonTests.py
           python3 Tests/Explosion524OptimizedRayBoundsTests.py
+      - name: Verify original iPad 4:3 and iPhone 15 Pro Max 19.5:9 responsive native layout
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/W3AdaptiveViewport568.swift Tests/W3AdaptiveViewport568Tests.swift -o /tmp/w3-iphone15-layout
+          /tmp/w3-iphone15-layout
+          swiftc ASTEROIDYiOS/MissionViewportFraming568.swift Tests/MissionViewportFraming568Tests.swift -o /tmp/w3-iphone15-projection
+          /tmp/w3-iphone15-projection
+          python3 Tests/W3AdaptiveViewportContract568.py
+          swiftc -frontend -parse ASTEROIDYiOS/W3SafeAreaReader568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3StartupSplash568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/MissionCinematic568.swift
       - name: Verify Swift compiler
         run: swift --version
       - name: Verify source STATEK v472 70–150% separate visual scales and unchanged combat physics
