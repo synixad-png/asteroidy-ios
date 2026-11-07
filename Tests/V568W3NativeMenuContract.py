@@ -202,8 +202,9 @@ tabs=[
  "GRAFIKA","DŹWIĘK","STEROWANIE","ROZGRYWKA","INTERFEJS",
  "DOSTĘPNOŚĆ","RĘKAWICE","PLANETY","BROŃ","HANGAR","GOLD MELTER",
  "WYBUCHY 3D","SZYBY","STATEK","POSTPROCES","KOSMOS","POCISKI"]
-assert all('"'+t+'"' in settings for t in tabs)
-assert settings.index('"GRAFIKA"')<settings.index('"DŹWIĘK"')<settings.index('"PLANETY"')<settings.index('"STATEK"')<settings.index('"POCISKI"')
+source_categories=re.search(r'private let sourceTabs139=\\[(.*?)\\]',settings,re.S)
+assert source_categories is not None, "Source W3 17-category array missing"
+assert re.findall(r'"([^"]+)"',source_categories.group(1))==tabs, "Windows Menu139.cs category order changed"
 assert "ScrollViewReader" in settings and "ScrollView(.vertical)" in settings
 assert "ScrollView(.horizontal,showsIndicators:false)" not in settings
 assert "case 11: explosionPage" in settings
