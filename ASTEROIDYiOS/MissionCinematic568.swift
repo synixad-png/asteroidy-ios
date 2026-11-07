@@ -10,7 +10,8 @@ struct MissionCinematic568:View {
     let onComplete:()->Void
     let onCancel:()->Void
     @State private var committed=false
-    @State private var skipping=false
+    @FocusState private var keyboardFocused:Bool
+    @StateObject private var pad=W3StartupGamepad568()
 
     private var progress:Float {
         min(1,max(0,input.introProgress41/IntroOrbit41.duration))
@@ -27,7 +28,6 @@ struct MissionCinematic568:View {
         // Windows Program.cs gamepad skip after 0.6 seconds. Touch
         // behaves as the original A/Enter action, never as a fire button.
         guard input.introProgress41>=0.6, !committed else {return}
-        skipping=true
         finish()
     }
     var body:some View {
@@ -150,10 +150,21 @@ struct MissionCinematic568:View {
             }
             .frame(width:geo.size.width,height:geo.size.height)
         }
+        .focusable(true)
+        .focused($keyboardFocused)
+        // Windows Program.cs Enter skips Intro without changing campaign.
+        .onKeyPress(.return) {finish();return .handled}
+        .onKeyPress(.space) {finish();return .handled}
+        .onAppear {
+            keyboardFocused=true
+            // Original gamepad A / Start: ignore premature presses < 0.6s.
+            pad.start(onConfirm:skip)
+        }
         .onChange(of:input.introProgress41) { value in
             if value>=IntroOrbit41.duration-0.00001 {finish()}
         }
         .onDisappear {
+            pad.stop()
             input.gameplayPaused=true
             input.releaseHeldControls()
         }
