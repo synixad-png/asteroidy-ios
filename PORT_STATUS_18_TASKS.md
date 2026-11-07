@@ -1,3 +1,11 @@
+## ETAP — 07.11.2026: preloading geometrii asteroid bez chwilowego generowania podczas trafień
+
+**Wdrożono po audycie źródeł i testach:** inicjalizator renderera misji CARBONIS przygotowuje wszystkie **80** osiągalnych oryginalnych wariantów StoneSubdivide56/RockVertices75 (8 ziaren × 5 poziomów × 2 stany fragmentacji) przed pierwszą klatką misji; podczas podziału i trafienia nie powinien już tworzyć brakujących oryginalnych `MTLBuffer`. Menu W3 zachowuje lżejsze przygotowanie początkowych skał, bez zmiany wzorów geometrii i fizyki. Pełne źródłowe testy obu uruchomień PR **2/2 PASS**, w tym wszystkie 80 wariantów i natywny Swift/Metal. [PR #2](https://github.com/synixad-png/asteroidy-ios/pull/2) scalono jako `a92df9ee`. [Raport techniczny](Reports/V568_IOS_ROCK_GEOMETRY_COLD_START_PRELOAD_2026-11-07.md).
+
+**Weryfikacja wydania:** [IPA #138](https://github.com/synixad-png/asteroidy-ios/actions/runs/42411007709) i [testy główne #413](https://github.com/synixad-png/asteroidy-ios/actions/runs/42411007705) zostały uruchomione; należy sprawdzić ich końcowy wynik. Nadal nie zmierzono faktycznego FPS ani dodatkowego czasu inicjalizacji na fizycznym iPadzie/iPhonie. Nie deklarować usunięcia przycinki bez testu. Poprawka audio z IPA #137 zachowana.
+
+**Stałe 18 zadań portu: 38% wykonane / 62% pozostało.**
+
 ## ETAP — 07.11.2026: rozruch audio powodujący możliwe spadki FPS przy trafieniach
 
 **Nowa obserwacja użytkownika:** przy uruchomieniu iPada z ekranu głównego przez pierwsze 2–3 minuty trafienia obniżają FPS, a później przy identycznym strzelaniu i trafieniach stabilne 60 FPS. To wskazuje na konkurencyjne **prace w tle podczas zimnego startu**, nie udowadnia winy GPU ani wybuchów. Źródła potwierdziły, że po 2 utworach menu gra generuje w tle 13 oryginalnych utworów muzycznych 128 taktów × 44,1 kHz, obejmujących długie FFT/mastering/WAV. Dotąd przygotowanie korzystało z `qos:.userInitiated`, a blokada podczas misji sprawdzana była za rzadko.
