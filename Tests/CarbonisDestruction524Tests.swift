@@ -47,6 +47,15 @@ import Foundation
             check(!mesh.isEmpty && mesh.count%12==0 &&
                   mesh.allSatisfy{$0.isFinite},
                   "source particles and 35 explosion shards have valid 3D mesh")
+            let cheapMesh=CarbonisExplosion524Meshes.vertices(
+                state,time:0.3,camera:SphereCamera67(at:center),
+                budget:.reducedDefault)
+            check(!cheapMesh.isEmpty && cheapMesh.count < mesh.count &&
+                  cheapMesh.allSatisfy{$0.isFinite},
+                  "iOS economy renders fewer cosmetic shards, same source event")
+            check(state.explosions.count==1 &&
+                  state.particles.count==count,
+                  "GPU-only reduced mode never modifies original destruction state")
             state.tick(dt:0.95)
             check(state.particles.isEmpty &&
                   state.lights.allSatisfy({$0.life==0}),

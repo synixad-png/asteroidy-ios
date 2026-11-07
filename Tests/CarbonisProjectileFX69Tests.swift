@@ -46,6 +46,11 @@ import Foundation
         let shotSaved=1-Double(indexedShots.transferBytes)/Double(oldShotBytes)
         check(shotSaved>0.40 && shotSaved<0.68,
               "indexing saves real Metal upload bytes without dropping a single triangle")
+        let cheapShots=CarbonisProjectileFX69.indexedVertices(
+            shots,camera:camera,drawableHeight:720,
+            glow:CarbonisIOSFXBudget568.reducedDefault.drawBulletGlow)
+        check(cheapShots.indexCount < indexedShots.indexCount,
+              "iOS lightweight removes outer halo while keeping bullets")
         let noGlow=CarbonisProjectileFX69.vertices(
             shots,camera:camera,drawableHeight:720,glow:false)
         check(noGlow.count < colorMesh.count && !noGlow.isEmpty,
@@ -57,6 +62,11 @@ import Foundation
               "each player and enemy projectile casts four real radial sphere lights")
         let indexedGround=CarbonisProjectileFX69.indexedGroundLights(
             shots,settings:profile)
+        let cheapLights=CarbonisProjectileFX69.indexedGroundLights(
+            shots,settings:profile,budget:.reducedDefault)
+        check(cheapLights.indexCount < indexedGround.indexCount/5 &&
+              !cheapLights.vertices.isEmpty,
+              "iOS lightweight keeps one 12-slice light fan vs four source layers")
         let expandedGround=indexedGround.expandedTriangles()
         check(expandedGround.count==originalGround.count,
               "four source radial ground light fans are still fully present")
