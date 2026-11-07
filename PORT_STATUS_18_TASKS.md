@@ -1,3 +1,11 @@
+## ETAP — 07.11.2026: autentyczny Intro41 przed CARBONIS 01 (misja i retry)
+
+**Wykonano:** natywne 16-sekundowe `Intro41` przed wejściem do grywalnej CARBONIS 01 z W3 NOWA GRA i z atlasu, a także przed powtórzeniem nieudanej misji. Oryginalna kamera/820 asteroid/Vanguard431/plazma491/atmosfera47 z `GpuIntro41.cs`, poziom 1 ma teraz **rzeczywistą planetę C279 z źródłowych assetów**, a nie stary GLB Boreas poziomu 5. Ekran przelotu W3 v319, prawdziwy plik `Intro43.m4a` i obsługa dotyku/Enter/Space/pada A/Start. Fizyczna pętla walki nie działa podczas przelotu; zachowano ekran wyników, zapis oraz mechanizm niewypłacania ponownych nagród.
+
+**Źródła i raport:** [oryginalny kod oraz ograniczenia](Reports/V568_IOS_INTRO41_PRZELOT_PRZED_KAZDA_MISJA_2026-11-07.md), realny commit portu [ca4014ea](https://github.com/synixad-png/asteroidy-ios/commit/ca4014ea9067ecc87c5e3c8200f71097a0facecb). Kontrakt `Tests/MissionIntro41SourceContract568.py` zabezpiecza połączenie. Dotychczasowe regresje Boreas oraz sterowania touch uzupełniono tak, by nie blokowały legalnej osobnej ścieżki CARBONIS. **Natywne Apple ARM64 i IPA oceniać tylko na podstawie najnowszego GitHub Actions**; test fizycznego iPhona/iPada, porównanie obrazu i 25 dalszych misji nieukończone.
+
+**Nie zmieniono ustalonej listy 18 zadań i procentów:** 38% całego portu zrobione / 62% pozostało. Zadanie 14 MENU W3/ustawienia nadal 26%; nowa sekwencja jest szczegółowym podzakresem oryginalnej integracji scen.
+
 ## ETAP — 07.11.2026: source instancing asteroid Metal (FPS CARBONIS)
 
 **Wykonano w aktualnym kodzie iOS:** usunięto odrębne wywołanie renderowania dla każdej widocznej asteroidy w CARBONIS na rzecz jednego `drawPrimitives(instanceCount:)` na grupę źródłowych siatek o tym samym shape, zgodnie z podejściem oryginalnego `GpuRockInstancing75`. Zachowano indywidualne macierze MVP/model, oryginalne kolory, pasma toon/rim, obrót, siatki 960-wierzchołkowe i SourceVisibleSurface73. Bufory instancji chroni 3-klatkowa pula Metal; przy niepowodzeniu alokacji zachowana jest pierwotna ścieżka rysowania. Kod gry, fizyka, wybuchy i suwaki W3 nietknięte.
