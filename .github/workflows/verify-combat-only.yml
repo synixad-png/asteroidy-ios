@@ -2,7 +2,7 @@ name: ASTEROIDY iOS - Swift combat tests ONLY (no IPA)
 on:
   workflow_dispatch:
   push:
-    branches: [main, feature/source-shot-collision-render-fps-20261107]
+    branches: [main]
     paths:
       - '.github/workflows/verify-combat-only.yml'
       - 'ASTEROIDYiOS/CombatVerifiedEncounter556.swift'
