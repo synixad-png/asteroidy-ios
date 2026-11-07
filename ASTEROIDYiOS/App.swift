@@ -32,6 +32,9 @@ final class FlightInput: ObservableObject {
     @Published var introPreview41 =
         ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] != "1"
     @Published var introProgress41: Float = 0
+    // 0: diagnostics (Boreas); 1: genuine playable CARBONIS mission
+    // uses the source C279 globe throughout the original Intro41.
+    @Published var missionIntroSector = 0
     // Source-defined diagnostic cases: ordinary rocks (1), timed waves
     // (9/17) and AmigaOnly266 perpetual bouncing balls (25).
     // This is NOT a mission/campaign unlock selector.
@@ -69,13 +72,49 @@ final class FlightInput: ObservableObject {
 struct GameView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var input = FlightInput()
+    @StateObject private var missionIntroInput568 = FlightInput()
     @StateObject private var audio = OriginalAudioAV568()
     @State private var campaign = CampaignStore556.load()
     // Native CARBONIS first mission runs an original source-driven state,
     // isolated from Boreas diagnostic scenes and unported later sectors.
     @State private var sourceSector01: Sector01Entry568?
     @State private var sourceSector01Setup: Sector01PreparedWave568?
+    @State private var showingMissionIntro568 = false
     @State private var reopenAtlasAfterCarbonis = false
+
+    private func beginMissionIntro568(sector:Int) {
+        // Only launch after original mission assets, shop and Wave()
+        // preparation succeeded. Intro does not advance Physics68.
+        missionIntroInput568.releaseHeldControls()
+        missionIntroInput568.rendererError=nil
+        missionIntroInput568.introProgress41=0
+        missionIntroInput568.missionIntroSector=sector
+        missionIntroInput568.introPreview41=true
+        missionIntroInput568.gameplayPaused=scenePhase != .active
+        showingMissionIntro568=true
+        audio.beginMissionIntro568(sector:sector)
+    }
+
+    private func finishMissionIntro568(sector:Int) {
+        guard showingMissionIntro568,
+              sourceSector01?.sector == sector else {return}
+        showingMissionIntro568=false
+        missionIntroInput568.gameplayPaused=true
+        audio.finishMissionIntro568(sector:sector)
+        // Only now is Sector01Scene568 constructed; its real combat
+        // simulation and 120Hz timer have NOT been running during Intro41.
+    }
+    private func cancelMissionIntro568() {
+        showingMissionIntro568=false
+        missionIntroInput568.gameplayPaused=true
+        sourceSector01=nil
+        sourceSector01Setup=nil
+        reopenAtlasAfterCarbonis=true
+        audio.returnToMenu()
+        input.releaseHeldControls()
+        showMainMenu=true
+    }
+
 
     private func inspectSourceSector(_ sector: Int) {
         guard let entry=Sector01Entry568.open(
@@ -99,7 +138,7 @@ struct GameView: View {
         reopenAtlasAfterCarbonis = false
         sourceSector01Setup = preparedWave
         sourceSector01 = entry
-        audio.enterMission(sector)
+        beginMissionIntro568(sector:sector)
         showMainMenu = true
     }
 
@@ -128,7 +167,7 @@ struct GameView: View {
         reopenAtlasAfterCarbonis=false
         sourceSector01Setup=prepared
         sourceSector01=entry
-        audio.enterMission(1)
+        beginMissionIntro568(sector:1)
         showMainMenu=true
         return true
     }
@@ -147,6 +186,13 @@ struct GameView: View {
             ZStack {
                 if let sourceEntry=sourceSector01,
                    let preparedWave=sourceSector01Setup {
+                    if showingMissionIntro568 {
+                        MissionCinematic568(sector:sourceEntry.sector,
+                                           input:missionIntroInput568,
+                                           onComplete:{
+                            finishMissionIntro568(sector:sourceEntry.sector)
+                        },onCancel:cancelMissionIntro568)
+                    } else {
                     Sector01Scene568(entry:sourceEntry,returnToAtlas:{
                         sourceSector01 = nil
                         sourceSector01Setup = nil
@@ -174,6 +220,7 @@ struct GameView: View {
                     },onReplay:{
                         audio.missionPhase568(.playing)
                     },preparedWave:preparedWave)
+                    }
                 } else if showMainMenu {
                     if !audio.startupComplete {
                         OriginalAudioLoadingView568(audio:audio)
@@ -415,7 +462,12 @@ struct GameView: View {
         .onChange(of: scenePhase) { phase in
             audio.sceneIsActive(phase == .active)
             input.gameplayPaused = phase != .active || showMainMenu
-            if phase != .active { input.releaseHeldControls() }
+            missionIntroInput568.gameplayPaused =
+                phase != .active || !showingMissionIntro568
+            if phase != .active {
+                input.releaseHeldControls()
+                missionIntroInput568.releaseHeldControls()
+            }
         }
         .onChange(of: showMainMenu) { visible in
             input.gameplayPaused = visible || scenePhase != .active
