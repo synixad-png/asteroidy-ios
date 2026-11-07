@@ -94,6 +94,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let planetGlowCount:Int
             private let visualSettings=CarbonisVisualSettings568.load()
             private let planetFx568=SourcePlanetGraphicsSettings568.load()
+            private let shipScale472=SourceShipScale472.load()
             private let missionTerrainScale523:Float
             private let vertexBuffer:MTLBuffer
             private let indexBuffer:MTLBuffer
@@ -255,9 +256,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     tint:SourcePlanetAtmosphere568.carbonisTint)
                 let halo=SourcePlanetAtmosphere568.glow(
                     tint:SourcePlanetAtmosphere568.carbonisTint)
-                planetAtmosphereCount=cap.count/
+                planetAtmosphereCount = cap.count /
                     SourcePlanetAtmosphere568.atmosphereVertexStride
-                planetGlowCount=halo.count/
+                planetGlowCount = halo.count /
                     SourcePlanetAtmosphere568.glowVertexStride
                 guard let capGPU=cap.withUnsafeBytes({ data in
                     data.baseAddress.flatMap {
@@ -602,7 +603,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 // PlanetScreen draws the additive ring BEFORE terrain,
                 // while sphere combat draws only its 3D atmosphere cap.
                 if gameSession == nil && planetFx568.glowEnabled {
-                    let sourceRadius:Float=1/missionTerrainScale523
+                    let sourceRadius:Float = 1 / missionTerrainScale523
                     var haloCenterScale=SIMD4<Float>(
                         0,0,sourceRadius/(1.42*max(0.35,aspect)),
                         sourceRadius/1.42)
@@ -655,7 +656,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     } else {
                         var origin=matrix_identity_float4x4
                         origin.columns.3.z = -5
-                        let sourceRadius:Float=1/missionTerrainScale523
+                        let sourceRadius:Float = 1 / missionTerrainScale523
                         atmosphereModel=origin*simd_float4x4(
                             diagonal:SIMD4<Float>(
                                 sourceRadius,sourceRadius,sourceRadius,1))
@@ -780,7 +781,13 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                    let texture=craftTexture,
                    let fighterPipeline=craftPipeline,
                    let worldView=vp {
-                    let shipMatrix=Self.craftModel(session.game.flight)
+                    // Windows/src/GpuSphere67.cs CraftSphere67 applies the
+                    // visual MissionShipScale472 AFTER source StampSphere67.
+                    // Reuse this very same model for exhaust sockets 491,
+                    // without touching collision size or geodesic movement.
+                    let pct=shipScale472.missionFactor
+                    let shipMatrix=Self.craftModel(session.game.flight) *
+                        simd_float4x4(diagonal:SIMD4<Float>(pct,pct,pct,1))
                     uniforms=Uniforms(mvp:worldView*shipMatrix,
                                       model:shipMatrix,material:2,glow:0)
                     encoder.setRenderPipelineState(fighterPipeline)

@@ -115,4 +115,43 @@ final class CarbonisVisualSettingsUITests: XCTestCase {
               scrollID:"w3-effects-scroll")
         XCTAssertTrue(app.buttons["w3-home-4"].waitForExistence(timeout:10))
     }
+    /// Original Menu139 STATEK #100/#101: separate 70..150% visual scales.
+    /// Both values must persist across a real iOS process restart.
+    func testSourceShipMissionAndOrbitScalesPersist() {
+        let app=XCUIApplication()
+        app.launchEnvironment["ASTEROIDY_W3_MENU_VERIFY"]="1"
+        XCUIDevice.shared.orientation = .landscapeRight
+        func openShipTab() {
+            enterSettings(app)
+            let strip=app.scrollViews["w3-effects-tabs-524-285"]
+            let statek=app.buttons["w3-effects-tab-5"]
+            XCTAssertTrue(statek.waitForExistence(timeout:10),
+                          "Original source STATEK tab must exist")
+            for _ in 0..<5 where !statek.isHittable {
+                if strip.exists { strip.swipeLeft() }
+            }
+            XCTAssertTrue(statek.isHittable,
+                          "Original source STATEK tab must be touchable")
+            statek.tap()
+            XCTAssertTrue(app.sliders["w3-ship-mission-scale-slider-472"]
+                .waitForExistence(timeout:10))
+        }
+        app.launch()
+        openShipTab()
+        let mission=app.sliders["w3-ship-mission-scale-slider-472"]
+        let orbit=app.sliders["w3-ship-orbit-scale-slider-472"]
+        XCTAssertTrue(orbit.waitForExistence(timeout:10))
+        mission.adjust(toNormalizedSliderPosition:0)
+        orbit.adjust(toNormalizedSliderPosition:1)
+        XCTAssertEqual(app.staticTexts["w3-ship-mission-scale-value-472"].label,"70%")
+        XCTAssertEqual(app.staticTexts["w3-ship-orbit-scale-value-472"].label,"150%")
+        touch(app.buttons["w3-panel-back"],app:app,
+              scrollID:"w3-effects-scroll")
+        app.terminate()
+        app.launch()
+        openShipTab()
+        XCTAssertEqual(app.staticTexts["w3-ship-mission-scale-value-472"].label,"70%")
+        XCTAssertEqual(app.staticTexts["w3-ship-orbit-scale-value-472"].label,"150%")
+    }
+
 }
