@@ -1,3 +1,13 @@
+## ETAP — 07.11.2026: źródłowa pauza w misji i poprawka audio po blokadzie iPada (IPA #140)
+
+**Nowe zgłoszenie urządzeniowe:** IPA #139 nadal odzyskiwało audio jedynie sporadycznie w menu, a w misjach dźwięk nie wracał. Poprawa samej reaktywacji `AVAudioSession` nie wystarczyła. W oryginalnej paczce PC **v568** sprawdzono `BossTunnelGame.cs`, `Game.cs`, `RendererW3Pause317.cs` i `MusicAudio.cs`: prawdziwa pauza zatrzymuje `Game.Step` oraz silnik, zachowuje utwór ściszony do 55%, ekran W3 ma `KONTYNUUJ` i `WYJDŹ DO MENU`.
+
+**Wdrożono w iOS:** w misji CARBONIS pojawił się przycisk `PAUZA` i działający ekran `KONTYNUUJ / WYJDŹ DO MENU`; wstrzymuje prawdziwy zegar `CarbonisSession568.frame(at:)` oraz neutralizuje dotyk, bez zmian fizyki, geometrii czy strzelania. Dodatkowo po rzeczywistym iOS lock/unlock i po ręcznym wznowieniu aplikacja ponownie otwiera **ten sam oryginalny, uprzednio wygenerowany WAV z bieżącej pozycji**, także gdy poprzedni `AVAudioPlayer.isPlaying` daje fałszywy sygnał; usunięto wyścig konfiguracji sesji między workerem silnika a odtwarzaczem muzyki. Oryginalne 43 SFX/voice/intro, 15 utworów, DSP, ustawienia, źródłowe input iPad/iPhone zachowane.
+
+**Sprawdzenie:** [PR #4](https://github.com/synixad-png/asteroidy-ios/pull/4) scalony jako `634da7b62`, [CI #419](https://github.com/synixad-png/asteroidy-ios/actions/runs/42416411451) **2/2 PASS**, [CI główne #421](https://github.com/synixad-png/asteroidy-ios/actions/runs/42416753068) **3/3 PASS** i [IPA #140](https://github.com/synixad-png/asteroidy-ios/actions/runs/42416753095) **4/4 PASS**, Xcode `BUILD SUCCEEDED`, iOS ARM64, pakiet CRC/Info.plist/iPhone+iPad/iOS17+ PASS. [**Pobierz IPA #140**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42416753095/artifacts/13592246637), ZIP artefaktu 28 025 256 B, SHA256 zewnętrznego ZIP `a64aa584ba35b52f6458b34cf0a25080d00385160540ae34171bafbee98a2025`. [Raport techniczny](Reports/V568_IOS_SOURCE_PAUSE_AUDIO_RECOVERY_2026-11-07.md). **Nie przeprowadzono fizycznego testu lock/unlock iPada, odsłuchu, dotyku ani FPS**; nie deklarować faktycznego ustąpienia usterki bez weryfikacji.
+
+**Stały harmonogram portu nadal ma 18 zadań: 38% wykonane, 62% pozostało.** Ta naprawa jakości nie oznacza ukończenia dalszych sektorów.
+
 ## ETAP — 07.11.2026: naprawa zanikającego dźwięku po blokadzie ekranu iPada
 
 **Zgłoszenie użytkownika:** dźwięk jest słyszalny podczas gry, ale po wygaszeniu i odblokowaniu iPada nie wraca. Usterka występowała już przed IPA #138 — **nie wynika z optymalizacji asteroid**. W oryginalnym kodzie iOS `sceneIsActive(true)` wznawiało odtwarzacze bez uprzedniego przywrócenia zdezaktywowanej sesji `AVAudioSession`.
