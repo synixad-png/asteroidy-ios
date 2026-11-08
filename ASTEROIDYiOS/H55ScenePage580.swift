@@ -40,7 +40,8 @@ import simd
 
     func jump() {
         guard !conversationOpen && arrival.walking else{return}
-        _=movement.jump()
+        guard let physical else{return}
+        _=movement.jump(collision:physical)
     }
     func setMove(forward:Float,right:Float) {
         moveForward=max(-1,min(1,forward))
@@ -88,13 +89,19 @@ import simd
         if arriving && !arrival.arriving {arriving=false}
         guard arrival.walking && !conversationOpen,let physical else{return}
         movement.step(dt:dt,forward:moveForward,right:moveRight,
-            sprint:false,
-            bodyClear:{x,y,z in physical.bodyClear379(x,feet:y,z)},
-            support:{x,z,feet in
-                physical.support(x,z,low:feet-H55Walk580.stepDown-0.05,
-                                 high:feet+H55Walk580.stepUp+0.05)
-            })
-        camera?.position=SCNVector3(movement.x,movement.y+H55Walk580.eyes,movement.z)
+            sprint:false,collision:physical)
+        // PC v580 GpuHub90: bob is visual only; physical capsule Y is untouched.
+        // Original HangarBob400 default=50%, render sway at actual footfall.
+        let bobPower:Float=0.5*movement.bobAmount
+        let phase=movement.bobPhase
+        let sway=sin(phase)*0.042*bobPower
+        let bounce=sin(phase*2)*0.052*bobPower
+        let cy=cos(movement.yaw),sy=sin(movement.yaw)
+        camera?.position=SCNVector3(movement.x+cy*sway,
+                movement.cameraFeet+H55Walk580.eyes+bounce,
+                movement.z+sy*sway)
+        let roll=(sin(phase)*0.0085+movement.lean*0.006)*bobPower
+        camera?.eulerAngles=SCNVector3(-movement.pitch,movement.yaw,roll)
         mechanic.step(dt:dt,playerX:movement.x,playerZ:movement.z,
             canWalk:{x,z in
                 guard let floor=physical.support(x,z,low:-0.25,high:0.45)
@@ -218,7 +225,7 @@ import simd
         var spawn=H55Walk580()
         spawn.x=candidate.x
         spawn.z=candidate.z
-        spawn.y=candidate.feet
+        spawn.placeAtSpawn(feet:candidate.feet)
         self.physical=physical
         arrival=H55Arrival580(spawnClear:true)
         arriving=true
