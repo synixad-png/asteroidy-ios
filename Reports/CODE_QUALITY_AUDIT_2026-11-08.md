@@ -125,3 +125,18 @@ Do wspólnego zapisu podłączono również źródłowy podgląd statku `W3HomeS
 
 `OriginalRenderProofWriter568` jest odtąd wspólnym mechanizmem atomowego zapisu diagnostyki renderowania, przy zachowaniu `ASTEROIDY_W3_MENU_VERIFY`, nazwy każdego pliku i oryginalnych pól JSON. Komunikaty błędów opisują teraz dokładnie zapis diagnostyczny, a nie zawsze GPU. Żadna z tych ścieżek nie wykonuje zapisu w zwykłej pętli rysowania każdej klatki.
 
+
+---
+
+## 10. Ochrona słowników trafień przed wymuszonym odczytem (08.11.2026)
+
+W przeglądzie źródeł wykryto dwa miejsca, w których po posortowaniu kluczy słownika wykonywano wymuszony odczyt `[index]!`:
+
+- `GameCore.swift` — sumowanie trafień w treningowym, płaskim modelu.
+- `SphereSector556.swift` — grupowanie trafień w sferycznej fizyce, z oddzielną ścieżką `AmigaBounce265`.
+
+Zmieniono **wyłącznie odczyt** na `guard let ... else { continue }`, pozostawiając dotychczasowe sortowanie malejące, liczbę i agregację trafień, kolejność usuwania i rozpadania asteroid oraz oddzielne zasady dema Amiga. Nie dodano nowej reprezentacji danych, kopiowania słowników, opóźnień, zapisów ani alokacji GPU. Dwa wymuszone odwołania zostały usunięte z kodu. Każdy indeks pochodzi z kluczy własnego słownika, więc ścieżka `continue` jest zabezpieczeniem na wypadek niespodziewanej niezgodności, a nie nowym wariantem mechaniki.
+
+`Tests/SafeDamageDictionary556Contract.py` wymaga niezmienionej kolejności indeksów i agregacji trafień. W CI uruchamiany jest dodatkowo rzeczywisty `GameCoreTests.swift` (3120 kroków); pozostają testy `SphereSector556Tests.swift`, `SphereCombatBatch556Tests.swift` oraz pełna matryca Physics68/Damage556. Nie należy przedstawiać testu statycznego jako pomiaru FPS ani wnioskować z niego o działaniu na fizycznym iPhonie.
+
+**Nadal wymagane:** indywidualny przegląd pozostałych wymuszonych odwołań w shader pipeline descriptors i generatorze muzyki. Nie wolno mechanicznie usuwać gwarantowanych niezmienników słowników źródłowego DSP ani przenosić nowych zabezpieczeń do gorącej ścieżki bez rzeczywistej potrzeby.
