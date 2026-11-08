@@ -104,11 +104,11 @@ struct Sector01MissionHUD568: View {
                                                 width:6,height:6)),
                          with:.color(.green))
             for p in hud.hazards {plot(p,color:.orange,diameter:3,
-                                       center:center,radius:radius,context:&context)}
+                                       center:center,radius:radius,context:context)}
             for p in hud.tokenPickups {plot(p,color:.yellow,diameter:5,
-                                            center:center,radius:radius,context:&context)}
+                                            center:center,radius:radius,context:context)}
             for p in hud.targets {plot(p,color:.red,diameter:6,
-                                       center:center,radius:radius,context:&context)}
+                                       center:center,radius:radius,context:context)}
         }
         .frame(width:compact ? 106:156,height:compact ? 106:156)
         .background(panel.opacity(0.89),in:RoundedRectangle(cornerRadius:9))
@@ -119,7 +119,7 @@ struct Sector01MissionHUD568: View {
     }
 
     private func plot(_ point:Vec2,color:Color,diameter:CGFloat,
-                      center:CGPoint,radius:CGFloat,context:inout GraphicsContext) {
+                      center:CGPoint,radius:CGFloat,context:GraphicsContext) {
         // Same 400-unit range as the previous live radar; no fake targets.
         let x=center.x+CGFloat(point.x/400)*radius
         let y=center.y+CGFloat(point.y/400)*radius
