@@ -322,6 +322,7 @@ struct H55ScenePage580: View {
     @StateObject private var loader=H55SceneModel580()
     @State private var choosingFile=false
     @State private var pickedClip=""
+    @State private var lookLast:CGSize = .zero
     @State private var importError:String?
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     var body:some View {
@@ -349,7 +350,71 @@ struct H55ScenePage580: View {
                               options:[.rendersContinuously])
                         .accessibilityIdentifier("h55-v580-native-scenekit")
                     VStack {
-                        Spacer()
+                        Spacer(minLength:0)
+                        if loader.conversationOpen {
+                            VStack(spacing:8) {
+                                Text("MECHANIK")
+                                    .font(.system(size:13,weight:.bold,design:.monospaced))
+                                    .foregroundStyle(gold)
+                                Text("WSZYSTKO W PORZĄDKU.")
+                                    .font(.system(size:12,design:.monospaced))
+                                Button("ZAKOŃCZ ROZMOWĘ") {loader.interact()}
+                                    .accessibilityIdentifier("h55-v580-npc-end-dialogue")
+                            }
+                            .padding(15)
+                            .background(Color.black.opacity(0.87))
+                            .accessibilityIdentifier("h55-v580-npc-dialogue")
+                        }
+                        HStack(spacing:10) {
+                            Text("LOT / RUCH")
+                                .font(.system(size:10,weight:.bold,design:.monospaced))
+                            Spacer()
+                            Button(loader.mechanicNearby ? "ROZMAWIAJ" : "MECHANIK 2,7 m") {
+                                loader.interact()
+                            }
+                            .disabled(!loader.mechanicNearby && !loader.conversationOpen)
+                            .accessibilityIdentifier("h55-v580-npc-interact")
+                        }
+                        .padding(.horizontal,12)
+                        .foregroundStyle(gold)
+                        HStack(spacing:5) {
+                            Rectangle().fill(Color.white.opacity(0.035))
+                                .overlay(alignment:.bottomLeading) {
+                                    Text("LEWA · CHODZENIE")
+                                        .font(.system(size:9,design:.monospaced))
+                                        .foregroundStyle(gold)
+                                        .padding(8)
+                                }
+                                .contentShape(Rectangle())
+                                .gesture(DragGesture(minimumDistance:0)
+                                    .onChanged{value in
+                                        let right=Float(value.translation.width/90)
+                                        let forward=Float(-value.translation.height/90)
+                                        loader.setMove(forward:forward,right:right)
+                                    }
+                                    .onEnded{_ in
+                                        loader.setMove(forward:0,right:0)
+                                    })
+                                .accessibilityIdentifier("h55-v580-left-walk")
+                            Rectangle().fill(Color.white.opacity(0.035))
+                                .overlay(alignment:.bottomTrailing) {
+                                    Text("PRAWA · ROZGLĄDANIE")
+                                        .font(.system(size:9,design:.monospaced))
+                                        .foregroundStyle(gold)
+                                        .padding(8)
+                                }
+                                .contentShape(Rectangle())
+                                .gesture(DragGesture(minimumDistance:0)
+                                    .onChanged{value in
+                                        let deltaX=Float(value.translation.width-lookLast.width)
+                                        let deltaY=Float(value.translation.height-lookLast.height)
+                                        loader.look(dx:deltaX,dy:deltaY)
+                                        lookLast=value.translation
+                                    }
+                                    .onEnded{_ in lookLast = .zero})
+                                .accessibilityIdentifier("h55-v580-right-look")
+                        }
+                        .frame(height:105)
                         HStack(spacing:8) {
                             Text("H55 · MODELE \(loader.inventory?.meshes ?? 0) · ANIMACJE \(loader.animationNames.count)")
                                 .font(.system(size:10,design:.monospaced))
