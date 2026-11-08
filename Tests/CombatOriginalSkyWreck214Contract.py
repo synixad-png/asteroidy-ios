@@ -8,6 +8,7 @@ root=Path(__file__).resolve().parents[1]
 def read(p):return (root/p).read_text(encoding='utf-8')
 sector=read("ASTEROIDYiOS/Sector01CarbonisPreview568.swift")
 sky=read("ASTEROIDYiOS/SourceCombatSky568.swift")
+shared=read("ASTEROIDYiOS/SourceSkyAssetFactory568.swift")
 wreck=read("ASTEROIDYiOS/SourceCombatWreck214.swift")
 geometry=read("ASTEROIDYiOS/ResearchWreckGeometry214.swift")
 shader=read("ASTEROIDYiOS/Sector01Carbonis568.metal")
@@ -46,7 +47,8 @@ assert 'let c=camera' in sky
 assert 'let basis=SphereCameraView556(camera:camera)' in sky
 assert 'let sourceCloudTexture=nebula ? ensureCloudTextures55(camera:c)' in sky
 assert 'glow:glow' in sky
-assert 'SphereSky207.count*2' in sky
+assert 'SourceSkyAssetFactory568.sphereSky207()' in sky
+assert 'SphereSky207.count*2' in shared
 assert 'SphereNebula556.orbitLayerCount*6' in sky
 assert 'style:0,base:SphereVector3(x:0.94,y:0.02,z:-0.34)' in intro
 assert 'style:1,base:SphereVector3(x:0.18,y:-0.62,z:-0.76)' in intro
