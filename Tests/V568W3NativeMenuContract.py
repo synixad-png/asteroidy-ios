@@ -199,7 +199,13 @@ assert not any(x in area for x in (
 
 assert "Brak zweryfikowanego oryginalnego modelu planety" in menu
 assert "W3HomeShipPreview568()" in menu
-assert 'hangar_h55.glb' in menu
+# v580: HANGAR is a real SceneKit/GLB destination, not the former
+# inert W3 message. The same verified source file name now belongs to
+# the isolated hangar asset loader.
+assert 'H55ScenePage580(dismiss:{navigateW3(nil)})' in menu
+assert 'hangar_h55.glb' in (root/"ASTEROIDYiOS/H55Asset580.swift").read_text()
+assert 'GpuHangar91' not in (root/"ASTEROIDYiOS/H55ScenePage580.swift").read_text()
+assert 'GpuHangar99' not in (root/"ASTEROIDYiOS/H55ScenePage580.swift").read_text()
 assert 'Wczytanie rzeczywistego zapisu' in menu
 # Navigation is fully handled in one native SwiftUI view, without
 # silently connecting unavailable menu actions to test gameplay.
