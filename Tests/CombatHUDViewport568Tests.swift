@@ -36,8 +36,7 @@ import Foundation
         check(near(ipad.originY(for:.bottomLeft),
                    ipad.originY(for:.bottomRight)),
               "lower corners have same bottom baseline")
-        check(ipad.originY(for:.bottomLeft)-
-              ipad.originY(for:.topLeft)>120,
+        check(ipad.originY(for:.bottomLeft)- ipad.originY(for:.topLeft)>120,
               "top and bottom MUST NOT share one origin")
         check(ipad.x(91,at:.bottomLeft)>0 &&
               ipad.x(1220,at:.bottomRight)<1024,
@@ -47,10 +46,8 @@ import Foundation
         // must remain correct without checking hardware model names.
         let screenshot=CombatHUDViewport568(width:1408,height:1056,
             safeTop:30,safeBottom:24)
-        check(screenshot.y(612,at:.bottomLeft)>
-              screenshot.height*0.82,"screenshot radar lower than before")
-        check(screenshot.y(17,at:.topLeft)<
-              screenshot.height*0.07,"screenshot top HUD near top")
+        check(screenshot.y(612,at:.bottomLeft)> screenshot.height*0.82,"screenshot radar lower than before")
+        check(screenshot.y(17,at:.topLeft)< screenshot.height*0.07,"screenshot top HUD near top")
 
         // iPhone 15 Pro Max landscape 932x430pt (19.5:9),
         // safe-area cutouts on BOTH sides; no invisible 16:9 side bands.
@@ -64,8 +61,7 @@ import Foundation
               "right header clear of rounded corner")
         check(phone.x(1220,at:.bottomRight)>800,
               "equipment must use full wide phone screen")
-        check(phone.x(1220,at:.bottomRight)>
-              phone.x(1220,at:.bottomLeft)+30,
+        check(phone.x(1220,at:.bottomRight)> phone.x(1220,at:.bottomLeft)+30,
               "right equipment independently anchored")
         check(phone.y(17,at:.topRight)<25,
               "wide iPhone top bar genuinely at top")
@@ -82,11 +78,9 @@ import Foundation
         // x,y, shape, sizes and relative distances, only anchors change.
         let source=CombatHUDViewport568(width:1280,height:720)
         check(near(source.scale,1),"original PC source scale")
-        check(near(source.y(661,at:.bottomLeft)-
-                   source.y(565,at:.bottomLeft),96),
+        check(near(source.y(661,at:.bottomLeft)- source.y(565,at:.bottomLeft),96),
               "original 3 gauge vertical spacing stays exact")
-        check(near(source.x(1220,at:.bottomRight)-
-                   source.x(920,at:.bottomRight),300),
+        check(near(source.x(1220,at:.bottomRight)- source.x(920,at:.bottomRight),300),
               "original 4 equipment horizontal spacing stays exact")
 
         let safe=CombatHUDViewport568(width:932,height:430,
