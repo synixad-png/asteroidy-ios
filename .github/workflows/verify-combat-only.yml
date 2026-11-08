@@ -14,6 +14,9 @@ on:
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'Tests/V568W3NativeMenuContract.py'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
+      - 'ASTEROIDYiOS/SourceSkyPremultipliedBlend.swift'
+      - 'Tests/SourceMetalBlendSafetyContract.py'
+      - 'Tests/SourceSkyPremultipliedBlendTests.swift'
       - 'ASTEROIDYiOS/SourceCombatSky568.swift'
       - 'ASTEROIDYiOS/SourceSkyAssetFactory568.swift'
       - 'ASTEROIDYiOS/OriginalRenderProofWriter568.swift'
@@ -248,6 +251,7 @@ jobs:
           python3 Tests/CarbonisSourceBufferProof568Contract.py
           python3 Tests/SourceGPUProofWriter568Contract.py
           python3 Tests/SourceSkyAssetFactory568Contract.py
+          python3 Tests/SourceMetalBlendSafetyContract.py
           python3 Tests/SourceSkyUniformPackingContract.py
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/DeepSkyPlanets55.swift ASTEROIDYiOS/BlackHoleSky55.swift ASTEROIDYiOS/SourceSkyUniformPacking.swift Tests/SourceSkyUniformPackingTests.swift -o /tmp/source-sky-uniforms
           /tmp/source-sky-uniforms
@@ -547,6 +551,11 @@ jobs:
         run: python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets
       - name: Stage exact indexed CARBONIS sector01 preview and three source texture maps
         run: python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Validate original PArgb sky mixing against actual Apple Metal descriptors
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourceSkyPremultipliedBlend.swift Tests/SourceSkyPremultipliedBlendTests.swift -o /tmp/asteroidy-metal-blend-test
+          /tmp/asteroidy-metal-blend-test
       - name: Generate native Xcode project from verified project.yml
         run: xcodegen generate
       - name: Typecheck and compile all native iOS Swift/Metal sources (unsigned, NO IPA)
