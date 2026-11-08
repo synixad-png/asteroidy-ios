@@ -98,9 +98,16 @@ hole=renderer.index("if let blackProjection=BlackHoleSky55.project")
 near=renderer.index("vertexStart:24*6,vertexCount:12*6")
 ck(far<planets<hole<near,
    "Original source painter order 24 far clouds→planets0,1,2→blackhole→12 near")
-ck("blackBlend.sourceRGBBlendFactor = .one" in renderer and
-   "blackBlend.destinationRGBBlendFactor = .oneMinusSourceAlpha" in renderer,
-   "Source PArgb blending removed")
+blend=(ROOT/"ASTEROIDYiOS"/"SourceSkyPremultipliedBlend.swift").read_text()
+ck("try SourceSkyPremultipliedBlend.configure(blackDesc)" in renderer and
+   all(factor in blend for factor in (
+       "attachment.isBlendingEnabled=true",
+       "attachment.sourceRGBBlendFactor = .one",
+       "attachment.destinationRGBBlendFactor = .oneMinusSourceAlpha",
+       "attachment.sourceAlphaBlendFactor = .one",
+       "attachment.destinationAlphaBlendFactor = .oneMinusSourceAlpha",
+   )),
+   "Source PArgb blending removed or changed")
 print("PASS: GpuIntro41 source 3x320x220 planet themes & real RGB formulas,")
 print("      3 AnimatedSkyDirection profiles, glow→textured quad order,")
 print("      one 3-slice array, individual visible-style uploads, reused Metal quad")

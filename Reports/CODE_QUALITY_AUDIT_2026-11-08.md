@@ -140,3 +140,19 @@ Zmieniono **wyłącznie odczyt** na `guard let ... else { continue }`, pozostawi
 `Tests/SafeDamageDictionary556Contract.py` wymaga niezmienionej kolejności indeksów i agregacji trafień. W CI uruchamiany jest dodatkowo rzeczywisty `GameCoreTests.swift` (3120 kroków); pozostają testy `SphereSector556Tests.swift`, `SphereCombatBatch556Tests.swift` oraz pełna matryca Physics68/Damage556. Nie należy przedstawiać testu statycznego jako pomiaru FPS ani wnioskować z niego o działaniu na fizycznym iPhonie.
 
 **Nadal wymagane:** indywidualny przegląd pozostałych wymuszonych odwołań w shader pipeline descriptors i generatorze muzyki. Nie wolno mechanicznie usuwać gwarantowanych niezmienników słowników źródłowego DSP ani przenosić nowych zabezpieczeń do gorącej ścieżki bez rzeczywistej potrzeby.
+
+---
+
+## 11. Bezpieczne konfiguracje mieszania Metal — kolejny etap (08.11.2026)
+
+Zweryfikowano faktyczne źródła `MetalRenderer.swift`, `SourceCombatSky568.swift` i `Sector01CarbonisPreview568.swift`: znajdowało się w nich **9 wymuszonych odczytów `colorAttachments[0]!`** przy konstruowaniu konfiguracji shaderów. Dostęp do kolorowego załącznika MTLRenderPipelineDescriptor odbywa się teraz przez `guard let` z rzeczywistym wyjątkiem, bez cichego fallbacku lub tworzenia alternatywnego pipeline'u.
+
+**Wspólny kod:** konfiguracje premultiplied alpha dla `solarDescriptor`, `nebulaDescriptor`, `blackDesc` i oryginalnego `SourceCombatSky568.pipeline` miały te same cztery współczynniki źródłowe: RGB/alpha `ONE / ONE_MINUS_SRC_ALPHA`. Zamiast ich czterech kopii istnieje `SourceSkyPremultipliedBlend.configure`, wywoływana jedynie przy tworzeniu GPU pipeline'ów, nigdy w pętli klatek. W dalszym ciągu **każda scena ma własne obiekty pipeline i GPU**, bez aliasowania buforów i bez zmiany ich życia.
+
+**Świadomie oddzielne:** pipeline gwiazd `skyDescriptor` zachowuje jawne operacje `ADD`, atmosfera `SRC_ALPHA/ONE_MINUS_SRC_ALPHA`, płomień statku `SRC_ALPHA/ONE`, atmosfera CARBONIS `SRC_ALPHA/ONE_MINUS_SRC_ALPHA`, poświata CARBONIS `ONE/ONE`. Nie podmieniono tych konfiguracji na jedno arbitralne ustawienie.
+
+**Testy:** `SourceMetalBlendSafetyContract.py` zabezpiecza wszystkie dziewięć usuniętych wymuszonych odwołań, dokładne współczynniki shaderów i ich podłączenie. `SourceSkyPremultipliedBlendTests.swift` sprawdza realne deskryptory z Apple Metal na runnerze macOS, nie na atrapie, przed kompilacją całej aplikacji. Ponadto testy oryginalnych rayów, mgławic, planet i poświaty muszą nadal przejść.
+
+**Uwaga bezpieczeństwa deskryptorów:** poza usunięciem samych `!`, przeniesiono także przypisanie `pixelFormat = .bgra8Unorm` ZA `guard let`, żeby nie wykonywać niezabezpieczonego dostępu przed kontrolą. W czterech źródłowych pipeline'ach nieba robi to wspólny helper; pozostałe pięć zachowuje własne oryginalne ustawienia i jawnie zgłasza błąd. `SourceMetalBlendSafetyContract.py` sprawdza kolejność tych operacji, a macOS test potwierdza BGRA8 na rzeczywistym deskryptorze Apple Metal.
+
+**Niepotwierdzone:** brak fizycznego testu renderingowego iPhone/iPad po tej zmianie; nie udowodniono wzrostu FPS ani pikselowej identyczności obrazu. Źródłowe wzory kolorów, shadery, geometrię, kolejność draw i dane audio pozostawiono bez zmian.

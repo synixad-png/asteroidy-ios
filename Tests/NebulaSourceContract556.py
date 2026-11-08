@@ -10,7 +10,18 @@ r=Path(__file__).resolve().parents[1]
 model=(r/"ASTEROIDYiOS/Sphere67.swift").read_text()
 render=(r/"ASTEROIDYiOS/MetalRenderer.swift").read_text()
 factory=(r/"ASTEROIDYiOS/SourceSkyAssetFactory568.swift").read_text()
+blend=(r/"ASTEROIDYiOS/SourceSkyPremultipliedBlend.swift").read_text()
 shader=(r/"ASTEROIDYiOS/Ship.metal").read_text()
+for factor in (
+    "attachment.pixelFormat = .bgra8Unorm",
+    "attachment.isBlendingEnabled=true",
+    "attachment.sourceRGBBlendFactor = .one",
+    "attachment.destinationRGBBlendFactor = .oneMinusSourceAlpha",
+    "attachment.sourceAlphaBlendFactor = .one",
+    "attachment.destinationAlphaBlendFactor = .oneMinusSourceAlpha",
+):
+    assert factor in blend, "Original GpuIntro41 source PArgb blend changed: "+factor
+
 def check(c,message):
     if not c:
         raise AssertionError(message)
@@ -41,9 +52,8 @@ for t in (
     "private var nebulaTexture: MTLTexture?",
     "let nebulaVertex=try requireShader(\"nebulaOverlayVertex\")",
     "let nebulaFragment=try requireShader(\"nebulaOverlayFragment\")",
-    "nebulaDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm",
-    "nebulaBlend.sourceRGBBlendFactor = .one",
-    "nebulaBlend.destinationRGBBlendFactor = .oneMinusSourceAlpha",
+    "nebulaDescriptor.depthAttachmentPixelFormat = .depth32Float",
+    "try SourceSkyPremultipliedBlend.configure(nebulaDescriptor)",
     "nebulaOverlayPipeline=try device.makeRenderPipelineState(",
     "let cloudData=SourceSkyAssetFactory568.nebulaSource556()",
     "nebulaOverlayMesh=try Self.makeMesh(device,cloudData.0,cloudData.1)",
