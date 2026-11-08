@@ -106,8 +106,10 @@ enum H55Asset580 {
     }
     @discardableResult
     static func install(from url:URL) throws -> URL {
+        #if os(iOS) || os(macOS)
         let accessible=url.startAccessingSecurityScopedResource()
         defer {if accessible {url.stopAccessingSecurityScopedResource()}}
+        #endif
         _=try inspect(url)
         let destination=try installedURL()
         if url.standardizedFileURL==destination.standardizedFileURL {return destination}
