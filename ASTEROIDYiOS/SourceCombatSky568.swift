@@ -69,7 +69,6 @@ final class SourceCombatSky568 {
             let d=MTLRenderPipelineDescriptor()
             d.vertexFunction=try shader(vertex)
             d.fragmentFunction=try shader(fragment)
-            d.colorAttachments[0].pixelFormat = .bgra8Unorm
             d.depthAttachmentPixelFormat = .depth32Float
             // GpuIntro41/IntroSky: unchanged source PArgb blend mode.
             try SourceSkyPremultipliedBlend.configure(d)
