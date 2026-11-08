@@ -47,6 +47,14 @@ jobs:
           name: H07-SOURCE-TO-REAL-GLB-DIFFERENTIAL
           path: |
             ASTEROIDYiOS/H55Airlocks580.swift
+            ASTEROIDYiOS/H55CollisionGeometry580.swift
+            ASTEROIDYiOS/H55SpatialSupport580.swift
+            ASTEROIDYiOS/H55TriangleBody580.swift
+            ASTEROIDYiOS/H55Sweep401580.swift
+            ASTEROIDYiOS/H55Walk580.swift
+            ASTEROIDYiOS/H55NpcDetour580.swift
+            ASTEROIDYiOS/H55Mechanic580.swift
+            ASTEROIDYiOS/H55Entry580.swift
             Tests/H55Airlocks580Tests.swift
             Tests/H55AirlocksRealGLB580Tests.swift
           if-no-files-found: error
