@@ -80,7 +80,7 @@ import UIKit
     private static func hits(_ scene:SCNScene,from:SCNVector3,to:SCNVector3)
         -> [SCNHitTestResult] {
         scene.rootNode.hitTestWithSegment(from:from,to:to,
-               options:[.backFaceCulling:false,.firstFoundOnly:false])
+               options:["backFaceCulling":false,"firstFoundOnly":false])
     }
     private static func supportHeight(_ scene:SCNScene,
                                       x:Float,z:Float,feet:Float)->Float? {
