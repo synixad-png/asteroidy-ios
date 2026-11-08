@@ -208,6 +208,28 @@ import Foundation
               "terminal debris expires after original 1.3-2.5 seconds")
         check(terminal.phase == .victory,
               "source 0.2-second clear hold starts only after debris gone")
+        // Existing source token pickup: contact credits wallet exactly once
+        // and routes the original PickupEvents audio event (code 30).
+        var pickupContact=CarbonisCombat568(prepared)
+        pickupContact.rocks=[]
+        pickupContact.shooters=Array(pickupContact.shooters.prefix(1))
+        pickupContact.tokenPickups=[
+            CarbonisCombat568.TokenPickup(
+                position:pickupContact.flight.position,
+                velocity:Vec2(x:0,y:0),value:5)
+        ]
+        pickupContact.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                           shooting:false,dt:1/120)
+        check(pickupContact.collectedLootTokens==5 &&
+              pickupContact.tokenPickups.isEmpty,
+              "source pickup credits five tokens on contact exactly once")
+        check(pickupContact.drainOriginalAudioEvents568().contains(30),
+              "source token collection emits PickupEvents SFX 30")
+        pickupContact.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                           shooting:false,dt:1/120)
+        check(pickupContact.collectedLootTokens==5,
+              "source token cannot be collected twice")
+
         // Real first-sector completion, including remaining uncollected
         // source tokens and Game.FinishLevel clear bonus, only once.
         var settlement=CarbonisCombat568(prepared)
