@@ -64,8 +64,11 @@ struct PhoneFrameCadence568 {
             late24:intervals.filter {$0>=24}.count,
             late40:intervals.filter {$0>=40}.count,
             intervalCount:intervals.count)
+        // A new sample starts on its own first callback. Do not mix a
+        // trailing 60-Hz interval into the following 30-Hz sample window.
         intervals.removeAll(keepingCapacity:true)
-        startedAt=now
+        lastCallback=nil
+        startedAt=nil
         return result
     }
 }
