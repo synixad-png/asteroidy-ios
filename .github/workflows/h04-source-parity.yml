@@ -18,6 +18,8 @@ jobs:
             ASTEROIDYiOS/H55CollisionGeometry580.swift
             ASTEROIDYiOS/H55SpatialSupport580.swift
             ASTEROIDYiOS/H55TriangleBody580.swift
+            ASTEROIDYiOS/H55Sweep401580.swift
+            Tests/H55Sweep401580Tests.swift
             Tests/H55TriangleBody580Tests.swift
           retention-days: 1
       - name: Run exact 4 sphere source regression
@@ -25,3 +27,5 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift Tests/H55TriangleBody580Tests.swift -o /tmp/h04
           /tmp/h04
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift Tests/H55Sweep401580Tests.swift -o /tmp/h04sweep
+          /tmp/h04sweep
