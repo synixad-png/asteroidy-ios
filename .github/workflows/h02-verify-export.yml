@@ -19,6 +19,12 @@ jobs:
         run: |
           set -euo pipefail
           swiftc -parse-as-library -emit-module ASTEROIDYiOS/H55CollisionGeometry580.swift -module-name H55CollisionGeometry580 -emit-module-path /tmp/H55CollisionGeometry580.swiftmodule
+      - name: Exercise source-style GLB geometry/door/drone/index fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift Tests/H55CollisionGeometry580Tests.swift -o /tmp/h02-fixtures
+          /tmp/h02-fixtures
       - name: Export source for real uploaded GLB differential test
         uses: actions/upload-artifact@v4
         with:
