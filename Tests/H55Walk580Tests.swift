@@ -48,7 +48,7 @@ import Foundation
         check(ledge.z>=13.8,"missing floor blocks movement fail-closed")
         var step=H55Walk580()
         let halfMetre:(Float,Float,Float)->Float?={_,z,_ in
-            z<13.7 ? 0.5 : 0
+            z<13.7 ? Float(0.5) : Float(0)
         }
         for _ in 0..<30 {
             step.step(dt:1/60,forward:1,right:0,sprint:false,
@@ -57,7 +57,7 @@ import Foundation
         check(abs(step.y-0.5)<0.0001,"source max step up 50cm")
         var tooHigh=H55Walk580()
         let more:(Float,Float,Float)->Float?={_,z,_ in
-            z<13.8 ? 0.501 : 0
+            z<13.8 ? Float(0.501) : Float(0)
         }
         for _ in 0..<80 {
             tooHigh.step(dt:1/60,forward:1,right:0,sprint:true,
