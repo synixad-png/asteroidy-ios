@@ -67,7 +67,7 @@ for piece in (
 assert "try? bytes.write" not in renderer
 for piece in ("JSONSerialization.data(", "options: [.sortedKeys]",
               "options: .atomic", "catch {",
-              "ASTEROIDY GPU proof write failed"):
+              "ASTEROIDY render proof write failed"):
     assert piece in writer, f"Shared GPU proof writer lost error handling: {piece}"
 assert renderer.count("command.addCompletedHandler { completed in")==1
 
