@@ -27,9 +27,7 @@ assert "guard (0..<count).contains(track)" in source
 assert "let hz=650+((index*17+variant*9)%11)*210" in source
 assert "let hz=650+((index*13+style*7)%11)*210" in source
 assert 'channel=filtered(channel,"lowpass:\\(1200+variant*250)")' in source
-guards=re.findall(
-    r'guard let sos=filters\[key\] else \{preconditionFailure\('
-    r'"Missing original source SOS filter: \\(key\)"\)\}',
-    source)
-assert len(guards)==2, f"Unexpected source DSP invariants: {len(guards)}"
+guards=source.count(
+    'guard let sos=filters[key] else {preconditionFailure("Missing original source SOS filter: \\(key)")}')
+assert guards==2, f"Unexpected source DSP invariants: {guards}"
 print(f"PASS exact source SOS table: {len(expected)} required keys, two guarded internal invariants, no DSP coefficient change")
