@@ -35,6 +35,7 @@ on:
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'ASTEROIDYiOS/CarbonisSession568.swift'
       - 'ASTEROIDYiOS/CarbonisCombat568.swift'
+      - 'Tests/CarbonisCombat568Tests.swift'
       - 'Tests/IOSOriginalCombatHUD331Contract.py'
       - 'ASTEROIDYiOS/PhoneCombatResolution568.swift'
       - 'ASTEROIDYiOS/SourcePerformance568.swift'
