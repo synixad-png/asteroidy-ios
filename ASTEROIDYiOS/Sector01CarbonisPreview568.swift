@@ -209,6 +209,19 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 }) else {throw SourceError.metal}
                 return buffer
             }
+            // One source-byte-exact upload path for immutable Float meshes.
+            // Used only during renderer initialization, never for per-frame FX.
+            // The original byte count, .storageMode default and failure
+            // behavior are preserved from the four former local copies.
+            private static func makeBuffer(_ values:[Float],device:MTLDevice)
+                throws -> MTLBuffer {
+                guard let buffer=values.withUnsafeBytes({ raw in
+                    raw.baseAddress.flatMap {
+                        device.makeBuffer(bytes:$0,length:raw.count,options:[])
+                    }
+                }) else {throw SourceError.metal}
+                return buffer
+            }
             init(device:MTLDevice,initialRocks:[SphereAsteroid556],
                  gameSession:CarbonisSession568?,
                  adaptivePhoneCombat568:Bool=false) throws {
@@ -356,15 +369,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     SourcePlanetAtmosphere568.atmosphereVertexStride
                 planetGlowCount = halo.count /
                     SourcePlanetAtmosphere568.glowVertexStride
-                guard let capGPU=cap.withUnsafeBytes({ data in
-                    data.baseAddress.flatMap {
-                        device.makeBuffer(bytes:$0,length:data.count,options:[])
-                    }
-                }),let haloGPU=halo.withUnsafeBytes({ data in
-                    data.baseAddress.flatMap {
-                        device.makeBuffer(bytes:$0,length:data.count,options:[])
-                    }
-                }) else {throw SourceError.metal}
+                let capGPU=try Self.makeBuffer(cap,device:device)
+                let haloGPU=try Self.makeBuffer(halo,device:device)
                 planetAtmosphereBuffer=capGPU
                 planetGlowBuffer=haloGPU
                 let rockSpec=MTLRenderPipelineDescriptor()
@@ -394,13 +400,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     : Set(0..<CarbonisRockGeometry568.sourceShapeCount)
                 for shape in preloadShapes.sorted() {
                     let values=CarbonisRockGeometry568.vertices(shape:shape)
-                    let newBuffer=values.withUnsafeBytes { bytes in
-                        bytes.baseAddress.flatMap {
-                            device.makeBuffer(bytes:$0,length:bytes.count,options:[])
-                        }
-                    }
-                    guard let buffer=newBuffer else {throw SourceError.metal}
-                    rockBuffers[shape]=buffer
+                    rockBuffers[shape]=try Self.makeBuffer(values,device:device)
                 }
                 // Original playable Vanguard, not W3 lookalike geometry.
                 // W3 and combat use the same SHA-locked source mesh and JPEG.
@@ -446,12 +446,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     for kind in 0...1 {
                         let mesh=kind==0 ? CarbonisShooterMesh71.typeZero()
                                          : CarbonisShooterMesh71.typeOne()
-                        let buffer=mesh.vertices.withUnsafeBytes { raw in
-                            raw.baseAddress.flatMap {
-                                device.makeBuffer(bytes:$0,length:raw.count,options:[])
-                            }
-                        }
-                        guard let buffer else {throw SourceError.metal}
+                        let buffer=try Self.makeBuffer(mesh.vertices,device:device)
                         sourceShooters[kind]=(buffer,mesh.ranges)
                     }
                     guard let shooterFragment=library.makeFunction(
@@ -1352,14 +1347,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             "sourceShooterType0Geometry":"ShipMesh0-BossMesh65-drone",
                             "nativeMissionPlayable":false
                         ]
-                        if let dir=FileManager.default.urls(
-                            for:.cachesDirectory,in:.userDomainMask).first,
-                            let bytes=try? JSONSerialization.data(
-                                withJSONObject:proof,options:[.sortedKeys]) {
-                            try? bytes.write(to:dir.appendingPathComponent(
-                                "ASTEROIDY_CARBONIS_L1_GPUProof.json"),
-                                options:.atomic)
-                        }
+                        OriginalRenderProofWriter568.save(
+                            proof,filename:"ASTEROIDY_CARBONIS_L1_GPUProof.json")
                     }
                 }
                 if gameSession != nil {
