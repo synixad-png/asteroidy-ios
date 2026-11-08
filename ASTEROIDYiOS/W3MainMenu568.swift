@@ -187,13 +187,8 @@ struct W3MainMenu568: View {
                 "bundleID": Bundle.main.bundleIdentifier ?? "",
                 "simulatorOnly": true
             ]
-            if let folder = FileManager.default.urls(
-                for: .cachesDirectory, in: .userDomainMask).first,
-               let data = try? JSONSerialization.data(
-                withJSONObject: proof, options: [.sortedKeys]) {
-                try? data.write(to: folder.appendingPathComponent(
-                    "ASTEROIDY_W3_MenuProof.json"), options: .atomic)
-            }
+            OriginalRenderProofWriter568.save(
+                proof,filename:"ASTEROIDY_W3_MenuProof.json")
         }
     }
 

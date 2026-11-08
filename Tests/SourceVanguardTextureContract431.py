@@ -132,7 +132,7 @@ for token in (
     "try bytes.write(",
     "options: .atomic",
     "catch {",
-    'NSLog("ASTEROIDY GPU proof write failed',
+    'NSLog("ASTEROIDY render proof write failed',
 ):
     check(token in writer,
           "GPU proof helper missing explicit I/O verification: "+token)

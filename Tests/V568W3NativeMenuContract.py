@@ -26,6 +26,16 @@ assert 'case newGame = "NOWA GRA"' in menu
 for caption in reference:
     assert menu.count('= "'+caption+'"')==1,(caption,"missing/duplicated")
 assert menu.index('case newGame')<menu.index('case continueGame')<menu.index('case campaign')
+# The opt-in UI proof is a render-state marker, NOT a GPU completion result.
+# Preserve its real payload and gate while sharing atomic persistence.
+assert 'ProcessInfo.processInfo.environment["ASTEROIDY_W3_MENU_VERIFY"] == "1"' in menu
+assert '"screen": "native-W3-v568-home"' in menu
+assert '"hasOriginalW3BackgroundImage": SourceW3Images568.pair != nil' in menu
+assert '"sourcePlanet3DIntegrated": W3HomePlanetMetal568.isAvailable' in menu
+assert 'OriginalRenderProofWriter568.save(' in menu
+assert 'proof,filename:"ASTEROIDY_W3_MenuProof.json"' in menu
+assert 'JSONSerialization.data(' not in menu
+
 assert "W3MainMenu568(progress:campaign,selectMission:" in app
 assert "Button(\"MENU W3\")" in app
 assert "showMainMenu = true" in app

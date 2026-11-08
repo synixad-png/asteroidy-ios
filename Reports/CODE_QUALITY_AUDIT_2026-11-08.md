@@ -100,3 +100,28 @@ To usuwa sześć powielonych pętli bez zmiany reprezentacji uniformów, liczby 
 Automatyczny [audyt jakości PR #18](https://github.com/synixad-png/asteroidy-ios/actions/runs/42485121961) wykazał: **0** krytycznych antywzorców w skanerze, liczba nakładających się 10-liniowych okien między rendererami **69 → 52**, długość `MetalRenderer.swift` **1652 → 1612 linii**. To zmiana statyczna kodu, **nie** pomiar przyspieszenia. Kompilacja Swift/Metal i testy natywnego urządzenia mają odrębny status w PR #18 — nie deklarować 60 FPS po zmianie bez pomiaru użytkownika.
 
 **Dalsze otwarte zadania:** oddzielny audyt żywotności buforów GPU i lazy cache w dużych modułach, potwierdzenie konieczności pozostałych 52 nakładających się okien, obsługa `try?` i wymuszonych subskryptów z indywidualnymi dowodami. Nie łączyć automatycznie stanów dwóch rendererów i nie usuwać oryginalnych ścieżek źródłowych.
+
+---
+
+## 9. Kolejna refaktoryzacja — CARBONIS: bufory źródłowe i diagnostyka (08.11.2026)
+
+**Potwierdzone powielenie:** w `Sector01CarbonisPreview568.swift` cztery ścieżki inicjalizacji wytwarzały bufory `MTLBuffer` z tablic `[Float]` przez praktycznie identyczne `withUnsafeBytes` / `device.makeBuffer(bytes:length:options:[])`. W istniejącej klasie `Renderer` dodano pojedyncze przeciążenie `makeBuffer(_ values:[Float],device:)`, wykorzystujące identyczne bajty i zgłaszające ten sam `SourceError.metal`. Teraz jest używane przez źródłową atmosferę, poświatę, wszystkie preładowane kształty skał i geometrię dronów.
+
+**Nie zmieniono:** formatu Float, rozmiaru buforów (liczba bajtów `raw.count`), liczenia wierzchołków, indeksów, pozycji, kolejności inicjalizacji, preładowania wszystkich kształtów w misji, awaryjnej ścieżki późnej alokacji skał w renderowaniu, źródłowych SHA-256 zasobów, strzelania i sterowania. Inicjalizacyjne bufory są nadal niezależne dla każdej rzeczywistej siatki — nie wprowadzono wspólnego aliasowania pamięci GPU.
+
+**Kolejny usunięty antywzorzec:** zapis diagnostyki `ASTEROIDY_CARBONIS_L1_GPUProof.json` z ukończonego command buffer używa teraz `OriginalRenderProofWriter568.save`. Zachowano oryginalny payload i warunek `ASTEROIDY_W3_MENU_VERIFY=1`, ale nie jest już maskowana awaria serializacji lub zapisu; komunikaty błędów pozostają wyłącznie w diagnostyce, nie w pętli zwykłej gry.
+
+**Test:** `Tests/CarbonisSourceBufferProof568Contract.py` kontroluje rzeczywistą strukturę wywołań, typy oryginalnych danych geometrycznych, niezmienność preładowania i awaryjnej ścieżki skał, SHA-256 źródeł, jednorazowe zaplanowanie callbacku GPU oraz zachowanie raportu. Dodatkowo obowiązują istniejące testy geometrii i pełna kompilacja iOS. Testy źródłowe nie oznaczają testu FPS na urządzeniu.
+
+**Pozostające ryzyka:** złożony cykl życia zasobów w `Sector01CarbonisPreview568.swift`, `MetalRenderer.swift` i `SourceCombatSky568.swift`; dopiero profilowanie na iPhonie/iPadzie może potwierdzić koszt alokacji. Dwa `try? Data(contentsOf:)` sprawdzają brak/niezgodność zasobów w ścieżce weryfikacji i nie zostały mechanicznie usunięte. Wszelkie dalsze przenoszenie cache pomiędzy rendererami wymaga testów własności i żywotności Metal.
+
+**Status interaktywny:** użytkownik potwierdził poprawne działanie IPA z commita `8af0f3f1` przed tą zmianą; działanie nowej gałęzi na rzeczywistym urządzeniu wymaga osobnego potwierdzenia.
+
+### 9a. Ujednolicenie dowodów GPU w całym sprawdzonym zakresie
+
+W kolejnym module `W3HomePlanetMetal568.swift` również istniał powielony serializator JSON z cichymi `try?`. Podłączono istniejący `OriginalRenderProofWriter568` bez modyfikacji zawartości `ASTEROIDY_W3_NewHome290_GPUProof.json`, warunku `ASTEROIDY_W3_MENU_VERIFY=1`, semantyki `proofScheduled` ani callbacku zakończenia pracy GPU.
+
+Do wspólnego zapisu podłączono również źródłowy podgląd statku `W3HomeShipPreview568.swift` oraz znacznik diagnostyczny menu `W3MainMenu568.swift`. Kontrakt `Tests/SourceGPUProofWriter568Contract.py` kontroluje **pięć raportów GPU**: Vanguard431 w dwóch widokach, PlayerShip367, NewHome290 i CARBONIS L1. Oryginalne nazwy i pola każdego raportu pozostają niezmienione. Test `Tests/V568W3NativeMenuContract.py` oddzielnie chroni szósty zapis — stan natywnego menu W3, który nie jest dowodem zakończenia operacji GPU.
+
+`OriginalRenderProofWriter568` jest odtąd wspólnym mechanizmem atomowego zapisu diagnostyki renderowania, przy zachowaniu `ASTEROIDY_W3_MENU_VERIFY`, nazwy każdego pliku i oryginalnych pól JSON. Komunikaty błędów opisują teraz dokładnie zapis diagnostyczny, a nie zawsze GPU. Żadna z tych ścieżek nie wykonuje zapisu w zwykłej pętli rysowania każdej klatki.
+

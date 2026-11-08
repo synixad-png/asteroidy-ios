@@ -236,13 +236,8 @@ struct W3HomePlanetMetal568: UIViewRepresentable {
                             "baseSHA256":Self.baseSHA256,"glowSHA256":Self.glowSHA256,
                             "simulatorOnly":true
                         ]
-                        if let dir=FileManager.default.urls(
-                            for:.cachesDirectory,in:.userDomainMask).first,
-                           let data=try? JSONSerialization.data(
-                            withJSONObject:proof,options:[.sortedKeys]) {
-                            try? data.write(to:dir.appendingPathComponent(
-                                "ASTEROIDY_W3_NewHome290_GPUProof.json"),options:.atomic)
-                        }
+                        OriginalRenderProofWriter568.save(
+                            proof,filename:"ASTEROIDY_W3_NewHome290_GPUProof.json")
                     }
                 }
                 command.commit()

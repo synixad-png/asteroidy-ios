@@ -18,7 +18,11 @@ assert "let preloadShapes:Set<Int> = gameSession == nil" in renderer
 assert "? initialShapes" in renderer  # W3 planet-only preview remains light
 assert ": Set(0..<CarbonisRockGeometry568.sourceShapeCount)" in renderer
 assert "for shape in preloadShapes.sorted()" in renderer
-assert "rockBuffers[shape]=buffer" in renderer
+# Initialization now uses the single exact Float-array GPU upload path.
+# Verify that all 80 source shapes are still allocated and stored eagerly.
+assert "rockBuffers[shape]=try Self.makeBuffer(values,device:device)" in renderer
+assert "private static func makeBuffer(_ values:[Float],device:MTLDevice)" in renderer
+assert "device.makeBuffer(bytes:$0,length:raw.count,options:[])" in renderer
 assert "if rockBuffers[shape] == nil" in renderer  # legacy fallback preserved
 assert "for shape in 0..<CarbonisRockGeometry568.sourceShapeCount" in tests
 print("PASS: 80 exact original rock shapes preallocated for combat; W3 preview and fallback preserved")
