@@ -228,6 +228,9 @@ jobs:
           set -euo pipefail
           python3 Tests/CombatOriginalSkyWreck214Contract.py
           python3 Tests/SourceSkyAssetFactory568Contract.py
+          python3 Tests/SourceSkyUniformPackingContract.py
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/DeepSkyPlanets55.swift ASTEROIDYiOS/BlackHoleSky55.swift ASTEROIDYiOS/SourceSkyUniformPacking.swift Tests/SourceSkyUniformPackingTests.swift -o /tmp/source-sky-uniforms
+          /tmp/source-sky-uniforms
           swiftc ASTEROIDYiOS/ResearchWreckGeometry214.swift Tests/ResearchWreckGeometry214Tests.swift -o /tmp/wreck211-mesh
           /tmp/wreck211-mesh
       - name: Verify source-exact Explosion524 static GPU geometry and precomputed GPU constants

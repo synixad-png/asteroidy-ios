@@ -81,3 +81,22 @@ Z porównania rzeczywistych ciał funkcji `MetalRenderer.swift` i `SourceCombatS
 **Pozostała duplikacja:** trzy metody `ensureCloudTextures55`, `ensureDeepPlanetTextures55`, `ensureBlackHoleTextures55` są identyczne na poziomie kodu, lecz operują na różnych właścicielach i cyklach życia zasobów. Dalsze wydzielanie ich bez niezależnych testów zarządzania GPU i obu scen mogłoby zwiększyć ryzyko regresji; **pozostają świadomie niezmienione**. Dalszy przegląd powinien też rozdzielić powielenie składania uniformów BlackHole między scenami od koniecznego niezależnego kodu ich kompozycji.
 
 **Ograniczenia:** testy CI i kontrola źródeł nie są natywnym testem wizualnym ani pomiarem FPS na fizycznym iPhonie/iPadzie. Dopóki użytkownik nie potwierdzi działania, nie należy twierdzić, że obrazy są pikselowo identyczne lub że FPS nie uległy zmianie.
+
+
+---
+
+## 8. Kontynuacja — 6 powielonych pętli pakowania uniformów (PR #18, 08.11.2026)
+
+Porównano niezależnie oryginalne bloki `var uniforms:[SIMD4<Float>]=[frame]` i `var properties:[SIMD4<Float>]=[screen]`: każdy występował dokładnie **2 razy w MetalRenderer** i **1 raz w SourceCombatSky**; odpowiadające sobie bloki były identyczne po usunięciu białych znaków/komentarzy.
+
+Wyodrębniono jedynie **dwie czyste funkcje** do `SourceSkyUniformPacking.swift`:
+- `planet(frame:layers:)` — oryginalne dane shaderowe [frame, radius/size, premultiplied rgba, textureSlice] dla planet.
+- `blackHole(screen:layers:)` — [screen, radius/angle cos/sin, premultiplied rgba, indeks warstwy lub -1] dla czarnej dziury.
+
+To usuwa sześć powielonych pętli bez zmiany reprezentacji uniformów, liczby obliczeń, źródła danych, draw-call sequence, powiązania buforów ani cyklu życia renderera. Pozostają dwie niezależne instancje renderera, a wewnątrz `MetalRenderer.swift` odrębne dwa konteksty renderowania źródłowego.
+
+**Dodatkowa ochrona:** `Tests/SourceSkyUniformPackingTests.swift` weryfikuje niezależnie wyliczone wartości wszystkich 7 wektorów `SIMD4<Float>` dla przykładowych dwóch warstw każdej rodziny, w tym wstępnie przemnożony kolor przez alfa, `cos/sin`, `textureSlice` oraz sentinel `-1`. `Tests/SourceSkyUniformPackingContract.py` weryfikuje wywołania w każdej z trzech ścieżek, brak starych kopii oraz brak operacji GPU wewnątrz pakera.
+
+Automatyczny [audyt jakości PR #18](https://github.com/synixad-png/asteroidy-ios/actions/runs/42485121961) wykazał: **0** krytycznych antywzorców w skanerze, liczba nakładających się 10-liniowych okien między rendererami **69 → 52**, długość `MetalRenderer.swift` **1652 → 1612 linii**. To zmiana statyczna kodu, **nie** pomiar przyspieszenia. Kompilacja Swift/Metal i testy natywnego urządzenia mają odrębny status w PR #18 — nie deklarować 60 FPS po zmianie bez pomiaru użytkownika.
+
+**Dalsze otwarte zadania:** oddzielny audyt żywotności buforów GPU i lazy cache w dużych modułach, potwierdzenie konieczności pozostałych 52 nakładających się okien, obsługa `try?` i wymuszonych subskryptów z indywidualnymi dowodami. Nie łączyć automatycznie stanów dwóch rendererów i nie usuwać oryginalnych ścieżek źródłowych.

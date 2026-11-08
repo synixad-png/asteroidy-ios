@@ -14,6 +14,7 @@ r=Path(__file__).resolve().parents[1]
 model=(r/"ASTEROIDYiOS/BlackHoleSky55.swift").read_text()
 metal=(r/"ASTEROIDYiOS/Ship.metal").read_text()
 render=(r/"ASTEROIDYiOS/MetalRenderer.swift").read_text()
+pack=(r/"ASTEROIDYiOS/SourceSkyUniformPacking.swift").read_text()
 factory=(r/"ASTEROIDYiOS/SourceSkyAssetFactory568.swift").read_text()
 def check(condition,msg):
     if not condition: raise AssertionError(msg)
@@ -56,7 +57,7 @@ for token in (
     "let created=try SourceSkyAssetFactory568.makeBlackHoleTextures55(device)",
     "BlackHoleSky55.project(",
     "let layers=BlackHoleSky55.overlays(",
-    "properties.reserveCapacity(1+layers.count*3)",
+    "let properties=SourceSkyUniformPacking.blackHole(screen:screen,layers:layers)",
     "encoder.setRenderPipelineState(blackHolePipeline)",
     "encoder.setFragmentTexture(blackTextures,index:0)",
     "encoder.setFragmentTexture(sphereHaloTexture,index:1)",
@@ -74,6 +75,13 @@ for token in (
     "bytesPerRow:n*4",
 ):
     check(token in factory,"Shared original black-hole texture builder changed: "+token)
+for token in (
+    "properties.reserveCapacity(1+layers.count*3)",
+    "cos(layer.angle),sin(layer.angle)",
+    "layer.isTexture ? Float(layer.layer) : -1",
+    "SIMD4(r*a,g*a,b*a,a)",
+):
+    check(token in pack,"Source original black-hole shader uniform packing changed: "+token)
 # The separate cinematic now has its own initial sky point draw;
 # check the original v556 sphere compositor in isolation, not the
 # first occurrence of a sky stage in an unrelated scene.
