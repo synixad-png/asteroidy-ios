@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """All original GPU proofs use one atomic writer, without hiding write errors.
 
-Four diagnostic proofs: Vanguard431, PlayerShip367, NewHome290, Carbonis L1.
+Five GPU diagnostic proofs: Vanguard431, PlayerShip367, NewHome290, Carbonis L1 and W3 Vanguard preview.
 Each remains opt-in and runs only from a completed Metal command callback.
 """
 from pathlib import Path
@@ -16,6 +16,7 @@ paths={
     ],
     "W3HomePlanetMetal568.swift":["ASTEROIDY_W3_NewHome290_GPUProof.json"],
     "Sector01CarbonisPreview568.swift":["ASTEROIDY_CARBONIS_L1_GPUProof.json"],
+    "W3HomeShipPreview568.swift":["ASTEROIDY_W3_Vanguard431_GPUProof.json"],
 }
 for name,filenames in paths.items():
     source=(gpu/name).read_text()
@@ -29,12 +30,16 @@ for name,filenames in paths.items():
 home=(gpu/"W3HomePlanetMetal568.swift").read_text()
 carbonis=(gpu/"Sector01CarbonisPreview568.swift").read_text()
 metal=(gpu/"MetalRenderer.swift").read_text()
+ship=(gpu/"W3HomeShipPreview568.swift").read_text()
 for scene in (home,carbonis):
     assert 'ProcessInfo.processInfo.environment["ASTEROIDY_W3_MENU_VERIFY"]=="1"' in scene
     assert "proofScheduled=true" in scene
     assert '"gpuCommandBufferCompleted":' in scene
 assert '"triangles":270249' in carbonis
 assert '"vertexCount":516624' in home
+assert '"originalW3PreviewScale":0.34' in ship
+assert '"gpuCommandBufferCompleted":' in ship
+assert '"ASTEROIDY_W3_MENU_VERIFY"]=="1"' in ship
 assert "sourceDrawProofRequested && !sourceDrawProofScheduled" in metal
 assert "sourceShip367DrawProofRequested &&" in metal
 
@@ -45,4 +50,4 @@ for contract in ("JSONSerialization.data(", "withJSONObject: payload",
                  "ASTEROIDY render proof write failed"):
     assert contract in writer,contract
 
-print("PASS 4 original GPU completion proofs: one fail-visible atomic writer, unchanged opt-in gates, filenames and source payloads")
+print("PASS 5 original GPU completion proofs: one fail-visible atomic writer, unchanged opt-in gates, filenames and source payloads")
