@@ -141,16 +141,13 @@ import simd
         let high=feet+(spawn ? 0.45 : H55Walk580.stepUp+0.05)
         let from=SCNVector3(x,high+0.002,z)
         let to=SCNVector3(x,low-0.002,z)
-        let floors=hits(scene,from:from,to:to)
-            .filter{hit in
-                let nx=hit.worldNormal.x,ny=hit.worldNormal.y,
-                    nz=hit.worldNormal.z
-                return ny*ny >= 0.65*(nx*nx+nz*nz) &&
-                       hit.worldCoordinates.y>=low-0.002 &&
-                       hit.worldCoordinates.y<=high+0.002
-            }
-        return floors.max(by:{$0.worldCoordinates.y<$1.worldCoordinates.y})
-                     .map{$0.worldCoordinates.y}
+        let floors=hits(scene,from:from,to:to).map{
+            H55FloorRule580.Sample(x:$0.worldCoordinates.x,
+                y:$0.worldCoordinates.y,z:$0.worldCoordinates.z,
+                normalX:$0.worldNormal.x,normalY:$0.worldNormal.y,
+                normalZ:$0.worldNormal.z)
+        }
+        return H55FloorRule580.highest(floors,low:low,high:high)
     }
     /// Windows H55FullCollision379.BodyClear():887-920:
     /// decorative ankle-height floor trims (Y<=feet+stepUp) are not
