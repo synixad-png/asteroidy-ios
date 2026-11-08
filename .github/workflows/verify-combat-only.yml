@@ -345,7 +345,7 @@ jobs:
           /tmp/h55-spawn-surface580-test
           swiftc ASTEROIDYiOS/H55GLBCompatibility580.swift Tests/H55GLBCompatibility580Tests.swift -o /tmp/h55-glb-compat580-test
           /tmp/h55-glb-compat580-test
-          swiftc ASTEROIDYiOS/H55Walk580.swift Tests/H55Walk580Tests.swift -o /tmp/h55-walk580-test
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift ASTEROIDYiOS/H55Walk580.swift Tests/H55Walk580Tests.swift -o /tmp/h55-walk580-test
           /tmp/h55-walk580-test
           swiftc ASTEROIDYiOS/H55NpcDetour580.swift Tests/H55NpcDetour580Tests.swift -o /tmp/h55-npc-detour580-test
           /tmp/h55-npc-detour580-test
