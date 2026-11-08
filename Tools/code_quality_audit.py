@@ -64,8 +64,20 @@ def scan_text(path: str, content: str) -> list[Finding]:
         if not code.strip():
             continue
         for rule, (pattern, severity) in COMPILED.items():
-            if pattern.search(code):
-                issues.append(Finding(rule, severity, path, number, raw.strip()[:180]))
+            if not pattern.search(code):
+                continue
+            # Both original SOS filter lookups are deliberate internal
+            # invariants; they must remain source-exact and are protected
+            # by Tests/OriginalMusicFilterKeys568Contract.py. Never classify
+            # arbitrary new fatalError/preconditionFailure as permitted.
+            if (rule == "forced_abort"
+                and path == "ASTEROIDYiOS/OriginalMusicSynth568.swift"
+                and 'guard let sos=filters[key] else {preconditionFailure(' in code
+                and 'Missing original source SOS filter:' in code):
+                issues.append(Finding("verified_dsp_filter_invariant", "review",
+                                      path, number, raw.strip()[:180]))
+                continue
+            issues.append(Finding(rule, severity, path, number, raw.strip()[:180]))
     return issues
 
 
