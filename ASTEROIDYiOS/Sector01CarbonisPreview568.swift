@@ -338,11 +338,11 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 let atmosphereSpec=MTLRenderPipelineDescriptor()
                 atmosphereSpec.vertexFunction=atmosphereVertex
                 atmosphereSpec.fragmentFunction=atmosphereFragment
-                atmosphereSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
-                atmosphereSpec.depthAttachmentPixelFormat = .depth32Float
                 guard let atmBlend=atmosphereSpec.colorAttachments[0] else {
                     throw SourceError.metal
                 }
+                atmBlend.pixelFormat = .bgra8Unorm
+                atmosphereSpec.depthAttachmentPixelFormat = .depth32Float
                 atmBlend.isBlendingEnabled=true
                 atmBlend.sourceRGBBlendFactor = .sourceAlpha
                 atmBlend.destinationRGBBlendFactor = .oneMinusSourceAlpha
@@ -353,11 +353,11 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 let glowSpec=MTLRenderPipelineDescriptor()
                 glowSpec.vertexFunction=glowVertex
                 glowSpec.fragmentFunction=glowFragment
-                glowSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
-                glowSpec.depthAttachmentPixelFormat = .depth32Float
                 guard let glowBlend=glowSpec.colorAttachments[0] else {
                     throw SourceError.metal
                 }
+                glowBlend.pixelFormat = .bgra8Unorm
+                glowSpec.depthAttachmentPixelFormat = .depth32Float
                 glowBlend.isBlendingEnabled=true
                 glowBlend.sourceRGBBlendFactor = .one
                 glowBlend.destinationRGBBlendFactor = .one
