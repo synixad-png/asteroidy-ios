@@ -4,6 +4,9 @@ on:
     paths:
       - '.github/workflows/verify-combat-only.yml'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/GameCore.swift'
+      - 'ASTEROIDYiOS/SphereSector556.swift'
+      - 'Tests/SafeDamageDictionary556Contract.py'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/SourceCombatSky568.swift'
       - 'ASTEROIDYiOS/SourceSkyAssetFactory568.swift'
@@ -219,6 +222,12 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Preserve actual sorted asteroid damage and flat source sandbox
+        run: |
+          set -euo pipefail
+          python3 Tests/SafeDamageDictionary556Contract.py
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift Tests/GameCoreTests.swift -o /tmp/asteroidy-flat-damage-safe
+          /tmp/asteroidy-flat-damage-safe
       - name: Verify authentic pre-mission Intro41 route and source Carbonis globe
         run: |
           set -euo pipefail
