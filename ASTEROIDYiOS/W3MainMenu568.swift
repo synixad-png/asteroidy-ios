@@ -459,7 +459,10 @@ struct W3MainMenu568: View {
                     .accessibilityIdentifier("w3-panel-back")
                 }
                 Rectangle().fill(cyan.opacity(0.36)).frame(height:1)
-                if item == .settings {
+                if item == .hangar {
+                    H55ScenePage580(dismiss:{navigateW3(nil)})
+                        .frame(maxWidth:.infinity,maxHeight:.infinity)
+                } else if item == .settings {
                     // Windows Menu139 v555: all 17 original left-rail
                     // categories, with implemented iOS engine bindings.
                     CarbonisVisualSettingsPanel568(compact:compact)
@@ -644,7 +647,7 @@ struct W3MainMenu568: View {
         case .continueGame:
             return "Wczytanie rzeczywistego zapisu gry Windows v568 nie jest jeszcze podłączone. Nie uruchamiam przypadkowego sektora."
         case .hangar:
-            return "Hangar wymaga oryginalnej sceny hangar_h55.glb, której nie zawiera dostarczona paczka BEZ_HANGARU."
+            return ""
         case .settings:
             return "Ustawienia wybuchów 3D i oświetlenia pocisków są aktywne w osobnych zakładkach."
         case .credits:
