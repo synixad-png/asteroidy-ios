@@ -44,7 +44,7 @@ import Foundation
         let sourceX:[Float]=[3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5]
         let sourceZ:[Float]=Array(repeating:Float(0),count:sourceX.count)
         let by=H55NpcDetour580.bypass(
-            start:start,player:player,goal:goal,goalIndex:0,
+            start:start,player:player,goal:P(x:4,z:0),goalIndex:0,
             workshopIndex:11,routeX:sourceX,routeZ:sourceZ,walkable:open)
         check(by != nil,"source bypass may rejoin approved corridor")
         print("PASS PC v580 NPC v532 A* stationary player, no wall tunneling, segment smoothing, grid cap and route rejoin")
