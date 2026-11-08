@@ -204,8 +204,10 @@ assert "W3HomeShipPreview568()" in menu
 # the isolated hangar asset loader.
 assert 'H55ScenePage580(dismiss:{navigateW3(nil)})' in menu
 assert 'hangar_h55.glb' in (root/"ASTEROIDYiOS/H55Asset580.swift").read_text()
-assert 'GpuHangar91' not in (root/"ASTEROIDYiOS/H55ScenePage580.swift").read_text()
-assert 'GpuHangar99' not in (root/"ASTEROIDYiOS/H55ScenePage580.swift").read_text()
+scene_h55=(root/"ASTEROIDYiOS/H55ScenePage580.swift").read_text()
+assert "import GLTFKit2" in scene_h55
+assert "GLTFAsset.load(with:url" in scene_h55
+assert "H55Asset580.inspect(url)" in scene_h55
 assert 'Wczytanie rzeczywistego zapisu' in menu
 # Navigation is fully handled in one native SwiftUI view, without
 # silently connecting unavailable menu actions to test gameplay.
