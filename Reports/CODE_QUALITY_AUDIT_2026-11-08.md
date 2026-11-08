@@ -52,3 +52,32 @@
 ## 6. Procedura każdej następnej poprawki
 
 Następne PR musi podać konkretny problem, powiązanie ze źródłami v568, niezmienione obszary, dowód testowy, status urządzeń i ewentualny pomiar FPS. Zmiany powodujące regresję wycofać, zamiast dokładać warstwy łatek. **Nie zwiększać numeru wydania tylko dlatego, że przeprowadzono audyt lub poprawiono samą dokumentację.**
+
+
+---
+
+## 7. Kontynuacja — wspólne tekstury źródłowego nieba (PR #17, 08.11.2026)
+
+Z porównania rzeczywistych ciał funkcji `MetalRenderer.swift` i `SourceCombatSky568.swift` wynika, że kolejne **6 implementacji** było identycznych po pominięciu białych znaków/komentarzy. Usunięto ich zdublowane definicje z obu rendererów i dołączono oryginalne ciała funkcji do istniejącego `SourceSkyAssetFactory568.swift`:
+
+| Funkcja źródłowa | Zakres |
+|---|---|
+| `makeNebulaTextures556` | Alokacja 2-warstwowej tekstury mgławicy 256×256 BGRA |
+| `uploadNebulaSlice556` | Upload pojedynczego, zweryfikowanego wycinka mgławicy |
+| `nebulaSource556` | Niezmienna siatka 36 warstw × 6 wierzchołków |
+| `makeBlackHoleTextures55` | Trzy źródłowe tekstury 640×640 czarnej dziury |
+| `makeDeepPlanetTextures55` | Trzy tekstury odległych planet 320×220 |
+| `uploadDeepPlanetSlice55` | Upload tylko rzeczywiście widocznego stylu planety |
+
+**Zachowane bez zmian:** ciała oryginalnych funkcji, współczynniki, format BGRA, liczba wierzchołków, komunikaty błędów, maski i pozycje tekstur, source painter order, osobny stan obu rendererów (`nebulaTexture`, `deepPlanetTextures`, `blackHoleTextures`), zweryfikowane filtry lazy/visibility `SkyTextureGate55`, `SkyTextureSliceCache55` oraz renderowanie intro i misji.
+
+**Wynik ponownego automatycznego skanowania:** [GitHub Actions #42484250375](https://github.com/synixad-png/asteroidy-ios/actions/runs/42484250375), PASS:
+- 0 krytycznych antywzorców według aktualnego zakresu skanera.
+- Liczba **nakładających się**, identycznych 10-liniowych okien między tymi dwoma rendererami: **165 → 69**. Nie należy interpretować jako liczbę samodzielnych wad.
+- `MetalRenderer.swift`: **1769 → 1652 linii**.
+- `SourceCombatSky568.swift`: w bieżącym PR **ok. 500 → 381 linii**.
+- Liczba znalezionych `makeBuffer/Texture/Pipeline` w produkcyjnych źródłach: **60 → 57** (zmiana liczby wystąpień w plikach; **nie** udowadnia zmniejszenia rzeczywistej liczby alokacji ani wzrostu FPS).
+
+**Pozostała duplikacja:** trzy metody `ensureCloudTextures55`, `ensureDeepPlanetTextures55`, `ensureBlackHoleTextures55` są identyczne na poziomie kodu, lecz operują na różnych właścicielach i cyklach życia zasobów. Dalsze wydzielanie ich bez niezależnych testów zarządzania GPU i obu scen mogłoby zwiększyć ryzyko regresji; **pozostają świadomie niezmienione**. Dalszy przegląd powinien też rozdzielić powielenie składania uniformów BlackHole między scenami od koniecznego niezależnego kodu ich kompozycji.
+
+**Ograniczenia:** testy CI i kontrola źródeł nie są natywnym testem wizualnym ani pomiarem FPS na fizycznym iPhonie/iPadzie. Dopóki użytkownik nie potwierdzi działania, nie należy twierdzić, że obrazy są pikselowo identyczne lub że FPS nie uległy zmianie.

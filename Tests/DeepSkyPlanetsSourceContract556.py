@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 source=(ROOT/"ASTEROIDYiOS"/"DeepSkyPlanets55.swift").read_text()
 renderer=(ROOT/"ASTEROIDYiOS"/"MetalRenderer.swift").read_text()
+factory=(ROOT/"ASTEROIDYiOS"/"SourceSkyAssetFactory568.swift").read_text()
 shader=(ROOT/"ASTEROIDYiOS"/"Ship.metal").read_text()
 def ck(value,message):
     if not value: raise AssertionError(message)
@@ -60,18 +61,12 @@ ck("DrawEllipse" in source and "DrawArc" in source,
 
 for term in (
     "private var deepPlanetTextures: MTLTexture?",
-    "let created=try Self.makeDeepPlanetTextures55(device)",
-    "makeDeepPlanetTextures55(_ device:MTLDevice)",
-    "d.textureType = .type2DArray",
-    "d.arrayLength = DeepSkyPlanets55.count",
-    "pixelFormat:.bgra8Unorm,width:w,height:h,mipmapped:false",
-    "private static func uploadDeepPlanetSlice55(",
+    "let created=try SourceSkyAssetFactory568.makeDeepPlanetTextures55(device)",
+    "SourceSkyAssetFactory568.uploadDeepPlanetSlice55(texture,style:style)",
     "private var deepPlanetSliceCache55 = SkyTextureSliceCache55(count: DeepSkyPlanets55.count)",
     "if deepPlanetSliceCache55.needsUpload(style:style)",
     "deepPlanetSliceCache55.markUploaded(style:style)",
     "guard let planets=ensureDeepPlanetTextures55(style:style)",
-    "let img=DeepSkyPlanets55.textureBGRA(style:style)",
-    "bytesPerRow:w*4",
     "for style in 0..<DeepSkyPlanets55.count",
     "guard let projected=DeepSkyPlanets55.project(",
     "let layers=DeepSkyPlanets55.overlays(",
@@ -83,6 +78,16 @@ for term in (
     "encoder.setFragmentTexture(blackTextures,index:0)",
 ):
     ck(term in renderer,"Three source DeepPlanet55 textures/draw missing: "+term)
+for token in (
+    "static func makeDeepPlanetTextures55(_ device:MTLDevice)",
+    "d.textureType = .type2DArray",
+    "d.arrayLength = DeepSkyPlanets55.count",
+    "pixelFormat:.bgra8Unorm,width:w,height:h,mipmapped:false",
+    "static func uploadDeepPlanetSlice55(",
+    "let img=DeepSkyPlanets55.textureBGRA(style:style)",
+    "bytesPerRow:w*4",
+):
+    ck(token in factory,"Shared source DeepPlanet55 texture builder changed: "+token)
 ck("vertex BlackHoleRaster55 blackHoleVertex55(" in shader and
    "fragment float4 blackHoleFragment55(" in shader,
    "Reuse existing premultiplied generic 2D shader, no duplicate pipeline")

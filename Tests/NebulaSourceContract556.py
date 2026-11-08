@@ -9,6 +9,7 @@ from pathlib import Path
 r=Path(__file__).resolve().parents[1]
 model=(r/"ASTEROIDYiOS/Sphere67.swift").read_text()
 render=(r/"ASTEROIDYiOS/MetalRenderer.swift").read_text()
+factory=(r/"ASTEROIDYiOS/SourceSkyAssetFactory568.swift").read_text()
 shader=(r/"ASTEROIDYiOS/Ship.metal").read_text()
 def check(c,message):
     if not c:
@@ -44,21 +45,16 @@ for t in (
     "nebulaBlend.sourceRGBBlendFactor = .one",
     "nebulaBlend.destinationRGBBlendFactor = .oneMinusSourceAlpha",
     "nebulaOverlayPipeline=try device.makeRenderPipelineState(",
-    "d.textureType = .type2DArray",
-    "d.arrayLength = SphereNebula556.orbitThemeCount",
-    "bytesPerRow:n*4,bytesPerImage:n*n*4",
-    "let cloudData=Self.nebulaSource556()",
+    "let cloudData=SourceSkyAssetFactory568.nebulaSource556()",
     "nebulaOverlayMesh=try Self.makeMesh(device,cloudData.0,cloudData.1)",
-    "let created=try Self.makeNebulaTextures556(device)",
+    "let created=try SourceSkyAssetFactory568.makeNebulaTextures556(device)",
     "private var nebulaSliceCache55 = SkyTextureSliceCache55(count: SphereNebula556.orbitThemeCount)",
     "let visibleThemes=Set(Self.sourceCloudLayers55.compactMap",
     "guard nebulaLoadGate.shouldAllocate(visible:!visibleThemes.isEmpty)",
     "where visibleThemes.contains(theme)",
     "nebulaSliceCache55.needsUpload(style:theme)",
     "nebulaSliceCache55.markUploaded(style:theme)",
-    "private static func uploadNebulaSlice556(",
-    "let texels=SphereNebula556.textureBGRA(theme:theme)",
-    "vertices.reserveCapacity(SphereNebula556.orbitLayerCount*6)",
+    "SourceSkyAssetFactory568.uploadNebulaSlice556(texture,theme:theme)",
     "encoder.setVertexBuffer(",
     "nebulaOverlayMesh.vertices,offset:0,index:0)",
     "encoder.setFragmentTexture(clouds,index:0)",
@@ -68,6 +64,16 @@ for t in (
     "encoder.setRenderPipelineState(pipeline)",
 ):
     check(t in render,"C# nebula Metal pipeline wiring missing: "+t)
+for token in (
+    "static func makeNebulaTextures556(_ device:MTLDevice)",
+    "d.textureType = .type2DArray",
+    "d.arrayLength = SphereNebula556.orbitThemeCount",
+    "bytesPerRow:n*4,bytesPerImage:n*n*4",
+    "static func uploadNebulaSlice556(",
+    "let texels=SphereNebula556.textureBGRA(theme:theme)",
+    "vertices.reserveCapacity(SphereNebula556.orbitLayerCount*6)",
+):
+    check(token in factory,"Shared source nebula texture builder changed: "+token)
 # The source sphere pipeline must preserve its own painter order.
 # The separate orbital IntroScene41 scene deliberately draws its stars
 # earlier; checking the first skyPoint occurrence across both scenes

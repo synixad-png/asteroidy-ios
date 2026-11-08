@@ -77,4 +77,137 @@ enum SourceSkyAssetFactory568 {
         }
         return (vertices,(0..<source.count).map {UInt32($0)})
     }
+
+
+    // Verified identical in both renderers before extraction; unchanged
+    // source texture formats, BGRA uploads, lazy caller behavior and errors.
+
+    static func makeNebulaTextures556(_ device:MTLDevice)
+        throws -> MTLTexture {
+        let n=SphereNebula556.imageSize
+        let d=MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false)
+        d.textureType = .type2DArray
+        d.arrayLength = SphereNebula556.orbitThemeCount
+        d.storageMode = .shared
+        d.usage=[.shaderRead]
+        guard let texture=device.makeTexture(descriptor:d) else {
+            throw NSError(domain:"ASTEROIDY iOS Metal",code:13,
+                 userInfo:[NSLocalizedDescriptionKey:
+                    "Nie można utworzyć źródłowych NebulaTexture 256x256"])
+        }
+        return texture
+    }
+
+    static func uploadNebulaSlice556(_ texture:MTLTexture,
+                                             theme:Int) -> Bool {
+        let n=SphereNebula556.imageSize
+        let texels=SphereNebula556.textureBGRA(theme:theme)
+        guard texels.count == n*n*4 else {
+            NSLog("ASTEROIDY iOS: nieprawidłowa tekstura mgławicy %ld", theme)
+            return false
+        }
+        texels.withUnsafeBytes { raw in
+            if let p=raw.baseAddress {
+                texture.replace(region:MTLRegionMake2D(0,0,n,n),
+                                mipmapLevel:0,slice:theme,withBytes:p,
+                                bytesPerRow:n*4,bytesPerImage:n*n*4)
+            }
+        }
+        return true
+    }
+
+    static func nebulaSource556()
+        -> ([AssetMesh.Vertex],[UInt32]) {
+        let uv:[SIMD2<Float>]=[
+            SIMD2(0,0),SIMD2(1,0),SIMD2(1,1),
+            SIMD2(0,0),SIMD2(1,1),SIMD2(0,1)
+        ]
+        var vertices:[AssetMesh.Vertex]=[]
+        vertices.reserveCapacity(SphereNebula556.orbitLayerCount*6)
+        var indices:[UInt32]=[]
+        indices.reserveCapacity(SphereNebula556.orbitLayerCount*6)
+        for i in 0..<SphereNebula556.orbitLayerCount {
+            let layer=SphereNebula556.layer(i)
+            for u in uv {
+                vertices.append(AssetMesh.Vertex(
+                    position:SIMD4(layer.direction.x,layer.direction.y,
+                                   layer.direction.z,1),
+                    color:SIMD4(1,1,1,layer.alpha),
+                    normal:SIMD4(u.x,u.y,0,0),
+                    material:SIMD4<Float>(
+                        layer.near ? 1:0,Float(layer.theme),0,0)))
+                indices.append(UInt32(indices.count))
+            }
+        }
+        return (vertices,indices)
+    }
+
+    static func makeBlackHoleTextures55(_ device:MTLDevice)
+        throws -> MTLTexture {
+        let n=BlackHoleSky55.imageSize
+        let desc=MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false)
+        desc.textureType = .type2DArray
+        desc.arrayLength = 3
+        desc.storageMode = .shared
+        desc.usage=[.shaderRead]
+        guard let tex=device.makeTexture(descriptor:desc) else {
+            throw NSError(domain:"ASTEROIDY iOS Metal",code:14,
+                          userInfo:[NSLocalizedDescriptionKey:
+                           "Nie można utworzyć trzech źródłowych warstw czarnej dziury 640px"])
+        }
+        for slice in 0..<3 {
+            let image=BlackHoleSky55.textureBGRA(slice:slice)
+            image.withUnsafeBytes { bytes in
+                if let p=bytes.baseAddress {
+                    tex.replace(region:MTLRegionMake2D(0,0,n,n),
+                                mipmapLevel:0,slice:slice,
+                                withBytes:p,bytesPerRow:n*4,
+                                bytesPerImage:n*n*4)
+                }
+            }
+        }
+        return tex
+    }
+
+    static func makeDeepPlanetTextures55(_ device:MTLDevice)
+        throws -> MTLTexture {
+        let w=DeepSkyPlanets55.textureWidth
+        let h=DeepSkyPlanets55.textureHeight
+        let d=MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat:.bgra8Unorm,width:w,height:h,mipmapped:false)
+        d.textureType = .type2DArray
+        d.arrayLength = DeepSkyPlanets55.count
+        d.storageMode = .shared
+        d.usage=[.shaderRead]
+        guard let tex=device.makeTexture(descriptor:d) else {
+            throw NSError(domain:"ASTEROIDY iOS Metal",code:15,
+                userInfo:[NSLocalizedDescriptionKey:
+                    "Nie można utworzyć trzech źródłowych planet 320x220"])
+        }
+        // Deliberately leave unseen slices uninitialized; the renderer
+        // never samples a planet until uploadDeepPlanetSlice55 succeeds.
+        return tex
+    }
+
+    static func uploadDeepPlanetSlice55(_ tex:MTLTexture,
+                                                style:Int) -> Bool {
+        let w=DeepSkyPlanets55.textureWidth
+        let h=DeepSkyPlanets55.textureHeight
+        let img=DeepSkyPlanets55.textureBGRA(style:style)
+        guard img.count == w*h*4 else {
+            NSLog("ASTEROIDY iOS: nieprawidłowy rozmiar tekstury planety %ld", style)
+            return false
+        }
+        img.withUnsafeBytes { raw in
+            if let ptr=raw.baseAddress {
+                tex.replace(region:MTLRegionMake2D(0,0,w,h),
+                            mipmapLevel:0,slice:style,
+                            withBytes:ptr,bytesPerRow:w*4,
+                            bytesPerImage:w*h*4)
+            }
+        }
+        return true
+    }
 }

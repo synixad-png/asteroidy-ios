@@ -49,7 +49,8 @@ assert 'let sourceCloudTexture=nebula ? ensureCloudTextures55(camera:c)' in sky
 assert 'glow:glow' in sky
 assert 'SourceSkyAssetFactory568.sphereSky207()' in sky
 assert 'SphereSky207.count*2' in shared
-assert 'SphereNebula556.orbitLayerCount*6' in sky
+assert 'SourceSkyAssetFactory568.nebulaSource556()' in sky
+assert 'SphereNebula556.orbitLayerCount*6' in shared
 assert 'style:0,base:SphereVector3(x:0.94,y:0.02,z:-0.34)' in intro
 assert 'style:1,base:SphereVector3(x:0.18,y:-0.62,z:-0.76)' in intro
 assert 'style:2,base:SphereVector3(x:-0.78,y:0.42,z:-0.46)' in intro
