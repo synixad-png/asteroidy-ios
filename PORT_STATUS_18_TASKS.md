@@ -1,3 +1,15 @@
+## ETAP — 08.11.2026: naprawa głównego wątku audio SFX po pomiarze użytkownika (IPA #145)
+
+**Potwierdzony test urządzeń:** efekty dźwiękowe 0%, muzyka 100% => iPhone i iPad utrzymują 60 FPS. Z efektami aktywnymi iPhone pokazywał ok. 40 FPS / DRAW 40/s pomimo GPU 4,3 ms, CPU 1,6 ms i WAIT Metal 0 ms. Nie są to przesłanki do dalszej redukcji jakości renderowania.
+
+**Wykonano:** [PR #9](https://github.com/synixad-png/asteroidy-ios/pull/9), commit `1725a7e9aa4337fe6f359ffb357335500e4256de`. Dotychczasowe blokujące operacje AVAudioPlayer strzałów, trafień i wybuchów wyprowadzono poza główny wątek SwiftUI/MetalKit do osobnej szeregowej kolejki, z zachowaniem wszystkich oryginalnych próbek, wariantów i gainów, źródłowego limitu 16 głosów, dwugłosowego prewarm oraz pełnej naprawy iPad audio lock/unlock #141. Nie zmieniono kodu grafiki, iPhone 100/84/74% Metal, iPada, fizyki ani sterowania.
+
+**Testy:** [PR CI #433](https://github.com/synixad-png/asteroidy-ios/actions/runs/42463798647) **2/2 PASS**, [IPA #145](https://github.com/synixad-png/asteroidy-ios/actions/runs/42464084745) **4/4 PASS**, `BUILD SUCCEEDED`, 43 oryginalne zasoby audio, 15 runtime synthesizer tracks, weryfikacja ARM64/ZIP CRC/Info.plist PASS. [**Pobierz unsigned IPA #145**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42464084745/artifacts/13611482405), ZIP 28 050 698 bajtów, SHA256 `fa67f7834a0550a85af6d11d1530a0791c6939b2d619fa370659f14d0b4028db`. [Pełny raport](Reports/V568_IOS_IPHONE_SFX_MAIN_THREAD_60FPS_FIX_2026-11-08.md). Main CI #434: właściwe joby PASS, pomocniczy zapis statusu GitHub nie przeszedł z powodu konfliktu 409.
+
+**Wymagany pomiar sprzętowy:** na iPhonie i iPadzie włączyć **efekty 100% i muzyka 100%**, sprawdzić czy przy ciągłym strzelaniu 20–30 s FPS utrzymuje się na 60 oraz czy słyszalne są oryginalne SFX. Po zamknięciu/otwarciu iPada potwierdzić audio. **Nie wiadomo jeszcze**, czy poprawka wyeliminowała realne przycięcia — brak testu fizycznego po #145.
+
+**Harmonogram 18 zadań:** nadal **38% zakończone / 62% pozostało**, bez sztucznego awansu za diagnozę i optymalizację.
+
 ## ETAP — 08.11.2026: pomiar kadencji MTKView na iPhonie przy spadku do 30 FPS (IPA #144)
 
 **Dane z fizycznego iPhone'a od użytkownika:** przy problemie strzelania podane CPU 2,3 ms, SYM 0,9 ms, GPU 4,1 ms, WAIT 0,3 ms. To nie potwierdza przeciążenia CPU/GPU, ale średnie nie wykrywają krótkich hitchów. **Nie stosowano dalszych cięć jakości.**
