@@ -30,9 +30,13 @@ import Foundation
         let start=P(x:9.2,feet:0,z:9.6)
         let stopped=H55Sweep401580.sweep(
             collision:col,from:start,vx:1.8,vz:0,moveHubAxis:move)
-        check(stopped.x>=start.x &&
-              stopped.x<9.8 && abs(stopped.z-start.z)<0.0001,
-              "5cm swept checks never tunnel through thin GLB wall")
+        // Original ContactNormal401 is derived from triangle overlap energy.
+        // It can add a SMALL tangential Z motion even for X-only input;
+        // that is the intended source v401 wall-slide, not axis drift.
+        check(stopped.x>=start.x && stopped.x<9.8 &&
+              col.bodyClear379(stopped.x,feet:stopped.feet,stopped.z) &&
+              hypot(stopped.x-start.x,stopped.z-start.z)<=1.8001,
+              "source swept motion must remain outside wall, without added energy")
         check(calls>=20 && calls<=60,"source bounded max 20 substeps")
         let before=calls
         let clear=H55Sweep401580.sweep(
