@@ -839,7 +839,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                                        streamWaitStart)*1000
                 }
                 let drawableRequestStart=ProcessInfo.processInfo.systemUptime
-                guard let drawable=view.currentDrawable,
+                let requestedDrawable=view.currentDrawable
+                let drawableReady=ProcessInfo.processInfo.systemUptime
+                guard let drawable=requestedDrawable,
                       let pass=view.currentRenderPassDescriptor,
                       let command=queue.makeCommandBuffer(),
                       let encoder=command.makeRenderCommandEncoder(descriptor:pass)
@@ -849,7 +851,10 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 }
                 if !adaptivePhoneCombat568 {fxStream568.beginFrame()}
                 let acquired=ProcessInfo.processInfo.systemUptime
-                let phoneDrawableWaitMs=(acquired-drawableRequestStart)*1000
+                // Drawable wait excludes command/encoder CPU setup; otherwise
+                // a 30 FPS cadence could be incorrectly blamed on drawable.
+                let phoneDrawableWaitMs=(drawableReady-drawableRequestStart)*1000
+                let phoneCommandSetupMs=(acquired-drawableReady)*1000
                 let waitMs=adaptivePhoneCombat568
                     ? phoneStreamWaitMs+phoneDrawableWaitMs
                     : (acquired-entered)*1000
@@ -1364,7 +1369,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 if gameSession != nil {
                     SourcePerformance568.shared.recordCPU(
                         workMs:(ProcessInfo.processInfo.systemUptime-acquired)*1000+
-                            (adaptivePhoneCombat568 ? phonePreCPUms : 0),
+                            (adaptivePhoneCombat568
+                                ? phonePreCPUms+phoneCommandSetupMs : 0),
                         simulationMs:simulationMs,waitMs:waitMs,
                         projectileMeshMs:projectileMeshMs,
                         destructionMeshMs:destructionMeshMs,
