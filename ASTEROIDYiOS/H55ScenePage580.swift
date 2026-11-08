@@ -79,7 +79,7 @@ import simd
     @objc private func stepFrame(_ link:CADisplayLink) {
         guard let scene,camera != nil else{return}
         let dt:Float
-        if let last=lastTick {dt=Float(min(0.05,max(0,link.timestamp-last)))}
+        if let last=lastTick {dt=Float(min(0.06,max(0,link.timestamp-last)))}
         else {dt=0}
         lastTick=link.timestamp
         guard dt>0 else{return}
