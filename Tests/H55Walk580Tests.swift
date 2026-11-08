@@ -64,6 +64,36 @@ import Foundation
                          bodyClear:clear,support:more)
         }
         check(tooHigh.z>=13.8,"source rejects steps above .50 metres")
+        var jump=H55Walk580()
+        check(jump.jump(),"source first jump enabled")
+        check(jump.jumps==1 && !jump.grounded,"jump makes airborne")
+        var firstTop:Float=0
+        for _ in 0..<150 {
+            jump.step(dt:1/60,forward:0,right:0,sprint:false,
+                      bodyClear:clear,support:flat)
+            firstTop=max(firstTop,jump.y)
+        }
+        check(firstTop>1.10 && firstTop<1.20,
+              "source first jump apex 1.15m")
+        check(jump.y==0 && jump.grounded && jump.jumps==0,
+              "source jump resets on floor contact")
+        check(jump.jump(),"first jump for double-jump sequence")
+        for _ in 0..<10 {
+            jump.step(dt:1/60,forward:0,right:0,sprint:false,
+                      bodyClear:clear,support:flat)
+        }
+        check(jump.jump(),"source midair second jump")
+        check(jump.jumps==2 && !jump.jump(),"third jump forbidden")
+        var secondApex:Float=jump.y
+        for _ in 0..<180 {
+            jump.step(dt:1/60,forward:0,right:0,sprint:false,
+                      bodyClear:clear,support:flat)
+            secondApex=max(secondApex,jump.y)
+        }
+        check(secondApex>3.45 && secondApex<5,
+              "source second jump adds 3.45 metres of vertical travel")
+        check(jump.grounded && jump.jumps==0,
+              "double jump re-arms only after physical landing")
         print("PASS v580 H55 walking source speed/look/damping, GLB collision gates, max-step, no-floor and walls")
     }
 }
