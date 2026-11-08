@@ -1,3 +1,13 @@
+## ETAP — 08.11.2026: iPhone 60→30 FPS podczas strzelania, bez ingerencji w działający iPad (IPA #142)
+
+**Zgłoszenie po teście fizycznym IPA #141:** użytkownik potwierdził, że naprawa dźwięków strzałów i wybuchów działa; iPad nie ma już uciążliwych spadków, ale na iPhonie podczas strzelania występują spadki z 60 do 30 FPS. **Poprawka ściśle dla iPhone'a.**
+
+**Implementacja:** `PhoneCombatResolution568.swift` + warunek w `Sector01CarbonisPreview568.swift`: **wyłącznie podczas rzeczywistej misji na iPhonie** (UIDevice .phone) licznik kolejnych opóźnionych klatek podczas aktywnego ostrzału adaptuje wewnętrzny rozmiar renderowania 3D Metal z 100% do 84%, a następnie 74% wymiarów; spadek liczby pikseli o ~29,4% albo ~45,2%. Po 4 s stabilnej płynności bez pocisków przywracany jest kolejny wyższy poziom. Oryginalna liczba pocisków, efektów, shaderów, obrażenia, audio z #141 i sterowanie nie zostały zmienione. Interfejs SwiftUI nie jest skalowany. **Na iPadzie nowa funkcja nie jest włączana i oryginalny MTKView, natywne piksele oraz cała ścieżka misji pozostają bez zmian.** iPhone może mieć chwilowo mniej ostry obraz podczas spadku FPS.
+
+**Weryfikacja:** [PR #6](https://github.com/synixad-png/asteroidy-ios/pull/6) scalony `df1c59a6`; [PR CI #426](https://github.com/synixad-png/asteroidy-ios/actions/runs/42455917109) **2/2 PASS**, [main CI #427](https://github.com/synixad-png/asteroidy-ios/actions/runs/42456161342) **3/3 PASS**; [IPA #142](https://github.com/synixad-png/asteroidy-ios/actions/runs/42456161374) **4/4 PASS**, Xcode iOS ARM64 BUILD SUCCEEDED, ZIP CRC i iPhone/iPad/Info.plist + audio/Metal testy PASS. [**Pobierz niepodpisane IPA #142**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42456161374/artifacts/13607468171); ZIP 28 033 312 B, SHA256 zewnętrznego ZIP `3c112a3dc5e8293d99190d3d7327de64021bb52fb86f47efd39692c85ae4b20f`. [Raport](Reports/V568_IOS_IPHONE_ONLY_60_TO_30_FPS_SHOOTING_2026-11-08.md). **Nie wykonano rzeczywistego pomiaru FPS na iPhonie ani testu iPada po tej zmianie**; skuteczność i brak regresji sprzętowej musi potwierdzić użytkownik.
+
+**Stały harmonogram portu: 18 zadań, 38% wykonane / 62% pozostało.** Nie zawyżać postępu za naprawy wydajności.
+
 ## ETAP — 07.11.2026: dźwięki strzałów i wybuchów po odblokowaniu iPada (IPA #141)
 
 **Rzeczywiste zgłoszenie po testach IPA #140:** muzyka po blokadzie/odblokowaniu ekranu gra, ale z krótką ciszą na początku; odgłosy strzałów i wybuchów zanikają. **Potwierdzona luka w kodzie:** dotąd przy uśpieniu tylko wstrzymywano `AVAudioPlayer` krótkich efektów, zachowując te same obiekty w puli `prewarmedEffects`; `sourceEffect` ignorowało wynik `player.play()`. Stare kolejki efektów po iOS interruption mogły pozostać nieme mimo poprawnie działającej muzyki.
