@@ -367,7 +367,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         sphereHaloTexture=try SourceSkyAssetFactory568.makeSphereHaloTexture(device)
         let overlayData=SourceSkyAssetFactory568.solarOverlaySource556()
         solarOverlayMesh=try Self.makeMesh(device,overlayData.0,overlayData.1)
-        let cloudData=Self.nebulaSource556()
+        let cloudData=SourceSkyAssetFactory568.nebulaSource556()
         nebulaOverlayMesh=try Self.makeMesh(device,cloudData.0,cloudData.1)
         // Source GpuIntro41.cs generates large sky Bitmaps only after
         // their first visible SkyProject55. Do not eagerly allocate
@@ -496,7 +496,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             guard nebulaLoadGate.shouldAllocate(visible:!visibleThemes.isEmpty)
             else { return nil }
             do {
-                let created=try Self.makeNebulaTextures556(device)
+                let created=try SourceSkyAssetFactory568.makeNebulaTextures556(device)
                 nebulaTexture=created
                 texture=created
             } catch {
@@ -510,7 +510,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         for theme in 0..<SphereNebula556.orbitThemeCount
             where visibleThemes.contains(theme) &&
                   nebulaSliceCache55.needsUpload(style:theme) {
-            guard Self.uploadNebulaSlice556(texture,theme:theme) else {
+            guard SourceSkyAssetFactory568.uploadNebulaSlice556(texture,theme:theme) else {
                 return nil
             }
             nebulaSliceCache55.markUploaded(style:theme)
@@ -531,7 +531,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             guard deepPlanetLoadGate.shouldAllocate(visible: true)
             else { return nil }
             do {
-                let created=try Self.makeDeepPlanetTextures55(device)
+                let created=try SourceSkyAssetFactory568.makeDeepPlanetTextures55(device)
                 deepPlanetTextures=created
                 texture=created
             } catch {
@@ -540,7 +540,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             }
         }
         if deepPlanetSliceCache55.needsUpload(style:style) {
-            guard Self.uploadDeepPlanetSlice55(texture,style:style) else {
+            guard SourceSkyAssetFactory568.uploadDeepPlanetSlice55(texture,style:style) else {
                 return nil
             }
             deepPlanetSliceCache55.markUploaded(style:style)
@@ -552,7 +552,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         if let current=blackHoleTextures { return current }
         guard blackHoleLoadGate.shouldAllocate(visible: true) else { return nil }
         do {
-            let created=try Self.makeBlackHoleTextures55(device)
+            let created=try SourceSkyAssetFactory568.makeBlackHoleTextures55(device)
             blackHoleTextures=created
             return created
         } catch {
@@ -565,104 +565,23 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     /// used by GpuIntro41.IntroSky. Share one 2-slice texture array across
     /// all 36 distant/near cloud layers, allocated exactly once. Each
     /// 256px CPU bitmap is generated only when its theme is visible.
-    private static func makeNebulaTextures556(_ device:MTLDevice)
-        throws -> MTLTexture {
-        let n=SphereNebula556.imageSize
-        let d=MTLTextureDescriptor.texture2DDescriptor(
-            pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false)
-        d.textureType = .type2DArray
-        d.arrayLength = SphereNebula556.orbitThemeCount
-        d.storageMode = .shared
-        d.usage=[.shaderRead]
-        guard let texture=device.makeTexture(descriptor:d) else {
-            throw NSError(domain:"ASTEROIDY iOS Metal",code:13,
-                 userInfo:[NSLocalizedDescriptionKey:
-                    "Nie można utworzyć źródłowych NebulaTexture 256x256"])
-        }
-        return texture
-    }
+    
 
-    private static func uploadNebulaSlice556(_ texture:MTLTexture,
-                                             theme:Int) -> Bool {
-        let n=SphereNebula556.imageSize
-        let texels=SphereNebula556.textureBGRA(theme:theme)
-        guard texels.count == n*n*4 else {
-            NSLog("ASTEROIDY iOS: nieprawidłowa tekstura mgławicy %ld", theme)
-            return false
-        }
-        texels.withUnsafeBytes { raw in
-            if let p=raw.baseAddress {
-                texture.replace(region:MTLRegionMake2D(0,0,n,n),
-                                mipmapLevel:0,slice:theme,withBytes:p,
-                                bytesPerRow:n*4,bytesPerImage:n*n*4)
-            }
-        }
-        return true
-    }
+    
 
     /// Original DrawDeepSpace55 emits 24 distant clouds, IntroSky adds
     /// 12 near layers. A static 216-vertex stream stores the exact
     /// source 3D sky directions, UV, alpha, theme and layer type; the
     /// original SkyProject55 is evaluated in the GPU vertex stage with
     /// the LIVE camera, without rebuilding the geometry every frame.
-    private static func nebulaSource556()
-        -> ([AssetMesh.Vertex],[UInt32]) {
-        let uv:[SIMD2<Float>]=[
-            SIMD2(0,0),SIMD2(1,0),SIMD2(1,1),
-            SIMD2(0,0),SIMD2(1,1),SIMD2(0,1)
-        ]
-        var vertices:[AssetMesh.Vertex]=[]
-        vertices.reserveCapacity(SphereNebula556.orbitLayerCount*6)
-        var indices:[UInt32]=[]
-        indices.reserveCapacity(SphereNebula556.orbitLayerCount*6)
-        for i in 0..<SphereNebula556.orbitLayerCount {
-            let layer=SphereNebula556.layer(i)
-            for u in uv {
-                vertices.append(AssetMesh.Vertex(
-                    position:SIMD4(layer.direction.x,layer.direction.y,
-                                   layer.direction.z,1),
-                    color:SIMD4(1,1,1,layer.alpha),
-                    normal:SIMD4(u.x,u.y,0,0),
-                    material:SIMD4<Float>(
-                        layer.near ? 1:0,Float(layer.theme),0,0)))
-                indices.append(UInt32(indices.count))
-            }
-        }
-        return (vertices,indices)
-    }
+    
 
     /// Original BuildBlackHoleDisk55(false), BuildBlackHoleCore55(),
     /// BuildBlackHoleDisk55(true) from actual v556 GpuIntro41.cs. One
     /// three-slice GPU texture shared by all 3 black-hole image passes.
     /// Source GpuRenderer.Texture(Bitmap) uploads Format32bppPArgb.
     /// Never flatten the original rear/core/front ordering.
-    private static func makeBlackHoleTextures55(_ device:MTLDevice)
-        throws -> MTLTexture {
-        let n=BlackHoleSky55.imageSize
-        let desc=MTLTextureDescriptor.texture2DDescriptor(
-            pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false)
-        desc.textureType = .type2DArray
-        desc.arrayLength = 3
-        desc.storageMode = .shared
-        desc.usage=[.shaderRead]
-        guard let tex=device.makeTexture(descriptor:desc) else {
-            throw NSError(domain:"ASTEROIDY iOS Metal",code:14,
-                          userInfo:[NSLocalizedDescriptionKey:
-                           "Nie można utworzyć trzech źródłowych warstw czarnej dziury 640px"])
-        }
-        for slice in 0..<3 {
-            let image=BlackHoleSky55.textureBGRA(slice:slice)
-            image.withUnsafeBytes { bytes in
-                if let p=bytes.baseAddress {
-                    tex.replace(region:MTLRegionMake2D(0,0,n,n),
-                                mipmapLevel:0,slice:slice,
-                                withBytes:p,bytesPerRow:n*4,
-                                bytesPerImage:n*n*4)
-                }
-            }
-        }
-        return tex
-    }
+    
 
     /// Real GpuIntro41.BuildDeepPlanet55(0/1/2): all images are
     /// 320x220 Format32bppPArgb. Allocate only ONCE in a single GPU
@@ -670,45 +589,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     /// actual CPU image/slice is uploaded only when THAT style is visible.
     /// Reuse BlackHole55's generic premultiplied 2D shader: texture slice
     /// -1 uses the original shared StarTexture halo.
-    private static func makeDeepPlanetTextures55(_ device:MTLDevice)
-        throws -> MTLTexture {
-        let w=DeepSkyPlanets55.textureWidth
-        let h=DeepSkyPlanets55.textureHeight
-        let d=MTLTextureDescriptor.texture2DDescriptor(
-            pixelFormat:.bgra8Unorm,width:w,height:h,mipmapped:false)
-        d.textureType = .type2DArray
-        d.arrayLength = DeepSkyPlanets55.count
-        d.storageMode = .shared
-        d.usage=[.shaderRead]
-        guard let tex=device.makeTexture(descriptor:d) else {
-            throw NSError(domain:"ASTEROIDY iOS Metal",code:15,
-                userInfo:[NSLocalizedDescriptionKey:
-                    "Nie można utworzyć trzech źródłowych planet 320x220"])
-        }
-        // Deliberately leave unseen slices uninitialized; the renderer
-        // never samples a planet until uploadDeepPlanetSlice55 succeeds.
-        return tex
-    }
+    
 
-    private static func uploadDeepPlanetSlice55(_ tex:MTLTexture,
-                                                style:Int) -> Bool {
-        let w=DeepSkyPlanets55.textureWidth
-        let h=DeepSkyPlanets55.textureHeight
-        let img=DeepSkyPlanets55.textureBGRA(style:style)
-        guard img.count == w*h*4 else {
-            NSLog("ASTEROIDY iOS: nieprawidłowy rozmiar tekstury planety %ld", style)
-            return false
-        }
-        img.withUnsafeBytes { raw in
-            if let ptr=raw.baseAddress {
-                tex.replace(region:MTLRegionMake2D(0,0,w,h),
-                            mipmapLevel:0,slice:style,
-                            withBytes:ptr,bytesPerRow:w*4,
-                            bytesPerImage:w*h*4)
-            }
-        }
-        return true
-    }
+    
 
     private static func translation(_ x: Float,_ y: Float,_ z: Float) -> simd_float4x4 {
         simd_float4x4(columns:(SIMD4(1,0,0,0),SIMD4(0,1,0,0),SIMD4(0,0,1,0),SIMD4(x,y,z,1)))
