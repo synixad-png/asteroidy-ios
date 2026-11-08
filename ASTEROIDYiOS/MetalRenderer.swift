@@ -1015,16 +1015,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 let frame=SIMD4<Float>(x,y,2/(720*aspect),-2/720)
                 let layers=DeepSkyPlanets55.overlays(
                     style:style,scale:projected.scale,glow:true)
-                var uniforms:[SIMD4<Float>]=[frame]
-                uniforms.reserveCapacity(1+layers.count*3)
-                for layer in layers {
-                    uniforms.append(SIMD4(
-                        layer.radiusX,layer.radiusY,1,0))
-                    let (r,g,b,a)=layer.rgba
-                    uniforms.append(SIMD4(r*a,g*a,b*a,a))
-                    uniforms.append(SIMD4(
-                        Float(layer.textureSlice),0,0,0))
-                }
+                let uniforms=SourceSkyUniformPacking.planet(frame:frame,layers:layers)
                 uniforms.withUnsafeBytes { raw in
                     if let ptr=raw.baseAddress {
                         encoder.setVertexBytes(
@@ -1048,18 +1039,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 let layers=BlackHoleSky55.overlays(
                     time:introTime41,
                     scale:blackProjection.scale,glow:true)
-                var properties:[SIMD4<Float>]=[screen]
-                properties.reserveCapacity(1+layers.count*3)
-                for layer in layers {
-                    properties.append(SIMD4(
-                        layer.radiusX,layer.radiusY,
-                        cos(layer.angle),sin(layer.angle)))
-                    let (r,g,b,a)=layer.rgba
-                    properties.append(SIMD4(r*a,g*a,b*a,a))
-                    properties.append(SIMD4(
-                        layer.isTexture ? Float(layer.layer) : -1,
-                        0,0,0))
-                }
+                let properties=SourceSkyUniformPacking.blackHole(screen:screen,layers:layers)
                 encoder.setRenderPipelineState(blackHolePipeline)
                 properties.withUnsafeBytes { raw in
                     if let ptr=raw.baseAddress {
@@ -1416,16 +1396,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 let frame=SIMD4<Float>(x,y,2/(720*aspect),-2/720)
                 let layers=DeepSkyPlanets55.overlays(
                     style:style,scale:projected.scale,glow:true)
-                var uniforms:[SIMD4<Float>]=[frame]
-                uniforms.reserveCapacity(1+layers.count*3)
-                for layer in layers {
-                    uniforms.append(SIMD4(
-                        layer.radiusX,layer.radiusY,1,0))
-                    let (r,g,b,a)=layer.rgba
-                    uniforms.append(SIMD4(r*a,g*a,b*a,a))
-                    uniforms.append(SIMD4(
-                        Float(layer.textureSlice),0,0,0))
-                }
+                let uniforms=SourceSkyUniformPacking.planet(frame:frame,layers:layers)
                 uniforms.withUnsafeBytes { raw in
                     if let ptr=raw.baseAddress {
                         encoder.setVertexBytes(
@@ -1449,18 +1420,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 let layers=BlackHoleSky55.overlays(
                     time:Float(planetAnimationTime),
                     scale:blackProjection.scale,glow:true)
-                var properties:[SIMD4<Float>]=[screen]
-                properties.reserveCapacity(1+layers.count*3)
-                for layer in layers {
-                    properties.append(SIMD4(
-                        layer.radiusX,layer.radiusY,
-                        cos(layer.angle),sin(layer.angle)))
-                    let (r,g,b,a)=layer.rgba
-                    properties.append(SIMD4(r*a,g*a,b*a,a))
-                    properties.append(SIMD4(
-                        layer.isTexture ? Float(layer.layer) : -1,
-                        0,0,0))
-                }
+                let properties=SourceSkyUniformPacking.blackHole(screen:screen,layers:layers)
                 encoder.setRenderPipelineState(blackHolePipeline)
                 properties.withUnsafeBytes { raw in
                     if let ptr=raw.baseAddress {
