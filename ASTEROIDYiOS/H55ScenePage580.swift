@@ -27,6 +27,9 @@ import simd
     private var airlockTracks:H55AirlockTracks580.SceneKeys?
     private var airlockLeaves:[String:SCNNode]=[:]
     private var airlockLastApplied:[Float]=[Float.nan,Float.nan]
+    private var h46LightNodes:[String:SCNNode]=[:]
+    private var h46LightIntensities:[String:CGFloat]=[:]
+    private var lightRefresh:Float=0
     private var arrival=H55Arrival580(spawnClear:false)
     @Published private(set) var arriving=false
     private var moveForward:Float=0
@@ -161,6 +164,34 @@ import simd
         // PC v580: update doors AFTER NPC movement; keep animating during
         // 3.25s arrival and while the conversation blocks walking.
         updateAirlocks(dt:dt)
+        lightRefresh+=dt
+        if lightRefresh>=0.16 {
+            lightRefresh=0
+            updateH46LightBudget()
+        }
+    }
+
+    private func updateH46LightBudget() {
+        guard !h46LightNodes.isEmpty else{return}
+        // Same source ranking as PC Lights(): 8 strongest lamps in proximity
+        // around the physically current player, rather than all 24 at once.
+        let ranked=h46LightNodes.map { (name,node) -> (String,Float) in
+            let p=node.simdWorldPosition
+            let dx=p.x-movement.x,dy=p.y-(movement.y+H55Walk580.eyes),dz=p.z-movement.z
+            return (name,H55LightBalance580.score(name,
+                      distanceSquared:dx*dx+dy*dy+dz*dz))
+        }.sorted { a,b in
+            if a.1 != b.1{return a.1>b.1}
+            return a.0<b.0
+        }
+        let selected=Set(ranked.prefix(H55LightBalance580.budget).map{$0.0})
+        SCNTransaction.begin()
+        SCNTransaction.disableActions=true
+        for (name,node) in h46LightNodes {
+            let next=selected.contains(name) ? (h46LightIntensities[name] ?? 0) : 0
+            if node.light?.intensity != next {node.light?.intensity=next}
+        }
+        SCNTransaction.commit()
     }
 
     private func updateAirlocks(dt:Float) {
@@ -207,6 +238,9 @@ import simd
         airlockTracks=nil
         airlockLeaves.removeAll()
         airlockLastApplied=[Float.nan,Float.nan]
+        h46LightNodes.removeAll()
+        h46LightIntensities.removeAll()
+        lightRefresh=0
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
         mechanic=H55Mechanic580()
@@ -291,6 +325,7 @@ import simd
         realScene.rootNode.addChildNode(pointOfView)
 
         installH46Lights(from:asset,into:source)
+        updateH46LightBudget()
         var clips:[String:GLTFSCNAnimation]=[:]
         for clip in source.animations where !clip.name.isEmpty {
             clips[clip.name]=clip
@@ -391,9 +426,14 @@ import simd
                       green:CGFloat(components[1].doubleValue),
                       blue:CGFloat(components[2].doubleValue),alpha:1)
             }
-            if let strength=proxy["intensity"] as? NSNumber {
-                light.intensity=CGFloat(strength.doubleValue)
-            }
+            guard let strength=proxy["intensity"] as? NSNumber else{continue}
+            // PC does NOT shade all 24 H46 proxies as raw 90..6100.
+            // Its eight nearest-source lights are rendered by a custom shader.
+            // SceneKit uses explicit, isolated gain and distance ranking.
+            h46LightIntensities[name]=CGFloat(H55LightBalance580.sceneIntensity(
+                name,raw:Float(strength.doubleValue)))
+            light.intensity=0
+
             if let range=proxy["range"] as? NSNumber {
                 light.attenuationStartDistance=0
                 light.attenuationEndDistance=CGFloat(range.doubleValue)
@@ -406,6 +446,7 @@ import simd
                 light.spotOuterAngle=CGFloat(outer.doubleValue*degrees)
             }
             target.light=light
+            h46LightNodes[name]=target
         }
     }
 
@@ -457,6 +498,9 @@ import simd
         airlockTracks=nil
         airlockLeaves.removeAll()
         airlockLastApplied=[Float.nan,Float.nan]
+        h46LightNodes.removeAll()
+        h46LightIntensities.removeAll()
+        lightRefresh=0
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
         setMove(forward:0,right:0)
