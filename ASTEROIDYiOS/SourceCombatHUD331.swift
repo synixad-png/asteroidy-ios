@@ -53,7 +53,7 @@ struct SourceCombatHUD331: View {
         }
         .allowsHitTesting(false)
         .accessibilityElement(children:.ignore)
-        .accessibilityLabel("Sektor 01. Punkty \\(hud.score). Żetony \\(hud.tokenBalance). Życia \\(hud.lives). Kadłub \\(hud.hull). Pancerz \\(hud.armor).")
+        .accessibilityLabel("Sektor 01. Punkty \(hud.score). Żetony \(hud.tokenBalance). Życia \(hud.lives). Kadłub \(hud.hull). Pancerz \(hud.armor).")
         .accessibilityIdentifier("sector01-source-w3-hud331")
     }
 
@@ -101,12 +101,15 @@ struct SourceCombatHUD331: View {
         text(c,s,x+1,y+1,color(200,1,7,11))
         text(c,s,x,y,col)
     }
-    private static func top(_ c:GraphicsContext,_ hud:CarbonisSession568.HUD,\n                            rightShift:CGFloat) {
+    private static func top(_ c:GraphicsContext,_ hud:CarbonisSession568.HUD,
+                            rightShift:CGFloat) {
         line(c,20,17,20,81,color(190,215,164,67),1.5)
         label(c,"SYNIXAD / WALKA 3D",34,17,white)
         label(c,"BROŃ: \(hud.weaponName)  ·  POZIOM \(hud.weaponLevel)  ·  TEMPO \(hud.rapidLevel)",
               34,42,cyan)
-        var right=c\n        right.translateBy(x:rightShift,y:0)\n        label(right,"SEKTOR 01 / 26",777,17,white)
+        var right=c
+        right.translateBy(x:rightShift,y:0)
+        label(right,"SEKTOR 01 / 26",777,17,white)
         label(right,"PKT \(hud.score)",936,17,cyan)
         label(right,"ŻETONY \(hud.tokenBalance)",1050,17,gold)
         label(right,"ŻYCIA \(hud.lives)",1195,17,white)
