@@ -3,6 +3,7 @@ import SceneKit
 import SwiftUI
 import GLTFKit2
 import UniformTypeIdentifiers
+import UIKit
 
 /// The v580 H55 scene is distinct from GpuHangar91/99 (legacy).
 /// GLTFKit2 performs glTF mesh/material/skin/animation decoding; no HTML.
@@ -18,6 +19,94 @@ import UniformTypeIdentifiers
     private var animations: [String:GLTFSCNAnimation] = [:]
     private var activeKeys: Set<String> = []
     private var generation = UUID()
+    private var movement=H55Walk580()
+    private var moveForward:Float=0
+    private var moveRight:Float=0
+    private var clock:CADisplayLink?
+    private var lastTick:CFTimeInterval?
+    @Published private(set) var mechanicNearby=false
+    @Published private(set) var conversationOpen=false
+    @Published private(set) var conversationsFinished=0
+    private let npcX:Float=9.9248
+    private let npcZ:Float=12.155
+
+    func setMove(forward:Float,right:Float) {
+        moveForward=max(-1,min(1,forward))
+        moveRight=max(-1,min(1,right))
+    }
+    func look(dx:Float,dy:Float) {
+        movement.look(deltaX:dx,deltaY:dy)
+        camera?.eulerAngles=SCNVector3(-movement.pitch,movement.yaw,0)
+    }
+    func interact() {
+        if conversationOpen {
+            conversationOpen=false
+            conversationsFinished+=1
+            return
+        }
+        let distance=hypot(movement.x-npcX,movement.z-npcZ)
+        guard distance<=2.7 else{return}
+        conversationOpen=true
+        setMove(forward:0,right:0)
+    }
+
+    private func beginClock() {
+        clock?.invalidate()
+        lastTick=nil
+        let link=CADisplayLink(target:self,selector:#selector(stepFrame(_:)))
+        link.preferredFramesPerSecond=60
+        link.add(to:.main,forMode:.common)
+        clock=link
+    }
+    @objc private func stepFrame(_ link:CADisplayLink) {
+        guard let scene,camera != nil else{return}
+        let dt:Float
+        if let last=lastTick {dt=Float(min(0.05,max(0,link.timestamp-last)))}
+        else {dt=0}
+        lastTick=link.timestamp
+        guard dt>0 && !conversationOpen else{return}
+        movement.step(dt:dt,forward:moveForward,right:moveRight,
+            sprint:false,
+            bodyClear:{x,y,z in Self.bodyClear(scene,x:x,feet:y,z:z)},
+            support:{x,z,feet in Self.supportHeight(scene,x:x,z:z,feet:feet)})
+        camera?.position=SCNVector3(movement.x,movement.y+H55Walk580.eyes,movement.z)
+        let near=hypot(movement.x-npcX,movement.z-npcZ)<=2.7
+        if near != mechanicNearby {mechanicNearby=near}
+    }
+
+    /// Physical samples raycast the ACTIVE H55 GLB, not an outdated
+    /// baked proxy. Full triangle-capsule parity to PC H55FullCollision379
+    /// still requires a dedicated spatial-index port.
+    private static func hits(_ scene:SCNScene,from:SCNVector3,to:SCNVector3)
+        -> [SCNHitTestResult] {
+        scene.rootNode.hitTestWithSegment(from:from,to:to,
+               options:[.backFaceCulling:false,.firstFoundOnly:false])
+    }
+    private static func supportHeight(_ scene:SCNScene,
+                                      x:Float,z:Float,feet:Float)->Float? {
+        let from=SCNVector3(x,feet+H55Walk580.stepUp+0.05,z)
+        let to=SCNVector3(x,feet-H55Walk580.stepDown-0.05,z)
+        let floors=hits(scene,from:from,to:to)
+            .filter{$0.worldNormal.y>0.45 &&
+                    abs($0.worldCoordinates.y-feet)<=0.55}
+        return floors.min(by:{
+            abs($0.worldCoordinates.y-feet)<abs($1.worldCoordinates.y-feet)
+        }).map{$0.worldCoordinates.y}
+    }
+    private static func bodyClear(_ scene:SCNScene,
+                                  x:Float,feet:Float,z:Float)->Bool {
+        let radius=H55Walk580.bodyRadius
+        for height:Float in [0.25,1.0,1.75] {
+            let cy=feet+height
+            for (dx,dz):(Float,Float) in [(1,0),(-1,0),(0,1),(0,-1)] {
+                let start=SCNVector3(x,cy,z)
+                let end=SCNVector3(x+dx*radius,cy,z+dz*radius)
+                if !hits(scene,from:start,to:end).isEmpty {return false}
+            }
+        }
+        return true
+    }
+
 
     func openIfAvailable() {
         guard let url=H55Asset580.availableURL() else {
@@ -29,6 +118,12 @@ import UniformTypeIdentifiers
     func open(_ url: URL) {
         generation=UUID()
         let request=generation
+        clock?.invalidate()
+        clock=nil
+        lastTick=nil
+        movement=H55Walk580()
+        conversationOpen=false
+        mechanicNearby=false
         phase = .loading
         scene=nil
         camera=nil
@@ -69,8 +164,8 @@ import UniformTypeIdentifiers
             phase = .failed("Plik nie zawiera sceny 3D.")
             return
         }
-        // PC v580 Hub90.BeginHubScene397: camera enters at (0, 12.5)
-        // at the physical floor; PC HubWalkEyes377 = 1.80 m.
+        // PC v580 HubWalkPlaceAtEntry380: (0,12.5) was embedded in
+        // copper geometry. Pick the first clear GLB floor candidate.
         let pointOfView=SCNNode()
         pointOfView.name="H55_iOS_Camera580"
         let lens=SCNCamera()
@@ -78,8 +173,24 @@ import UniformTypeIdentifiers
         lens.zFar=250
         lens.fieldOfView=70
         pointOfView.camera=lens
-        pointOfView.position=SCNVector3(0,1.80,12.5)
-        pointOfView.eulerAngles.y=Float.pi // PC yaw=0 faces +Z
+        let candidates:[(Float,Float)]=[(2,14),(3,14),(-2,14),
+                                         (4,15),(-4,15),(6,15)]
+        var chosen:H55Walk580?
+        for (x,z) in candidates {
+            guard let floor=Self.supportHeight(realScene,x:x,z:z,feet:0),
+                  Self.bodyClear(realScene,x:x,feet:floor,z:z) else{continue}
+            var trial=H55Walk580()
+            trial.x=x;trial.z=z;trial.y=floor
+            chosen=trial
+            break
+        }
+        guard let spawn=chosen else {
+            phase = .failed("Nie znaleziono bezkolizyjnego wejścia H55 z PC v580.")
+            return
+        }
+        movement=spawn
+        pointOfView.position=SCNVector3(spawn.x,spawn.y+H55Walk580.eyes,spawn.z)
+        pointOfView.eulerAngles.y=0 // PC yaw=0 looks toward -Z
         realScene.rootNode.addChildNode(pointOfView)
 
         installH46Lights(from:asset,into:source)
@@ -98,6 +209,7 @@ import UniformTypeIdentifiers
         scene=realScene
         camera=pointOfView
         phase = .ready
+        beginClock()
         // PC H55Renderer: never trigger the docking or departure
         // 146 s composites while simply visiting the hangar from menu.
         for name in ["04_TURBINE_ROTATION_LOOP",
@@ -188,6 +300,11 @@ import UniformTypeIdentifiers
                        !name.contains("DEPART"))
     }
     func close() {
+        clock?.invalidate()
+        clock=nil
+        lastTick=nil
+        setMove(forward:0,right:0)
+        conversationOpen=false
         generation=UUID()
         guard let scene else{return}
         for key in activeKeys {scene.rootNode.removeAnimation(forKey:key)}
