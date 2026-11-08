@@ -156,3 +156,15 @@ Zweryfikowano faktyczne źródła `MetalRenderer.swift`, `SourceCombatSky568.swi
 **Uwaga bezpieczeństwa deskryptorów:** poza usunięciem samych `!`, przeniesiono także przypisanie `pixelFormat = .bgra8Unorm` ZA `guard let`, żeby nie wykonywać niezabezpieczonego dostępu przed kontrolą. W czterech źródłowych pipeline'ach nieba robi to wspólny helper; pozostałe pięć zachowuje własne oryginalne ustawienia i jawnie zgłasza błąd. `SourceMetalBlendSafetyContract.py` sprawdza kolejność tych operacji, a macOS test potwierdza BGRA8 na rzeczywistym deskryptorze Apple Metal.
 
 **Niepotwierdzone:** brak fizycznego testu renderingowego iPhone/iPad po tej zmianie; nie udowodniono wzrostu FPS ani pikselowej identyczności obrazu. Źródłowe wzory kolorów, shadery, geometrię, kolejność draw i dane audio pozostawiono bez zmian.
+
+---
+
+## 12. Bezpieczne buforowanie sampli źródłowej muzyki (08.11.2026)
+
+W `OriginalMusicSynth568.swift` pozostało **9 wymuszonych odczytów** elementów cache utworzonych wcześniej w kodzie: `bass[note]!`, `pads[padKey]!`, `acid[cache]!` (dwukrotnie) i pięć nazw perkusji. Dostęp do próbek zastąpiono `guard let` oraz lokalnymi stałymi już istniejących sampli. Brak oczekiwanego elementu powoduje jawny `SynthError568.invalidPCM` zamiast awaryjnego zakończenia przez `!`; **nie** powstają sztuczne sample zastępcze.
+
+**Niezmienione:** wywołania i kolejność RNG, pętla generowania perkusji w porządku `closed/open/clap/shaker/tom`, liczba taktów/ścieżek, matematyka syntezy `SourceDsp568.bass/acid/lead/pad/percussion`, wzory głośności, panoramy i położenia próbek, sidechain, FFT reverb, WAV 44,1 kHz stereo oraz przerwania dla współpracy z walką. Kod odpowiedzialny za odtwarzanie AVAudioPlayer i asynchroniczne SFX **pozostał nietknięty**.
+
+**Warunek scalenia:** oprócz oryginalnych testów 15 utworów, 5 krótkich aranżacji, przerw i wznowień audio, wymagana jest w CI kompilacja **dwóch wersji prawdziwego syntezatora Swift** — z zatwierdzonego przez użytkownika commita `8af0f3f1c08adc3638fc1db145db82767208cb6e` oraz z nowej gałęzi. `Tests/OriginalMusicPCMParity568.swift` tworzy WAV dla ścieżek 0, 7 i 14 (takt 1 oraz takty 1–24 dla ścieżki 7), a `cmp` porównuje gotowe pliki **bajt po bajcie**. Obejmuje bas, pad, próbki perkusji, lead, acid, efekt i kluczowe sekcje utworu. Test jest niezależny od statycznego `OriginalMusicCacheSafety568Contract.py`.
+
+Ten test nie dowodzi zgodności całych piętnastu 128-taktowych utworów, a poprawna kompilacja nie zastępuje testu iPhone/iPad. Jeśli choć jeden WAV różni się bajtowo, nie scalać tej zmiany i nie zastępować oryginalnej muzyki.
