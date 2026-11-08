@@ -361,7 +361,11 @@ struct GameCore {
             }
         }
         if trainingBalance != nil {
-            for index in damageEvents.keys.sorted(by: >) { damageRock(at: index, amount: damageEvents[index]!) }
+            // Key order must remain descending: damage can split/remove rocks.
+            for index in damageEvents.keys.sorted(by: >) {
+                guard let amount=damageEvents[index] else { continue }
+                damageRock(at:index,amount:amount)
+            }
         } else {
             rocks = rocks.enumerated().compactMap { removeRocks.contains($0.offset) ? nil : $0.element }
         }
