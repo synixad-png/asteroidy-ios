@@ -22,6 +22,10 @@ import simd
     private var generation = UUID()
     private var movement=H55Walk580()
     private var physical:H55SpatialSupport580?
+    // H07 source PC580 independent H70 doors, separate from static H02-H04.
+    private var airlocks=H55AirlockController580()
+    private var airlockTracks:H55AirlockTracks580.SceneKeys?
+    private var airlockLeaves:[String:SCNNode]=[:]
     private var arrival=H55Arrival580(spawnClear:false)
     @Published private(set) var arriving=false
     private var moveForward:Float=0
@@ -87,9 +91,12 @@ import simd
         // PC Hub90.StepHub90: arrival clock runs before walking.
         arrival.advance(dt:dt)
         if arriving && !arrival.arriving {arriving=false}
-        guard arrival.walking && !conversationOpen,let physical else{return}
+        if arrival.walking && !conversationOpen,let physical {
         movement.step(dt:dt,forward:moveForward,right:moveRight,
-            sprint:false,collision:physical)
+            sprint:false,collision:physical,
+            doorBlocks:{ax,az,bx,bz in
+                self.airlocks.blockingGate(fromX:ax,fromZ:az,toX:bx,toZ:bz) != nil
+            })
         // PC v580 GpuHub90: bob is visual only; physical capsule Y is untouched.
         // Original HangarBob400 default=50%, render sway at actual footfall.
         let bobPower:Float=0.5*movement.bobAmount
@@ -107,6 +114,8 @@ import simd
                 guard let floor=physical.support(x,z,low:-0.25,high:0.45)
                 else{return false}
                 return physical.bodyClear379(x,feet:floor,z)
+            },doorBlocking:{ax,az,bx,bz in
+                self.airlocks.blockingGate(fromX:ax,fromZ:az,toX:bx,toZ:bz)
             })
         if let root=mechanicRoot {
             root.position=SCNVector3(mechanic.x,mechanicBaseY,mechanic.z)
@@ -132,12 +141,42 @@ import simd
         case .idle: nextStatus="OCZEKUJE NA ROZMOWĘ"
         case .walking: nextStatus="PATROL DO WARSZTATU I POWRÓT"
         case .workshop: nextStatus="WARSZTAT — POSTÓJ 5 s"
-        case .blocked: nextStatus="MECHANIK — KOLIZJA / TRASA ZABLOKOWANA"
+        case .blocked:
+            if let gate=mechanic.doorFailure {
+                nextStatus=gate==0
+                    ? "MECHANIK: ŚLUZA HANGARU ZABLOKOWANA — PATROL PRZERWANY"
+                    : "MECHANIK: ŚLUZA WARSZTATU ZABLOKOWANA — PATROL PRZERWANY"
+            } else if mechanic.doorWait>0.20 {
+                nextStatus="MECHANIK CZEKA NA OTWARCIE DRZWI"
+            } else {nextStatus="MECHANIK — KOLIZJA / TRASA ZABLOKOWANA"}
         case .completed: nextStatus="MECHANIK WRÓCIŁ"
         }
         if nextStatus != mechanicStatus {mechanicStatus=nextStatus}
         let near=hypot(movement.x-mechanic.x,movement.z-mechanic.z)<=2.7
         if near != mechanicNearby {mechanicNearby=near}
+        }
+        // PC v580: update doors AFTER NPC movement; keep animating during
+        // 3.25s arrival and while the conversation blocks walking.
+        updateAirlocks(dt:dt)
+    }
+
+    private func updateAirlocks(dt:Float) {
+        airlocks.step(playerX:movement.x,playerZ:movement.z,
+            playerPresent:arrival.walking && !conversationOpen,
+            npcX:mechanic.x,npcZ:mechanic.z,
+            npcPresent:mechanic.isPatrolling,dt:dt)
+        guard let keys=airlockTracks else{return}
+        SCNTransaction.begin()
+        SCNTransaction.disableActions=true
+        for gate in 0..<2 {
+            let t=H55AirlockController580.clipTime(for:airlocks.openness[gate])
+            for leaf in H55AirlockController580.leafNames[gate] {
+                guard let node=airlockLeaves[leaf],
+                      let p=keys.sample(leaf:leaf,time:t) else{continue}
+                node.position=SCNVector3(p.x,p.y,p.z)
+            }
+        }
+        SCNTransaction.commit()
     }
 
     func openIfAvailable() {
@@ -155,6 +194,9 @@ import simd
         lastTick=nil
         movement=H55Walk580()
         physical=nil
+        airlocks=H55AirlockController580()
+        airlockTracks=nil
+        airlockLeaves.removeAll()
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
         mechanic=H55Mechanic580()
@@ -178,12 +220,15 @@ import simd
                 // Build on background thread, fail-closed, no raycast fallback.
                 let geometry=try H55CollisionGeometry580.fromGLB(url)
                 let physical=H55SpatialSupport580(geometry:geometry)
+                // H70 tracks are from the same SHA-verified GLB as collision.
+                let airlockKeys=try H55AirlockTracks580.load(from:url)
                 GLTFAsset.load(with:url,options:[:]) { _,status,asset,error,_ in
                     if status == .complete, let asset {
                         let source=GLTFSCNSceneSource(asset:asset)
                         DispatchQueue.main.async { [weak self] in
                             guard let self, self.generation == request else {return}
-                            self.attach(source,asset:asset,inventory:metadata,physical:physical)
+                            self.attach(source,asset:asset,inventory:metadata,
+                                        physical:physical,airlockKeys:airlockKeys)
                         }
                     } else if status == .error {
                         DispatchQueue.main.async { [weak self] in
@@ -204,7 +249,8 @@ import simd
 
     private func attach(_ source:GLTFSCNSceneSource,
                         asset:GLTFAsset,inventory:H55Asset580.Inventory,
-                        physical:H55SpatialSupport580) {
+                        physical:H55SpatialSupport580,
+                        airlockKeys:H55AirlockTracks580.SceneKeys) {
         guard let realScene=source.defaultScene else {
             phase = .failed("Plik nie zawiera sceny 3D.")
             return
@@ -256,12 +302,29 @@ import simd
             phase = .failed("Mechanik H55 nie ma prawidłowych kierunków stóp GLB.")
             return
         }
+        // H70 clip nodes are driven by sampled original GLB translations.
+        // Multiple or missing imported nodes are a hard error, not a fallback.
+        var leaves:[String:SCNNode]=[:]
+        for leaf in H55AirlockController580.leafNames.flatMap({$0}) {
+            let matches=source.nodes.filter{$0.name==leaf}
+            guard matches.count==1,airlockKeys.nodes[leaf] != nil else {
+                phase = .failed("Oryginalny H55 nie zawiera skrzydła śluzy H70: "+leaf)
+                return
+            }
+            leaves[leaf]=matches[0]
+        }
+        airlockTracks=airlockKeys
+        airlockLeaves=leaves
+        airlocks=H55AirlockController580()
+        updateAirlocks(dt:0) // original 1.85s CLOSED door pose
         mechanic.calibrate(anatomicalHeading:heading)
         mechanicRoot=importedNpc
         mechanicBaseY=importedNpc.position.y
         mechanicBaseOrientation=importedNpc.simdOrientation
         animations=clips
-        animationNames=inventory.animations.filter{clips[$0] != nil}
+        animationNames=inventory.animations.filter {
+            clips[$0] != nil && !H55AirlockController580.clipNames.contains($0)
+        }
         self.inventory=inventory
         scene=realScene
         camera=pointOfView
@@ -357,6 +420,8 @@ import simd
         if playingClip==name {playingClip=nil}
     }
     func showAnimation(_ name:String) {
+        // Never play an autonomous H70 clip on nodes owned by the sensors.
+        if H55AirlockController580.clipNames.contains(name) {return}
         // Selecting a special animation for inspection stops the previous
         // special clip. Ambient loops and the NPC idle remain unaffected.
         if let current=playingClip,![
@@ -377,6 +442,9 @@ import simd
         clock=nil
         lastTick=nil
         physical=nil
+        airlocks=H55AirlockController580()
+        airlockTracks=nil
+        airlockLeaves.removeAll()
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
         setMove(forward:0,right:0)
