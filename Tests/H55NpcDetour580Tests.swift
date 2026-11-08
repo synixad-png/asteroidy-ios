@@ -36,7 +36,7 @@ import Foundation
             start:start,join:P(x:100,z:100),player:P(x:200,z:200),
             walkable:open)
         check(tooFar==nil,"PC source 3000-cell limit blocks excessive A*")
-        let originInside=P(x:1.35,z:0)
+        let originInside=P(x:1.65,z:0)
         let away=P(x:3.0,z:0)
         check(H55NpcDetour580.segmentClear(from:originInside,to:away,
                                            player:player,walkable:open),
