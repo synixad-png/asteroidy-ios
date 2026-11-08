@@ -124,20 +124,44 @@ import Foundation
         }
         // Original GLB animated airlock leaves rest-pose static collider out.
         _=f.node(["name":"H70_HANGAR_AIRLOCK_panel","mesh":importedMesh])
+        // Authored hollow portal: two jambs + header, NEVER solid aperture.
+        var portalPoints:[Float]=[]
+        for i in 0..<9 {
+            portalPoints.append(contentsOf:[Float(i%3)*0.5,1.5,
+                                            Float((i/3)%2)*0.10])
+        }
+        for i in 0..<9 {
+            portalPoints.append(contentsOf:[3+Float(i%3)*0.5,1.5,
+                                            Float((i/3)%2)*0.10])
+        }
+        portalPoints.append(contentsOf:[0,0,0,4,3,0,4,0,0,0,3,0,0,0,0,4,3,0])
+        let portalPos=f.pos(portalPoints)
+        let portalIndices=f.indices(Array(0..<24))
+        let portalMesh=f.mesh(portalPos,portalIndices)
+        _=f.node(["name":"H55_portal_frame_original",
+                   "mesh":portalMesh,
+                   "extras":["hangarLabPrefabId":"HL_IMPORT_2411"]])
         let path=FileManager.default.temporaryDirectory
             .appendingPathComponent("h02-authentic-GLB-\(UUID().uuidString).glb")
         defer{try? FileManager.default.removeItem(at:path)}
         try f.write(path)
         let result=try H55CollisionGeometry580.fromGLB(path)
-        check(result.sceneNodes==10,"active scene descendants + doors")
-        check(result.sourceTriangles==10_003,"dynamic drone instances omitted, source triangles counted")
-        check(result.proxyTriangles==2,"two static proxies: authored prefab and third drone")
+        check(result.sceneNodes==11,"active scene descendants + doors")
+        check(result.sourceTriangles==10_011,"dynamic drone instances omitted, source triangles counted")
+        check(result.proxyTriangles==10,"original prefab + static third drone + 8 portal triangles")
         check(result.triangles.count==90_054,"10k architectural triangles + source six bridge triangles")
-        check(result.objects.count==2,"two distinct physical instance ids")
+        check(result.objects.count==5,"two normal prefabs and three genuine hollow portal frame pieces")
         check(result.objects.contains(where:{$0.name=="HL_IMPORT_2317"}),
               "prefab instance id inherited from ancestor, not legacy mesh-name number")
         check(result.objects.contains(where:{$0.name=="HL_IMPORT_1839"}),
               "third imported drone remains a physical static prefab")
+        for name in ["HL_IMPORT_2411/jamb_A","HL_IMPORT_2411/jamb_B",
+                     "HL_IMPORT_2411/header"] {
+            check(result.objects.contains(where:{$0.name==name}),
+                  "original hollow portal must split into frame segments: \(name)")
+        }
+        check(!result.objects.contains(where:{$0.name=="HL_IMPORT_2411"}),
+              "original hollow portal cannot create solid collider across opening")
         check(!result.objects.contains(where:{$0.name=="HL_IMPORT_1835"}) &&
               !result.objects.contains(where:{$0.name=="HL_IMPORT_1837"}),
               "two active drone actors excluded from static collision")
