@@ -169,11 +169,11 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let atmosphereDesc=MTLRenderPipelineDescriptor()
         atmosphereDesc.vertexFunction=sceneVertex
         atmosphereDesc.fragmentFunction=sceneFragment
-        atmosphereDesc.colorAttachments[0].pixelFormat = .bgra8Unorm
-        atmosphereDesc.depthAttachmentPixelFormat = .depth32Float
         guard let atmosphereBlend=atmosphereDesc.colorAttachments[0] else {
             throw MetalBlendAttachmentError.missingColorAttachment
         }
+        atmosphereBlend.pixelFormat = .bgra8Unorm
+        atmosphereDesc.depthAttachmentPixelFormat = .depth32Float
         atmosphereBlend.isBlendingEnabled=true
         atmosphereBlend.sourceRGBBlendFactor = .sourceAlpha
         atmosphereBlend.destinationRGBBlendFactor = .oneMinusSourceAlpha
@@ -184,11 +184,11 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let plasmaDescriptor=MTLRenderPipelineDescriptor()
         plasmaDescriptor.vertexFunction=fighterPlasmaVertex
         plasmaDescriptor.fragmentFunction=fighterPlasmaFragment
-        plasmaDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
-        plasmaDescriptor.depthAttachmentPixelFormat = .depth32Float
         guard let plasmaBlend=plasmaDescriptor.colorAttachments[0] else {
             throw MetalBlendAttachmentError.missingColorAttachment
         }
+        plasmaBlend.pixelFormat = .bgra8Unorm
+        plasmaDescriptor.depthAttachmentPixelFormat = .depth32Float
         plasmaBlend.isBlendingEnabled=true
         // Original GpuShip.cs:22 glBlendFunc(GL_SRC_ALPHA,GL_ONE).
         plasmaBlend.sourceRGBBlendFactor = .sourceAlpha
@@ -203,11 +203,11 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let skyDescriptor=MTLRenderPipelineDescriptor()
         skyDescriptor.vertexFunction=skyVertex
         skyDescriptor.fragmentFunction=skyFragment
-        skyDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
-        skyDescriptor.depthAttachmentPixelFormat = .depth32Float
         guard let blend=skyDescriptor.colorAttachments[0] else {
             throw MetalBlendAttachmentError.missingColorAttachment
         }
+        blend.pixelFormat = .bgra8Unorm
+        skyDescriptor.depthAttachmentPixelFormat = .depth32Float
         blend.isBlendingEnabled = true
         blend.rgbBlendOperation = .add
         blend.alphaBlendOperation = .add
@@ -221,7 +221,6 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let solarDescriptor=MTLRenderPipelineDescriptor()
         solarDescriptor.vertexFunction=solarVertex
         solarDescriptor.fragmentFunction=solarFragment
-        solarDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
         solarDescriptor.depthAttachmentPixelFormat = .depth32Float
         try SourceSkyPremultipliedBlend.configure(solarDescriptor)
         solarOverlayPipeline=try device.makeRenderPipelineState(
@@ -229,7 +228,6 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let nebulaDescriptor=MTLRenderPipelineDescriptor()
         nebulaDescriptor.vertexFunction=nebulaVertex
         nebulaDescriptor.fragmentFunction=nebulaFragment
-        nebulaDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
         nebulaDescriptor.depthAttachmentPixelFormat = .depth32Float
         try SourceSkyPremultipliedBlend.configure(nebulaDescriptor)
         nebulaOverlayPipeline=try device.makeRenderPipelineState(
@@ -239,7 +237,6 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         let blackDesc=MTLRenderPipelineDescriptor()
         blackDesc.vertexFunction=blackHoleVertex
         blackDesc.fragmentFunction=blackHoleFragment
-        blackDesc.colorAttachments[0].pixelFormat = .bgra8Unorm
         blackDesc.depthAttachmentPixelFormat = .depth32Float
         try SourceSkyPremultipliedBlend.configure(blackDesc)
         blackHolePipeline=try device.makeRenderPipelineState(
