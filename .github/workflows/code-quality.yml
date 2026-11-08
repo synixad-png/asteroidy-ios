@@ -32,6 +32,8 @@ jobs:
         run: python3 Tests/OriginalMusicFilterKeys568Contract.py
       - name: Verify three source-exact sky constructors are genuinely shared
         run: python3 Tests/SourceSkyAssetFactory568Contract.py
+      - name: Verify source-exact shared sky overlay uniform packing and GPU isolation
+        run: python3 Tests/SourceSkyUniformPackingContract.py
       - name: Verify shared GPU proof writer also passes original Vanguard source contract
         run: python3 Tests/SourceVanguardTextureContract431.py
       - name: Parse Python scripts and unit tests
