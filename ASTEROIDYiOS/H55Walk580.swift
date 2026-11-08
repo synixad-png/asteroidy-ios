@@ -310,7 +310,8 @@ struct H55Walk580 {
     /// Exactly PC StepHubWalk375 with H04 swept 5cm triangle contacts.
     /// Movement and camera use different foot heights, never vice-versa.
     mutating func step(dt raw:Float,forward rawF:Float,right rawR:Float,
-                       sprint:Bool,collision p:H55SpatialSupport580) {
+                       sprint:Bool,collision p:H55SpatialSupport580,
+                       doorBlocks:(Float,Float,Float,Float)->Bool = {_,_,_,_ in false}) {
         let t=max(0,min(0.05,raw))
         if t<=0 {return}
         vertical(p,t)
@@ -333,7 +334,10 @@ struct H55Walk580 {
         let origin=H55Sweep401580.Position(x:x,feet:y,z:z)
         _=H55Sweep401580.sweep(collision:p,from:origin,vx:dx,vz:dz,
                                 moveHubAxis:{_,sx,sz in
+            // H07: preserve ALL H06 state if an H70 closed leaf blocks this substep.
+            let before=state
             state.moveAxis(p,sx,sz)
+            if doorBlocks(before.x,before.z,state.x,state.z) {state=before}
             return H55Sweep401580.Position(x:state.x,feet:state.y,z:state.z)
         })
         self=state
