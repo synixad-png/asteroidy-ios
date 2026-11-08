@@ -7,6 +7,7 @@ final class CarbonisSession568: ObservableObject {
     struct HUD {
         var hull:Int
         var armor:Int
+        var shieldCharges:Int
         var lives:Int
         var rocks:Int
         var fighters:Int
@@ -24,6 +25,7 @@ final class CarbonisSession568: ObservableObject {
         var phase:CarbonisCombat568.Phase
         init(_ game:CarbonisCombat568,summarySeconds:Float=0) {
             hull=game.hull;armor=game.armor;lives=game.lives
+            shieldCharges=game.shieldCharges
             score=game.score;collectedTokens=game.collectedLootTokens
             destroyedRocks=game.rocksDestroyed
             shotDownEnemies=game.shooterKills
