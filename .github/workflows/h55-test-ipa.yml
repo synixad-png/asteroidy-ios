@@ -68,6 +68,29 @@ jobs:
           test ! -e ASTEROIDYiOS/Assets/hangar_h55.glb || {
             echo 'Unverified GLB bundled, aborting'; exit 1;
           }
+      - name: Restore all original game assets from the proven full IPA pipeline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_w3_home_planet290.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/verify_original_audio568_assets.py
+          python3 Tests/CarbonisPlanetOpaqueCull568.py
+          python3 - <<'PY'
+          from pathlib import Path
+          original=Path('ASTEROIDYiOS/Assets')
+          required=['Sector01CarbonisBase.dat','Sector01CarbonisEmissive.dat',
+                    'Sector01CarbonisHeightMap.dat','Sector01CarbonisIndices.bin',
+                    'Sector01CarbonisIrradiance.dat','Sector01CarbonisSource.json',
+                    'Sector01CarbonisVertices.bin','W3Background568Original.dat',
+                    'W3HomePlanet290Base.dat','W3HomePlanet290OriginalGPU.bin',
+                    'W3HomePlanet290Source.json','W3HomePlanet293Glow.dat',
+                    'W3Logo568Original.dat']
+          missing=[f for f in required if not (original/f).is_file() or (original/f).stat().st_size == 0]
+          assert not missing, 'Missing required original game assets: '+str(missing)
+          print('PASS all 13 critical original game assets staged')
+          PY
       - name: Generate Xcode project
         shell: bash
         run: |
@@ -96,6 +119,23 @@ jobs:
           cp -R "$APP" distribution/Payload/
           (cd distribution && zip -q -r -y ../ASTEROIDY_v580_H55_iPhone_iPad_TEST_UNSIGNED.ipa Payload)
           python3 Tools/verify_ipa.py ASTEROIDY_v580_H55_iPhone_iPad_TEST_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-validation.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          name='ASTEROIDY_v580_H55_iPhone_iPad_TEST_UNSIGNED.ipa'
+          required=['Sector01CarbonisBase.dat','Sector01CarbonisEmissive.dat',
+                    'Sector01CarbonisHeightMap.dat','Sector01CarbonisIndices.bin',
+                    'Sector01CarbonisIrradiance.dat','Sector01CarbonisSource.json',
+                    'Sector01CarbonisVertices.bin','W3Background568Original.dat',
+                    'W3HomePlanet290Base.dat','W3HomePlanet290OriginalGPU.bin',
+                    'W3HomePlanet290Source.json','W3HomePlanet293Glow.dat',
+                    'W3Logo568Original.dat']
+          with zipfile.ZipFile(name) as z:
+              members=set(z.namelist())
+              missing=[x for x in required if 'Payload/ASTEROIDY iOS.app/'+x not in members]
+              assert not missing,'IPA missing original game assets: '+str(missing)
+              print('PASS original game assets physically embedded in test IPA')
+          PY
           python3 - <<'PY'
           import zipfile
           p='ASTEROIDY_v580_H55_iPhone_iPad_TEST_UNSIGNED.ipa'
