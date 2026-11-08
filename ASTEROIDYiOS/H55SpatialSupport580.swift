@@ -16,8 +16,7 @@ final class H55SpatialSupport580 {
     var proxyCellCount:Int {proxyCells.count}
     static func cell(_ p:Float)->Int {Int(floor(p/2))}
     static func key(_ x:Int,_ y:Int,_ z:Int)->Int64 {
-        (Int64(x+1024)<<42)|(Int64(y+1024)<<21)|
-          Int64(UInt32(truncatingIfNeeded:z+1024))
+        (Int64(x+1024)<<42) | (Int64(y+1024)<<21) | Int64(UInt32(truncatingIfNeeded:z+1024))
     }
     init(geometry:Geometry) {
         self.geometry=geometry
