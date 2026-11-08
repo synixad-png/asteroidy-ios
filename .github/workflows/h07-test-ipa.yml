@@ -1,0 +1,194 @@
+name: ASTEROIDY iOS - H55 PC580 H07 airlock TEST IPA
+on:
+  push:
+    branches:
+      - feature/ios-h55-v580-native-entry
+    paths:
+      - '.github/workflows/h07-test-ipa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-h55:
+    name: Verify original H55 H02-H07 collision and airlock controllers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert correct H55 model import and build linkage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          project=Path('project.yml').read_text()
+          menu=Path('ASTEROIDYiOS/W3MainMenu568.swift').read_text()
+          h55=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          assert "TARGETED_DEVICE_FAMILY: '1,2'" in project
+          assert "GLTFKit2:" in project and "exactVersion: 0.5.15" in project
+          assert 'H55ScenePage580(dismiss:{navigateW3(nil)})' in menu
+          assert 'GLTFAsset.load(with:url' in h55
+          assert 'H55Asset580.inspect(url)' in h55
+          assert 'H55Walk580()' in h55
+          assert 'H55Mechanic580()' in h55
+          assert 'H55NpcDetour580' in Path('ASTEROIDYiOS/H55Mechanic580.swift').read_text()
+          assert 'H55Entry580.find(using:physical)' in h55
+          assert 'H55CollisionGeometry580.fromGLB(url)' in h55
+          assert 'physical.bodyClear379' in h55
+          assert 'arrival.advance(dt:dt)' in h55
+          assert 'H55AirlockTracks580.load(from:url)' in h55
+          assert 'updateAirlocks(dt:dt)' in h55
+          assert 'airlocks.blockingGate' in h55
+          assert 'doorBlocking:' in Path('ASTEROIDYiOS/H55Mechanic580.swift').read_text()
+          assert 'doorBlocks:' in Path('ASTEROIDYiOS/H55Walk580.swift').read_text()
+          assert 'H55AirlockController580.clipNames.contains(name) {return}' in h55
+          assert 'H55Entry580.arrivalSeconds' in Path('ASTEROIDYiOS/H55Entry580.swift').read_text()
+          assert 'hitTestWithSegment' not in h55, 'Old SceneKit raycast fallback is forbidden'
+          assert 'GpuHangar91' not in '\n'.join(x for x in h55.splitlines() if not x.lstrip().startswith('//'))
+          print('PASS: real new H55 entry + native importer and iPhone/iPad build')
+          PY
+      - name: Run H02-H07 physical entry, real H70 keyframe fixture, and NPC/player gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/H55GLBCompatibility580.swift ASTEROIDYiOS/H55Asset580.swift Tests/H55Asset580Tests.swift -o /tmp/h55-asset
+          /tmp/h55-asset
+          swiftc ASTEROIDYiOS/H55FloorRule580.swift Tests/H55SpawnSurface580Tests.swift -o /tmp/h55-spawn-surface580-test
+          /tmp/h55-spawn-surface580-test
+          swiftc ASTEROIDYiOS/H55GLBCompatibility580.swift Tests/H55GLBCompatibility580Tests.swift -o /tmp/h55-compat
+          /tmp/h55-compat
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift ASTEROIDYiOS/H55Walk580.swift Tests/H55Walk580Tests.swift -o /tmp/h55-walk
+          /tmp/h55-walk
+          swiftc ASTEROIDYiOS/H55NpcDetour580.swift Tests/H55NpcDetour580Tests.swift -o /tmp/h55-detour
+          /tmp/h55-detour
+          swiftc ASTEROIDYiOS/H55NpcDetour580.swift ASTEROIDYiOS/H55Mechanic580.swift Tests/H55Mechanic580Tests.swift -o /tmp/h55-mechanic
+          /tmp/h55-mechanic
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Entry580.swift Tests/H55Entry580Tests.swift -o /tmp/h55-entry-real
+          /tmp/h55-entry-real
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift Tests/H55Sweep401580Tests.swift -o /tmp/h55-source-sweep
+          /tmp/h55-source-sweep
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift ASTEROIDYiOS/H55Walk580.swift ASTEROIDYiOS/H55NpcDetour580.swift ASTEROIDYiOS/H55Mechanic580.swift ASTEROIDYiOS/H55Airlocks580.swift Tests/H55Airlocks580Tests.swift -o /tmp/h07-sluzy
+          /tmp/h07-sluzy
+          swiftc ASTEROIDYiOS/H55Airlocks580.swift Tests/H55AirlocksRealGLB580Tests.swift -o /tmp/h07-real-glb-source
+
+  build-h55-ipa:
+    needs: verify-h55
+    name: Build iPhone/iPad H07 dual airlocks TEST unsigned IPA
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify iOS resource inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python3 Tools/verify_ios_inputs.py | tee reports/verify-inputs.txt
+          python3 Tools/prepare_vanguard431_assets.py | tee reports/vanguard-import.txt
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets | tee reports/verify-vanguard.txt
+          test ! -e ASTEROIDYiOS/Assets/hangar_h55.glb || {
+            echo 'Unverified GLB bundled, aborting'; exit 1;
+          }
+      - name: Restore all original game assets from the proven full IPA pipeline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_w3_home_planet290.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/verify_original_audio568_assets.py
+          python3 Tests/CarbonisPlanetOpaqueCull568.py
+          python3 - <<'PY'
+          from pathlib import Path
+          original=Path('ASTEROIDYiOS/Assets')
+          required=['Sector01CarbonisBase.dat','Sector01CarbonisEmissive.dat',
+                    'Sector01CarbonisHeightMap.dat','Sector01CarbonisIndices.bin',
+                    'Sector01CarbonisIrradiance.dat','Sector01CarbonisSource.json',
+                    'Sector01CarbonisVertices.bin','W3Background568Original.dat',
+                    'W3HomePlanet290Base.dat','W3HomePlanet290OriginalGPU.bin',
+                    'W3HomePlanet290Source.json','W3HomePlanet293Glow.dat',
+                    'W3Logo568Original.dat']
+          missing=[f for f in required if not (original/f).is_file() or (original/f).stat().st_size == 0]
+          assert not missing, 'Missing required original game assets: '+str(missing)
+          print('PASS all 13 critical original game assets staged')
+          PY
+      - name: Generate Xcode project
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+      - name: Build actual arm64 device app (unsigned)
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/DerivedData" \
+            build 2>&1 | tee reports/build.log
+      - name: Package and verify H55 test IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" && test -f "$APP/Info.plist"
+          test -f "$APP/ASTEROIDY iOS" || test -f "$APP/ASTEROIDYiOS"
+          mkdir -p distribution/Payload
+          cp -R "$APP" distribution/Payload/
+          (cd distribution && zip -q -r -y ../ASTEROIDY_v580_H07_SLUZY_iPhone_iPad_TEST_UNSIGNED.ipa Payload)
+          python3 Tools/verify_ipa.py ASTEROIDY_v580_H07_SLUZY_iPhone_iPad_TEST_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-validation.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          name='ASTEROIDY_v580_H07_SLUZY_iPhone_iPad_TEST_UNSIGNED.ipa'
+          required=['Sector01CarbonisBase.dat','Sector01CarbonisEmissive.dat',
+                    'Sector01CarbonisHeightMap.dat','Sector01CarbonisIndices.bin',
+                    'Sector01CarbonisIrradiance.dat','Sector01CarbonisSource.json',
+                    'Sector01CarbonisVertices.bin','W3Background568Original.dat',
+                    'W3HomePlanet290Base.dat','W3HomePlanet290OriginalGPU.bin',
+                    'W3HomePlanet290Source.json','W3HomePlanet293Glow.dat',
+                    'W3Logo568Original.dat']
+          with zipfile.ZipFile(name) as z:
+              members=set(z.namelist())
+              missing=[x for x in required if 'Payload/ASTEROIDY iOS.app/'+x not in members]
+              assert not missing,'IPA missing original game assets: '+str(missing)
+              print('PASS original game assets physically embedded in test IPA')
+          PY
+          python3 - <<'PY'
+          import zipfile
+          p='ASTEROIDY_v580_H07_SLUZY_iPhone_iPad_TEST_UNSIGNED.ipa'
+          with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None
+              paths=z.namelist()
+              assert any(n.startswith('Payload/') and n.endswith('Info.plist') for n in paths)
+              assert not any(n.endswith('/hangar_h55.glb') for n in paths)
+          print('PASS zip CRC, valid Payload, source v580 H55 requires one-time Files import')
+          PY
+          shasum -a 256 ASTEROIDY_v580_H07_SLUZY_iPhone_iPad_TEST_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
+          echo "Source commit: $GITHUB_SHA" | tee reports/build-commit.txt
+          echo "GLB: exact original 126419336-byte hangar_h55.glb must be imported once from iOS Files; H70 source clips sampled, no GLB embedded" | tee reports/H55_IMPORT_REQUIRED.txt
+      - name: Upload test IPA and build report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-v580-H07-AIRLOCK-TEST-unsigned-IPA
+          path: |
+            ASTEROIDY_v580_H07_SLUZY_iPhone_iPad_TEST_UNSIGNED.ipa
+            reports/ipa-validation.txt
+            reports/SHA256SUMS.txt
+            reports/build-commit.txt
+            reports/H55_IMPORT_REQUIRED.txt
+          retention-days: 14
+          if-no-files-found: error
+      - name: Upload compilation diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-H55-TEST-build-logs
+          path: reports/
+          retention-days: 7
+          if-no-files-found: ignore
