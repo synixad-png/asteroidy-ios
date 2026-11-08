@@ -42,6 +42,8 @@ jobs:
         run: python3 Tests/SourceVanguardTextureContract431.py
       - name: Verify rock-hit dictionary access and descending damage order
         run: python3 Tests/SafeDamageDictionary556Contract.py
+      - name: Preserve exact source Metal blending while removing unsafe attachments
+        run: python3 Tests/SourceMetalBlendSafetyContract.py
       - name: Parse Python scripts and unit tests
         run: python3 -m compileall -q Tests Tools
       - name: Audit ALL tracked code and enforce critical no-slop rules
