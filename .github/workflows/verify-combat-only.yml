@@ -4,6 +4,9 @@ on:
     paths:
       - '.github/workflows/verify-combat-only.yml'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/PhoneCombatResolution568.swift'
+      - 'Tests/PhoneCombatResolution568Tests.swift'
+      - 'Tests/PhoneCombatResolution568Contract.py'
       - 'ASTEROIDYiOS/CarbonisRockGeometry568.swift'
       - 'Tests/CarbonisRockGeometry568Tests.swift'
       - 'Tests/RockShapeWarmup568Contract.py'
@@ -46,6 +49,9 @@ on:
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/MissionCatalog568.swift'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/PhoneCombatResolution568.swift'
+      - 'Tests/PhoneCombatResolution568Tests.swift'
+      - 'Tests/PhoneCombatResolution568Contract.py'
       - 'ASTEROIDYiOS/SourceCombatSky568.swift'
       - 'ASTEROIDYiOS/SourceCombatWreck214.swift'
       - 'ASTEROIDYiOS/ResearchWreckGeometry214.swift'
@@ -212,6 +218,13 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/W3StartupSplash568.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/MissionCinematic568.swift
+      - name: Verify iPhone-only adaptive 30 FPS shooting without iPad quality regression
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/PhoneCombatResolution568.swift Tests/PhoneCombatResolution568Tests.swift -o /tmp/phone-combat-resolution568
+          /tmp/phone-combat-resolution568
+          python3 Tests/PhoneCombatResolution568Contract.py
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
       - name: Verify original Combat69 shooting-only broadphase and indexed 3D source bullets
         run: |
           set -euo pipefail
