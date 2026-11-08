@@ -4,6 +4,14 @@ on:
     paths:
       - '.github/workflows/verify-combat-only.yml'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/MetalRenderer.swift'
+      - 'ASTEROIDYiOS/SourceCombatSky568.swift'
+      - 'ASTEROIDYiOS/SourceSkyAssetFactory568.swift'
+      - 'ASTEROIDYiOS/OriginalRenderProofWriter568.swift'
+      - 'Tests/SourceSkyAssetFactory568Contract.py'
+      - 'Tests/SkyPointSourceContract556.py'
+      - 'Tests/SolarOverlaySourceContract556.py'
+      - 'Tests/SourceVanguardTextureContract431.py'
       - 'ASTEROIDYiOS/SourceCombatHUD331.swift'
       - 'ASTEROIDYiOS/CombatHUDViewport568.swift'
       - 'Tests/CombatHUDViewport568Tests.swift'
@@ -219,6 +227,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 Tests/CombatOriginalSkyWreck214Contract.py
+          python3 Tests/SourceSkyAssetFactory568Contract.py
           swiftc ASTEROIDYiOS/ResearchWreckGeometry214.swift Tests/ResearchWreckGeometry214Tests.swift -o /tmp/wreck211-mesh
           /tmp/wreck211-mesh
       - name: Verify source-exact Explosion524 static GPU geometry and precomputed GPU constants
