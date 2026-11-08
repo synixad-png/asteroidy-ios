@@ -1,0 +1,29 @@
+name: iOS mission HUD v568 regression
+on:
+  pull_request:
+    paths:
+      - 'ASTEROIDYiOS/Sector01MissionHUD568.swift'
+      - 'ASTEROIDYiOS/Sector01Scene568.swift'
+      - 'ASTEROIDYiOS/CarbonisSession568.swift'
+      - 'Tests/IOSMissionHUD568Contract.py'
+      - '.github/workflows/verify-ios-mission-hud.yml'
+  workflow_dispatch:
+jobs:
+  hud-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source-backed live HUD and protected 60 FPS audio contract
+        run: |
+          set -euo pipefail
+          python3 Tests/IOSMissionHUD568Contract.py
+          python3 Tests/IOSShotExplosionAudioResume568Contract.py
+          python3 Tests/IOSSourceCombatPause568Contract.py
+      - name: Swift syntax checks
+        run: |
+          set -euo pipefail
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01MissionHUD568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisSession568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/OriginalShotSFXWorker568.swift
