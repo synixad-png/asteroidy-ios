@@ -22,6 +22,8 @@ struct Sector01Scene568: View {
     // Windows v568 Game.Mode.Paused / PausedFrom=Playing:
     // user pause is independent from an iOS lock-screen suspension.
     @State private var userPaused=false
+    // Window safe areas survive a full-bleed mission view on iPad/iPhone.
+    @State private var missionSafeInsets568=W3ScreenInsets568()
 
     init(entry:Sector01Entry568,returnToAtlas:@escaping ()->Void,
          onMissionCompleted:@escaping (Sector01MissionSummary568)->Void,
@@ -95,10 +97,10 @@ struct Sector01Scene568: View {
             let compact=geo.size.height<550
             let combatHUDLayout=CombatHUDViewport568(
                 width:Double(geo.size.width),height:Double(geo.size.height),
-                safeLeft:Double(geo.safeAreaInsets.leading),
-                safeRight:Double(geo.safeAreaInsets.trailing),
-                safeTop:Double(geo.safeAreaInsets.top),
-                safeBottom:Double(geo.safeAreaInsets.bottom))
+                safeLeft:missionSafeInsets568.left,
+                safeRight:missionSafeInsets568.right,
+                safeTop:missionSafeInsets568.top,
+                safeBottom:missionSafeInsets568.bottom)
             ZStack {
                 Color(red:0.008,green:0.014,blue:0.032).ignoresSafeArea()
                 Sector01CarbonisPreview568(
@@ -122,7 +124,7 @@ struct Sector01Scene568: View {
                 // RendererW3Combat331.cs: native, transparent, screen-anchored
                 // HUD at the exact original 1280x720 virtual positions.
                 // All readings come from the genuine active combat snapshot.
-                SourceCombatHUD331(hud:session.hud)
+                SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568)
                     .allowsHitTesting(false)
 
                 // The touch-only pause affordance is separate from the PC HUD.
@@ -139,8 +141,8 @@ struct Sector01Scene568: View {
                                     in:RoundedRectangle(cornerRadius:4))
                         .overlay(RoundedRectangle(cornerRadius:4)
                             .stroke(.cyan.opacity(0.45),lineWidth:1))
-                        .position(x:CGFloat(combatHUDLayout.leftX(660)),
-                                  y:CGFloat(combatHUDLayout.hudY(33)))
+                        .position(x:CGFloat(combatHUDLayout.pauseCenterX),
+                                  y:CGFloat(combatHUDLayout.pauseCenterY))
                         .accessibilityIdentifier("sector01-pause-button")
                 }
                 // Windows Renderer.cs:200: performance overlay only during
@@ -268,7 +270,16 @@ struct Sector01Scene568: View {
                     .accessibilityIdentifier("sector01-source-pause-overlay")
                 }
             }
+            .background {
+                W3SafeAreaReader568(insets:$missionSafeInsets568)
+                    .frame(width:0,height:0)
+                    .allowsHitTesting(false)
+            }
         }
+        // Full-bleed mission uses the entire physical viewport; only the
+        // four HUD corners are inset via actual UIWindow.safeAreaInsets.
+        // Touch zones continue covering both halves edge to edge.
+        .ignoresSafeArea()
         // Source CompleteMission50: persist only after the genuine
         // 0.20 s full clear gate and one-shot FinishLevel settlement.
         .onChange(of:session.hud.phase) { phase in

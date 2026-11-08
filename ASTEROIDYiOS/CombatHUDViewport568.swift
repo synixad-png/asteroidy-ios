@@ -1,9 +1,18 @@
 import Foundation
 
-/// Keep HUD graphics at the original 1280x720 proportions, but lay out
-/// top/left and right HUD regions independently when aspect ratio differs.
-/// No device model checks: supports both iPad 4:3 and long iPhone landscape.
+/// Screen-space placement of the original v568 RendererW3Combat331 HUD.
+/// Original x/y coordinates and art sizes remain unchanged (1280x720).
+/// Crucially the four groups have FOUR separate physical-screen anchors:
+/// upper-left, upper-right, lower-left, lower-right. No centered 16:9 box.
+/// Safe insets come from the actual UIWindow, never device-name heuristics.
 struct CombatHUDViewport568 {
+    enum Anchor {
+        case topLeft, topRight, bottomLeft, bottomRight
+    }
+
+    static let sourceWidth:Double=1280
+    static let sourceHeight:Double=720
+
     let width:Double
     let height:Double
     let safeLeft:Double
@@ -27,22 +36,46 @@ struct CombatHUDViewport568 {
     var bottom:Double {min(safeBottom,height*0.25)}
     var usableWidth:Double {max(1,width-left-right)}
     var usableHeight:Double {max(1,height-top-bottom)}
-    var scale:Double {max(0.001,min(usableWidth/1280,usableHeight/720))}
-    var spareWidth:Double {max(0,usableWidth-1280*scale)}
-    var spareHeight:Double {max(0,usableHeight-720*scale)}
 
-    // iPad portrait-ratio landscape leaves extra height: shift HUD upwards
-    // relative to the previously centered letterbox (50% of spare height).
-    // A quarter gutter preserves vertical breathing room at the top.
-    var originY:Double {top+spareHeight*0.25}
-    var originLeftX:Double {left}
-    var originRightX:Double {left+spareWidth}
+    // Preserve the PC's original HUD aspect ratio, but NOT the old
+    // centered source viewport. Its physical anchor is set per group.
+    var scale:Double {
+        max(0.001,min(usableWidth/Self.sourceWidth,
+                      usableHeight/Self.sourceHeight))
+    }
 
-    func topRightX(_ x:Double)->Double {originRightX+x*scale}
-    func leftX(_ x:Double)->Double {originLeftX+x*scale}
-    func hudY(_ y:Double)->Double {originY+y*scale}
+    // Small optical padding from the safe SCREEN edges, not from the
+    // letterboxed 16:9 gaming area. Scales on phone without device guesses.
+    var horizontalMargin:Double {min(10,max(3,scale*10))}
+    var verticalMargin:Double {min(8,max(3,scale*9))}
 
-    // Independent x anchoring moves the rightmost equipment to the edge on
-    // wide iPhones. The center is left free for the actual gameplay scene.
-    func rightGroupOffsetInSource()->Double {spareWidth/scale}
+    func originX(for anchor:Anchor)->Double {
+        switch anchor {
+        case .topLeft,.bottomLeft:
+            return left+horizontalMargin
+        case .topRight,.bottomRight:
+            return width-right-horizontalMargin-Self.sourceWidth*scale
+        }
+    }
+
+    func originY(for anchor:Anchor)->Double {
+        switch anchor {
+        case .topLeft,.topRight:
+            return top+verticalMargin
+        case .bottomLeft,.bottomRight:
+            return height-bottom-verticalMargin-Self.sourceHeight*scale
+        }
+    }
+
+    func x(_ sourceX:Double,at anchor:Anchor)->Double {
+        originX(for:anchor)+sourceX*scale
+    }
+    func y(_ sourceY:Double,at anchor:Anchor)->Double {
+        originY(for:anchor)+sourceY*scale
+    }
+
+    // Pause is a touch-only iOS control, horizontally centered in the
+    // real safe screen (independent of the PC HUD's individual groups).
+    var pauseCenterX:Double {left+usableWidth/2}
+    var pauseCenterY:Double {y(33,at:.topLeft)}
 }

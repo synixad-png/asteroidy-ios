@@ -22,8 +22,18 @@ expect_all(hud,(
     "struct SourceCombatHUD331: View",
     "Canvas(opaque:false, rendersAsynchronously:false)",
     "CombatHUDViewport568(",
-    "rightGroupOffsetInSource()",
-    "Self.top(c,hud,rightShift:rightShift)",
+    "originX(for:.topLeft)",
+    "originY(for:.topLeft)",
+    "originX(for:.topRight)",
+    "originY(for:.topRight)",
+    "originX(for:.bottomLeft)",
+    "originY(for:.bottomLeft)",
+    "originX(for:.bottomRight)",
+    "originY(for:.bottomRight)",
+    "Self.top(topLeft,topRight,hud)",
+    "Self.radar(bottomLeft,hud)",
+    "Self.ability(bottomRight,type:i",
+    "safeLeft:insets.left,safeRight:insets.right",
     "hud.hull,60,191,565,Self.cyan",
     "hud.armor,25,191,613,Self.gold",
     "hud.tarczaEnergy,100,191,661,Self.blue",
@@ -59,7 +69,7 @@ expect_all(combat,(
     "mutating func suffer(_ damage:Int)",
 ),"wallet original model")
 expect_all(scene,(
-    "SourceCombatHUD331(hud:session.hud)",
+    "SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568)",
     "Button(\"PAUZA\") {pauseMission568()}",
     ".accessibilityIdentifier(\"sector01-pause-button\")",
     "Button(\"KONTYNUUJ\") {resumeMission568()}",
@@ -68,6 +78,14 @@ expect_all(scene,(
     ".gesture(movement)",
     ".gesture(aiming)",
     "session.release()",
+    "W3SafeAreaReader568(insets:$missionSafeInsets568)",
+    "safeLeft:missionSafeInsets568.left",
+    "safeRight:missionSafeInsets568.right",
+    "safeTop:missionSafeInsets568.top",
+    "safeBottom:missionSafeInsets568.bottom",
+    "combatHUDLayout.pauseCenterX",
+    "combatHUDLayout.pauseCenterY",
+    ".ignoresSafeArea()",
 ),"scene integration")
 for old in (
     "PORT MISJI 01",
@@ -78,8 +96,13 @@ for old in (
 ):
     assert old not in scene, "old non-source HUD still present: " + old
 assert "Color.black.opacity(0.78)" not in scene
+# Guard against regressing to the single common origin/centered viewport.
+assert "rightShift" not in hud
+assert "originLeftX" not in hud
+assert "originY)" not in hud
+assert "geo.safeAreaInsets" not in hud
 assert "AVAudioPlayer" not in hud
 assert "Timer(" not in hud
 assert "DispatchQueue" not in hud
 assert "MetalRenderer" not in hud
-print("PASS RendererW3Combat331 source-contract: layout, source HUD values, hemispherical radar, noninterference with audio/touch/120Hz gameplay")
+print("PASS RendererW3Combat331 source-contract: four-corner screen anchors, live safe areas, source values, hemispherical radar, noninterference with audio/touch/120Hz gameplay")
