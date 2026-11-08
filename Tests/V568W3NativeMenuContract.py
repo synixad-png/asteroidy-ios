@@ -80,7 +80,10 @@ assert "Sector01Shop568.save(profile,defaults:defaults)" in source_settlement
 assert "enum Item:Int,CaseIterable" in source_shop
 assert "accessibilityIdentifier(\"sector01-source-post-mission-service-shop\")" in shop_view
 
-assert "session.hud.fighters" in source_scene
+assert "SourceCombatHUD331(hud:session.hud)" in source_scene
+source_hud=(root/"ASTEROIDYiOS/SourceCombatHUD331.swift").read_text()
+assert "game.shooters.compactMap" in (root/"ASTEROIDYiOS/CarbonisSession568.swift").read_text()
+assert "hud.radarContacts" in source_hud
 incoming_wave=(root/"ASTEROIDYiOS/MissionIncoming568.swift").read_text()
 assert "random = encounter.randomState" in incoming_wave
 assert "incomingLeft = encounter.initialReinforcements" in incoming_wave
@@ -106,9 +109,11 @@ assert "private var fireGesture" not in source_scene
 assert 'Text("OGIEŃ")' not in source_scene
 assert "session.release()" in source_scene
 # Static HUD must not block right-side touch and its held-auto-fire gesture.
-assert source_scene.count(".allowsHitTesting(false)")>=4
+assert source_scene.count(".allowsHitTesting(false)")>=3
+assert ".allowsHitTesting(false)" in source_hud
 
-assert "SEKTOR 01 / CARBONIS" in source_scene
+assert '"SEKTOR 01 / 26"' in source_hud
+assert "PORT MISJI 01" not in source_scene
 rock_geom=(root/"ASTEROIDYiOS/CarbonisRockGeometry568.swift").read_text()
 rock_metal=(root/"ASTEROIDYiOS/Sector01Carbonis568.metal").read_text()
 assert "let seed=Float((shape%40)/5+13)" in rock_geom

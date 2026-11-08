@@ -65,6 +65,8 @@ struct CarbonisCombat568 {
     let rapidLevel:Int
     var score:Int=0
     var collectedLootTokens:Int=0
+    // Source Game.Tokens: mission HUD begins with real persisted wallet.
+    let startingTokens:Int
     private var lootCarry:Float=0
     private let lootYieldScale:Float
     private let isReplay:Bool
@@ -103,6 +105,7 @@ struct CarbonisCombat568 {
         invincible=prepared.reset.invincibleSeconds
         difficulty=prepared.difficulty
         let profile=prepared.shopProfile
+        startingTokens=profile.tokens
         selectedWeapon=profile.weapon
         upgradeLevel=profile.upgradeLevel
         rapidLevel=profile.rapidLevel

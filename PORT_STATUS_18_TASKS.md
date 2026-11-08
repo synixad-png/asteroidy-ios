@@ -1,3 +1,13 @@
+## ETAP — 08.11.2026: oryginalny HUD walki W3 v331 dla CARBONIS 01 (PR #10)
+
+**Potwierdzenie użytkownika po IPA #145:** przy strzelaniu gra utrzymuje stabilne **60 FPS**. Naprawionego modułu SFX ani żadnych danych fizyki, sterowania i grafiki nie zmieniono przy pracach nad HUD.
+
+**Wykonano w osobnej gałęzi:** na podstawie źródłowego `Windows/src/RendererW3Combat331.cs` przeniesiono przezroczysty, zwarty HUD z górnym paskiem, sferycznym radarem, 14-segmentowymi wskaźnikami oraz czterema ikonami wyposażenia do `SourceCombatHUD331.swift`; zintegrowano w `Sector01Scene568.swift`. Usunięto robocze teksty i czarne panele. HUD pokazuje realne dane z `CarbonisSession568`, a nie osobną symulację. Używa istniejącego odświeżania 10Hz, nie wpływa na kolejkę `AVAudioPlayer` ani pętlę GPU.
+
+**Dowód:** [PR #10](https://github.com/synixad-png/asteroidy-ios/pull/10), [audyt źródeł](Reports/V568_IOS_ORIGINAL_COMBAT_HUD331_2026-11-08.md), [CI no IPA](https://github.com/synixad-png/asteroidy-ios/actions/runs/42468530315). **Natywna kompilacja Swift/Metal na macOS PASS**; szersze regresje i testy urządzeniowe mają odrębne bramki. Nie wydano nowej IPA; źródłowa energia Tarcza145, niezaimplementowane dodatkowe bronie i wyposażenie nie zostały sfingowane.
+
+**Stały harmonogram:** 18 zadań, **38% wykonane / 62% do ukończenia**. Zadanie 14: oryginalny HUD misji 01 ma rzeczywistą implementację, ale pozostałe widoki iOS oraz potwierdzenie urządzeniowe są jeszcze niekompletne; bez sztucznego podnoszenia globalnego procentu.
+
 ## ETAP — 08.11.2026: naprawa głównego wątku audio SFX po pomiarze użytkownika (IPA #145)
 
 **Potwierdzony test urządzeń:** efekty dźwiękowe 0%, muzyka 100% => iPhone i iPad utrzymują 60 FPS. Z efektami aktywnymi iPhone pokazywał ok. 40 FPS / DRAW 40/s pomimo GPU 4,3 ms, CPU 1,6 ms i WAIT Metal 0 ms. Nie są to przesłanki do dalszej redukcji jakości renderowania.

@@ -4,6 +4,11 @@ on:
     paths:
       - '.github/workflows/verify-combat-only.yml'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/SourceCombatHUD331.swift'
+      - 'ASTEROIDYiOS/Sector01Scene568.swift'
+      - 'ASTEROIDYiOS/CarbonisSession568.swift'
+      - 'ASTEROIDYiOS/CarbonisCombat568.swift'
+      - 'Tests/IOSOriginalCombatHUD331Contract.py'
       - 'ASTEROIDYiOS/PhoneCombatResolution568.swift'
       - 'ASTEROIDYiOS/SourcePerformance568.swift'
       - 'ASTEROIDYiOS/CarbonisFXStreamingBuffers568.swift'
@@ -295,6 +300,7 @@ jobs:
           set -euo pipefail
           python3 Tests/IOSAudioLockResume568Contract.py
           python3 Tests/IOSSourceCombatPause568Contract.py
+          python3 Tests/IOSOriginalCombatHUD331Contract.py
           python3 Tests/IOSShotExplosionAudioResume568Contract.py
           swiftc -frontend -parse ASTEROIDYiOS/OriginalShotSFXWorker568.swift
           swiftc ASTEROIDYiOS/OriginalAudioLifecycle568.swift Tests/OriginalAudioLifecycle568Tests.swift -o /tmp/original-audio-v568
@@ -327,6 +333,7 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Entry568.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisSurface277.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisRockGeometry568.swift

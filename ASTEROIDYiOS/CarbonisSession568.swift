@@ -5,6 +5,23 @@ import SwiftUI
 /// Metal draws its *actual* simulation, not a second diagnostic sandbox.
 final class CarbonisSession568: ObservableObject {
     struct HUD {
+        // RendererW3Combat331 uses SphereFocus/Right/Up and removes targets
+        // on the far hemisphere, not a flat delta map or a fake radar.
+        struct RadarContact {
+            let x:Float
+            let y:Float
+            let kind:Int  // 0 asteroid, 1 fighter, 2 pickup
+        }
+        var radarContacts:[RadarContact]
+        var tokenBalance:Int
+        var weaponName:String
+        var weaponLevel:Int
+        var rapidLevel:Int
+        var shieldCharges:Int
+        var tarczaEnergy:Int?  // nil: unported Tarcza145, never invent energy
+        var ionAmmo:Int
+        var bombs:Int
+        var boostCharges:Int
         var hull:Int
         var armor:Int
         var lives:Int
@@ -42,6 +59,33 @@ final class CarbonisSession568: ObservableObject {
                 Sphere67.delta(target:$0.position,origin:game.flight.position)
             }
             seconds=game.elapsed;phase=game.phase
+            let initialTokens=max(0,game.startingTokens)
+            let earned=max(0,game.collectedLootTokens)
+            tokenBalance=initialTokens>Int.max-earned ? Int.max : initialTokens+earned
+            switch game.selectedWeapon {
+            case .pulse: weaponName="IMPULS"
+            case .twin: weaponName="PODWÓJNA"
+            case .scatter: weaponName="WACHLARZ"
+            }
+            weaponLevel=game.upgradeLevel
+            rapidLevel=game.rapidLevel
+            shieldCharges=game.shieldCharges
+            // The original IonAmmo, Bombs, Boost71 and Tarcza145 are
+            // not executable in this first-sector port. Display actual
+            // zero inventory; show an em dash for unavailable energy.
+            tarczaEnergy=nil
+            ionAmmo=0; bombs=0; boostCharges=0
+            let camera=game.flight.camera
+            func contact(_ point:Vec2,_ kind:Int)->RadarContact? {
+                let n=Sphere67.normal(point)
+                if SphereVector3.dot(n,camera.focus) < -0.06 {return nil}
+                return RadarContact(
+                    x:SphereVector3.dot(n,camera.right),
+                    y:-SphereVector3.dot(n,camera.up),kind:kind)
+            }
+            radarContacts=game.rocks.compactMap {contact($0.position,0)}
+                + game.shooters.compactMap {contact($0.core.position,1)}
+                + game.tokenPickups.compactMap {contact($0.position,2)}
         }
     }
     @Published private(set) var hud:HUD
