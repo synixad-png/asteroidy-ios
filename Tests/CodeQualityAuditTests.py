@@ -25,6 +25,22 @@ assert {i.rule for i in issues} == {
 assert len([i for i in issues if i.severity == "critical"]) == 5
 assert module.scan_text("Tests/Bad.swift", bad) == []
 
+dsp_guard = 'guard let sos=filters[key] else {preconditionFailure("Missing original source SOS filter: \\(key)")}'
+allowed = module.scan_text("ASTEROIDYiOS/OriginalMusicSynth568.swift", dsp_guard)
+assert len(allowed)==1 and allowed[0].rule=="verified_dsp_filter_invariant"
+assert allowed[0].severity=="review"
+assert module.scan_text("ASTEROIDYiOS/Other.swift", dsp_guard)[0].severity=="critical"
+
+metal = module.scan_text("ASTEROIDYiOS/Test.metal","while(true) { busy(); }")
+assert metal and metal[0].rule=="unbounded_shader_loop_candidate"
+py = module.scan_text("Tools/loader.py","os.system('echo broken')")
+assert py and py[0].rule=="shell_command_candidate"
+workflow = module.scan_text(".github/workflows/bad.yml","pull_request_target:")
+assert workflow and workflow[0].rule=="privileged_pr_candidate"
+forced = module.scan_text("ASTEROIDYiOS/Cache.swift", "let item=cache[key]!")
+assert forced and forced[0].rule=="forced_optional_subscript_candidate"
+
+
 good = """// fatalError("commented-out text") is not production code.
 func load() throws -> Data { return Data() }
 let bytes = try load()
