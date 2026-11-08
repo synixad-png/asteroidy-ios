@@ -49,12 +49,28 @@ struct CombatHUDViewport568 {
     var horizontalMargin:Double {min(10,max(3,scale*10))}
     var verticalMargin:Double {min(8,max(3,scale*9))}
 
+    // The full-bleed 19.5:9 iPhone has wide horizontal safe insets.
+    // They are appropriate for touch targets, but made the read-only HUD
+    // float too far toward the middle. Keep the original safe-area scale
+    // and use less horizontal inset ONLY for this long, short viewport.
+    // 4:3 iPad and conventional 16:9 geometry remain byte-for-byte in
+    // effect identical to the previously approved four-corner HUD.
+    var widePhoneHUD:Bool {width/height >= 2.0 && height <= 500}
+
+    // Move the left group toward (not fully behind) Dynamic Island.
+    // Reduce ~59pt safe inset to ~29.5pt on a 15 Pro Max.
+    var leftHUDInset:Double {widePhoneHUD ? left*0.5 : left}
+
+    // On a long iPhone the passive right HUD reaches the physical right
+    // edge (only the original scaled source optical margin remains).
+    var rightHUDInset:Double {widePhoneHUD ? 0 : right}
+
     func originX(for anchor:Anchor)->Double {
         switch anchor {
         case .topLeft,.bottomLeft:
-            return left+horizontalMargin
+            return leftHUDInset+horizontalMargin
         case .topRight,.bottomRight:
-            return width-right-horizontalMargin-Self.sourceWidth*scale
+            return width-rightHUDInset-horizontalMargin-Self.sourceWidth*scale
         }
     }
 
