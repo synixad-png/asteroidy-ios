@@ -2,8 +2,8 @@ import Foundation
 
 /// PC v580 Windows/src/H55Renderer.cs NpcRouteX525/Z525, v530 workshop
 /// pause, v528 acceleration and v533/537 anatomical-forward yaw steering.
-/// Full v532 player detour A*, v529 foot IK and v544 airlock collision
-/// remain separate, unported systems.
+/// Uses the original v532 player-avoidance A* from H55NpcDetour580.
+/// v529 Foot IK and v544 airlock animation/collision are not yet ported.
 struct H55Mechanic580 {
     enum Phase:Equatable {case idle, walking, workshop, completed, blocked}
     static let routeX:[Float]=[
@@ -40,6 +40,12 @@ struct H55Mechanic580 {
     }
     private var talked=false
     private var completedOnce=false
+    private var detour:[H55NpcDetour580.Point]=[]
+    private var detourCursor=0
+    private var detourSkipTo=-1
+    private var blockedFrames=0
+    private var detourAge:Float=999
+    private(set) var detoursBuilt=0
     var moving:Bool {phase == .walking && speed>0.01}
 
     mutating func finishConversation() {
@@ -50,6 +56,11 @@ struct H55Mechanic580 {
         goal=0
         speed=0
         pause=0
+        detour.removeAll()
+        detourCursor=0
+        detourSkipTo = -1
+        blockedFrames=0
+        detourAge=999
     }
 
     /// Use actual active H55 floor/GLB collision plus exclusion of player.
@@ -59,6 +70,7 @@ struct H55Mechanic580 {
                        canWalk:(Float,Float)->Bool) {
         let dt=min(0.07,max(0,raw))
         guard dt>0 else{return}
+        detourAge+=dt
         if phase == .idle {
             guard talked && calibrated && !completedOnce &&
                   hypot(playerX-x,playerZ-z)>2.5 else{return}
@@ -71,18 +83,36 @@ struct H55Mechanic580 {
             return
         }
         guard phase == .walking || phase == .blocked else{return}
-        var advance=0
-        while goal<Self.routeX.count-1 && goal != Self.workshopIndex &&
-              advance<Self.routeX.count &&
-              hypot(Self.routeX[goal]-x,Self.routeZ[goal]-z)<=0.18 {
-            goal+=1;advance+=1
+        let avoiding=detourCursor<detour.count
+        if !avoiding {
+            var advance=0
+            while goal<Self.routeX.count-1 && goal != Self.workshopIndex &&
+                  advance<Self.routeX.count &&
+                  hypot(Self.routeX[goal]-x,Self.routeZ[goal]-z)<=0.18 {
+                goal+=1;advance+=1
+            }
         }
-        let destX=Self.routeX[goal],destZ=Self.routeZ[goal]
+        let destX=avoiding ? detour[detourCursor].x : Self.routeX[goal]
+        let destZ=avoiding ? detour[detourCursor].z : Self.routeZ[goal]
         let dx=destX-x,dz=destZ-z
         let d=hypot(dx,dz)
-        let key=goal==Self.workshopIndex || goal==Self.routeX.count-1
+        let key = !avoiding &&
+                  (goal==Self.workshopIndex || goal==Self.routeX.count-1)
         let tolerance:Float=key ? 0.03 : 0.18
         if d<=tolerance {
+            if avoiding {
+                detourCursor+=1
+                if detourCursor>=detour.count {
+                    detour.removeAll()
+                    detourCursor=0
+                    blockedFrames=0
+                    if detourSkipTo>=0 {
+                        goal=min(Self.routeX.count-1,detourSkipTo+1)
+                        detourSkipTo = -1
+                    }
+                }
+                return
+            }
             if key {x=destX;z=destZ}
             if goal == Self.workshopIndex {
                 pause=5
@@ -106,8 +136,8 @@ struct H55Mechanic580 {
         let turn=max(-2.35*dt,min(2.35*dt,error))
         yaw=Self.wrap(yaw+turn)
         let steering=abs(Self.wrap(desired-yaw))
-        let hardTurn=steering>1.48 ||
-             (goal==0 && distance<0.01 && steering>0.24)
+        let hardTurn=avoiding ? steering>=0.20 :
+             (steering>1.48 || (goal==0 && distance<0.01 && steering>0.24))
         if hardTurn {
             speed=max(0,speed-Self.braking*dt)
             return
@@ -115,21 +145,48 @@ struct H55Mechanic580 {
         let brakingLimit=sqrt(max(0,2*Self.braking*max(0,d-tolerance)))
         let cornerFactor=cos(min(1.47,steering))
         let base=key ? min(Self.maximumSpeed,brakingLimit) : Self.maximumSpeed
-        let request=base*max(0.23,cornerFactor)
+        let request=avoiding ? base*(steering>0.18 ? max(0.92,cos(steering)) : 1)
+                              : base*max(0.23,cornerFactor)
         if speed<request {speed=min(request,speed+Self.acceleration*dt)}
         else {speed=max(request,speed-Self.braking*dt)}
         let move=min(d,speed*dt)
         guard d>0 else{return}
         let facing=Self.wrap(anatomicalHeading-yaw)
-        let nx=x+sin(facing)*move,nz=z-cos(facing)*move
-        let playerClearance:Float=d>6 ? 0.97 : 0.82
-        guard hypot(nx-playerX,nz-playerZ)>=playerClearance,
-              canWalk(nx,nz) else {
-            speed=max(0,speed-Self.braking*dt)
-            phase = .blocked
+        let nx=x+(avoiding ? dx/d : sin(facing))*move
+        let nz=z+(avoiding ? dz/d : -cos(facing))*move
+        let playerClearance:Float=avoiding ? 0.82 : (d>6 ? 0.97 : 0.82)
+        let playerBlocked=hypot(nx-playerX,nz-playerZ)<playerClearance
+        if !playerBlocked && canWalk(nx,nz) {
+            x=nx;z=nz;distance+=move
+            blockedFrames=0
+            phase = .walking
             return
         }
-        x=nx;z=nz;distance+=move
-        phase = .walking
+        speed=max(0,speed-Self.braking*dt)
+        phase = .blocked
+        if playerBlocked {
+            blockedFrames+=1
+            // PC v532: only the player's capsule can trigger A*.
+            // Static GLB/door collision never causes a speculative bypass.
+            if blockedFrames>=8 && detourAge>=0.8 {
+                blockedFrames=0
+                detourAge=0
+                detour.removeAll()
+                detourCursor=0
+                let start=H55NpcDetour580.Point(x:x,z:z)
+                let player=H55NpcDetour580.Point(x:playerX,z:playerZ)
+                let routeGoal=H55NpcDetour580.Point(x:Self.routeX[goal],
+                                                       z:Self.routeZ[goal])
+                if let bypass=H55NpcDetour580.bypass(
+                    start:start,player:player,goal:routeGoal,
+                    goalIndex:goal,workshopIndex:Self.workshopIndex,
+                    routeX:Self.routeX,routeZ:Self.routeZ,
+                    walkable:canWalk) {
+                    detour=bypass.points
+                    detourSkipTo=bypass.skipTo
+                    detoursBuilt+=1
+                }
+            }
+        }
     }
 }
