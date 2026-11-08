@@ -13,6 +13,10 @@ settings:
     INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
     INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
     ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
+packages:
+  GLTFKit2:
+    url: https://github.com/warrenm/GLTFKit2
+    exactVersion: 0.5.15
 targets:
   ASTEROIDYiOS:
     type: application
@@ -23,6 +27,8 @@ targets:
           - Assets/**
       - path: ASTEROIDYiOS/Assets
         buildPhase: resources
+    dependencies:
+      - package: GLTFKit2
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.synixad.asteroidyios
