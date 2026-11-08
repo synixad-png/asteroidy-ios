@@ -11,6 +11,7 @@ struct CarbonisVisualSettingsPanel568: View {
     @State private var planetProfile=SourcePlanetGraphicsSettings568.load()
     @State private var lava287=SourceLavaLightSettings287.load()
     @State private var shipScale472=SourceShipScale472.load()
+    @State private var missionSize580=SourceMissionSize580.load()
     @State private var tab:Int=11
     @State private var previewRevision=0
     @ObservedObject private var performance=SourcePerformance568.shared
@@ -38,6 +39,11 @@ struct CarbonisVisualSettingsPanel568: View {
         update(&shipScale472)
         shipScale472.clampAll()
         shipScale472.save()
+    }
+    private func saveMissionSize580(_ change:(inout SourceMissionSize580)->Void) {
+        change(&missionSize580)
+        missionSize580.clampAll()
+        missionSize580.save()
     }
     private func doubleValue(_ idx:Int)->Binding<Double> {
         Binding(get:{Double(profile.value(idx))},
@@ -134,6 +140,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     Rectangle().fill(cyan.opacity(0.28)).frame(height:1)
                     switch tab {
                     case 0: sourceGraphicsPage
+                    case 3: missionObjectSizePage580
                     case 11: explosionPage
                     case 16: projectilePage
                     case 1: OriginalAudioSettingsPanel568(compact:compact)
@@ -210,6 +217,43 @@ struct CarbonisVisualSettingsPanel568: View {
             Spacer(minLength:0)
         }
         .accessibilityIdentifier("w3-source-graphics-settings")
+    }
+    /// Windows PC v580: Menu139 options 142/144. Both are graphics-only;
+    /// the count, hitboxes, physics, pickup scale and other categories remain separate.
+    private var missionObjectSizePage580:some View {
+        VStack(alignment:.leading,spacing:compact ? 10:16) {
+            header("ROZGRYWKA / WIELKOŚĆ OBIEKTÓW — PC v580")
+            HStack {
+                Text("PRZECIWNICY / WIELKOŚĆ MODELI")
+                Spacer()
+                Text("\(missionSize580.enemyPercent)%").foregroundStyle(gold)
+            }
+            .font(.system(size:compact ? 10:12,design:.monospaced))
+            Slider(value:Binding(
+                get:{Double(missionSize580.enemyPercent)},
+                set:{n in saveMissionSize580{$0.setEnemy(Int(n.rounded()))}}),
+                in:30...150,step:1)
+                .tint(cyan)
+                .accessibilityIdentifier("w3-v580-enemy-size-slider")
+            HStack {
+                Text("ASTEROIDY / WIELKOŚĆ MODELI")
+                Spacer()
+                Text("\(missionSize580.rockPercent)%").foregroundStyle(gold)
+            }
+            .font(.system(size:compact ? 10:12,design:.monospaced))
+            Slider(value:Binding(
+                get:{Double(missionSize580.rockPercent)},
+                set:{n in saveMissionSize580{$0.setRock(Int(n.rounded()))}}),
+                in:40...150,step:1)
+                .tint(cyan)
+                .accessibilityIdentifier("w3-v580-asteroid-size-slider")
+            Text("Wyłącznie rozmiar wizualny modeli w misji. Liczba obiektów, obrażenia, fizyka i promienie kolizji nie zmieniają się. Wartości źródłowe: 77% / 78%.")
+                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .foregroundStyle(muted)
+                .fixedSize(horizontal:false,vertical:true)
+            Spacer(minLength:0)
+        }
+        .accessibilityIdentifier("w3-v580-object-size-settings")
     }
     private var unavailableSourceCategory:some View {
         VStack(alignment:.leading,spacing:12) {
