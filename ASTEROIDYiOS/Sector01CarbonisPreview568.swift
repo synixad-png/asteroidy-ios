@@ -725,6 +725,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 // shot SFX, gameplay physics, shader effects or SwiftUI HUD).
                 // iPad and the non-gameplay menu preview never enter here.
                 if adaptivePhoneCombat568,let session=gameSession {
+                    // iPhone-only actual MTKView callbacks, before waiting
+                    // for stream buffers, Metal drawable or CPU FX builds.
+                    SourcePerformance568.shared.recordPhoneDrawCallback(at:entered)
                     let activeShot=session.shooting ||
                         !session.game.bullets.isEmpty ||
                         !session.game.hostileShots.isEmpty
