@@ -116,6 +116,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var lava287=SourceLavaLightSettings287.load()
             private let planetFx568=SourcePlanetGraphicsSettings568.load()
             private let shipScale472=SourceShipScale472.load()
+            private var sourceMissionSize580=SourceMissionSize580.load()
             private let missionTerrainScale523:Float
             private let vertexBuffer:MTLBuffer
             private let indexBuffer:MTLBuffer
@@ -571,7 +572,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             /// GpuSphere67.cs:8,63,133: source StampSphere67 placement
             /// and 41/23 degree rock spin rotations. CARBONIS C279 is
             /// already normalized to source outer radius in this renderer.
-            static func sourceRockModel(_ rock:SphereAsteroid556)
+            static func sourceRockModel(_ rock:SphereAsteroid556,
+                                        visualFactor:Float=1)
                 -> simd_float4x4 {
                 let n=Sphere67.normal(rock.position)
                 let forward=Sphere67.vector(
@@ -579,7 +581,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 let right=SphereVector3.cross(forward,n).normalized
                 let outer:Float=100*1.4419674
                 let shell=outer+15
-                let radius=rock.radius*(shell/Sphere67.radius)/outer
+                let radius=rock.radius*visualFactor*(shell/Sphere67.radius)/outer
                 let place=shell/outer
                 let placement=simd_float4x4(columns:(
                     SIMD4<Float>(right.x*radius,right.y*radius,right.z*radius,0),
@@ -861,6 +863,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     // same live renderer without reloading 3D assets.
                     visualSettings=CarbonisVisualSettings568.load()
                     fxBudget=CarbonisIOSFXBudget568.load()
+                    sourceMissionSize580=SourceMissionSize580.load()
                     let newLava=SourceLavaLightSettings287.load()
                     if newLava != lava287 {
                         rebakeCarbonis469(newLava.intensity)
@@ -1086,7 +1089,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             }
                         }
                         guard rockBuffers[shape] != nil else {continue}
-                        let rockMatrix=model*Self.sourceRockModel(rock)
+                        let rockMatrix=model*Self.sourceRockModel(
+                            rock,visualFactor:sourceMissionSize580.rockFactor)
                         let rockUniforms=Uniforms(
                             mvp:vp.map{$0*rockMatrix} ??
                                 Self.previewMVP(aspect,rockMatrix),
@@ -1155,7 +1159,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         encoder.setVertexBuffer(shooter.buffer,offset:0,index:0)
                         let stamp=SphereSurfaceStamp556(
                             point:enemy.core.position,angle:enemy.aim)
-                        let pose=stamp.columnMajor(size:9)
+                        let pose=stamp.columnMajor(
+                            size:9*sourceMissionSize580.enemyFactor)
                         let matrix=simd_float4x4(columns:(
                             SIMD4<Float>(pose[0],pose[1],pose[2],pose[3]),
                             SIMD4<Float>(pose[4],pose[5],pose[6],pose[7]),
