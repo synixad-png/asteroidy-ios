@@ -13,7 +13,8 @@ from pathlib import Path
 r=Path(__file__).resolve().parents[1]
 model=(r/"ASTEROIDYiOS/BlackHoleSky55.swift").read_text()
 metal=(r/"ASTEROIDYiOS/Ship.metal").read_text()
-render=(r/"ASTEROIDYiOS/MetalRenderer.swift").read_text()
+render=(r/"ASTEROIDYiOS/MetalRenderer.swift").read_text() + "\n" + \
+    (r/"ASTEROIDYiOS/SourceSkyTextureLifecycle55.swift").read_text()
 pack=(r/"ASTEROIDYiOS/SourceSkyUniformPacking.swift").read_text()
 factory=(r/"ASTEROIDYiOS/SourceSkyAssetFactory568.swift").read_text()
 def check(condition,msg):
