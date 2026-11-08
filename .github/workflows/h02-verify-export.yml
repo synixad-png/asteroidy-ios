@@ -1,0 +1,27 @@
+name: H02 - compile geometry porter and export source for actual GLB parity
+on:
+  push:
+    branches:
+      - feature/ios-h55-v580-native-entry
+    paths:
+      - '.github/workflows/h02-verify-export.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  H02:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile original H02 Geometry source, no app code changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -parse-as-library -emit-module ASTEROIDYiOS/H55CollisionGeometry580.swift -module-name H55CollisionGeometry580 -emit-module-path /tmp/H55CollisionGeometry580.swiftmodule
+      - name: Export source for real uploaded GLB differential test
+        uses: actions/upload-artifact@v4
+        with:
+          name: H02-SOURCE-DIAGNOSTIC
+          path: ASTEROIDYiOS/H55CollisionGeometry580.swift
+          retention-days: 1
