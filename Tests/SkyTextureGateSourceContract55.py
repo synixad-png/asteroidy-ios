@@ -15,11 +15,11 @@ def ck(ok,message):
         raise AssertionError(message)
 for kind,field,method,call in (
     ("cloud","nebulaTexture","ensureCloudTextures55",
-     "Self.makeNebulaTextures556(device)"),
+     "SourceSkyAssetFactory568.makeNebulaTextures556(device)"),
     ("planet","deepPlanetTextures","ensureDeepPlanetTextures55",
-     "Self.makeDeepPlanetTextures55(device)"),
+     "SourceSkyAssetFactory568.makeDeepPlanetTextures55(device)"),
     ("black hole","blackHoleTextures","ensureBlackHoleTextures55",
-     "Self.makeBlackHoleTextures55(device)")):
+     "SourceSkyAssetFactory568.makeBlackHoleTextures55(device)")):
     ck(f"private var {field}: MTLTexture?" in src,
        kind+": source texture no longer lazily optional")
     signature=(f"private func {method}(camera: SphereCamera67) -> MTLTexture?"
@@ -53,14 +53,14 @@ for token in (
     "private var nebulaSliceCache55 = SkyTextureSliceCache55(count: SphereNebula556.orbitThemeCount)",
     "where visibleThemes.contains(theme)",
     "nebulaSliceCache55.needsUpload(style:theme)",
-    "guard Self.uploadNebulaSlice556(texture,theme:theme)",
+    "guard SourceSkyAssetFactory568.uploadNebulaSlice556(texture,theme:theme)",
     "nebulaSliceCache55.markUploaded(style:theme)",
     "if let clouds=sourceCloudTexture",
     "guard let planets=ensureDeepPlanetTextures55(style:style)",
     "private var deepPlanetSliceCache55 = SkyTextureSliceCache55(count: DeepSkyPlanets55.count)",
     "if deepPlanetSliceCache55.needsUpload(style:style)",
     "deepPlanetSliceCache55.markUploaded(style:style)",
-    "guard Self.uploadDeepPlanetSlice55(texture,style:style)",
+    "guard SourceSkyAssetFactory568.uploadDeepPlanetSlice55(texture,style:style)",
     "let blackTextures=ensureBlackHoleTextures55()",
     "encoder.setFragmentTexture(clouds,index:0)",
     "encoder.setFragmentTexture(planets,index:0)",
