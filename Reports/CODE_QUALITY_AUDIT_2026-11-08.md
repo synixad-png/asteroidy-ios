@@ -116,3 +116,10 @@ Automatyczny [audyt jakości PR #18](https://github.com/synixad-png/asteroidy-io
 **Pozostające ryzyka:** złożony cykl życia zasobów w `Sector01CarbonisPreview568.swift`, `MetalRenderer.swift` i `SourceCombatSky568.swift`; dopiero profilowanie na iPhonie/iPadzie może potwierdzić koszt alokacji. Dwa `try? Data(contentsOf:)` sprawdzają brak/niezgodność zasobów w ścieżce weryfikacji i nie zostały mechanicznie usunięte. Wszelkie dalsze przenoszenie cache pomiędzy rendererami wymaga testów własności i żywotności Metal.
 
 **Status interaktywny:** użytkownik potwierdził poprawne działanie IPA z commita `8af0f3f1` przed tą zmianą; działanie nowej gałęzi na rzeczywistym urządzeniu wymaga osobnego potwierdzenia.
+
+### 9a. Ujednolicenie dowodów GPU w całym sprawdzonym zakresie
+
+W kolejnym module `W3HomePlanetMetal568.swift` również istniał powielony serializator JSON z cichymi `try?`. Podłączono istniejący `OriginalRenderProofWriter568` bez modyfikacji zawartości `ASTEROIDY_W3_NewHome290_GPUProof.json`, warunku `ASTEROIDY_W3_MENU_VERIFY=1`, semantyki `proofScheduled` ani callbacku zakończenia pracy GPU.
+
+Kontrakt `Tests/SourceGPUProofWriter568Contract.py` sprawdza teraz wszystkie **cztery** potwierdzone raporty: Vanguard431, PlayerShip367, NewHome290 i CARBONIS L1, w tym ich oryginalne nazwy, pola, jawne logowanie błędów zapisu, formatowanie JSON i atomowość. Odnosi się to wyłącznie do raportów diagnostycznych, nie do normalnego rysowania każdej klatki.
+
