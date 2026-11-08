@@ -28,14 +28,14 @@ struct SourceCombatHUD331: View {
             c.scaleBy(x:scale,y:scale)
             Self.top(c,hud)
             Self.radar(c,hud)
-            Self.gauge(c,"KADŁUB",hud.hull,60,191,565,cyan)
-            Self.gauge(c,"PANCERZ",hud.armor,25,191,613,gold)
+            Self.gauge(c,"KADŁUB",hud.hull,60,191,565,Self.cyan)
+            Self.gauge(c,"PANCERZ",hud.armor,25,191,613,Self.gold)
             // Tarcza145 isn't implemented in CARBONIS iOS yet: never
             // display invented charge/energy or pretend it is usable.
-            Self.gauge(c,"TARCZA",hud.tarczaEnergy,100,191,661,blue)
+            Self.gauge(c,"TARCZA",hud.tarczaEnergy,100,191,661,Self.blue)
             let counts=[hud.ionAmmo,hud.bombs,hud.shieldCharges,hud.boostCharges]
             let names=["JON","BOMBY","OSŁONY","DOPALACZ"]
-            let tints=[cyan,dim,cyan,gold]
+            let tints=[Self.cyan,Self.dim,Self.cyan,Self.gold]
             for i in 0..<4 {
                 Self.ability(c,type:i,cx:CGFloat(920+100*i),
                              count:counts[i],name:names[i],tint:tints[i])
@@ -154,7 +154,7 @@ struct SourceCombatHUD331: View {
         arc(c,cx,cy,r-24,0,360,color(78,17,111,128),0.85)
         arc(c,cx,cy,r-42,0,360,color(48,18,106,122),0.7)
         for i in 0..<32 {
-            let angle=CGFloat(i)*.pi/16
+            let angle=CGFloat(i) * CGFloat.pi / 16
             let length:CGFloat=i%8==0 ? 7 : i%4==0 ? 4 : 2
             let x0=cx+CGFloat(cos(Double(angle)))*(r-2), y0=cy+CGFloat(sin(Double(angle)))*(r-2)
             let x1=cx+CGFloat(cos(Double(angle)))*(r-2-length), y1=cy+CGFloat(sin(Double(angle)))*(r-2-length)
