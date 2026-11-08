@@ -27,8 +27,11 @@ import UIKit
     @Published private(set) var mechanicNearby=false
     @Published private(set) var conversationOpen=false
     @Published private(set) var conversationsFinished=0
-    private let npcX:Float=9.9248
-    private let npcZ:Float=12.155
+    private var mechanic=H55Mechanic580()
+    private weak var mechanicRoot:SCNNode?
+    private var mechanicBaseY:Float=0.1095
+    private var mechanicMotionPlaying=false
+    @Published private(set) var mechanicStatus="OCZEKUJE NA ROZMOWĘ"
 
     func setMove(forward:Float,right:Float) {
         moveForward=max(-1,min(1,forward))
@@ -42,9 +45,11 @@ import UIKit
         if conversationOpen {
             conversationOpen=false
             conversationsFinished+=1
+            mechanic.finishConversation()
+            mechanicStatus="PATROL GOTOWY — ODDAL SIĘ"
             return
         }
-        let distance=hypot(movement.x-npcX,movement.z-npcZ)
+        let distance=hypot(movement.x-mechanic.x,movement.z-mechanic.z)
         guard distance<=2.7 else{return}
         conversationOpen=true
         setMove(forward:0,right:0)
@@ -70,7 +75,37 @@ import UIKit
             bodyClear:{x,y,z in Self.bodyClear(scene,x:x,feet:y,z:z)},
             support:{x,z,feet in Self.supportHeight(scene,x:x,z:z,feet:feet)})
         camera?.position=SCNVector3(movement.x,movement.y+H55Walk580.eyes,movement.z)
-        let near=hypot(movement.x-npcX,movement.z-npcZ)<=2.7
+        mechanic.step(dt:dt,playerX:movement.x,playerZ:movement.z,
+            canWalk:{x,z in
+                guard let floor=Self.supportHeight(scene,x:x,z:z,feet:0),
+                      Self.bodyClear(scene,x:x,feet:floor,z:z)
+                else{return false}
+                return true
+            })
+        if let root=mechanicRoot {
+            root.position=SCNVector3(mechanic.x,mechanicBaseY,mechanic.z)
+        }
+        let walking=mechanic.moving
+        if walking != mechanicMotionPlaying {
+            mechanicMotionPlaying=walking
+            if walking {
+                stop(H55Asset580.idleClip)
+                play(H55Asset580.walkClip,loop:true)
+            } else {
+                stop(H55Asset580.walkClip)
+                play(H55Asset580.idleClip,loop:true)
+            }
+        }
+        let nextStatus:String
+        switch mechanic.phase {
+        case .idle: nextStatus="OCZEKUJE NA ROZMOWĘ"
+        case .walking: nextStatus="PATROL DO WARSZTATU I POWRÓT"
+        case .workshop: nextStatus="WARSZTAT — POSTÓJ 5 s"
+        case .blocked: nextStatus="MECHANIK — KOLIZJA / TRASA ZABLOKOWANA"
+        case .completed: nextStatus="MECHANIK WRÓCIŁ"
+        }
+        if nextStatus != mechanicStatus {mechanicStatus=nextStatus}
+        let near=hypot(movement.x-mechanic.x,movement.z-mechanic.z)<=2.7
         if near != mechanicNearby {mechanicNearby=near}
     }
 
@@ -122,6 +157,10 @@ import UIKit
         clock=nil
         lastTick=nil
         movement=H55Walk580()
+        mechanic=H55Mechanic580()
+        mechanicRoot=nil
+        mechanicMotionPlaying=false
+        mechanicStatus="OCZEKUJE NA ROZMOWĘ"
         conversationOpen=false
         mechanicNearby=false
         phase = .loading
@@ -203,6 +242,14 @@ import UIKit
             phase = .failed("Wczytana scena nie zawiera animacji mechanika.")
             return
         }
+        let importedNpcName="HL_Import_2023_space_suit_3d_model_ca_o_c_animacji_-_najleps"
+        guard let importedNpc=source.nodes.first(where:{$0.name==importedNpcName})
+        else {
+            phase = .failed("Nie znaleziono właściwego mechanika H55 z PC v580.")
+            return
+        }
+        mechanicRoot=importedNpc
+        mechanicBaseY=importedNpc.position.y
         animations=clips
         animationNames=inventory.animations.filter{clips[$0] != nil}
         self.inventory=inventory
@@ -304,6 +351,8 @@ import UIKit
         clock=nil
         lastTick=nil
         setMove(forward:0,right:0)
+        mechanicRoot=nil
+        mechanicMotionPlaying=false
         conversationOpen=false
         generation=UUID()
         guard let scene else{return}
@@ -366,7 +415,7 @@ struct H55ScenePage580: View {
                             .accessibilityIdentifier("h55-v580-npc-dialogue")
                         }
                         HStack(spacing:10) {
-                            Text("LOT / RUCH")
+                            Text(loader.mechanicStatus)
                                 .font(.system(size:10,weight:.bold,design:.monospaced))
                             Spacer()
                             Button(loader.mechanicNearby ? "ROZMAWIAJ" : "MECHANIK 2,7 m") {
