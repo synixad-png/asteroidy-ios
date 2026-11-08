@@ -21,6 +21,9 @@ import simd
     private var activeKeys: Set<String> = []
     private var generation = UUID()
     private var movement=H55Walk580()
+    private var physical:H55SpatialSupport580?
+    private var arrival=H55Arrival580(spawnClear:false)
+    @Published private(set) var arriving=false
     private var moveForward:Float=0
     private var moveRight:Float=0
     private var clock:CADisplayLink?
@@ -36,7 +39,7 @@ import simd
     @Published private(set) var mechanicStatus="OCZEKUJE NA ROZMOWĘ"
 
     func jump() {
-        guard !conversationOpen else{return}
+        guard !conversationOpen && arrival.walking else{return}
         _=movement.jump()
     }
     func setMove(forward:Float,right:Float) {
@@ -44,10 +47,12 @@ import simd
         moveRight=max(-1,min(1,right))
     }
     func look(dx:Float,dy:Float) {
+        guard arrival.walking else{return}
         movement.look(deltaX:dx,deltaY:dy)
         camera?.eulerAngles=SCNVector3(-movement.pitch,movement.yaw,0)
     }
     func interact() {
+        guard arrival.walking else{return}
         if conversationOpen {
             conversationOpen=false
             conversationsFinished+=1
@@ -60,6 +65,8 @@ import simd
         conversationOpen=true
         setMove(forward:0,right:0)
     }
+
+    func skipArrival() {arrival.skip()}
 
     private func beginClock() {
         clock?.invalidate()
@@ -75,18 +82,24 @@ import simd
         if let last=lastTick {dt=Float(min(0.05,max(0,link.timestamp-last)))}
         else {dt=0}
         lastTick=link.timestamp
-        guard dt>0 && !conversationOpen else{return}
+        guard dt>0 else{return}
+        // PC Hub90.StepHub90: arrival clock runs before walking.
+        arrival.advance(dt:dt)
+        if arriving && !arrival.arriving {arriving=false}
+        guard arrival.walking && !conversationOpen,let physical else{return}
         movement.step(dt:dt,forward:moveForward,right:moveRight,
             sprint:false,
-            bodyClear:{x,y,z in Self.bodyClear(scene,x:x,feet:y,z:z)},
-            support:{x,z,feet in Self.supportHeight(scene,x:x,z:z,feet:feet)})
+            bodyClear:{x,y,z in physical.bodyClear379(x,feet:y,z)},
+            support:{x,z,feet in
+                physical.support(x,z,low:feet-H55Walk580.stepDown-0.05,
+                                 high:feet+H55Walk580.stepUp+0.05)
+            })
         camera?.position=SCNVector3(movement.x,movement.y+H55Walk580.eyes,movement.z)
         mechanic.step(dt:dt,playerX:movement.x,playerZ:movement.z,
             canWalk:{x,z in
-                guard let floor=Self.supportHeight(scene,x:x,z:z,feet:0),
-                      Self.bodyClear(scene,x:x,feet:floor,z:z)
+                guard let floor=physical.support(x,z,low:-0.25,high:0.45)
                 else{return false}
-                return true
+                return physical.bodyClear379(x,feet:floor,z)
             })
         if let root=mechanicRoot {
             root.position=SCNVector3(mechanic.x,mechanicBaseY,mechanic.z)
@@ -120,59 +133,6 @@ import simd
         if near != mechanicNearby {mechanicNearby=near}
     }
 
-    /// Physical samples raycast the ACTIVE H55 GLB, not an outdated
-    /// baked proxy. Full triangle-capsule parity to PC H55FullCollision379
-    /// still requires a dedicated spatial-index port.
-    private static func hits(_ scene:SCNScene,from:SCNVector3,to:SCNVector3)
-        -> [SCNHitTestResult] {
-        scene.rootNode.hitTestWithSegment(from:from,to:to,
-               options:["backFaceCulling":false,"firstFoundOnly":false])
-    }
-    /// Windows HubWalk375.cs:139 and H55FullCollision379.Support():787-810.
-    /// The *actual* user H55 mesh has the TOP of its original floor tiles
-    /// at Y=0.085 with a -Y normal (and the underside at Y=0.005, +Y).
-    /// The old +Y-only predicate rejected the physical top floor.
-    /// PC deliberately accepts BOTH windings (normalY squared) and
-    /// selects the highest valid support within the requested interval.
-    private static func supportHeight(_ scene:SCNScene,
-                                      x:Float,z:Float,feet:Float,
-                                      spawn:Bool=false)->Float? {
-        let low=feet-(spawn ? 0.25 : H55Walk580.stepDown+0.05)
-        let high=feet+(spawn ? 0.45 : H55Walk580.stepUp+0.05)
-        let from=SCNVector3(x,high+0.002,z)
-        let to=SCNVector3(x,low-0.002,z)
-        let floors=hits(scene,from:from,to:to).map{
-            H55FloorRule580.Sample(x:$0.worldCoordinates.x,
-                y:$0.worldCoordinates.y,z:$0.worldCoordinates.z,
-                normalX:$0.worldNormal.x,normalY:$0.worldNormal.y,
-                normalZ:$0.worldNormal.z)
-        }
-        return H55FloorRule580.highest(floors,low:low,high:high)
-    }
-    /// Windows H55FullCollision379.BodyClear():887-920:
-    /// decorative ankle-height floor trims (Y<=feet+stepUp) are not
-    /// blocking torso walls. Unlike old iOS 0.25m ray, these probes
-    /// exclude everything below the already-source-defined 50cm step.
-    /// This is still a SceneKit approximate cylinder, not PC's exact
-    /// 4-sphere triangle-distance collision.
-    private static func bodyClear(_ scene:SCNScene,
-                                  x:Float,feet:Float,z:Float)->Bool {
-        let radius=H55Walk580.bodyRadius
-        for height:Float in [0.335,0.78,1.225,1.67] {
-            let cy=feet+height
-            for (dx,dz):(Float,Float) in [(1,0),(-1,0),(0,1),(0,-1)] {
-                let start=SCNVector3(x,cy,z)
-                let end=SCNVector3(x+dx*radius,cy,z+dz*radius)
-                if hits(scene,from:start,to:end).contains(where:{
-                    $0.worldCoordinates.y>feet+H55Walk580.stepUp+0.001 &&
-                    $0.worldCoordinates.y<feet+H55Walk580.bodyHeight+0.28
-                }) {return false}
-            }
-        }
-        return true
-    }
-
-
     func openIfAvailable() {
         guard let url=H55Asset580.availableURL() else {
             phase = .missing
@@ -187,6 +147,9 @@ import simd
         clock=nil
         lastTick=nil
         movement=H55Walk580()
+        physical=nil
+        arrival=H55Arrival580(spawnClear:false)
+        arriving=false
         mechanic=H55Mechanic580()
         mechanicRoot=nil
         mechanicBaseOrientation=nil
@@ -204,12 +167,16 @@ import simd
         DispatchQueue.global(qos:.userInitiated).async {
             do {
                 let metadata=try H55Asset580.inspect(url)
+                // Same authenticated active GLB for render and H02–H04 physics.
+                // Build on background thread, fail-closed, no raycast fallback.
+                let geometry=try H55CollisionGeometry580.fromGLB(url)
+                let physical=H55SpatialSupport580(geometry:geometry)
                 GLTFAsset.load(with:url,options:[:]) { _,status,asset,error,_ in
                     if status == .complete, let asset {
                         let source=GLTFSCNSceneSource(asset:asset)
                         DispatchQueue.main.async { [weak self] in
                             guard let self, self.generation == request else {return}
-                            self.attach(source,asset:asset,inventory:metadata)
+                            self.attach(source,asset:asset,inventory:metadata,physical:physical)
                         }
                     } else if status == .error {
                         DispatchQueue.main.async { [weak self] in
@@ -229,13 +196,14 @@ import simd
     }
 
     private func attach(_ source:GLTFSCNSceneSource,
-                        asset:GLTFAsset,inventory:H55Asset580.Inventory) {
+                        asset:GLTFAsset,inventory:H55Asset580.Inventory,
+                        physical:H55SpatialSupport580) {
         guard let realScene=source.defaultScene else {
             phase = .failed("Plik nie zawiera sceny 3D.")
             return
         }
-        // PC v580 HubWalkPlaceAtEntry380: (0,12.5) was embedded in
-        // copper geometry. Pick the first clear GLB floor candidate.
+        // PC HubWalkPlaceAtEntry380: six exact candidates,
+        // Support(-0.25,+0.45), BodyClear at four original heights.
         let pointOfView=SCNNode()
         pointOfView.name="H55_iOS_Camera580"
         let lens=SCNCamera()
@@ -243,21 +211,17 @@ import simd
         lens.zFar=250
         lens.fieldOfView=70
         pointOfView.camera=lens
-        let candidates:[(Float,Float)]=[(2,14),(3,14),(-2,14),
-                                         (4,15),(-4,15),(6,15)]
-        var chosen:H55Walk580?
-        for (x,z) in candidates {
-            guard let floor=Self.supportHeight(realScene,x:x,z:z,feet:0,spawn:true),
-                  Self.bodyClear(realScene,x:x,feet:floor,z:z) else{continue}
-            var trial=H55Walk580()
-            trial.x=x;trial.z=z;trial.y=floor
-            chosen=trial
-            break
-        }
-        guard let spawn=chosen else {
-            phase = .failed("Nie znaleziono bezkolizyjnego wejścia H55 z PC v580.")
+        guard let candidate=H55Entry580.find(using:physical) else {
+            phase = .failed("Nie znaleziono bezkolizyjnego wejścia H55 z PC v580 — sprawdzono 6 punktów i 4 wysokości kolizji.")
             return
         }
+        var spawn=H55Walk580()
+        spawn.x=candidate.x
+        spawn.z=candidate.z
+        spawn.y=candidate.feet
+        self.physical=physical
+        arrival=H55Arrival580(spawnClear:true)
+        arriving=true
         movement=spawn
         pointOfView.position=SCNVector3(spawn.x,spawn.y+H55Walk580.eyes,spawn.z)
         pointOfView.eulerAngles.y=0 // PC yaw=0 looks toward -Z
@@ -405,6 +369,9 @@ import simd
         clock?.invalidate()
         clock=nil
         lastTick=nil
+        physical=nil
+        arrival=H55Arrival580(spawnClear:false)
+        arriving=false
         setMove(forward:0,right:0)
         mechanicRoot=nil
         mechanicBaseOrientation=nil
@@ -456,6 +423,17 @@ struct H55ScenePage580: View {
                         .accessibilityIdentifier("h55-v580-native-scenekit")
                     VStack {
                         Spacer(minLength:0)
+                        if loader.arriving {
+                            VStack(spacing:8) {
+                                Text("H55 — PRZYLOT · 3,25 s")
+                                    .font(.system(size:12,weight:.bold,design:.monospaced))
+                                Button("POMIŃ PRZYLOT") {loader.skipArrival()}
+                                    .accessibilityIdentifier("h55-v580-skip-arrival")
+                            }
+                            .padding(12)
+                            .foregroundStyle(gold)
+                            .background(Color.black.opacity(0.85))
+                        }
                         if loader.conversationOpen {
                             VStack(spacing:8) {
                                 Text("MECHANIK")
