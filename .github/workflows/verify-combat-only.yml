@@ -17,6 +17,8 @@ on:
       - 'ASTEROIDYiOS/H55Walk580.swift'
       - 'Tests/H55Walk580Tests.swift'
       - 'ASTEROIDYiOS/H55Mechanic580.swift'
+      - 'ASTEROIDYiOS/H55NpcDetour580.swift'
+      - 'Tests/H55NpcDetour580Tests.swift'
       - 'Tests/H55Mechanic580Tests.swift'
       - 'Tests/H55Asset580Tests.swift'
       - 'Tests/V568W3NativeMenuContract.py'
@@ -327,7 +329,9 @@ jobs:
           /tmp/h55-asset580-test
           swiftc ASTEROIDYiOS/H55Walk580.swift Tests/H55Walk580Tests.swift -o /tmp/h55-walk580-test
           /tmp/h55-walk580-test
-          swiftc ASTEROIDYiOS/H55Mechanic580.swift Tests/H55Mechanic580Tests.swift -o /tmp/h55-mechanic580-test
+          swiftc ASTEROIDYiOS/H55NpcDetour580.swift Tests/H55NpcDetour580Tests.swift -o /tmp/h55-npc-detour580-test
+          /tmp/h55-npc-detour580-test
+          swiftc ASTEROIDYiOS/H55NpcDetour580.swift ASTEROIDYiOS/H55Mechanic580.swift Tests/H55Mechanic580Tests.swift -o /tmp/h55-mechanic580-test
           /tmp/h55-mechanic580-test
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
