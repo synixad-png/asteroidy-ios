@@ -511,6 +511,11 @@ enum OriginalMusicSynth568 {
         let kick=SourceDsp568.kick()
         var perc:[String:[Float]]=[:]
         for kind in ["closed","open","clap","shaker","tom"] {perc[kind]=SourceDsp568.percussion(&rng,kind)}
+        // The original five samples must all exist. Resolve them once,
+        // without modifying the deterministic RNG call order or PCM.
+        guard let closedPerc=perc["closed"],let openPerc=perc["open"],
+              let clapPerc=perc["clap"],let shakerPerc=perc["shaker"],
+              let tomPerc=perc["tom"] else {throw SynthError568.invalidPCM}
         var bass:[Int:[Float]]=[:],acid:[Int:[Float]]=[:],pads:[Int:SourceBus568]=[:]
         progress("Synteza barw i aranżacji")
         for b in 0..<testBars {
@@ -527,18 +532,19 @@ enum OriginalMusicSynth568 {
                     let note=key + (v==4 && s==3 && b%4==3 ? 12 : 0) + ((b%16==14 || b%16==15) && s==3 ? 3 : 0)
                     if bass[note]==nil {bass[note]=SourceDsp568.bass(note,beat/4*0.88)}
                     if !breakdown && b>=4 && b<126 {
-                        SourceDsp568.add(&main,bass[note]!,at+Double(s)*beat/4,0.69*strength,0)
+                        guard let cachedBass=bass[note] else {throw SynthError568.invalidPCM}
+                        SourceDsp568.add(&main,cachedBass,at+Double(s)*beat/4,0.69*strength,0)
                     }
                 }
                 if section != 4 && b>=6 && b<126 {
-                    SourceDsp568.add(&main,perc["open"]!,at+beat/2,0.15*strength,(q%2==1 ? 1 : -1)*0.22)
+                    SourceDsp568.add(&main,openPerc,at+beat/2,0.15*strength,(q%2==1 ? 1 : -1)*0.22)
                     for s in [1,3] {
-                        SourceDsp568.add(&main,perc["closed"]!,at+Double(s)*beat/4,0.095*strength,(s==1 ? -1 : 1)*0.35)
+                        SourceDsp568.add(&main,closedPerc,at+Double(s)*beat/4,0.095*strength,(s==1 ? -1 : 1)*0.35)
                     }
-                    if q==1 || q==3 {SourceDsp568.add(&main,perc["clap"]!,at,0.12*strength,0.05)}
+                    if q==1 || q==3 {SourceDsp568.add(&main,clapPerc,at,0.12*strength,0.05)}
                     if [2,3,5,6].contains(section) {
                         for s in 0..<4 {
-                            SourceDsp568.add(&main,perc["shaker"]!,at+Double(s)*beat/4,
+                            SourceDsp568.add(&main,shakerPerc,at+Double(s)*beat/4,
                                 0.055*(0.75+rng.uniform()*0.5),(s%2==1 ? -1 : 1)*0.65)
                         }
                     }
@@ -547,7 +553,8 @@ enum OriginalMusicSynth568 {
             if b%4==0 {
                 let padKey=[0,0,3,0,7,0,3,0][section]
                 if pads[padKey]==nil {pads[padKey]=SourceDsp568.pad(key,voice,section,bar*4)}
-                SourceDsp568.add(&space,pads[padKey]!,Double(b)*bar,breakdown ? 0.85 : 0.32)
+                guard let cachedPad=pads[padKey] else {throw SynthError568.invalidPCM}
+                SourceDsp568.add(&space,cachedPad,Double(b)*bar,breakdown ? 0.85 : 0.32)
             }
             if [1,2,3,5,6,7].contains(section) || !driving {
                 for step in 0..<16 {
@@ -558,16 +565,17 @@ enum OriginalMusicSynth568 {
                     if acid[cache]==nil {
                         acid[cache]=v<5 ? SourceDsp568.acid(note,beat*0.64,idx,voice) : SourceDsp568.lead(note,beat*0.64,idx,v-5)
                     }
+                    guard let cachedAcid=acid[cache] else {throw SynthError568.invalidPCM}
                     let at=Double(b)*bar+Double(step)*beat/4
                     let gain=(driving ? 0.105 : 0.078)*strength*(step%3==0 ? 0.7 : 1)
                     let pan=sin(Double(step)*1.3+Double(b)*0.2)*0.4
-                    SourceDsp568.add(&main,acid[cache]!,at,gain,pan)
-                    SourceDsp568.add(&delay,acid[cache]!,at,gain*0.6,-pan)
+                    SourceDsp568.add(&main,cachedAcid,at,gain,pan)
+                    SourceDsp568.add(&delay,cachedAcid,at,gain*0.6,-pan)
                 }
             }
             if b%8==6 || b%8==7 {
                 for p in 0..<4 {
-                    SourceDsp568.add(&main,perc["tom"]!,Double(b)*bar+(3+Double(p)/4)*beat,
+                    SourceDsp568.add(&main,tomPerc,Double(b)*bar+(3+Double(p)/4)*beat,
                         0.095*strength,(-1+Double(p)*0.67)*0.4)
                 }
             }

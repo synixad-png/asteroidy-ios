@@ -13,6 +13,9 @@ on:
       - 'ASTEROIDYiOS/W3HomeShipPreview568.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'Tests/V568W3NativeMenuContract.py'
+      - 'ASTEROIDYiOS/OriginalMusicSynth568.swift'
+      - 'Tests/OriginalMusicCacheSafety568Contract.py'
+      - 'Tests/OriginalMusicPCMParity568.swift'
       - 'ASTEROIDYiOS/MetalRenderer.swift'
       - 'ASTEROIDYiOS/SourceSkyPremultipliedBlend.swift'
       - 'Tests/SourceMetalBlendSafetyContract.py'
@@ -333,6 +336,24 @@ jobs:
           python3 Tests/OriginalMusicCombatPause568Contract.py
           swiftc -O ASTEROIDYiOS/OriginalMusicSynth568.swift Tests/OriginalMusicSynth568Tests.swift -o /tmp/music568-combat-pauses
           /tmp/music568-combat-pauses
+      - name: Compare source-generated PCM byte-for-byte with the user-approved 8af0f3f1 baseline
+        run: |
+          set -euo pipefail
+          python3 Tests/OriginalMusicCacheSafety568Contract.py
+          baseline=8af0f3f1c08adc3638fc1db145db82767208cb6e
+          git fetch --no-tags --depth=1 origin "$baseline"
+          git show "$baseline":ASTEROIDYiOS/OriginalMusicSynth568.swift > /tmp/approved-music568.swift
+          swiftc -O /tmp/approved-music568.swift Tests/OriginalMusicPCMParity568.swift -o /tmp/approved-music568
+          swiftc -O ASTEROIDYiOS/OriginalMusicSynth568.swift Tests/OriginalMusicPCMParity568.swift -o /tmp/refactored-music568
+          /tmp/approved-music568 /tmp/asteroidy-music-baseline
+          /tmp/refactored-music568 /tmp/asteroidy-music-current
+          for original in /tmp/asteroidy-music-baseline/*.wav; do
+            current="/tmp/asteroidy-music-current/${original##*/}"
+            cmp "$original" "$current"
+            sha256sum "$original" "$current"
+          done
+          test "$(find /tmp/asteroidy-music-current -maxdepth 1 -name '*.wav' | wc -l)" -eq 3
+          echo 'PASS: source track 0/7/14 PCM files byte-for-byte identical to approved release'
       - name: Verify original v568 audio startup order, lazy mission, cache and no replacements
         run: |
           set -euo pipefail
