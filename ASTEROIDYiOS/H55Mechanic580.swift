@@ -1,9 +1,9 @@
 import Foundation
 
 /// PC v580 Windows/src/H55Renderer.cs NpcRouteX525/Z525, v530 workshop
-/// pause and v528 acceleration. This is route/translational state ONLY:
-/// full v532 player detour A*, v533 anatomical yaw calibration, v529
-/// foot IK, v544 airlock collision remain separate, unported systems.
+/// pause, v528 acceleration and v533/537 anatomical-forward yaw steering.
+/// Full v532 player detour A*, v529 foot IK and v544 airlock collision
+/// remain separate, unported systems.
 struct H55Mechanic580 {
     enum Phase:Equatable {case idle, walking, workshop, completed, blocked}
     static let routeX:[Float]=[
@@ -27,6 +27,17 @@ struct H55Mechanic580 {
     private(set) var speed:Float=0
     private(set) var pause:Float=0
     private(set) var distance:Float=0
+    private(set) var yaw:Float=0
+    private(set) var anatomicalHeading:Float=0
+    private(set) var calibrated=false
+    static func wrap(_ angle:Float)->Float {
+        atan2(sin(angle),cos(angle))
+    }
+    mutating func calibrate(anatomicalHeading heading:Float) {
+        guard heading.isFinite else{return}
+        anatomicalHeading=Self.wrap(heading)
+        calibrated=true
+    }
     private var talked=false
     private var completedOnce=false
     var moving:Bool {phase == .walking && speed>0.01}
@@ -86,13 +97,31 @@ struct H55Mechanic580 {
             } else {goal+=1}
             return
         }
+        // v533/537: the anatomical GLB direction (measured from
+        // original ankle->toe bones) drives root yaw and movement;
+        // a track heading is not itself the character facing direction.
+        let trackHeading=atan2(dx,-dz)
+        let desired=Self.wrap(anatomicalHeading-trackHeading)
+        let error=Self.wrap(desired-yaw)
+        let turn=max(-2.35*dt,min(2.35*dt,error))
+        yaw=Self.wrap(yaw+turn)
+        let steering=abs(Self.wrap(desired-yaw))
+        let hardTurn=steering>1.48 ||
+             (goal==0 && distance<0.01 && steering>0.24)
+        if hardTurn {
+            speed=max(0,speed-Self.braking*dt)
+            return
+        }
         let brakingLimit=sqrt(max(0,2*Self.braking*max(0,d-tolerance)))
-        let request=key ? min(Self.maximumSpeed,brakingLimit) : Self.maximumSpeed
+        let cornerFactor=cos(min(1.47,steering))
+        let base=key ? min(Self.maximumSpeed,brakingLimit) : Self.maximumSpeed
+        let request=base*max(0.23,cornerFactor)
         if speed<request {speed=min(request,speed+Self.acceleration*dt)}
         else {speed=max(request,speed-Self.braking*dt)}
         let move=min(d,speed*dt)
         guard d>0 else{return}
-        let nx=x+dx/d*move,nz=z+dz/d*move
+        let facing=Self.wrap(anatomicalHeading-yaw)
+        let nx=x+sin(facing)*move,nz=z-cos(facing)*move
         let playerClearance:Float=d>6 ? 0.97 : 0.82
         guard hypot(nx-playerX,nz-playerZ)>=playerClearance,
               canWalk(nx,nz) else {
