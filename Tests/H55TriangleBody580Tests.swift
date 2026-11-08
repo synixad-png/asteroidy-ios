@@ -39,8 +39,11 @@ import Foundation
                 "edge AB region")
         require(close(body.distanceSquared379(at:0,x:-1,y:1,z:0),1),
                 "edge AC region")
-        require(close(body.distanceSquared379(at:0,x:1.5,y:1.5,z:0),0.5),
-                "edge BC region")
+        // Original PC v580 Dist2 BC-region formula uses bpx + w*(cx-bx)
+        // (not the textbook minus): actual source returns 8.5 here.
+        // Keep source parity; changing game physics requires separate approval.
+        require(close(body.distanceSquared379(at:0,x:1.5,y:1.5,z:0),8.5),
+                "original PC v580 exact BC-region formula")
         require(close(body.distanceSquared379(at:0,x:0.5,y:0.5,z:2),4),
                 "inside face with perpendicular distance")
         // BodyClear must test four spheres in true 3D.
