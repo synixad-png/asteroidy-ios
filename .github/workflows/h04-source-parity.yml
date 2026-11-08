@@ -10,11 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run exact 4 sphere source regression
-        run: |
-          set -euo pipefail
-          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift Tests/H55TriangleBody580Tests.swift -o /tmp/h04
-          /tmp/h04
       - name: Export authenticated code for 126MB user GLB differential
         uses: actions/upload-artifact@v4
         with:
@@ -25,3 +20,8 @@ jobs:
             ASTEROIDYiOS/H55TriangleBody580.swift
             Tests/H55TriangleBody580Tests.swift
           retention-days: 1
+      - name: Run exact 4 sphere source regression
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift Tests/H55TriangleBody580Tests.swift -o /tmp/h04
+          /tmp/h04
