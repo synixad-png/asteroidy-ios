@@ -453,7 +453,9 @@ struct SphereSector556 {
         }
         // Descending indices prevent removal from invalidating still-pending hits.
         for idx in rockHits.keys.sorted(by:>) {
-            let incoming = rockHits[idx]!
+            // This index came from rockHits.keys; handle a missing value
+            // safely without changing sorted hit order or damage aggregation.
+            guard let incoming = rockHits[idx] else { continue }
             if isAmigaDemo {
                 // AmigaBounce265.ImpulseAmiga266: persistent balls,
                 // every direct projectile scores +10 and adds a hop.
