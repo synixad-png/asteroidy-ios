@@ -470,25 +470,30 @@ struct H55ScenePage580: View {
                                 .accessibilityIdentifier("h55-v580-right-look")
                         }
                         .frame(height:105)
-                        HStack(spacing:8) {
-                            Text("H55 · MODELE \(loader.inventory?.meshes ?? 0) · ANIMACJE \(loader.animationNames.count)")
-                                .font(.system(size:10,design:.monospaced))
-                            Spacer()
-                            Picker("ANIMACJA GLB",selection:$pickedClip) {
-                                Text("WYBIERZ").tag("")
-                                ForEach(loader.animationNames,id:\.self) {
-                                    Text($0).tag($0)
+                        // The source PC v580 H55 has no manual 62-clip
+                        // animation picker. Expose this only in diagnostics;
+                        // production animation is controlled by world state.
+                        if ProcessInfo.processInfo.environment["ASTEROIDY_DEBUG_MENU"] == "1" {
+                            HStack(spacing:8) {
+                                Text("H55 · ANIMACJE \(loader.animationNames.count)")
+                                    .font(.system(size:10,design:.monospaced))
+                                Spacer()
+                                Picker("ANIMACJA GLB",selection:$pickedClip) {
+                                    Text("WYBIERZ").tag("")
+                                    ForEach(loader.animationNames,id:\.self) {
+                                        Text($0).tag($0)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .frame(maxWidth:280)
+                                .onChange(of:pickedClip) { value in
+                                    if !value.isEmpty {loader.showAnimation(value)}
                                 }
                             }
-                            .pickerStyle(.menu)
-                            .frame(maxWidth:280)
-                            .onChange(of:pickedClip) { value in
-                                if !value.isEmpty {loader.showAnimation(value)}
-                            }
+                            .padding(10)
+                            .foregroundStyle(gold)
+                            .background(Color.black.opacity(0.83))
                         }
-                        .padding(10)
-                        .foregroundStyle(gold)
-                        .background(Color.black.opacity(0.83))
                     }
                 }
             }
