@@ -12,6 +12,9 @@ on:
       - 'ASTEROIDYiOS/W3HomePlanetMetal568.swift'
       - 'ASTEROIDYiOS/W3HomeShipPreview568.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
+      - 'ASTEROIDYiOS/H55Asset580.swift'
+      - 'ASTEROIDYiOS/H55ScenePage580.swift'
+      - 'Tests/H55Asset580Tests.swift'
       - 'Tests/V568W3NativeMenuContract.py'
       - 'ASTEROIDYiOS/OriginalMusicSynth568.swift'
       - 'Tests/OriginalMusicCacheSafety568Contract.py'
@@ -313,6 +316,13 @@ jobs:
           /tmp/mission-object-scale580
           swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
+      - name: Verify v580 H55 authentic GLB eligibility before native load
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/H55Asset580.swift Tests/H55Asset580Tests.swift -o /tmp/h55-asset580-test
+          /tmp/h55-asset580-test
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
       - name: Verify Swift compiler
         run: swift --version
       - name: Verify source STATEK v472 70–150% separate visual scales and unchanged combat physics
