@@ -205,14 +205,8 @@ struct W3HomeShipPreview568: UIViewRepresentable {
                             "originalW3PreviewScale":0.34,
                             "simulatorOnly":true
                         ]
-                        if let dir=FileManager.default.urls(
-                            for:.cachesDirectory,in:.userDomainMask).first,
-                           let data=try? JSONSerialization.data(
-                            withJSONObject:obj,options:[.sortedKeys]) {
-                            try? data.write(to:dir.appendingPathComponent(
-                                "ASTEROIDY_W3_Vanguard431_GPUProof.json"),
-                                options:.atomic)
-                        }
+                        OriginalRenderProofWriter568.save(
+                            obj,filename:"ASTEROIDY_W3_Vanguard431_GPUProof.json")
                     }
                 }
                 command.commit()
