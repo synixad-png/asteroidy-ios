@@ -79,11 +79,11 @@ struct SourceCombatHUD331: View {
     }
     private static func text(_ c:GraphicsContext,_ s:String,
                              _ x:CGFloat,_ y:CGFloat,_ col:Color,
-                             right:Bool=false) {
+                             right:Bool=false,center:Bool=false) {
         let resolved=c.resolve(Text(s).font(.system(size:14,weight:.regular))
                                     .foregroundColor(col))
         c.draw(resolved,at:CGPoint(x:x,y:y),
-               anchor:right ? .topTrailing : .topLeading)
+               anchor:center ? .top : (right ? .topTrailing : .topLeading))
     }
     private static func label(_ c:GraphicsContext,_ s:String,
                               _ x:CGFloat,_ y:CGFloat,_ col:Color) {
@@ -156,8 +156,8 @@ struct SourceCombatHUD331: View {
         for i in 0..<32 {
             let angle=CGFloat(i)*.pi/16
             let length:CGFloat=i%8==0 ? 7 : i%4==0 ? 4 : 2
-            let x0=cx+cos(angle)*(r-2), y0=cy+sin(angle)*(r-2)
-            let x1=cx+cos(angle)*(r-2-length), y1=cy+sin(angle)*(r-2-length)
+            let x0=cx+CGFloat(cos(Double(angle)))*(r-2), y0=cy+CGFloat(sin(Double(angle)))*(r-2)
+            let x1=cx+CGFloat(cos(Double(angle)))*(r-2-length), y1=cy+CGFloat(sin(Double(angle)))*(r-2-length)
             line(c,x0,y0,x1,y1,i%8==0 ? color(191,72,192,205)
                  :color(77,62,127,140),i%8==0 ? 1.2:0.7)
         }
@@ -213,7 +213,7 @@ struct SourceCombatHUD331: View {
         let progress:CGFloat = type<2 ? (count>0 ? 0.7:0)
             : clamp(CGFloat(count)/3)
         badge(c,type,cx,628,tint,progress)
-        text(c,name,cx-45,658,white)
-        text(c,type>=2 ? "\(count) / 3" : "\(count)",cx-45,680,cyan)
+        text(c,name,cx,658,white,center:true)
+        text(c,type>=2 ? "\(count) / 3" : "\(count)",cx,680,cyan,center:true)
     }
 }
