@@ -8,8 +8,8 @@ final class H55SpatialSupport580 {
     typealias Geometry=H55CollisionGeometry580.Geometry
     static let cellSize:Float=2
     private(set) var geometry:Geometry
-    private let cells:[Int64:[Int]]
-    private let proxyCells:[Int64:[Int]]
+    let cells:[Int64:[Int]]
+    let proxyCells:[Int64:[Int]]
     var triangleCount:Int {geometry.triangles.count/9}
     var proxyCount:Int {geometry.objects.count}
     var cellCount:Int {cells.count}
