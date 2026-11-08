@@ -39,6 +39,7 @@ on:
       - 'Tests/MissionIntro41SourceContract568.py'
       - 'ASTEROIDYiOS/OriginalAudioLifecycle568.swift'
       - 'ASTEROIDYiOS/OriginalAudioAV568.swift'
+      - 'ASTEROIDYiOS/OriginalShotSFXWorker568.swift'
       - 'ASTEROIDYiOS/OriginalMusicSynth568.swift'
       - 'Tests/OriginalMusicSynth568Tests.swift'
       - 'Tests/OriginalMusicCombatPause568Contract.py'
@@ -295,6 +296,7 @@ jobs:
           python3 Tests/IOSAudioLockResume568Contract.py
           python3 Tests/IOSSourceCombatPause568Contract.py
           python3 Tests/IOSShotExplosionAudioResume568Contract.py
+          swiftc -frontend -parse ASTEROIDYiOS/OriginalShotSFXWorker568.swift
           swiftc ASTEROIDYiOS/OriginalAudioLifecycle568.swift Tests/OriginalAudioLifecycle568Tests.swift -o /tmp/original-audio-v568
           /tmp/original-audio-v568
           swiftc -frontend -parse ASTEROIDYiOS/OriginalAudioAV568.swift

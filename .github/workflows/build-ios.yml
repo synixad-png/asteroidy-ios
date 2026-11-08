@@ -55,6 +55,7 @@ on:
       - 'ASTEROIDYiOS/CarbonisIntroPlanet568.swift'
       - 'ASTEROIDYiOS/MissionCinematic568.swift'
       - 'ASTEROIDYiOS/OriginalAudioAV568.swift'
+      - 'ASTEROIDYiOS/OriginalShotSFXWorker568.swift'
       - 'ASTEROIDYiOS/OriginalEnginePlayback52.swift'
       - 'ASTEROIDYiOS/OriginalMusicSynth568.swift'
       - 'Tests/OriginalMusicSynth568Tests.swift'
@@ -546,6 +547,7 @@ jobs:
           python3 Tests/IOSAudioLockResume568Contract.py
           python3 Tests/IOSSourceCombatPause568Contract.py
           python3 Tests/IOSShotExplosionAudioResume568Contract.py
+          swiftc -frontend -parse ASTEROIDYiOS/OriginalShotSFXWorker568.swift
           swiftc -O ASTEROIDYiOS/OriginalMusicSynth568.swift Tests/OriginalMusicSynth568Tests.swift -o /tmp/v568-native-music-synthesis
           /tmp/v568-native-music-synthesis
           swiftc ASTEROIDYiOS/OriginalMusicTransition568.swift Tests/OriginalMusicTransition568Tests.swift -o /tmp/v568-music-crossfade
