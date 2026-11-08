@@ -1,4 +1,4 @@
-name: ASTEROIDY iOS - H55 v580 test IPA (iPhone iPad)
+name: ASTEROIDY iOS - H55 v580 H05 entry TEST IPA (iPhone iPad)
 on:
   push:
     branches:
@@ -13,7 +13,7 @@ permissions:
 jobs:
   verify-h55:
     name: Verify source H55 and mechanic before device archive
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +34,12 @@ jobs:
           assert 'H55Walk580()' in h55
           assert 'H55Mechanic580()' in h55
           assert 'H55NpcDetour580' in Path('ASTEROIDYiOS/H55Mechanic580.swift').read_text()
+          assert 'H55Entry580.find(using:physical)' in h55
+          assert 'H55CollisionGeometry580.fromGLB(url)' in h55
+          assert 'physical.bodyClear379' in h55
+          assert 'arrival.advance(dt:dt)' in h55
+          assert 'H55Entry580.arrivalSeconds' in Path('ASTEROIDYiOS/H55Entry580.swift').read_text()
+          assert 'hitTestWithSegment' not in h55, 'Old SceneKit raycast fallback is forbidden'
           assert 'GpuHangar91' not in '\n'.join(x for x in h55.splitlines() if not x.lstrip().startswith('//'))
           print('PASS: real new H55 entry + native importer and iPhone/iPad build')
           PY
@@ -53,6 +59,10 @@ jobs:
           /tmp/h55-detour
           swiftc ASTEROIDYiOS/H55NpcDetour580.swift ASTEROIDYiOS/H55Mechanic580.swift Tests/H55Mechanic580Tests.swift -o /tmp/h55-mechanic
           /tmp/h55-mechanic
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Entry580.swift Tests/H55Entry580Tests.swift -o /tmp/h55-entry-real
+          /tmp/h55-entry-real
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift Tests/H55Sweep401580Tests.swift -o /tmp/h55-source-sweep
+          /tmp/h55-source-sweep
 
   build-h55-ipa:
     needs: verify-h55
@@ -121,7 +131,7 @@ jobs:
           test -f "$APP/ASTEROIDY iOS" || test -f "$APP/ASTEROIDYiOS"
           mkdir -p distribution/Payload
           cp -R "$APP" distribution/Payload/
-          (cd distribution && zip -q -r -y ../ASTEROIDY_v580_H55_iPhone_iPad_TEST_UNSIGNED.ipa Payload)
+          (cd distribution && zip -q -r -y ../ASTEROIDY_v580_H05_WEJSCIE_iPhone_iPad_TEST_UNSIGNED.ipa Payload)
           python3 Tools/verify_ipa.py ASTEROIDY_v580_H55_iPhone_iPad_TEST_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-validation.txt
           python3 - <<'PY'
           from pathlib import Path
@@ -156,7 +166,7 @@ jobs:
       - name: Upload test IPA and build report
         uses: actions/upload-artifact@v4
         with:
-          name: ASTEROIDY-v580-H55-TEST-unsigned-IPA
+          name: ASTEROIDY-v580-H05-ENTRY-TEST-unsigned-IPA
           path: |
             ASTEROIDY_v580_H55_iPhone_iPad_TEST_UNSIGNED.ipa
             reports/ipa-validation.txt
