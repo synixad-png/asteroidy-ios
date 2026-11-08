@@ -21,6 +21,7 @@ for name,contents in (("MetalRenderer",sky),("SourceCombatSky",combat),
 for value in (
     "guard let attachment=descriptor.colorAttachments[0] else {",
     "throw MetalBlendAttachmentError.missingColorAttachment",
+    "attachment.pixelFormat = .bgra8Unorm",
     "attachment.isBlendingEnabled=true",
     "attachment.sourceRGBBlendFactor = .one",
     "attachment.destinationRGBBlendFactor = .oneMinusSourceAlpha",
@@ -41,6 +42,25 @@ for descriptor,shader in (
     assert sky.count(required)==1, f"Original {shader} source blend missing"
     assert sky.index(required)<sky.index(
         f"{shader}=try device.makeRenderPipelineState(")
+assert shared.index("guard let attachment=descriptor.colorAttachments[0] else {") < \
+       shared.index("attachment.pixelFormat = .bgra8Unorm"), \
+       "Original sky attachment must be validated BEFORE pixel format access"
+for descriptor in ("solarDescriptor", "nebulaDescriptor", "blackDesc"):
+    assert f"{descriptor}.colorAttachments[0].pixelFormat" not in sky, \
+        f"{descriptor}: unsafe pixel format assignment before source guard"
+assert "d.colorAttachments[0].pixelFormat" not in combat, \
+    "Combat sky pixel format bypasses the checked shared source setter"
+for shader,name,descriptor in (
+    (sky, "atmosphereBlend", "atmosphereDesc"),
+    (sky, "plasmaBlend", "plasmaDescriptor"),
+    (sky, "blend", "skyDescriptor"),
+    (carbonis, "atmBlend", "atmosphereSpec"),
+    (carbonis, "glowBlend", "glowSpec"),
+):
+    guard=f"guard let {name}={descriptor}.colorAttachments[0] else {{"
+    pixel=f"{name}.pixelFormat = .bgra8Unorm"
+    assert shader.index(guard) < shader.index(pixel), \
+        f"{name}: unguarded pixel format access retained"
 assert combat.count("try SourceSkyPremultipliedBlend.configure(d)")==1
 for shader in (
     'pipeline("skyPointVertex","skyPointFragment")',
