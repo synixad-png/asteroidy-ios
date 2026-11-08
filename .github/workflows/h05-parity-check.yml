@@ -1,0 +1,31 @@
+name: H05 exact PC source spawn and arrival evidence
+on:
+  push:
+    branches: [feature/ios-h55-v580-native-entry]
+    paths: [.github/workflows/h05-parity-check.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-h05:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check source H02-H05 implementation
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Entry580.swift Tests/H55Entry580Tests.swift -o /tmp/h05-spawn
+          /tmp/h05-spawn
+      - name: Export exact H05/H02-H04 source for real GLB differential
+        uses: actions/upload-artifact@v4
+        with:
+          name: H05-GLB-ENTRY-SOURCE-EVIDENCE
+          path: |
+            ASTEROIDYiOS/H55CollisionGeometry580.swift
+            ASTEROIDYiOS/H55SpatialSupport580.swift
+            ASTEROIDYiOS/H55TriangleBody580.swift
+            ASTEROIDYiOS/H55Entry580.swift
+            Tests/H55Entry580Tests.swift
+          retention-days: 1
+          if-no-files-found: error
