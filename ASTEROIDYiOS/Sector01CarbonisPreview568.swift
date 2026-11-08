@@ -774,18 +774,15 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     session.frame(at:physicsStart)
                     activeRocks=session.game.rocks
                     previousRockFrame=physicsStart
-                    phoneSimulationMs=(ProcessInfo.processInfo.systemUptime-
-                                       physicsStart)*1000
+                    phoneSimulationMs=(ProcessInfo.processInfo.systemUptime - physicsStart)*1000
 
                     let shots=session.game.bullets+session.game.hostileShots
                     let screenSize=view.drawableSize
-                    let frameAspect=Float(max(1,screenSize.width)/
-                                          max(1,screenSize.height))
+                    let frameAspect=Float(max(1,screenSize.width) / max(1,screenSize.height))
                     let lightsStart=ProcessInfo.processInfo.systemUptime
                     let ground=CarbonisProjectileFX69.indexedGroundLights(
                         shots,settings:visualSettings,budget:fxBudget)
-                    let lightMs=(ProcessInfo.processInfo.systemUptime-
-                                 lightsStart)*1000
+                    let lightMs=(ProcessInfo.processInfo.systemUptime - lightsStart)*1000
 
                     let projectileStart=ProcessInfo.processInfo.systemUptime
                     var projectiles=CarbonisProjectileFX69.indexedVertices(
@@ -803,8 +800,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             projectiles.indices.append(UInt32(i))
                         }
                     }
-                    let projectileMs=(ProcessInfo.processInfo.systemUptime-
-                                      projectileStart)*1000
+                    let projectileMs=(ProcessInfo.processInfo.systemUptime - projectileStart)*1000
 
                     var debris=Self.warningVertices(session.game.shooters)
                     debris.append(contentsOf:
@@ -817,14 +813,12 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             camera:session.game.flight.camera,
                             aspect:frameAspect,
                             settings:visualSettings,budget:fxBudget))
-                    let destructionMs=(ProcessInfo.processInfo.systemUptime-
-                                       destructionStart)*1000
+                    let destructionMs=(ProcessInfo.processInfo.systemUptime - destructionStart)*1000
                     phoneFX=PhonePreparedFX568(
                         ground:ground,projectiles:projectiles,debris:debris,
                         projectileMs:lightMs+projectileMs,
                         destructionMs:destructionMs)
-                    phonePreCPUms=(ProcessInfo.processInfo.systemUptime-
-                                   preparationStart)*1000
+                    phonePreCPUms=(ProcessInfo.processInfo.systemUptime - preparationStart)*1000
                 }
 
                 // Wait for the three-in-flight GPU arena BEFORE taking a
@@ -835,8 +829,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 if adaptivePhoneCombat568 {
                     let streamWaitStart=ProcessInfo.processInfo.systemUptime
                     fxStream568.beginFrame()
-                    phoneStreamWaitMs=(ProcessInfo.processInfo.systemUptime-
-                                       streamWaitStart)*1000
+                    phoneStreamWaitMs=(ProcessInfo.processInfo.systemUptime - streamWaitStart)*1000
                 }
                 let drawableRequestStart=ProcessInfo.processInfo.systemUptime
                 let requestedDrawable=view.currentDrawable
@@ -1368,9 +1361,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 }
                 if gameSession != nil {
                     SourcePerformance568.shared.recordCPU(
-                        workMs:(ProcessInfo.processInfo.systemUptime-acquired)*1000+
-                            (adaptivePhoneCombat568
-                                ? phonePreCPUms+phoneCommandSetupMs : 0),
+                        workMs:(ProcessInfo.processInfo.systemUptime-acquired)*1000 +
+                            (adaptivePhoneCombat568 ? phonePreCPUms+phoneCommandSetupMs : 0),
                         simulationMs:simulationMs,waitMs:waitMs,
                         projectileMeshMs:projectileMeshMs,
                         destructionMeshMs:destructionMeshMs,
