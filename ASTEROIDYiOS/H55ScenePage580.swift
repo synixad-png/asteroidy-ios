@@ -55,7 +55,8 @@ import simd
     func look(dx:Float,dy:Float) {
         guard arrival.walking else{return}
         movement.look(deltaX:dx,deltaY:dy)
-        camera?.eulerAngles=SCNVector3(-movement.pitch,movement.yaw,0)
+        camera?.eulerAngles=SCNVector3(H55TouchMapping580.scenePitch(for:movement.pitch),
+                H55TouchMapping580.sceneYaw(for:movement.yaw),0)
     }
     func interact() {
         guard arrival.walking else{return}
@@ -109,7 +110,8 @@ import simd
                 movement.cameraFeet+H55Walk580.eyes+bounce,
                 movement.z+sy*sway)
         let roll=(sin(phase)*0.0085+movement.lean*0.006)*bobPower
-        camera?.eulerAngles=SCNVector3(-movement.pitch,movement.yaw,roll)
+        camera?.eulerAngles=SCNVector3(H55TouchMapping580.scenePitch(for:movement.pitch),
+                H55TouchMapping580.sceneYaw(for:movement.yaw),roll)
         mechanic.step(dt:dt,playerX:movement.x,playerZ:movement.z,
             canWalk:{x,z in
                 guard let floor=physical.support(x,z,low:-0.25,high:0.45)
@@ -479,7 +481,6 @@ struct H55ScenePage580: View {
     @StateObject private var loader=H55SceneModel580()
     @State private var choosingFile=false
     @State private var pickedClip=""
-    @State private var lookLast:CGSize = .zero
     @State private var importError:String?
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     var body:some View {
@@ -503,113 +504,79 @@ struct H55ScenePage580: View {
                 }.font(.system(size:13,design:.monospaced))
             case .ready:
                 if let scene=loader.scene,let camera=loader.camera {
-                    SceneView(scene:scene,pointOfView:camera,
-                              options:[.rendersContinuously])
-                        .accessibilityIdentifier("h55-v580-native-scenekit")
-                    VStack {
-                        Spacer(minLength:0)
+                    ZStack {
+                        // SceneKit draws only. It MUST NOT eat the left/right
+                        // drag gestures, otherwise H06 sees zero input.
+                        SceneView(scene:scene,pointOfView:camera,
+                                  options:[.rendersContinuously])
+                            .allowsHitTesting(false)
+                            .accessibilityIdentifier("h55-v580-native-scenekit")
+                        H55TouchControls580(
+                            onWalk:{forward,right in
+                                loader.setMove(forward:forward,right:right)
+                            },
+                            onLook:{dx,dy in loader.look(dx:dx,dy:dy)},
+                            onJump:{loader.jump()},
+                            onTalk:{loader.interact()},
+                            canTalk:loader.mechanicNearby,
+                            conversationOpen:loader.conversationOpen,
+                            mechanicStatus:loader.mechanicStatus
+                        )
+
                         if loader.arriving {
-                            VStack(spacing:8) {
+                            VStack(spacing:9) {
                                 Text("H55 — PRZYLOT · 3,25 s")
                                     .font(.system(size:12,weight:.bold,design:.monospaced))
                                 Button("POMIŃ PRZYLOT") {loader.skipArrival()}
                                     .accessibilityIdentifier("h55-v580-skip-arrival")
                             }
-                            .padding(12)
+                            .padding(13)
                             .foregroundStyle(gold)
-                            .background(Color.black.opacity(0.85))
+                            .background(Color.black.opacity(0.88))
+                            .cornerRadius(8)
                         }
                         if loader.conversationOpen {
-                            VStack(spacing:8) {
+                            VStack(spacing:9) {
                                 Text("MECHANIK")
-                                    .font(.system(size:13,weight:.bold,design:.monospaced))
-                                    .foregroundStyle(gold)
+                                    .font(.system(size:14,weight:.bold,design:.monospaced))
                                 Text("WSZYSTKO W PORZĄDKU.")
                                     .font(.system(size:12,design:.monospaced))
                                 Button("ZAKOŃCZ ROZMOWĘ") {loader.interact()}
                                     .accessibilityIdentifier("h55-v580-npc-end-dialogue")
                             }
+                            .foregroundStyle(gold)
                             .padding(15)
-                            .background(Color.black.opacity(0.87))
+                            .background(Color.black.opacity(0.91))
+                            .cornerRadius(8)
                             .accessibilityIdentifier("h55-v580-npc-dialogue")
                         }
-                        HStack(spacing:10) {
-                            Text(loader.mechanicStatus)
-                                .font(.system(size:10,weight:.bold,design:.monospaced))
-                            Spacer()
-                            Button("SKOK") {loader.jump()}
-                                .accessibilityIdentifier("h55-v580-jump")
-                            Button(loader.mechanicNearby ? "ROZMAWIAJ" : "MECHANIK 2,7 m") {
-                                loader.interact()
-                            }
-                            .disabled(!loader.mechanicNearby && !loader.conversationOpen)
-                            .accessibilityIdentifier("h55-v580-npc-interact")
-                        }
-                        .padding(.horizontal,12)
-                        .foregroundStyle(gold)
-                        HStack(spacing:5) {
-                            Rectangle().fill(Color.white.opacity(0.035))
-                                .overlay(alignment:.bottomLeading) {
-                                    Text("LEWA · CHODZENIE")
-                                        .font(.system(size:9,design:.monospaced))
-                                        .foregroundStyle(gold)
-                                        .padding(8)
-                                }
-                                .contentShape(Rectangle())
-                                .gesture(DragGesture(minimumDistance:0)
-                                    .onChanged{value in
-                                        let right=Float(value.translation.width/90)
-                                        let forward=Float(-value.translation.height/90)
-                                        loader.setMove(forward:forward,right:right)
-                                    }
-                                    .onEnded{_ in
-                                        loader.setMove(forward:0,right:0)
-                                    })
-                                .accessibilityIdentifier("h55-v580-left-walk")
-                            Rectangle().fill(Color.white.opacity(0.035))
-                                .overlay(alignment:.bottomTrailing) {
-                                    Text("PRAWA · ROZGLĄDANIE")
-                                        .font(.system(size:9,design:.monospaced))
-                                        .foregroundStyle(gold)
-                                        .padding(8)
-                                }
-                                .contentShape(Rectangle())
-                                .gesture(DragGesture(minimumDistance:0)
-                                    .onChanged{value in
-                                        let deltaX=Float(value.translation.width-lookLast.width)
-                                        let deltaY=Float(value.translation.height-lookLast.height)
-                                        loader.look(dx:deltaX,dy:deltaY)
-                                        lookLast=value.translation
-                                    }
-                                    .onEnded{_ in lookLast = .zero})
-                                .accessibilityIdentifier("h55-v580-right-look")
-                        }
-                        .frame(height:105)
-                        // The source PC v580 H55 has no manual 62-clip
-                        // animation picker. Expose this only in diagnostics;
-                        // production animation is controlled by world state.
+
                         if ProcessInfo.processInfo.environment["ASTEROIDY_DEBUG_MENU"] == "1" {
-                            HStack(spacing:8) {
-                                Text("H55 · ANIMACJE \(loader.animationNames.count)")
-                                    .font(.system(size:10,design:.monospaced))
-                                Spacer()
-                                Picker("ANIMACJA GLB",selection:$pickedClip) {
-                                    Text("WYBIERZ").tag("")
-                                    ForEach(loader.animationNames,id:\.self) {
-                                        Text($0).tag($0)
+                            VStack {
+                                HStack(spacing:8) {
+                                    Text("H55 · ANIMACJE \(loader.animationNames.count)")
+                                    Spacer()
+                                    Picker("ANIMACJA GLB",selection:$pickedClip) {
+                                        Text("WYBIERZ").tag("")
+                                        ForEach(loader.animationNames,id:\.self) {
+                                            Text($0).tag($0)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                    .frame(maxWidth:270)
+                                    .onChange(of:pickedClip) { value in
+                                        if !value.isEmpty {loader.showAnimation(value)}
                                     }
                                 }
-                                .pickerStyle(.menu)
-                                .frame(maxWidth:280)
-                                .onChange(of:pickedClip) { value in
-                                    if !value.isEmpty {loader.showAnimation(value)}
-                                }
+                                .font(.system(size:10,design:.monospaced))
+                                .padding(10)
+                                .foregroundStyle(gold)
+                                .background(Color.black.opacity(0.83))
+                                Spacer()
                             }
-                            .padding(10)
-                            .foregroundStyle(gold)
-                            .background(Color.black.opacity(0.83))
                         }
                     }
+                    .frame(maxWidth:.infinity,maxHeight:.infinity)
                 }
             }
             VStack {
