@@ -1,3 +1,13 @@
+## ETAP — 08.11.2026: iPhone Metal currentDrawable pobierany później, oddzielny WAIT GPU/drawable (IPA #143)
+
+**Baza:** oryginalne źródła Windows v568 oraz zatwierdzone IPA #142 z działającym dźwiękiem poprawionym w #141. **Zgłoszenie:** podczas ostrzału iPhone spada z 60 do 30 FPS; iPad wcześniej utrzymuje płynność. **Zasada bez regresji iPada** obowiązuje.
+
+**Wykonano:** po sprawdzeniu kodu `Sector01CarbonisPreview568.swift` i podobnych przypadków opóźnień CAMetalDrawable odroczono pobranie bufora ekranu **wyłącznie dla aktywnej misji na iPhonie** aż po symulacji i stworzeniu oryginalnej indeksowanej geometrii strzałów/świateł/odłamków. Przed `currentDrawable` rezerwowany jest również GPU in-flight slot, z `abortFrame()` zwalniającym go na błędzie. W istniejącym liczniku FPS **tylko iPhone** otrzymał rozdzielony pomiar `WAIT drawable / stream`. **iPad nadal używa starej sekwencji**, oryginalnych pikseli i starego HUD, bez zmian fizyki, jakości grafiki i dźwięku. Dotychczasowa 100/84/74% dynamiczna rozdzielczość tylko iPhone zachowana.
+
+**Testy:** [PR #7](https://github.com/synixad-png/asteroidy-ios/pull/7) `2bf285dd`, [PR #429](https://github.com/synixad-png/asteroidy-ios/actions/runs/42458911490) **2/2 PASS**, [main #430](https://github.com/synixad-png/asteroidy-ios/actions/runs/42459117791) **3/3 PASS**, [device IPA #143](https://github.com/synixad-png/asteroidy-ios/actions/runs/42459117850) **4/4 PASS**, `BUILD SUCCEEDED`, CRC/Info.plist/ARM64 oraz 43 oryginalne audio źródła PASS. [**Pobierz unsigned IPA #143**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42459117850/artifacts/13609575476), ZIP **28 043 867 B**, SHA256 `0b70c73c4a040c80dbc5f8c341835ee8f199e14b1c3ab01a9270e8cea2a7b90d`. [Pełny raport](Reports/V568_IOS_IPHONE_LATE_DRAWABLE_SPLIT_WAITS_2026-11-08.md).
+
+**Do sprawdzenia:** na fizycznym iPhonie rzeczywisty FPS podczas strzelania z rozbiciem CPU/GPU/WAIT, FX CPU P/W i WAIT drawable/stream; na iPadzie utrzymanie poprzedniej wydajności. Bez testu sprzętowego **nie wiadomo**, czy spadki do 30 FPS zostały usunięte. **Stały harmonogram: 18 zadań, 38% ukończone, 62% pozostało.**
+
 ## ETAP — 08.11.2026: iPhone 60→30 FPS podczas strzelania, bez ingerencji w działający iPad (IPA #142)
 
 **Zgłoszenie po teście fizycznym IPA #141:** użytkownik potwierdził, że naprawa dźwięków strzałów i wybuchów działa; iPad nie ma już uciążliwych spadków, ale na iPhonie podczas strzelania występują spadki z 60 do 30 FPS. **Poprawka ściśle dla iPhone'a.**
