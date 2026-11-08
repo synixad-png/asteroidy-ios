@@ -1,13 +1,14 @@
 import Foundation
 
-/// Shared persistence for the two source-verified GPU completion proofs.
-/// Called only by explicitly requested diagnostic command-buffer callbacks;
-/// it is never used by the regular Metal draw path.
+/// Shared persistence for source-verified rendering diagnostics:
+/// GPU completion proofs and the opt-in native W3 menu state marker.
+/// Never called by the ordinary per-frame Metal draw path; all callers
+/// guard the original diagnostic conditions before invoking this writer.
 enum OriginalRenderProofWriter568 {
     static func save(_ payload: [String: Any], filename: String) {
         guard let folder = FileManager.default.urls(
             for: .cachesDirectory, in: .userDomainMask).first else {
-            NSLog("ASTEROIDY GPU proof directory unavailable: %@", filename)
+            NSLog("ASTEROIDY render proof directory unavailable: %@", filename)
             return
         }
         do {
@@ -17,7 +18,7 @@ enum OriginalRenderProofWriter568 {
                 to: folder.appendingPathComponent(filename),
                 options: .atomic)
         } catch {
-            NSLog("ASTEROIDY GPU proof write failed (%@): %@",
+            NSLog("ASTEROIDY render proof write failed (%@): %@",
                   filename, String(describing: error))
         }
     }
