@@ -13,6 +13,9 @@ enum SourceSkyPremultipliedBlend {
         guard let attachment=descriptor.colorAttachments[0] else {
             throw MetalBlendAttachmentError.missingColorAttachment
         }
+        // All four source sky pipeline passes use the same BGRA8 target.
+        // Set it only AFTER verifying the attachment exists.
+        attachment.pixelFormat = .bgra8Unorm
         attachment.isBlendingEnabled=true
         attachment.sourceRGBBlendFactor = .one
         attachment.destinationRGBBlendFactor = .oneMinusSourceAlpha
