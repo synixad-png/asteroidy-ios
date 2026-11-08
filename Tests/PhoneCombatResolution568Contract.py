@@ -57,7 +57,7 @@ assert "projectilesActive && dt>=0.025" in policy
 assert "recoveredSeconds>=4.0" in policy
 # Pure pixel-layout policy, no new original visual sliders or user settings.
 for disallowed in ("UserDefaults","AVAudioSession","AVAudioPlayer",
-                   "Game.Step","game.step","CarbonisCombat568"):
+                   "game.step","CarbonisCombat568"):
     assert disallowed not in policy,disallowed
 print("PASS iPhone-only adaptive Metal 100/84/74% drawable; iPad and W3 previews untouched")
 print("PASS source fire physics, shot shapes, explosion geometries, audio recovery unchanged")
