@@ -60,10 +60,14 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
         view.depthStencilPixelFormat = .depth32Float
         view.framebufferOnly=true
         view.preferredFramesPerSecond=gameSession == nil ? 30 : 60
+        // Preserve the iPad and both W3 menu previews byte-for-byte in
+        // rendering behaviour; only a playing PHONE gets adaptive pixels.
+        let adaptivePhoneCombat568=gameSession != nil &&
+            UIDevice.current.userInterfaceIdiom == .phone
         if let device=view.device {
             do {
                 let renderer=try Coordinator.Renderer(device:device,initialRocks:initialRocks,
-                    gameSession:gameSession)
+                    gameSession:gameSession,adaptivePhoneCombat568:adaptivePhoneCombat568)
                 renderer.yawOffset=yawOffset
                 renderer.pitchOffset=pitchOffset
                 view.delegate=renderer
@@ -126,6 +130,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var carbonisCombined469:MTLTexture
             private let started=ProcessInfo.processInfo.systemUptime
             private let gameSession:CarbonisSession568?
+            private let adaptivePhoneCombat568:Bool
+            private var phoneDrawable568=PhoneCombatResolution568()
             private var craftBuffer:MTLBuffer?
             private var craftTexture:MTLTexture?
             private var craftVertexCount=0
@@ -194,10 +200,12 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 return buffer
             }
             init(device:MTLDevice,initialRocks:[SphereAsteroid556],
-                 gameSession:CarbonisSession568?) throws {
+                 gameSession:CarbonisSession568?,
+                 adaptivePhoneCombat568:Bool=false) throws {
                 activeRocks=initialRocks
                 gpu=device
                 self.gameSession=gameSession
+                self.adaptivePhoneCombat568=adaptivePhoneCombat568
                 // The W3 planet-only menu preview stays transparent and
                 // has NO sky. Only real playable CARBONIS combat gets it.
                 sourceSky568=try gameSession != nil
@@ -701,6 +709,37 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             func mtkView(_ view:MTKView,drawableSizeWillChange size:CGSize) {}
             func draw(in view:MTKView) {
                 let entered=ProcessInfo.processInfo.systemUptime
+                // A sustained 60->30 Hz drop during firing on iPhone
+                // indicates missed draw deadlines. Reduce ONLY the phone
+                // gameplay Metal drawable's pixel area (not source geometry,
+                // shot SFX, gameplay physics, shader effects or SwiftUI HUD).
+                // iPad and the non-gameplay menu preview never enter here.
+                if adaptivePhoneCombat568,let session=gameSession {
+                    let activeShot=session.shooting ||
+                        !session.game.bullets.isEmpty ||
+                        !session.game.hostileShots.isEmpty
+                    phoneDrawable568.observe(at:entered,
+                                             projectilesActive:activeShot)
+                    if view.bounds.width>0 && view.bounds.height>0 {
+                        // Keep the native UIKit content scale, so iPhone
+                        // 15 Pro Max landscape and rotation use the exact
+                        // current MTKView aspect rather than a fixed 16:9.
+                        let px=phoneDrawable568.drawablePixels(
+                            widthPoints:Double(view.bounds.width),
+                            heightPoints:Double(view.bounds.height),
+                            contentScale:Double(view.contentScaleFactor))
+                        if px.width>0 && px.height>0 {
+                            if view.autoResizeDrawable {
+                                view.autoResizeDrawable=false
+                            }
+                            let wanted=CGSize(width:px.width,height:px.height)
+                            if abs(view.drawableSize.width-wanted.width)>0.5 ||
+                               abs(view.drawableSize.height-wanted.height)>0.5 {
+                                view.drawableSize=wanted
+                            }
+                        }
+                    }
+                }
                 guard let drawable=view.currentDrawable,
                       let pass=view.currentRenderPassDescriptor,
                       let command=queue.makeCommandBuffer(),
