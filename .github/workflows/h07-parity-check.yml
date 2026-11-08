@@ -1,0 +1,53 @@
+name: H07 PC v580 H70 dual-airlock source parity and regression
+on:
+  push:
+    branches: [feature/ios-h55-v580-native-entry]
+    paths:
+      - 'ASTEROIDYiOS/H55Airlocks580.swift'
+      - 'ASTEROIDYiOS/H55ScenePage580.swift'
+      - 'ASTEROIDYiOS/H55Mechanic580.swift'
+      - 'ASTEROIDYiOS/H55Walk580.swift'
+      - 'Tests/H55Airlocks580Tests.swift'
+      - 'Tests/H55AirlocksRealGLB580Tests.swift'
+      - '.github/workflows/h07-parity-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-h07:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: PC v393/v544 controller, actual GLB-format channels, H06 player and NPC collision
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O \
+            ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55Sweep401580.swift \
+            ASTEROIDYiOS/H55Walk580.swift \
+            ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            ASTEROIDYiOS/H55Airlocks580.swift \
+            Tests/H55Airlocks580Tests.swift -o /tmp/h07-parity
+          /tmp/h07-parity
+      - name: Verify actual GLB test can compile and H07 SceneKit source parses
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/H55Airlocks580.swift \
+            Tests/H55AirlocksRealGLB580Tests.swift -o /tmp/h07-real-glb
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+      - name: Make exact H07 source available for offline real 126MB GLB check
+        uses: actions/upload-artifact@v4
+        with:
+          name: H07-SOURCE-TO-REAL-GLB-DIFFERENTIAL
+          path: |
+            ASTEROIDYiOS/H55Airlocks580.swift
+            Tests/H55Airlocks580Tests.swift
+            Tests/H55AirlocksRealGLB580Tests.swift
+          if-no-files-found: error
+          retention-days: 2
