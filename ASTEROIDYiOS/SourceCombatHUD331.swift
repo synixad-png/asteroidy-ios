@@ -19,31 +19,41 @@ struct SourceCombatHUD331: View {
     private static func clamp(_ v:CGFloat)->CGFloat { max(0,min(1,v)) }
 
     var body: some View {
-        Canvas(opaque:false, rendersAsynchronously:false) { context, size in
-            // Matches the single scale/centered virtual viewport in UiScale336.
-            let scale=max(0.001,min(size.width/1280,size.height/720))
-            var c=context
-            c.translateBy(x:(size.width-1280*scale)/2,
-                          y:(size.height-720*scale)/2)
-            c.scaleBy(x:scale,y:scale)
-            Self.top(c,hud)
-            Self.radar(c,hud)
-            Self.gauge(c,"KADŁUB",hud.hull,60,191,565,Self.cyan)
-            Self.gauge(c,"PANCERZ",hud.armor,25,191,613,Self.gold)
-            // Tarcza145 isn't implemented in CARBONIS iOS yet: never
-            // display invented charge/energy or pretend it is usable.
-            Self.gauge(c,"TARCZA",hud.tarczaEnergy,100,191,661,Self.blue)
-            let counts=[hud.ionAmmo,hud.bombs,hud.shieldCharges,hud.boostCharges]
-            let names=["JON","BOMBY","OSŁONY","DOPALACZ"]
-            let tints=[Self.cyan,Self.dim,Self.cyan,Self.gold]
-            for i in 0..<4 {
-                Self.ability(c,type:i,cx:CGFloat(920+100*i),
-                             count:counts[i],name:names[i],tint:tints[i])
+        GeometryReader { geo in
+            Canvas(opaque:false, rendersAsynchronously:false) { context, size in
+                let layout=CombatHUDViewport568(
+                    width:Double(size.width),height:Double(size.height),
+                    safeLeft:Double(geo.safeAreaInsets.leading),
+                    safeRight:Double(geo.safeAreaInsets.trailing),
+                    safeTop:Double(geo.safeAreaInsets.top),
+                    safeBottom:Double(geo.safeAreaInsets.bottom))
+                let scale=CGFloat(layout.scale)
+                var c=context
+                c.translateBy(x:CGFloat(layout.originLeftX),
+                              y:CGFloat(layout.originY))
+                c.scaleBy(x:scale,y:scale)
+                let rightShift=CGFloat(layout.rightGroupOffsetInSource())
+                // The original elements retain their dimensions and relative
+                // positions, while the right-most group uses the whole width.
+                Self.top(c,hud,rightShift:rightShift)
+                Self.radar(c,hud)
+                Self.gauge(c,"KADŁUB",hud.hull,60,191,565,Self.cyan)
+                Self.gauge(c,"PANCERZ",hud.armor,25,191,613,Self.gold)
+                Self.gauge(c,"TARCZA",hud.tarczaEnergy,100,191,661,Self.blue)
+                let counts=[hud.ionAmmo,hud.bombs,hud.shieldCharges,hud.boostCharges]
+                let names=["JON","BOMBY","OSŁONY","DOPALACZ"]
+                let tints=[Self.cyan,Self.dim,Self.cyan,Self.gold]
+                var right=c
+                right.translateBy(x:rightShift,y:0)
+                for i in 0..<4 {
+                    Self.ability(right,type:i,cx:CGFloat(920+100*i),
+                                 count:counts[i],name:names[i],tint:tints[i])
+                }
             }
         }
         .allowsHitTesting(false)
         .accessibilityElement(children:.ignore)
-        .accessibilityLabel("Sektor 01. Punkty \(hud.score). Żetony \(hud.tokenBalance). Życia \(hud.lives). Kadłub \(hud.hull). Pancerz \(hud.armor).")
+        .accessibilityLabel("Sektor 01. Punkty \\(hud.score). Żetony \\(hud.tokenBalance). Życia \\(hud.lives). Kadłub \\(hud.hull). Pancerz \\(hud.armor).")
         .accessibilityIdentifier("sector01-source-w3-hud331")
     }
 
@@ -91,16 +101,16 @@ struct SourceCombatHUD331: View {
         text(c,s,x+1,y+1,color(200,1,7,11))
         text(c,s,x,y,col)
     }
-    private static func top(_ c:GraphicsContext,_ hud:CarbonisSession568.HUD) {
+    private static func top(_ c:GraphicsContext,_ hud:CarbonisSession568.HUD,\n                            rightShift:CGFloat) {
         line(c,20,17,20,81,color(190,215,164,67),1.5)
         label(c,"SYNIXAD / WALKA 3D",34,17,white)
         label(c,"BROŃ: \(hud.weaponName)  ·  POZIOM \(hud.weaponLevel)  ·  TEMPO \(hud.rapidLevel)",
               34,42,cyan)
-        label(c,"SEKTOR 01 / 26",777,17,white)
-        label(c,"PKT \(hud.score)",936,17,cyan)
-        label(c,"ŻETONY \(hud.tokenBalance)",1050,17,gold)
-        label(c,"ŻYCIA \(hud.lives)",1195,17,white)
-        line(c,776,46,1262,46,color(67,109,145,156),0.8)
+        var right=c\n        right.translateBy(x:rightShift,y:0)\n        label(right,"SEKTOR 01 / 26",777,17,white)
+        label(right,"PKT \(hud.score)",936,17,cyan)
+        label(right,"ŻETONY \(hud.tokenBalance)",1050,17,gold)
+        label(right,"ŻYCIA \(hud.lives)",1195,17,white)
+        line(right,776,46,1262,46,color(67,109,145,156),0.8)
     }
     private static func gauge(_ c:GraphicsContext,_ name:String,_ current:Int?,
                               _ maximum:Int,_ x:CGFloat,_ y:CGFloat,_ tint:Color) {
