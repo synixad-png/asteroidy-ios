@@ -11,6 +11,7 @@ root=Path(__file__).resolve().parents[1]/"ASTEROIDYiOS"
 shared=(root/"SourceSkyAssetFactory568.swift").read_text()
 intro=(root/"MetalRenderer.swift").read_text()
 combat=(root/"SourceCombatSky568.swift").read_text()
+lifecycle=(root/"SourceSkyTextureLifecycle55.swift").read_text()
 
 for name in (
     "makeSphereHaloTexture", "sphereSky207", "solarOverlaySource556",
@@ -22,8 +23,13 @@ for name in (
     assert shared.count(signature)==1, f"Source builder duplicated: {name}"
     for source in (intro,combat):
         assert signature not in source, f"Old copied source builder remains: {name}"
-        assert f"SourceSkyAssetFactory568.{name}(" in source, \
-            f"Renderer not using shared source builder: {name}"
+        caller = lifecycle if name in (
+            "makeNebulaTextures556","uploadNebulaSlice556",
+            "makeBlackHoleTextures55","makeDeepPlanetTextures55",
+            "uploadDeepPlanetSlice55",
+        ) else source
+        assert f"SourceSkyAssetFactory568.{name}(" in caller, \
+            f"Exact source sky asset builder missing from its shared owner: {name}"
 
 for piece in (
     "pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false",
@@ -71,11 +77,16 @@ for renderer in (intro, combat):
     for name in ("ensureCloudTextures55", "ensureDeepPlanetTextures55",
                  "ensureBlackHoleTextures55"):
         assert f"private func {name}(" in renderer
-    for name in ("uploadNebulaSlice556", "uploadDeepPlanetSlice55"):
-        assert f"SourceSkyAssetFactory568.{name}(" in renderer
+    for name in ("ensureCloudTextures55", "ensureDeepPlanetTextures55",
+                 "ensureBlackHoleTextures55"):
+        assert f"SourceSkyTextureLifecycle55.{name}(" in renderer, \
+            f"Renderer does not delegate to independent source cache: {name}"
     assert "privatevarnebulaTexture:MTLTexture?" in renderer.replace(" ", "")
     assert "privatevardeepPlanetTextures:MTLTexture?" in renderer.replace(" ", "")
     assert "privatevarblackHoleTextures:MTLTexture?" in renderer.replace(" ", "")
+assert "SourceSkyAssetFactory568.uploadNebulaSlice556(" in lifecycle
+assert "SourceSkyAssetFactory568.uploadDeepPlanetSlice55(" in lifecycle
+assert "SourceSkyAssetFactory568.makeBlackHoleTextures55(device)" in lifecycle
 assert "SourceSkyAssetFactory568.makeSphereHaloTexture(device)" in intro
 assert "SourceSkyAssetFactory568.makeSphereHaloTexture(device)" in combat
 print("PASS one sky source factory: 9 builders, star/nebula/planet/black-hole exact source formulas; both renderer caches independent")
