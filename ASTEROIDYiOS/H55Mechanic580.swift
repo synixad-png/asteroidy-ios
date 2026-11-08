@@ -60,7 +60,7 @@ struct H55Mechanic580 {
         let dt=min(0.07,max(0,raw))
         guard dt>0 else{return}
         if phase == .idle {
-            guard talked && !completedOnce &&
+            guard talked && calibrated && !completedOnce &&
                   hypot(playerX-x,playerZ-z)>2.5 else{return}
             phase = .walking
         }
