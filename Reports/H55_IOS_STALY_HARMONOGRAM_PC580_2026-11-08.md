@@ -15,7 +15,7 @@ Data ustanowienia: 2026-11-08. Baza: PC **Windows v580** i przesłany oryginalny
 | ID | Moduł / zadanie | Oryginalna podstawa PC v580 | Warunek odbioru (definicja 100%) | Zależność | Stan na 08.11.2026 |
 |---|---|---|---|---|---|
 | H01 | Autentyczny GLB: import, naprawa 4 B i trwały zapis | `HangarH55Asset.cs`; GLB2.0/GLTFKit2 | Oryginał SHA zweryfikowany; naprawiona kopia przechodzi parser `cgltf`, zachowuje 1411 siatek i 62 klipy, ponowne wejście nie wymaga importu | — | Kod i test parsera PASS; test urządzenia oczekuje |
-| H02 | Dokładna rekonstrukcja geometrii kolizyjnej, prefabów i wykluczeń | `HangarCollision441.FromGlb` | Wszystkie oryginalne trójkąty 3D, transformacje, bryły prefabów, podział pustych portali, most podłogi i wykluczenia obiektów dynamicznych reprodukowane z GLB; pomiary PC→iOS zgodne | H01 | NIEUKOŃCZONE — PRIORYTET |
+| H02 | Dokładna rekonstrukcja geometrii kolizyjnej, prefabów i wykluczeń | `HangarCollision441.FromGlb` | Wszystkie oryginalne trójkąty 3D, transformacje, bryły prefabów, podział pustych portali, most podłogi i wykluczenia obiektów dynamicznych reprodukowane z GLB; pomiary PC→iOS zgodne | H01 | **100% implementacja + rzeczywisty GLB + porównanie 7 231 842 współrzędnych PASS.** Test urządzenia w H15 |
 | H03 | Przestrzenny indeks 2 m, bryły, granice i podpory | `H55FullCollision379`, `H72Bounds392`, `Support`, `SupportLowest403` | Ta sama siatka wiader, wynik barycentryczny, najwyższa dopuszczalna podpora, przeciwne normalne, prefab AABB, statek i granice jak w PC; test porównawczy na rzeczywistym GLB | H02 | NIEUKOŃCZONE |
 | H04 | Rzeczywiste 4-sferowe BodyClear, kontakt trójkątów i przesuwanie | `H55FullCollision379.BodyClear`, `Dist2`, `HubWalkSweepSlide401` | Sfery R=.325 m na wysokościach +.335/.780/1.225/1.670, dokładne zderzenia trójkąty/bryły, brak przenikania; testy wąskich przejść, ścian, drzwi i podłogi vs PC | H03 | NIEUKOŃCZONE; promienie SceneKit są tylko prowizoryczne |
 | H05 | Prawdziwe wejście i warunek uruchomienia spaceru | `HubWalkPlaceAtEntry380`, `HubWalkSpawnClear380`, `Hub90.BeginHubScene397`, `StepHub90` | Test wszystkich 6 źródłowych kandydatów w kolejności z podporą [-.25,.45], BodyClear na 0/+0.55/+1.15/+4.50 i wyzwolenie ruchu dopiero po 3.25 s; wejście z menu i powrót, bez fałszywego błędu spawnu | H02–H04 | NIEUKOŃCZONE; poprzednie wydania zgłaszały błąd wejścia |
@@ -32,7 +32,7 @@ Data ustanowienia: 2026-11-08. Baza: PC **Windows v580** i przesłany oryginalny
 | H16 | Odbiór i wydanie testowe/końcowe | GitHub Actions + zaakceptowana baza | Wszystkie testy CI PASS, źródła/reports zapisane w GitHub, właściwe IPA na iPhone/iPad zweryfikowane archiwalnie; docelowe zakończenie tylko po H15 i akceptacji użytkownika | H15 | NIEUKOŃCZONE |
 
 ## Kryteria przejścia i checkpointy
-- **C1 — autentyczne kolizje i wejście:** H01–H05. Żadnego dalszego „naprawienia spawnu” przez przesuwanie współrzędnych, obniżanie kolizji ani awaryjne podstawienie starego hangaru. Test odtwarza oryginalne dane PC i GLB. **To jest pierwszy obowiązujący priorytet.**
+- **C1 — autentyczne kolizje i wejście:** H01–H05. Żadnego dalszego „naprawienia spawnu” przez przesuwanie współrzędnych, obniżanie kolizji ani awaryjne podstawienie starego hangaru. Test odtwarza oryginalne dane PC i GLB. **H02 ukończony; bieżący priorytet H03 (indeks kolizji i podpor).**
 - **C2 — pełna eksploracja i AI:** H06–H10. Zanim pojawią się stanowiska i sekwencje, gracz musi stabilnie chodzić, a mechanik poruszać się i rozmawiać według oryginału.
 - **C3 — pełna funkcjonalność hangaru:** H11–H13. Sprzęt, sklep, audio i wszystkie animacje muszą być prawdziwymi mechanizmami, nie ekranami pokazowymi.
 - **C4 — test fizyczny i wydanie:** H14–H16. Automatyczne testy != test na urządzeniu. Zgłoszone błędy iPhone/iPad blokują pełny odbiór.
@@ -41,3 +41,7 @@ Data ustanowienia: 2026-11-08. Baza: PC **Windows v580** i przesłany oryginalny
 Co sesję jedna **kompaktowa tabela obejmująca niezmiennie H01–H16**: ID, zadanie, stan, zmiana od poprzedniego raportu oraz konkretny dowód (nazwa testu/CI). Bez sztucznego procentu ogólnego lub wymyślonych terminów. Jeśli potrzebny jest procent, raportować tylko mierzalny podzbiór kryteriów zaakceptowanych testami; początkowe częściowo napisane moduły NIE oznaczają automatycznie procentu ukończenia.
 
 Nie istnieje jeszcze podstawa do rzetelnej procentowej oceny całego hangaru H55 — każdy z wcześniejszych „PASS” dotyczył pojedynczych testów Swift/CI, a nie pełnego przejścia na prawdziwym iPhonie i iPadzie.
+
+## Raport realizacji 2026-11-08 — bez zmiany listy H01–H16
+- **H02: 0% → 100%**: kompletny osobny moduł `H55CollisionGeometry580.swift`, testy GLB i regresji oraz porównanie niezależnego odtworzenia reguł PC z 126MB rzeczywistą sceną. 233/233 bryły, 7 231 842/7 231 842 współrzędne statyczne, różnica maksymalna 0.000000954 m. Dokument szczegółowy `Reports/H02_ZAKONCZONY_PC580_H55_POROWNANIE_GLB_2026-11-08.md`.
+- Inne pozycje pozostają bez zmiany ukończenia. **H03** jest następne. Nie integrowano koliderów z ruchem przed przepisaniem oryginalnych `Support` i `BodyClear`. Brak IPA w tym wydaniu; test na iPhone/iPad pozostaje przy H15.
