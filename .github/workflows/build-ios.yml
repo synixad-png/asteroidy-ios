@@ -65,6 +65,9 @@ on:
       - 'Tests/IOSShotExplosionAudioResume568Contract.py'
       - 'Tests/MissionIntro41SourceContract568.py'
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
+      - 'ASTEROIDYiOS/Sector01MissionHUD568.swift'
+      - 'ASTEROIDYiOS/CarbonisSession568.swift'
+      - 'Tests/IOSMissionHUD568Contract.py'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/App.swift'
       - 'Tests/W3AdaptiveViewport568Tests.swift'
@@ -546,6 +549,10 @@ jobs:
           python3 Tests/OriginalMusicCombatPause568Contract.py
           python3 Tests/IOSAudioLockResume568Contract.py
           python3 Tests/IOSSourceCombatPause568Contract.py
+          python3 Tests/IOSMissionHUD568Contract.py
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01MissionHUD568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisSession568.swift
           python3 Tests/IOSShotExplosionAudioResume568Contract.py
           swiftc -frontend -parse ASTEROIDYiOS/OriginalShotSFXWorker568.swift
           swiftc -O ASTEROIDYiOS/OriginalMusicSynth568.swift Tests/OriginalMusicSynth568Tests.swift -o /tmp/v568-native-music-synthesis
