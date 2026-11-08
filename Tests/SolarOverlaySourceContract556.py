@@ -10,6 +10,16 @@ swift=(r/"ASTEROIDYiOS"/"MetalRenderer.swift").read_text()
 source=(r/"ASTEROIDYiOS"/"Sphere67.swift").read_text()
 metal=(r/"ASTEROIDYiOS"/"Ship.metal").read_text()
 factory=(r/"ASTEROIDYiOS"/"SourceSkyAssetFactory568.swift").read_text()
+blend=(r/"ASTEROIDYiOS"/"SourceSkyPremultipliedBlend.swift").read_text()
+for factor in (
+    "attachment.isBlendingEnabled=true",
+    "attachment.sourceRGBBlendFactor = .one",
+    "attachment.destinationRGBBlendFactor = .oneMinusSourceAlpha",
+    "attachment.sourceAlphaBlendFactor = .one",
+    "attachment.destinationAlphaBlendFactor = .oneMinusSourceAlpha",
+):
+    assert factor in blend, "Original GpuIntro41 source PArgb blend changed: "+factor
+
 def check(cond,msg):
     if not cond: raise AssertionError(msg)
 
@@ -41,8 +51,7 @@ for token in (
     "let solarVertex=try requireShader(\"solarOverlayVertex\")",
     "let solarFragment=try requireShader(\"solarOverlayFragment\")",
     "solarDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm",
-    "solarBlend.sourceRGBBlendFactor = .one",
-    "solarBlend.destinationRGBBlendFactor = .oneMinusSourceAlpha",
+    "try SourceSkyPremultipliedBlend.configure(solarDescriptor)",
     "solarOverlayPipeline=try device.makeRenderPipelineState(",
     "if let sun=SphereSolarOverlay556.project(",
     "camera:sphereFlight.camera",
