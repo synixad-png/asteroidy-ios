@@ -1,41 +1,103 @@
 import Foundation
 
+/// Four-corner geometry regression. Validate physical viewport positions,
+/// not just a 1280x720 aspect-fit factor (the old iPad bug).
 @main struct CombatHUDViewport568Tests {
-    static func check(_ condition:Bool,_ message:String) {
-        precondition(condition,message)
+    static func check(_ ok:Bool,_ reason:String) {
+        precondition(ok,reason)
+    }
+    static func near(_ a:Double,_ b:Double,_ tolerance:Double=0.0001)->Bool {
+        abs(a-b)<tolerance
     }
     static func main() {
-        // 4:3 iPad landscape: old 16:9 HUD centering left 96pt top gutter.
-        // Lift the entire HUD by 48pt without moving individual ornaments.
-        let ipad=CombatHUDViewport568(width:1024,height:768)
-        check(abs(ipad.scale-0.8)<0.00001,"iPad proportional HUD")
-        check(abs(ipad.originY-48)<0.00001,"iPad HUD higher than centered")
-        check(ipad.hudY(612)<96+612*0.8,"iPad radar lifted")
-        check(ipad.leftX(91)>0,"iPad radar visible")
-        check(ipad.topRightX(1220)<1024,"iPad last ability visible")
+        typealias A=CombatHUDViewport568.Anchor
 
-        // 15 Pro Max landscape, logical points; safe-area insets supplied
-        // by UIWindow, never hard-coded in rendering code.
+        // Fullscreen iPad 4:3 with a status bar and home indicator.
+        // The source radar is at (91,612), gauges y=565/613/661,
+        // bottom ability counts y=680; all must hug the REAL bottom.
+        let ipad=CombatHUDViewport568(width:1024,height:768,
+            safeTop:24,safeBottom:20)
+        check(near(ipad.scale,0.8),"4:3 iPad retains source HUD geometry")
+        check(ipad.y(17,at:.topLeft)<52,
+              "4:3 header must start just under status bar")
+        check(ipad.y(17,at:.topRight)<52,
+              "4:3 right header must also reach the top")
+        check(ipad.y(612,at:.bottomLeft)>640,
+              "4:3 radar must be near bottom, not screen middle")
+        check(ipad.y(661,at:.bottomLeft)>685,
+              "4:3 armor and shield group must be low")
+        check(ipad.y(680,at:.bottomRight)>700,
+              "4:3 equipment must be near bottom")
+        check(ipad.y(680,at:.bottomRight)<768-ipad.bottom,
+              "4:3 bottom text must not cross safe edge")
+        check(near(ipad.originY(for:.topLeft),
+                   ipad.originY(for:.topRight)),
+              "upper corners have same top baseline")
+        check(near(ipad.originY(for:.bottomLeft),
+                   ipad.originY(for:.bottomRight)),
+              "lower corners have same bottom baseline")
+        check(ipad.originY(for:.bottomLeft)-
+              ipad.originY(for:.topLeft)>120,
+              "top and bottom MUST NOT share one origin")
+        check(ipad.x(91,at:.bottomLeft)>0 &&
+              ipad.x(1220,at:.bottomRight)<1024,
+              "iPad left radar and right icon both visible")
+
+        // User's iPad screenshot is 1408x1056 pixels; the same 4:3 policy
+        // must remain correct without checking hardware model names.
+        let screenshot=CombatHUDViewport568(width:1408,height:1056,
+            safeTop:30,safeBottom:24)
+        check(screenshot.y(612,at:.bottomLeft)>
+              screenshot.height*0.82,"screenshot radar lower than before")
+        check(screenshot.y(17,at:.topLeft)<
+              screenshot.height*0.07,"screenshot top HUD near top")
+
+        // iPhone 15 Pro Max landscape 932x430pt (19.5:9),
+        // safe-area cutouts on BOTH sides; no invisible 16:9 side bands.
         let phone=CombatHUDViewport568(width:932,height:430,
-            safeLeft:59,safeRight:59,safeTop:0,safeBottom:0)
-        check(abs(phone.scale-430.0/720)<0.00001,"iPhone height fit")
-        check(phone.spareWidth>0,"wide phone spare width")
-        check(phone.leftX(20)>=phone.left,"left HUD out of notch")
-        check(phone.topRightX(1262)<=932-phone.right,"right HUD within safe area")
-        check(phone.hudY(701)<=430,"lower HUD fits")
-        check(phone.topRightX(1220)>phone.leftX(1220),"right group reaches wide screen")
-        check(abs(phone.originY)<0.00001,"wide iPhone top anchored")
+            safeLeft:59,safeRight:59)
+        check(near(phone.scale,430.0/720),
+              "iPhone retains source aspect and readable height")
+        check(phone.x(20,at:.topLeft)>phone.left,
+              "left header clear of Dynamic Island")
+        check(phone.x(1262,at:.topRight)<932-phone.right,
+              "right header clear of rounded corner")
+        check(phone.x(1220,at:.bottomRight)>800,
+              "equipment must use full wide phone screen")
+        check(phone.x(1220,at:.bottomRight)>
+              phone.x(1220,at:.bottomLeft)+40,
+              "right equipment independently anchored")
+        check(phone.y(17,at:.topRight)<25,
+              "wide iPhone top bar genuinely at top")
+        check(phone.y(680,at:.bottomRight)>395,
+              "wide iPhone equipment genuinely at bottom")
+        check(phone.y(680,at:.bottomRight)<430,
+              "wide iPhone equipment not cut off")
+        check(near(phone.pauseCenterX,466),
+              "pause centered in the actual safe viewport")
+        check(phone.pauseCenterY<33,
+              "pause button near screen top")
 
-        let original=CombatHUDViewport568(width:1280,height:720)
-        check(abs(original.scale-1)<0.00001,"16:9 source scale")
-        check(abs(original.originY)<0.00001,"16:9 source vertical positions")
-        check(abs(original.spareWidth)<0.00001,"16:9 source horizontal positions")
+        // Unchanged PC reference geometry: components still have the same
+        // x,y, shape, sizes and relative distances, only anchors change.
+        let source=CombatHUDViewport568(width:1280,height:720)
+        check(near(source.scale,1),"original PC source scale")
+        check(near(source.y(661,at:.bottomLeft)-
+                   source.y(565,at:.bottomLeft),96),
+              "original 3 gauge vertical spacing stays exact")
+        check(near(source.x(1220,at:.bottomRight)-
+                   source.x(920,at:.bottomRight),300),
+              "original 4 equipment horizontal spacing stays exact")
 
         let safe=CombatHUDViewport568(width:932,height:430,
             safeLeft:40,safeRight:35,safeTop:8,safeBottom:12)
-        check(safe.leftX(20)>40,"notch safe area")
-        check(safe.topRightX(1262)<932-35,"trailing corner safe area")
-        check(safe.hudY(701)<430-12,"bottom inset")
-        print("PASS HUD viewport: iPad 4:3 raised, 15 Pro Max wide, 16:9 unchanged, safe areas")
+        check(safe.x(20,at:.topLeft)>40,"independent left safe area")
+        check(safe.x(1262,at:.topRight)<932-35,
+              "independent right safe area")
+        check(safe.y(17,at:.topLeft)>8,"independent top safe area")
+        check(safe.y(680,at:.bottomRight)<430-12,
+              "independent bottom safe area")
+
+        print("PASS four-corner fullscreen HUD: iPad 4:3, screenshot 4:3, iPhone 15 Pro Max 19.5:9, 16:9, safe insets, pause")
     }
 }
