@@ -14,7 +14,7 @@ import Foundation
                      ["name":"HL_Import_2023_space_suit_3d_model_ca_o_c_animacji_-_najleps"]],
             "meshes":[["name":"Hangar test"]],
             "skins":Array(repeating:[String:Any](),count:5),
-            "animations":clips.map{["name":$0]]
+            "animations":clips.map{["name":$0]}
         ]
         let inventory=try H55Asset580.validateDocument(document)
         precondition(inventory.animations.count==4 && inventory.skins==5)
