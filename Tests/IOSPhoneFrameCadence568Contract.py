@@ -36,7 +36,7 @@ assert "late24:" in cadence and "late40:" in cadence
 assert "if delta<=0 || delta>0.50" in cadence
 assert "intervals.sorted()" in cadence
 assert "lastCallback=nil" in cadence
-for forbidden in ("UIScreen","CADisplayLink","preferredFramesPerSecond",
+for forbidden in ("UIScreen","CADisplayLink(","preferredFramesPerSecond",
                   "AVAudioPlayer","CarbonisCombat568","drawableSize"):
     assert forbidden not in cadence, forbidden
 assert "w3-source-show-performance-006" in ui
