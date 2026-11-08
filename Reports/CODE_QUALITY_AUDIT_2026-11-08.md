@@ -153,4 +153,6 @@ Zweryfikowano faktyczne źródła `MetalRenderer.swift`, `SourceCombatSky568.swi
 
 **Testy:** `SourceMetalBlendSafetyContract.py` zabezpiecza wszystkie dziewięć usuniętych wymuszonych odwołań, dokładne współczynniki shaderów i ich podłączenie. `SourceSkyPremultipliedBlendTests.swift` sprawdza realne deskryptory z Apple Metal na runnerze macOS, nie na atrapie, przed kompilacją całej aplikacji. Ponadto testy oryginalnych rayów, mgławic, planet i poświaty muszą nadal przejść.
 
+**Uwaga bezpieczeństwa deskryptorów:** poza usunięciem samych `!`, przeniesiono także przypisanie `pixelFormat = .bgra8Unorm` ZA `guard let`, żeby nie wykonywać niezabezpieczonego dostępu przed kontrolą. W czterech źródłowych pipeline'ach nieba robi to wspólny helper; pozostałe pięć zachowuje własne oryginalne ustawienia i jawnie zgłasza błąd. `SourceMetalBlendSafetyContract.py` sprawdza kolejność tych operacji, a macOS test potwierdza BGRA8 na rzeczywistym deskryptorze Apple Metal.
+
 **Niepotwierdzone:** brak fizycznego testu renderingowego iPhone/iPad po tej zmianie; nie udowodniono wzrostu FPS ani pikselowej identyczności obrazu. Źródłowe wzory kolorów, shadery, geometrię, kolejność draw i dane audio pozostawiono bez zmian.
