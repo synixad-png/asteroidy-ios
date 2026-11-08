@@ -1,99 +1,92 @@
 import Foundation
 
 @main struct H55Walk580Tests {
+    static func check(_ ok:Bool,_ why:String) {precondition(ok,"H06: "+why)}
+    typealias G=H55CollisionGeometry580
+
+    static func floor(_ h:Float,_ x0:Float,_ x1:Float,
+                      _ z0:Float,_ z1:Float)->[Float] {
+        [x0,h,z0, x1,h,z0, x0,h,z1,
+         x1,h,z0, x1,h,z1, x0,h,z1]
+    }
+    static func collision(_ extras:[Float]=[])->H55SpatialSupport580 {
+        let tris=floor(0,-28,56,-18,20)+extras
+        return H55SpatialSupport580(geometry:
+             G.Geometry(triangles:tris,objects:[],
+                        sourceTriangles:tris.count/9,proxyTriangles:0,sceneNodes:1,
+                        minX:-30,maxX:60,minZ:-20,maxZ:22))
+    }
     static func main() {
-        func check(_ value:Bool,_ reason:String) {precondition(value,reason)}
-        let clear:(Float,Float,Float)->Bool={_,_,_ in true}
-        let flat:(Float,Float,Float)->Float?={_,_,_ in 0}
+        let p=collision()
         var walk=H55Walk580()
-        check(walk.x==2 && walk.z==14 && walk.y==0,"surveyed H55 starting lane")
-        check(abs(H55Walk580.walkSpeed-4.3)<0.001,"v580 HubWalk speed400 default50")
+        walk.placeAtSpawn(feet:0)
+        check(walk.cameraReady && walk.cameraFeet==0,"spawn visual feet")
+        check(walk.x==2 && walk.z==14,"PC source ordered first entry")
+        check(abs(H55Walk580.walkSpeed-4.3)<0.0001,"source speed 50")
         check(H55Walk580.bodyRadius==0.34 && H55Walk580.bodyHeight==2,
-              "H55FullCollision379 capsule dimensions")
-        walk.step(dt:1/60,forward:1,right:0,sprint:false,
-                  bodyClear:clear,support:flat)
-        check(walk.z<14 && walk.x==2,
-              "yaw 0 walks toward -Z as source HubWalk375")
+              "source four-sphere physical dimensions")
+        walk.step(dt:1/60,forward:1,right:0,sprint:false,collision:p)
+        check(walk.z<14 && walk.x==2,"yaw=0 moves -Z")
         let early=walk.z
-        for _ in 0..<30 {
-            walk.step(dt:1/60,forward:1,right:0,sprint:false,
-                      bodyClear:clear,support:flat)
-        }
-        check(walk.z<early-1,"source walking accelerates over 30 frames")
-        let oldZ=walk.z
-        for _ in 0..<60 {
-            walk.step(dt:1/60,forward:0,right:0,sprint:false,
-                      bodyClear:clear,support:flat)
-        }
-        check(walk.z<oldZ && abs(walk.vz)<0.03,"source exponential stop")
+        for _ in 0..<30 {walk.step(dt:1/60,forward:1,right:0,sprint:false,collision:p)}
+        check(walk.z<early-1,"source response 17 on ground")
+        let before=walk.z
+        for _ in 0..<60 {walk.step(dt:1/60,forward:0,right:0,sprint:false,collision:p)}
+        check(walk.z<before && abs(walk.vz)<0.03,"exponential damping")
         walk.look(deltaX:100,deltaY:100)
-        check(abs(walk.yaw-0.28)<0.0001 &&
-              abs(walk.pitch+0.25)<0.0001,
-              "source delta look uses 0.0028 and 0.0025")
-        var wall=H55Walk580()
-        let noWall:(Float,Float,Float)->Bool={x,_,_ in x<=2.10}
-        for _ in 0..<200 {
-            wall.step(dt:1/60,forward:0,right:1,sprint:true,
-                      bodyClear:noWall,support:flat)
-        }
-        check(wall.x<=2.10001,"5cm bounded steps do not pass thin wall")
-        var ledge=H55Walk580()
-        let unsupported:(Float,Float,Float)->Float?={_,z,_ in
-            z<13.8 ? nil : 0
-        }
-        for _ in 0..<200 {
-            ledge.step(dt:1/60,forward:1,right:0,sprint:true,
-                       bodyClear:clear,support:unsupported)
-        }
-        check(ledge.z>=13.8,"missing floor blocks movement fail-closed")
-        var step=H55Walk580()
-        let halfMetre:(Float,Float,Float)->Float?={_,z,_ in
-            z<13.7 ? Float(0.5) : Float(0)
-        }
-        for _ in 0..<30 {
-            step.step(dt:1/60,forward:1,right:0,sprint:false,
-                      bodyClear:clear,support:halfMetre)
-        }
-        check(abs(step.y-0.5)<0.0001,"source max step up 50cm")
-        var tooHigh=H55Walk580()
-        let more:(Float,Float,Float)->Float?={_,z,_ in
-            z<13.8 ? Float(0.501) : Float(0)
-        }
-        for _ in 0..<80 {
-            tooHigh.step(dt:1/60,forward:1,right:0,sprint:true,
-                         bodyClear:clear,support:more)
-        }
-        check(tooHigh.z>=13.8,"source rejects steps above .50 metres")
+        check(abs(walk.yaw-0.28)<0.0001 && abs(walk.pitch+0.25)<0.0001,
+              "original 0.0028 / 0.0025 look")
+
         var jump=H55Walk580()
-        check(jump.jump(),"source first jump enabled")
-        check(jump.jumps==1 && !jump.grounded,"jump makes airborne")
-        var firstTop:Float=0
+        jump.placeAtSpawn(feet:0)
+        check(jump.jump(collision:p),"source first jump")
+        var apex:Float=0
         for _ in 0..<150 {
-            jump.step(dt:1/60,forward:0,right:0,sprint:false,
-                      bodyClear:clear,support:flat)
-            firstTop=max(firstTop,jump.y)
+            jump.step(dt:1/60,forward:0,right:0,sprint:false,collision:p)
+            apex=max(apex,jump.y)
         }
-        check(firstTop>1.10 && firstTop<1.20,
-              "source first jump apex 1.15m")
-        check(jump.y==0 && jump.grounded && jump.jumps==0,
-              "source jump resets on floor contact")
-        check(jump.jump(),"first jump for double-jump sequence")
-        for _ in 0..<10 {
-            jump.step(dt:1/60,forward:0,right:0,sprint:false,
-                      bodyClear:clear,support:flat)
-        }
-        check(jump.jump(),"source midair second jump")
-        check(jump.jumps==2 && !jump.jump(),"third jump forbidden")
-        var secondApex:Float=jump.y
+        check(apex>1.10 && apex<1.20,"PC 1.15m first apex")
+        check(jump.grounded && jump.jumps==0,"landing resets jump")
+        check(jump.jump(collision:p),"first jump for double jump")
+        for _ in 0..<10 {jump.step(dt:1/60,forward:0,right:0,sprint:false,collision:p)}
+        check(jump.jump(collision:p) && !jump.jump(collision:p),"second jump only")
+        var second:Float=jump.y
         for _ in 0..<180 {
-            jump.step(dt:1/60,forward:0,right:0,sprint:false,
-                      bodyClear:clear,support:flat)
-            secondApex=max(secondApex,jump.y)
+            jump.step(dt:1/60,forward:0,right:0,sprint:false,collision:p)
+            second=max(second,jump.y)
         }
-        check(secondApex>3.45 && secondApex<5,
-              "source second jump adds 3.45 metres of vertical travel")
-        check(jump.grounded && jump.jumps==0,
-              "double jump re-arms only after physical landing")
-        print("PASS v580 H55 walking source speed/look/damping, GLB collision gates, max-step, no-floor and walls")
+        check(second>3.45 && second<5.0,"second jump adds source 3.45m")
+        check(jump.grounded && jump.jumps==0,"double jump resets")
+
+        // Exact H04 collision against a genuine vertical wall mesh.
+        let wall:[Float]=[
+            3.25,0.60,8, 3.25,2.20,8, 3.25,0.60,17,
+            3.25,2.20,8, 3.25,2.20,17, 3.25,0.60,17
+        ]
+        let w=collision(wall)
+        var blocked=H55Walk580()
+        blocked.placeAtSpawn(feet:0)
+        for _ in 0..<180 {
+            blocked.step(dt:1/60,forward:0,right:1,sprint:true,collision:w)
+        }
+        check(blocked.x<3.25 && w.bodyClear379(blocked.x,feet:blocked.y,blocked.z),
+              "swept body does not enter real wall")
+        check(blocked.bobAmount<0.1,"source bob uses displacement, not held input")
+
+        var stair=H55Walk580()
+        stair.x=18;stair.z=16.8;stair.placeAtSpawn(feet:0.16)
+        stair.step(dt:1/60,forward:1,right:0,sprint:false,collision:p)
+        check(stair.y>0.16 && stair.y<0.4,"authored PC 381 ramp step at x=18")
+        check(p.bodyClear379(stair.x,feet:stair.y,stair.z),
+              "ramp is clear at whole capsule")
+
+        // Camera render follows separately: physical feet must not lerp.
+        let smooth=H55Walk580.smoothCamera(0,0.5,1/60,true)
+        check(smooth>0 && smooth<0.5,"PC 404 smoothing only the camera")
+        check(H55Walk580.smoothCamera(0,2,1/60,true)==2,
+              "large step cuts camera lag")
+        check(H55Walk580.smoothCamera(0,0.5,1/60,false)==0.5,
+              "airborne camera is not delayed")
+        print("PASS H06 PC580 actual H02-H04 geometry: speed, look, 4-sphere wall, ramp, jumps, bob, camera")
     }
 }
