@@ -13,6 +13,7 @@ factory=(r/"ASTEROIDYiOS/SourceSkyAssetFactory568.swift").read_text()
 blend=(r/"ASTEROIDYiOS/SourceSkyPremultipliedBlend.swift").read_text()
 shader=(r/"ASTEROIDYiOS/Ship.metal").read_text()
 for factor in (
+    "attachment.pixelFormat = .bgra8Unorm",
     "attachment.isBlendingEnabled=true",
     "attachment.sourceRGBBlendFactor = .one",
     "attachment.destinationRGBBlendFactor = .oneMinusSourceAlpha",
@@ -51,7 +52,7 @@ for t in (
     "private var nebulaTexture: MTLTexture?",
     "let nebulaVertex=try requireShader(\"nebulaOverlayVertex\")",
     "let nebulaFragment=try requireShader(\"nebulaOverlayFragment\")",
-    "nebulaDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm",
+    "nebulaDescriptor.depthAttachmentPixelFormat = .depth32Float",
     "try SourceSkyPremultipliedBlend.configure(nebulaDescriptor)",
     "nebulaOverlayPipeline=try device.makeRenderPipelineState(",
     "let cloudData=SourceSkyAssetFactory568.nebulaSource556()",
