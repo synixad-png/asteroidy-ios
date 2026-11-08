@@ -10,7 +10,8 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 source=(ROOT/"ASTEROIDYiOS"/"DeepSkyPlanets55.swift").read_text()
-renderer=(ROOT/"ASTEROIDYiOS"/"MetalRenderer.swift").read_text()
+renderer=(ROOT/"ASTEROIDYiOS"/"MetalRenderer.swift").read_text() + "\n" + \
+    (ROOT/"ASTEROIDYiOS"/"SourceSkyTextureLifecycle55.swift").read_text()
 factory=(ROOT/"ASTEROIDYiOS"/"SourceSkyAssetFactory568.swift").read_text()
 shader=(ROOT/"ASTEROIDYiOS"/"Ship.metal").read_text()
 def ck(value,message):
