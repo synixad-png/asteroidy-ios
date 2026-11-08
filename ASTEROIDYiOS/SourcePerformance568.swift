@@ -26,6 +26,9 @@ final class SourcePerformance568: ObservableObject {
     private var drawableWaitTotal:Double=0
     private var streamWaitTotal:Double=0
     private var phoneWaitSamples:Int=0
+    // Real iPhone-only MTKView callback arrival intervals; intentionally
+    // separate from actual completed Metal GPU command buffer FPS.
+    private var phoneFrameCadence=PhoneFrameCadence568()
     // CPU build times only; GPU raster/shading is measured separately
     // by actual gpuStartTime/gpuEndTime, never guessed from FPS.
     private var projectileMeshTotal:Double=0
@@ -48,6 +51,7 @@ final class SourcePerformance568: ObservableObject {
         drawableWaitTotal=0
         streamWaitTotal=0
         phoneWaitSamples=0
+        phoneFrameCadence.reset()
         projectileMeshTotal=0
         destructionMeshTotal=0
         cpuSamples=0
@@ -57,6 +61,14 @@ final class SourcePerformance568: ObservableObject {
         UserDefaults.standard.set(value,forKey:Self.sourceKey)
     }
     func toggle() {setEnabled(!enabled)}
+
+    /// Called only by the playable iPhone's MTKViewDelegate.draw(in:).
+    /// This measures iOS callback cadence, never a synthetic refresh rate.
+    func recordPhoneDrawCallback(at now:TimeInterval) {
+        lock.lock()
+        if sampling {phoneFrameCadence.drawCallback(at:now)}
+        lock.unlock()
+    }
 
     /// CPU stopwatch from the actual Metal callback, collected only when
     /// FPS measurement is switched on. It is not GPU counter time.
@@ -110,7 +122,10 @@ final class SourcePerformance568: ObservableObject {
         let next=meter.completedFrame(
             at:ProcessInfo.processInfo.systemUptime,gpuMs:gpuMs)
         var phoneWait:[Double]?=nil
+        var phoneCadence:PhoneFrameCadence568.Sample?=nil
         let cpu:[Double]?=next.map { _ in
+            phoneCadence=phoneFrameCadence.takeSample(
+                at:ProcessInfo.processInfo.systemUptime)
             defer {
                 cpuWorkTotal=0
                 cpuSimulationTotal=0
@@ -155,7 +170,15 @@ final class SourcePerformance568: ObservableObject {
         let phoneText=phoneWait.map {
             String(format:"\nWAIT drawable %.1f / stream %.1f ms",$0[0],$0[1])
         } ?? ""
-        let newText="\(fps) FPS · GPU \(gpuText) ms\n"+cpuText+"\n"+fxText+phoneText
+        // Only iPhone submits draw-callback measurements. Compare this
+        // with completed-GPU FPS: low CPU/GPU + ~30 draw callbacks/s
+        // points to display pacing, not expensive source FX geometry.
+        let cadenceText=phoneCadence.map {
+            String(format:"\nDRAW %.0f/s · avg %.1f / p95 %.1f / max %.1f ms · >=24 %d / >=40 %d",
+                   $0.callbackRate,$0.averageMs,$0.p95Ms,$0.peakMs,
+                   $0.late24,$0.late40)
+        } ?? ""
+        let newText="\(fps) FPS · GPU \(gpuText) ms\n"+cpuText+"\n"+fxText+phoneText+cadenceText
         DispatchQueue.main.async { [weak self] in
             guard let self, self.enabled else{return}
             self.label=newText
