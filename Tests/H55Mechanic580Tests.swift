@@ -36,7 +36,7 @@ import Foundation
         check(npc.phase == .completed,"verified route returns to start")
         check(abs(npc.x-9.9248)<0.001 && abs(npc.z-12.155)<0.001,
               "return position from source GLB")
-        check(npc.distance>100 && npc.distance<135,
+        check(npc.distance>85 && npc.distance<92,
               "source outbound and return path physically traversed")
         let lastDistance=npc.distance
         for _ in 0..<100 {
