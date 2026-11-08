@@ -121,5 +121,7 @@ Automatyczny [audyt jakości PR #18](https://github.com/synixad-png/asteroidy-io
 
 W kolejnym module `W3HomePlanetMetal568.swift` również istniał powielony serializator JSON z cichymi `try?`. Podłączono istniejący `OriginalRenderProofWriter568` bez modyfikacji zawartości `ASTEROIDY_W3_NewHome290_GPUProof.json`, warunku `ASTEROIDY_W3_MENU_VERIFY=1`, semantyki `proofScheduled` ani callbacku zakończenia pracy GPU.
 
-Kontrakt `Tests/SourceGPUProofWriter568Contract.py` sprawdza teraz wszystkie **cztery** potwierdzone raporty: Vanguard431, PlayerShip367, NewHome290 i CARBONIS L1, w tym ich oryginalne nazwy, pola, jawne logowanie błędów zapisu, formatowanie JSON i atomowość. Odnosi się to wyłącznie do raportów diagnostycznych, nie do normalnego rysowania każdej klatki.
+Do wspólnego zapisu podłączono również źródłowy podgląd statku `W3HomeShipPreview568.swift` oraz znacznik diagnostyczny menu `W3MainMenu568.swift`. Kontrakt `Tests/SourceGPUProofWriter568Contract.py` kontroluje **pięć raportów GPU**: Vanguard431 w dwóch widokach, PlayerShip367, NewHome290 i CARBONIS L1. Oryginalne nazwy i pola każdego raportu pozostają niezmienione. Test `Tests/V568W3NativeMenuContract.py` oddzielnie chroni szósty zapis — stan natywnego menu W3, który nie jest dowodem zakończenia operacji GPU.
+
+`OriginalRenderProofWriter568` jest odtąd wspólnym mechanizmem atomowego zapisu diagnostyki renderowania, przy zachowaniu `ASTEROIDY_W3_MENU_VERIFY`, nazwy każdego pliku i oryginalnych pól JSON. Komunikaty błędów opisują teraz dokładnie zapis diagnostyczny, a nie zawsze GPU. Żadna z tych ścieżek nie wykonuje zapisu w zwykłej pętli rysowania każdej klatki.
 
