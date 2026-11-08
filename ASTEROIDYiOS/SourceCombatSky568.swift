@@ -71,13 +71,8 @@ final class SourceCombatSky568 {
             d.fragmentFunction=try shader(fragment)
             d.colorAttachments[0].pixelFormat = .bgra8Unorm
             d.depthAttachmentPixelFormat = .depth32Float
-            let blend=d.colorAttachments[0]!
-            blend.isBlendingEnabled=true
-            // GpuIntro41/IntroSky: premultiplied source-alpha.
-            blend.sourceRGBBlendFactor = .one
-            blend.destinationRGBBlendFactor = .oneMinusSourceAlpha
-            blend.sourceAlphaBlendFactor = .one
-            blend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
+            // GpuIntro41/IntroSky: unchanged source PArgb blend mode.
+            try SourceSkyPremultipliedBlend.configure(d)
             return try device.makeRenderPipelineState(descriptor:d)
         }
         skyPointPipeline=try pipeline("skyPointVertex","skyPointFragment")
