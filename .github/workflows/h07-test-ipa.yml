@@ -5,6 +5,11 @@ on:
       - feature/ios-h55-v580-native-entry
     paths:
       - '.github/workflows/h07-test-ipa.yml'
+      - 'ASTEROIDYiOS/H55Airlocks580.swift'
+      - 'ASTEROIDYiOS/H55ScenePage580.swift'
+      - 'ASTEROIDYiOS/H55Mechanic580.swift'
+      - 'ASTEROIDYiOS/H55Walk580.swift'
+      - 'Tests/H55Airlocks580Tests.swift'
   workflow_dispatch:
 
 permissions:
