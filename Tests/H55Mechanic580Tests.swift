@@ -7,6 +7,9 @@ import Foundation
               H55Mechanic580.routeZ.count==28,"28 source v580 waypoints")
         check(H55Mechanic580.workshopIndex==11,"verified workshop index")
         var npc=H55Mechanic580()
+        check(!npc.calibrated,"GLB anatomical axis must be verified")
+        npc.calibrate(anatomicalHeading:0)
+        check(npc.calibrated,"calibration from bind-pose toe/ankle")
         check(npc.phase == .idle,"original mechanic initially idle")
         let free:(Float,Float)->Bool={_,_ in true}
         for _ in 0..<600 {
@@ -45,6 +48,7 @@ import Foundation
         check(npc.distance==lastDistance,
               "no automatic patrol restart without conversation")
         var blocked=H55Mechanic580()
+        blocked.calibrate(anatomicalHeading:0)
         blocked.finishConversation()
         for _ in 0..<100 {
             blocked.step(dt:1/60,playerX:-30,playerZ:-30,
