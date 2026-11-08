@@ -40,8 +40,12 @@ assert "if !visible(piece.point,max(0.30,piece.size*0.04)) {continue}" in mesh
 assert "budget.particleLimit(state.particles.count)" in mesh
 assert "budget.pieceLimit(state.pieces.count)" in mesh
 assert "for event in state.visibleExplosions(" in mesh
-assert "aspect:aspect," in scene.split(
-    "CarbonisExplosion524Meshes.vertices(",1)[1].split("))",1)[0]
+# Both routes must pass their actual viewport aspect: iPhone CPU-prep
+# reads frameAspect before drawable acquisition; original iPad uses aspect.
+render_parts=scene.split("CarbonisExplosion524Meshes.vertices(")
+assert len(render_parts)==3,"one phone preflight and one original iPad draw"
+assert "aspect:frameAspect," in render_parts[1].split("))",1)[0]
+assert "aspect:aspect," in render_parts[2].split("))",1)[0]
 assert "static func possiblyVisible(" in visible
 assert "let hLimit=depth*(1+margin)+radius *" in visible
 assert "let vLimit=depth*(1+margin)+radius *" in visible

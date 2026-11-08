@@ -55,6 +55,13 @@ final class CarbonisFXStreamingBuffers568 {
         uploadedBytes+=length
         return target
     }
+    /// iPhone late-drawable path can reserve a slot before asking
+    /// CAMetalLayer for a drawable. Release the slot if drawable/encoder
+    /// construction fails; iPad never calls this rollback path.
+    func abortFrame() {
+        guard slot>=0 else {return}
+        inFlight.signal()
+    }
     func completeFrame(_ command:MTLCommandBuffer) {
         // Capture the semaphore, not self; release on success/error alike.
         command.addCompletedHandler { [inFlight] _ in inFlight.signal() }
