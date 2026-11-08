@@ -5,8 +5,12 @@ on:
       - '.github/workflows/verify-combat-only.yml'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
       - 'ASTEROIDYiOS/PhoneCombatResolution568.swift'
+      - 'ASTEROIDYiOS/SourcePerformance568.swift'
+      - 'ASTEROIDYiOS/CarbonisFXStreamingBuffers568.swift'
+      - 'Tests/FXCPUGeodesicSourceContract568.py'
       - 'Tests/PhoneCombatResolution568Tests.swift'
       - 'Tests/PhoneCombatResolution568Contract.py'
+      - 'Tests/IOSPhoneLateDrawable568Contract.py'
       - 'ASTEROIDYiOS/CarbonisRockGeometry568.swift'
       - 'Tests/CarbonisRockGeometry568Tests.swift'
       - 'Tests/RockShapeWarmup568Contract.py'
@@ -50,8 +54,11 @@ on:
       - 'ASTEROIDYiOS/MissionCatalog568.swift'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
       - 'ASTEROIDYiOS/PhoneCombatResolution568.swift'
+      - 'ASTEROIDYiOS/CarbonisFXStreamingBuffers568.swift'
+      - 'ASTEROIDYiOS/SourcePerformance568.swift'
       - 'Tests/PhoneCombatResolution568Tests.swift'
       - 'Tests/PhoneCombatResolution568Contract.py'
+      - 'Tests/IOSPhoneLateDrawable568Contract.py'
       - 'ASTEROIDYiOS/SourceCombatSky568.swift'
       - 'ASTEROIDYiOS/SourceCombatWreck214.swift'
       - 'ASTEROIDYiOS/ResearchWreckGeometry214.swift'
@@ -224,7 +231,9 @@ jobs:
           swiftc ASTEROIDYiOS/PhoneCombatResolution568.swift Tests/PhoneCombatResolution568Tests.swift -o /tmp/phone-combat-resolution568
           /tmp/phone-combat-resolution568
           python3 Tests/PhoneCombatResolution568Contract.py
+          python3 Tests/IOSPhoneLateDrawable568Contract.py
           swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourcePerformance568.swift
       - name: Verify original Combat69 shooting-only broadphase and indexed 3D source bullets
         run: |
           set -euo pipefail
