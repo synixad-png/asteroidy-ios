@@ -5,6 +5,7 @@ import SwiftUI
 /// No textures, panels, animations, timers, audio work or hit-test surfaces.
 struct SourceCombatHUD331: View {
     let hud: CarbonisSession568.HUD
+    let insets: W3ScreenInsets568
 
     private static let white = color(234, 228, 232, 231)
     private static let dim = color(196, 155, 180, 190)
@@ -19,38 +20,53 @@ struct SourceCombatHUD331: View {
     private static func clamp(_ v:CGFloat)->CGFloat { max(0,min(1,v)) }
 
     var body: some View {
-        GeometryReader { geo in
-            Canvas(opaque:false, rendersAsynchronously:false) { context, size in
-                let layout=CombatHUDViewport568(
-                    width:Double(size.width),height:Double(size.height),
-                    safeLeft:Double(geo.safeAreaInsets.leading),
-                    safeRight:Double(geo.safeAreaInsets.trailing),
-                    safeTop:Double(geo.safeAreaInsets.top),
-                    safeBottom:Double(geo.safeAreaInsets.bottom))
-                let scale=CGFloat(layout.scale)
-                var c=context
-                c.translateBy(x:CGFloat(layout.originLeftX),
-                              y:CGFloat(layout.originY))
-                c.scaleBy(x:scale,y:scale)
-                let rightShift=CGFloat(layout.rightGroupOffsetInSource())
-                // The original elements retain their dimensions and relative
-                // positions, while the right-most group uses the whole width.
-                Self.top(c,hud,rightShift:rightShift)
-                Self.radar(c,hud)
-                Self.gauge(c,"KADŁUB",hud.hull,60,191,565,Self.cyan)
-                Self.gauge(c,"PANCERZ",hud.armor,25,191,613,Self.gold)
-                Self.gauge(c,"TARCZA",hud.tarczaEnergy,100,191,661,Self.blue)
-                let counts=[hud.ionAmmo,hud.bombs,hud.shieldCharges,hud.boostCharges]
-                let names=["JON","BOMBY","OSŁONY","DOPALACZ"]
-                let tints=[Self.cyan,Self.dim,Self.cyan,Self.gold]
-                var right=c
-                right.translateBy(x:rightShift,y:0)
-                for i in 0..<4 {
-                    Self.ability(right,type:i,cx:CGFloat(920+100*i),
-                                 count:counts[i],name:names[i],tint:tints[i])
-                }
+        Canvas(opaque:false, rendersAsynchronously:false) { context, size in
+            let layout=CombatHUDViewport568(
+                width:Double(size.width),height:Double(size.height),
+                safeLeft:insets.left,safeRight:insets.right,
+                safeTop:insets.top,safeBottom:insets.bottom)
+            let scale=CGFloat(layout.scale)
+
+            // Separate transforms prevent top / bottom and left / right
+            // from drifting together when the screen is not 16:9.
+            var topLeft=context
+            topLeft.translateBy(
+                x:CGFloat(layout.originX(for:.topLeft)),
+                y:CGFloat(layout.originY(for:.topLeft)))
+            topLeft.scaleBy(x:scale,y:scale)
+
+            var topRight=context
+            topRight.translateBy(
+                x:CGFloat(layout.originX(for:.topRight)),
+                y:CGFloat(layout.originY(for:.topRight)))
+            topRight.scaleBy(x:scale,y:scale)
+
+            var bottomLeft=context
+            bottomLeft.translateBy(
+                x:CGFloat(layout.originX(for:.bottomLeft)),
+                y:CGFloat(layout.originY(for:.bottomLeft)))
+            bottomLeft.scaleBy(x:scale,y:scale)
+
+            var bottomRight=context
+            bottomRight.translateBy(
+                x:CGFloat(layout.originX(for:.bottomRight)),
+                y:CGFloat(layout.originY(for:.bottomRight)))
+            bottomRight.scaleBy(x:scale,y:scale)
+
+            Self.top(topLeft,topRight,hud)
+            Self.radar(bottomLeft,hud)
+            Self.gauge(bottomLeft,"KADŁUB",hud.hull,60,191,565,Self.cyan)
+            Self.gauge(bottomLeft,"PANCERZ",hud.armor,25,191,613,Self.gold)
+            Self.gauge(bottomLeft,"TARCZA",hud.tarczaEnergy,100,191,661,Self.blue)
+            let counts=[hud.ionAmmo,hud.bombs,hud.shieldCharges,hud.boostCharges]
+            let names=["JON","BOMBY","OSŁONY","DOPALACZ"]
+            let tints=[Self.cyan,Self.dim,Self.cyan,Self.gold]
+            for i in 0..<4 {
+                Self.ability(bottomRight,type:i,cx:CGFloat(920+100*i),
+                             count:counts[i],name:names[i],tint:tints[i])
             }
         }
+        .frame(maxWidth:.infinity,maxHeight:.infinity)
         .allowsHitTesting(false)
         .accessibilityElement(children:.ignore)
         .accessibilityLabel("Sektor 01. Punkty \(hud.score). Żetony \(hud.tokenBalance). Życia \(hud.lives). Kadłub \(hud.hull). Pancerz \(hud.armor).")
@@ -101,14 +117,12 @@ struct SourceCombatHUD331: View {
         text(c,s,x+1,y+1,color(200,1,7,11))
         text(c,s,x,y,col)
     }
-    private static func top(_ c:GraphicsContext,_ hud:CarbonisSession568.HUD,
-                            rightShift:CGFloat) {
+    private static func top(_ c:GraphicsContext,_ right:GraphicsContext,
+                            _ hud:CarbonisSession568.HUD) {
         line(c,20,17,20,81,color(190,215,164,67),1.5)
         label(c,"SYNIXAD / WALKA 3D",34,17,white)
         label(c,"BROŃ: \(hud.weaponName)  ·  POZIOM \(hud.weaponLevel)  ·  TEMPO \(hud.rapidLevel)",
               34,42,cyan)
-        var right=c
-        right.translateBy(x:rightShift,y:0)
         label(right,"SEKTOR 01 / 26",777,17,white)
         label(right,"PKT \(hud.score)",936,17,cyan)
         label(right,"ŻETONY \(hud.tokenBalance)",1050,17,gold)
