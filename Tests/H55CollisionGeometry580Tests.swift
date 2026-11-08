@@ -144,8 +144,8 @@ import Foundation
         check(abs(result.triangles[0]-2)<0.0001 &&
               abs(result.triangles[3]-3)<0.0001,
               "architectural glTF TRS applied in world metres")
-        check(abs(result.minX-2)<0.0001 && result.maxX>=15,
-              "original active-scene bounds computed after exclusions")
+        check(abs(result.minX-0)<0.0001 && result.maxX>=15,
+              "original extents include authored airlock mesh before door-collision exclusion")
         let invalid=path.deletingLastPathComponent().appendingPathComponent(
             "h02-invalid-\(UUID().uuidString).glb")
         defer{try? FileManager.default.removeItem(at:invalid)}
