@@ -42,7 +42,7 @@ struct H55Mechanic580 {
     private var completedOnce=false
     private var detour:[H55NpcDetour580.Point]=[]
     private var detourCursor=0
-    private var detourSkipTo=-1
+    private var detourSkipTo = -1
     private var blockedFrames=0
     private var detourAge:Float=999
     private(set) var detoursBuilt=0
