@@ -42,7 +42,7 @@ assert "sourceShip367DrawProofRequested &&" in metal
 for contract in ("JSONSerialization.data(", "withJSONObject: payload",
                  "options: [.sortedKeys]", "try bytes.write(",
                  "options: .atomic", "catch {",
-                 "ASTEROIDY GPU proof write failed"):
+                 "ASTEROIDY render proof write failed"):
     assert contract in writer,contract
 
 print("PASS 4 original GPU completion proofs: one fail-visible atomic writer, unchanged opt-in gates, filenames and source payloads")
