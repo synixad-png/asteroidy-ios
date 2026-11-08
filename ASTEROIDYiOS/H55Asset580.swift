@@ -9,6 +9,11 @@ enum H55Asset580 {
     static let fileName = "hangar_h55.glb"
     static let byteCount: UInt64 = 126_419_336
     static let sha256 = "00e6ba4ab2cce025b1290265052c1e252e149209f6fcbbc50b5d569af4592461"
+    // Verified on the actual 126MB original with pinned cgltf 1.15.
+    // Only the scalar accessor min/max is corrected, and the original
+    // binary chunk remains byte-identical. This is NOT a different hangar.
+    static let correctedByteCount:UInt64 = 126_419_340
+    static let correctedSHA256 = "670c313f0557fdb7aef3a497db3b8b00e56a6be4235ad5810074e5df8aeebbe2"
     static let idleClip = "NPC525_standing_relax.001"
     static let walkClip = "NPC525_walk.003"
 
@@ -58,7 +63,10 @@ enum H55Asset580 {
         guard FileManager.default.fileExists(atPath:url.path) else {throw ValidationError.absent}
         let size=(try FileManager.default.attributesOfItem(atPath:url.path)[.size] as? NSNumber)?.uint64Value ?? 0
         guard size >= 28, size < 256*1024*1024 else {throw ValidationError.unsupported}
-        if requireUserAsset && size != byteCount {throw ValidationError.checksum}
+        if requireUserAsset &&
+            size != byteCount && size != correctedByteCount {
+            throw ValidationError.checksum
+        }
         let f=try FileHandle(forReadingFrom:url)
         defer {try? f.close()}
         let header=try f.read(upToCount:20) ?? Data()
@@ -87,7 +95,8 @@ enum H55Asset580 {
                 hash.update(data:chunk)
             }
             let digest=hash.finalize().map{String(format:"%02x",$0)}.joined()
-            guard digest==sha256 else {throw ValidationError.checksum}
+            let expected=size==byteCount ? sha256 : correctedSHA256
+            guard digest==expected else {throw ValidationError.checksum}
         }
         #endif
         return inventory
@@ -98,11 +107,22 @@ enum H55Asset580 {
         return root.appendingPathComponent(fileName)
     }
     static func availableURL() -> URL? {
+        // The older IPA already stored the original byte-perfect GLB
+        // in Application Support. Migrate it in-place once and do not
+        // require the user to choose the file again.
+        if let installed=try? installedURL(),
+           (try? inspect(installed)) != nil {
+            if (try? FileManager.default.attributesOfItem(atPath:installed.path)[.size]
+                    as? NSNumber)?.uint64Value==correctedByteCount {
+                return installed
+            }
+            return try? install(from:installed)
+        }
         if let bundled=Bundle.main.url(forResource:"hangar_h55",withExtension:"glb"),
-           (try? inspect(bundled)) != nil {return bundled}
-        guard let installed=try? installedURL(),
-              (try? inspect(installed)) != nil else {return nil}
-        return installed
+           (try? inspect(bundled)) != nil {
+            return try? install(from:bundled)
+        }
+        return nil
     }
     @discardableResult
     static func install(from url:URL) throws -> URL {
@@ -111,12 +131,25 @@ enum H55Asset580 {
         defer {if accessible {url.stopAccessingSecurityScopedResource()}}
         #endif
         _=try inspect(url)
+        let originalSize=(try FileManager.default.attributesOfItem(atPath:url.path)[.size]
+                          as? NSNumber)?.uint64Value ?? 0
         let destination=try installedURL()
-        if url.standardizedFileURL==destination.standardizedFileURL {return destination}
+        if originalSize==correctedByteCount &&
+           url.standardizedFileURL==destination.standardizedFileURL {
+            return destination
+        }
         let temp=destination.deletingLastPathComponent()
             .appendingPathComponent(UUID().uuidString+".glb")
         defer {try? FileManager.default.removeItem(at:temp)}
-        try FileManager.default.copyItem(at:url,to:temp)
+        if originalSize==byteCount {
+            // Only approved original SHA256 is accepted by inspect.
+            // Make a new locally-patched copy; NEVER touch the source
+            // GLB in Files or use a legacy/procedural substitute.
+            try H55GLBCompatibility580.repair(original:url,to:temp)
+        } else {
+            try FileManager.default.copyItem(at:url,to:temp)
+        }
+        // Every installed scene has a verified, deterministic SHA256.
         _=try inspect(temp)
         if FileManager.default.fileExists(atPath:destination.path) {
             try FileManager.default.removeItem(at:destination)
