@@ -43,8 +43,8 @@ import Foundation
             widthPoints:932,heightPoints:430,contentScale:3)
         check(low.width*low.height<middle.width*middle.height,
               "performance tier has fewer rasterized pixels")
-        check(Double(low.width*low.height)/
-              Double(original.width*original.height)<0.56,
+        check((Double(low.width*low.height) /
+               Double(original.width*original.height)) < 0.56,
               "worst tier reduces pixel area by about 45%")
         frames(120,60,true,policy:&adaptive)
         check(adaptive.tier == .performance,
