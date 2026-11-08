@@ -183,3 +183,20 @@ Zestawiono ciała trzech metod w `MetalRenderer.swift` i `SourceCombatSky568.swi
 **Nowy kontrakt:** `Tests/SourceSkyTextureLifecycle55Contract.py` sprawdza osobne pola instancji w obu rendererach, wszystkie trzy delegacje, brak globalnego cache, kolejność szybkiej ścieżki i źródłowych warunków widoczności, zróżnicowanie rozmiarów i odrębność GPU. Uaktualniono istniejące testy 9 builderów, SkyTextureGate55, mgławic, planet i czarnej dziury, aby sprawdzały rzeczywistą lokalizację identycznej logiki, nie nieaktualne kopie.
 
 **Granica dowodów:** kompilacja i testy logiczne CI nie są testem interaktywnym Windows, iPhone ani iPad. Nie deklarować zmian FPS lub pikselowej równości bez testów urządzeń. Nie ruszono naprawionego asynchronicznego SFX, WAV ani ustawień HUD.
+
+
+---
+
+## Kontynuacja — audyt rzeczywistych miejsc tworzenia buforów GPU (08.11.2026, po PR #24)
+
+Przegląd wykonano na scalonej bazie PR #24 (`ee6690904c50b86c6bb462c4e8e6456caee9da6d`). Odróżniono wystąpienie API `makeBuffer` od faktycznej alokacji co klatkę; sam grep nie jest pomiarem wydajności.
+
+| Moduł | Potwierdzone miejsca | Kontekst / decyzja |
+|---|---|---|
+| `MetalRenderer.swift` | wiersze 316, 375, 396–397, 674 w scalonej bazie | Vanguard431, ring animacji Boreas, siatki sceny: inicjalizacja; PlayerShip367: jednorazowa próba ładowania z `sourcePlayerShip367LoadAttempted`. Brak dowodu stałej alokacji przy każdym `draw(in:)`. Nie przenosić tych zasobów do współdzielonego singletonu. |
+| `SourceCombatSky568.swift` | wiersz 50 | Pomocnicze tworzenie statycznego bufora w cyklu konstruowania warstwy sceny. Brak bezpośredniego `makeBuffer` w `draw(encoder:camera:...)`. |
+| `CarbonisFXStreamingBuffers568.swift` | wiersz 43 | `makeBuffer` działa jedynie, gdy slot/rola nie ma dostatecznej pojemności; pojemność rośnie potęgami dwójki. Trzy sloty są synchronizowane semaforem i zakończeniem command buffer; jest możliwość pojedynczych reallocacji podczas wzrostu sceny, nie bezwarunkowo na każdej klatce. |
+
+**Nieuzasadniona refaktoryzacja odrzucona:** usuwanie wszystkich znalezionych wywołań `makeBuffer`, łączenie stanów renderera intro i misji, albo deklarowanie wzrostu FPS na podstawie spadku liczby wystąpień w źródłach. Te zmiany mogłyby pogorszyć niezależność cyklu życia GPU lub naruszyć zachowane zabezpieczenie trzech klatek in-flight.
+
+**Pozostaje otwarte:** prześledzenie wszystkich gałęzi `Sector01CarbonisPreview568.swift`, ich czasów życia i zjawiska wzrostu buforów podczas realnego ostrzału; skorelowanie `ASTEROIDY_FX_PROFILE` z pomiarami na iPhonie bez redukowania efektów. Weryfikacja animacji, FPS i obrazu na fizycznym iPhone/iPad po PR #24 nadal nie jest potwierdzona tym audytem. Ta aktualizacja dokumentuje wynik przeglądu, nie zmienia produkcyjnego kodu ani nie stanowi testu wydajności.
