@@ -168,3 +168,18 @@ W `OriginalMusicSynth568.swift` pozostało **9 wymuszonych odczytów** elementó
 **Warunek scalenia:** oprócz oryginalnych testów 15 utworów, 5 krótkich aranżacji, przerw i wznowień audio, wymagana jest w CI kompilacja **dwóch wersji prawdziwego syntezatora Swift** — z zatwierdzonego przez użytkownika commita `8af0f3f1c08adc3638fc1db145db82767208cb6e` oraz z nowej gałęzi. `Tests/OriginalMusicPCMParity568.swift` tworzy WAV dla ścieżek 0, 7 i 14 (takt 1 oraz takty 1–24 dla ścieżki 7), a `cmp` porównuje gotowe pliki **bajt po bajcie**. Obejmuje bas, pad, próbki perkusji, lead, acid, efekt i kluczowe sekcje utworu. Test jest niezależny od statycznego `OriginalMusicCacheSafety568Contract.py`.
 
 Ten test nie dowodzi zgodności całych piętnastu 128-taktowych utworów, a poprawna kompilacja nie zastępuje testu iPhone/iPad. Jeśli choć jeden WAV różni się bajtowo, nie scalać tej zmiany i nie zastępować oryginalnej muzyki.
+
+
+---
+
+## 13. Dwie niezależne sceny, jeden kod ładowania tekstur nieba (08.11.2026)
+
+Zestawiono ciała trzech metod w `MetalRenderer.swift` i `SourceCombatSky568.swift`. Każda para była **identyczna po pominięciu komentarzy i białych znaków**: `ensureCloudTextures55` (44 linie), `ensureDeepPlanetTextures55` (29), `ensureBlackHoleTextures55` (12). Usunięto powielone instrukcje, przenosząc oryginalną logikę do `SourceSkyTextureLifecycle55.swift`. Obie sceny mają własne, osobne, krótkie metody delegujące.
+
+**Nie współdzielimy pamięci GPU między scenami.** `MetalRenderer` i `SourceCombatSky568` nadal posiadają własne pola `nebulaTexture`, `deepPlanetTextures`, `blackHoleTextures`, trzy `SkyTextureGate55` i dwa `SkyTextureSliceCache55`. Wspólne funkcje przyjmują te istniejące pola przez `inout`, nigdy nie przechowują własnych globalnych tekstur lub singletonu. Żadna scena nie może unieważnić cache drugiej.
+
+**Niezmieniona semantyka:** pierwsze widoczne użycie inicjuje przydział, kompletne chmury unikają ponownego projektowania 36 warstw, bitmapy planet i chmur są generowane wyłącznie dla aktualnie widocznych wycinków, zaobserwowane niepowodzenie przydziału jest oznaczone raz przez gate, a kolejność 24 chmur dalekich → planety → czarna dziura → 12 chmur bliskich → gwiazdy pozostaje oryginalna. Także logi błędów i oryginalne wzory tekstur są nietknięte.
+
+**Nowy kontrakt:** `Tests/SourceSkyTextureLifecycle55Contract.py` sprawdza osobne pola instancji w obu rendererach, wszystkie trzy delegacje, brak globalnego cache, kolejność szybkiej ścieżki i źródłowych warunków widoczności, zróżnicowanie rozmiarów i odrębność GPU. Uaktualniono istniejące testy 9 builderów, SkyTextureGate55, mgławic, planet i czarnej dziury, aby sprawdzały rzeczywistą lokalizację identycznej logiki, nie nieaktualne kopie.
+
+**Granica dowodów:** kompilacja i testy logiczne CI nie są testem interaktywnym Windows, iPhone ani iPad. Nie deklarować zmian FPS lub pikselowej równości bez testów urządzeń. Nie ruszono naprawionego asynchronicznego SFX, WAV ani ustawień HUD.

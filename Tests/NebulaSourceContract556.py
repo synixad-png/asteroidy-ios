@@ -8,7 +8,8 @@ is a real Apple Metal compiler nor proof of appearance on iPhone.
 from pathlib import Path
 r=Path(__file__).resolve().parents[1]
 model=(r/"ASTEROIDYiOS/Sphere67.swift").read_text()
-render=(r/"ASTEROIDYiOS/MetalRenderer.swift").read_text()
+render=(r/"ASTEROIDYiOS/MetalRenderer.swift").read_text() + "\n" + \
+    (r/"ASTEROIDYiOS/SourceSkyTextureLifecycle55.swift").read_text()
 factory=(r/"ASTEROIDYiOS/SourceSkyAssetFactory568.swift").read_text()
 blend=(r/"ASTEROIDYiOS/SourceSkyPremultipliedBlend.swift").read_text()
 shader=(r/"ASTEROIDYiOS/Ship.metal").read_text()
@@ -59,7 +60,7 @@ for t in (
     "nebulaOverlayMesh=try Self.makeMesh(device,cloudData.0,cloudData.1)",
     "let created=try SourceSkyAssetFactory568.makeNebulaTextures556(device)",
     "private var nebulaSliceCache55 = SkyTextureSliceCache55(count: SphereNebula556.orbitThemeCount)",
-    "let visibleThemes=Set(Self.sourceCloudLayers55.compactMap",
+    "let visibleThemes=Set(sourceCloudLayers55.compactMap",
     "guard nebulaLoadGate.shouldAllocate(visible:!visibleThemes.isEmpty)",
     "where visibleThemes.contains(theme)",
     "nebulaSliceCache55.needsUpload(style:theme)",
