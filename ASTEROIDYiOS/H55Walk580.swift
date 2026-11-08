@@ -294,7 +294,7 @@ struct H55Walk580 {
             }
         }
     }
-    private static func smoothCamera(_ old:Float,_ real:Float,_ dt:Float,_ onFloor:Bool)->Float {
+    static func smoothCamera(_ old:Float,_ real:Float,_ dt:Float,_ onFloor:Bool)->Float {
         if !onFloor || abs(real-old)>1.35 {return real}
         let response:Float=real>old ? 10.5 : 13
         let alpha:Float=1-exp(-response*max(0,min(0.05,dt)))
