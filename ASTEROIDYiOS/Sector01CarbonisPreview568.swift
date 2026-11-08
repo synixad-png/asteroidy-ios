@@ -572,8 +572,12 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             /// GpuSphere67.cs:8,63,133: source StampSphere67 placement
             /// and 41/23 degree rock spin rotations. CARBONIS C279 is
             /// already normalized to source outer radius in this renderer.
+            static func sourceRockModel(_ rock:SphereAsteroid556)
+                -> simd_float4x4 {
+                sourceRockModel(rock,visualFactor:1)
+            }
             static func sourceRockModel(_ rock:SphereAsteroid556,
-                                        visualFactor:Float=1)
+                                        visualFactor:Float)
                 -> simd_float4x4 {
                 let n=Sphere67.normal(rock.position)
                 let forward=Sphere67.vector(
