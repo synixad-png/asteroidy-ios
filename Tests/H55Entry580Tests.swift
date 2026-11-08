@@ -18,7 +18,7 @@ import Foundation
         check(all.time==0 && !all.walking,"no negative-time activation")
         all.advance(dt:1)
         check(abs(all.time-0.06)<0.00001,"source dt capped at 0.06s")
-        for _ in 0..<52 {all.advance(dt:0.06)}
+        for _ in 0..<53 {all.advance(dt:0.06)}
         check(all.arriving && !all.walking,"walking forbidden before 3.25s")
         all.advance(dt:0.06)
         check(!all.arriving && all.walking && all.started,
