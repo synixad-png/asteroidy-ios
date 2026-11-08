@@ -234,7 +234,7 @@ on:
 jobs:
   publish-combat-verify-run:
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
@@ -259,7 +259,7 @@ jobs:
               content:Buffer.from(body).toString('base64')
             });
   verify-combat-no-ipa:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: read
