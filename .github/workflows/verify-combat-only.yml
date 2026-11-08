@@ -11,6 +11,9 @@ on:
       - 'Tests/PhoneCombatResolution568Tests.swift'
       - 'Tests/PhoneCombatResolution568Contract.py'
       - 'Tests/IOSPhoneLateDrawable568Contract.py'
+      - 'ASTEROIDYiOS/PhoneFrameCadence568.swift'
+      - 'Tests/PhoneFrameCadence568Tests.swift'
+      - 'Tests/IOSPhoneFrameCadence568Contract.py'
       - 'ASTEROIDYiOS/CarbonisRockGeometry568.swift'
       - 'Tests/CarbonisRockGeometry568Tests.swift'
       - 'Tests/RockShapeWarmup568Contract.py'
@@ -59,6 +62,9 @@ on:
       - 'Tests/PhoneCombatResolution568Tests.swift'
       - 'Tests/PhoneCombatResolution568Contract.py'
       - 'Tests/IOSPhoneLateDrawable568Contract.py'
+      - 'ASTEROIDYiOS/PhoneFrameCadence568.swift'
+      - 'Tests/PhoneFrameCadence568Tests.swift'
+      - 'Tests/IOSPhoneFrameCadence568Contract.py'
       - 'ASTEROIDYiOS/SourceCombatSky568.swift'
       - 'ASTEROIDYiOS/SourceCombatWreck214.swift'
       - 'ASTEROIDYiOS/ResearchWreckGeometry214.swift'
@@ -225,6 +231,13 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/W3StartupSplash568.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/MissionCinematic568.swift
+      - name: Verify real iPhone MTKView callback cadence vs GPU completed FPS
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/PhoneFrameCadence568.swift Tests/PhoneFrameCadence568Tests.swift -o /tmp/phone-frame-cadence568
+          /tmp/phone-frame-cadence568
+          python3 Tests/IOSPhoneFrameCadence568Contract.py
+          swiftc -frontend -parse ASTEROIDYiOS/SourcePerformance568.swift
       - name: Verify iPhone-only adaptive 30 FPS shooting without iPad quality regression
         run: |
           set -euo pipefail
