@@ -15,6 +15,9 @@ on:
       - 'ASTEROIDYiOS/SourcePerformance568.swift'
       - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/PhoneCombatResolution568.swift'
+      - 'Tests/PhoneCombatResolution568Tests.swift'
+      - 'Tests/PhoneCombatResolution568Contract.py'
       - 'ASTEROIDYiOS/SourceCombatSky568.swift'
       - 'ASTEROIDYiOS/SourceCombatWreck214.swift'
       - 'ASTEROIDYiOS/ResearchWreckGeometry214.swift'
@@ -187,6 +190,13 @@ jobs:
           /tmp/w3-fps568
           python3 Tests/W3AdaptiveViewportContract568.py
           python3 Tests/SourcePerformance568Contract.py
+      - name: Verify iPhone-only adaptive 30 FPS shooting without iPad quality regression
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/PhoneCombatResolution568.swift Tests/PhoneCombatResolution568Tests.swift -o /tmp/phone-combat-resolution568
+          /tmp/phone-combat-resolution568
+          python3 Tests/PhoneCombatResolution568Contract.py
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
       - name: Verify original C279 terrain radius v523 before IPA build
         run: |
           swiftc ASTEROIDYiOS/CarbonisMissionPlanet523.swift Tests/CarbonisMissionPlanet523Tests.swift -o /tmp/carbonis-mission-scale-523
