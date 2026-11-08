@@ -110,9 +110,6 @@ final class OriginalAudioAV568: ObservableObject {
     private var introMissionSector568:Int?
     private var fadeTimer:Timer?
     private var fadeStart:TimeInterval=0
-    private var effects: [AVAudioPlayer] = []
-    // Original MusicAudio.cs: voice announcements interrupt one another.
-    private var spokenVoices:[AVAudioPlayer]=[]
     private var musicDuck:Float=1
     // Windows/src/BossTunnelGame.cs PausedFrom=Playing is independent
     // of iOS background suspension. MusicAudio.cs ducks music to 55%.
@@ -121,7 +118,9 @@ final class OriginalAudioAV568: ObservableObject {
     private var masterMusicVolume:Float {
         Float(settings.musicPercent)/100*0.8*musicDuck
     }
-    private var prewarmedEffects: [String:[AVAudioPlayer]] = [:]
+    // Combat shots/explosions must never call AVAudioPlayer from the
+    // SwiftUI/MetalKit main loop. The dedicated FIFO owns their voices.
+    private let combatSFX568=OriginalShotSFXWorker568()
     private var prewarmedMusic: [Int:AVAudioPlayer] = [:]
     private let enginePlayback52=OriginalEnginePlayback52()
     private var engineLevel52:Float=0
@@ -242,7 +241,7 @@ final class OriginalAudioAV568: ObservableObject {
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 self.sounds = found
-                self.prewarmedEffects = prepared
+                self.combatSFX568.install(prepared)
                 self.stage = 1
                 self.sourceStatus = "ASTRAL GATE — PIERWSZY UTWÓR MENU"
             }
@@ -479,9 +478,7 @@ final class OriginalAudioAV568: ObservableObject {
         engineLevel52=0
         enginePlayback52.stop()
         context = .menu
-        effects.forEach {$0.stop()}
-        effects.removeAll()
-        spokenVoices.removeAll()
+        combatSFX568.stopAll(invalidate:false)
         if !suspended { playTrack(0) }
     }
     func enterMission(_ sector: Int) {
@@ -555,7 +552,7 @@ final class OriginalAudioAV568: ObservableObject {
         musicDuck=1
         finishMusicFade()
         music?.stop(); activeMusicIndex = nil
-        effects.removeAll()
+        combatSFX568.stopAll(invalidate:false)
     }
     /// Short one-shot sounds must never be resumed mid-impact after iOS
     /// suspended the app. More importantly, AVAudioPlayer.prepareToPlay()
@@ -563,11 +560,10 @@ final class OriginalAudioAV568: ObservableObject {
     /// Drop all such players; rebuild only the SAME original M4A on the
     /// next shot/explosion, with no resynthesis or FPS-heavy full bank reload.
     private func invalidateSuspendedEffects568() {
-        effects.forEach { $0.stop() }
-        effects.removeAll(keepingCapacity:true)
-        spokenVoices.forEach { $0.stop() }
-        spokenVoices.removeAll(keepingCapacity:true)
-        prewarmedEffects.removeAll(keepingCapacity:true)
+        // Worker owns ALL effect AVAudioPlayers. Drop stale decoder pools
+        // exclusively on its serial queue, before the first resumed shot.
+        // The actual AVAudioSession is reactivated on main as in IPA #141.
+        combatSFX568.stopAll(invalidate:true)
     }
     // Apple may deactivate an AVAudioSession while the iPad is locked.
     // Calling AVAudioPlayer.play() alone on the previously paused player
@@ -751,65 +747,24 @@ final class OriginalAudioAV568: ObservableObject {
     func sourceEffect(_ code: Int) {
         guard !suspended, !audioInterrupted, !missionUserPaused,
               settings.effectsPercent>0 else { return }
-        // MusicMix.AddEffect uses one voice event per volley and 16 slots.
+        // MusicMix.AddEffect source global variation advances for every
+        // actual enabled event, including announcements, on the main
+        // sequence exactly as before.
         let variation = variant
         variant += 1
-        let stem: String
-        if (50...57).contains(code) { stem = "Voice\(code-50)" }
-        else { stem = "SFX\(code)_\((10...30).contains(code) ? variation % 3 : 0)" }
+        let stem:String
+        if (50...57).contains(code) {stem="Voice\(code-50)"}
+        else {stem="SFX\(code)_\((10...30).contains(code) ? variation % 3 : 0)"}
         guard let file = sounds[stem] else { return }
-        if (50...57).contains(code) {
-            // Source MusicMix.AddEffect: stop previous Polish announcement
-            // without silencing any playing gun or explosion.
-            spokenVoices.forEach {$0.stop()}
-            spokenVoices.removeAll()
-        }
-        do {
-            // First two players for every exact source sample were
-            // prepared at application startup; allocate only when the
-            // same effect exceeds its two-voice source budget.
-            let pool = prewarmedEffects[stem] ?? []
-            let player:AVAudioPlayer
-            if let available=pool.first(where:{!$0.isPlaying}) {
-                player=available
-            } else if pool.count<4 {
-                let new=try AVAudioPlayer(contentsOf:file)
-                new.prepareToPlay()
-                prewarmedEffects[stem,default:[]].append(new)
-                player=new
-            } else {
-                player=pool[0]
-                player.stop()
-            }
-            player.currentTime=0
-            let gain:Float = (50...57).contains(code) ? 0.84 :
-                             code==60 ? 0.38 : (40...45).contains(code) ? 0.32 : 0.55
-            player.volume = Float(settings.effectsPercent)/100 * gain
-            player.prepareToPlay()
-            // Never ignore a failed .play(). A cached SFX queue may have
-            // gone stale after a real iOS interruption even when its
-            // isPlaying flag looked usable. Reopen the SAME bundled sample.
-            var audiblePlayer=player
-            if !player.play() {
-                let fresh=try AVAudioPlayer(contentsOf:file)
-                fresh.currentTime=0
-                fresh.volume=player.volume
-                fresh.prepareToPlay()
-                guard fresh.play() else {
-                    prewarmedEffects[stem]?.removeAll { $0 === player }
-                    sourceStatus="IOS SFX \(code) — NIE MOŻNA ODTWORZYĆ"
-                    return
-                }
-                prewarmedEffects[stem]?.removeAll { $0 === player }
-                prewarmedEffects[stem,default:[]].append(fresh)
-                audiblePlayer=fresh
-            }
-            effects.removeAll { !$0.isPlaying }
-            if effects.count>=16 { effects.removeFirst().stop() }
-            effects.append(audiblePlayer)
-            if (50...57).contains(code) {spokenVoices.append(audiblePlayer)}
-        } catch {
-            sourceStatus = "SFX \(code) — BŁĄD ORYGINALNEGO PLIKU"
+        // Original Windows MusicMix source mix values, unchanged.
+        let gain:Float = (50...57).contains(code) ? 0.84 :
+                         code==60 ? 0.38 : (40...45).contains(code) ? 0.32 : 0.55
+        let volume=Float(settings.effectsPercent)/100 * gain
+        // Never call AVAudioPlayer.play/prepareToPlay/isPlaying/stop or
+        // allocate an M4A decoder on the main thread during combat.
+        combatSFX568.play(stem:stem,file:file,code:code,volume:volume) {
+            [weak self] message in
+            self?.sourceStatus=message
         }
     }
     func preview(_ index:Int) {
