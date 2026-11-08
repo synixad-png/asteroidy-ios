@@ -123,14 +123,14 @@ import Foundation
                        "mesh":importedMesh],root:false)
         }
         // Original GLB animated airlock leaves rest-pose static collider out.
-        _=f.node(["name":"H70_HANGAR_AIRLOCK_panel","mesh":staticMesh])
+        _=f.node(["name":"H70_HANGAR_AIRLOCK_panel","mesh":importedMesh])
         let path=FileManager.default.temporaryDirectory
             .appendingPathComponent("h02-authentic-GLB-\(UUID().uuidString).glb")
         defer{try? FileManager.default.removeItem(at:path)}
         try f.write(path)
         let result=try H55CollisionGeometry580.fromGLB(path)
         check(result.sceneNodes==10,"active scene descendants + doors")
-        check(result.sourceTriangles==10_002,"dynamic drone instances omitted, source triangles counted")
+        check(result.sourceTriangles==10_003,"dynamic drone instances omitted, source triangles counted")
         check(result.proxyTriangles==2,"two static proxies: authored prefab and third drone")
         check(result.triangles.count==90_054,"10k architectural triangles + source six bridge triangles")
         check(result.objects.count==2,"two distinct physical instance ids")
