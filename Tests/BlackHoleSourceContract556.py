@@ -14,6 +14,7 @@ r=Path(__file__).resolve().parents[1]
 model=(r/"ASTEROIDYiOS/BlackHoleSky55.swift").read_text()
 metal=(r/"ASTEROIDYiOS/Ship.metal").read_text()
 render=(r/"ASTEROIDYiOS/MetalRenderer.swift").read_text()
+factory=(r/"ASTEROIDYiOS/SourceSkyAssetFactory568.swift").read_text()
 def check(condition,msg):
     if not condition: raise AssertionError(msg)
 for token in (
@@ -52,12 +53,7 @@ for token in (
     "let blackHoleVertex=try requireShader(\"blackHoleVertex55\")",
     "let blackHoleFragment=try requireShader(\"blackHoleFragment55\")",
     "blackHolePipeline=try device.makeRenderPipelineState(",
-    "desc.textureType = .type2DArray",
-    "desc.arrayLength = 3",
-    "pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false",
-    "let image=BlackHoleSky55.textureBGRA(slice:slice)",
-    "bytesPerRow:n*4",
-    "let created=try Self.makeBlackHoleTextures55(device)",
+    "let created=try SourceSkyAssetFactory568.makeBlackHoleTextures55(device)",
     "BlackHoleSky55.project(",
     "let layers=BlackHoleSky55.overlays(",
     "properties.reserveCapacity(1+layers.count*3)",
@@ -69,6 +65,15 @@ for token in (
     "vertexStart:24*6,vertexCount:12*6",
 ):
     check(token in render,"Original black-hole Metal draw contract missing: "+token)
+for token in (
+    "static func makeBlackHoleTextures55(_ device:MTLDevice)",
+    "desc.textureType = .type2DArray",
+    "desc.arrayLength = 3",
+    "pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false",
+    "let image=BlackHoleSky55.textureBGRA(slice:slice)",
+    "bytesPerRow:n*4",
+):
+    check(token in factory,"Shared original black-hole texture builder changed: "+token)
 # The separate cinematic now has its own initial sky point draw;
 # check the original v556 sphere compositor in isolation, not the
 # first occurrence of a sky stage in an unrelated scene.
