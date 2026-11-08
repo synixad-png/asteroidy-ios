@@ -21,6 +21,11 @@ final class SourcePerformance568: ObservableObject {
     private var cpuWorkTotal:Double=0
     private var cpuSimulationTotal:Double=0
     private var cpuWaitTotal:Double=0
+    // iPhone-only precise Metal wait breakdown. The existing iPad FPS
+    // label remains byte-for-byte identical, with no extra HUD lines.
+    private var drawableWaitTotal:Double=0
+    private var streamWaitTotal:Double=0
+    private var phoneWaitSamples:Int=0
     // CPU build times only; GPU raster/shading is measured separately
     // by actual gpuStartTime/gpuEndTime, never guessed from FPS.
     private var projectileMeshTotal:Double=0
@@ -40,6 +45,9 @@ final class SourcePerformance568: ObservableObject {
         cpuWorkTotal=0
         cpuSimulationTotal=0
         cpuWaitTotal=0
+        drawableWaitTotal=0
+        streamWaitTotal=0
+        phoneWaitSamples=0
         projectileMeshTotal=0
         destructionMeshTotal=0
         cpuSamples=0
@@ -53,17 +61,25 @@ final class SourcePerformance568: ObservableObject {
     /// CPU stopwatch from the actual Metal callback, collected only when
     /// FPS measurement is switched on. It is not GPU counter time.
     func recordCPU(workMs:Double,simulationMs:Double,waitMs:Double,
-                   projectileMeshMs:Double=0,destructionMeshMs:Double=0) {
+                   projectileMeshMs:Double=0,destructionMeshMs:Double=0,
+                   drawableWaitMs:Double?=nil,streamWaitMs:Double?=nil) {
         guard workMs.isFinite && simulationMs.isFinite &&
               waitMs.isFinite && workMs>=0 && simulationMs>=0 && waitMs>=0 &&
               projectileMeshMs.isFinite && destructionMeshMs.isFinite &&
-              projectileMeshMs>=0 && destructionMeshMs>=0
+              projectileMeshMs>=0 && destructionMeshMs>=0 &&
+              (drawableWaitMs.map {$0.isFinite && $0>=0} ?? true) &&
+              (streamWaitMs.map {$0.isFinite && $0>=0} ?? true)
         else {return}
         lock.lock()
         if sampling {
             cpuWorkTotal+=workMs
             cpuSimulationTotal+=simulationMs
             cpuWaitTotal+=waitMs
+            if let drawableWaitMs,let streamWaitMs {
+                drawableWaitTotal+=drawableWaitMs
+                streamWaitTotal+=streamWaitMs
+                phoneWaitSamples+=1
+            }
             projectileMeshTotal+=projectileMeshMs
             destructionMeshTotal+=destructionMeshMs
             cpuSamples+=1
@@ -93,17 +109,25 @@ final class SourcePerformance568: ObservableObject {
         guard sampling else {lock.unlock();return}
         let next=meter.completedFrame(
             at:ProcessInfo.processInfo.systemUptime,gpuMs:gpuMs)
+        var phoneWait:[Double]?=nil
         let cpu:[Double]?=next.map { _ in
             defer {
                 cpuWorkTotal=0
                 cpuSimulationTotal=0
                 cpuWaitTotal=0
+                drawableWaitTotal=0
+                streamWaitTotal=0
+                phoneWaitSamples=0
                 projectileMeshTotal=0
                 destructionMeshTotal=0
                 cpuSamples=0
             }
             guard cpuSamples>0 else{return []}
             let n=Double(cpuSamples)
+            if phoneWaitSamples>0 {
+                let pn=Double(phoneWaitSamples)
+                phoneWait=[drawableWaitTotal/pn,streamWaitTotal/pn]
+            }
             return [cpuWorkTotal/n,cpuSimulationTotal/n,cpuWaitTotal/n,
                     projectileMeshTotal/n,destructionMeshTotal/n]
         }
@@ -125,7 +149,13 @@ final class SourcePerformance568: ObservableObject {
             : "FX CPU n/d"
         // Never call 1/FPS GPU time if Metal GPU timestamps are unavailable.
         // Cadence and GPU execution are distinct, especially at 35 FPS.
-        let newText="\(fps) FPS · GPU \(gpuText) ms\n"+cpuText+"\n"+fxText
+        // Additional diagnostics appear ONLY on iPhone, when that
+        // renderer supplies the split Metal wait timings. iPad's HUD
+        // format and scene remain identical to the already-working #142.
+        let phoneText=phoneWait.map {
+            String(format:"\nWAIT drawable %.1f / stream %.1f ms",$0[0],$0[1])
+        } ?? ""
+        let newText="\(fps) FPS · GPU \(gpuText) ms\n"+cpuText+"\n"+fxText+phoneText
         DispatchQueue.main.async { [weak self] in
             guard let self, self.enabled else{return}
             self.label=newText
