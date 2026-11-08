@@ -46,6 +46,11 @@ struct H55Mechanic580 {
     private var blockedFrames=0
     private var detourAge:Float=999
     private(set) var detoursBuilt=0
+    private(set) var doorWait:Float=0
+    private(set) var doorFailure:Int?=nil
+    var isPatrolling:Bool {
+        doorFailure == nil && (phase == .walking || phase == .blocked || phase == .workshop)
+    }
     var moving:Bool {phase == .walking && speed>0.01}
 
     mutating func finishConversation() {
@@ -61,15 +66,19 @@ struct H55Mechanic580 {
         detourSkipTo = -1
         blockedFrames=0
         detourAge=999
+        doorWait=0
+        doorFailure=nil
     }
 
     /// Use actual active H55 floor/GLB collision plus exclusion of player.
     /// If unsafe, stop instead of walking through GLB. Source A* is not
     /// emulated by an arbitrary shortcut.
     mutating func step(dt raw:Float,playerX:Float,playerZ:Float,
-                       canWalk:(Float,Float)->Bool) {
+                       canWalk:(Float,Float)->Bool,
+                       doorBlocking:(Float,Float,Float,Float)->Int? =
+                         {_,_,_,_ in nil}) {
         let dt=min(0.07,max(0,raw))
-        guard dt>0 else{return}
+        guard dt>0 && doorFailure == nil else{return}
         detourAge+=dt
         if phase == .idle {
             guard talked && calibrated && !completedOnce &&
@@ -156,14 +165,28 @@ struct H55Mechanic580 {
         let nz=z+(avoiding ? dz/d : -cos(facing))*move
         let playerClearance:Float=avoiding ? 0.82 : (d>6 ? 0.97 : 0.82)
         let playerBlocked=hypot(nx-playerX,nz-playerZ)<playerClearance
-        if !playerBlocked && canWalk(nx,nz) {
+        // PC v544: evaluate source door plane on the NPC's actual
+        // movement segment BEFORE player A*/static walkability.
+        let gate=doorBlocking(x,z,nx,nz)
+        if !playerBlocked && gate == nil && canWalk(nx,nz) {
             x=nx;z=nz;distance+=move
             blockedFrames=0
+            doorWait=0
             phase = .walking
             return
         }
         speed=max(0,speed-Self.braking*dt)
         phase = .blocked
+        if let gate {
+            // PC H55Renderer.cs NPC v544 waits 2.5s, then aborts.
+            // Static walls and gates must NEVER trigger player-only A*.
+            doorWait+=dt
+            if doorWait>2.5 {
+                doorFailure=gate
+                talked=false
+            }
+            return
+        }
         if playerBlocked {
             blockedFrames+=1
             // PC v532: only the player's capsule can trigger A*.
