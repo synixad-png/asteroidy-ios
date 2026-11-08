@@ -128,26 +128,48 @@ import simd
         scene.rootNode.hitTestWithSegment(from:from,to:to,
                options:["backFaceCulling":false,"firstFoundOnly":false])
     }
+    /// Windows HubWalk375.cs:139 and H55FullCollision379.Support():787-810.
+    /// The *actual* user H55 mesh has the TOP of its original floor tiles
+    /// at Y=0.085 with a -Y normal (and the underside at Y=0.005, +Y).
+    /// The old +Y-only predicate rejected the physical top floor.
+    /// PC deliberately accepts BOTH windings (normalY squared) and
+    /// selects the highest valid support within the requested interval.
     private static func supportHeight(_ scene:SCNScene,
-                                      x:Float,z:Float,feet:Float)->Float? {
-        let from=SCNVector3(x,feet+H55Walk580.stepUp+0.05,z)
-        let to=SCNVector3(x,feet-H55Walk580.stepDown-0.05,z)
+                                      x:Float,z:Float,feet:Float,
+                                      spawn:Bool=false)->Float? {
+        let low=feet-(spawn ? 0.25 : H55Walk580.stepDown+0.05)
+        let high=feet+(spawn ? 0.45 : H55Walk580.stepUp+0.05)
+        let from=SCNVector3(x,high+0.002,z)
+        let to=SCNVector3(x,low-0.002,z)
         let floors=hits(scene,from:from,to:to)
-            .filter{$0.worldNormal.y>0.45 &&
-                    abs($0.worldCoordinates.y-feet)<=0.55}
-        return floors.min(by:{
-            abs($0.worldCoordinates.y-feet)<abs($1.worldCoordinates.y-feet)
-        }).map{$0.worldCoordinates.y}
+            .filter{hit in
+                let nx=hit.worldNormal.x,ny=hit.worldNormal.y,
+                    nz=hit.worldNormal.z
+                return ny*ny >= 0.65*(nx*nx+nz*nz) &&
+                       hit.worldCoordinates.y>=low-0.002 &&
+                       hit.worldCoordinates.y<=high+0.002
+            }
+        return floors.max(by:{$0.worldCoordinates.y<$1.worldCoordinates.y})
+                     .map{$0.worldCoordinates.y}
     }
+    /// Windows H55FullCollision379.BodyClear():887-920:
+    /// decorative ankle-height floor trims (Y<=feet+stepUp) are not
+    /// blocking torso walls. Unlike old iOS 0.25m ray, these probes
+    /// exclude everything below the already-source-defined 50cm step.
+    /// This is still a SceneKit approximate cylinder, not PC's exact
+    /// 4-sphere triangle-distance collision.
     private static func bodyClear(_ scene:SCNScene,
                                   x:Float,feet:Float,z:Float)->Bool {
         let radius=H55Walk580.bodyRadius
-        for height:Float in [0.25,1.0,1.75] {
+        for height:Float in [0.335,0.78,1.225,1.67] {
             let cy=feet+height
             for (dx,dz):(Float,Float) in [(1,0),(-1,0),(0,1),(0,-1)] {
                 let start=SCNVector3(x,cy,z)
                 let end=SCNVector3(x+dx*radius,cy,z+dz*radius)
-                if !hits(scene,from:start,to:end).isEmpty {return false}
+                if hits(scene,from:start,to:end).contains(where:{
+                    $0.worldCoordinates.y>feet+H55Walk580.stepUp+0.001 &&
+                    $0.worldCoordinates.y<feet+H55Walk580.bodyHeight+0.28
+                }) {return false}
             }
         }
         return true
@@ -228,7 +250,7 @@ import simd
                                          (4,15),(-4,15),(6,15)]
         var chosen:H55Walk580?
         for (x,z) in candidates {
-            guard let floor=Self.supportHeight(realScene,x:x,z:z,feet:0),
+            guard let floor=Self.supportHeight(realScene,x:x,z:z,feet:0,spawn:true),
                   Self.bodyClear(realScene,x:x,feet:floor,z:z) else{continue}
             var trial=H55Walk580()
             trial.x=x;trial.z=z;trial.y=floor
