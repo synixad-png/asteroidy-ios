@@ -29,7 +29,12 @@ Ten dokument jest wymaganiem repozytorium, a nie propozycją.
    obejść, martwych flag ani fałszywie zielonych testów.
 5. **Obsługuj błędy jawnie.** W krytycznych ścieżkach nie stosuj
    `try!`, `as!`, `fatalError`, pustych `catch`, ukrywania błędów zapisu
-   pliku ani dowolnego fallbacku. Oczekiwane braki zasobów mogą dawać
+   pliku ani dowolnego fallbacku. Jedyny zaakceptowany wyjątek to
+   dwa strażniki nieistniejących kluczy oryginalnych filtrów SOS w
+   `OriginalMusicSynth568.swift`, objęte dokładnym testem
+   `Tests/OriginalMusicFilterKeys568Contract.py`; nie zamieniaj ich na
+   hipotetyczne współczynniki ani nie dodawaj nowych bez testu.
+   Oczekiwane braki zasobów mogą dawać
    bezpieczne `nil`, ale stan musi być rozpoznawalny, a test musi odróżniać
    brak od sukcesu. Diagnostyka nie może udawać ukończenia testu.
 6. **Nie degraduj klatek.** W ścieżce klatki i `MTKViewDelegate.draw(in:)`
@@ -61,7 +66,8 @@ Ten dokument jest wymaganiem repozytorium, a nie propozycją.
 ## Stała kontrola jakości
 
 - Uruchamiaj `python3 Tools/code_quality_audit.py --root . --gate` oraz
-  `python3 Tests/CodeQualityAuditTests.py`; raport audytu jest artefaktem CI.
+  `python3 Tests/CodeQualityAuditTests.py` i
+  `python3 Tests/OriginalMusicFilterKeys568Contract.py`; raport audytu jest artefaktem CI.
 - Statyczne ostrzeżenie to **kandydat** do ręcznej oceny, nie automatyczny
   dowód błędu. Nie kasuj funkcji tylko dlatego, że ma wiele linii.
 - Nie „naprawiaj” wymagań ani testów tylko po to, aby były zielone. Zmiany
