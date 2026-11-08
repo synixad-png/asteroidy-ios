@@ -24,6 +24,8 @@ on:
       - 'Tests/H55SpatialSupport580Tests.swift'
       - 'ASTEROIDYiOS/H55TriangleBody580.swift'
       - 'Tests/H55TriangleBody580Tests.swift'
+      - 'ASTEROIDYiOS/H55Sweep401580.swift'
+      - 'Tests/H55Sweep401580Tests.swift'
       - 'ASTEROIDYiOS/H55Walk580.swift'
       - 'Tests/H55Walk580Tests.swift'
       - 'ASTEROIDYiOS/H55Mechanic580.swift'
@@ -353,6 +355,8 @@ jobs:
           /tmp/h03-spatial-test
           swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift Tests/H55TriangleBody580Tests.swift -o /tmp/h04-triangle-body-test
           /tmp/h04-triangle-body-test
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift Tests/H55Sweep401580Tests.swift -o /tmp/h04-sweep-test
+          /tmp/h04-sweep-test
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
       - name: Verify Swift compiler
