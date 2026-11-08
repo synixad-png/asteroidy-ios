@@ -1543,14 +1543,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                         "bundleID":Bundle.main.bundleIdentifier ?? "",
                         "simulatorTestOnly":true
                     ]
-                    if let folder=FileManager.default.urls(
-                        for:.cachesDirectory,in:.userDomainMask).first,
-                       let bytes=try? JSONSerialization.data(
-                        withJSONObject:payload,options:[.sortedKeys]) {
-                        let path=folder.appendingPathComponent(
-                            "ASTEROIDY_Vanguard431_RenderProof.json")
-                        try? bytes.write(to:path,options:.atomic)
-                    }
+                    OriginalRenderProofWriter568.save(
+                        payload,
+                        filename:"ASTEROIDY_Vanguard431_RenderProof.json")
                 }
             }
             command.present(drawable)
@@ -1809,14 +1804,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                                 "bundleID":Bundle.main.bundleIdentifier ?? "",
                                 "simulatorTestOnly":true
                             ]
-                            if let dir=FileManager.default.urls(
-                                for:.cachesDirectory,in:.userDomainMask).first,
-                               let encoded=try? JSONSerialization.data(
-                                withJSONObject:payload,options:[.sortedKeys]) {
-                                try? encoded.write(to:dir.appendingPathComponent(
-                                    "ASTEROIDY_PlayerShip367_RenderProof.json"),
-                                    options:.atomic)
-                            }
+                            OriginalRenderProofWriter568.save(
+                                payload,
+                                filename:"ASTEROIDY_PlayerShip367_RenderProof.json")
                         }
                     }
                     encoder.setRenderPipelineState(pipeline)
