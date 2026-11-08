@@ -340,7 +340,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 atmosphereSpec.fragmentFunction=atmosphereFragment
                 atmosphereSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
                 atmosphereSpec.depthAttachmentPixelFormat = .depth32Float
-                let atmBlend=atmosphereSpec.colorAttachments[0]!
+                guard let atmBlend=atmosphereSpec.colorAttachments[0] else {
+                    throw SourceError.metal
+                }
                 atmBlend.isBlendingEnabled=true
                 atmBlend.sourceRGBBlendFactor = .sourceAlpha
                 atmBlend.destinationRGBBlendFactor = .oneMinusSourceAlpha
@@ -353,7 +355,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 glowSpec.fragmentFunction=glowFragment
                 glowSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
                 glowSpec.depthAttachmentPixelFormat = .depth32Float
-                let glowBlend=glowSpec.colorAttachments[0]!
+                guard let glowBlend=glowSpec.colorAttachments[0] else {
+                    throw SourceError.metal
+                }
                 glowBlend.isBlendingEnabled=true
                 glowBlend.sourceRGBBlendFactor = .one
                 glowBlend.destinationRGBBlendFactor = .one
