@@ -9,6 +9,7 @@ on:
       - 'ASTEROIDYiOS/H55Walk580.swift'
       - 'Tests/H55Airlocks580Tests.swift'
       - 'Tests/H55AirlocksRealGLB580Tests.swift'
+      - 'Tests/H55AirlockRealGLBIntegration580Tests.swift'
       - '.github/workflows/h07-parity-check.yml'
   workflow_dispatch:
 permissions:
@@ -40,6 +41,15 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/H55Airlocks580.swift \
             Tests/H55AirlocksRealGLB580Tests.swift -o /tmp/h07-real-glb
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55Sweep401580.swift \
+            ASTEROIDYiOS/H55Walk580.swift \
+            ASTEROIDYiOS/H55Entry580.swift \
+            ASTEROIDYiOS/H55Airlocks580.swift \
+            Tests/H55AirlockRealGLBIntegration580Tests.swift \
+            -o /tmp/h07-real-glb-traversal
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
       - name: Make exact H07 source available for offline real 126MB GLB check
         uses: actions/upload-artifact@v4
@@ -57,5 +67,6 @@ jobs:
             ASTEROIDYiOS/H55Entry580.swift
             Tests/H55Airlocks580Tests.swift
             Tests/H55AirlocksRealGLB580Tests.swift
+            Tests/H55AirlockRealGLBIntegration580Tests.swift
           if-no-files-found: error
           retention-days: 2
