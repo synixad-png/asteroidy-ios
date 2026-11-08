@@ -56,30 +56,58 @@ def strip_swift_line_comment(line: str) -> str:
 
 
 def scan_text(path: str, content: str) -> list[Finding]:
-    if not path.startswith(PRODUCTION_ROOT) or not path.endswith(".swift"):
-        return []
     issues: list[Finding] = []
+    production_swift = path.startswith(PRODUCTION_ROOT) and path.endswith(".swift")
+    metal = path.startswith(PRODUCTION_ROOT) and path.endswith(".metal")
+    python_tool = path.startswith("Tools/") and path.endswith(".py")
+    workflow = path.startswith(".github/workflows/") and path.endswith((".yml", ".yaml"))
+    if not any((production_swift, metal, python_tool, workflow)):
+        return issues
     for number, raw in enumerate(content.splitlines(), start=1):
-        code = strip_swift_line_comment(raw)
+        code = strip_swift_line_comment(raw) if (production_swift or metal) else raw
         if not code.strip():
             continue
-        for rule, (pattern, severity) in COMPILED.items():
-            if not pattern.search(code):
-                continue
-            # Both original SOS filter lookups are deliberate internal
-            # invariants; they must remain source-exact and are protected
-            # by Tests/OriginalMusicFilterKeys568Contract.py. Never classify
-            # arbitrary new fatalError/preconditionFailure as permitted.
-            if (rule == "forced_abort"
-                and path == "ASTEROIDYiOS/OriginalMusicSynth568.swift"
-                and 'guard let sos=filters[key] else {preconditionFailure(' in code
-                and 'Missing original source SOS filter:' in code):
-                issues.append(Finding("verified_dsp_filter_invariant", "review",
+        if production_swift:
+            for rule, (pattern, severity) in COMPILED.items():
+                if not pattern.search(code):
+                    continue
+                # Both original SOS filter lookups are deliberate internal
+                # invariants; they must remain source-exact and are protected
+                # by Tests/OriginalMusicFilterKeys568Contract.py. Never classify
+                # arbitrary new fatalError/preconditionFailure as permitted.
+                if (rule == "forced_abort"
+                    and path == "ASTEROIDYiOS/OriginalMusicSynth568.swift"
+                    and 'guard let sos=filters[key] else {preconditionFailure(' in code
+                    and 'Missing original source SOS filter:' in code):
+                    issues.append(Finding("verified_dsp_filter_invariant", "review",
+                                          path, number, raw.strip()[:180]))
+                    continue
+                issues.append(Finding(rule, severity, path, number, raw.strip()[:180]))
+            if re.search(r"\[[^\]\n]+\]!", code):
+                issues.append(Finding("forced_optional_subscript_candidate", "review",
                                       path, number, raw.strip()[:180]))
-                continue
-            issues.append(Finding(rule, severity, path, number, raw.strip()[:180]))
+        if metal and re.search(r"\bwhile\s*\(\s*(?:true|1)\s*\)", code):
+            issues.append(Finding("unbounded_shader_loop_candidate", "review",
+                                  path, number, raw.strip()[:180]))
+        if python_tool:
+            for label, pattern in (
+                ("bare_except_candidate", r"^\s*except\s*:"),
+                ("shell_command_candidate", r"\bshell\s*=\s*True\b|\bos\.system\s*\("),
+                ("dynamic_code_candidate", r"\b(?:eval|exec)\s*\("),
+            ):
+                if re.search(pattern, code):
+                    issues.append(Finding(label, "review", path, number,
+                                          raw.strip()[:180]))
+        if workflow:
+            for label, pattern in (
+                ("shell_install_candidate", r"curl\s+.+\|\s*(?:sh|bash)\b"),
+                ("privileged_pr_candidate", r"^\s*pull_request_target\s*:"),
+                ("broad_write_permission_candidate", r"^\s*permissions\s*:\s*write-all"),
+            ):
+                if re.search(pattern, code):
+                    issues.append(Finding(label, "review", path, number,
+                                          raw.strip()[:180]))
     return issues
-
 
 def tracked_files(root: Path) -> list[Path]:
     try:
