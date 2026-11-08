@@ -132,6 +132,16 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let gameSession:CarbonisSession568?
             private let adaptivePhoneCombat568:Bool
             private var phoneDrawable568=PhoneCombatResolution568()
+            // Prepared BEFORE asking CAMetalLayer for a drawable, iPhone
+            // only. Arrays are identical to those built in the iPad's
+            // existing in-encoder path; no geometry or physics shortcuts.
+            private struct PhonePreparedFX568 {
+                var ground:CarbonisIndexedFXMesh568
+                var projectiles:CarbonisIndexedFXMesh568
+                var debris:[Float]
+                var projectileMs:Double
+                var destructionMs:Double
+            }
             private var craftBuffer:MTLBuffer?
             private var craftTexture:MTLTexture?
             private var craftVertexCount=0
@@ -740,14 +750,109 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         }
                     }
                 }
+                // METAL iPhone only: finish the CPU simulation and build
+                // source-exact shot/ground-light/explosion triangles BEFORE
+                // acquiring a CAMetalDrawable. This avoids holding one of
+                // the layer's limited drawable slots during expensive fire
+                // geometry construction. iPad keeps the previous order.
+                var phoneFX:PhonePreparedFX568?
+                var phonePreCPUms:Double=0
+                var phoneSimulationMs:Double=0
+                if adaptivePhoneCombat568,let session=gameSession {
+                    let preparationStart=ProcessInfo.processInfo.systemUptime
+                    if preparationStart>=nextVisualReload {
+                        visualSettings=CarbonisVisualSettings568.load()
+                        fxBudget=CarbonisIOSFXBudget568.load()
+                        let newLava=SourceLavaLightSettings287.load()
+                        if newLava != lava287 {
+                            rebakeCarbonis469(newLava.intensity)
+                            lava287=newLava
+                        }
+                        nextVisualReload=preparationStart+0.25
+                    }
+                    let physicsStart=ProcessInfo.processInfo.systemUptime
+                    session.frame(at:physicsStart)
+                    activeRocks=session.game.rocks
+                    previousRockFrame=physicsStart
+                    phoneSimulationMs=(ProcessInfo.processInfo.systemUptime-
+                                       physicsStart)*1000
+
+                    let shots=session.game.bullets+session.game.hostileShots
+                    let screenSize=view.drawableSize
+                    let frameAspect=Float(max(1,screenSize.width)/
+                                          max(1,screenSize.height))
+                    let lightsStart=ProcessInfo.processInfo.systemUptime
+                    let ground=CarbonisProjectileFX69.indexedGroundLights(
+                        shots,settings:visualSettings,budget:fxBudget)
+                    let lightMs=(ProcessInfo.processInfo.systemUptime-
+                                 lightsStart)*1000
+
+                    let projectileStart=ProcessInfo.processInfo.systemUptime
+                    var projectiles=CarbonisProjectileFX69.indexedVertices(
+                        shots,camera:session.game.flight.camera,
+                        drawableHeight:Float(screenSize.height),
+                        glow:fxBudget.drawBulletGlow)
+                    let muzzles=CarbonisProjectileFX69.muzzleFlashes(
+                        session.game.shooters,
+                        camera:session.game.flight.camera,
+                        drawableHeight:Float(screenSize.height))
+                    if !muzzles.isEmpty {
+                        let first=projectiles.vertexCount
+                        projectiles.vertices.append(contentsOf:muzzles)
+                        for i in first..<projectiles.vertexCount {
+                            projectiles.indices.append(UInt32(i))
+                        }
+                    }
+                    let projectileMs=(ProcessInfo.processInfo.systemUptime-
+                                      projectileStart)*1000
+
+                    var debris=Self.warningVertices(session.game.shooters)
+                    debris.append(contentsOf:
+                        Self.tokenVertices(session.game.tokenPickups))
+                    let destructionStart=ProcessInfo.processInfo.systemUptime
+                    debris.append(contentsOf:
+                        CarbonisExplosion524Meshes.vertices(
+                            session.game.destruction,
+                            time:session.game.elapsed,
+                            camera:session.game.flight.camera,
+                            aspect:frameAspect,
+                            settings:visualSettings,budget:fxBudget))
+                    let destructionMs=(ProcessInfo.processInfo.systemUptime-
+                                       destructionStart)*1000
+                    phoneFX=PhonePreparedFX568(
+                        ground:ground,projectiles:projectiles,debris:debris,
+                        projectileMs:lightMs+projectileMs,
+                        destructionMs:destructionMs)
+                    phonePreCPUms=(ProcessInfo.processInfo.systemUptime-
+                                   preparationStart)*1000
+                }
+
+                // Wait for the three-in-flight GPU arena BEFORE taking a
+                // drawable on iPhone. If drawable/encoder is unavailable,
+                // abortFrame must return this acquired semaphore permit.
+                // The previous iPad acquire-then-wait sequence is untouched.
+                var phoneStreamWaitMs:Double=0
+                if adaptivePhoneCombat568 {
+                    let streamWaitStart=ProcessInfo.processInfo.systemUptime
+                    fxStream568.beginFrame()
+                    phoneStreamWaitMs=(ProcessInfo.processInfo.systemUptime-
+                                       streamWaitStart)*1000
+                }
+                let drawableRequestStart=ProcessInfo.processInfo.systemUptime
                 guard let drawable=view.currentDrawable,
                       let pass=view.currentRenderPassDescriptor,
                       let command=queue.makeCommandBuffer(),
                       let encoder=command.makeRenderCommandEncoder(descriptor:pass)
-                else {return}
-                fxStream568.beginFrame()
+                else {
+                    if adaptivePhoneCombat568 {fxStream568.abortFrame()}
+                    return
+                }
+                if !adaptivePhoneCombat568 {fxStream568.beginFrame()}
                 let acquired=ProcessInfo.processInfo.systemUptime
-                let waitMs=(acquired-entered)*1000
+                let phoneDrawableWaitMs=(acquired-drawableRequestStart)*1000
+                let waitMs=adaptivePhoneCombat568
+                    ? phoneStreamWaitMs+phoneDrawableWaitMs
+                    : (acquired-entered)*1000
                 let now=acquired
                 if gameSession != nil && now>=nextVisualReload {
                     // One-shot snapshots previously made all effects
@@ -765,18 +870,21 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 }
                 let physicsStart=ProcessInfo.processInfo.systemUptime
                 if let session=gameSession {
-                    session.frame(at:now)
-                    activeRocks=session.game.rocks
+                    if !adaptivePhoneCombat568 {
+                        session.frame(at:now)
+                        activeRocks=session.game.rocks
+                    }
                 } else if let previous=previousRockFrame {
                     let dt=Float(min(0.05,max(0,now-previous)))
                     for index in activeRocks.indices {activeRocks[index].advance(dt:dt)}
                 }
                 previousRockFrame=now
-                let simulationMs=(ProcessInfo.processInfo.systemUptime-physicsStart)*1000
-                // Instrument CPU-side geometry generation with the
-                // EXISTING FPS overlay, not a new graphics setting.
-                var projectileMeshMs:Double=0
-                var destructionMeshMs:Double=0
+                let simulationMs=adaptivePhoneCombat568 ? phoneSimulationMs :
+                    (ProcessInfo.processInfo.systemUptime-physicsStart)*1000
+                // The iPhone CPU-prepared FX use the same original meshes.
+                // Count their actual build time in existing FX CPU metrics.
+                var projectileMeshMs:Double=phoneFX?.projectileMs ?? 0
+                var destructionMeshMs:Double=phoneFX?.destructionMs ?? 0
                 let t=Float(now-started)
                 var model=matrix_identity_float4x4
                 if gameSession == nil {
@@ -921,12 +1029,17 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 // brightness/color/mixing follow the saved settings.
                 if let session=gameSession,let cameraMatrix=vp,
                    let groundPipeline=projectileGroundPipeline {
-                    let groundMeshStarted=ProcessInfo.processInfo.systemUptime
-                    let lightMesh=CarbonisProjectileFX69.indexedGroundLights(
-                        session.game.bullets+session.game.hostileShots,
-                        settings:visualSettings,budget:fxBudget)
-                    projectileMeshMs+=(ProcessInfo.processInfo.systemUptime -
-                                       groundMeshStarted)*1000
+                    let lightMesh:CarbonisIndexedFXMesh568
+                    if let prepared=phoneFX {
+                        lightMesh=prepared.ground
+                    } else {
+                        let groundMeshStarted=ProcessInfo.processInfo.systemUptime
+                        lightMesh=CarbonisProjectileFX69.indexedGroundLights(
+                            session.game.bullets+session.game.hostileShots,
+                            settings:visualSettings,budget:fxBudget)
+                        projectileMeshMs+=(ProcessInfo.processInfo.systemUptime -
+                                           groundMeshStarted)*1000
+                    }
                     if lightMesh.indexCount>0,
                        let verts=fxStream568.upload(
                            lightMesh.vertices,as:.groundVertices),
@@ -1136,25 +1249,31 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     // segment, three-layer geodesic luminous ribbons
                     // with true constant-pixel round 3D projectile cores.
                     if let fxPipeline=projectilePipeline {
-                        let projectileMeshStarted=ProcessInfo.processInfo.systemUptime
-                        var fx=CarbonisProjectileFX69.indexedVertices(
-                            shots,camera:session.game.flight.camera,
-                            drawableHeight:Float(view.drawableSize.height),
-                            glow:fxBudget.drawBulletGlow)
-                        // Source enemy muzzle flashes retain all 24 slices.
-                        let muzzles=CarbonisProjectileFX69.muzzleFlashes(
-                            session.game.shooters,
-                            camera:session.game.flight.camera,
-                            drawableHeight:Float(view.drawableSize.height))
-                        if !muzzles.isEmpty {
-                            let first=fx.vertexCount
-                            fx.vertices.append(contentsOf:muzzles)
-                            for i in first..<fx.vertexCount {
-                                fx.indices.append(UInt32(i))
+                        let fx:CarbonisIndexedFXMesh568
+                        if let prepared=phoneFX {
+                            fx=prepared.projectiles
+                        } else {
+                            let projectileMeshStarted=ProcessInfo.processInfo.systemUptime
+                            var original=CarbonisProjectileFX69.indexedVertices(
+                                shots,camera:session.game.flight.camera,
+                                drawableHeight:Float(view.drawableSize.height),
+                                glow:fxBudget.drawBulletGlow)
+                            // Source enemy muzzle flashes retain all 24 slices.
+                            let muzzles=CarbonisProjectileFX69.muzzleFlashes(
+                                session.game.shooters,
+                                camera:session.game.flight.camera,
+                                drawableHeight:Float(view.drawableSize.height))
+                            if !muzzles.isEmpty {
+                                let first=original.vertexCount
+                                original.vertices.append(contentsOf:muzzles)
+                                for i in first..<original.vertexCount {
+                                    original.indices.append(UInt32(i))
+                                }
                             }
+                            projectileMeshMs+=(ProcessInfo.processInfo.systemUptime -
+                                               projectileMeshStarted)*1000
+                            fx=original
                         }
-                        projectileMeshMs+=(ProcessInfo.processInfo.systemUptime -
-                                           projectileMeshStarted)*1000
                         if fx.indexCount>0,
                            let verts=fxStream568.upload(
                                fx.vertices,as:.projectileVertices),
@@ -1176,21 +1295,27 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             encoder.setDepthStencilState(depth)
                         }
                     }
-                    var values=Self.warningVertices(session.game.shooters)
-                    values.append(contentsOf:Self.tokenVertices(
-                        session.game.tokenPickups))
-                    // Source particle bursts, radius-animated lights,
-                    // metal CombatPieces125 and Explosion524 3D shards.
-                    let destructionMeshStarted=ProcessInfo.processInfo.systemUptime
-                    values.append(contentsOf:
-                        CarbonisExplosion524Meshes.vertices(
-                            session.game.destruction,
-                            time:session.game.elapsed,
-                            camera:session.game.flight.camera,
-                            aspect:aspect,
-                            settings:visualSettings,budget:fxBudget))
-                    destructionMeshMs=(ProcessInfo.processInfo.systemUptime -
-                                         destructionMeshStarted)*1000
+                    let values:[Float]
+                    if let prepared=phoneFX {
+                        values=prepared.debris
+                    } else {
+                        var original=Self.warningVertices(session.game.shooters)
+                        original.append(contentsOf:Self.tokenVertices(
+                            session.game.tokenPickups))
+                        // Original particle bursts, CombatPieces125 and
+                        // Explosion524 shards on unchanged iPad path.
+                        let destructionMeshStarted=ProcessInfo.processInfo.systemUptime
+                        original.append(contentsOf:
+                            CarbonisExplosion524Meshes.vertices(
+                                session.game.destruction,
+                                time:session.game.elapsed,
+                                camera:session.game.flight.camera,
+                                aspect:aspect,
+                                settings:visualSettings,budget:fxBudget))
+                        destructionMeshMs=(ProcessInfo.processInfo.systemUptime -
+                                             destructionMeshStarted)*1000
+                        values=original
+                    }
                     if !values.isEmpty,
                        let buffer=fxStream568.upload(
                            values,as:.debrisVertices) {
@@ -1238,10 +1363,16 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 }
                 if gameSession != nil {
                     SourcePerformance568.shared.recordCPU(
-                        workMs:(ProcessInfo.processInfo.systemUptime-acquired)*1000,
+                        workMs:(ProcessInfo.processInfo.systemUptime-acquired)*1000+
+                            (adaptivePhoneCombat568 ? phonePreCPUms : 0),
                         simulationMs:simulationMs,waitMs:waitMs,
                         projectileMeshMs:projectileMeshMs,
-                        destructionMeshMs:destructionMeshMs)
+                        destructionMeshMs:destructionMeshMs,
+                        // Only iPhone sends separated observable waits.
+                        drawableWaitMs:adaptivePhoneCombat568
+                            ? phoneDrawableWaitMs : nil,
+                        streamWaitMs:adaptivePhoneCombat568
+                            ? phoneStreamWaitMs : nil)
                     SourcePerformance568.shared.watch(command)
                 }
                 fxStream568.completeFrame(command)
