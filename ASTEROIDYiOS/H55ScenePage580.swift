@@ -26,6 +26,7 @@ import simd
     private var airlocks=H55AirlockController580()
     private var airlockTracks:H55AirlockTracks580.SceneKeys?
     private var airlockLeaves:[String:SCNNode]=[:]
+    private var airlockLastApplied:[Float]=[Float.nan,Float.nan]
     private var arrival=H55Arrival580(spawnClear:false)
     @Published private(set) var arriving=false
     private var moveForward:Float=0
@@ -166,15 +167,21 @@ import simd
             npcX:mechanic.x,npcZ:mechanic.z,
             npcPresent:mechanic.isPatrolling,dt:dt)
         guard let keys=airlockTracks else{return}
+        // Stable open/closed leaves must not dirty 4 SCNNode transforms
+        // every frame on iPhone. Only real controller changes redraw.
+        if airlockLastApplied == airlocks.openness {return}
         SCNTransaction.begin()
         SCNTransaction.disableActions=true
         for gate in 0..<2 {
-            let t=H55AirlockController580.clipTime(for:airlocks.openness[gate])
+            let amount=airlocks.openness[gate]
+            if amount==airlockLastApplied[gate] {continue}
+            let t=H55AirlockController580.clipTime(for:amount)
             for leaf in H55AirlockController580.leafNames[gate] {
                 guard let node=airlockLeaves[leaf],
                       let p=keys.sample(leaf:leaf,time:t) else{continue}
                 node.position=SCNVector3(p.x,p.y,p.z)
             }
+            airlockLastApplied[gate]=amount
         }
         SCNTransaction.commit()
     }
@@ -197,6 +204,7 @@ import simd
         airlocks=H55AirlockController580()
         airlockTracks=nil
         airlockLeaves.removeAll()
+        airlockLastApplied=[Float.nan,Float.nan]
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
         mechanic=H55Mechanic580()
@@ -316,6 +324,7 @@ import simd
         airlockTracks=airlockKeys
         airlockLeaves=leaves
         airlocks=H55AirlockController580()
+        airlockLastApplied=[Float.nan,Float.nan]
         updateAirlocks(dt:0) // original 1.85s CLOSED door pose
         mechanic.calibrate(anatomicalHeading:heading)
         mechanicRoot=importedNpc
@@ -445,6 +454,7 @@ import simd
         airlocks=H55AirlockController580()
         airlockTracks=nil
         airlockLeaves.removeAll()
+        airlockLastApplied=[Float.nan,Float.nan]
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
         setMove(forward:0,right:0)
