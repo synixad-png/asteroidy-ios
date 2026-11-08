@@ -33,6 +33,10 @@ import UIKit
     private var mechanicMotionPlaying=false
     @Published private(set) var mechanicStatus="OCZEKUJE NA ROZMOWĘ"
 
+    func jump() {
+        guard !conversationOpen else{return}
+        _=movement.jump()
+    }
     func setMove(forward:Float,right:Float) {
         moveForward=max(-1,min(1,forward))
         moveRight=max(-1,min(1,right))
@@ -418,6 +422,8 @@ struct H55ScenePage580: View {
                             Text(loader.mechanicStatus)
                                 .font(.system(size:10,weight:.bold,design:.monospaced))
                             Spacer()
+                            Button("SKOK") {loader.jump()}
+                                .accessibilityIdentifier("h55-v580-jump")
                             Button(loader.mechanicNearby ? "ROZMAWIAJ" : "MECHANIK 2,7 m") {
                                 loader.interact()
                             }
