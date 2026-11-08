@@ -44,7 +44,7 @@ import UniformTypeIdentifiers
                         let source=GLTFSCNSceneSource(asset:asset)
                         DispatchQueue.main.async { [weak self] in
                             guard let self, self.generation == request else {return}
-                            self.attach(source,inventory:metadata)
+                            self.attach(source,asset:asset,inventory:metadata)
                         }
                     } else if status == .error {
                         DispatchQueue.main.async { [weak self] in
@@ -64,7 +64,7 @@ import UniformTypeIdentifiers
     }
 
     private func attach(_ source:GLTFSCNSceneSource,
-                        inventory:H55Asset580.Inventory) {
+                        asset:GLTFAsset,inventory:H55Asset580.Inventory) {
         guard let realScene=source.defaultScene else {
             phase = .failed("Plik nie zawiera sceny 3D.")
             return
@@ -82,6 +82,7 @@ import UniformTypeIdentifiers
         pointOfView.eulerAngles.y=Float.pi // PC yaw=0 faces +Z
         realScene.rootNode.addChildNode(pointOfView)
 
+        installH46Lights(from:asset,into:source)
         var clips:[String:GLTFSCNAnimation]=[:]
         for clip in source.animations where !clip.name.isEmpty {
             clips[clip.name]=clip
@@ -105,6 +106,47 @@ import UniformTypeIdentifiers
                      "H46_LIGHT_IDLE_20S",
                      H55Asset580.idleClip] {
             play(name,loop:true)
+        }
+    }
+
+    /// Exact H46 light proxy metadata from the supplied H55 GLB.
+    /// Nodes remain attached to their animated GLB parents (not fixed lights).
+    /// SceneKit differs from the PC/OpenGL shader, so GPU visual parity
+    /// must be measured on a real device; no claimed one-to-one luminance.
+    private func installH46Lights(from asset:GLTFAsset,
+                                  into source:GLTFSCNSceneSource) {
+        for node in asset.nodes {
+            guard let name=node.name,
+                  let extra=node.extras as? [String:Any],
+                  let proxy=extra["H46_BABYLON_COMPAT_lightProxy"] as? [String:Any],
+                  let target=source.nodes.first(where:{$0.name==name}),
+                  target.light==nil else {continue}
+            let kind=proxy["type"] as? String ?? ""
+            guard kind=="spot" || kind=="point" else {continue}
+            let light=SCNLight()
+            light.name=name
+            light.type=kind=="spot" ? .spot : .omni
+            if let components=proxy["color"] as? [NSNumber],
+               components.count>=3 {
+                light.color=UIColor(red:CGFloat(components[0].doubleValue),
+                      green:CGFloat(components[1].doubleValue),
+                      blue:CGFloat(components[2].doubleValue),alpha:1)
+            }
+            if let strength=proxy["intensity"] as? NSNumber {
+                light.intensity=CGFloat(strength.doubleValue)
+            }
+            if let range=proxy["range"] as? NSNumber {
+                light.attenuationStartDistance=0
+                light.attenuationEndDistance=CGFloat(range.doubleValue)
+            }
+            if kind=="spot",let cone=proxy["spot"] as? [String:Any],
+               let inner=cone["innerConeAngle"] as? NSNumber,
+               let outer=cone["outerConeAngle"] as? NSNumber {
+                let degrees=180.0/Double.pi
+                light.spotInnerAngle=CGFloat(inner.doubleValue*degrees)
+                light.spotOuterAngle=CGFloat(outer.doubleValue*degrees)
+            }
+            target.light=light
         }
     }
 
