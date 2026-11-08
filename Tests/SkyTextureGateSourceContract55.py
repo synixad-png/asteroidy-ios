@@ -8,7 +8,8 @@ initialization, especially while only the flat sandbox is being used.
 """
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
-src=(root/"ASTEROIDYiOS"/"MetalRenderer.swift").read_text()
+src=(root/"ASTEROIDYiOS"/"MetalRenderer.swift").read_text() + "\n" + \
+    (root/"ASTEROIDYiOS"/"SourceSkyTextureLifecycle55.swift").read_text()
 gate=(root/"ASTEROIDYiOS"/"SkyTextureGate55.swift").read_text()
 def ck(ok,message):
     if not ok:
@@ -47,7 +48,7 @@ for token in (
     "let sourceCloudTexture=ensureCloudTextures55(camera:c)",
     "private static let sourceCloudLayers55: [SphereNebula556.Layer]",
     "if let cached=nebulaTexture, nebulaSliceCache55.allUploaded {",
-    "let visibleThemes=Set(Self.sourceCloudLayers55.compactMap",
+    "let visibleThemes=Set(sourceCloudLayers55.compactMap",
     "layer.projected(camera:camera) != nil ? layer.theme : nil",
     "guard nebulaLoadGate.shouldAllocate(visible:!visibleThemes.isEmpty)",
     "private var nebulaSliceCache55 = SkyTextureSliceCache55(count: SphereNebula556.orbitThemeCount)",
@@ -70,7 +71,7 @@ for token in (
     ck(token in src, "Visible-only source texture path missing: "+token)
 
 ck(src.index("if let cached=nebulaTexture, nebulaSliceCache55.allUploaded {") <
-   src.index("let visibleThemes=Set(Self.sourceCloudLayers55.compactMap"),
+   src.index("let visibleThemes=Set(sourceCloudLayers55.compactMap"),
    "Cached cloud images must skip CPU projection after first complete upload")
 ck("var allUploaded: Bool { uploaded.allSatisfy { $0 } }" in gate,
    "Complete source texture cache must have a fast successful path")
