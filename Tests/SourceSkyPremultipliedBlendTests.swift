@@ -5,7 +5,7 @@ import Metal
 @main struct SourceSkyPremultipliedBlendTests {
     static func main() throws {
         let descriptor=MTLRenderPipelineDescriptor()
-        descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        // The helper itself must set the source BGRA8 target after validation.
         descriptor.depthAttachmentPixelFormat = .depth32Float
         try SourceSkyPremultipliedBlend.configure(descriptor)
 
