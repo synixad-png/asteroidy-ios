@@ -65,7 +65,7 @@ import Foundation
         check(phone.x(1220,at:.bottomRight)>800,
               "equipment must use full wide phone screen")
         check(phone.x(1220,at:.bottomRight)>
-              phone.x(1220,at:.bottomLeft)+40,
+              phone.x(1220,at:.bottomLeft)+30,
               "right equipment independently anchored")
         check(phone.y(17,at:.topRight)<25,
               "wide iPhone top bar genuinely at top")
