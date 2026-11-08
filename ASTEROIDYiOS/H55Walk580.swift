@@ -19,6 +19,47 @@ struct H55Walk580 {
     var vx:Float=0
     var vz:Float=0
     var grounded=true
+    var vy:Float=0
+    private(set) var jumps=0
+    static let gravity:Float=18
+    static let firstJumpHeight:Float=1.15
+    static let secondJumpHeight:Float=3.45
+
+    @discardableResult
+    mutating func jump()->Bool {
+        guard jumps<2 else{return false}
+        let height=jumps==0 ? Self.firstJumpHeight : Self.secondJumpHeight
+        vy=sqrt(2*Self.gravity*height)
+        jumps+=1
+        grounded=false
+        return true
+    }
+
+    private mutating func stepVertical(dt:Float,
+                        bodyClear:(Float,Float,Float)->Bool,
+                        support:(Float,Float,Float)->Float?) {
+        if grounded {
+            if let floor=support(x,z,y),
+               y-floor<=Self.stepDown && floor-y<=Self.stepUp,
+               bodyClear(x,floor,z) {
+                y=floor;vy=0;jumps=0
+                return
+            }
+            grounded=false
+        }
+        let from=y
+        let next=from+vy*dt-0.5*Self.gravity*dt*dt
+        vy-=Self.gravity*dt
+        if vy<=0,let floor=support(x,z,from),
+           floor<=from+0.015 && floor>=next-0.04,
+           bodyClear(x,floor,z) {
+            y=floor;vy=0;jumps=0;grounded=true
+            return
+        }
+        if bodyClear(x,next,z) {y=next}
+        else {vy=0}
+        if y<=0 {y=0;vy=0;jumps=0;grounded=true}
+    }
 
     mutating func look(deltaX:Float,deltaY:Float) {
         yaw+=deltaX*0.0028
@@ -35,6 +76,7 @@ struct H55Walk580 {
                        support:(Float,Float,Float)->Float?) {
         let dt=max(0,min(0.05,raw))
         guard dt>0 else{return}
+        stepVertical(dt:dt,bodyClear:bodyClear,support:support)
         var forward=max(-1,min(1,rawF)),right=max(-1,min(1,rawR))
         let magnitude=hypot(forward,right)
         if magnitude>1 {forward/=magnitude;right/=magnitude}
@@ -74,6 +116,11 @@ struct H55Walk580 {
         if !hall && !workshop &&
            (nx < -23.52 || nx>23.52 || nz < -16.82 || nz>16.62) {
             return false
+        }
+        if !grounded {
+            guard bodyClear(nx,y,nz) else{return false}
+            x=nx;z=nz
+            return true
         }
         guard let floor=support(nx,nz,y), floor.isFinite,
               floor-y<=Self.stepUp+0.0001,
