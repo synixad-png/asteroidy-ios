@@ -73,9 +73,9 @@ for renderer in (intro, combat):
         assert f"private func {name}(" in renderer
     for name in ("uploadNebulaSlice556", "uploadDeepPlanetSlice55"):
         assert f"SourceSkyAssetFactory568.{name}(" in renderer
-    assert "private var nebulaTexture: MTLTexture?" in renderer
-    assert "private var deepPlanetTextures: MTLTexture?" in renderer
-    assert "private var blackHoleTextures: MTLTexture?" in renderer
+    assert "privatevarnebulaTexture:MTLTexture?" in renderer.replace(" ", "")
+    assert "privatevardeepPlanetTextures:MTLTexture?" in renderer.replace(" ", "")
+    assert "privatevarblackHoleTextures:MTLTexture?" in renderer.replace(" ", "")
 assert "SourceSkyAssetFactory568.makeSphereHaloTexture(device)" in intro
 assert "SourceSkyAssetFactory568.makeSphereHaloTexture(device)" in combat
 print("PASS one sky source factory: 9 builders, star/nebula/planet/black-hole exact source formulas; both renderer caches independent")
