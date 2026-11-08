@@ -119,10 +119,23 @@ for token in (
     '"textureWidth":textureWidth',
     '"textureHeight":textureHeight',
     '"ASTEROIDY_Vanguard431_RenderProof.json"',
-    'try? bytes.write(to:path,options:.atomic)',
+    'OriginalRenderProofWriter568.save(',
 ):
     check(token in renderer,
           'Source Vanguard completed-GPU-draw proof missing: '+token)
+# Shared diagnostic writer must preserve atomic JSON output and never
+# hide a failed write; every other rendering and gameplay path is frozen.
+writer=(root/"ASTEROIDYiOS/OriginalRenderProofWriter568.swift").read_text()
+for token in (
+    "JSONSerialization.data(",
+    "withJSONObject: payload, options: [.sortedKeys]",
+    "try bytes.write(",
+    "options: .atomic",
+    "catch {",
+    'NSLog("ASTEROIDY GPU proof write failed',
+):
+    check(token in writer,
+          "GPU proof helper missing explicit I/O verification: "+token)
 proof=cinematic.index('if sourceDrawProofRequested && !sourceDrawProofScheduled,')
 draw=cinematic.index('vertexCount:native.count)')
 finish=cinematic.index('command.commit()',proof)

@@ -6,6 +6,7 @@ from pathlib import Path
 
 root=Path(__file__).resolve().parents[1]
 swift=(root/"ASTEROIDYiOS"/"MetalRenderer.swift").read_text()
+factory=(root/"ASTEROIDYiOS"/"SourceSkyAssetFactory568.swift").read_text()
 metal=(root/"ASTEROIDYiOS"/"Ship.metal").read_text()
 source=(root/"ASTEROIDYiOS"/"Sphere67.swift").read_text()
 
@@ -33,11 +34,11 @@ for t in (
 # One actual 64x64 PArgb source glow texture shared by all source stars.
 ck("private let sphereHaloTexture: MTLTexture" in swift,
    "Missing real GPU StarTexture")
-ck("sphereHaloTexture=try Self.makeSphereHaloTexture(device)" in swift,
+ck("sphereHaloTexture=try SourceSkyAssetFactory568.makeSphereHaloTexture(device)" in swift,
    "Source halo GPU texture is not created")
-ck("pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false" in swift,
+ck("pixelFormat:.bgra8Unorm,width:n,height:n,mipmapped:false" in factory,
    "Source StarTexture pixel format or size changed")
-ck("texels.withUnsafeBytes" in swift and "bytesPerRow:n*4" in swift,
+ck("texels.withUnsafeBytes" in factory and "bytesPerRow:n*4" in factory,
    "Original 64x64 BGRA texels not uploaded")
 ck("encoder.setFragmentTexture(sphereHaloTexture,index:0)" in swift,
    "StarTexture not bound in sky pass")
@@ -60,8 +61,8 @@ for t in (
 ):
     ck(t in swift,"Source premultiplied blend/depth contract missing: "+t)
 
-sky=swift.split("private static func sphereSky207()",1)[1].split(
-    "private static func translation(",1)[0]
+sky=factory.split("static func sphereSky207()",1)[1].split(
+    "static func solarOverlaySource556()",1)[0]
 for t in (
     "vertices.reserveCapacity(SphereSky207.count*2)",
     "indices.reserveCapacity(SphereSky207.count*2)",
@@ -76,6 +77,8 @@ for t in (
 ck(sky.index("appendHalo(SphereSky207.brightHaloDiameterPixels") <
    sky.index("appendHalo(SphereSky207.baseDiameterPixels"),
    "GpuIntro41 draws bright glow BEFORE base, not after")
+ck("SourceSkyAssetFactory568.sphereSky207()" in swift,
+   "Shared source star geometry is not actually constructed")
 ck("drawMesh(sphereSkyMesh" not in swift and
    "type:.point,vertexStart:0,vertexCount:sphereSkyMesh.count" in swift,
    "Star quads not represented by one batched point draw")

@@ -1,0 +1,50 @@
+name: ASTEROIDY iOS - Code Quality / No Slop
+on:
+  pull_request:
+    paths:
+      - 'ASTEROIDYiOS/**'
+      - 'Tests/**'
+      - 'Tools/**'
+      - 'W3MenuUITests/**'
+      - '.github/workflows/**'
+      - 'AGENTS.md'
+      - 'project.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ASTEROIDYiOS/**'
+      - 'Tools/code_quality_audit.py'
+      - 'Tests/CodeQualityAuditTests.py'
+      - '.github/workflows/code-quality.yml'
+      - 'AGENTS.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quality-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify audit tool catches defects and avoids test false positives
+        run: python3 Tests/CodeQualityAuditTests.py
+      - name: Prove exact music filter coefficient lookup invariants
+        run: python3 Tests/OriginalMusicFilterKeys568Contract.py
+      - name: Verify three source-exact sky constructors are genuinely shared
+        run: python3 Tests/SourceSkyAssetFactory568Contract.py
+      - name: Parse Python scripts and unit tests
+        run: python3 -m compileall -q Tests Tools
+      - name: Audit ALL tracked code and enforce critical no-slop rules
+        run: |
+          mkdir -p reports
+          python3 Tools/code_quality_audit.py --root . \
+            --markdown reports/code_quality_audit.md \
+            --json reports/code_quality_audit.json --gate
+      - name: Publish complete reproducible static audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteroidy-ios-quality-inventory
+          path: reports/code_quality_audit.*
+          retention-days: 30
+          if-no-files-found: warn

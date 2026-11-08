@@ -1,0 +1,24 @@
+# Local build, IDE and test artifacts — NEVER original assets or sources.
+.DS_Store
+Thumbs.db
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.swiftpm/
+.build/
+DerivedData/
+*.xcarchive/
+*.dSYM/
+*.xcresult/
+*.ipa
+*.app/
+*.profraw
+*.profdata
+*.tmp
+*.swp
+*.log
+
+# Machine-local IDE state; project.yml remains the reproducible source.
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/

@@ -1,5 +1,11 @@
 # ASTEROIDY iOS — natywny port Swift/Metal (projekt w trakcie rozwoju)
 
+## Zasady jakości obowiązujące wszystkie przyszłe zmiany — 08.11.2026
+
+**Nie wprowadzać AI slop, prowizorycznych obejść, kopii mechanizmów ani optymalizacji bez pomiarów.**
+Obowiązuje dokument [AGENTS.md](AGENTS.md), raport [audytu jakości](Reports/CODE_QUALITY_AUDIT_2026-11-08.md) i automatyczny [Code Quality / No Slop](.github/workflows/code-quality.yml). Każdy PR powinien zachować źródłowe reguły gry, 60 FPS/naprawę SFX, działający HUD iPada/iPhone'a i przejść testy regresji oraz kompilacji. Nadal istnieją otwarte zadania refaktoryzacyjne; nie deklarujemy idealnego kodu ani pełnej zgodności gry bez testów urządzeń.
+
+
 ## CARBONIS 01 — WYBUCHY 3D + POCISKI z oryginalnych ustawień Windows v568 (06.11.2026)
 
 Zamiast dotychczasowej informacji, że ustawienia są niedostępne, **USTAWIENIA w natywnym menu W3 zawierają dwie funkcjonalne karty**: `WYBUCHY 3D` (12 oryginalnych wartości łącznie z podglądem, 3 źródłowymi presetami, 3 jakościami, odłamkami i czasem trwania), `POCISKI` (jasność oświetlenia 0–400%, 8 kolorów z `Menu139.cs` i dokładne mieszanie 48%). Wszystkie kontrolki zapisują stan UserDefaults i aktualizują realny renderer CARBONIS 01.

@@ -9,6 +9,7 @@ r=Path(__file__).resolve().parents[1]
 swift=(r/"ASTEROIDYiOS"/"MetalRenderer.swift").read_text()
 source=(r/"ASTEROIDYiOS"/"Sphere67.swift").read_text()
 metal=(r/"ASTEROIDYiOS"/"Ship.metal").read_text()
+factory=(r/"ASTEROIDYiOS"/"SourceSkyAssetFactory568.swift").read_text()
 def check(cond,msg):
     if not cond: raise AssertionError(msg)
 
@@ -35,7 +36,7 @@ for token in (
 
 for token in (
     "private let solarOverlayMesh: GPUModel",
-    "let overlayData=Self.solarOverlaySource556()",
+    "let overlayData=SourceSkyAssetFactory568.solarOverlaySource556()",
     "solarOverlayMesh=try Self.makeMesh(device,overlayData.0,overlayData.1)",
     "let solarVertex=try requireShader(\"solarOverlayVertex\")",
     "let solarFragment=try requireShader(\"solarOverlayFragment\")",
@@ -72,6 +73,12 @@ for token in (
     "filter::linear",
 ):
     check(token in metal,"Original Gpu2DRenderer premultiplied overlay shader regression: "+token)
+for token in (
+    "let source=SphereSolarOverlay556.vertices()",
+    "vertices.reserveCapacity(source.count)",
+    "material:SIMD4<Float>(v.textured ? 1:0,1,0,0)",
+):
+    check(token in factory, "Shared original solar GPU vertex factory drift: "+token)
 check("GlowEnabled" in source, "Source default glow context lost")
 check("drawMesh(starMesh" in swift, "Flat arena graphics accidentally removed")
 print("PASS: original GpuIntro41 + GpuCosmos39 738 static solar overlays")
