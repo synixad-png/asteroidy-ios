@@ -4,6 +4,7 @@ import SwiftUI
 import GLTFKit2
 import UniformTypeIdentifiers
 import UIKit
+import simd
 
 /// The v580 H55 scene is distinct from GpuHangar91/99 (legacy).
 /// GLTFKit2 performs glTF mesh/material/skin/animation decoding; no HTML.
@@ -30,6 +31,7 @@ import UIKit
     private var mechanic=H55Mechanic580()
     private weak var mechanicRoot:SCNNode?
     private var mechanicBaseY:Float=0.1095
+    private var mechanicBaseOrientation:simd_quatf?
     private var mechanicMotionPlaying=false
     @Published private(set) var mechanicStatus="OCZEKUJE NA ROZMOWĘ"
 
@@ -88,6 +90,11 @@ import UIKit
             })
         if let root=mechanicRoot {
             root.position=SCNVector3(mechanic.x,mechanicBaseY,mechanic.z)
+            if let original=mechanicBaseOrientation {
+                // Same quaternion product as Windows H55Renderer.cs:1618-22.
+                root.simdOrientation=simd_quatf(angle:mechanic.yaw,
+                     axis:SIMD3<Float>(0,1,0))*original
+            }
         }
         let walking=mechanic.moving
         if walking != mechanicMotionPlaying {
@@ -163,6 +170,7 @@ import UIKit
         movement=H55Walk580()
         mechanic=H55Mechanic580()
         mechanicRoot=nil
+        mechanicBaseOrientation=nil
         mechanicMotionPlaying=false
         mechanicStatus="OCZEKUJE NA ROZMOWĘ"
         conversationOpen=false
@@ -252,8 +260,16 @@ import UIKit
             phase = .failed("Nie znaleziono właściwego mechanika H55 z PC v580.")
             return
         }
+        // Source PC v580 Npc533 calibrates BOTH anatomical ankle->toe
+        // vectors in original GLB bind pose before any animation plays.
+        guard let heading=Self.npcHeadingFromBindPose(source) else {
+            phase = .failed("Mechanik H55 nie ma prawidłowych kierunków stóp GLB.")
+            return
+        }
+        mechanic.calibrate(anatomicalHeading:heading)
         mechanicRoot=importedNpc
         mechanicBaseY=importedNpc.position.y
+        mechanicBaseOrientation=importedNpc.simdOrientation
         animations=clips
         animationNames=inventory.animations.filter{clips[$0] != nil}
         self.inventory=inventory
@@ -270,6 +286,22 @@ import UIKit
                      H55Asset580.idleClip] {
             play(name,loop:true)
         }
+    }
+
+    private static func npcHeadingFromBindPose(
+        _ source:GLTFSCNSceneSource)->Float? {
+        func joint(_ suffix:String)->SCNNode? {
+            source.nodes.first(where:{$0.name?.hasSuffix(suffix) == true})
+        }
+        guard let la=joint("_foot_l"),let lt=joint("_ball_l"),
+              let ra=joint("_foot_r"),let rt=joint("_ball_r") else{return nil}
+        let l=lt.simdWorldPosition-la.simdWorldPosition
+        let r=rt.simdWorldPosition-ra.simdWorldPosition
+        let lm=hypot(l.x,l.z),rm=hypot(r.x,r.z)
+        guard lm>0.02 && rm>0.02 else{return nil}
+        let dot=(l.x*r.x+l.z*r.z)/(lm*rm)
+        guard dot>0.4 else{return nil}
+        return atan2(l.x/lm+r.x/rm,-(l.z/lm+r.z/rm))
     }
 
     /// Exact H46 light proxy metadata from the supplied H55 GLB.
@@ -356,6 +388,7 @@ import UIKit
         lastTick=nil
         setMove(forward:0,right:0)
         mechanicRoot=nil
+        mechanicBaseOrientation=nil
         mechanicMotionPlaying=false
         conversationOpen=false
         generation=UUID()
