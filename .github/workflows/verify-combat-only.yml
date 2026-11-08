@@ -14,6 +14,8 @@ on:
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/H55Asset580.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
+      - 'ASTEROIDYiOS/H55Walk580.swift'
+      - 'Tests/H55Walk580Tests.swift'
       - 'Tests/H55Asset580Tests.swift'
       - 'Tests/V568W3NativeMenuContract.py'
       - 'ASTEROIDYiOS/OriginalMusicSynth568.swift'
@@ -321,6 +323,8 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/H55Asset580.swift Tests/H55Asset580Tests.swift -o /tmp/h55-asset580-test
           /tmp/h55-asset580-test
+          swiftc ASTEROIDYiOS/H55Walk580.swift Tests/H55Walk580Tests.swift -o /tmp/h55-walk580-test
+          /tmp/h55-walk580-test
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
       - name: Verify Swift compiler
