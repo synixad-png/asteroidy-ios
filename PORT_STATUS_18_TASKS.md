@@ -1,3 +1,13 @@
+## ETAP — 08.11.2026: pomiar kadencji MTKView na iPhonie przy spadku do 30 FPS (IPA #144)
+
+**Dane z fizycznego iPhone'a od użytkownika:** przy problemie strzelania podane CPU 2,3 ms, SYM 0,9 ms, GPU 4,1 ms, WAIT 0,3 ms. To nie potwierdza przeciążenia CPU/GPU, ale średnie nie wykrywają krótkich hitchów. **Nie stosowano dalszych cięć jakości.**
+
+**Wykonano:** [PR #8](https://github.com/synixad-png/asteroidy-ios/pull/8) scalony `d3e04c4`; nowy czysty, tani pomiar rzeczywistych wywołań `MTKViewDelegate.draw(in:)` (callbacki/s, avg/p95/max odstępów, liczba opóźnień >=24/40 ms), pokazywany w źródłowym liczniku FPS **wyłącznie na iPhonie**. iPad nadal ma niezmienioną pętlę Metal, pełną rozdzielczość i stary HUD. Nie zmieniono fizyki, SFX #141, efektów ani poprzednich optymalizacji #142/#143.
+
+**Testy:** [PR CI #431](https://github.com/synixad-png/asteroidy-ios/actions/runs/42461017308) **2/2 PASS**; [main CI #432](https://github.com/synixad-png/asteroidy-ios/actions/runs/42461276133) **3/3 PASS**; [IPA #144](https://github.com/synixad-png/asteroidy-ios/actions/runs/42461276141) **4/4 PASS**, Xcode BUILD SUCCEEDED, audio source i ZIP CRC PASS. [**Pobierz unsigned IPA #144**](https://github.com/synixad-png/asteroidy-ios/actions/runs/42461276141/artifacts/13610600181) (ZIP 28 044 097 B; SHA256 `a83a937600a80b36fbf4c2771c252a1138c7370638c99a9810656c56e53ef18d`). [Pełny raport](Reports/V568_IOS_IPHONE_FRAME_CADENCE_2026-11-08.md).
+
+**Pozostało:** użytkownik musi wykonać pomiar na iPhonie podczas spadku i podać `DRAW` oraz `avg/p95/max` wraz z `FPS` i ewentualnymi `WAIT drawable / stream`, `FX CPU P/W`. Sprawdzić brak regresji iPada 60 FPS. **Bez testu na urządzeniu nie potwierdzono usunięcia spadków FPS.** Harmonogram pozostaje stały: **18 zadań, 38% ukończone, 62% pozostało**.
+
 ## ETAP — 08.11.2026: iPhone Metal currentDrawable pobierany później, oddzielny WAIT GPU/drawable (IPA #143)
 
 **Baza:** oryginalne źródła Windows v568 oraz zatwierdzone IPA #142 z działającym dźwiękiem poprawionym w #141. **Zgłoszenie:** podczas ostrzału iPhone spada z 60 do 30 FPS; iPad wcześniej utrzymuje płynność. **Zasada bez regresji iPada** obowiązuje.
