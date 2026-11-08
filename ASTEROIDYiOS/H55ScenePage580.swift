@@ -116,7 +116,7 @@ import UniformTypeIdentifiers
         let player=source.animationPlayer
         player.animation.repeatCount=loop ? .greatestFiniteMagnitude : 1
         player.animation.usesSceneTimeBase=false
-        scene.rootNode.removeAnimationPlayer(forKey:key)
+        scene.rootNode.removeAnimation(forKey:key)
         scene.rootNode.addAnimationPlayer(player,forKey:key)
         player.play()
         activeKeys.insert(key)
@@ -125,7 +125,7 @@ import UniformTypeIdentifiers
     func stop(_ name:String) {
         guard let scene else{return}
         let key="source580_"+name
-        scene.rootNode.removeAnimationPlayer(forKey:key)
+        scene.rootNode.removeAnimation(forKey:key)
         activeKeys.remove(key)
         if playingClip==name {playingClip=nil}
     }
@@ -148,7 +148,7 @@ import UniformTypeIdentifiers
     func close() {
         generation=UUID()
         guard let scene else{return}
-        for key in activeKeys {scene.rootNode.removeAnimationPlayer(forKey:key)}
+        for key in activeKeys {scene.rootNode.removeAnimation(forKey:key)}
         activeKeys.removeAll()
         animations.removeAll()
         scene.rootNode.removeAllAnimations()
