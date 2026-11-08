@@ -93,7 +93,12 @@ struct Sector01Scene568: View {
     var body:some View {
         GeometryReader { geo in
             let compact=geo.size.height<550
-            let hudScale=max(0.001,min(geo.size.width/1280,geo.size.height/720))
+            let combatHUDLayout=CombatHUDViewport568(
+                width:Double(geo.size.width),height:Double(geo.size.height),
+                safeLeft:Double(geo.safeAreaInsets.leading),
+                safeRight:Double(geo.safeAreaInsets.trailing),
+                safeTop:Double(geo.safeAreaInsets.top),
+                safeBottom:Double(geo.safeAreaInsets.bottom))
             ZStack {
                 Color(red:0.008,green:0.014,blue:0.032).ignoresSafeArea()
                 Sector01CarbonisPreview568(
@@ -134,8 +139,8 @@ struct Sector01Scene568: View {
                                     in:RoundedRectangle(cornerRadius:4))
                         .overlay(RoundedRectangle(cornerRadius:4)
                             .stroke(.cyan.opacity(0.45),lineWidth:1))
-                        .position(x:(geo.size.width-1280*hudScale)/2+660*hudScale,
-                                  y:(geo.size.height-720*hudScale)/2+33*hudScale)
+                        .position(x:CGFloat(combatHUDLayout.leftX(660)),
+                                  y:CGFloat(combatHUDLayout.hudY(33)))
                         .accessibilityIdentifier("sector01-pause-button")
                 }
                 // Windows Renderer.cs:200: performance overlay only during

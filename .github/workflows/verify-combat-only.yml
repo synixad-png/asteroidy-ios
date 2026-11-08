@@ -5,6 +5,8 @@ on:
       - '.github/workflows/verify-combat-only.yml'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
       - 'ASTEROIDYiOS/SourceCombatHUD331.swift'
+      - 'ASTEROIDYiOS/CombatHUDViewport568.swift'
+      - 'Tests/CombatHUDViewport568Tests.swift'
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'ASTEROIDYiOS/CarbonisSession568.swift'
       - 'ASTEROIDYiOS/CarbonisCombat568.swift'
@@ -301,6 +303,8 @@ jobs:
           python3 Tests/IOSAudioLockResume568Contract.py
           python3 Tests/IOSSourceCombatPause568Contract.py
           python3 Tests/IOSOriginalCombatHUD331Contract.py
+          swiftc ASTEROIDYiOS/CombatHUDViewport568.swift Tests/CombatHUDViewport568Tests.swift -o /tmp/combat-hud-viewport568
+          /tmp/combat-hud-viewport568
           python3 Tests/IOSShotExplosionAudioResume568Contract.py
           swiftc -frontend -parse ASTEROIDYiOS/OriginalShotSFXWorker568.swift
           swiftc ASTEROIDYiOS/OriginalAudioLifecycle568.swift Tests/OriginalAudioLifecycle568Tests.swift -o /tmp/original-audio-v568
