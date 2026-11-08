@@ -125,7 +125,7 @@ for token in (
           'Source Vanguard completed-GPU-draw proof missing: '+token)
 # Shared diagnostic writer must preserve atomic JSON output and never
 # hide a failed write; every other rendering and gameplay path is frozen.
-writer=(root/"ASTEROIDYiOS/OriginalRenderProofWriter568.swift").read_text()
+writer=(r/"ASTEROIDYiOS/OriginalRenderProofWriter568.swift").read_text()
 for token in (
     "JSONSerialization.data(",
     "withJSONObject: payload, options: [.sortedKeys]",
