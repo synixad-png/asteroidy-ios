@@ -93,6 +93,7 @@ struct Sector01Scene568: View {
     var body:some View {
         GeometryReader { geo in
             let compact=geo.size.height<550
+            let hudScale=max(0.001,min(geo.size.width/1280,geo.size.height/720))
             ZStack {
                 Color(red:0.008,green:0.014,blue:0.032).ignoresSafeArea()
                 Sector01CarbonisPreview568(
@@ -113,113 +114,30 @@ struct Sector01Scene568: View {
                         .accessibilityLabel("Prawy obszar: skręt i ciągły ostrzał")
                         .accessibilityIdentifier("sector01-right-steer-auto-fire")
                 }
-                VStack(spacing:0) {
-                    HStack(spacing:10) {
-                        VStack(alignment:.leading,spacing:2) {
-                            Text("SEKTOR 01 / CARBONIS")
-                                .font(.system(size:compact ? 14:20,weight:.bold,design:.monospaced))
-                                .foregroundStyle(.orange)
-                            Text("ORYGINALNA PLANETA C279 · VANGUARD · WAVE 01")
-                                .font(.system(size:compact ? 9:11,design:.monospaced))
-                                .foregroundStyle(.cyan)
-                        }
-                        Spacer()
-                        if session.hud.phase == .playing && !showingService {
-                            Button("PAUZA") {pauseMission568()}
-                                .font(.system(size:compact ? 10:13,weight:.bold,
-                                              design:.monospaced))
-                                .padding(10)
-                                .foregroundStyle(Color(red:0.10,green:0.15,blue:0.20))
-                                .background(Color(red:0.88,green:0.67,blue:0.31),
-                                            in:RoundedRectangle(cornerRadius:6))
-                                .accessibilityIdentifier("sector01-pause-button")
-                        }
-                        Button("WRÓĆ DO MAPY") {exitMission568()}
-                        .font(.system(size:compact ? 10:13,weight:.bold,design:.monospaced))
-                        .padding(10)
-                        .foregroundStyle(.white)
-                        .background(Color(red:0.05,green:0.15,blue:0.22),
-                                    in:RoundedRectangle(cornerRadius:6))
-                        .accessibilityIdentifier("sector01-back-to-atlas")
-                    }
-                    .padding(.horizontal,compact ? 12:24)
-                    .padding(.vertical,6)
-                    .background(.black.opacity(0.78))
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Canvas { context,size in
-                            let radius=min(size.width,size.height)*0.44
-                            let center=CGPoint(x:size.width/2,y:size.height/2)
-                            let circle=CGRect(x:center.x-radius,y:center.y-radius,
-                                              width:radius*2,height:radius*2)
-                            context.stroke(Path(ellipseIn:circle),
-                                with:.color(.cyan.opacity(0.5)),lineWidth:1)
-                            let cross=Path(ellipseIn:CGRect(
-                                x:center.x-3,y:center.y-3,width:6,height:6))
-                            context.fill(cross,with:.color(.green))
-                            for p in session.hud.hazards {
-                                let x=center.x+CGFloat(p.x/400)*radius
-                                let y=center.y+CGFloat(p.y/400)*radius
-                                guard hypot(x-center.x,y-center.y)<=radius else {continue}
-                                context.fill(Path(ellipseIn:CGRect(
-                                    x:x-2,y:y-2,width:4,height:4)),
-                                    with:.color(.orange.opacity(0.76)))
-                            }
-                            for p in session.hud.tokenPickups {
-                                let x=center.x+CGFloat(p.x/400)*radius
-                                let y=center.y+CGFloat(p.y/400)*radius
-                                guard hypot(x-center.x,y-center.y)<=radius else {continue}
-                                context.fill(Path(ellipseIn:CGRect(
-                                    x:x-3,y:y-3,width:6,height:6)),
-                                    with:.color(.yellow))
-                            }
-                            for p in session.hud.targets {
-                                let x=center.x+CGFloat(p.x/400)*radius
-                                let y=center.y+CGFloat(p.y/400)*radius
-                                guard hypot(x-center.x,y-center.y)<=radius else {continue}
-                                context.fill(Path(ellipseIn:CGRect(
-                                    x:x-4,y:y-4,width:8,height:8)),
-                                    with:.color(.red))
-                            }
-                        }
-                        .frame(width:compact ? 120:162,height:compact ? 100:142)
-                        .background(.black.opacity(0.73),
-                                    in:RoundedRectangle(cornerRadius:9))
-                        .padding(.trailing,compact ? 15:28)
-                        .accessibilityIdentifier("sector01-live-enemy-radar")
-                        .allowsHitTesting(false)
-                    }
-                    HStack(alignment:.bottom) {
-                        VStack(alignment:.leading,spacing:5) {
-                            Text("KADŁUB \(session.hud.hull)  PANCERZ \(session.hud.armor)  ŻYCIA \(session.hud.lives)")
-                                .foregroundStyle(.cyan)
-                            Text("ASTEROIDY \(session.hud.rocks)  MYŚLIWCE \(session.hud.fighters)")
-                                .foregroundStyle(.orange)
-                            Text("PUNKTY \(session.hud.score)  ŻETONY \(session.hud.collectedTokens)  DO ZEBRANIA \(session.hud.tokenPickups.count)")
-                                .foregroundStyle(.yellow)
-                            Text("CZAS \(Int(session.hud.seconds)) s  ·  LEWA: LOT / PRAWA: SKRĘT + OGIEŃ")
-                                .foregroundStyle(.white)
-                        }
-                        .font(.system(size:compact ? 10:12,weight:.bold,design:.monospaced))
-                        .padding(10)
-                        .background(.black.opacity(0.70),in:RoundedRectangle(cornerRadius:7))
-                        Spacer()
-
-                    }
-                    .padding(.horizontal,compact ? 14:28)
-                    .padding(.bottom,compact ? 9:20)
+                // RendererW3Combat331.cs: native, transparent, screen-anchored
+                // HUD at the exact original 1280x720 virtual positions.
+                // All readings come from the genuine active combat snapshot.
+                SourceCombatHUD331(hud:session.hud)
                     .allowsHitTesting(false)
-                    Text("PORT MISJI 01 · POZOSTAŁE SEKTORY I MECHANIKI PC NADAL W OPRACOWANIU")
-                        .font(.system(size:compact ? 8:10,design:.monospaced))
-                        .foregroundStyle(.yellow)
-                        .frame(maxWidth:.infinity,alignment:.leading)
-                        .padding(.horizontal,compact ? 12:24)
-                        .padding(.vertical,5)
-                        .background(.black.opacity(0.9))
-                        .allowsHitTesting(false)
-                }
 
+                // The touch-only pause affordance is separate from the PC HUD.
+                // Keep the real source Game.Paused action and preserve
+                // both full-screen drag zones, including iPhone safe areas.
+                if session.hud.phase == .playing && !showingService && !userPaused {
+                    Button("PAUZA") {pauseMission568()}
+                        .font(.system(size:compact ? 10:12,weight:.semibold,
+                                      design:.monospaced))
+                        .padding(.horizontal,compact ? 7:11)
+                        .padding(.vertical,compact ? 4:7)
+                        .foregroundStyle(Color(red:0.85,green:0.88,blue:0.90))
+                        .background(Color.black.opacity(0.36),
+                                    in:RoundedRectangle(cornerRadius:4))
+                        .overlay(RoundedRectangle(cornerRadius:4)
+                            .stroke(.cyan.opacity(0.45),lineWidth:1))
+                        .position(x:(geo.size.width-1280*hudScale)/2+660*hudScale,
+                                  y:(geo.size.height-720*hudScale)/2+33*hudScale)
+                        .accessibilityIdentifier("sector01-pause-button")
+                }
                 // Windows Renderer.cs:200: performance overlay only during
                 // active combat, not victory/defeat/service screens.
                 if session.hud.phase == .playing && !showingService {
@@ -227,7 +145,7 @@ struct Sector01Scene568: View {
                         .frame(maxWidth:.infinity,maxHeight:.infinity,
                                alignment:.bottomTrailing)
                         .padding(.trailing,compact ? 15 : 28)
-                        .padding(.bottom,compact ? 74 : 102)
+                        .padding(.bottom,compact ? 112 : 144)
                         .allowsHitTesting(false)
                 }
                 if showingService {
@@ -324,6 +242,7 @@ struct Sector01Scene568: View {
                             .foregroundStyle(Color(red:0.07,green:0.13,blue:0.17))
                             .accessibilityIdentifier("sector01-resume-button")
                         Button("WYJDŹ DO MENU") {exitMission568()}
+                            .accessibilityIdentifier("sector01-back-to-atlas")
                             .frame(maxWidth:.infinity)
                             .padding(compact ? 9:13)
                             .background(Color(red:0.05,green:0.15,blue:0.22),
