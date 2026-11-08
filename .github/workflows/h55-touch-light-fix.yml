@@ -1,0 +1,59 @@
+name: H55 iOS input axis and H46 lighting repair — source gate
+on:
+  push:
+    branches: [feature/ios-h55-v580-native-entry]
+    paths:
+      - 'ASTEROIDYiOS/H55TouchMapping580.swift'
+      - 'ASTEROIDYiOS/H55TouchControls580.swift'
+      - 'ASTEROIDYiOS/H55LightBalance580.swift'
+      - 'ASTEROIDYiOS/H55ScenePage580.swift'
+      - 'Tests/H55TouchLightFix580Tests.swift'
+      - '.github/workflows/h55-touch-light-fix.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-controls-lighting:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exact four-way control vs H06 movement and original PC H46 palette
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55Sweep401580.swift \
+            ASTEROIDYiOS/H55Walk580.swift \
+            ASTEROIDYiOS/H55TouchMapping580.swift \
+            ASTEROIDYiOS/H55LightBalance580.swift \
+            Tests/H55TouchLightFix580Tests.swift -o /tmp/h55-touch-light-test
+          /tmp/h55-touch-light-test
+      - name: SwiftUI full-screen touch domains and button placement contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -frontend -parse ASTEROIDYiOS/H55TouchControls580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          python3 - <<'PY'
+          from pathlib import Path
+          c=Path('ASTEROIDYiOS/H55TouchControls580.swift').read_text()
+          s=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          assert 'HStack(spacing:0)' in c and '.frame(width:w,height:h)' in c
+          assert '.gesture(walkGesture)' in c and '.gesture(lookGesture)' in c
+          assert 'onWalk(0,0)' in c, 'releasing LEFT must zero velocity'
+          assert '.position(x:w*0.33,y:h*0.79)' in c
+          assert '.position(x:w*0.84,y:h*0.79)' in c
+          assert 'h55-v580-npc-interact' in c and 'h55-v580-jump' in c
+          assert '.allowsHitTesting(false)' in s, 'SceneKit must not steal drag'
+          assert 'H55TouchMapping580.scenePitch(for:movement.pitch)' in s
+          assert 'H55TouchMapping580.sceneYaw(for:movement.yaw)' in s
+          assert 'H55LightBalance580.sceneIntensity(' in s
+          assert 'H55LightBalance580.budget' in s
+          assert 'lightRefresh>=0.16' in s, 'bounded lighting updates'
+          assert 'frame(height:105)' not in s, 'obsolete bottom-only touch strip'
+          assert 'H55TouchControls580(' in s
+          print('PASS: full LEFT and RIGHT view input, inset SKOK / ROZMAWIAJ, fixed camera signs, iPhone light budget')
+          PY
