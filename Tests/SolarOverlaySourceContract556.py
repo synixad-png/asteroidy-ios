@@ -12,6 +12,7 @@ metal=(r/"ASTEROIDYiOS"/"Ship.metal").read_text()
 factory=(r/"ASTEROIDYiOS"/"SourceSkyAssetFactory568.swift").read_text()
 blend=(r/"ASTEROIDYiOS"/"SourceSkyPremultipliedBlend.swift").read_text()
 for factor in (
+    "attachment.pixelFormat = .bgra8Unorm",
     "attachment.isBlendingEnabled=true",
     "attachment.sourceRGBBlendFactor = .one",
     "attachment.destinationRGBBlendFactor = .oneMinusSourceAlpha",
@@ -50,7 +51,7 @@ for token in (
     "solarOverlayMesh=try Self.makeMesh(device,overlayData.0,overlayData.1)",
     "let solarVertex=try requireShader(\"solarOverlayVertex\")",
     "let solarFragment=try requireShader(\"solarOverlayFragment\")",
-    "solarDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm",
+    "solarDescriptor.depthAttachmentPixelFormat = .depth32Float",
     "try SourceSkyPremultipliedBlend.configure(solarDescriptor)",
     "solarOverlayPipeline=try device.makeRenderPipelineState(",
     "if let sun=SphereSolarOverlay556.project(",
