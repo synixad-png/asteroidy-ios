@@ -43,6 +43,8 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/H55GLBCompatibility580.swift ASTEROIDYiOS/H55Asset580.swift Tests/H55Asset580Tests.swift -o /tmp/h55-asset
           /tmp/h55-asset
+          swiftc ASTEROIDYiOS/H55FloorRule580.swift Tests/H55SpawnSurface580Tests.swift -o /tmp/h55-spawn-surface580-test
+          /tmp/h55-spawn-surface580-test
           swiftc ASTEROIDYiOS/H55GLBCompatibility580.swift Tests/H55GLBCompatibility580Tests.swift -o /tmp/h55-compat
           /tmp/h55-compat
           swiftc ASTEROIDYiOS/H55Walk580.swift Tests/H55Walk580Tests.swift -o /tmp/h55-walk
