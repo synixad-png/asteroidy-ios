@@ -3,7 +3,7 @@
 
 Source reference: Windows/src/RendererW3Combat331.cs
 SHA-256: 8119c1d98936e0c5ec602b49cc98f41f945312792122b33ce82740735ba0ffc3
-Canonical virtual layout: UiScale336.cs, 1280 x 720 centered/aspect fit.
+Canonical HUD elements: UiScale336.cs, 1280 x 720; adaptive physical screen anchoring.
 This checks implementation properties; it does NOT claim Apple GPU screenshot equality.
 """
 from pathlib import Path
@@ -21,7 +21,9 @@ def expect_all(data, needles, what):
 expect_all(hud,(
     "struct SourceCombatHUD331: View",
     "Canvas(opaque:false, rendersAsynchronously:false)",
-    "size.width/1280,size.height/720",
+    "CombatHUDViewport568(",
+    "rightGroupOffsetInSource()",
+    "Self.top(c,hud,rightShift:rightShift)",
     "hud.hull,60,191,565,Self.cyan",
     "hud.armor,25,191,613,Self.gold",
     "hud.tarczaEnergy,100,191,661,Self.blue",
