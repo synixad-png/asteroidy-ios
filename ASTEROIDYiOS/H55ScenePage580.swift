@@ -464,8 +464,18 @@ import simd
         npcAnimator?.apply(dt:0,mechanic:mechanic,allowWalking:false)
         phase = .ready
         beginClock()
-        // Original H12 composites and ambient machinery are controlled
-        // exclusively by the source-clock compositor, not CAAnimation.
+        // The H12 source-clock compositor supersedes the former ambient
+        // CAAnimation players. If a particular imported GLB lacks H12
+        // clips, preserve the previously verified H11 ambient animation
+        // behaviour without blocking H55 entry or mixing pose writers.
+        if machinery == nil {
+            for name in ["04_TURBINE_ROTATION_LOOP",
+                         "05_GIANT_REPAIR_ARMS_SERVICE_LOOP",
+                         "H39_NO_SHIP_IDLE",
+                         "H46_LIGHT_IDLE_20S"] {
+                play(name,loop:true)
+            }
+        }
     }
 
     private static func npcHeadingFromBindPose(
