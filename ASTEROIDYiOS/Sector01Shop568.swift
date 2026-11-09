@@ -6,7 +6,7 @@ import Foundation
 /// offered as fake purchases or charged against a user's balance.
 enum Sector01Shop568 {
     enum Weapon:Int,Codable,CaseIterable {
-        case pulse=0,twin=1,scatter=2
+        case pulse=0,twin=1,scatter=2,rail=3,swarm=4
     }
     enum Item:Int,CaseIterable {
         case twin=0,scatter=1,power=2,rapid=3,shield=4,repair=5
@@ -27,6 +27,8 @@ enum Sector01Shop568 {
         var totalSpent:Int=0
         var twinOwned:Bool=false
         var scatterOwned:Bool=false
+        var railOwned:Bool=false
+        var swarmOwned:Bool=false
         var weapon:Weapon = .pulse
         var upgradeLevel:Int=1
         var rapidLevel:Int=0
@@ -34,6 +36,52 @@ enum Sector01Shop568 {
         var lives:Int=3
         var repairsBought:Int=0
 
+        // Decode both v568 profiles (which lack Rail/Swarm keys) and H11
+        // profiles. Preserve all earlier purchases, tokens and equipped guns.
+        init() {}
+        private enum CodingKeys:String,CodingKey {
+            case tokens,totalEarned,totalSpent,twinOwned,scatterOwned
+            case railOwned,swarmOwned,weapon,upgradeLevel,rapidLevel
+            case shieldCharges,lives,repairsBought
+        }
+        init(from decoder:Decoder) throws {
+            let v=try decoder.container(keyedBy:CodingKeys.self)
+            tokens=try v.decode(Int.self,forKey:.tokens)
+            totalEarned=try v.decode(Int.self,forKey:.totalEarned)
+            totalSpent=try v.decode(Int.self,forKey:.totalSpent)
+            twinOwned=try v.decode(Bool.self,forKey:.twinOwned)
+            scatterOwned=try v.decode(Bool.self,forKey:.scatterOwned)
+            railOwned=try v.decodeIfPresent(Bool.self,forKey:.railOwned) ?? false
+            swarmOwned=try v.decodeIfPresent(Bool.self,forKey:.swarmOwned) ?? false
+            weapon=try v.decode(Weapon.self,forKey:.weapon)
+            upgradeLevel=try v.decode(Int.self,forKey:.upgradeLevel)
+            rapidLevel=try v.decode(Int.self,forKey:.rapidLevel)
+            shieldCharges=try v.decode(Int.self,forKey:.shieldCharges)
+            lives=try v.decode(Int.self,forKey:.lives)
+            repairsBought=try v.decode(Int.self,forKey:.repairsBought)
+        }
+
+        /// PC v580 Game.Price(item 0/1) at level >=13, and Game.Buy.
+        /// The same persisted C279 wallet owns advanced weapons too.
+        func advancedPrice(_ weapon:Weapon)->Int? {
+            switch weapon {
+            case .rail:return railOwned ? 0 : 160
+            case .swarm:return swarmOwned ? 0 : 190
+            default:return nil
+            }
+        }
+        @discardableResult mutating func buyAdvanced(_ weapon:Weapon,
+                                                  sector:Int)->Bool {
+            guard (13..<25).contains(sector),
+                  let cost=advancedPrice(weapon),cost>0,
+                  tokens>=cost,totalSpent<=Int.max-cost
+            else{return false}
+            tokens-=cost
+            totalSpent+=cost
+            if weapon == .rail {railOwned=true} else {swarmOwned=true}
+            self.weapon=weapon
+            return true
+        }
         func price(_ item:Item)->Int {
             switch item {
             case .twin:return twinOwned ? 0 : 45
@@ -74,7 +122,9 @@ enum Sector01Shop568 {
         @discardableResult mutating func equip(_ newWeapon:Weapon)->Bool {
             guard newWeapon == .pulse ||
                   (newWeapon == .twin && twinOwned) ||
-                  (newWeapon == .scatter && scatterOwned)
+                  (newWeapon == .scatter && scatterOwned) ||
+                  (newWeapon == .rail && railOwned) ||
+                  (newWeapon == .swarm && swarmOwned)
             else {return false}
             weapon=newWeapon
             return true
@@ -119,6 +169,8 @@ enum Sector01Shop568 {
         (1...5).contains(s.lives) && s.repairsBought>=0 &&
         (s.weapon == .pulse ||
          (s.weapon == .twin && s.twinOwned) ||
-         (s.weapon == .scatter && s.scatterOwned))
+         (s.weapon == .scatter && s.scatterOwned) ||
+         (s.weapon == .rail && s.railOwned) ||
+         (s.weapon == .swarm && s.swarmOwned))
     }
 }
