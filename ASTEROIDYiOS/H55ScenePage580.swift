@@ -52,6 +52,9 @@ import simd
     // Never start concurrent automatic SceneKit NPC animation players.
     private var npcAnimator:H55NpcSceneAnimator580?
     private var machinery:H55H12SceneAnimator580?
+    // H71 moves only the two source-selected GLB drone prefab roots.
+    private var droneScene:H55DroneScene580?
+    @Published private(set) var h71Status="H71: NIE WCZYTANO DRONÓW"
     @Published private(set) var h12Status="NIE WCZYTANO ANIMACJI H12"
     @Published private(set) var mechanicStatus="OCZEKUJE NA ROZMOWĘ"
 
@@ -196,6 +199,12 @@ import simd
         // 3.25s arrival and while the conversation blocks walking.
         // PC GpuHub90: composite H51 then machinery, before H70 doors.
         machinery?.advance(dt:dt)
+        if let droneScene {
+            droneScene.advance(dt:dt,player:H55DroneFlight580.Player(
+                walking:arrival.walking,position:SIMD3<Float>(
+                    movement.x,movement.y,movement.z),yaw:movement.yaw))
+            if h71Status != droneScene.status {h71Status=droneScene.status}
+        }
         updateAirlocks(dt:dt)
         lightRefresh+=dt
         if lightRefresh>=0.16 {
@@ -282,6 +291,8 @@ import simd
         mechanicBaseOrientation=nil
         npcAnimator=nil
         machinery=nil
+        droneScene=nil
+        h71Status="H71: NIE WCZYTANO DRONÓW"
         h12Status="NIE WCZYTANO ANIMACJI H12"
         mechanicStatus="OCZEKUJE NA ROZMOWĘ"
         showingWorkshop=false
@@ -312,6 +323,13 @@ import simd
                 // H12 must not regress H01–H11: an incomplete imported
                 // animation library disables H12 alone, not the hangar.
                 let h12=try? H55H12Tracks580.load(url)
+                // H71 builds its source flight lattice on the background
+                // loading queue, never in the SceneKit display frame.
+                let droneSpawns=(try? H55DroneImports580.load(url)) ?? []
+                let droneNavigation:H55DroneNavigation580? = droneSpawns.count==2
+                    ? H55DroneNavigation580(clearance:{x,y,z,radius in
+                        physical.cameraClear406(x,y,z,radius:radius)
+                    }) : nil
                 GLTFAsset.load(with:url,options:[:]) { _,status,asset,error,_ in
                     if status == .complete, let asset {
                         let source=GLTFSCNSceneSource(asset:asset)
@@ -320,7 +338,9 @@ import simd
                             self.attach(source,asset:asset,inventory:metadata,
                                         physical:physical,airlockKeys:airlockKeys,
                                         npcSurface:npcSurface,npcRig:npcRig,
-                                        machineryLibrary:h12)
+                                        machineryLibrary:h12,
+                                        droneSpawns:droneSpawns,
+                                        droneNavigation:droneNavigation)
                         }
                     } else if status == .error {
                         DispatchQueue.main.async { [weak self] in
@@ -345,7 +365,9 @@ import simd
                         airlockKeys:H55AirlockTracks580.SceneKeys,
                         npcSurface:H55NpcSurface580,
                         npcRig:H55NpcTracks580.Rig,
-                         machineryLibrary:H55H12Tracks580.Library?) {
+                         machineryLibrary:H55H12Tracks580.Library?,
+                         droneSpawns:[H55DroneImports580.Spawn],
+                         droneNavigation:H55DroneNavigation580?) {
         guard let realScene=source.defaultScene else {
             phase = .failed("Plik nie zawiera sceny 3D.")
             return
@@ -453,6 +475,16 @@ import simd
         } else {
             machinery=nil
             h12Status="H12: BRAK ZGODNYCH KLIPÓW W DOSTARCZONYM GLB"
+        }
+        if let droneNavigation,droneSpawns.count==2 {
+            droneScene=H55DroneScene580(
+                spawns:droneSpawns,navigation:droneNavigation,
+                allNodes:source.nodes)
+            h71Status=droneScene?.status ??
+                "H71: START ZABLOKOWANY — KOLIZJA LUB NIEZGODNE WĘZŁY GLB"
+        } else {
+            droneScene=nil
+            h71Status="H71: BRAK DWÓCH ZWERYFIKOWANYCH PREFABÓW DRONÓW"
         }
         animations=clips
         animationNames=inventory.animations.filter {
@@ -604,6 +636,8 @@ import simd
         mechanicBaseOrientation=nil
         npcAnimator=nil
         machinery=nil
+        droneScene=nil
+        h71Status="H71: NIE WCZYTANO DRONÓW"
         h12Status="NIE WCZYTANO ANIMACJI H12"
         showingWorkshop=false
         dialogue.reset()
@@ -710,7 +744,10 @@ struct H55ScenePage580: View {
                                         // The runtime uses a single H51/H39 timeline.
                                         // Don't display an inert picker that would
                                         // overwrite animated nodes or break H70.
-                                        Text(loader.h12Status)
+                                        VStack(alignment:.trailing,spacing:3) {
+                                            Text(loader.h12Status)
+                                            Text(loader.h71Status)
+                                        }
                                             .accessibilityIdentifier("h12-source-clock-active")
                                     } else {
                                         Picker("ANIMACJA GLB",selection:$pickedClip) {
