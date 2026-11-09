@@ -43,6 +43,7 @@ on:
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
       - 'ASTEROIDYiOS/H55LoadDiagnostics580.swift'
+      - 'Tests/H55LoadDiagnostics580Tests.swift'
       - 'Tests/H55NpcTracks580Tests.swift'
       - 'Tests/H55NpcMotion580Tests.swift'
       - 'Tests/H55NpcH09RealPatrol580Tests.swift'
@@ -165,6 +166,8 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55LoadDiagnostics580.swift
+          swiftc ASTEROIDYiOS/H55LoadDiagnostics580.swift Tests/H55LoadDiagnostics580Tests.swift -o /tmp/h55-diagnostics-test
+          /tmp/h55-diagnostics-test
           swiftc ASTEROIDYiOS/H55Airlocks580.swift Tests/H55AirlocksRealGLB580Tests.swift -o /tmp/h07-real-glb-source
           swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55NpcDetour580.swift ASTEROIDYiOS/H55Mechanic580.swift ASTEROIDYiOS/H55NpcSurface580.swift ASTEROIDYiOS/H55Airlocks580.swift Tests/H55H08SourceTests.swift -o /tmp/h08-check
           /tmp/h08-check
