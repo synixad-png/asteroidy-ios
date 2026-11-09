@@ -42,15 +42,15 @@ import Foundation
         check(H55Workshop580.serviceMissing(1,vitals:vitals,shop:shop)==18,
               "source armor gap")
         let originalWallet=shop
-        check(H55Workshop580.service(0,vitals:&vitals,shop:&shop)==
+        check(H55Workshop580.service(0,vitals:&vitals,shop:&shop) ==
               .changed("KADŁUB NAPRAWIONY") &&
               vitals.hull==60 && shop==originalWallet,
               "PC service free hull repair changes REAL state, not wallet")
-        check(H55Workshop580.service(1,vitals:&vitals,shop:&shop)==
+        check(H55Workshop580.service(1,vitals:&vitals,shop:&shop) ==
               .changed("PANCERZ ODNOWIONY") &&
               vitals.armor==25 && shop==originalWallet,
               "PC free armor repair")
-        check(H55Workshop580.service(1,vitals:&vitals,shop:&shop)==
+        check(H55Workshop580.service(1,vitals:&vitals,shop:&shop) ==
               .unchanged("STAN UKŁADU JUŻ JEST MAKSYMALNY"),
               "never bill healthy armor")
         check(H55Workshop580.servicePrice(2,vitals:vitals,shop:shop)==12,
@@ -101,7 +101,7 @@ import Foundation
         H55Workshop580.resetVitals(defaults:defaults)
         check(H55Workshop580.loadVitals(defaults:defaults) == H55Workshop580.Vitals(),
               "PC new game clears damage")
-        vitals.hull=-1
+        vitals.hull = -1
         check(!H55Workshop580.saveVitals(vitals,defaults:defaults),
               "cannot save corrupt negative hull")
         check(H55Workshop580.loadVitals(defaults:defaults) == H55Workshop580.Vitals(),
