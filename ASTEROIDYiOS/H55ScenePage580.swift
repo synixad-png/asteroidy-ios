@@ -868,6 +868,14 @@ struct H55ScenePage580: View {
                         }
                         .disabled(loader.arriving || loader.conversationOpen || loader.showingWorkshop)
                         .accessibilityIdentifier("h11-open-stations")
+                        // Windows HubKey90 ESC in a dialogue closes the
+                        // dialogue first, without leaving H55 or losing NPC state.
+                        if loader.conversationOpen {
+                            pauseButton("ZAKOŃCZ ROZMOWĘ") {
+                                if loader.conversationOpen {loader.interact()}
+                            }
+                            .accessibilityIdentifier("h55-pause-close-conversation")
+                        }
                         ShareLink(item:loader.h13MaterialReport) {
                             Text("RAPORT H13")
                                 .frame(maxWidth:.infinity)
