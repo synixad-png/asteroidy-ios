@@ -55,7 +55,7 @@ jobs:
           assert 'dialogue.interact(walking:arrival.walking' in h55
           assert 'H55NpcDialogue580.spokenLine' in h55
           assert 'if loader.conversationOpen {loader.interact()}' in h55
-          assert 'if conversationOpen {moveForward=0;moveRight=0;return}' in h55
+          assert 'if conversationOpen || showingWorkshop {moveForward=0;moveRight=0;return}' in h55
           assert 'H55NpcDialogue580' in Path('ASTEROIDYiOS/H55NpcDialogue580.swift').read_text()
           assert 'mechanic.finishConversation()' in h55
           assert 'H55WorkshopPanel580(' in h55
