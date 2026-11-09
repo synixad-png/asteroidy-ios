@@ -8,6 +8,7 @@ on:
       - 'ASTEROIDYiOS/H55H12SceneAnimator580.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - 'Tests/H55H12Timeline580Tests.swift'
+      - 'Tests/H55H12Tracks580Tests.swift'
       - '.github/workflows/h12-machinery-source.yml'
   workflow_dispatch:
 permissions:
@@ -26,6 +27,11 @@ jobs:
             Tests/H55H12Timeline580Tests.swift \
             -o /tmp/h12-original-pc580
           /tmp/h12-original-pc580
+          swiftc -Onone ASTEROIDYiOS/H55H12Timeline580.swift \
+            ASTEROIDYiOS/H55H12Tracks580.swift \
+            Tests/H55H12Tracks580Tests.swift \
+            -o /tmp/h12-glb2-source
+          /tmp/h12-glb2-source
           swiftc -frontend -parse ASTEROIDYiOS/H55H12Tracks580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55H12SceneAnimator580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
