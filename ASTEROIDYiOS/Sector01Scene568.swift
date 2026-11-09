@@ -8,7 +8,7 @@ struct Sector01Scene568: View {
     let entry:Sector01Entry568
     let returnToAtlas:()->Void
     let onMissionCompleted:(Sector01MissionSummary568)->Void
-    let onSurvivalChanged:(Int,Int)->Void
+    let onSurvivalChanged:(Int,Int,Int,Int)->Void
     let onAudioEvent:(Int)->Void
     let onEnginePower:(Float)->Void
     let onMissionPause:(Bool)->Void
@@ -27,7 +27,7 @@ struct Sector01Scene568: View {
 
     init(entry:Sector01Entry568,returnToAtlas:@escaping ()->Void,
          onMissionCompleted:@escaping (Sector01MissionSummary568)->Void,
-         onSurvivalChanged:@escaping (Int,Int)->Void,
+         onSurvivalChanged:@escaping (Int,Int,Int,Int)->Void,
          onAudioEvent:@escaping (Int)->Void = {_ in},
          onEnginePower:@escaping (Float)->Void = {_ in},
          onMissionPause:@escaping (Bool)->Void = {_ in},
@@ -72,7 +72,8 @@ struct Sector01Scene568: View {
         // returnToAtlas -> OriginalAudioAV568.returnToMenu() changes
         // the context atomically. Do not briefly restart combat sound.
         onEnginePower(0)
-        onSurvivalChanged(session.game.lives,session.game.shieldCharges)
+        onSurvivalChanged(session.game.lives,session.game.shieldCharges,
+                           session.game.hull,session.game.armor)
         returnToAtlas()
     }
     private var movement:some Gesture {
@@ -204,8 +205,8 @@ struct Sector01Scene568: View {
                                 .buttonStyle(.borderedProminent)
                                 .accessibilityIdentifier("sector01-retry-after-defeat")
                                 Button("POWRÓT DO ATLASU") {
-                                    onSurvivalChanged(session.game.lives,
-                                                      session.game.shieldCharges)
+                                    onSurvivalChanged(session.game.lives,session.game.shieldCharges,
+                           session.game.hull,session.game.armor)
                                     returnToAtlas()
                                 }
                                     .buttonStyle(.bordered)
@@ -288,8 +289,8 @@ struct Sector01Scene568: View {
                   let report=session.hud.summary else {return}
             completionReported=true
             session.release()
-            onSurvivalChanged(session.game.lives,
-                              session.game.shieldCharges)
+            onSurvivalChanged(session.game.lives,session.game.shieldCharges,
+                           session.game.hull,session.game.armor)
             onMissionCompleted(report)
         }
         // MusicAudio.cs engineLevel: active thrust=1; no thrust idle=.16.
