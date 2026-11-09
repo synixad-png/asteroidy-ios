@@ -67,9 +67,10 @@ struct H55WorkshopPanel580:View {
                                 let owned=H55SourceMechanics580.shipOwned(i,state:rules)
                                 let price=H55SourceMechanics580.shipPrice(i)
                                 let detail="A:\(Int(stats?.acceleration ?? 0)) · V:\(Int(stats?.topSpeed ?? 0)) · SKR:\(Int((stats?.turnSpeed ?? 0)*100)/100) · MASA:\(stats?.mass ?? 0)"
+                                let craftStatus=i==rules.selectedShip ? "WYBRANY" : owned ? "POSIADANY" : "KOSZT \(price ?? 0) Ż"
+                                let craftVisual=modeled ? "MODEL iOS DOSTĘPNY" : "GLB DO DOSTARCZENIA (BEZ PODMIANY)"
                                 itemRow(H55Workshop580.ships[i],
-                                    detail:detail+" · "+(i==rules.selectedShip ? "WYBRANY" : owned ? "POSIADANY" : "KOSZT \(price ?? 0) Ż")+
-                                        (modeled ? " · MODEL iOS DOSTĘPNY" : " · GLB DO DOSTARCZENIA (NIE PODSTAWIAMY INNEGO)"),
+                                    detail:"\(detail) · \(craftStatus) · \(craftVisual)",
                                     action:modeled && i != rules.selectedShip ? {
                                         let r=H55SourceMechanics580.buyAndEquipShip(
                                             i,sector:sector,state:&rules,wallet:&wallet)
@@ -86,11 +87,12 @@ struct H55WorkshopPanel580:View {
                                 let rank=i==0 ? vitals.hullRank : i==1 ? vitals.armorRank : rules.rateRank
                                 let cost=H55Workshop580.talentCost(rank:rank)
                                 let free=rules.trophiesFree(vitals:vitals)
+                                let costText=cost.map{"KOLEJNY KOSZT \($0) TROFEÓW"} ?? "MAKSIMUM"
+                                let benefit=i==0 ? "MAX HP \(vitals.maxHull)" :
+                                            i==1 ? "MAX PANCERZ \(vitals.maxArmor)" :
+                                            "SZYBKOSTRZELNOŚĆ \(Int(100/(1+0.06*Double(rank))))%"
                                 itemRow(["KADŁUB","PANCERZ","SZYBKOSTRZELNOŚĆ"][i],
-                                    detail:"RANGA \(rank)/4 · "+(cost==nil ? "MAKSIMUM" : "KOLEJNY KOSZT \(cost!) TROFEÓW")+
-                                        (i==0 ? " · MAX HP \(vitals.maxHull)" :
-                                         i==1 ? " · MAX PANCERZ \(vitals.maxArmor)" :
-                                         " · MODYFIKATOR \(Int(100/(1+0.06*Double(rank))))%"),
+                                    detail:"RANGA \(rank)/4 · \(costText) · \(benefit)",
                                     action:rank<4 && free >= (cost ?? 999) ? {
                                         let r=H55SourceMechanics580.buyTalent(
                                             i,state:&rules,vitals:&vitals)
@@ -158,9 +160,10 @@ struct H55WorkshopPanel580:View {
                                 let level=H55Workshop580.moduleLevelRequired[i]
                                 let can=rank<2 && sector>=level &&
                                     (i<3 || rules.guardianOwned)
+                                let costInfo=cost.map{"\($0) Ż"} ?? "MAKSIMUM"
+                                let droneInfo=i>=3 && !rules.guardianOwned ? " · WYMAGA DRONA" : ""
                                 itemRow(H55Workshop580.modules[i],
-                                    detail:"RANGA \(rank)/2 · "+(cost==nil ? "MAKSIMUM" : "\(cost!) Ż")+
-                                      " · OD SEKTORA \(level)"+(i>=3 && !rules.guardianOwned ? " · WYMAGA DRONA": ""),
+                                    detail:"RANGA \(rank)/2 · \(costInfo) · OD SEKTORA \(level)\(droneInfo)",
                                     action:can ? {
                                         let r=H55SourceMechanics580.buyModule(
                                             i,sector:sector,state:&rules,wallet:&wallet)
