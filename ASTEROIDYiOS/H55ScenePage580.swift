@@ -198,6 +198,9 @@ import simd
         // PC v580: update doors AFTER NPC movement; keep animating during
         // 3.25s arrival and while the conversation blocks walking.
         // PC GpuHub90: composite H51 then machinery, before H70 doors.
+        // Authored bind/root first, current H51/H39/H46 animation next,
+        // dynamic H71 pilot world delta last — exactly source PC rendering.
+        droneScene?.restoreSourceRoots()
         machinery?.advance(dt:dt)
         if let droneScene {
             droneScene.advance(dt:dt,player:H55DroneFlight580.Player(
