@@ -64,12 +64,49 @@ import Foundation
         check(approx(H55LightBalance580.score(red,distanceSquared:0),
                      (2.5+0.14+0.05)/40),"PC exact relevance score")
         check(approx(H55LightBalance580.sceneIntensity(red,raw:180),
-                     180*0.22*0.30) &&
+                     180*0.22*H55LightingProfile580.defaultRed) &&
               approx(H55LightBalance580.sceneIntensity(white,raw:2300),
-                     2300*0.22),"source baseline and isolated red gain")
+                     2300*0.22),"source H46 non-red gain and new red default")
+        check(H55LightBalance580.maxRedActive==2,
+              "SceneKit H46 may not select more than two red lights")
+        let candidates:[H55LightBalance580.Candidate] = [
+            .init(name:red,distanceSquared:1),
+            .init(name:redUpper,distanceSquared:2),
+            .init(name:"H46_DOCK_02_RED_POINT",distanceSquared:3),
+            .init(name:"H46_DOCK_03_RED_POINT",distanceSquared:4),
+            .init(name:"H46_DOCK_04_RED_POINT",distanceSquared:5),
+            .init(name:scan,distanceSquared:6),
+            .init(name:white,distanceSquared:7),
+            .init(name:"H46_GENERAL_SPOT_02_KHR_SPOT",distanceSquared:8),
+            .init(name:"H46_GENERAL_SPOT_03_KHR_SPOT",distanceSquared:9),
+            .init(name:"H46_GENERAL_SPOT_04_KHR_SPOT",distanceSquared:10),
+            .init(name:"H46_GENERAL_SPOT_05_KHR_SPOT",distanceSquared:11),
+            .init(name:"H46_GENERAL_SPOT_06_KHR_SPOT",distanceSquared:12)
+        ]
+        let selected=H55LightBalance580.selectedNames(candidates)
+        check(selected.count==8 &&
+              selected.filter {H55LightBalance580.isRed($0)}.count==2 &&
+              selected.filter {!H55LightBalance580.isRed($0)}.count==6,
+              "white/cyan H46 lights must remain available within eight slots")
+        check(selected==H55LightBalance580.selectedNames(candidates.reversed()),
+              "deterministic H46 balancing regardless of dictionary iteration")
+        check(H55LightBalance580.selectedNames([
+            .init(name:"H46_DOCK_RED",distanceSquared:Float.nan),
+            .init(name:white,distanceSquared:Float.infinity)
+        ]).isEmpty,"invalid distance inputs cannot activate lights")
+        let clamped=H55LightingProfile580(fill:Float.infinity,red:-3)
+        check(approx(clamped.fill,H55LightingProfile580.defaultFill) &&
+              clamped.red==0,"invalid and negative persisted lighting values sanitized")
+        let maxed=H55LightingProfile580(fill:99,red:88)
+        check(maxed.fill==H55LightingProfile580.maximumFill &&
+              maxed.red==H55LightingProfile580.maximumRed,
+              "live lighting cannot exceed safe maximums")
+        check(approx(H55LightBalance580.sceneIntensity(red,raw:180,redGain:0),0) &&
+              approx(H55LightBalance580.sceneIntensity(red,raw:180,redGain:0.3),
+                     180*0.22*0.3),"live red dimming is deterministic")
         check(H55LightBalance580.sceneIntensity(red,raw:-1)==0 &&
               H55LightBalance580.score(white,distanceSquared:Float.nan)==0,
               "invalid brightness never propagates")
-        print("PASS H55 new touch mapping (4 axes, diagonal, camera view in 49 yaw headings, vertical look), source H46 8-light budget, red SceneKit balance")
+        print("PASS H55 new touch mapping (4 axes, diagonal, camera view in 49 yaw headings, vertical look), source H46 family-aware eight-light balance, persisted neutral fill and red controls")
     }
 }
