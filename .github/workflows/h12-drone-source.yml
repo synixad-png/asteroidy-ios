@@ -40,7 +40,8 @@ jobs:
           assert 'H55DroneImports580.load(url)' in scene
           flags=Path('ASTEROIDYiOS/H55DroneImports580.swift').read_text()
           assert 'static let autonomousDronesEnabled=true' in flags
-          assert 'let droneSpawns=H55H12FeatureFlags580.autonomousDronesEnabled' in scene
+          assert 'let droneSpawns:[H55DroneImports580.Spawn]' in scene
+          assert 'droneSpawns=try H55DroneImports580.load(url)' in scene
           assert 'if H55H12FeatureFlags580.autonomousDronesEnabled,' in scene
           assert 'h71-pause-status' in scene, 'H71 activation or error must be accessible without debug mode'
           assert 'H71: ODCZYT GLB DRONÓW NIEUDANY' in scene, 'Never swallow import failure'
