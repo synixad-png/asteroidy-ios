@@ -9,9 +9,11 @@ import Foundation
         let duration:Float
         let target:Int
         let meta:Bool
-        init(_ name:String,_ duration:Float,_ target:Int,_ meta:Bool=false) {
+        let rotation:Bool
+        init(_ name:String,_ duration:Float,_ target:Int,
+             _ meta:Bool=false,rotation:Bool=false) {
             self.name=name;self.duration=duration;self.target=target
-            self.meta=meta
+            self.meta=meta;self.rotation=rotation
         }
     }
     private static func check(_ ok:Bool,_ message:String) {
@@ -42,20 +44,23 @@ import Foundation
                           "byteLength":values.count*4])
             let id=accessors.count
             accessors.append(["bufferView":view,"componentType":5126,
-                              "count":kind=="SCALAR" ? values.count : values.count/3,
+                              "count":kind=="SCALAR" ? values.count :
+                                     values.count/(kind=="VEC4" ? 4 : 3),
                               "type":kind])
             return id
         }
         for spec in specs {
             let t=accessor([0,spec.duration],"SCALAR")
-            let v=accessor([0,0,0,1,2,3],"VEC3")
+            let v=spec.rotation ?
+                accessor([0,0,0,1,0,0,1,0],"VEC4") :
+                accessor([0,0,0,1,2,3],"VEC3")
             var item:[String:Any]=[
                 "name":spec.name,
                 "samplers":[["input":t,"output":v,
                               "interpolation":"LINEAR"]],
                 "channels":[["sampler":0,
                              "target":["node":spec.target,
-                                       "path":"translation"]]]
+                                       "path":spec.rotation ? "rotation" : "translation"]]]
             ]
             if spec.meta {
                 item["extras"]=["ANIMATION_LOOP":true,
@@ -100,7 +105,7 @@ import Foundation
         let url=folder.appendingPathComponent("valid.glb")
         let specs=[
             Spec(H55H12Timeline580.docking,32,0),
-            Spec(H55H12Timeline580.service,96,0),
+            Spec(H55H12Timeline580.service,96,0,false,rotation:true),
             Spec(H55H12Timeline580.turbines,2.4,0),
             Spec(H55H12Timeline580.arms,96,0),
             Spec(H55H12Timeline580.lighting,20,0),
@@ -141,6 +146,23 @@ import Foundation
               abs(p[1]-1)<0.00001 &&
               abs(p[2]-1.5)<0.00001,
               "real accessor LINEAR translation sampled mid-key")
+        let q=lib.clips[H55H12Timeline580.service]!.tracks[0].sample(48)
+        let half:Float=0.70710678
+        check(q.count==4 && abs(q[2]-half)<0.0001 &&
+              abs(q[3]-half)<0.0001,
+              "original glTF FLOAT32 rotation uses normalized shortest-arc SLERP")
+        let opposite=H55H12Tracks580.Track(
+            nodeName:"QuaternionTest",path:.rotation,
+            times:[0,1],values:[0,0,0,1,0,0,0,-1],
+            width:4,step:false).sample(0.5)
+        check(abs(opposite[3]-1)<0.0001 &&
+              abs(opposite[2])<0.0001,
+              "antipodal quaternions take shortest arc, never collapse to zero")
+        let step=H55H12Tracks580.Track(
+            nodeName:"StepTest",path:.translation,
+            times:[0,1],values:[1,2,3,4,5,6],
+            width:3,step:true).sample(0.75)
+        check(step==[1,2,3],"original glTF STEP never interpolates")
         let frame=lib.frame(48)
         check(frame.count==8 &&
               frame[0].clip==H55H12Timeline580.service &&
@@ -153,6 +175,6 @@ import Foundation
         try damaged.write(to:truncated,options:.atomic)
         check((try? H55H12Tracks580.load(truncated))==nil,
               "truncated GLB must never create synthesized animation")
-        print("PASS H12 source GLB2 parser: real FLOAT32 accessors, 6 original durations, H51 key sampling, imported LOOP/IDLE priority, metadata speed, H70/NPC exclusions and corrupt file fail-safe")
+        print("PASS H12 source GLB2 parser: real FLOAT32 accessors and quaternion SLERP/STEP, 6 original durations, H51 key sampling, imported LOOP/IDLE priority, metadata speed, H70/NPC exclusions and corrupt file fail-safe")
     }
 }
