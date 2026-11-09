@@ -309,7 +309,9 @@ import simd
                 // H70 tracks are from the same SHA-verified GLB as collision.
                 let airlockKeys=try H55AirlockTracks580.load(from:url)
                 let npcRig=try H55NpcTracks580.load(url)
-                let h12=try H55H12Tracks580.load(url)
+                // H12 must not regress H01–H11: an incomplete imported
+                // animation library disables H12 alone, not the hangar.
+                let h12=try? H55H12Tracks580.load(url)
                 GLTFAsset.load(with:url,options:[:]) { _,status,asset,error,_ in
                     if status == .complete, let asset {
                         let source=GLTFSCNSceneSource(asset:asset)
@@ -343,7 +345,7 @@ import simd
                         airlockKeys:H55AirlockTracks580.SceneKeys,
                         npcSurface:H55NpcSurface580,
                         npcRig:H55NpcTracks580.Rig,
-                         machineryLibrary:H55H12Tracks580.Library) {
+                         machineryLibrary:H55H12Tracks580.Library?) {
         guard let realScene=source.defaultScene else {
             phase = .failed("Plik nie zawiera sceny 3D.")
             return
@@ -436,16 +438,21 @@ import simd
             phase = .failed("H09: niekompletny szkielet mechanika GLB: " + String(describing:error))
             return
         }
-        do {
-            machinery=try H55H12SceneAnimator580(
-                library:machineryLibrary,allNodes:source.nodes,
-                excludedAirlockNames:Set(H55AirlockController580.leafNames.flatMap{$0}),
-                protectedNpcRoot:importedNpc)
-            machinery?.apply(time:0)
-            h12Status="H12: DOKOWANIE 0–32 s / SERWIS OD 32 s"
-        } catch {
-            phase = .failed("H12: niekompletne oryginalne animacje/węzły: "+String(describing:error))
-            return
+        if let machineryLibrary {
+            do {
+                machinery=try H55H12SceneAnimator580(
+                    library:machineryLibrary,allNodes:source.nodes,
+                    excludedAirlockNames:Set(H55AirlockController580.leafNames.flatMap{$0}),
+                    protectedNpcRoot:importedNpc)
+                machinery?.apply(time:0)
+                h12Status="H12: DOKOWANIE 0–32 s / SERWIS OD 32 s"
+            } catch {
+                machinery=nil
+                h12Status="H12: BŁĄD WĘZŁÓW ORYGINALNEGO GLB — "+String(describing:error)
+            }
+        } else {
+            machinery=nil
+            h12Status="H12: BRAK ZGODNYCH KLIPÓW W DOSTARCZONYM GLB"
         }
         animations=clips
         animationNames=inventory.animations.filter {
