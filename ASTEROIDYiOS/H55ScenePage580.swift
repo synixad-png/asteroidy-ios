@@ -147,7 +147,10 @@ import simd
         let nextStatus:String
         switch mechanic.phase {
         case .idle: nextStatus="OCZEKUJE NA ROZMOWĘ"
-        case .walking: nextStatus="PATROL DO WARSZTATU I POWRÓT"
+        case .walking:
+            nextStatus=mechanic.avoidingPlayer
+                ? "MECHANIK OMIJA GRACZA"
+                : "PATROL DO WARSZTATU I POWRÓT"
         case .workshop: nextStatus="WARSZTAT — POSTÓJ 5 s"
         case .blocked:
             if let gate=mechanic.doorFailure {
@@ -156,6 +159,8 @@ import simd
                     : "MECHANIK: ŚLUZA WARSZTATU ZABLOKOWANA — PATROL PRZERWANY"
             } else if mechanic.doorWait>0.20 {
                 nextStatus="MECHANIK CZEKA NA OTWARCIE DRZWI"
+            } else if mechanic.playerBlockedSeconds>0.9 {
+                nextStatus="GRACZ BLOKUJE PRZEJŚCIE — MECHANIK CZEKA"
             } else {nextStatus="MECHANIK — KOLIZJA / TRASA ZABLOKOWANA"}
         case .completed: nextStatus="MECHANIK WRÓCIŁ"
         }
