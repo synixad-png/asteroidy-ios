@@ -1,0 +1,51 @@
+name: H12 PC580 authentic dual H71 drone flight and GLB integration
+on:
+  push:
+    branches: [feature/ios-h55-v580-native-entry]
+    paths:
+      - 'ASTEROIDYiOS/H55DroneImports580.swift'
+      - 'ASTEROIDYiOS/H55DroneNavigation580.swift'
+      - 'ASTEROIDYiOS/H55DroneFlight580.swift'
+      - 'ASTEROIDYiOS/H55DroneScene580.swift'
+      - 'ASTEROIDYiOS/H55ScenePage580.swift'
+      - 'Tests/H55Drone580Tests.swift'
+      - '.github/workflows/h12-drone-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  h71-source:
+    name: PC580 imported drones, 2m graph, collision verified real flight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and execute actual DroneNav453 + StepHangarDrone451 source parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -Onone \
+            ASTEROIDYiOS/H55DroneImports580.swift \
+            ASTEROIDYiOS/H55DroneNavigation580.swift \
+            ASTEROIDYiOS/H55DroneFlight580.swift \
+            Tests/H55Drone580Tests.swift -o /tmp/h12-h71-source
+          /tmp/h12-h71-source
+          swiftc -frontend -parse ASTEROIDYiOS/H55DroneScene580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          python3 - <<'PY'
+          from pathlib import Path
+          scene=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          renderer=Path('ASTEROIDYiOS/H55DroneScene580.swift').read_text()
+          nav=Path('ASTEROIDYiOS/H55DroneNavigation580.swift').read_text()
+          assert 'H55DroneImports580.load(url)' in scene
+          assert 'H55DroneNavigation580(clearance:' in scene
+          assert 'physical.cameraClear406(x,y,z,radius:radius)' in scene
+          assert 'H55DroneScene580(' in scene
+          assert 'droneScene.advance(dt:dt' in scene
+          assert 'droneScene=nil' in scene
+          assert 'b.root.simdWorldTransform=delta*b.authoredWorld' in renderer
+          assert 'scene.rootNode.addChildNode(' not in renderer
+          assert 'return H55DroneNavigation580' not in renderer
+          assert 'let bridgeHeights' in nav
+          print("PASS H12 H71: real imported GLB roots, one collision lattice, two source aircraft, protected H07/H09 and no duplicate geometry")
+          PY
