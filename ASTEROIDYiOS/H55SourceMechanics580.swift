@@ -117,7 +117,7 @@ enum H55SourceMechanics580 {
         guard state.valid,Sector01Shop568.validate(wallet),
               (1...25).contains(sector),
               let cost=shipPrice(ship),
-              ship!=3 || sector>=13 else{return .unavailable}
+              ship != 3 || sector >= 13 else{return .unavailable}
         guard !shipOwned(ship,state:state) else{return .unchanged}
         guard wallet.tokens>=cost else{return .insufficientFunds}
         var next=state
