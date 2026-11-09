@@ -19,6 +19,15 @@ import Foundation
         let diagonal=H55TouchMapping580.walk(dx:78,dy:-78)
         check(approx(hypot(diagonal.forward,diagonal.right),1),
               "no diagonal speed exploit")
+        let shortUp=H55TouchMapping580.walk(dx:0,dy:-4)
+        let shortRight=H55TouchMapping580.walk(dx:4,dy:0)
+        check(approx(shortUp.forward,1) && approx(shortRight.right,1),
+              "short 4pt gestures use instant PC digital walking speed")
+        let jitter=H55TouchMapping580.walk(dx:1,dy:-1)
+        check(jitter.forward==0 && jitter.right==0,"3pt anti-jitter threshold")
+        let digitalDiagonal=H55TouchMapping580.walk(dx:4,dy:-4)
+        check(approx(hypot(digitalDiagonal.forward,digitalDiagonal.right),1),
+              "digital diagonals never sprint")
         let invalid=H55TouchMapping580.walk(dx:Float.nan,dy:-90)
         check(invalid.forward==0 && invalid.right==0,"invalid drag cancels")
 
