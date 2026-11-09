@@ -464,7 +464,7 @@ import simd
         // H13-A: no dynamic IBL cubemap. Windows PC v580 H55Renderer.cs
         // uses its own GLSL light shader, not SceneKit environment textures.
         H55SceneLighting580.install(into:realScene,profile:lighting)
-        installH46Lights(from:asset,into:source)
+        installH46Lights(into:source)
         updateH46LightBudget()
         var clips:[String:GLTFSCNAnimation]=[:]
         for clip in source.animations where !clip.name.isEmpty {
@@ -562,6 +562,7 @@ import simd
         }
         self.inventory=inventory
         H55LoadDiagnostics580.mark("10_WERYFIKACJA_MATERIALOW_START")
+        let visual=H55VisualScene580.apply(nodes:source.nodes)
         if let materialSnapshot,H55LightingProfile580.allowCustomEmissionShader {
             // Upstream GLTFKit2 omits KHR_materials_emissive_strength.
             // Correct only named, unambiguous source materials at load time.
@@ -573,6 +574,7 @@ import simd
         } else {
             h13MaterialReport=materialReport+"\nH13-A: BEZPIECZNY TRYB MATERIAŁÓW / DODATKOWE SHADERY WYŁĄCZONE"
         }
+        h13MaterialReport += "\n"+visual.text+"\nH46: \(h46LightNodes.count)/24 oryginalnych źródeł światła"
         H55LoadDiagnostics580.mark("11_MATERIALY_GOTOWE_ATTACH_KONIEC")
         scene=realScene
         camera=pointOfView
@@ -614,44 +616,30 @@ import simd
     /// Nodes remain attached to their animated GLB parents (not fixed lights).
     /// SceneKit differs from the PC/OpenGL shader, so GPU visual parity
     /// must be measured on a real device; no claimed one-to-one luminance.
-    private func installH46Lights(from asset:GLTFAsset,
-                                  into source:GLTFSCNSceneSource) {
-        for node in asset.nodes {
-            guard let name=node.name,
-                  let extra=node.extras as? [String:Any],
-                  let proxy=extra["H46_BABYLON_COMPAT_lightProxy"] as? [String:Any],
-                  let target=source.nodes.first(where:{$0.name==name}),
-                  target.light==nil else {continue}
-            let kind=proxy["type"] as? String ?? ""
-            guard kind=="spot" || kind=="point" else {continue}
+    /// PC v580 H55Renderer.cs: GLB has no KHR_lights_punctual and uses
+    /// 24 named animated fallback proxies. Their names, powers, cone angles
+    /// and colors are copied from the original user GLB, not generated lamps.
+    private func installH46Lights(into source:GLTFSCNSceneSource) {
+        for target in source.nodes {
+            guard let name=target.name,
+                  let proxy=H55VisualSource580.lightProxy(name),
+                  target.light==nil else{continue}
             let light=SCNLight()
             light.name=name
-            light.type=kind=="spot" ? .spot : .omni
-            if let components=proxy["color"] as? [NSNumber],
-               components.count>=3 {
-                light.color=UIColor(red:CGFloat(components[0].doubleValue),
-                      green:CGFloat(components[1].doubleValue),
-                      blue:CGFloat(components[2].doubleValue),alpha:1)
-            }
-            guard let strength=proxy["intensity"] as? NSNumber else{continue}
-            // PC does NOT shade all 24 H46 proxies as raw 90..6100.
-            // Its eight nearest-source lights are rendered by a custom shader.
-            // SceneKit uses explicit, isolated gain and distance ranking.
-            h46RawIntensities[name]=Float(strength.doubleValue)
+            light.type=proxy.kind=="spot" ? .spot : .omni
+            light.color=UIColor(red:proxy.red,green:proxy.green,
+                                blue:proxy.blue,alpha:1)
             light.intensity=0
-
-            if let range=proxy["range"] as? NSNumber {
-                light.attenuationStartDistance=0
-                light.attenuationEndDistance=CGFloat(range.doubleValue)
-            }
-            if kind=="spot",let cone=proxy["spot"] as? [String:Any],
-               let inner=cone["innerConeAngle"] as? NSNumber,
-               let outer=cone["outerConeAngle"] as? NSNumber {
-                let degrees=180.0/Double.pi
-                light.spotInnerAngle=CGFloat(inner.doubleValue*degrees)
-                light.spotOuterAngle=CGFloat(outer.doubleValue*degrees)
+            light.castsShadow=false
+            light.attenuationStartDistance=0
+            light.attenuationEndDistance=CGFloat(proxy.range)
+            if proxy.kind=="spot" {
+                let angle=180.0/Double.pi
+                light.spotInnerAngle=CGFloat(proxy.inner*angle)
+                light.spotOuterAngle=CGFloat(proxy.outer*angle)
             }
             target.light=light
+            h46RawIntensities[name]=proxy.power
             h46LightNodes[name]=target
         }
     }
@@ -748,6 +736,7 @@ struct H55ScenePage580: View {
     @State private var pickedClip=""
     @State private var importError:String?
     @State private var showingSettings=false
+    @State private var showingPause=false
     @AppStorage("ASTEROIDY_H55_ENV_FILL_580") private var lightingFill=0.80
     @AppStorage("ASTEROIDY_H55_RED_GAIN_580") private var lightingRed=0.10
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
@@ -776,6 +765,7 @@ struct H55ScenePage580: View {
                 }
             }
             topControls
+            if showingPause && !showingSettings { pauseScreen }
             if showingSettings { settingsScreen }
         }
         .onAppear {
@@ -788,11 +778,14 @@ struct H55ScenePage580: View {
         .onChange(of:lightingRed) { value in
             loader.setLighting(fill:lightingFill,red:value)
         }
+        .onChange(of:showingPause) { _ in
+            loader.pauseForSettings(showingPause || showingSettings)
+        }
         .onChange(of:showingSettings) { visible in
-            loader.pauseForSettings(visible)
+            loader.pauseForSettings(showingPause || visible)
             if !visible {loader.setLighting(fill:lightingFill,red:lightingRed)}
         }
-        .onDisappear {showingSettings=false;loader.close()}
+        .onDisappear {showingSettings=false;showingPause=false;loader.close()}
         .fileImporter(isPresented:$choosingFile,
             allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data],
             allowsMultipleSelection:false) { result in
@@ -815,63 +808,124 @@ struct H55ScenePage580: View {
     }
     /// Render layer is typechecked independently of navigation, file import,
     /// menus and settings. Fixes Xcode SwiftUI generic typecheck timeout.
+    /// Same central touch affordance as Sector01Scene568 (PC W3 pause).
+    /// No critical controls trapped in iPhone's far upper-right corner.
     private var topControls:some View {
-            VStack {
-                HStack {
-                    Button(loader.showingWorkshop ? "‹ WRÓĆ DO HANGARU" :
-                           loader.conversationOpen ? "‹ ZAMKNIJ ROZMOWĘ" : "‹ MENU") {
-                        // PC HubKey90 ESC first closes an active conversation.
-                        if loader.showingWorkshop {loader.closeWorkshop()}
-                        else if loader.conversationOpen {loader.interact()}
-                        else {loader.close();dismiss()}
-                    }
+        GeometryReader { viewport in
+            if case .ready = loader.phase {
+                if !showingPause && !showingSettings {
+                    Button("PAUZA") { showingPause=true }
+                        .font(.system(size:13,weight:.semibold,design:.monospaced))
+                        .foregroundStyle(.white)
+                        .frame(width:116,height:42)
+                        .background(Color.black.opacity(0.68))
+                        .overlay(Rectangle().stroke(gold.opacity(0.72),lineWidth:1))
+                        .position(x:viewport.size.width*0.5,
+                                  y:max(42,viewport.safeAreaInsets.top+29))
+                        .accessibilityIdentifier("h55-pause-button")
+                }
+            } else {
+                Button("‹ MENU") {loader.close();dismiss()}
+                    .font(.system(size:14,weight:.bold,design:.monospaced))
+                    .foregroundStyle(gold)
                     .padding(12)
                     .background(Color.black.opacity(0.82))
                     .accessibilityIdentifier("h55-v580-back")
-                    Spacer()
-                    if case .ready = loader.phase {
-                        // Share only after an explicit tap, never automatically.
-                        ShareLink(item:loader.h13MaterialReport) {
-                            Text("RAPORT H13")
+            }
+        }
+    }
+
+    /// W3 RendererW3Pause317: translucent modal on top of the LIVE scene.
+    /// Hub90 source supplies Return to Menu and six original workshops.
+    /// No dead Save/Load/Scores keys: those Windows actions are not ported.
+    private var pauseScreen:some View {
+        GeometryReader { viewport in
+            let compact=viewport.size.height<480
+            ZStack {
+                Color.black.opacity(0.80)
+                    .ignoresSafeArea()
+                    .contentShape(Rectangle())
+                    .accessibilityIdentifier("h55-pause-touch-blocker")
+                ScrollView {
+                    VStack(alignment:.leading,spacing:compact ? 8:13) {
+                        Text("SYNIXAD // SYSTEM HANGARU")
+                            .font(.system(size:compact ? 10:12,weight:.bold,design:.monospaced))
+                            .foregroundStyle(Color(red:0.55,green:0.77,blue:0.80))
+                        Text("GRA WSTRZYMANA")
+                            .font(.system(size:compact ? 22:30,weight:.heavy,design:.monospaced))
+                            .foregroundStyle(.white)
+                        Text("H55 / PC v580 · SCENA I CZAS GRY ZATRZYMANE")
+                            .font(.system(size:compact ? 10:12,design:.monospaced))
+                            .foregroundStyle(.gray)
+                        Divider().overlay(gold)
+                        pauseButton("KONTYNUUJ",primary:true) {showingPause=false}
+                            .accessibilityIdentifier("h55-pause-resume")
+                        pauseButton("USTAWIENIA") {showingSettings=true}
+                            .accessibilityIdentifier("h55-open-settings")
+                        pauseButton("STANOWISKA") {
+                            showingPause=false
+                            loader.openWorkshop()
                         }
                         .disabled(loader.arriving || loader.conversationOpen || loader.showingWorkshop)
-                        .padding(8)
-                        .background(Color.black.opacity(0.82))
-                        .accessibilityIdentifier("h13-share-glb-report")
-                        Button("USTAWIENIA") {
-                            showingSettings=true
+                        .accessibilityIdentifier("h11-open-stations")
+                        ShareLink(item:loader.h13MaterialReport) {
+                            Text("RAPORT H13")
+                                .frame(maxWidth:.infinity)
+                                .padding(.vertical,compact ? 7:10)
+                                .background(Color(red:0.05,green:0.15,blue:0.22))
+                                .foregroundStyle(.white)
+                                .overlay(Rectangle().stroke(gold.opacity(0.25),lineWidth:1))
                         }
-                        .padding(8)
-                        .background(Color.black.opacity(0.82))
-                        .accessibilityIdentifier("h55-open-settings")
-                        Button("STANOWISKA") {loader.openWorkshop()}
-                            .disabled(loader.arriving || loader.conversationOpen || loader.showingWorkshop)
-                            .padding(12)
-                            .background(Color.black.opacity(0.82))
-                            .accessibilityIdentifier("h11-open-stations")
+                        .accessibilityIdentifier("h13-share-glb-report")
+                        pauseButton("WYJDŹ DO MENU") {
+                            if loader.showingWorkshop {loader.closeWorkshop()}
+                            loader.close()
+                            dismiss()
+                        }
+                        .accessibilityIdentifier("h55-pause-exit")
                     }
+                    .font(.system(size:compact ? 12:14,weight:.bold,design:.monospaced))
+                    .padding(compact ? 14:22)
+                    .frame(maxWidth:550)
+                    .background(Color(red:0.02,green:0.05,blue:0.09))
+                    .overlay(Rectangle().stroke(Color(red:0.24,green:0.38,blue:0.44),lineWidth:1))
+                    .frame(maxWidth:.infinity)
                 }
-                Spacer()
+                .frame(maxWidth:.infinity,maxHeight:.infinity)
             }
-            .font(.system(size:14,weight:.bold,design:.monospaced))
-            .foregroundStyle(gold)
+        }
+        .zIndex(20)
+        .accessibilityIdentifier("h55-pause-overlay")
+    }
+
+    private func pauseButton(_ title:String,primary:Bool=false,
+                             action:@escaping ()->Void)->some View {
+        Button(action:action) {
+            Text(title)
+                .frame(maxWidth:.infinity)
+                .padding(.vertical,9)
+                .background(primary ? gold : Color(red:0.05,green:0.15,blue:0.22))
+                .foregroundStyle(primary ? Color(red:0.07,green:0.13,blue:0.17) : .white)
+                .overlay(Rectangle().stroke(gold.opacity(0.25),lineWidth:1))
+        }
     }
 
     private var settingsScreen:some View {
                 GeometryReader { frame in
                     VStack(spacing:0) {
-                        HStack {
+                        VStack(spacing:3) {
                             Text("USTAWIENIA / HANGAR")
-                                .font(.system(size:15,weight:.bold,design:.monospaced))
+                                .font(.system(size:12,weight:.bold,design:.monospaced))
                                 .foregroundStyle(gold)
-                            Spacer()
-                            Button("WRÓĆ DO HANGARU") {
-                                showingSettings=false
-                            }
-                            .foregroundStyle(gold)
-                            .accessibilityIdentifier("h55-settings-back")
+                            Button("‹ WRÓĆ DO PAUZY") {showingSettings=false}
+                                .font(.system(size:14,weight:.bold,design:.monospaced))
+                                .frame(maxWidth:250,minHeight:38)
+                                .foregroundStyle(.white)
+                                .background(Color(red:0.05,green:0.15,blue:0.22))
+                                .accessibilityIdentifier("h55-settings-back")
                         }
-                        .padding(12)
+                        .frame(maxWidth:.infinity)
+                        .padding(4)
                         .background(Color(red:0.008,green:0.028,blue:0.048))
                         CarbonisVisualSettingsPanel568(
                             compact:frame.size.width<850,initialTab:9)

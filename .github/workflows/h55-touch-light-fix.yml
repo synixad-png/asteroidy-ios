@@ -8,6 +8,9 @@ on:
       - 'ASTEROIDYiOS/H55LightBalance580.swift'
       - 'ASTEROIDYiOS/H55LightingProfile580.swift'
       - 'ASTEROIDYiOS/H55SceneLighting580.swift'
+      - 'ASTEROIDYiOS/H55VisualSource580.swift'
+      - 'ASTEROIDYiOS/H55VisualScene580.swift'
+      - 'Tests/H55VisualSource580Tests.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
@@ -52,6 +55,9 @@ jobs:
         run: |
           set -euo pipefail
           swiftc -frontend -parse ASTEROIDYiOS/H55TouchControls580.swift
+          swiftc ASTEROIDYiOS/H55VisualSource580.swift Tests/H55VisualSource580Tests.swift -o /tmp/h55-source-visual
+          /tmp/h55-source-visual
+          swiftc -frontend -parse ASTEROIDYiOS/H55VisualScene580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift

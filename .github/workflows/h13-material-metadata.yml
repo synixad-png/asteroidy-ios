@@ -11,6 +11,9 @@ on:
       - 'Tests/H55H13MaterialReport580Tests.swift'
       - 'ASTEROIDYiOS/H55LightingProfile580.swift'
       - 'ASTEROIDYiOS/H55SceneLighting580.swift'
+      - 'ASTEROIDYiOS/H55VisualSource580.swift'
+      - 'ASTEROIDYiOS/H55VisualScene580.swift'
+      - 'Tests/H55VisualSource580Tests.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
@@ -32,6 +35,9 @@ jobs:
           set -euo pipefail
           swiftc -Onone ASTEROIDYiOS/H55H13MaterialReport580.swift ASTEROIDYiOS/H55H13EmissionRules580.swift Tests/H55H13MaterialReport580Tests.swift -o /tmp/h13-native-materials
           /tmp/h13-native-materials
+          swiftc ASTEROIDYiOS/H55VisualSource580.swift Tests/H55VisualSource580Tests.swift -o /tmp/h55-source-visual
+          /tmp/h55-source-visual
+          swiftc -frontend -parse ASTEROIDYiOS/H55VisualScene580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
