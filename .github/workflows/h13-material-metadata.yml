@@ -9,6 +9,9 @@ on:
       - 'ASTEROIDYiOS/H55H13EmissionRules580.swift'
       - 'ASTEROIDYiOS/H55H13SceneMaterials580.swift'
       - 'Tests/H55H13MaterialReport580Tests.swift'
+      - 'ASTEROIDYiOS/H55LightingProfile580.swift'
+      - 'ASTEROIDYiOS/H55SceneLighting580.swift'
+      - 'ASTEROIDYiOS/H55LightingPanel580.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - '.github/workflows/h13-material-metadata.yml'
   workflow_dispatch:
@@ -45,7 +48,7 @@ jobs:
           assert '.accessibilityIdentifier("h13-share-glb-report")' in scene
           assert 'machinery?.advance(dt:dt)' in scene and 'updateAirlocks(dt:dt)' in scene
           assert 'H55TouchControls580(' in scene
-          assert 'H55LightBalance580.budget' in scene
+          assert 'H55LightBalance580.selectedNames(candidates)' in scene
           assert 'if loader.showingWorkshop {loader.closeWorkshop()}' in scene
           assert 'if conversationOpen || showingWorkshop {moveForward=0;moveRight=0;return}' in scene
           print('PASS H13 integration: background-only diagnostic after source authentication, manual sharing, protected H01-H12')
