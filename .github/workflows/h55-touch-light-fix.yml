@@ -12,6 +12,7 @@ on:
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
       - 'ASTEROIDYiOS/H55LoadDiagnostics580.swift'
+      - 'Tests/H55LoadDiagnostics580Tests.swift'
       - 'Tests/H55TouchLightFix580Tests.swift'
       - 'Tests/H55TouchRealGLB580Tests.swift'
       - '.github/workflows/h55-touch-light-fix.yml'
@@ -55,6 +56,8 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55LoadDiagnostics580.swift
+          swiftc ASTEROIDYiOS/H55LoadDiagnostics580.swift Tests/H55LoadDiagnostics580Tests.swift -o /tmp/h55-diagnostics-test
+          /tmp/h55-diagnostics-test
           python3 - <<'PY'
           from pathlib import Path
           c=Path('ASTEROIDYiOS/H55TouchControls580.swift').read_text()
