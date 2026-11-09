@@ -9,6 +9,7 @@ on:
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - 'Tests/H55H08SourceTests.swift'
       - 'Tests/H55H08PatrolRealGLBTests.swift'
+      - 'Tests/H55NpcRealRoute580Tests.swift'
       - '.github/workflows/h08-parity-check.yml'
   workflow_dispatch:
 permissions:
@@ -49,6 +50,14 @@ jobs:
             ASTEROIDYiOS/H55NpcSurface580.swift \
             ASTEROIDYiOS/H55Airlocks580.swift \
             Tests/H55H08PatrolRealGLBTests.swift -o /tmp/h08-real-glb
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            ASTEROIDYiOS/H55NpcSurface580.swift \
+            ASTEROIDYiOS/H55Airlocks580.swift \
+            Tests/H55NpcRealRoute580Tests.swift -o /tmp/h08-real-glb-two-leg-e2e
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
           python3 - <<'PY'
           from pathlib import Path
@@ -82,3 +91,4 @@ jobs:
             ASTEROIDYiOS/H55Airlocks580.swift
             Tests/H55H08SourceTests.swift
             Tests/H55H08PatrolRealGLBTests.swift
+            Tests/H55NpcRealRoute580Tests.swift
