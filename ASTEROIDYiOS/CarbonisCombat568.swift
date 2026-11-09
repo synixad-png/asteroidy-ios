@@ -158,7 +158,11 @@ struct CarbonisCombat568 {
         return CombatCollision556.segmentHit(delta:delta,
                   travel:projectile.velocity*dt,radius:radius) <= 1
     }
-    mutating func suffer(_ damage:Int,hostileProjectile:Bool=false) {
+    // Preserve the frozen first-sector damage API for all contact callers.
+    mutating func suffer(_ damage:Int) {
+        suffer(damage,hostileProjectile:false)
+    }
+    private mutating func suffer(_ damage:Int,hostileProjectile:Bool) {
         guard phase == .playing && invincible<=0 else{return}
         lastContactCount += 1
         // Source Game.Damage(): guardian intercept is BEFORE tarcza/shield.
