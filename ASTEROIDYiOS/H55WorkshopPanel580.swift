@@ -111,11 +111,18 @@ struct H55WorkshopPanel580:View {
                                 let craftVisual=modeled ? "MODEL iOS DOSTĘPNY" : "GLB DO DOSTARCZENIA (BEZ PODMIANY)"
                                 itemRow(H55Workshop580.ships[i],
                                     detail:"\(detail) · \(craftStatus) · \(craftVisual)",
-                                    action:modeled && i != rules.selectedShip ? {
-                                        let r=H55SourceMechanics580.buyAndEquipShip(
-                                            i,sector:sector,state:&rules,wallet:&wallet)
-                                        notice=shipMessage(r,i)
-                                        if r == .changed {persistSource()}
+                                    action:i != rules.selectedShip &&
+                                           (modeled || (!owned && price != nil)) ? {
+                                        let result=modeled
+                                            ? H55SourceMechanics580.buyAndEquipShip(
+                                                i,sector:sector,state:&rules,wallet:&wallet)
+                                            : H55SourceMechanics580.purchaseShipForLaterModel(
+                                                i,sector:sector,state:&rules,wallet:&wallet)
+                                        notice=modeled ? shipMessage(result,i) :
+                                            result == .changed
+                                            ? "ZAKUPIONO "+H55Workshop580.ships[i]+" · CZEKAMY NA GLB"
+                                            : shipMessage(result,i)
+                                        if result == .changed {persistSource()}
                                     } : nil)
                             }
     }
