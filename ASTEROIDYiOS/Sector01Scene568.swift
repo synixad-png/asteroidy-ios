@@ -65,6 +65,10 @@ struct Sector01Scene568: View {
         onMissionPause(false)
         if scenePhase == .active {onEnginePower(0.16)}
     }
+    private func persistConsumables580() {
+        Sector01Shop568.persistConsumables(
+            ionAmmo:session.game.ionAmmo,bombs:session.game.bombs)
+    }
     private func exitMission568() {
         session.release()
         userPaused=false
@@ -72,6 +76,7 @@ struct Sector01Scene568: View {
         // returnToAtlas -> OriginalAudioAV568.returnToMenu() changes
         // the context atomically. Do not briefly restart combat sound.
         onEnginePower(0)
+        persistConsumables580()
         onSurvivalChanged(session.game.lives,session.game.shieldCharges,
                            session.game.hull,session.game.armor)
         returnToAtlas()
@@ -145,6 +150,24 @@ struct Sector01Scene568: View {
                         .position(x:CGFloat(combatHUDLayout.pauseCenterX),
                                   y:CGFloat(combatHUDLayout.pauseCenterY))
                         .accessibilityIdentifier("sector01-pause-button")
+                    // PC Game.UseBomb is a discrete action (R / pad Y),
+                    // not a held drag. Touch location follows the pause
+                    // control without shrinking either steering half.
+                    if session.hud.bombs>0 {
+                        Button("BOMBA \(session.hud.bombs)") {
+                            _=session.useBomb()
+                        }
+                        .font(.system(size:compact ? 10:12,
+                                      weight:.bold,design:.monospaced))
+                        .padding(.horizontal,compact ? 7:11)
+                        .padding(.vertical,compact ? 5:8)
+                        .foregroundStyle(.white)
+                        .background(Color.red.opacity(0.75),
+                                    in:RoundedRectangle(cornerRadius:5))
+                        .position(x:CGFloat(combatHUDLayout.pauseCenterX),
+                                  y:CGFloat(combatHUDLayout.pauseCenterY+45))
+                        .accessibilityIdentifier("sector01-active-bomb-button")
+                    }
                 }
                 // Windows Renderer.cs:200: performance overlay only during
                 // active combat, not victory/defeat/service screens.
@@ -205,6 +228,7 @@ struct Sector01Scene568: View {
                                 .buttonStyle(.borderedProminent)
                                 .accessibilityIdentifier("sector01-retry-after-defeat")
                                 Button("POWRÓT DO ATLASU") {
+                                    persistConsumables580()
                                     onSurvivalChanged(session.game.lives,session.game.shieldCharges,
                            session.game.hull,session.game.armor)
                                     returnToAtlas()
@@ -289,6 +313,7 @@ struct Sector01Scene568: View {
                   let report=session.hud.summary else {return}
             completionReported=true
             session.release()
+            persistConsumables580()
             onSurvivalChanged(session.game.lives,session.game.shieldCharges,
                            session.game.hull,session.game.armor)
             onMissionCompleted(report)
