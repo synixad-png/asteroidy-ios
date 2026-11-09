@@ -182,7 +182,7 @@ enum H55Workshop580 {
         if sector<moduleLevelRequired[id] {
             return "ODBLOKUJ OD SEKTORA \(moduleLevelRequired[id])"
         }
-        return "EFEKT MODUŁU JESZCZE NIEJEST PODŁĄCZONY DO MISJI iOS"
+        return "PARAMETRY I EFEKT MODUŁU AKTYWNE W MISJI CARBONIS 01"
     }
     /// Source PC: costs 1/2/3/4 trophy for hull/armor/rate ranks.
     static func talentCost(rank:Int)->Int? {
