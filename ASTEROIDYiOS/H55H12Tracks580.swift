@@ -17,7 +17,18 @@ enum H55H12Tracks580 {
         let width:Int
         let step:Bool
 
+        /// Compatibility for one-off analysis and deterministic tests.
+        /// The per-frame SceneKit path uses the overload below, reusing
+        /// one 64-float buffer for all H51/H39/arm/crane/morph channels.
         func sample(_ t:Float)->[Float] {
+            var result=[Float](repeating:0,count:width)
+            sample(t,into:&result)
+            return result
+        }
+        /// No per-channel heap allocation in the 60/120 Hz H12 render loop.
+        /// Parser restricts all valid source channels to at most 64 floats.
+        func sample(_ t:Float,into output:inout [Float]) {
+            precondition(output.count>=width && times.count>0)
             var lo=0,hi=times.count-1
             if t<=times[0] {hi=0}
             else if t>=times[hi] {lo=hi}
@@ -31,8 +42,8 @@ enum H55H12Tracks580 {
                 (t-times[lo])/max(0.00001,times[hi]-times[lo])
             let i=lo*width,j=hi*width
             if path == .rotation {
-                // PC H55Renderer.Slerp shortest-arc with normalized lerp
-                // for nearly equal quaternions, never component lerp.
+                // Original H55Renderer.Slerp: shortest-arc quaternion with
+                // normalized interpolation near coincident rotations.
                 let x0=values[i],y0=values[i+1],z0=values[i+2],w0=values[i+3]
                 var x1=values[j],y1=values[j+1],z1=values[j+2],w1=values[j+3]
                 var dot=x0*x1+y0*y1+z0*z1+w0*w1
@@ -48,10 +59,11 @@ enum H55H12Tracks580 {
                 }
                 let x=x0*a+x1*b,y=y0*a+y1*b,z=z0*a+z1*b,w=w0*a+w1*b
                 let n=max(0.000001,sqrt(x*x+y*y+z*z+w*w))
-                return [x/n,y/n,z/n,w/n]
+                output[0]=x/n;output[1]=y/n;output[2]=z/n;output[3]=w/n
+                return
             }
-            return (0..<width).map {k in
-                values[i+k]*(1-f)+values[j+k]*f
+            for k in 0..<width {
+                output[k]=values[i+k]*(1-f)+values[j+k]*f
             }
         }
     }
