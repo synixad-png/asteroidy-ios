@@ -325,7 +325,9 @@ import simd
                 let npcRig=try H55NpcTracks580.load(url)
                 // H12 must not regress H01–H11: an incomplete imported
                 // animation library disables H12 alone, not the hangar.
-                let h12=try? H55H12Tracks580.load(url)
+                let h12=try? H55H12Tracks580.load(
+                    url,excludeImportedDroneRoots:
+                        !H55H12FeatureFlags580.autonomousDronesEnabled)
                 // H71 builds its source flight lattice on the background
                 // loading queue, never in the SceneKit display frame.
                 let droneSpawns=H55H12FeatureFlags580.autonomousDronesEnabled
