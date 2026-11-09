@@ -10,6 +10,10 @@ on:
       - 'ASTEROIDYiOS/H55SceneLighting580.swift'
       - 'ASTEROIDYiOS/H55VisualSource580.swift'
       - 'ASTEROIDYiOS/H55VisualScene580.swift'
+      - 'ASTEROIDYiOS/H55PlayerShip580.swift'
+      - 'ASTEROIDYiOS/H55SpaceBackdrop580.swift'
+      - 'ASTEROIDYiOS/H55DockingPresentation580.swift'
+      - 'Tests/H55DockingPresentation580Tests.swift'
       - 'Tests/H55VisualSource580Tests.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
@@ -58,6 +62,10 @@ jobs:
           swiftc ASTEROIDYiOS/H55VisualSource580.swift Tests/H55VisualSource580Tests.swift -o /tmp/h55-source-visual
           /tmp/h55-source-visual
           swiftc -frontend -parse ASTEROIDYiOS/H55VisualScene580.swift
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Entry580.swift ASTEROIDYiOS/H55DockingPresentation580.swift Tests/H55DockingPresentation580Tests.swift -o /tmp/h55-docking
+          /tmp/h55-docking
+          swiftc -frontend -parse ASTEROIDYiOS/H55SpaceBackdrop580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55PlayerShip580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
@@ -70,6 +78,10 @@ jobs:
           s=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
           assert 'HStack(spacing:0)' in c and '.frame(width:w,height:h)' in c
           assert '.gesture(walkGesture)' in c and '.gesture(lookGesture)' in c
+          assert 'walkIndicator(' not in c and 'lookIndicator(' not in c, 'No visible controls'
+          assert 'walkTranslation' not in c, 'No joystick state'
+          assert 'H55DockingPresentation580.camera(time:arrival.time)' in s
+          assert 'H55PlayerShip580.make()' in s and 'H55SpaceBackdrop580.make()' in s
           assert 'onWalk(0,0)' in c, 'releasing LEFT must zero velocity'
           assert '.position(x:w*0.33,y:h*0.79)' in c
           assert '.position(x:w*0.84,y:h*0.79)' in c
