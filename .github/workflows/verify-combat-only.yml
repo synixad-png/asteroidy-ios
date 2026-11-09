@@ -653,9 +653,20 @@ jobs:
             if xcodebuild -project ASTEROIDYiOS.xcodeproj \
               -scheme ASTEROIDYiOS \
               -derivedDataPath /tmp/asteroidy-ios-verify-only \
-              -resolvePackageDependencies; then
+              -resolvePackageDependencies 2>&1 | tee "/tmp/h11-gltf-resolve-$attempt.log"; then
               ok=yes
               break
+            fi
+            # SwiftPM may keep a partial download of the EXACT pinned
+            # GLTFKit2 0.5.15 binary in a file-system slot. Remove only
+            # that malformed artifact before retrying, never other packages.
+            cache="$HOME/Library/Caches/org.swift.swiftpm/artifacts"
+            incomplete="$cache/https___github_com_warrenm_GLTFKit2_releases_download_0_5_15_GLTFKit2_xcframework_zip"
+            if grep -Fq 'already exists in file system' "/tmp/h11-gltf-resolve-$attempt.log"; then
+              if [ -d "$incomplete" ]; then
+                echo "Reset incomplete original GLTFKit2 0.5.15 binary artifact"
+                rm -rf -- "$incomplete"
+              fi
             fi
             if [ "$attempt" -lt 5 ]; then sleep $((attempt * 7)); fi
           done
