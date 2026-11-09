@@ -41,7 +41,10 @@ jobs:
           assert 'H55NpcDetour580' in Path('ASTEROIDYiOS/H55Mechanic580.swift').read_text()
           assert 'H55Entry580.find(using:physical)' in h55
           assert 'H55CollisionGeometry580.fromGLB(url)' in h55
-          assert 'physical.bodyClear379' in h55
+          # H08 centralizes NPC four-sphere collision in original NpcSafeWalk530.
+          assert 'H55NpcSurface580.prepare(collision:physical)' in h55
+          assert 'npcSurface.ground(x:x,z:z)' in h55
+          assert 'bodyClear379(x,feet:' in Path('ASTEROIDYiOS/H55NpcSurface580.swift').read_text()
           assert 'arrival.advance(dt:dt)' in h55
           assert 'H55AirlockTracks580.load(from:url)' in h55
           assert 'updateAirlocks(dt:dt)' in h55
