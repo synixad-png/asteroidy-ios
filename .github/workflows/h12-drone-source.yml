@@ -39,10 +39,12 @@ jobs:
           nav=Path('ASTEROIDYiOS/H55DroneNavigation580.swift').read_text()
           assert 'H55DroneImports580.load(url)' in scene
           flags=Path('ASTEROIDYiOS/H55DroneImports580.swift').read_text()
-          assert 'static let autonomousDronesEnabled=false' in flags
+          assert 'static let autonomousDronesEnabled=true' in flags
           assert 'let droneSpawns=H55H12FeatureFlags580.autonomousDronesEnabled' in scene
           assert 'if H55H12FeatureFlags580.autonomousDronesEnabled,' in scene
-          assert 'ODŁOŻONE DO PÓŹNIEJSZEGO ETAPU' in scene
+          assert 'h71-pause-status' in scene, 'H71 activation or error must be accessible without debug mode'
+          assert 'H71: ODCZYT GLB DRONÓW NIEUDANY' in scene, 'Never swallow import failure'
+          assert 'h13MaterialReport += "\\n"+h71Status' in scene, 'Include H71 binding status in shareable H13 report'
           assert 'H55DroneNavigation580(clearance:' in scene
           assert 'physical.cameraClear406(x,y,z,radius:radius)' in scene
           assert 'H55DroneScene580(' in scene
@@ -54,5 +56,5 @@ jobs:
           assert 'scene.rootNode.addChildNode(' not in renderer
           assert 'return H55DroneNavigation580' not in renderer
           assert 'let bridgeHeights' in nav
-          print("PASS H12 H71: real imported GLB roots, one collision lattice, two source aircraft, protected H07/H09 and no duplicate geometry")
+          print("PASS H71 ENABLED: original imported GLB roots, bounded 2m collision lattice, two aircraft, protected H07/H09, fail-closed diagnostics and no duplicate geometry")
           PY

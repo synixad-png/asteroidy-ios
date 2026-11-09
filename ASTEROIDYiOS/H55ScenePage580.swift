@@ -60,7 +60,7 @@ import simd
     private var machinery:H55H12SceneAnimator580?
     // H71 moves only the two source-selected GLB drone prefab roots.
     private var droneScene:H55DroneScene580?
-    @Published private(set) var h71Status="H71: ODŁOŻONE DO PÓŹNIEJSZEGO ETAPU"
+    @Published private(set) var h71Status="H71: PRZYGOTOWANIE DWÓCH DRONÓW GLB"
     @Published private(set) var h12Status="NIE WCZYTANO ANIMACJI H12"
     @Published private(set) var h13MaterialReport="H13: ORYGINALNY GLB NIE WCZYTANY"
     @Published private(set) var mechanicStatus="OCZEKUJE NA ROZMOWĘ"
@@ -355,7 +355,7 @@ import simd
         npcAnimator=nil
         machinery=nil
         droneScene=nil
-        h71Status="H71: ODŁOŻONE DO PÓŹNIEJSZEGO ETAPU"
+        h71Status="H71: PRZYGOTOWANIE DWÓCH DRONÓW GLB"
         h12Status="NIE WCZYTANO ANIMACJI H12"
         h13MaterialReport="H13: ORYGINALNY GLB NIE WCZYTANY"
         mechanicStatus="OCZEKUJE NA ROZMOWĘ"
@@ -404,10 +404,25 @@ import simd
                 let h12=try? H55H12Tracks580.load(
                     url,excludeImportedDroneRoots:
                         !H55H12FeatureFlags580.autonomousDronesEnabled)
-                // H71 builds its source flight lattice on the background
-                // loading queue, never in the SceneKit display frame.
-                let droneSpawns=H55H12FeatureFlags580.autonomousDronesEnabled
-                    ? ((try? H55DroneImports580.load(url)) ?? []) : []
+                // H71 uses ONLY the two authored GLB prefab roots and
+                // one PC DroneNav453 graph on the background load queue.
+                // Explicit error status: missing metadata is not a crash
+                // and cannot silently fabricate drones or block hangar.
+                let droneSpawns:[H55DroneImports580.Spawn]
+                let droneIssue:String?
+                if H55H12FeatureFlags580.autonomousDronesEnabled {
+                    do {
+                        droneSpawns=try H55DroneImports580.load(url)
+                        droneIssue=droneSpawns.count==2 ? nil :
+                            "H71: W GLB NIE ZNALEZIONO DWÓCH KWALIFIKOWANYCH IMPORTÓW DRONÓW"
+                    } catch {
+                        droneSpawns=[]
+                        droneIssue="H71: ODCZYT GLB DRONÓW NIEUDANY — "+String(describing:error)
+                    }
+                } else {
+                    droneSpawns=[]
+                    droneIssue="H71: WYŁĄCZONE"
+                }
                 let droneNavigation:H55DroneNavigation580? = droneSpawns.count==2
                     ? H55DroneNavigation580(clearance:{x,y,z,radius in
                         physical.cameraClear406(x,y,z,radius:radius)
@@ -427,6 +442,7 @@ import simd
                                         machineryLibrary:h12,
                                         droneSpawns:droneSpawns,
                                         droneNavigation:droneNavigation,
+                                        droneIssue:droneIssue,
                                         materialReport:materialReport,
                                         materialSnapshot:materialSnapshot)
                         }
@@ -458,6 +474,7 @@ import simd
                          machineryLibrary:H55H12Tracks580.Library?,
                          droneSpawns:[H55DroneImports580.Spawn],
                          droneNavigation:H55DroneNavigation580?,
+                         droneIssue:String?,
                          materialReport:String,
                          materialSnapshot:H55H13MaterialReport580.Snapshot?) {
         guard let realScene=source.defaultScene else {
@@ -582,9 +599,8 @@ import simd
                 "H71: START ZABLOKOWANY — KOLIZJA LUB NIEZGODNE WĘZŁY GLB"
         } else {
             droneScene=nil
-            h71Status=H55H12FeatureFlags580.autonomousDronesEnabled
-                ? "H71: BRAK DWÓCH ZWERYFIKOWANYCH PREFABÓW DRONÓW"
-                : "H71: ODŁOŻONE DO PÓŹNIEJSZEGO ETAPU"
+            h71Status=droneIssue ??
+                "H71: DWA PREFABY ZNALEZIONE, ALE BRAK BEZPIECZNEJ TRASY"
         }
         animations=clips
         animationNames=inventory.animations.filter {
@@ -605,6 +621,10 @@ import simd
             h13MaterialReport=materialReport+"\nH13-A: BEZPIECZNY TRYB MATERIAŁÓW / DODATKOWE SHADERY WYŁĄCZONE"
         }
         h13MaterialReport += "\n"+visual.text+"\nH46: \(h46LightNodes.count)/24 oryginalnych źródeł światła"
+        h13MaterialReport += "\n"+h71Status
+        if !droneSpawns.isEmpty {
+            h13MaterialReport += "\nH71 GLB: "+droneSpawns.map{$0.name}.joined(separator:" | ")
+        }
         // PC GpuHub90 draws the outer space and actual ship OUTSIDE GLB.
         // Attach only AFTER machinery/NPC rigs capture authentic GLB nodes.
         H55LoadDiagnostics580.mark("11A_PC580_SKY_SHIP_ATTACH_START")
@@ -763,7 +783,7 @@ import simd
         npcAnimator=nil
         machinery=nil
         droneScene=nil
-        h71Status="H71: ODŁOŻONE DO PÓŹNIEJSZEGO ETAPU"
+        h71Status="H71: PRZYGOTOWANIE DWÓCH DRONÓW GLB"
         h12Status="NIE WCZYTANO ANIMACJI H12"
         showingWorkshop=false
         dialogue.reset()
@@ -910,6 +930,11 @@ struct H55ScenePage580: View {
                             .font(.system(size:compact ? 10:12,design:.monospaced))
                             .foregroundStyle(.gray)
                         Divider().overlay(gold)
+                        Text(loader.h71Status)
+                            .font(.system(size:compact ? 9:10,design:.monospaced))
+                            .foregroundStyle(Color(red:0.58,green:0.79,blue:0.82))
+                            .fixedSize(horizontal:false,vertical:true)
+                            .accessibilityIdentifier("h71-pause-status")
                         pauseButton("KONTYNUUJ",primary:true) {showingPause=false}
                             .accessibilityIdentifier("h55-pause-resume")
                         pauseButton("USTAWIENIA") {showingSettings=true}

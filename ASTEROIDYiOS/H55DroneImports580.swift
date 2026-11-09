@@ -1,10 +1,10 @@
 import Foundation
 
-/// H12 scope decision: H71 autonomous drones are postponed.
-/// Keep the verified source implementation available for later reactivation;
-/// do not initialize the graph or animate drones in normal H55 gameplay.
+/// H71: enable the two verified imported GLB aircraft on explicit user
+/// request. Real collision/source root validation remains mandatory;
+/// missing or unsafe assets cause H71-only fail-closed, not H55 fallback.
 enum H55H12FeatureFlags580 {
-    static let autonomousDronesEnabled=false
+    static let autonomousDronesEnabled=true
 }
 
 /// PC v580 H71DroneImports461.Select: ONLY the two explicitly imported

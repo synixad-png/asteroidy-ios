@@ -25,8 +25,8 @@ import Foundation
                       "hangarLabPrefabId":prefab]]
     }
     static func main() throws {
-        check(!H55H12FeatureFlags580.autonomousDronesEnabled,
-              "H71 autonomous flight is explicitly postponed; no accidental runtime activation")
+        check(H55H12FeatureFlags580.autonomousDronesEnabled,
+              "H71 two authentic imported GLB drones are now explicitly enabled")
         let mechanic: [String:Any] = [
             "name":"HL_Import_Mechanik_XX",
             "matrix":[1,0,0,0,0,1,0,0,0,0,1,0,
