@@ -172,9 +172,10 @@ import simd
 
     private func orientation(_ x:Float,_ y:Float,_ z:Float)->simd_quatf {
         let rad=Float.pi/180
-        return simd_quatf(angle:x*rad,axis:SIMD3<Float>(1,0,0)) *
-               simd_quatf(angle:y*rad,axis:SIMD3<Float>(0,1,0)) *
-               simd_quatf(angle:z*rad,axis:SIMD3<Float>(0,0,1))
+        let rx=simd_quatf(angle:x*rad,axis:SIMD3<Float>(1,0,0))
+        let ry=simd_quatf(angle:y*rad,axis:SIMD3<Float>(0,1,0))
+        let rz=simd_quatf(angle:z*rad,axis:SIMD3<Float>(0,0,1))
+        return rx*ry*rz
     }
 
     func advance(time:Float,walking:Bool,bobPhase:Float,bobAmount:Float,
@@ -199,9 +200,10 @@ import simd
                     Float(pose[1])*0.01+sway.y+idle,
                     Float(pose[2])*0.01)
                 // PC ApplyGlovePose422: extra yaw *before* rotations XYZ.
-                root.simdOrientation=simd_quatf(angle:sway.yawDegrees*Float.pi/180,
-                             axis:SIMD3<Float>(0,1,0)) *
-                    orientation(Float(pose[3]),Float(pose[4]),Float(pose[5]))
+                let walkingYaw=simd_quatf(angle:sway.yawDegrees*Float.pi/180,
+                             axis:SIMD3<Float>(0,1,0))
+                let handRotation=orientation(Float(pose[3]),Float(pose[4]),Float(pose[5]))
+                root.simdOrientation=walkingYaw*handRotation
                 let scale=max(0.25,min(2.5,Float(pose[6])*0.01))
                 root.simdScale=SIMD3<Float>(repeating:scale)
             }
