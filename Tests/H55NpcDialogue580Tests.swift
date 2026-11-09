@@ -17,31 +17,31 @@ import Foundation
 
         // PC 3.25s arrival and HubWalkStarted gates.
         test(d.interact(walking:false,playerX:9.9248,playerZ:12.155,
-                        npcX:9.9248,npcZ:12.155)== .ignored,
+                        npcX:9.9248,npcZ:12.155) == .ignored,
              "conversation cannot start during dock arrival")
         test(!d.isOpen && d.finished==0,"failed open is side-effect free")
         test(d.interact(walking:true,playerX:0,playerZ:0,
-                        npcX:9.9248,npcZ:12.155)== .ignored,
+                        npcX:9.9248,npcZ:12.155) == .ignored,
              "out-of-range tap never starts patrol")
         test(d.interact(walking:true,playerX:2.7,playerZ:0,
-                        npcX:0,npcZ:0)== .opened,
+                        npcX:0,npcZ:0) == .opened,
              "PC source inclusive 2.7 meter radius")
         test(d.isOpen && d.finished==0 &&
              d.notice==H55NpcDialogue580.openNotice,
              "opening emits source text but does not arm patrol")
         // Source closing ignores distance; ESC/E can end dialog at any point.
         test(d.interact(walking:true,playerX:500,playerZ:500,
-                        npcX:0,npcZ:0)== .closed,"close even if player moved")
+                        npcX:0,npcZ:0) == .closed,"close even if player moved")
         test(!d.isOpen && d.finished==1 &&
              d.notice==H55NpcDialogue580.closeNotice,
              "exactly one completion on close")
         test(d.interact(walking:true,playerX:2.701,playerZ:0,
-                        npcX:0,npcZ:0)== .ignored,"strict outer limit")
+                        npcX:0,npcZ:0) == .ignored,"strict outer limit")
         test(d.finished==1,"ignored taps never increment counter")
         test(d.interact(walking:true,playerX:0,playerZ:0,
-                        npcX:0,npcZ:0)== .opened,"can reopen after close")
+                        npcX:0,npcZ:0) == .opened,"can reopen after close")
         test(d.interact(walking:true,playerX:0,playerZ:0,
-                        npcX:0,npcZ:0)== .closed,"touch exit mirrors ESC/E")
+                        npcX:0,npcZ:0) == .closed,"touch exit mirrors ESC/E")
         test(d.finished==2,"two complete conversations = counter two")
         test(!H55NpcDialogue580.inRange(playerX:.nan,playerZ:0,
                       npcX:0,npcZ:0),"reject NaN coordinates")
@@ -59,14 +59,14 @@ import Foundation
         }
         test(mechanic.phase == .idle,"proximity alone never starts the NPC")
         test(d.interact(walking:true,playerX:9.9248,playerZ:12.155,
-                        npcX:mechanic.x,npcZ:mechanic.z)== .opened,
+                        npcX:mechanic.x,npcZ:mechanic.z) == .opened,
              "H10 dialogue opens at moving GLB root")
         for _ in 0..<40 {
             mechanic.step(dt:1/60,playerX:2,playerZ:14,canWalk:{_,_ in true})
         }
         test(mechanic.phase == .idle,"even far player cannot start patrol before closing")
         test(d.interact(walking:true,playerX:9.9248,playerZ:12.155,
-                        npcX:mechanic.x,npcZ:mechanic.z)== .closed,
+                        npcX:mechanic.x,npcZ:mechanic.z) == .closed,
              "source dialogue close event")
         mechanic.finishConversation()
         for _ in 0..<40 {
