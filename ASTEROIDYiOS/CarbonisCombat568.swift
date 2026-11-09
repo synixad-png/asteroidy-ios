@@ -2,8 +2,9 @@ import Foundation
 
 /// Native CARBONIS level-one combat simulation. All movement takes place in
 /// original 1280x720 spherical coordinates, independent of SwiftUI and Metal.
-/// Matches Game.Step + DirectFlight67 + EnemyTactics71 for the first-sector
-/// ordinary Pulse / shooter encounter. No boss, shop, multi-ship or later sectors.
+/// Matches Game.Step + DirectFlight67 + EnemyTactics71 for CARBONIS 01.
+/// It executes source Rail, Swarm and Guardian shots when the shared H11
+/// profile equips them; sectors 02–25, bosses and their scenes are not ported.
 struct CarbonisCombat568 {
     enum Phase: Equatable { case playing, victory, defeat }
     /// Source Game.Pickup Token with real spherical position and velocity.
