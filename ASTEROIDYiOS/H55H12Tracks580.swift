@@ -65,13 +65,15 @@ enum H55H12Tracks580 {
         let clips:[String:Clip]
         let durations:[String:Float]
         let morphIdle:String?
+        let imported:[H55H12Timeline580.Loop]
         let metadata:[H55H12Timeline580.Loop]
         var animatedNodeNames:Set<String> {
             Set(clips.values.flatMap{$0.tracks.map{$0.nodeName}})
         }
         func frame(_ elapsed:Float)->[H55H12Timeline580.Sample] {
             H55H12Timeline580.sample(time:elapsed,durations:durations,
-                                    idleMorph:morphIdle,metadata:metadata)
+                                    idleMorph:morphIdle,
+                                    imported:imported,metadata:metadata)
         }
     }
     private static func list(_ v:Any?)->[D] {(v as? [Any] ?? []).compactMap{$0 as? D}}
@@ -129,8 +131,78 @@ enum H55H12Tracks580 {
                 loops.append(.init(name,speed))
             }
         }
+        // Windows H55Renderer.ConfigureImportedAutoLoops462:
+        // a single autonomous clip per HL_Import_ root, never the NPC,
+        // H51, H70, explicitly declared metadata loop or idle morph.
+        // Prefer LOOP (10) then IDLE (5), keep the first on a tie.
+        var parents=[Int](repeating:-1,count:nodes.count)
+        for (parent,node) in nodes.enumerated() {
+            for child in (node["children"] as? [NSNumber] ?? []) {
+                let id=child.intValue
+                guard id>=0,id<nodes.count,parents[id]<0,id != parent else {
+                    throw Failure.document
+                }
+                parents[id]=parent
+            }
+        }
+        func importRoot(_ id:Int)->Int {
+            var ancestor=id,root = -1,steps=0
+            while ancestor>=0 && ancestor<nodes.count && steps<=nodes.count {
+                if (str(nodes[ancestor]["name"]) ?? "")
+                    .lowercased().hasPrefix("hl_import_") {
+                    root=ancestor
+                }
+                ancestor=parents[ancestor]
+                steps+=1
+            }
+            return steps>nodes.count ? -1 : root
+        }
+        let metadataNames=Set(loops.map{$0.name})
+        var blockedIdleNodes=Set<Int>()
+        if let idle,let authored=byName[idle] {
+            for ch in list(authored["channels"]) {
+                if let id=int(object(ch["target"])["node"]) {
+                    blockedIdleNodes.insert(id)
+                }
+            }
+        }
+        var importedBest=[Int:(name:String,score:Int)]()
+        for authored in animations {
+            guard let name=str(authored["name"]),!name.isEmpty,
+                  H55H12Timeline580.eligibleMetadata(name),
+                  !metadataNames.contains(name),
+                  name != idle,!expected.contains(name),
+                  !(name.uppercased().hasPrefix("NPC525_")),
+                  !(name.uppercased().hasPrefix("H51_")) else{continue}
+            let channels=list(authored["channels"])
+            guard !channels.isEmpty else{continue}
+            var root:Int?,valid=true
+            for ch in channels {
+                guard let node=int(object(ch["target"])["node"]),
+                      node>=0,node<nodes.count,
+                      !blockedIdleNodes.contains(node) else {
+                    valid=false;break
+                }
+                let importedRoot=importRoot(node)
+                if importedRoot<0 || (root != nil && root != importedRoot) {
+                    valid=false;break
+                }
+                root=importedRoot
+            }
+            guard valid,let root else{continue}
+            let upper=name.uppercased()
+            let score=(upper.contains("LOOP") ? 10 : 0)
+                +(upper.contains("IDLE") ? 5 : 0)
+            if importedBest[root] == nil || score>importedBest[root]!.score {
+                importedBest[root]=(name,score)
+            }
+        }
+        let imported=importedBest.keys.sorted().compactMap {
+            importedBest[$0].map{H55H12Timeline580.Loop($0.name)}
+        }
         let required=expected.union(idle.map{[$0]} ?? [])
         let selected=required.union(loops.map{$0.name})
+            .union(imported.map{$0.name})
         var cache=[Int:Accessor]()
         var sampleCount=0
         func accessor(_ index:Int)throws->Accessor {
@@ -234,6 +306,6 @@ enum H55H12Tracks580 {
         }
         return Library(clips:parsed,
             durations:parsed.mapValues{$0.duration},
-            morphIdle:idle,metadata:loops)
+            morphIdle:idle,imported:imported,metadata:loops)
     }
 }
