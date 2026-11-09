@@ -1,5 +1,12 @@
 import Foundation
 
+/// H12 scope decision: H71 autonomous drones are postponed.
+/// Keep the verified source implementation available for later reactivation;
+/// do not initialize the graph or animate drones in normal H55 gameplay.
+enum H55H12FeatureFlags580 {
+    static let autonomousDronesEnabled=false
+}
+
 /// PC v580 H71DroneImports461.Select: ONLY the two explicitly imported
 /// GLB prefab roots within 6m of the authored mechanic may become drones.
 /// A third imported model remains static. Never create mesh substitutes.
