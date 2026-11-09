@@ -59,7 +59,10 @@ import Foundation
         legacy.award(210)
         check(legacy.buy(.twin),"legacy Twin is still functional")
         let oldBytes=try JSONEncoder().encode(legacy)
-        var oldJSON=try JSONSerialization.jsonObject(with:oldBytes) as! [String:Any]
+        guard var oldJSON=try JSONSerialization.jsonObject(with:oldBytes)
+                as? [String:Any] else {
+            preconditionFailure("encoded profile must be a JSON dictionary")
+        }
         oldJSON.removeValue(forKey:"railOwned")
         oldJSON.removeValue(forKey:"swarmOwned")
         let original568=try JSONSerialization.data(withJSONObject:oldJSON)
