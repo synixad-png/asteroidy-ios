@@ -78,3 +78,25 @@ dronów H71. Całość H01–H16 **70,9%**, do końca **29,1%**.
 Kolejność: H13-A stabilny import → H13-B światła PC v580 →
 H13-C materiały GLSL/SceneKit → H13-D odbiór urządzenia, bez
 przechodzenia do H14.
+
+## Poprawka odrębnego błędu kompilacji SwiftUI — po zgłoszeniu 09.11.2026
+
+Przeanalizowano **rzeczywiste logi Xcode** z nieudanych przebiegów
+[42656975527](https://github.com/synixad-png/asteroidy-ios/actions/runs/42656975527)
+i [42656909644](https://github.com/synixad-png/asteroidy-ios/actions/runs/42656909644):
+`H55ScenePage580.swift:800:47: error: the compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions`, `BUILD FAILED`, exit code 65.
+To nie jest diagnostyka awarii GPU ani GLB: Swift/Xcode nie potrafił ukończyć typowania rozbudowanego drzewa widoku `H55ScenePage580`.
+Po sprawdzeniu, że UI nie może usunąć wejścia/animacji/ustawień, rozdzielono:
+- bazowy `body`: tylko przełączanie stanu, panel sterowania i ustawienia;
+- `renderedHangar(scene:camera:)`: `SceneView`, oryginalne sterowanie `H55TouchControls580` i warunkowe nakładki;
+- `arrivalOverlay`: oryginalne 3,25 sekundy i pominięcie wejścia;
+- `conversationOverlay`: dialog mechanika;
+- `debugOverlay`: wyświetlanie H12/H71/animacji;
+- `topControls`: powrót, raport H13, ustawienia, stanowiska;
+- `settingsScreen`: pełny ekran oryginalnej kategorii HANGAR z powrotem.
+Wszystkie widoki są oddzielnymi, **statycznie typowanymi** `some View`; nie stosowano `AnyView`, duplikowania ekranów ani przebudowy GLB. Zmiana dotyczy struktury typów SwiftUI i **nie zmienia** sterowania, fizyki, shaderów, NPC ani H70/H12.
+Wdrożona zmiana: [commit `62dc4428`](https://github.com/synixad-png/asteroidy-ios/commit/62dc4428499c548f9aa8b2898648fb26535711a1).
+Źródłowy H13 i sterowanie mają osobne zielone bramki; nie oznaczać pełnej
+kompilacji Xcode za PASS do czasu wyniku
+[42661756660](https://github.com/synixad-png/asteroidy-ios/actions/runs/42661756660)
+lub późniejszego pełnego builda dla tej samej zmiany.
