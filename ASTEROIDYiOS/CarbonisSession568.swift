@@ -67,9 +67,8 @@ final class CarbonisSession568: ObservableObject {
             weaponLevel=game.upgradeLevel
             rapidLevel=game.rapidLevel
             shieldCharges=game.shieldCharges
-            // The original IonAmmo, Bombs, Boost71 and Tarcza145 are
-            // not executable in this first-sector port. Display actual
-            // zero inventory; show an em dash for unavailable energy.
+            // PC580 IonAmmo/Bombs are real combat inventory. The Boost71
+            // and Tarcza145 systems remain unavailable in CARBONIS 01.
             tarczaEnergy=nil
             ionAmmo=game.ionAmmo; bombs=game.bombs; boostCharges=0
             let camera=game.flight.camera
