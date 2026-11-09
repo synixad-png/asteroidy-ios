@@ -43,7 +43,9 @@ import simd
     private var mechanic=H55Mechanic580()
     private weak var mechanicRoot:SCNNode?
     private var mechanicBaseOrientation:simd_quatf?
-    private var mechanicMotionPlaying=false
+    // H09 exclusively samples the original GLB idle/walk on its 80 bones.
+    // Never start concurrent automatic SceneKit NPC animation players.
+    private var npcAnimator:H55NpcSceneAnimator580?
     @Published private(set) var mechanicStatus="OCZEKUJE NA ROZMOWĘ"
 
     func jump() {
@@ -133,17 +135,7 @@ import simd
                      axis:SIMD3<Float>(0,1,0))*original
             }
         }
-        let walking=mechanic.moving
-        if walking != mechanicMotionPlaying {
-            mechanicMotionPlaying=walking
-            if walking {
-                stop(H55Asset580.idleClip)
-                play(H55Asset580.walkClip,loop:true)
-            } else {
-                stop(H55Asset580.walkClip)
-                play(H55Asset580.idleClip,loop:true)
-            }
-        }
+        // H09 mocap evaluated below, after the H08 collision/root update.
         let nextStatus:String
         switch mechanic.phase {
         case .idle: nextStatus="OCZEKUJE NA ROZMOWĘ"
@@ -168,6 +160,9 @@ import simd
         let near=hypot(movement.x-mechanic.x,movement.z-mechanic.z)<=2.7
         if near != mechanicNearby {mechanicNearby=near}
         }
+        // Continue authentic idle during arrival and conversation.
+        npcAnimator?.apply(dt:dt,mechanic:mechanic,
+                           allowWalking:arrival.walking && !conversationOpen)
         // PC v580: update doors AFTER NPC movement; keep animating during
         // 3.25s arrival and while the conversation blocks walking.
         updateAirlocks(dt:dt)
@@ -254,7 +249,7 @@ import simd
         mechanic=H55Mechanic580()
         mechanicRoot=nil
         mechanicBaseOrientation=nil
-        mechanicMotionPlaying=false
+        npcAnimator=nil
         mechanicStatus="OCZEKUJE NA ROZMOWĘ"
         conversationOpen=false
         mechanicNearby=false
@@ -277,6 +272,7 @@ import simd
                 let npcSurface=try H55NpcSurface580.prepare(collision:physical)
                 // H70 tracks are from the same SHA-verified GLB as collision.
                 let airlockKeys=try H55AirlockTracks580.load(from:url)
+                let npcRig=try H55NpcTracks580.load(url)
                 GLTFAsset.load(with:url,options:[:]) { _,status,asset,error,_ in
                     if status == .complete, let asset {
                         let source=GLTFSCNSceneSource(asset:asset)
@@ -284,7 +280,7 @@ import simd
                             guard let self, self.generation == request else {return}
                             self.attach(source,asset:asset,inventory:metadata,
                                         physical:physical,airlockKeys:airlockKeys,
-                                        npcSurface:npcSurface)
+                                        npcSurface:npcSurface,npcRig:npcRig)
                         }
                     } else if status == .error {
                         DispatchQueue.main.async { [weak self] in
@@ -307,7 +303,8 @@ import simd
                         asset:GLTFAsset,inventory:H55Asset580.Inventory,
                         physical:H55SpatialSupport580,
                         airlockKeys:H55AirlockTracks580.SceneKeys,
-                        npcSurface:H55NpcSurface580) {
+                        npcSurface:H55NpcSurface580,
+                        npcRig:H55NpcTracks580.Rig) {
         guard let realScene=source.defaultScene else {
             phase = .failed("Plik nie zawiera sceny 3D.")
             return
@@ -392,6 +389,14 @@ import simd
         mechanic.calibrate(anatomicalHeading:heading)
         mechanicRoot=importedNpc
         mechanicBaseOrientation=importedNpc.simdOrientation
+        do {
+            npcAnimator=try H55NpcSceneAnimator580(
+                rig:npcRig,allNodes:source.nodes,collision:physical,
+                foot:npcSurface.foot,anatomicalHeading:heading)
+        } catch {
+            phase = .failed("H09: niekompletny szkielet mechanika GLB: " + String(describing:error))
+            return
+        }
         animations=clips
         animationNames=inventory.animations.filter {
             clips[$0] != nil && !H55AirlockController580.clipNames.contains($0)
@@ -399,6 +404,7 @@ import simd
         self.inventory=inventory
         scene=realScene
         camera=pointOfView
+        npcAnimator?.apply(dt:0,mechanic:mechanic,allowWalking:false)
         phase = .ready
         beginClock()
         // PC H55Renderer: never trigger the docking or departure
@@ -406,8 +412,7 @@ import simd
         for name in ["04_TURBINE_ROTATION_LOOP",
                      "05_GIANT_REPAIR_ARMS_SERVICE_LOOP",
                      "H39_NO_SHIP_IDLE",
-                     "H46_LIGHT_IDLE_20S",
-                     H55Asset580.idleClip] {
+                     "H46_LIGHT_IDLE_20S"] {
             play(name,loop:true)
         }
     }
@@ -476,6 +481,8 @@ import simd
     }
 
     func play(_ name:String,loop:Bool) {
+        // H09 manually samples the exact author mocap on these 80 nodes.
+        if name == H55Asset580.idleClip || name == H55Asset580.walkClip {return}
         guard let scene,let source=animations[name] else{return}
         let key="source580_"+name
         // A shared source clip may be paused and resumed; never fabricate
@@ -532,7 +539,7 @@ import simd
         setMove(forward:0,right:0)
         mechanicRoot=nil
         mechanicBaseOrientation=nil
-        mechanicMotionPlaying=false
+        npcAnimator=nil
         conversationOpen=false
         generation=UUID()
         guard let scene else{return}
