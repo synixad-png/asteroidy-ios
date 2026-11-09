@@ -30,7 +30,11 @@ import Foundation
             ["name":"HL_Workshop_Part"],
             ["name":"NPC525_Character"],
             ["name":"H70_Door"],
-            ["name":"H39_Lamp"]
+            ["name":"H39_Lamp"],
+            ["name":"HL_Import_Drone","children":[7],
+             "extras":["hangarLabImported":true,
+                       "hangarLabImportName":"drone for service"]],
+            ["name":"HL_Drone_Rotor"]
         ]
         var bin=Data()
         var accessors=[[String:Any]]()
@@ -115,13 +119,23 @@ import Foundation
             Spec("HL_TOOL_LOOP",7,2),
             Spec("HL_TOOL_OTHER",8,2),
             Spec("H39_META_LOOP",8,5,true),
+            Spec("HL_DRONE_LOOP",6,7),
+            Spec("H39_DRONE_META_LOOP",4,7,true),
             Spec("NPC525_Walk",2.375,3),
             Spec("H70_HANGAR_AIRLOCK_SLIDING_DOORS_8S",8,4),
             Spec("H51_03_INVALID_AUTOPLAY",64,0),
             Spec("HL_DOCK_CLAMPS_LOOP",5,2)
         ]
         try writeGLB(specs,url:url)
-        let lib=try H55H12Tracks580.load(url)
+        // Default reader can preserve the old H71 selection for later,
+        // but the active H12 scene MUST exclude user-deferred drone loops.
+        let withDrones=try H55H12Tracks580.load(url)
+        check(withDrones.imported.count==2 &&
+              withDrones.metadata.count==2 &&
+              withDrones.clips["HL_DRONE_LOOP"] != nil,
+              "legacy authored H71 loops retained for future opt-in")
+        let lib=try H55H12Tracks580.load(
+            url,excludeImportedDroneRoots:true)
         check(lib.imported.count==1 &&
               lib.imported[0].name=="HL_TOOL_LOOP",
               "one source-ranked LOOP per imported root, not IDLE/OTHER")
@@ -129,6 +143,9 @@ import Foundation
               lib.metadata[0].name=="H39_META_LOOP" &&
               lib.metadata[0].speed==1.5,
               "explicit authored metadata loop speed retained")
+        check(lib.clips["HL_DRONE_LOOP"] == nil &&
+              lib.clips["H39_DRONE_META_LOOP"] == nil,
+              "deferred drones cannot animate even through metadata GLB loops")
         check(lib.morphIdle=="H39_Idle_Natural_24s_NO_ARMS",
               "natural idle clip preserved but protected NPC bound separately")
         check(lib.clips.count==9 &&
@@ -142,12 +159,19 @@ import Foundation
         check(raw.tracks.count==1 && raw.tracks[0].times.count==2,
               "read original little-endian glTF accessor and two keyframes")
         let p=raw.tracks[0].sample(16)
+        var scratch=[Float](repeating:-123,count:64)
+        raw.tracks[0].sample(16,into:&scratch)
+        check(Array(scratch.prefix(3))==p && scratch[3] == -123,
+              "allocation-free sampler returns exactly original translation and never overwrites adjacent channels")
         check(abs(p[0]-0.5)<0.00001 &&
               abs(p[1]-1)<0.00001 &&
               abs(p[2]-1.5)<0.00001,
               "real accessor LINEAR translation sampled mid-key")
         let q=lib.clips[H55H12Timeline580.service]!.tracks[0].sample(48)
         let half:Float=0.70710678
+        lib.clips[H55H12Timeline580.service]!.tracks[0].sample(48,into:&scratch)
+        check(Array(scratch.prefix(4))==q,
+              "allocation-free quaternion SLERP matches original native values")
         check(q.count==4 && abs(q[2]-half)<0.0001 &&
               abs(q[3]-half)<0.0001,
               "original glTF FLOAT32 rotation uses normalized shortest-arc SLERP")
@@ -163,6 +187,23 @@ import Foundation
             times:[0,1],values:[1,2,3,4,5,6],
             width:3,step:true).sample(0.75)
         check(step==[1,2,3],"original glTF STEP never interpolates")
+        let stepTrack=H55H12Tracks580.Track(
+            nodeName:"StepTest",path:.translation,
+            times:[0,1],values:[1,2,3,4,5,6],
+            width:3,step:true)
+        stepTrack.sample(0.75,into:&scratch)
+        check(Array(scratch.prefix(3))==step,
+              "allocation-free glTF STEP never blends or changes authored keys")
+        // H12 is sampled every rendered frame, not only on the first loop.
+        // Reuse the SAME scratch across the entire repair/arms sequence.
+        for tick in 0..<12_000 {
+            let t=Float(tick)*Float(1.0/120.0)
+            let track=lib.clips[H55H12Timeline580.service]!.tracks[0]
+            track.sample(t,into:&scratch)
+            let expected=track.sample(t)
+            check(Array(scratch.prefix(4))==expected,
+                  "120Hz quaternion trace must remain byte-equivalent with reusable buffer")
+        }
         let frame=lib.frame(48)
         check(frame.count==8 &&
               frame[0].clip==H55H12Timeline580.service &&
