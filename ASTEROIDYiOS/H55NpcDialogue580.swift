@@ -6,7 +6,7 @@ import Foundation
 struct H55NpcDialogue580 {
     enum Transition:Equatable {case ignored,opened,closed}
     static let radius:Float=2.7
-    static let spokenLine="WSZYSTKO W PORZĄDKU."
+    static let spokenLine="WSZYSTKO W PORZADKU."
     // Literal PC strings are retained as source labels, including controls.
     static let openNotice="MECHANIK: WSZYSTKO W PORZADKU. E / ENTER / ESC - ZAKONCZ ROZMOWE."
     static let closeNotice="MECHANIK: DO ZOBACZENIA."
