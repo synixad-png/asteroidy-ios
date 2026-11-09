@@ -356,10 +356,8 @@ import Foundation
               "H11 +15/+15 talents read by actual playable source combat")
         let bonusStats=H55SourceMechanics580.shipStats(
             type:1,engine:1,stabilizer:1,thruster:1)!
-        check(abs(bonusSim.flight.flight.configuration.cruiseSpeed-
-                  bonusStats.topSpeed*0.40)<0.0002 &&
-              abs(bonusSim.flight.flight.configuration.control-
-                  bonusStats.acceleration/245)<0.0002,
+        check(abs(bonusSim.flight.flight.configuration.cruiseSpeed-bonusStats.topSpeed*0.40)<0.0002 &&
+              abs(bonusSim.flight.flight.configuration.control-bonusStats.acceleration/245)<0.0002,
               "PC v580 legacy Engine + Thruster genuinely change ship motion")
         check(bonusSim.guardianCharges==1,"owned Guardian grants one intercept per sector")
         bonusSim.invincible=0;bonusSim.suffer(8)
@@ -400,7 +398,7 @@ import Foundation
         check(cooling.bullets.count==1 &&
               abs(cooling.cooldown-expectedInterval)<0.0002,
               "actual C279 firing uses source rate talent and cooling")
-        print("PASS H11 live integration: 110kg? no — original C279 real flight, source modules/talents, guardian intercept, hostile dampener, collector and cooldown")
+        print("PASS H11 actual C279: source ship dynamics, talents, guardian shield, hostile dampener, collector and cooling")
         print("PASS \(checks) live Carbonis C279 flight, shot, hit, victory and defeat checks")
     }
 }
