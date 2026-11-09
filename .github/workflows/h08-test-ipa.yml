@@ -5,6 +5,10 @@ on:
       - feature/ios-h55-v580-native-entry
     paths:
       - '.github/workflows/h08-test-ipa.yml'
+      - 'ASTEROIDYiOS/H55NpcDetour580.swift'
+      - 'ASTEROIDYiOS/H55Mechanic580.swift'
+      - 'ASTEROIDYiOS/H55NpcSurface580.swift'
+      - 'Tests/H55NpcRealRoute580Tests.swift'
   workflow_dispatch:
 
 permissions:
@@ -89,6 +93,15 @@ jobs:
           swiftc ASTEROIDYiOS/H55Airlocks580.swift Tests/H55AirlocksRealGLB580Tests.swift -o /tmp/h07-real-glb-source
           swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55NpcDetour580.swift ASTEROIDYiOS/H55Mechanic580.swift ASTEROIDYiOS/H55NpcSurface580.swift ASTEROIDYiOS/H55Airlocks580.swift Tests/H55H08SourceTests.swift -o /tmp/h08-check
           /tmp/h08-check
+
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55NpcDetour580.swift ASTEROIDYiOS/H55NpcSurface580.swift ASTEROIDYiOS/H55Mechanic580.swift ASTEROIDYiOS/H55Airlocks580.swift Tests/H55NpcRealRoute580Tests.swift -o /tmp/h08-original-126mb-glb-e2e
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path("ASTEROIDYiOS/H55NpcDetour580.swift").read_text()
+          assert "let legEnd=goalIndex<workshopIndex ? workshopIndex-1 : routeX.count-1" in src
+          assert "let limit=min(legEnd,goalIndex+3)" in src
+          print("PASS: H08 return-leg A* original PC580 deadlock fixed without changing approved route")
+          PY
 
   build-h55-ipa:
     needs: verify-h55
