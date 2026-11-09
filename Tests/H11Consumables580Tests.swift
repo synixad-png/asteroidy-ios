@@ -115,8 +115,8 @@ import Foundation
             hasOriginalC279Assets:true)!
         let zero=Vec2(x:0,y:0)
         let ionProfile=Sector01Shop568.State(
-            tokens:145,weapon:.scatter,upgradeLevel:3,rapidLevel:2,
-            ionAmmo:2,bombs:2,scatterOwned:true)
+            tokens:145,scatterOwned:true,weapon:.scatter,
+            upgradeLevel:3,rapidLevel:2,ionAmmo:2,bombs:2)
         // The explicit initializer matches the original factory used in
         // SourceNewGame568; no separate duplicate gameplay inventory.
         let prepared=Sector01PreparedWave568.prepare(
