@@ -212,16 +212,16 @@ import simd
             let p=settings.weapon
             let sway=H55FPSPose580.weaponWalk(phase:bobPhase,
                             movement:movement,visualIntensity:intensity)
-            let vertical=Float(p[1])*0.01+sway.y+
-                H55FPSPose580.weaponIdle(time:time,enabled:settings.idle)
+            let idleVertical=H55FPSPose580.weaponIdle(time:time,enabled:settings.idle)
+            let vertical=Float(p[1])*0.01+sway.y+idleVertical
             weaponRoot.simdPosition=SIMD3<Float>(
                 Float(p[0])*0.01+sway.x,vertical,Float(p[2])*0.01)
             let x=simd_quatf(angle:-Float.pi/2,axis:SIMD3<Float>(1,0,0))
             let z=simd_quatf(angle:Float.pi/2,axis:SIMD3<Float>(0,0,1))
-            weaponRoot.simdOrientation=x*z*
-                orientation(Float(p[3]),Float(p[4])+sway.yawDegrees,Float(p[5]))
-            let scale=H55FPSPose580.weaponScale *
-                      max(0.25,min(2.5,Float(p[6])*0.01))
+            let rotation=orientation(Float(p[3]),Float(p[4])+sway.yawDegrees,Float(p[5]))
+            weaponRoot.simdOrientation=x*z*rotation
+            let userScale=max(0.25,min(2.5,Float(p[6])*0.01))
+            let scale=H55FPSPose580.weaponScale*userScale
             weaponRoot.simdScale=SIMD3<Float>(repeating:scale)
         }
     }
