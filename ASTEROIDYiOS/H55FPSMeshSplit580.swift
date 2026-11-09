@@ -18,7 +18,7 @@ import simd
         let centres:[SIMD3<Float>]
         let reverse:Bool
     }
-    private static func recipe(_ kind:H55FPSAssets580.Kind)->Recipe {
+    private static func recipe(_ kind:H55FPSAssets580.Kind)->Recipe? {
         switch kind {
         case .tripo:
             return Recipe(axis:0,threshold:-0.0002,
@@ -29,7 +29,7 @@ import simd
                 centres:[SIMD3<Float>(0.0165,0.1794,0.0043),
                          SIMD3<Float>(-0.0182,0.7922,-0.0002)],reverse:true)
         case .weapon:
-            preconditionFailure("Weapons are not hand-pair geometry")
+            return nil // Weapon stays whole and never passes through glove splitter
         }
     }
     private static func u32(_ bytes:[UInt8],_ i:Int)->UInt32 {
@@ -44,8 +44,7 @@ import simd
         }
     }
     static func build(scene:SCNScene,kind:H55FPSAssets580.Kind)throws->Result {
-        precondition(kind != .weapon)
-        let r=recipe(kind)
+        guard let r=recipe(kind) else{throw Failure.unsupportedGeometry}
         var halves=[[SCNNode](),[SCNNode]()]
         var triangles=0,parts=0,failed=false
         scene.rootNode.enumerateHierarchy { node,_ in
