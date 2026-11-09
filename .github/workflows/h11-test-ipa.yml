@@ -11,6 +11,7 @@ on:
       - 'ASTEROIDYiOS/H55SourceMechanics580.swift'
       - 'Tests/H55SourceMechanics580Tests.swift'
       - 'ASTEROIDYiOS/H55WorkshopPanel580.swift'
+      - 'ASTEROIDYiOS/CombatGuardianDrone298.swift'
       - 'ASTEROIDYiOS/CarbonisCombat568.swift'
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'ASTEROIDYiOS/App.swift'
