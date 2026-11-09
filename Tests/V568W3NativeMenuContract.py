@@ -208,7 +208,12 @@ scene_h55=(root/"ASTEROIDYiOS/H55ScenePage580.swift").read_text()
 assert "import GLTFKit2" in scene_h55
 assert "GLTFAsset.load(with:url" in scene_h55
 assert "H55Asset580.inspect(url)" in scene_h55
-assert 'Wczytanie rzeczywistego zapisu' in menu
+# PC manual-save import remains unavailable, but the actual prior iOS H11
+# campaign backup has its own native recovery UI and full profile restore.
+assert 'SourceNewGame568.archives()' in menu
+assert 'restoreArchivedGame(archive)' in menu
+assert 'w3-restore-profile-' in menu
+assert 'Wczytywanie ręcznych zapisów PC nie jest jeszcze przeniesione.' in menu
 # Navigation is fully handled in one native SwiftUI view, without
 # silently connecting unavailable menu actions to test gameplay.
 assert "ScrollView(.vertical)" in menu
