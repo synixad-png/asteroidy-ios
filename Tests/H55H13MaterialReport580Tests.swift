@@ -59,7 +59,8 @@ import Foundation
         assert(result.issues.isEmpty)
         assert(result.text.contains("3: Transmission"))
         assert(result.text.contains("nie potwierdza wyglądu szkła"))
-        assert(try Data(contentsOf: path) == original, "Reading must not change the GLB")
+        let afterInspection = try Data(contentsOf: path)
+        assert(afterInspection == original, "Reading must not change the GLB")
         try writeGLB(path, ["asset": ["version": "2.0"], "materials": [
             ["name": "Bad alpha", "alphaMode": "CUSTOM", "doubleSided": "true"],
             "not a material"
