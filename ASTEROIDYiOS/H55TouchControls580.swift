@@ -12,10 +12,7 @@ struct H55TouchControls580:View {
     var conversationOpen:Bool
     var mechanicStatus:String
 
-    @State private var walkTranslation:CGSize = .zero
     @State private var rightLast:CGSize = .zero
-    @State private var walking=false
-    @State private var looking=false
 
     private let borderColor=Color(red:0.29,green:0.75,blue:0.83)
     private let textColor=Color(red:0.94,green:0.79,blue:0.51)
@@ -25,7 +22,6 @@ struct H55TouchControls580:View {
             let w=geometry.size.width
             let h=geometry.size.height
             let compact=h<390
-            let controlSize:CGFloat=compact ? 102 : 128
             let buttonWidth:CGFloat=compact ? 104 : 124
             let buttonHeight:CGFloat=compact ? 43 : 51
             ZStack(alignment:.topLeading) {
@@ -43,14 +39,7 @@ struct H55TouchControls580:View {
                 }
                 .frame(width:w,height:h)
 
-                // Read-only guidance can never steal touch input.
-                walkIndicator(size:controlSize)
-                    .position(x:w*0.20,y:h*0.68)
-                    .allowsHitTesting(false)
-                lookIndicator(size:controlSize)
-                    .position(x:w*0.77,y:h*0.56)
-                    .allowsHitTesting(false)
-
+                // Two invisible full-screen gesture zones, no thumbsticks.
                 Button(action:onTalk) {
                     Text("ROZMAWIAJ")
                         .font(.system(size:compact ? 11:13,weight:.bold,design:.monospaced))
@@ -94,26 +83,19 @@ struct H55TouchControls580:View {
         }
         .onDisappear {
             onWalk(0,0)
-            walkTranslation = .zero
             rightLast = .zero
-            walking=false
-            looking=false
         }
     }
 
     private var walkGesture:some Gesture {
         DragGesture(minimumDistance:0)
             .onChanged { value in
-                walkTranslation=value.translation
-                walking=true
                 let v=H55TouchMapping580.walk(
                     dx:Float(value.translation.width),
                     dy:Float(value.translation.height))
                 onWalk(v.forward,v.right)
             }
             .onEnded { _ in
-                walkTranslation = .zero
-                walking=false
                 onWalk(0,0)
             }
     }
@@ -127,59 +109,10 @@ struct H55TouchControls580:View {
                 let dy=Float(value.translation.height-rightLast.height)
                 onLook(dx,dy)
                 rightLast=value.translation
-                looking=true
             }
             .onEnded { _ in
                 rightLast = .zero
-                looking=false
             }
     }
 
-    private func walkIndicator(size:CGFloat)->some View {
-        ZStack {
-            Circle()
-                .fill(Color.black.opacity(0.36))
-                .overlay(Circle().stroke(borderColor.opacity(0.52),lineWidth:1.4))
-            Text("↑")
-                .offset(y:-size*0.32)
-            Text("↓")
-                .offset(y:size*0.32)
-            Text("←")
-                .offset(x:-size*0.32)
-            Text("→")
-                .offset(x:size*0.32)
-            Circle()
-                .fill(borderColor.opacity(walking ? 0.46 : 0.21))
-                .frame(width:size*0.31,height:size*0.31)
-                .offset(x:walkTranslation.width*0.32,y:walkTranslation.height*0.32)
-                .mask(Circle().frame(width:size*0.85,height:size*0.85))
-        }
-        .font(.system(size:14,weight:.bold))
-        .foregroundStyle(borderColor)
-        .frame(width:size,height:size)
-        .overlay(alignment:.bottom) {
-            Text("CHODZENIE / STRAFE")
-                .font(.system(size:9,weight:.semibold,design:.monospaced))
-                .foregroundStyle(textColor)
-                .offset(y:19)
-        }
-    }
-
-    private func lookIndicator(size:CGFloat)->some View {
-        ZStack {
-            Circle()
-                .fill(Color.black.opacity(0.21))
-                .overlay(Circle().stroke(borderColor.opacity(looking ? 0.64 : 0.37),lineWidth:1))
-            Image(systemName:"viewfinder")
-                .font(.system(size:size*0.30,weight:.ultraLight))
-                .foregroundStyle(borderColor.opacity(0.8))
-        }
-        .frame(width:size*0.68,height:size*0.68)
-        .overlay(alignment:.bottom) {
-            Text("ROZGLĄDANIE")
-                .font(.system(size:9,weight:.semibold,design:.monospaced))
-                .foregroundStyle(textColor)
-                .offset(y:22)
-        }
-    }
 }
