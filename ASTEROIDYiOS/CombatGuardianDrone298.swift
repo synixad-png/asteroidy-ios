@@ -84,8 +84,8 @@ struct CombatGuardianDrone298 {
         let bias=relative.x*side.x+relative.y*side.y
         if abs(bias)>=4 {orbitSide=bias>=0 ? 1 : -1}
         let orbit:Float=104+focus*8
-        let displacement=side*(orbitSide*orbit*0.70)-
-            forward*(orbit*0.24)+
+        let displacement=side*(orbitSide*orbit*0.70) -
+            forward*(orbit*0.24) +
             Vec2(x:0,y:sin(elapsed*0.72)*orbit*0.05)
         return Sphere67.offset(ship,by:displacement)
     }
@@ -165,9 +165,9 @@ struct CombatGuardianDrone298 {
                 by:rel*(gap>430 ? 0.26 : 0.16))
             velocity=velocity*(gap>430 ? 0.42 : 0.58)
         }
-        let maxSpeed:Float=(catchUp ? 132 : hasTarget ? 70 : 56)+
+        let maxSpeed:Float=(catchUp ? 132 : hasTarget ? 70 : 56) +
                             f*(catchUp ? 11 : 7)
-        let accel:Float=(catchUp ? 118 : hasTarget ? 56 : 44)+
+        let accel:Float=(catchUp ? 118 : hasTarget ? 56 : 44) +
                          f*(catchUp ? 9 : 5)
         var wanted=shipVelocity*(catchUp ? 0.78 : hasTarget ? 0.28 : 0.16)
         if distance>0.01 {
@@ -175,7 +175,7 @@ struct CombatGuardianDrone298 {
                 distance*(catchUp ? 1.08 : hasTarget ? 0.54 : 0.42))/distance)
         }
         let error=wanted-velocity
-        var spring=rel*(catchUp ? 0.88 : hasTarget ? 0.72 : 0.54)+
+        var spring=rel*(catchUp ? 0.88 : hasTarget ? 0.72 : 0.54) +
                    error*(catchUp ? 1.44 : hasTarget ? 1.00 : 0.86)
         spring=Self.clampMagnitude(spring,accel)
         if gap<minGap && gap>0.001 {
