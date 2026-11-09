@@ -47,7 +47,28 @@ enum Sector01Shop568 {
 
         // Decode both v568 profiles (which lack Rail/Swarm keys) and H11
         // profiles. Preserve all earlier purchases, tokens and equipped guns.
-        init() {}
+        // Preserve the original v568 memberwise API: SourceNewGame568
+        // initializes lives and multiple existing tests initialize tokens.
+        // Defaulted new ownership flags cannot change those call sites.
+        init(tokens:Int=0,totalEarned:Int=0,totalSpent:Int=0,
+             twinOwned:Bool=false,scatterOwned:Bool=false,
+             railOwned:Bool=false,swarmOwned:Bool=false,
+             weapon:Weapon = .pulse,upgradeLevel:Int=1,rapidLevel:Int=0,
+             shieldCharges:Int=0,lives:Int=3,repairsBought:Int=0) {
+            self.tokens=tokens
+            self.totalEarned=totalEarned
+            self.totalSpent=totalSpent
+            self.twinOwned=twinOwned
+            self.scatterOwned=scatterOwned
+            self.railOwned=railOwned
+            self.swarmOwned=swarmOwned
+            self.weapon=weapon
+            self.upgradeLevel=upgradeLevel
+            self.rapidLevel=rapidLevel
+            self.shieldCharges=shieldCharges
+            self.lives=lives
+            self.repairsBought=repairsBought
+        }
         private enum CodingKeys:String,CodingKey {
             case tokens,totalEarned,totalSpent,twinOwned,scatterOwned
             case railOwned,swarmOwned,weapon,upgradeLevel,rapidLevel
