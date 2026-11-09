@@ -56,7 +56,47 @@ struct H55WorkshopPanel580:View {
                 ScrollView(showsIndicators:true) {
                     VStack(alignment:.leading,spacing:compact ? 8 : 12) {
                         switch tab {
-                        case 0:
+                        case 0: fleetTab()
+                        case 1: talentsTab()
+                        case 2: weaponsTab()
+                        case 3: trophiesTab()
+                        case 4: serviceTab()
+                        case 5: modulesTab()
+                        default: EmptyView()
+                        }
+                    }
+                    .padding(.horizontal,compact ? 12:18)
+                    .padding(.vertical,compact ? 7:12)
+                    .frame(maxWidth:.infinity,alignment:.leading)
+                }
+                HStack {
+                    Text(notice)
+                        .font(.system(size:compact ? 10:12,weight:.medium,design:.monospaced))
+                        .foregroundStyle(cyan)
+                        .accessibilityIdentifier("h11-workshop-notice")
+                    Spacer()
+                    Text("OPERACJE POŁĄCZONE Z MISJĄ 01 • POZOSTAŁE WYMAGAJĄ PORTU SILNIKA")
+                        .font(.system(size:9,design:.monospaced))
+                        .foregroundStyle(muted)
+                }
+                .padding(.horizontal,14)
+            }
+            .padding(.horizontal,compact ? 12:24)
+            .padding(.top,compact ? 8:18)
+            .padding(.bottom,compact ? 6:12)
+            .background(Color(red:0.008,green:0.024,blue:0.042).opacity(0.89))
+            .overlay(RoundedRectangle(cornerRadius:8).stroke(cyan.opacity(0.6),lineWidth:1))
+            .frame(maxWidth:.infinity,maxHeight:.infinity)
+        }
+        .onAppear {
+            // Reload canonical mission profile whenever the console is opened.
+            wallet=Sector01Shop568.load()
+            vitals=H55Workshop580.loadVitals()
+            rules=H55SourceMechanics580.load()
+        }
+        .accessibilityIdentifier("h11-authentic-w3-stations")
+    }
+    @ViewBuilder private func fleetTab()->some View {
                             headline("01 / FLOTA","SZEŚĆ STATKÓW · ŹRÓDŁO CAMPAIGN37")
                             ForEach(H55Workshop580.ships.indices,id:\.self){i in
                                 let stats=H55SourceMechanics580.shipStats(
@@ -78,7 +118,9 @@ struct H55WorkshopPanel580:View {
                                         if r == .changed {persistSource()}
                                     } : nil)
                             }
-                        case 1:
+    }
+
+    @ViewBuilder private func talentsTab()->some View {
                             headline("02 / DRZEWKO","TALENTY 78 · AUTENTYCZNE TROFEA")
                             Text("ZDOBYTE: \(rules.trophiesEarned) · WOLNE: \(rules.trophiesFree(vitals:vitals))")
                                 .font(.system(size:12,weight:.bold,design:.monospaced))
@@ -100,7 +142,9 @@ struct H55WorkshopPanel580:View {
                                         if r == .changed {persistSource()}
                                     } : nil)
                             }
-                        case 2:
+    }
+
+    @ViewBuilder private func weaponsTab()->some View {
                             headline("03 / UZBROJENIE","KONFIGURACJA BRONI")
                             ForEach(H55Workshop580.weapons.indices,id:\.self){i in
                                 let owned=H55Workshop580.weaponOwned(i,wallet)
@@ -116,7 +160,9 @@ struct H55WorkshopPanel580:View {
                                         if result.success {Sector01Shop568.save(wallet)}
                                     } : nil)
                             }
-                        case 3:
+    }
+
+    @ViewBuilder private func trophiesTab()->some View {
                             headline("04 / GALERIA","TROFEA Z RZECZYWISTYCH MISJI")
                             itemRow("BOSSOWIE \(rules.bossTrophies.nonzeroBitCount)/6",
                                     detail:"Poziomy 4, 8, 12, 16, 20, 24 · trofeum dopiero po podniesieniu łupu",
@@ -131,7 +177,9 @@ struct H55WorkshopPanel580:View {
                                         "NIEZDOBYTE · \(H55SourceMechanics580.timeTarget(sector:level,objective:level==2 || level==11 || level==21 ? .escort : level==5 || level==14 || level==23 ? .defend : level==9 || level==17 ? .waves : .normal) ?? 0) s",
                                     action:nil)
                             }
-                        case 4:
+    }
+
+    @ViewBuilder private func serviceTab()->some View {
                             headline("05 / SERWIS","NAPRAWY I OSŁONY")
                             ForEach(H55Workshop580.services.indices,id:\.self){i in
                                 let current=i==0 ? vitals.hull : i==1 ? vitals.armor :
@@ -152,7 +200,9 @@ struct H55WorkshopPanel580:View {
                                         }
                                     } : nil)
                             }
-                        case 5:
+    }
+
+    @ViewBuilder private func modulesTab()->some View {
                             headline("06 / MODUŁY","PIĘĆ MODUŁÓW 97 · EFEKTY ŹRÓDŁOWE")
                             ForEach(H55Workshop580.modules.indices,id:\.self){i in
                                 let rank=rules.moduleRanks[i]
@@ -187,39 +237,6 @@ struct H55WorkshopPanel580:View {
                                         if result == .changed {persistSource()}
                                     } : nil)
                             }
-                        default:EmptyView()
-                        }
-                    }
-                    .padding(.horizontal,compact ? 12:18)
-                    .padding(.vertical,compact ? 7:12)
-                    .frame(maxWidth:.infinity,alignment:.leading)
-                }
-                HStack {
-                    Text(notice)
-                        .font(.system(size:compact ? 10:12,weight:.medium,design:.monospaced))
-                        .foregroundStyle(cyan)
-                        .accessibilityIdentifier("h11-workshop-notice")
-                    Spacer()
-                    Text("OPERACJE POŁĄCZONE Z MISJĄ 01 • POZOSTAŁE WYMAGAJĄ PORTU SILNIKA")
-                        .font(.system(size:9,design:.monospaced))
-                        .foregroundStyle(muted)
-                }
-                .padding(.horizontal,14)
-            }
-            .padding(.horizontal,compact ? 12:24)
-            .padding(.top,compact ? 8:18)
-            .padding(.bottom,compact ? 6:12)
-            .background(Color(red:0.008,green:0.024,blue:0.042).opacity(0.89))
-            .overlay(RoundedRectangle(cornerRadius:8).stroke(cyan.opacity(0.6),lineWidth:1))
-            .frame(maxWidth:.infinity,maxHeight:.infinity)
-        }
-        .onAppear {
-            // Reload canonical mission profile whenever the console is opened.
-            wallet=Sector01Shop568.load()
-            vitals=H55Workshop580.loadVitals()
-            rules=H55SourceMechanics580.load()
-        }
-        .accessibilityIdentifier("h11-authentic-w3-stations")
     }
     private func persistSource() {
         // Operations have passed source validation. Store only the canonical
