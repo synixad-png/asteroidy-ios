@@ -107,12 +107,12 @@ final class H55NpcSceneAnimator580 {
 
     /// Operates only on imported NPC bones on main thread. SCNTransaction
     /// disables implicit interpolation, since the PC blend is already sampled.
-    func apply(dt raw:Float,mechanic:H55Mechanic580) {
+    func apply(dt raw:Float,mechanic:H55Mechanic580,allowWalking:Bool=true) {
         let dt=clamp(raw,0,0.07)
-        let measured=dt>0.0001 ? mechanic.movedThisFrame/dt : 0
+        let measured=allowWalking && dt>0.0001 ? mechanic.movedThisFrame/dt : 0
         let yawRate=dt>0.0001 ? H55Mechanic580.wrap(mechanic.yaw-previousYaw)/dt : 0
         previousYaw=mechanic.yaw
-        let poses=motion.step(dt:dt,moving:mechanic.moving,
+        let poses=motion.step(dt:dt,moving:allowWalking && mechanic.moving,
                               distance:mechanic.distance,speed:measured,yawRate:yawRate)
         SCNTransaction.begin()
         SCNTransaction.disableActions=true
@@ -134,9 +134,9 @@ final class H55NpcSceneAnimator580 {
                 continue
             }
             let clearance=toe.y-(ground+0.08)
-            let turningInPlace = !mechanic.moving && abs(yawRate)>0.24
-            let threshold:Float=foot.planted ? 0.062 : (mechanic.moving ? 0.050 : 0.052)
-            var candidate = !turningInPlace && (!mechanic.moving || measured>0.05) &&
+            let turningInPlace = !(allowWalking && mechanic.moving) && abs(yawRate)>0.24
+            let threshold:Float=foot.planted ? 0.062 : (allowWalking && mechanic.moving ? 0.050 : 0.052)
+            var candidate = !turningInPlace && (!(allowWalking && mechanic.moving) || measured>0.05) &&
                             clearance<threshold
             if clearance>0.078 {foot.waitForLift=false}
             let horizontal=SIMD3(toe.x-foot.anchor.x,0,toe.z-foot.anchor.z)
@@ -149,7 +149,7 @@ final class H55NpcSceneAnimator580 {
                 foot.planted=true
                 foot.anchor=SIMD3(toe.x,ground+0.08,toe.z)
                 foot.lockCount+=1;lockCount+=1
-                if mechanic.moving && measured>0.12 {landings+=1}
+                if allowWalking && mechanic.moving && measured>0.12 {landings+=1}
             } else if !candidate && foot.planted {
                 foot.planted=false;foot.releaseCount+=1
             }
@@ -163,7 +163,7 @@ final class H55NpcSceneAnimator580 {
         let landing=motion.land(dt:dt,newContacts:landings,speed:measured)
         let sum=feet[0].weight+feet[1].weight
         var shift=SIMD3<Float>.zero
-        if mechanic.moving && sum>0.25 {
+        if allowWalking && mechanic.moving && sum>0.25 {
             let cx=(feet[0].anchor.x*feet[0].weight+feet[1].anchor.x*feet[1].weight)/sum
             let cz=(feet[0].anchor.z*feet[0].weight+feet[1].anchor.z*feet[1].weight)/sum
             let hip=pelvis.simdWorldPosition
