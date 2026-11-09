@@ -138,14 +138,26 @@ enum H55H12Tracks580 {
         let idleNames=byName.keys.filter{$0.hasSuffix(H55H12Timeline580.idleMorphSuffix)}
         guard idleNames.count<=1 else{throw Failure.clip}
         let idle=idleNames.first
+        // Windows HangarMetadata443.FromDocument / AddLoop:
+        // actual glTF animation extras AND node extras of ACTIVE scene nodes,
+        // one data-only known clip each, speed within [0.1,4], at most 64.
+        // Reject H51/H70/NPC and airlock/autodocking overrides.
         var loops=[H55H12Timeline580.Loop]()
-        for a in animations {
-            guard let name=str(a["name"]),H55H12Timeline580.eligibleMetadata(name),
-                  (object(a["extras"])["ANIMATION_LOOP"] as? Bool)==true else{continue}
-            let speed=float(object(a["extras"])["ANIMATION_SPEED"]) ?? 1
-            if speed.isFinite && speed>0 && speed<100 && loops.count<64 {
-                loops.append(.init(name,speed))
-            }
+        var metadataAdded=Set<String>()
+        func addMetadata(_ name:String,_ speed:Float) {
+            guard byName[name] != nil,
+                  H55H12Timeline580.eligibleMetadata(name),
+                  speed.isFinite,speed>=0.1,speed<=4,
+                  metadataAdded.insert(name).inserted,
+                  loops.count<64 else{return}
+            loops.append(.init(name,speed))
+        }
+        for animation in animations {
+            guard let name=str(animation["name"]),
+                  (object(animation["extras"])["ANIMATION_LOOP"] as? Bool)==true
+            else{continue}
+            let speed=float(object(animation["extras"])["ANIMATION_SPEED"]) ?? 1
+            addMetadata(name,speed)
         }
         // Windows H55Renderer.ConfigureImportedAutoLoops462:
         // a single autonomous clip per HL_Import_ root, never the NPC,
@@ -159,6 +171,40 @@ enum H55H12Tracks580 {
                     throw Failure.document
                 }
                 parents[id]=parent
+            }
+        }
+        // PC v443 enumerates only nodes reachable from doc.scenes[scene].
+        // A bounded queue and a seen set prevent malformed cyclic graphs
+        // from scheduling infinite traversal or activating orphan clips.
+        let scenes=list(doc["scenes"])
+        let selectedScene=int(doc["scene"]) ?? 0
+        if scenes.indices.contains(selectedScene) {
+            var active=Set<Int>(),queue=[Int](),head=0
+            for root in (scenes[selectedScene]["nodes"] as? [NSNumber] ?? []) {
+                let id=root.intValue
+                if nodes.indices.contains(id),active.insert(id).inserted {
+                    queue.append(id)
+                }
+            }
+            while head<queue.count {
+                let id=queue[head];head+=1
+                for child in (nodes[id]["children"] as? [NSNumber] ?? []) {
+                    let next=child.intValue
+                    if nodes.indices.contains(next),
+                       active.insert(next).inserted {
+                        queue.append(next)
+                    }
+                }
+            }
+            // Match original C# node index enumeration, not BFS order.
+            for id in nodes.indices where active.contains(id) {
+                let extra=object(nodes[id]["extras"])
+                let speed=float(extra["ANIMATION_SPEED"]) ?? 1
+                if let clip=str(extra["ANIMATION_LOOP"]) {
+                    addMetadata(clip,speed)
+                } else if let names=extra["ANIMATION_LOOP"] as? [String] {
+                    for clip in names {addMetadata(clip,speed)}
+                }
             }
         }
         func importRoot(_ id:Int)->Int {
