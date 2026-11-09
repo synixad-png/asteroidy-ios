@@ -85,3 +85,12 @@ Użytkownik sprawdził bieżącą H13 IPA na urządzeniu: **hangar jest bardzo c
 
 ### Granice dowodu i następny krok
 To **świadoma adaptacja SceneKit**, a nie identyczne fotometrycznie oświetlenie oryginalnego PC v580. Pomimo zweryfikowanej przez Apple API obsługi cube maps i PBR faktyczny wygląd musi zostać sprawdzony na iPhone/iPad. Neutralny fill nie jest nową geometrią ani częścią GLB. Zanim użytkownik sprawdzi nowy obraz, **H13 pozostaje 35% (zmiana 0 p.p.)**; w szczególności audio H55, transparentność, ostateczna wizualna zgodność czerwieni i FPS nie zostały odebrane. H14 nadal nie rozpoczynać. Autonomiczne drony H71 pozostają wyłączone.
+
+
+## H13 — nowa zweryfikowana IPA z neutralnym oświetleniem (09.11.2026)
+
+- Użyto istniejącej natywnej iOS ścieżki pełnego projektu. [GitHub Actions H55 controls + lights 42650416270](https://github.com/synixad-png/asteroidy-ios/actions/runs/42650416270) **PASS** — źródła commitu `1d534089621a0b3a1d488a7c08735f6e49865c5e` zawierają wszystkie zmiany H13 (PBR IBL, max 2 czerwone, profil i panel), a późniejsze commity przed testem dodawały tylko workflow/dokumentację.
+- GitHub artifact **13691045613**. W zewnętrznym ZIP oryginalny plik `ASTEROIDY_v580_H55_STEROWANIE_OSWIETLENIE_TEST_UNSIGNED.ipa`; skopiowany bajtowo, bez zmian, do nazwy dystrybucyjnej `ASTEROIDY_v580_H13_JASNY_HANGAR_TEST_UNSIGNED.ipa`.
+- Rozmiar **30 174 899 B**, SHA-256 **`58aefa7a3113ef3d692f52021946ea254d60a7b180991b127a63a3da975c4f60`** zgodny z raportem w GitHub artifact. Kontrola **CRC ZIP archiwum i IPA PASS**. W IPA: Mach-O ARM64 (16777228), iOS 17.0+, `UIDeviceFamily=[1,2]`, **13/13** oryginalnych zasobów Carbonis/W3. W samym EXE wykryto stringi `H55_IOS_NEUTRAL_FILL`, `ASTEROIDY_H55_ENV_FILL_580`, `ASTEROIDY_H55_RED_GAIN_580`, `h55-light-toggle`.
+- Niezależna docelowo nazwana ścieżka H13 w obecnym `.github/workflows/h12-test-ipa.yml` również może skompilować to samo źródło: [GitHub Actions 42650728526](https://github.com/synixad-png/asteroidy-ios/actions/runs/42650728526). Jej końcowego wyniku **nie zakładać**, jeżeli nie jest widoczny jako ukończony.
+- **H13 pozostaje 35% (zmiana 0 p.p.)**: ukończono implementację i kompilację adaptacji, lecz bez testu fizycznego SceneKit nie jest potwierdzone, czy hangar wizualnie jest odpowiednio jasny/neutralny. Urządzenie nie testowało jeszcze panelu. Audio H55 nadal nierozwiązane, H14 niewłączony, H71 OFF.
