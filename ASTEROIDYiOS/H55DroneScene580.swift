@@ -39,6 +39,16 @@ import simd
         self.flight=flight
         apply()
     }
+    /// PC Animate resets authored GLB node roots before sampling the current
+    /// cinematic/rotor pose. Restore the two imported parent transforms before
+    /// the H51 writer runs, so drone flight never accumulates last-frame delta.
+    func restoreSourceRoots() {
+        for b in bindings {
+            b.root.simdWorldTransform=b.authoredWorld
+            b.root.isHidden=false
+        }
+    }
+
     func advance(dt:Float,player:H55DroneFlight580.Player) {
         guard dt.isFinite,dt>0 else{return}
         time+=min(0.06,dt)
@@ -69,7 +79,10 @@ import simd
                 pilot.position.z-moved.z,1)
             // Transform the authentic source parent once. Child primitives,
             // material/skin, GLB-authored rotors and alpha remain untouched.
-            b.root.simdWorldTransform=delta*b.authoredWorld
+            // GLB timeline has ALREADY sampled this frame. Overlay the
+            // moving pilot on THAT animated world matrix (H55Renderer.cs
+            // PlaceImportedDrones461), not on the stale initial frame.
+            b.root.simdWorldTransform=delta*b.root.simdWorldTransform
             b.root.isHidden=pilot.visualScale<=0.001
         }
     }
