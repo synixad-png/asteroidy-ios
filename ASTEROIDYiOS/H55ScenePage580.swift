@@ -22,6 +22,7 @@ import simd
     private var generation = UUID()
     private var movement=H55Walk580()
     private var physical:H55SpatialSupport580?
+    private var npcSurface:H55NpcSurface580?
     // H07 source PC580 independent H70 doors, separate from static H02-H04.
     private var airlocks=H55AirlockController580()
     private var airlockTracks:H55AirlockTracks580.SceneKeys?
@@ -41,7 +42,6 @@ import simd
     @Published private(set) var conversationsFinished=0
     private var mechanic=H55Mechanic580()
     private weak var mechanicRoot:SCNNode?
-    private var mechanicBaseY:Float=0.1095
     private var mechanicBaseOrientation:simd_quatf?
     private var mechanicMotionPlaying=false
     @Published private(set) var mechanicStatus="OCZEKUJE NA ROZMOWĘ"
@@ -115,16 +115,18 @@ import simd
         let roll=(sin(phase)*0.0085+movement.lean*0.006)*bobPower
         camera?.eulerAngles=SCNVector3(H55TouchMapping580.scenePitch(for:movement.pitch),
                 H55TouchMapping580.sceneYaw(for:movement.yaw),roll)
-        mechanic.step(dt:dt,playerX:movement.x,playerZ:movement.z,
-            canWalk:{x,z in
-                guard let floor=physical.support(x,z,low:-0.25,high:0.45)
-                else{return false}
-                return physical.bodyClear379(x,feet:floor,z)
-            },doorBlocking:{ax,az,bx,bz in
+        if let npcSurface {
+            // H08 original NpcSafeWalk530 (with authentic seam support).
+            // The player controls cannot bypass the actor's validated floor.
+            mechanic.step(dt:dt,playerX:movement.x,playerZ:movement.z,
+                canWalk:{x,z in npcSurface.ground(x:x,z:z) != nil},
+                groundAt:{x,z in npcSurface.ground(x:x,z:z)},
+                doorBlocking:{ax,az,bx,bz in
                 self.airlocks.blockingGate(fromX:ax,fromZ:az,toX:bx,toZ:bz)
-            })
+                })
+        }
         if let root=mechanicRoot {
-            root.position=SCNVector3(mechanic.x,mechanicBaseY,mechanic.z)
+            root.position=SCNVector3(mechanic.x,mechanic.y,mechanic.z)
             if let original=mechanicBaseOrientation {
                 // Same quaternion product as Windows H55Renderer.cs:1618-22.
                 root.simdOrientation=simd_quatf(angle:mechanic.yaw,
@@ -234,6 +236,7 @@ import simd
         lastTick=nil
         movement=H55Walk580()
         physical=nil
+        npcSurface=nil
         airlocks=H55AirlockController580()
         airlockTracks=nil
         airlockLeaves.removeAll()
@@ -264,6 +267,9 @@ import simd
                 // Build on background thread, fail-closed, no raycast fallback.
                 let geometry=try H55CollisionGeometry580.fromGLB(url)
                 let physical=H55SpatialSupport580(geometry:geometry)
+                // H08 v531: test EVERY original approved patrol corridor
+                // segment at 8 cm intervals on background thread before UI.
+                let npcSurface=try H55NpcSurface580.prepare(collision:physical)
                 // H70 tracks are from the same SHA-verified GLB as collision.
                 let airlockKeys=try H55AirlockTracks580.load(from:url)
                 GLTFAsset.load(with:url,options:[:]) { _,status,asset,error,_ in
@@ -272,7 +278,8 @@ import simd
                         DispatchQueue.main.async { [weak self] in
                             guard let self, self.generation == request else {return}
                             self.attach(source,asset:asset,inventory:metadata,
-                                        physical:physical,airlockKeys:airlockKeys)
+                                        physical:physical,airlockKeys:airlockKeys,
+                                        npcSurface:npcSurface)
                         }
                     } else if status == .error {
                         DispatchQueue.main.async { [weak self] in
@@ -294,7 +301,8 @@ import simd
     private func attach(_ source:GLTFSCNSceneSource,
                         asset:GLTFAsset,inventory:H55Asset580.Inventory,
                         physical:H55SpatialSupport580,
-                        airlockKeys:H55AirlockTracks580.SceneKeys) {
+                        airlockKeys:H55AirlockTracks580.SceneKeys,
+                        npcSurface:H55NpcSurface580) {
         guard let realScene=source.defaultScene else {
             phase = .failed("Plik nie zawiera sceny 3D.")
             return
@@ -347,6 +355,14 @@ import simd
             phase = .failed("Mechanik H55 nie ma prawidłowych kierunków stóp GLB.")
             return
         }
+        // PC v580 NPC root is actual editable TRS from authenticated GLB.
+        // Any mismatch with the source-driven route preflight fails closed.
+        guard abs(importedNpc.position.x-H55NpcSurface580.rootX)<0.001,
+              abs(importedNpc.position.y-H55NpcSurface580.rootY)<0.001,
+              abs(importedNpc.position.z-H55NpcSurface580.rootZ)<0.001 else {
+            phase = .failed("GLB H55: mechanik ma inne współrzędne niż oryginalna, zweryfikowana trasa PC v580.")
+            return
+        }
         // H70 clip nodes are driven by sampled original GLB translations.
         // Multiple or missing imported nodes are a hard error, not a fallback.
         var leaves:[String:SCNNode]=[:]
@@ -363,9 +379,13 @@ import simd
         airlocks=H55AirlockController580()
         airlockLastApplied=[Float.nan,Float.nan]
         updateAirlocks(dt:0) // original 1.85s CLOSED door pose
+        self.npcSurface=npcSurface
+        mechanic.configureSpawn(x:importedNpc.position.x,
+                                y:importedNpc.position.y,
+                                z:importedNpc.position.z,
+                                foot:npcSurface.foot)
         mechanic.calibrate(anatomicalHeading:heading)
         mechanicRoot=importedNpc
-        mechanicBaseY=importedNpc.position.y
         mechanicBaseOrientation=importedNpc.simdOrientation
         animations=clips
         animationNames=inventory.animations.filter {
@@ -494,6 +514,7 @@ import simd
         clock=nil
         lastTick=nil
         physical=nil
+        npcSurface=nil
         airlocks=H55AirlockController580()
         airlockTracks=nil
         airlockLeaves.removeAll()
