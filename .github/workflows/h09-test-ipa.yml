@@ -40,6 +40,7 @@ jobs:
           assert "TARGETED_DEVICE_FAMILY: '1,2'" in project
           assert "GLTFKit2:" in project and "exactVersion: 0.5.15" in project
           assert 'H55ScenePage580(dismiss:{navigateW3(nil)})' in menu
+          assert 'if page == .hangar {' in menu and menu.count('H55ScenePage580(') == 1
           assert 'GLTFAsset.load(with:url' in h55
           assert 'H55Asset580.inspect(url)' in h55
           assert 'H55Walk580()' in h55
@@ -65,7 +66,7 @@ jobs:
           assert 'H55TouchMapping580.sceneYaw' in h55
           assert 'H55TouchMapping580.scenePitch' in h55
           assert 'H55LightBalance580.sceneIntensity' in h55
-          assert 'H55LightBalance580.budget' in h55
+          assert 'H55LightBalance580.selectedNames(candidates)' in h55
           assert 'H55Entry580.arrivalSeconds' in Path('ASTEROIDYiOS/H55Entry580.swift').read_text()
           assert 'H55NpcTracks580.load(url)' in h55
           assert 'H55NpcSceneAnimator580(' in h55
@@ -103,7 +104,7 @@ jobs:
           /tmp/h55-source-sweep
           swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift ASTEROIDYiOS/H55Walk580.swift ASTEROIDYiOS/H55NpcDetour580.swift ASTEROIDYiOS/H55Mechanic580.swift ASTEROIDYiOS/H55Airlocks580.swift Tests/H55Airlocks580Tests.swift -o /tmp/h07-sluzy
           /tmp/h07-sluzy
-          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift ASTEROIDYiOS/H55Walk580.swift ASTEROIDYiOS/H55TouchMapping580.swift ASTEROIDYiOS/H55LightBalance580.swift Tests/H55TouchLightFix580Tests.swift -o /tmp/h55-touch-light
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift ASTEROIDYiOS/H55Walk580.swift ASTEROIDYiOS/H55TouchMapping580.swift ASTEROIDYiOS/H55LightingProfile580.swift ASTEROIDYiOS/H55LightBalance580.swift Tests/H55TouchLightFix580Tests.swift -o /tmp/h55-touch-light
           /tmp/h55-touch-light
           swiftc -frontend -parse ASTEROIDYiOS/H55TouchControls580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
