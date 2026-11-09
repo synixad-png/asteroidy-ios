@@ -85,6 +85,15 @@ struct W3MainMenu568: View {
                 insets:safeInsets)
             let compact=layout.compact
             ZStack {
+                // Windows PC v580 Hub90.EnterMenuHangar397 switches into
+                // Mode.Hub90. This is a real full-screen gameplay scene,
+                // NOT a panel nested between W3 menu header/footer.
+                if page == .hangar {
+                    H55ScenePage580(dismiss:{navigateW3(nil)})
+                        .frame(maxWidth:.infinity,maxHeight:.infinity)
+                        .ignoresSafeArea()
+                        .accessibilityIdentifier("h55-fullscreen-game-mode")
+                } else {
                 if let images=SourceW3Images568.pair {
                     Image(uiImage:images.background)
                         .resizable()
@@ -131,6 +140,7 @@ struct W3MainMenu568: View {
                         // HOME also uses that shutter; no extra iOS fade.
                     }
                     footer(compact:compact,layout:layout)
+                }
                 }
                 if w3Wiping327 {
                     // W3 native left-to-right shutter, NOT old modal
@@ -479,10 +489,7 @@ struct W3MainMenu568: View {
                     .accessibilityIdentifier("w3-panel-back")
                 }
                 Rectangle().fill(cyan.opacity(0.36)).frame(height:1)
-                if item == .hangar {
-                    H55ScenePage580(dismiss:{navigateW3(nil)})
-                        .frame(maxWidth:.infinity,maxHeight:.infinity)
-                } else if item == .settings {
+                if item == .settings {
                     // Windows Menu139 v555: all 17 original left-rail
                     // categories, with implemented iOS engine bindings.
                     CarbonisVisualSettingsPanel568(compact:compact)
