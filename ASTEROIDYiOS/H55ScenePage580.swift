@@ -30,8 +30,10 @@ import simd
     private var airlockLastApplied:[Float]=[Float.nan,Float.nan]
     private var h46LightNodes:[String:SCNNode]=[:]
     private var h46RawIntensities:[String:Float]=[:]
-    private var lighting=H55LightingProfile580()
+    private var lighting=H55LightingProfile580.saved()
     private var lightRefresh:Float=0
+    private var pausedForSettings=false
+    private var firstTickLogged=false
     private var arrival=H55Arrival580(spawnClear:false)
     @Published private(set) var arriving=false
     private var moveForward:Float=0
@@ -112,7 +114,22 @@ import simd
     }
     func skipArrival() {arrival.skip()}
 
+    func pauseForSettings(_ pause:Bool) {
+        guard pausedForSettings != pause else{return}
+        pausedForSettings=pause
+        if pause {
+            moveForward=0
+            moveRight=0
+            clock?.invalidate()
+            clock=nil
+            lastTick=nil
+        } else if case .ready = phase {
+            beginClock()
+        }
+    }
+
     private func beginClock() {
+        guard !pausedForSettings else{return}
         clock?.invalidate()
         lastTick=nil
         let link=CADisplayLink(target:self,selector:#selector(stepFrame(_:)))
@@ -121,7 +138,11 @@ import simd
         clock=link
     }
     @objc private func stepFrame(_ link:CADisplayLink) {
-        guard let scene,camera != nil else{return}
+        guard !pausedForSettings,let scene,camera != nil else{return}
+        if !firstTickLogged {
+            firstTickLogged=true
+            H55LoadDiagnostics580.mark("13_PIERWSZY_TICK_CADISPLAYLINK")
+        }
         let dt:Float
         if let last=lastTick {dt=Float(min(0.06,max(0,link.timestamp-last)))}
         else {dt=0}
@@ -280,6 +301,9 @@ import simd
         open(url)
     }
     func open(_ url: URL) {
+        H55LoadDiagnostics580.mark("01_START_WCZYTYWANIA_H55")
+        lighting=H55LightingProfile580.saved()
+        firstTickLogged=false
         generation=UUID()
         let request=generation
         clock?.invalidate()
@@ -322,16 +346,19 @@ import simd
         DispatchQueue.global(qos:.userInitiated).async {
             do {
                 let metadata=try H55Asset580.inspect(url)
+                H55LoadDiagnostics580.mark("02_GLB_ZWERYFIKOWANY")
                 // Same authenticated active GLB for render and H02–H04 physics.
                 // Build on background thread, fail-closed, no raycast fallback.
                 let geometry=try H55CollisionGeometry580.fromGLB(url)
                 let physical=H55SpatialSupport580(geometry:geometry)
+                H55LoadDiagnostics580.mark("03_GEOMETRIA_KOLIZJI_GOTOWA")
                 // H08 v531: test EVERY original approved patrol corridor
                 // segment at 8 cm intervals on background thread before UI.
                 let npcSurface=try H55NpcSurface580.prepare(collision:physical)
                 // H70 tracks are from the same SHA-verified GLB as collision.
                 let airlockKeys=try H55AirlockTracks580.load(from:url)
                 let npcRig=try H55NpcTracks580.load(url)
+                H55LoadDiagnostics580.mark("04_NPC_SLUSY_RIG_GOTOWE")
                 // H13 inspects the already authenticated GLB off the display thread.
                 // Diagnostic failure does not block entry, NPC or H12.
                 let materialReport:String
@@ -357,11 +384,15 @@ import simd
                     ? H55DroneNavigation580(clearance:{x,y,z,radius in
                         physical.cameraClear406(x,y,z,radius:radius)
                     }) : nil
+                H55LoadDiagnostics580.mark("05_GLTFKIT2_DECODE_START")
                 GLTFAsset.load(with:url,options:[:]) { _,status,asset,error,_ in
                     if status == .complete, let asset {
+                        H55LoadDiagnostics580.mark("06_GLTF_ASSET_GOTOWY_SCENESOURCE_START")
                         let source=GLTFSCNSceneSource(asset:asset)
+                        H55LoadDiagnostics580.mark("07_GLTF_SCENESOURCE_UTWORZONY")
                         DispatchQueue.main.async { [weak self] in
                             guard let self, self.generation == request else {return}
+                            H55LoadDiagnostics580.mark("08_ATTACH_SCENEKIT_START")
                             self.attach(source,asset:asset,inventory:metadata,
                                         physical:physical,airlockKeys:airlockKeys,
                                         npcSurface:npcSurface,npcRig:npcRig,
@@ -372,6 +403,7 @@ import simd
                                         materialSnapshot:materialSnapshot)
                         }
                     } else if status == .error {
+                        H55LoadDiagnostics580.mark("BLAD_GLTFKIT2")
                         DispatchQueue.main.async { [weak self] in
                             guard let self,self.generation == request else {return}
                             self.phase = .failed(error?.localizedDescription
@@ -380,6 +412,7 @@ import simd
                     }
                 }
             } catch {
+                H55LoadDiagnostics580.mark("BLAD_WSTEPNEGO_WCZYTYWANIA")
                 DispatchQueue.main.async { [weak self] in
                     guard let self,self.generation == request else {return}
                     self.phase = .failed(error.localizedDescription)
@@ -427,7 +460,9 @@ import simd
         pointOfView.position=SCNVector3(spawn.x,spawn.y+H55Walk580.eyes,spawn.z)
         pointOfView.eulerAngles.y=0 // PC yaw=0 looks toward -Z
         realScene.rootNode.addChildNode(pointOfView)
-
+        H55LoadDiagnostics580.mark("09_KAMERA_WYKONANA_SWATLO_START")
+        // H13-A: no dynamic IBL cubemap. Windows PC v580 H55Renderer.cs
+        // uses its own GLSL light shader, not SceneKit environment textures.
         H55SceneLighting580.install(into:realScene,profile:lighting)
         installH46Lights(from:asset,into:source)
         updateH46LightBudget()
@@ -526,7 +561,8 @@ import simd
             clips[$0] != nil && !H55AirlockController580.clipNames.contains($0)
         }
         self.inventory=inventory
-        if let materialSnapshot {
+        H55LoadDiagnostics580.mark("10_WERYFIKACJA_MATERIALOW_START")
+        if let materialSnapshot,H55LightingProfile580.allowCustomEmissionShader {
             // Upstream GLTFKit2 omits KHR_materials_emissive_strength.
             // Correct only named, unambiguous source materials at load time.
             // Keep all eight BLEND materials, six clearcoat materials and
@@ -535,12 +571,14 @@ import simd
                 materialSnapshot,nodes:source.nodes)
             h13MaterialReport=materialReport+"\n"+corrected.text
         } else {
-            h13MaterialReport=materialReport
+            h13MaterialReport=materialReport+"\nH13-A: BEZPIECZNY TRYB MATERIAŁÓW / DODATKOWE SHADERY WYŁĄCZONE"
         }
+        H55LoadDiagnostics580.mark("11_MATERIALY_GOTOWE_ATTACH_KONIEC")
         scene=realScene
         camera=pointOfView
         npcAnimator?.apply(dt:0,mechanic:mechanic,allowWalking:false)
         phase = .ready
+        H55LoadDiagnostics580.mark("12_SCENA_GOTOWA_PRZED_PIERWSZYM_RENDEREM_GPU")
         beginClock()
         // The H12 source-clock compositor supersedes the former ambient
         // CAAnimation players. If a particular imported GLB lacks H12
@@ -662,6 +700,7 @@ import simd
                        !name.contains("DEPART"))
     }
     func close() {
+        H55LoadDiagnostics580.mark("14_WYJSCIE_Z_HANGARU")
         clock?.invalidate()
         clock=nil
         lastTick=nil
@@ -676,6 +715,8 @@ import simd
         lightRefresh=0
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
+        pausedForSettings=false
+        firstTickLogged=false
         setMove(forward:0,right:0)
         mechanicRoot=nil
         mechanicBaseOrientation=nil
@@ -706,7 +747,7 @@ struct H55ScenePage580: View {
     @State private var choosingFile=false
     @State private var pickedClip=""
     @State private var importError:String?
-    @State private var showingLighting=false
+    @State private var showingSettings=false
     @AppStorage("ASTEROIDY_H55_ENV_FILL_580") private var lightingFill=0.80
     @AppStorage("ASTEROIDY_H55_RED_GAIN_580") private var lightingRed=0.10
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
@@ -750,20 +791,7 @@ struct H55ScenePage580: View {
                             mechanicStatus:loader.mechanicStatus
                         )
 
-                        if showingLighting && !loader.showingWorkshop && !loader.conversationOpen {
-                            VStack {
-                                HStack {
-                                    Spacer()
-                                    H55LightingPanel580(fill:$lightingFill,red:$lightingRed,
-                                                        onClose:{showingLighting=false})
-                                        .padding(.trailing,12)
-                                        .padding(.top,56)
-                                }
-                                Spacer()
-                            }
-                            .zIndex(8)
-                        }
-                        if loader.showingWorkshop {
+                         if loader.showingWorkshop {
                             H55WorkshopPanel580(initialTab:loader.workshopInitialPanel,
                                                 onClose:{loader.closeWorkshop()})
                                 .zIndex(5)
@@ -857,13 +885,12 @@ struct H55ScenePage580: View {
                         .padding(8)
                         .background(Color.black.opacity(0.82))
                         .accessibilityIdentifier("h13-share-glb-report")
-                        Button(showingLighting ? "✕ ŚWIATŁO" : "ŚWIATŁO") {
-                            showingLighting.toggle()
+                        Button("USTAWIENIA") {
+                            showingSettings=true
                         }
-                        .disabled(loader.arriving || loader.conversationOpen || loader.showingWorkshop)
                         .padding(8)
                         .background(Color.black.opacity(0.82))
-                        .accessibilityIdentifier("h55-light-toggle")
+                        .accessibilityIdentifier("h55-open-settings")
                         Button("STANOWISKA") {loader.openWorkshop()}
                             .disabled(loader.arriving || loader.conversationOpen || loader.showingWorkshop)
                             .padding(12)
@@ -875,6 +902,32 @@ struct H55ScenePage580: View {
             }
             .font(.system(size:14,weight:.bold,design:.monospaced))
             .foregroundStyle(gold)
+            if showingSettings {
+                GeometryReader { frame in
+                    VStack(spacing:0) {
+                        HStack {
+                            Text("USTAWIENIA / HANGAR")
+                                .font(.system(size:15,weight:.bold,design:.monospaced))
+                                .foregroundStyle(gold)
+                            Spacer()
+                            Button("WRÓĆ DO HANGARU") {
+                                showingSettings=false
+                            }
+                            .foregroundStyle(gold)
+                            .accessibilityIdentifier("h55-settings-back")
+                        }
+                        .padding(12)
+                        .background(Color(red:0.008,green:0.028,blue:0.048))
+                        CarbonisVisualSettingsPanel568(
+                            compact:frame.size.width<850,initialTab:9)
+                            .frame(maxWidth:.infinity,maxHeight:.infinity)
+                    }
+                    .background(Color(red:0.005,green:0.018,blue:0.034))
+                    .ignoresSafeArea()
+                }
+                .zIndex(30)
+                .accessibilityIdentifier("h55-settings-fullscreen")
+            }
         }
         .onAppear {
             loader.setLighting(fill:lightingFill,red:lightingRed)
@@ -886,7 +939,11 @@ struct H55ScenePage580: View {
         .onChange(of:lightingRed) { value in
             loader.setLighting(fill:lightingFill,red:value)
         }
-        .onDisappear {showingLighting=false;loader.close()}
+        .onChange(of:showingSettings) { visible in
+            loader.pauseForSettings(visible)
+            if !visible {loader.setLighting(fill:lightingFill,red:lightingRed)}
+        }
+        .onDisappear {showingSettings=false;loader.close()}
         .fileImporter(isPresented:$choosingFile,
             allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data],
             allowsMultipleSelection:false) { result in
