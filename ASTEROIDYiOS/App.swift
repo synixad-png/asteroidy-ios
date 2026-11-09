@@ -162,6 +162,7 @@ struct GameView: View {
             shopProfile:freshShop) else {return false}
         guard SourceNewGame568.create(choice) else {return false}
         H55Workshop580.resetVitals() // PC new game clears previous damage
+        H55SourceMechanics580.reset() // Source v580: clear owned ships, modules and trophies
         campaign=CampaignStore556.load()
         input.releaseHeldControls()
         input.gameplayPaused=true
@@ -209,6 +210,16 @@ struct GameView: View {
                         _ = Sector01MissionSettlement568.commit(
                             report,campaign:&changed)
                         campaign=changed
+                        // PC Talents78.CompleteTimeTrial78: only actual
+                        // Game.FinishLevel may award this (including a replay
+                        // without a previous fast clear). No artificial
+                        // trophies from menu, test preview or mere HUD event.
+                        var source=H55SourceMechanics580.load()
+                        if H55SourceMechanics580.awardTimeTrophy(
+                            sector:report.sector,elapsed:report.elapsedSeconds,
+                            objective:.normal,state:&source) {
+                            _=H55SourceMechanics580.save(source)
+                        }
                     },onSurvivalChanged:{ lives,charges,hull,armor in
                         Sector01Shop568.persistSurvival(
                             lives:lives,shieldCharges:charges)
