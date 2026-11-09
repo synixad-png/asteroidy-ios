@@ -49,9 +49,11 @@ enum H55FPSPose580 {
             let closing=ease((cycle-(0.34+shift))/0.16)
             let opening=ease((cycle-(0.62+shift*0.35))/0.22)
             let grip=closing*(1-opening)
-            let idle:Float=0.025+0.020*sin(time*(0.42+Float(finger)*0.07)
-                                         +Float(finger)*1.7+Float(hand)*0.8)
-            return max(0,min(1,(grip*amplitude[finger]+idle*(1-grip))*intensity))
+            let oscillation:Float=time*(0.42+Float(finger)*0.07)
+                + Float(finger)*1.7 + Float(hand)*0.8
+            let idle:Float=0.025+0.020*sin(oscillation)
+            let amount=(grip*amplitude[finger]+idle*(1-grip))*intensity
+            return max(0,min(1,amount))
         }
     }
 }
