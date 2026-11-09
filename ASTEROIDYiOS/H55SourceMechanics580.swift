@@ -107,6 +107,34 @@ enum H55SourceMechanics580 {
         return .changed
     }
 
+    /// Model-independent purchase. The original Game.cs ownership flags
+    /// and wallet are changed, while the currently rendered ship remains
+    /// unchanged until a model with the matching stable ID is registered.
+    /// Do NOT silently render Vanguard as Vanguard X, TITAN or MAMMOTH.
+    static func purchaseShipForLaterModel(_ ship:Int,sector:Int,
+                                          state:inout State,
+                                          wallet:inout Sector01Shop568.State)->SourceEffect {
+        guard state.valid,Sector01Shop568.validate(wallet),
+              (1...25).contains(sector),
+              let cost=shipPrice(ship),
+              ship!=3 || sector>=13 else{return .unavailable}
+        guard !shipOwned(ship,state:state) else{return .unchanged}
+        guard wallet.tokens>=cost else{return .insufficientFunds}
+        var next=state
+        switch ship {
+        case 3:next.vanguardXOwned=true
+        case 4:next.titanOwned=true
+        case 5:next.mammothOwned=true
+        default:return .unavailable
+        }
+        guard next.valid,next.selectedShip==state.selectedShip
+            else{return .unavailable}
+        state=next
+        wallet.tokens-=cost
+        wallet.totalSpent=addCapped(wallet.totalSpent,cost)
+        return .changed
+    }
+
     /// Legacy Game.cs shop items 6..9; source buy only after unlocking.
     static func legacyModuleCost(_ item:Int,state:State)->Int? {
         switch item {
