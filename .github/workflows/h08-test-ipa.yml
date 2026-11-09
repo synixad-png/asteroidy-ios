@@ -98,7 +98,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           src=Path("ASTEROIDYiOS/H55NpcDetour580.swift").read_text()
-          assert "let legEnd=goalIndex<workshopIndex ? workshopIndex-1 : routeX.count-1" in src
+          assert "let legEnd=goalIndex<=workshopIndex ? workshopIndex-1 : routeX.count-1" in src
           assert "let limit=min(legEnd,goalIndex+3)" in src
           print("PASS: H08 return-leg A* original PC580 deadlock fixed without changing approved route")
           PY
