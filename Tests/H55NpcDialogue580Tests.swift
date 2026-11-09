@@ -7,7 +7,7 @@ import Foundation
     static func main() {
         var d=H55NpcDialogue580()
         test(!d.isOpen && d.finished==0,"initial 526 counter")
-        test(H55NpcDialogue580.spokenLine=="WSZYSTKO W PORZĄDKU.",
+        test(H55NpcDialogue580.spokenLine=="WSZYSTKO W PORZADKU.",
              "exact only PC authored utterance, no invented options")
         test(H55NpcDialogue580.openNotice ==
              "MECHANIK: WSZYSTKO W PORZADKU. E / ENTER / ESC - ZAKONCZ ROZMOWE.",
