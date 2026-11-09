@@ -7,6 +7,15 @@ import Foundation
 enum Sector01Shop568 {
     enum Weapon:Int,Codable,CaseIterable {
         case pulse=0,twin=1,scatter=2,rail=3,swarm=4
+        var shortLabel:String {
+            switch self {
+            case .pulse:return "PULSE"
+            case .twin:return "TWIN"
+            case .scatter:return "SCATTER"
+            case .rail:return "RAIL"
+            case .swarm:return "SWARM"
+            }
+        }
     }
     enum Item:Int,CaseIterable {
         case twin=0,scatter=1,power=2,rapid=3,shield=4,repair=5
