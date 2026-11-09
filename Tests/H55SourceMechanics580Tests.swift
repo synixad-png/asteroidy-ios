@@ -106,8 +106,7 @@ import Foundation
         var hp=H55Workshop580.Vitals()
         check(H55SourceMechanics580.timeTarget(sector:1,objective:.normal)==94,
               "source first-sector time target 94")
-        check(H55SourceMechanics580.timeTarget(sector:4,objective:.waves)==
-              94+21+85+52,"source boss/4 waves time target")
+        check(H55SourceMechanics580.timeTarget(sector:4,objective:.waves) == 94+21+85+52,"source boss/4 waves time target")
         check(!H55SourceMechanics580.awardTimeTrophy(sector:1,elapsed:94.01,objective:.normal,state:&trophies),
               "no undeserved first-sector trophy")
         check(H55SourceMechanics580.awardTimeTrophy(sector:1,elapsed:94,objective:.normal,state:&trophies) &&
