@@ -69,7 +69,7 @@ import simd
                 if let existing=captured[identity] {index=existing}
                 else {
                     var morph=[CGFloat]()
-                    if let m=node.geometry?.morpher {
+                    if let m=node.morpher {
                         for n in 0..<m.targets.count {
                             morph.append(m.weight(forTargetAt:n))
                         }
@@ -80,8 +80,8 @@ import simd
                         rotation:node.simdOrientation,scale:node.simdScale,morph:morph))
                 }
                 if track.path == .weights {
-                    guard node.geometry?.morpher != nil,
-                          node.geometry?.morpher?.targets.count==track.width else {
+                    guard node.morpher != nil,
+                          node.morpher?.targets.count==track.width else {
                         throw Failure.missingNode(track.nodeName+" / morph targets")
                     }
                 }
@@ -107,7 +107,7 @@ import simd
             pose.node.simdPosition=pose.position
             pose.node.simdOrientation=pose.rotation
             pose.node.simdScale=pose.scale
-            if let morpher=pose.node.geometry?.morpher {
+            if let morpher=pose.node.morpher {
                 for i in pose.morph.indices {
                     morpher.setWeight(pose.morph[i],forTargetAt:i)
                 }
@@ -129,7 +129,7 @@ import simd
                 case .scale:
                     node.simdScale=SIMD3<Float>(values[0],values[1],values[2])
                 case .weights:
-                    if let morpher=node.geometry?.morpher {
+                    if let morpher=node.morpher {
                         for i in values.indices {
                             morpher.setWeight(CGFloat(values[i]),forTargetAt:i)
                         }
