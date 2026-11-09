@@ -43,6 +43,7 @@ on:
       - 'ASTEROIDYiOS/H55FPSAssets580.swift'
       - 'ASTEROIDYiOS/H55FPSPose580.swift'
       - 'ASTEROIDYiOS/H55FPSScene580.swift'
+      - 'ASTEROIDYiOS/H55FPSMeshSplit580.swift'
       - 'Tests/H55FPSPose580Tests.swift'
       - 'ASTEROIDYiOS/H55VisualScene580.swift'
       - 'ASTEROIDYiOS/H55SpaceBackdrop580.swift'
@@ -136,6 +137,8 @@ jobs:
           assert 'H55PlayerShip580.make()' in h55
           assert 'H55SceneViewport580(' in h55
           assert 'H55FPSScene580(camera:pointOfView' in h55
+          assert 'h55-fps-show-monolith' in h55
+          assert 'h55-fps-import-monolith' in h55
           assert 'fpsViewmodel?.advance(time:arrival.time,walking:arrival.walking' in h55
           assert 'H55FPSAssets580.install(url,as:kind)' in h55
           assert 'firstRenderedFramesReady(for rendered:SCNScene)' in h55
@@ -194,6 +197,7 @@ jobs:
           /tmp/h55-fps
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSAssets580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSScene580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSMeshSplit580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55TouchControls580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
@@ -409,7 +413,7 @@ jobs:
           shasum -a 256 ASTEROIDY_v580_H55_FPS_RECE_BRON_TEST_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
           echo "Source commit: $GITHUB_SHA" | tee reports/build-commit.txt
           echo "H12/H71: original H51/H39/H46, arms/crane; two imported GLB drones enabled with source clearance and safe fail-closed" | tee reports/H12_RELEASE_SCOPE.txt
-          echo "H55 FPS: original Tripo gloves_parted.glb and EXP01_SOURCE_v601.glb imported one time through Files and verified with SHA256, not bundled; PC source left/right and weapon poses, 64 degree source FOV scaled to SceneKit; MONOLIT, finger skeletal deformation not yet ported/tested; no fake assets" | tee reports/H55_FPS_SCOPE.txt
+          echo "H55 FPS: original Tripo gloves_parted.glb and EXP01_SOURCE_v601.glb imported one time through Files and verified with SHA256, not bundled; PC source left/right and weapon poses, 64 degree source FOV scaled to SceneKit; MONOLIT original GLB triangle split enabled, but 15-bone finger skin deformation still not ported/tested; no fake assets" | tee reports/H55_FPS_SCOPE.txt
           echo "H13: neutral scene IBL + one fill, cap two red H46 lamps, saved brightness/red sliders; real iPhone GPU visual result not confirmed" | tee reports/H13_LIGHTING_SCOPE.txt
           echo "GLB: exact original 126419336-byte hangar_h55.glb must be imported once from iOS Files; H70 source clips sampled, no GLB embedded" | tee reports/H55_IMPORT_REQUIRED.txt
       - name: Upload test IPA and build report

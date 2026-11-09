@@ -6,6 +6,7 @@ on:
       - 'ASTEROIDYiOS/H55FPSAssets580.swift'
       - 'ASTEROIDYiOS/H55FPSPose580.swift'
       - 'ASTEROIDYiOS/H55FPSScene580.swift'
+      - 'ASTEROIDYiOS/H55FPSMeshSplit580.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - 'Tests/H55FPSPose580Tests.swift'
       - '.github/workflows/h55-fps-original-weapon.yml'
@@ -25,11 +26,13 @@ jobs:
           /tmp/fps-source580
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSAssets580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSScene580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSMeshSplit580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
           python3 - <<'PY'
           from pathlib import Path
           assets=Path('ASTEROIDYiOS/H55FPSAssets580.swift').read_text()
           scene=Path('ASTEROIDYiOS/H55FPSScene580.swift').read_text()
+          splitter=Path('ASTEROIDYiOS/H55FPSMeshSplit580.swift').read_text()
           main=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
           checks=[
             ('gloves_parted.glb','8a494bbd9a3dd6eb70cb5e22a7db4da7ec33b069dc1b0bab36f6a1c5b4c257ca'),
@@ -42,7 +45,13 @@ jobs:
           assert 'fpsViewmodel?.advance(time:arrival.time,walking:arrival.walking' in main
           assert 'h55-fps-import-hands' in main and 'h55-fps-import-weapon' in main
           assert 'h55-fps-show-hands' in main and 'h55-fps-show-weapon' in main
-          assert 'source.nodes.filter{$0.geometry != nil}' in scene
+          assert 'H55FPSMeshSplit580.build(scene:scene,kind:kind)' in scene
+          assert 'element.primitiveCount*3*w<=bytes.count' in splitter
+          assert 'let centre=(axisPositions[v0]+axisPositions[v1]+axisPositions[v2])/3' in splitter
+          assert 'threshold:-0.0002' in splitter and 'threshold:0.4929' in splitter
+          assert 'reverse:true' in splitter and 'reverse:false' in splitter
+          assert 'SCNGeometry(sources:geometry.sources' in splitter
+          assert 'h55-fps-import-monolith' in main and 'h55-fps-show-monolith' in main
           assert 'source.defaultScene' in scene and 'protectMaterials' in scene
           assert 'camera.addChildNode(fpsRoot)' in scene
           assert 'fpsRoot.isHidden = !walking' in scene
@@ -50,5 +59,5 @@ jobs:
           assert 'SCNSphere' not in scene and 'SCNBox' not in scene and 'SCNCapsule' not in scene
           assert 'GLOVES v417' not in scene
           assert 'gloves_combined' in assets
-          print('PASS PC580 immutable glTF original checks and single camera-space native FPS layer')
+          print('PASS PC580 immutable glTF, TRIPO X and MONOLIT Y authentic triangle split, camera-space FPS layer')
           PY
