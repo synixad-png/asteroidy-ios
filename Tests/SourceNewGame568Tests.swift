@@ -99,6 +99,9 @@ import Foundation
         let names=try FileManager.default.contentsOfDirectory(at:backup,
             includingPropertiesForKeys:nil)
         check(names.count==1,"one existing profile archived")
+        let available=SourceNewGame568.archives(backupDirectory:backup)
+        check(available.count==1 && available[0].url==names[0],
+              "native W3 lists the actual validated backup, not an invented file")
         let bytes=try Data(contentsOf:names[0])
         let payload=try PropertyListSerialization.propertyList(from:bytes,
             format:nil) as! [String:Any]
@@ -139,8 +142,9 @@ import Foundation
               "restored difficulty without touching graphics/settings")
         let backupAfterRestore=try FileManager.default.contentsOfDirectory(
             at:backup,includingPropertiesForKeys:nil)
-        check(backupAfterRestore.count==2,
-              "restore made a second recovery archive of overwritten current profile")
+        check(backupAfterRestore.count==2 &&
+              SourceNewGame568.archives(backupDirectory:backup).count==2,
+              "restore made a second selectable recovery archive of overwritten profile")
 
         // Reject tampered and foreign archives BEFORE backing up / changing
         // any live profile record; old save must be recoverable on failure.
