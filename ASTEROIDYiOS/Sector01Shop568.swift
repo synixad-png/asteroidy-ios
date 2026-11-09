@@ -1,9 +1,9 @@
 import Foundation
 
 /// Windows Game.cs v568/v580: canonical first-sector shop and PC v580
-/// sector-13 Rail/Swarm weapon ownership. Existing JSON profiles migrate
-/// without losing credits or weapons. Ion ammo/bombs remain explicitly
-/// unimplemented and must not be falsely sold.
+/// sector-13 Rail/Swarm weapon ownership plus the authentic upgrade-III
+/// ion ammunition and rapid-II bomb inventory. Earlier JSON profiles migrate
+/// without losing credits, weapon ownership, or equipped guns.
 enum Sector01Shop568 {
     enum Weapon:Int,Codable,CaseIterable {
         case pulse=0,twin=1,scatter=2,rail=3,swarm=4
@@ -41,6 +41,8 @@ enum Sector01Shop568 {
         var weapon:Weapon = .pulse
         var upgradeLevel:Int=1
         var rapidLevel:Int=0
+        var ionAmmo:Int=0
+        var bombs:Int=0
         var shieldCharges:Int=0
         var lives:Int=3
         var repairsBought:Int=0
@@ -54,7 +56,8 @@ enum Sector01Shop568 {
              twinOwned:Bool=false,scatterOwned:Bool=false,
              railOwned:Bool=false,swarmOwned:Bool=false,
              weapon:Weapon = .pulse,upgradeLevel:Int=1,rapidLevel:Int=0,
-             shieldCharges:Int=0,lives:Int=3,repairsBought:Int=0) {
+             shieldCharges:Int=0,lives:Int=3,repairsBought:Int=0,
+             ionAmmo:Int=0,bombs:Int=0) {
             self.tokens=tokens
             self.totalEarned=totalEarned
             self.totalSpent=totalSpent
@@ -65,6 +68,8 @@ enum Sector01Shop568 {
             self.weapon=weapon
             self.upgradeLevel=upgradeLevel
             self.rapidLevel=rapidLevel
+            self.ionAmmo=ionAmmo
+            self.bombs=bombs
             self.shieldCharges=shieldCharges
             self.lives=lives
             self.repairsBought=repairsBought
@@ -72,7 +77,7 @@ enum Sector01Shop568 {
         private enum CodingKeys:String,CodingKey {
             case tokens,totalEarned,totalSpent,twinOwned,scatterOwned
             case railOwned,swarmOwned,weapon,upgradeLevel,rapidLevel
-            case shieldCharges,lives,repairsBought
+            case ionAmmo,bombs,shieldCharges,lives,repairsBought
         }
         init(from decoder:Decoder) throws {
             let v=try decoder.container(keyedBy:CodingKeys.self)
@@ -86,6 +91,8 @@ enum Sector01Shop568 {
             weapon=try v.decode(Weapon.self,forKey:.weapon)
             upgradeLevel=try v.decode(Int.self,forKey:.upgradeLevel)
             rapidLevel=try v.decode(Int.self,forKey:.rapidLevel)
+            ionAmmo=try v.decodeIfPresent(Int.self,forKey:.ionAmmo) ?? 0
+            bombs=try v.decodeIfPresent(Int.self,forKey:.bombs) ?? 0
             shieldCharges=try v.decode(Int.self,forKey:.shieldCharges)
             lives=try v.decode(Int.self,forKey:.lives)
             repairsBought=try v.decode(Int.self,forKey:.repairsBought)
@@ -112,41 +119,59 @@ enum Sector01Shop568 {
             self.weapon=weapon
             return true
         }
-        func price(_ item:Item)->Int {
+        /// Windows Game.cs Price(2/3), IonPackSize and Available.
+        /// The exact per-sector integer-ceil price is important for
+        /// replenishing a *partial* ion pack near its 300-shot cap.
+        var ionPackSize:Int { min(100,max(0,300-ionAmmo)) }
+        func price(_ item:Item,sector:Int=1)->Int {
             switch item {
             case .twin:return twinOwned ? 0 : 45
             case .scatter:return scatterOwned ? 0 : 80
-            case .power:return upgradeLevel==1 ? 60 : upgradeLevel==2 ? 150 : 0
-            case .rapid:return rapidLevel==0 ? 75 : rapidLevel==1 ? 140 : 0
+            case .power:
+                if upgradeLevel<3 {return upgradeLevel==1 ? 60 : 150}
+                return ((50+sector*3)*ionPackSize+99)/100
+            case .rapid:
+                if rapidLevel<2 {return rapidLevel==0 ? 75 : 140}
+                return 60+sector*2
             case .shield:return 12
             case .repair:return 70+25*repairsBought
             }
         }
-        func available(_ item:Item)->Bool {
+        func available(_ item:Item,sector:Int=1)->Bool {
+            guard (1..<25).contains(sector) else{return false}
             switch item {
-            case .power:return upgradeLevel<3
-            case .rapid:return rapidLevel<2
+            case .power:return upgradeLevel<3 || ionAmmo<300
+            case .rapid:return rapidLevel<2 || bombs<3
             case .shield:return shieldCharges<3
             case .repair:return lives<5
             default:return true
             }
         }
-        @discardableResult mutating func buy(_ item:Item)->Bool {
-            guard available(item) else {return false}
-            let cost=price(item)
-            guard cost>=0 && tokens>=cost else {return false}
-            tokens-=cost
-            totalSpent+=cost
+        @discardableResult mutating func buy(_ item:Item,
+                                              sector:Int=1)->Bool {
+            guard Sector01Shop568.validate(self),
+                  available(item,sector:sector) else{return false}
+            let cost=price(item,sector:sector)
+            guard cost>=0,tokens>=cost,totalSpent<=Int.max-cost,
+                  !(item == .repair && repairsBought==Int.max)
+            else{return false}
+            var next=self
+            next.tokens-=cost
+            next.totalSpent+=cost
             switch item {
-            case .twin:
-                twinOwned=true;weapon = .twin
-            case .scatter:
-                scatterOwned=true;weapon = .scatter
-            case .power:upgradeLevel+=1
-            case .rapid:rapidLevel+=1
-            case .shield:shieldCharges+=1
-            case .repair:lives+=1;repairsBought+=1
+            case .twin:next.twinOwned=true;next.weapon = .twin
+            case .scatter:next.scatterOwned=true;next.weapon = .scatter
+            case .power:
+                if next.upgradeLevel<3 {next.upgradeLevel+=1}
+                else {next.ionAmmo=min(300,next.ionAmmo+100)}
+            case .rapid:
+                if next.rapidLevel<2 {next.rapidLevel+=1}
+                else {next.bombs+=1}
+            case .shield:next.shieldCharges+=1
+            case .repair:next.lives+=1;next.repairsBought+=1
             }
+            guard Sector01Shop568.validate(next) else{return false}
+            self=next
             return true
         }
         @discardableResult mutating func equip(_ newWeapon:Weapon)->Bool {
@@ -186,6 +211,16 @@ enum Sector01Shop568 {
         profile.shieldCharges=max(0,min(3,shieldCharges))
         save(profile,defaults:defaults)
     }
+    /// PC Game.ReturnToMenu / FinishLevel SaveShopProfile56:
+    /// persist the ammunition consumed by the real mission, not a HUD copy.
+    static func persistConsumables(ionAmmo:Int,bombs:Int,
+                                   defaults:UserDefaults = .standard) {
+        guard (0...300).contains(ionAmmo),(0...3).contains(bombs) else{return}
+        var profile=load(defaults:defaults)
+        profile.ionAmmo=ionAmmo
+        profile.bombs=bombs
+        save(profile,defaults:defaults)
+    }
     static func save(_ state:State,defaults:UserDefaults = .standard) {
         guard validate(state),let bytes=try? JSONEncoder().encode(state)
         else{return}
@@ -195,6 +230,7 @@ enum Sector01Shop568 {
         s.tokens>=0 && s.totalEarned>=0 && s.totalSpent>=0 &&
         (1...3).contains(s.upgradeLevel) &&
         (0...2).contains(s.rapidLevel) &&
+        (0...300).contains(s.ionAmmo) && (0...3).contains(s.bombs) &&
         (0...3).contains(s.shieldCharges) &&
         (1...5).contains(s.lives) && s.repairsBought>=0 &&
         (s.weapon == .pulse ||
