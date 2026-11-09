@@ -903,7 +903,15 @@ struct H55ScenePage580: View {
                                                 onClose:{loader.closeWorkshop()})
                                 .zIndex(5)
                         }
-                        if loader.arriving {
+                        if loader.arriving { arrivalOverlay }
+                        if loader.conversationOpen { conversationOverlay }
+
+                        if ProcessInfo.processInfo.environment["ASTEROIDY_DEBUG_MENU"] == "1" { debugOverlay }
+                    }
+                    .frame(maxWidth:.infinity,maxHeight:.infinity)
+    }
+
+    private var arrivalOverlay:some View {
                             VStack(spacing:9) {
                                 Text("H55 — PRZYLOT · 3,25 s")
                                     .font(.system(size:12,weight:.bold,design:.monospaced))
@@ -914,8 +922,9 @@ struct H55ScenePage580: View {
                             .foregroundStyle(gold)
                             .background(Color.black.opacity(0.88))
                             .cornerRadius(8)
-                        }
-                        if loader.conversationOpen {
+    }
+
+    private var conversationOverlay:some View {
                             VStack(spacing:9) {
                                 Text("MECHANIK")
                                     .font(.system(size:14,weight:.bold,design:.monospaced))
@@ -929,9 +938,9 @@ struct H55ScenePage580: View {
                             .background(Color.black.opacity(0.91))
                             .cornerRadius(8)
                             .accessibilityIdentifier("h55-v580-npc-dialogue")
-                        }
+    }
 
-                        if ProcessInfo.processInfo.environment["ASTEROIDY_DEBUG_MENU"] == "1" {
+    private var debugOverlay:some View {
                             VStack {
                                 HStack(spacing:8) {
                                     Text("H55 · ANIMACJE \(loader.animationNames.count)")
@@ -965,9 +974,6 @@ struct H55ScenePage580: View {
                                 .background(Color.black.opacity(0.83))
                                 Spacer()
                             }
-                        }
-                    }
-                    .frame(maxWidth:.infinity,maxHeight:.infinity)
     }
 
     private var missingAsset:some View {
