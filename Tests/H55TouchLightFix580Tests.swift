@@ -88,7 +88,7 @@ import Foundation
               selected.filter {H55LightBalance580.isRed($0)}.count==2 &&
               selected.filter {!H55LightBalance580.isRed($0)}.count==6,
               "white/cyan H46 lights must remain available within eight slots")
-        check(selected==H55LightBalance580.selectedNames(candidates.reversed()),
+        check(selected==H55LightBalance580.selectedNames(Array(candidates.reversed())),
               "deterministic H46 balancing regardless of dictionary iteration")
         check(H55LightBalance580.selectedNames([
             .init(name:"H46_DOCK_RED",distanceSquared:Float.nan),
