@@ -5,6 +5,35 @@ import Foundation
 /// The 8-light budget and proximity score are source rules (not new lights).
 enum H55LightBalance580 {
     static let budget=8
+    /// H46 iOS correction: source rank remains intact *within* each family,
+    /// but at most two red lamps may consume the eight local slots.
+    /// The OpenGL renderer is not changed.
+    static let maxRedActive=2
+
+    struct Candidate {
+        let name:String
+        let distanceSquared:Float
+    }
+
+    static func selectedNames(_ candidates:[Candidate])->[String] {
+        let ranked=candidates.map { ($0.name,score($0.name,distanceSquared:$0.distanceSquared)) }
+            .filter { $0.1 > 0 }
+            .sorted { a,b in a.1 == b.1 ? a.0 < b.0 : a.1 > b.1 }
+        var selected=[String]()
+        var seen=Set<String>()
+        var red=0
+        for (name,_) in ranked {
+            if selected.count==budget { break }
+            if seen.contains(name) { continue }
+            if isRed(name) {
+                if red==maxRedActive { continue }
+                red+=1
+            }
+            selected.append(name)
+            seen.insert(name)
+        }
+        return selected
+    }
 
     static func isRed(_ name:String)->Bool {
         name.hasPrefix("H46_DOCK_") || name.hasPrefix("H46_UPPER_RED_")
@@ -24,13 +53,13 @@ enum H55LightBalance580 {
         return (c.r+c.g+c.b)/(40+distanceSquared)
     }
 
-    /// Conversion to SceneKit lighting units is NOT a physically exact
-    /// OpenGL shader equivalence. 0.22 is PC's source punctual gain;
-    /// reduced red-only gain is an iOS visual correction requested after
-    /// device capture, isolated here without editing authored GLB materials.
-    static func sceneIntensity(_ name:String,raw:Float)->Float {
+    /// Source H46 intensity -> SceneKit approximation, not photometric parity.
+    /// Non-red local sources retain their gain; red is user-adjustable in iOS.
+    static func sceneIntensity(_ name:String,raw:Float,
+                               redGain:Float=H55LightingProfile580.defaultRed)->Float {
         guard raw.isFinite && raw>0 else{return 0}
-        let redVisualGain:Float=0.30
-        return raw*0.22*(isRed(name) ? redVisualGain : 1)
+        let safe=redGain.isFinite ? max(0,min(H55LightingProfile580.maximumRed,redGain))
+                                  : H55LightingProfile580.defaultRed
+        return raw*0.22*(isRed(name) ? safe : 1)
     }
 }
