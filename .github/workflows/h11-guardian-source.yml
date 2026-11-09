@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          swiftc -O \
+          swiftc \
             ASTEROIDYiOS/GameCore.swift \
             ASTEROIDYiOS/FlightDynamics556.swift \
             ASTEROIDYiOS/CombatCollision556.swift \
