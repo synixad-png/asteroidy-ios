@@ -689,16 +689,24 @@ struct H55ScenePage580: View {
                                 HStack(spacing:8) {
                                     Text("H55 · ANIMACJE \(loader.animationNames.count)")
                                     Spacer()
-                                    Picker("ANIMACJA GLB",selection:$pickedClip) {
-                                        Text("WYBIERZ").tag("")
-                                        ForEach(loader.animationNames,id:\.self) {
-                                            Text($0).tag($0)
+                                    if loader.h12Status.hasPrefix("H12:") {
+                                        // The runtime uses a single H51/H39 timeline.
+                                        // Don't display an inert picker that would
+                                        // overwrite animated nodes or break H70.
+                                        Text(loader.h12Status)
+                                            .accessibilityIdentifier("h12-source-clock-active")
+                                    } else {
+                                        Picker("ANIMACJA GLB",selection:$pickedClip) {
+                                            Text("WYBIERZ").tag("")
+                                            ForEach(loader.animationNames,id:\.self) {
+                                                Text($0).tag($0)
+                                            }
                                         }
-                                    }
-                                    .pickerStyle(.menu)
-                                    .frame(maxWidth:270)
-                                    .onChange(of:pickedClip) { value in
-                                        if !value.isEmpty {loader.showAnimation(value)}
+                                        .pickerStyle(.menu)
+                                        .frame(maxWidth:270)
+                                        .onChange(of:pickedClip) { value in
+                                            if !value.isEmpty {loader.showAnimation(value)}
+                                        }
                                     }
                                 }
                                 .font(.system(size:10,design:.monospaced))
