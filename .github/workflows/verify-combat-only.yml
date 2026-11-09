@@ -642,6 +642,24 @@ jobs:
           /tmp/asteroidy-metal-blend-test
       - name: Generate native Xcode project from verified project.yml
         run: xcodegen generate
+      - name: Resolve exact pinned GLTFKit2 v0.5.15 without changing dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          ok=no
+          for attempt in 1 2 3 4 5; do
+            echo "Original GLTFKit2 binary fetch, attempt $attempt/5"
+            if xcodebuild -project ASTEROIDYiOS.xcodeproj \
+              -scheme ASTEROIDYiOS \
+              -derivedDataPath /tmp/asteroidy-ios-verify-only \
+              -resolvePackageDependencies; then
+              ok=yes
+              break
+            fi
+            if [ "$attempt" -lt 5 ]; then sleep $((attempt * 7)); fi
+          done
+          test "$ok" = yes
+
       - name: Typecheck and compile all native iOS Swift/Metal sources (unsigned, NO IPA)
         run: |
           set -euo pipefail
