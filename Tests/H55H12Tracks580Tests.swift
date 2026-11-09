@@ -23,8 +23,9 @@ import Foundation
         let v=n.littleEndian
         withUnsafeBytes(of:v) {bytes.append(contentsOf:$0)}
     }
-    private static func writeGLB(_ specs:[Spec],url:URL)throws {
-        let nodes:[[String:Any]]=[
+    private static func writeGLB(_ specs:[Spec],url:URL,
+                                 matrixOnBase:Bool=false)throws {
+        var nodes:[[String:Any]]=[
             ["name":"H55_Base"],
             ["name":"HL_Import_Workshop_Tool","children":[2]],
             ["name":"HL_Workshop_Part"],
@@ -44,6 +45,13 @@ import Foundation
              "extras":["ANIMATION_LOOP":"H39_ORPHAN_META_LOOP",
                        "ANIMATION_SPEED":2.0]]
         ]
+        if matrixOnBase {
+            // Invalid glTF per PC H55Renderer.cs:392: composite TRS
+            // may not target a node whose authored transform is matrix.
+            nodes[0]["matrix"]=[
+                1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1
+            ]
+        }
         var bin=Data()
         var accessors=[[String:Any]]()
         var views=[[String:Any]]()
@@ -232,6 +240,11 @@ import Foundation
         try damaged.write(to:truncated,options:.atomic)
         check((try? H55H12Tracks580.load(truncated))==nil,
               "truncated GLB must never create synthesized animation")
-        print("PASS H12 GLB2: original authored floats, reusable SLERP/STEP, 12000-frame parity, node+animation metadata extras, deferred drone/orphan/protected filtering and corrupt file fail-safe")
+        let matrixInvalid=folder.appendingPathComponent("matrix-target.glb")
+        try writeGLB(specs,url:matrixInvalid,matrixOnBase:true)
+        check((try? H55H12Tracks580.load(
+            matrixInvalid,excludeImportedDroneRoots:true))==nil,
+            "PC580 rejects TRS animation of nodes using matrix (glTF specification)")
+        print("PASS H12 GLB2: original authored floats, 12000-frame shared-buffer parity, PC443 active-node extras, deferred drones, protected channels, invalid matrix TRS and truncated-file fail-safe")
     }
 }
