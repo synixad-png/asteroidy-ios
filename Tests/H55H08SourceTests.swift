@@ -48,6 +48,23 @@ import Foundation
         check(door.blockingGate(fromX:23,fromZ:7.15,
                                 toX:24.36,toZ:7.15)==0,
               "H08 inherits H07 closed-door check")
-        print("PASS H08 source: 28 points, 1136 samples, fail-closed edited GLB, original floor support, NPC move and H07 door integration")
+        // Confirm the original v532 return-leg deadlock repair does NOT
+        // allow skipping the mandatory five-second workshop stop.
+        let workshopBypass=H55NpcDetour580.bypass(
+            start:.init(x:45.2,z:8.1),player:.init(x:45.817,z:8.15),
+            goal:.init(x:45.817,z:8.15),goalIndex:11,workshopIndex:11,
+            routeX:H55Mechanic580.routeX,routeZ:H55Mechanic580.routeZ,
+            walkable:{_,_ in true})
+        check(workshopBypass == nil,
+              "workshop 11 must never be skipped by an A* detour")
+
+        let returnBypass=H55NpcDetour580.bypass(
+            start:.init(x:15.009,z:11.315),player:.init(x:14.2,z:11.181),
+            goal:.init(x:13.914,z:11.713),goalIndex:23,workshopIndex:11,
+            routeX:H55Mechanic580.routeX,routeZ:H55Mechanic580.routeZ,
+            walkable:{_,_ in true})
+        check(returnBypass != nil && returnBypass!.skipTo==24,
+              "return leg 23 must join next original approved waypoint 24")
+        print("PASS H08 source: 28 points, 1136 samples, original floor, NPC/H07, return-leg A* and mandatory 5s workshop preserved")
     }
 }
