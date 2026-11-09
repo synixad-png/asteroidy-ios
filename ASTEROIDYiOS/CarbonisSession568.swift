@@ -62,13 +62,8 @@ final class CarbonisSession568: ObservableObject {
             let initialTokens=max(0,game.startingTokens)
             let earned=max(0,game.collectedLootTokens)
             tokenBalance=initialTokens>Int.max-earned ? Int.max : initialTokens+earned
-            switch game.selectedWeapon {
-            case .pulse: weaponName="IMPULS"
-            case .twin: weaponName="PODWÓJNA"
-            case .scatter: weaponName="WACHLARZ"
-            case .rail: weaponName="SZYNOWA"
-            case .swarm: weaponName="NAMIERZAJĄCE"
-            }
+            // PC BossTunnelGame.WeaponName is one canonical source label.
+            weaponName=game.selectedWeapon.shortLabel
             weaponLevel=game.upgradeLevel
             rapidLevel=game.rapidLevel
             shieldCharges=game.shieldCharges
