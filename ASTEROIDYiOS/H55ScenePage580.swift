@@ -772,95 +772,7 @@ struct H55ScenePage580: View {
                 }.font(.system(size:13,design:.monospaced))
             case .ready:
                 if let scene=loader.scene,let camera=loader.camera {
-                    ZStack {
-                        // SceneKit draws only. It MUST NOT eat the left/right
-                        // drag gestures, otherwise H06 sees zero input.
-                        SceneView(scene:scene,pointOfView:camera,
-                                  options:[.rendersContinuously])
-                            .allowsHitTesting(false)
-                            .accessibilityIdentifier("h55-v580-native-scenekit")
-                        H55TouchControls580(
-                            onWalk:{forward,right in
-                                loader.setMove(forward:forward,right:right)
-                            },
-                            onLook:{dx,dy in loader.look(dx:dx,dy:dy)},
-                            onJump:{loader.jump()},
-                            onTalk:{loader.interact()},
-                            canTalk:loader.mechanicNearby,
-                            conversationOpen:loader.conversationOpen,
-                            mechanicStatus:loader.mechanicStatus
-                        )
-
-                         if loader.showingWorkshop {
-                            H55WorkshopPanel580(initialTab:loader.workshopInitialPanel,
-                                                onClose:{loader.closeWorkshop()})
-                                .zIndex(5)
-                        }
-                        if loader.arriving {
-                            VStack(spacing:9) {
-                                Text("H55 — PRZYLOT · 3,25 s")
-                                    .font(.system(size:12,weight:.bold,design:.monospaced))
-                                Button("POMIŃ PRZYLOT") {loader.skipArrival()}
-                                    .accessibilityIdentifier("h55-v580-skip-arrival")
-                            }
-                            .padding(13)
-                            .foregroundStyle(gold)
-                            .background(Color.black.opacity(0.88))
-                            .cornerRadius(8)
-                        }
-                        if loader.conversationOpen {
-                            VStack(spacing:9) {
-                                Text("MECHANIK")
-                                    .font(.system(size:14,weight:.bold,design:.monospaced))
-                                Text(H55NpcDialogue580.spokenLine)
-                                    .font(.system(size:12,design:.monospaced))
-                                Button("ZAKOŃCZ ROZMOWĘ") {loader.interact()}
-                                    .accessibilityIdentifier("h55-v580-npc-end-dialogue")
-                            }
-                            .foregroundStyle(gold)
-                            .padding(15)
-                            .background(Color.black.opacity(0.91))
-                            .cornerRadius(8)
-                            .accessibilityIdentifier("h55-v580-npc-dialogue")
-                        }
-
-                        if ProcessInfo.processInfo.environment["ASTEROIDY_DEBUG_MENU"] == "1" {
-                            VStack {
-                                HStack(spacing:8) {
-                                    Text("H55 · ANIMACJE \(loader.animationNames.count)")
-                                    Spacer()
-                                    if loader.h12Status.hasPrefix("H12:") {
-                                        // The runtime uses a single H51/H39 timeline.
-                                        // Don't display an inert picker that would
-                                        // overwrite animated nodes or break H70.
-                                        VStack(alignment:.trailing,spacing:3) {
-                                            Text(loader.h12Status)
-                                            Text(loader.h71Status)
-                                        }
-                                            .accessibilityIdentifier("h12-source-clock-active")
-                                    } else {
-                                        Picker("ANIMACJA GLB",selection:$pickedClip) {
-                                            Text("WYBIERZ").tag("")
-                                            ForEach(loader.animationNames,id:\.self) {
-                                                Text($0).tag($0)
-                                            }
-                                        }
-                                        .pickerStyle(.menu)
-                                        .frame(maxWidth:270)
-                                        .onChange(of:pickedClip) { value in
-                                            if !value.isEmpty {loader.showAnimation(value)}
-                                        }
-                                    }
-                                }
-                                .font(.system(size:10,design:.monospaced))
-                                .padding(10)
-                                .foregroundStyle(gold)
-                                .background(Color.black.opacity(0.83))
-                                Spacer()
-                            }
-                        }
-                    }
-                    .frame(maxWidth:.infinity,maxHeight:.infinity)
+                    renderedHangar(scene:scene,camera:camera)
                 }
             }
             VStack {
@@ -964,6 +876,100 @@ struct H55ScenePage580: View {
         }
         .accessibilityIdentifier("h55-v580-page")
     }
+    /// Render layer is typechecked independently of navigation, file import,
+    /// menus and settings. Fixes Xcode SwiftUI generic typecheck timeout.
+    private func renderedHangar(scene:SCNScene,camera:SCNNode)->some View {
+                    ZStack {
+                        // SceneKit draws only. It MUST NOT eat the left/right
+                        // drag gestures, otherwise H06 sees zero input.
+                        SceneView(scene:scene,pointOfView:camera,
+                                  options:[.rendersContinuously])
+                            .allowsHitTesting(false)
+                            .accessibilityIdentifier("h55-v580-native-scenekit")
+                        H55TouchControls580(
+                            onWalk:{forward,right in
+                                loader.setMove(forward:forward,right:right)
+                            },
+                            onLook:{dx,dy in loader.look(dx:dx,dy:dy)},
+                            onJump:{loader.jump()},
+                            onTalk:{loader.interact()},
+                            canTalk:loader.mechanicNearby,
+                            conversationOpen:loader.conversationOpen,
+                            mechanicStatus:loader.mechanicStatus
+                        )
+
+                         if loader.showingWorkshop {
+                            H55WorkshopPanel580(initialTab:loader.workshopInitialPanel,
+                                                onClose:{loader.closeWorkshop()})
+                                .zIndex(5)
+                        }
+                        if loader.arriving {
+                            VStack(spacing:9) {
+                                Text("H55 — PRZYLOT · 3,25 s")
+                                    .font(.system(size:12,weight:.bold,design:.monospaced))
+                                Button("POMIŃ PRZYLOT") {loader.skipArrival()}
+                                    .accessibilityIdentifier("h55-v580-skip-arrival")
+                            }
+                            .padding(13)
+                            .foregroundStyle(gold)
+                            .background(Color.black.opacity(0.88))
+                            .cornerRadius(8)
+                        }
+                        if loader.conversationOpen {
+                            VStack(spacing:9) {
+                                Text("MECHANIK")
+                                    .font(.system(size:14,weight:.bold,design:.monospaced))
+                                Text(H55NpcDialogue580.spokenLine)
+                                    .font(.system(size:12,design:.monospaced))
+                                Button("ZAKOŃCZ ROZMOWĘ") {loader.interact()}
+                                    .accessibilityIdentifier("h55-v580-npc-end-dialogue")
+                            }
+                            .foregroundStyle(gold)
+                            .padding(15)
+                            .background(Color.black.opacity(0.91))
+                            .cornerRadius(8)
+                            .accessibilityIdentifier("h55-v580-npc-dialogue")
+                        }
+
+                        if ProcessInfo.processInfo.environment["ASTEROIDY_DEBUG_MENU"] == "1" {
+                            VStack {
+                                HStack(spacing:8) {
+                                    Text("H55 · ANIMACJE \(loader.animationNames.count)")
+                                    Spacer()
+                                    if loader.h12Status.hasPrefix("H12:") {
+                                        // The runtime uses a single H51/H39 timeline.
+                                        // Don't display an inert picker that would
+                                        // overwrite animated nodes or break H70.
+                                        VStack(alignment:.trailing,spacing:3) {
+                                            Text(loader.h12Status)
+                                            Text(loader.h71Status)
+                                        }
+                                            .accessibilityIdentifier("h12-source-clock-active")
+                                    } else {
+                                        Picker("ANIMACJA GLB",selection:$pickedClip) {
+                                            Text("WYBIERZ").tag("")
+                                            ForEach(loader.animationNames,id:\.self) {
+                                                Text($0).tag($0)
+                                            }
+                                        }
+                                        .pickerStyle(.menu)
+                                        .frame(maxWidth:270)
+                                        .onChange(of:pickedClip) { value in
+                                            if !value.isEmpty {loader.showAnimation(value)}
+                                        }
+                                    }
+                                }
+                                .font(.system(size:10,design:.monospaced))
+                                .padding(10)
+                                .foregroundStyle(gold)
+                                .background(Color.black.opacity(0.83))
+                                Spacer()
+                            }
+                        }
+                    }
+                    .frame(maxWidth:.infinity,maxHeight:.infinity)
+    }
+
     private var missingAsset:some View {
         VStack(spacing:15) {
             Text("HANGAR H55 / PC v580")
