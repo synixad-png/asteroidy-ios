@@ -59,7 +59,7 @@ expect_all(session,(
     "tokenBalance=initialTokens>Int.max-earned ? Int.max : initialTokens+earned",
     "shieldCharges=game.shieldCharges",
     "tarczaEnergy=nil",
-    "ionAmmo=0; bombs=0; boostCharges=0",
+    "ionAmmo=game.ionAmmo; bombs=game.bombs; boostCharges=0",
     "if now-lastHUD > 0.10",
 ),"source combat HUD data")
 expect_all(combat,(
@@ -71,6 +71,8 @@ expect_all(combat,(
 expect_all(scene,(
     "SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568)",
     "Button(\"PAUZA\") {pauseMission568()}",
+    "session.useBomb()",
+    "persistConsumables580()",
     ".accessibilityIdentifier(\"sector01-pause-button\")",
     "Button(\"KONTYNUUJ\") {resumeMission568()}",
     "Button(\"WYJDŹ DO MENU\") {exitMission568()}",
