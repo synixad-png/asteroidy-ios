@@ -9,11 +9,11 @@ enum Sector01Shop568 {
         case pulse=0,twin=1,scatter=2,rail=3,swarm=4
         var shortLabel:String {
             switch self {
-            case .pulse:return "PULSE"
-            case .twin:return "TWIN"
-            case .scatter:return "SCATTER"
-            case .rail:return "RAIL"
-            case .swarm:return "SWARM"
+            case .pulse:return "IMPULS"
+            case .twin:return "PODWÓJNA"
+            case .scatter:return "WACHLARZ"
+            case .rail:return "GAUSS"
+            case .swarm:return "RÓJ ŁOWCÓW"
             }
         }
     }
