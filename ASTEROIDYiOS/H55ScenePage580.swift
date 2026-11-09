@@ -30,6 +30,8 @@ import simd
     private var airlockLastApplied:[Float]=[Float.nan,Float.nan]
     private var h46LightNodes:[String:SCNNode]=[:]
     private var h46RawIntensities:[String:Float]=[:]
+    private weak var exteriorSky:SCNNode?
+    private weak var playerShip:SCNNode?
     private var lighting=H55LightingProfile580.saved()
     private var lightRefresh:Float=0
     private var pausedForSettings=false
@@ -151,6 +153,16 @@ import simd
         // PC Hub90.StepHub90: arrival clock runs before walking.
         arrival.advance(dt:dt)
         if arriving && !arrival.arriving {arriving=false}
+        if !arrival.walking,let camera {
+            // Windows GpuHub90: camera flies from (0,7.8,40) to (0,6.8,31)
+            // while the ship approaches. H05 player physical spawn is fixed.
+            let pose=H55DockingPresentation580.camera(time:arrival.time)
+            camera.position=SCNVector3(pose.x,pose.y,pose.z)
+            camera.look(at:SCNVector3(0,4,0))
+        }
+        if let craft=playerShip {
+            H55PlayerShip580.pose(craft,time:arrival.time)
+        }
         if arrival.walking && !conversationOpen,let physical {
         movement.step(dt:dt,
             forward:showingWorkshop ? 0 : moveForward,
@@ -215,6 +227,8 @@ import simd
         let near=hypot(movement.x-mechanic.x,movement.z-mechanic.z)<=2.7
         if near != mechanicNearby {mechanicNearby=near}
         }
+        // The same source sky stays in camera space, without parallax.
+        if let camera {exteriorSky?.position=camera.position}
         // Continue authentic idle during arrival and conversation.
         npcAnimator?.apply(dt:dt,mechanic:mechanic,
                            allowWalking:arrival.walking && !conversationOpen)
@@ -318,6 +332,8 @@ import simd
         airlockLastApplied=[Float.nan,Float.nan]
         h46LightNodes.removeAll()
         h46RawIntensities.removeAll()
+        exteriorSky=nil
+        playerShip=nil
         lightRefresh=0
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
@@ -457,8 +473,10 @@ import simd
         arrival=H55Arrival580(spawnClear:true)
         arriving=true
         movement=spawn
-        pointOfView.position=SCNVector3(spawn.x,spawn.y+H55Walk580.eyes,spawn.z)
-        pointOfView.eulerAngles.y=0 // PC yaw=0 looks toward -Z
+        // Source GpuHub90 cinematic first. PC foot position remains spawn.
+        let cameraStart=H55DockingPresentation580.camera(time:0)
+        pointOfView.position=SCNVector3(cameraStart.x,cameraStart.y,cameraStart.z)
+        pointOfView.look(at:SCNVector3(0,4,0))
         realScene.rootNode.addChildNode(pointOfView)
         H55LoadDiagnostics580.mark("09_KAMERA_WYKONANA_SWATLO_START")
         // H13-A: no dynamic IBL cubemap. Windows PC v580 H55Renderer.cs
@@ -575,6 +593,21 @@ import simd
             h13MaterialReport=materialReport+"\nH13-A: BEZPIECZNY TRYB MATERIAŁÓW / DODATKOWE SHADERY WYŁĄCZONE"
         }
         h13MaterialReport += "\n"+visual.text+"\nH46: \(h46LightNodes.count)/24 oryginalnych źródeł światła"
+        // PC GpuHub90 draws the outer space and actual ship OUTSIDE GLB.
+        // Attach only AFTER machinery/NPC rigs capture authentic GLB nodes.
+        H55LoadDiagnostics580.mark("11A_PC580_SKY_SHIP_ATTACH_START")
+        realScene.background.contents=UIColor(red:0.012,green:0.021,blue:0.04,alpha:1)
+        let sky=H55SpaceBackdrop580.make()
+        sky.position=pointOfView.position
+        realScene.rootNode.addChildNode(sky)
+        exteriorSky=sky
+        if let craft=H55PlayerShip580.make() {
+            realScene.rootNode.addChildNode(craft)
+            playerShip=craft
+            h13MaterialReport += "\nSTATEK: ORYGINALNY VANGUARD431 / MESH I JPEG SHA256 OK"
+        } else {
+            h13MaterialReport += "\nSTATEK: BRAK ZWERYFIKOWANEGO ORYGINALNEGO VANGUARD431 (BEZ ZAMIENNIKA)"
+        }
         H55LoadDiagnostics580.mark("11_MATERIALY_GOTOWE_ATTACH_KONIEC")
         scene=realScene
         camera=pointOfView
@@ -700,6 +733,8 @@ import simd
         airlockLastApplied=[Float.nan,Float.nan]
         h46LightNodes.removeAll()
         h46RawIntensities.removeAll()
+        exteriorSky=nil
+        playerShip=nil
         lightRefresh=0
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
