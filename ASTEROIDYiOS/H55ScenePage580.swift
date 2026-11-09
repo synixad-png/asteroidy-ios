@@ -72,12 +72,20 @@ import simd
         fpsMode=mode
         fpsViewmodel?.selectMode(mode)
     }
+    func setFPSGloves(_ model:H55FPSSettings580.Model) {
+        fpsViewmodel?.selectGloves(model)
+        setFPSMode(.gloves)
+    }
     func importFPS(_ url:URL,kind:H55FPSAssets580.Kind)throws {
         _=try H55FPSAssets580.install(url,as:kind)
         fpsStatus="FPS: ZWERYFIKOWANO ORYGINALNY MODEL "+kind.fileName
-        if kind == .tripo {setFPSMode(.gloves)}
-        if kind == .weapon {setFPSMode(.weapon)}
-        fpsViewmodel?.reload(kind)
+        switch kind {
+        case .tripo: setFPSGloves(.tripo)
+        case .monolith: setFPSGloves(.monolith)
+        case .weapon:
+            fpsViewmodel?.reload(.weapon)
+            setFPSMode(.weapon)
+        }
     }
 
     func jump() {
@@ -980,17 +988,23 @@ struct H55ScenePage580: View {
                             .fixedSize(horizontal:false,vertical:true)
                             .accessibilityIdentifier("h55-fps-status")
                         HStack(spacing:8) {
-                            pauseButton("RĘCE") {loader.setFPSMode(.gloves)}
+                            pauseButton("RĘCE TRIPO") {loader.setFPSGloves(.tripo)}
                                 .accessibilityIdentifier("h55-fps-show-hands")
+                            pauseButton("RĘCE MONOLIT") {loader.setFPSGloves(.monolith)}
+                                .accessibilityIdentifier("h55-fps-show-monolith")
                             pauseButton("BROŃ EXP-01") {loader.setFPSMode(.weapon)}
                                 .accessibilityIdentifier("h55-fps-show-weapon")
                         }
                         HStack(spacing:8) {
-                            pauseButton("IMPORTUJ RĘCE GLB") {
+                            pauseButton("IMPORT TRIPO GLB") {
                                 fpsImportKind = .tripo
                                 choosingFPSModel=true
                             }.accessibilityIdentifier("h55-fps-import-hands")
-                            pauseButton("IMPORTUJ BROŃ GLB") {
+                            pauseButton("IMPORT MONOLIT GLB") {
+                                fpsImportKind = .monolith
+                                choosingFPSModel=true
+                            }.accessibilityIdentifier("h55-fps-import-monolith")
+                            pauseButton("IMPORT BROŃ GLB") {
                                 fpsImportKind = .weapon
                                 choosingFPSModel=true
                             }.accessibilityIdentifier("h55-fps-import-weapon")
