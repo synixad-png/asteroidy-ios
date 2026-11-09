@@ -706,6 +706,9 @@ struct H55ScenePage580: View {
     @State private var choosingFile=false
     @State private var pickedClip=""
     @State private var importError:String?
+    @State private var showingLighting=false
+    @AppStorage("ASTEROIDY_H55_ENV_FILL_580") private var lightingFill=0.80
+    @AppStorage("ASTEROIDY_H55_RED_GAIN_580") private var lightingRed=0.10
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     var body:some View {
         ZStack {
@@ -747,6 +750,19 @@ struct H55ScenePage580: View {
                             mechanicStatus:loader.mechanicStatus
                         )
 
+                        if showingLighting && !loader.showingWorkshop && !loader.conversationOpen {
+                            VStack {
+                                HStack {
+                                    Spacer()
+                                    H55LightingPanel580(fill:$lightingFill,red:$lightingRed,
+                                                        onClose:{showingLighting=false})
+                                        .padding(.trailing,12)
+                                        .padding(.top,56)
+                                }
+                                Spacer()
+                            }
+                            .zIndex(8)
+                        }
                         if loader.showingWorkshop {
                             H55WorkshopPanel580(initialTab:loader.workshopInitialPanel,
                                                 onClose:{loader.closeWorkshop()})
@@ -841,6 +857,13 @@ struct H55ScenePage580: View {
                         .padding(8)
                         .background(Color.black.opacity(0.82))
                         .accessibilityIdentifier("h13-share-glb-report")
+                        Button(showingLighting ? "✕ ŚWIATŁO" : "ŚWIATŁO") {
+                            showingLighting.toggle()
+                        }
+                        .disabled(loader.arriving || loader.conversationOpen || loader.showingWorkshop)
+                        .padding(8)
+                        .background(Color.black.opacity(0.82))
+                        .accessibilityIdentifier("h55-light-toggle")
                         Button("STANOWISKA") {loader.openWorkshop()}
                             .disabled(loader.arriving || loader.conversationOpen || loader.showingWorkshop)
                             .padding(12)
@@ -853,8 +876,17 @@ struct H55ScenePage580: View {
             .font(.system(size:14,weight:.bold,design:.monospaced))
             .foregroundStyle(gold)
         }
-        .onAppear {loader.openIfAvailable()}
-        .onDisappear {loader.close()}
+        .onAppear {
+            loader.setLighting(fill:lightingFill,red:lightingRed)
+            loader.openIfAvailable()
+        }
+        .onChange(of:lightingFill) { value in
+            loader.setLighting(fill:value,red:lightingRed)
+        }
+        .onChange(of:lightingRed) { value in
+            loader.setLighting(fill:lightingFill,red:value)
+        }
+        .onDisappear {showingLighting=false;loader.close()}
         .fileImporter(isPresented:$choosingFile,
             allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data],
             allowsMultipleSelection:false) { result in
