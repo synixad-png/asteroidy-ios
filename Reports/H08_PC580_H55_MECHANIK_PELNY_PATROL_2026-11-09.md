@@ -44,3 +44,20 @@ Po przejściu bramki H08 i dołączeniu raportu wydania: H09 — oryginalne klip
 - GitHub artifact id 13653230471 ZIP z tą samą IPA i raportami, rozmiar 29280114 B, CRC ZIP PASS.
 - Google Drive plik odczytany po zapisaniu: https://drive.google.com/file/d/1SUCpfb-3Kmnqw00MVNm9a79KGf1skGNx/view?usp=drivesdk, rozmiar 29280114 B.
 - Niepodpisane IPA; oryginalny hangar GLB wymaga importu z Plików iOS. Fizyczne sprawdzenie chodzenia NPC/SceneKit i Foot IK H09 nadal nieprzeprowadzone, H15 otwarty. Nie utożsamiać udanej kompilacji z odbiorem interaktywnym.
+
+## 7. H08 — dodatkowa naprawa odkryta w teście blokowania drogi powrotnej (09.11.2026)
+
+**Potwierdzona luka oryginalnego PC v580:** `Windows/src/H55Renderer.cs`, procedura `NpcPlanPlayerBypass532`, linie źródłowe ~1768–1800: przy zajęciu waypointu zmienna `limit` jest zawsze ograniczana `Math.Min(NpcWorkshopIndex530-1,routeIndex+3)`. Działa tylko na trasie wychodzącej (indeksy 0–10). Na drodze powrotnej (indeksy 12–27) `limit<routeIndex+1`, więc NPC nie może wybrać żadnego dopuszczonego punktu obejścia. To źródłowa usterka, nie nowa wymyślona geometria.
+
+**Dowód E2E przed zmianą:** na oryginalnym SHA-zweryfikowanym GLB, ze stałym graczem po 5 s w miejscu `(X=14.2,Z=11.181)`, NPC omija gracza na wyjściu (`detoursBuilt=1`), dochodzi do warsztatu, czeka dokładnie 300 klatek, przechodzi obie H70, wraca do celu 23 i **zatrzymuje się na stałe w (15.00908,11.314705)**. Symulacja 15000 klatek 60 FPS kończy się `TIMEOUT blocked`. Nie uznawano tego za sukces.
+
+**Zminimalizowana poprawka** `ASTEROIDYiOS/H55NpcDetour580.swift`: wybór końca bieżącej nogi podróży: `goalIndex <= workshopIndex ? workshopIndex-1 : routeX.count-1`; nadal bezwzględnie obowiązują: źródłowe 28 punktów, limit maks. 3 kolejnych waypointów, dystans sprawdzania 6m, A* 0.24m, oryginalne próbkowanie segmentu 0.08m oraz kolizje gracza/GLB. Cel warsztatowy (indeks 11) nadal jest obowiązkowym postojem i **nigdy nie wolno go przeskoczyć**. Jest to jawna naprawa rozbieżna z błędnym PC, a nie deklaracja dokładnej zgodności 1:1 dla tej sytuacji.
+
+**Testy po poprawce, bez fałszywej posadzki**: oryginalny `hangar_h55.glb` 126419336 B SHA256 `00e6ba4ab2cce025b1290265052c1e252e149209f6fcbbc50b5d569af4592461`, 803538 trójkątów i 233 kolidery, 1136 próbek trasy. Test `Tests/H55NpcRealRoute580Tests.swift` przeprowadzony natywnie z aktualnymi źródłami po poprawce `<=`:
+- Bez gracza na trasie: **4922 klatki, 87.38785 m**, 300 klatek postoju, dwie H70 otwarte i przekroczone, root wraca do źródłowej pozycji, brak auto-restartu: **PASS**.
+- Gracz w (14.2,11.181) od klatki 300: **5102 klatki, 2 rzeczywiste obejścia A*** (wyjście i powrót), 300 klatek postoju, obie H70, root z powrotem dokładnie `(9.9248,12.155)`, fizyczny test pozycji Y, 4-sferowe `BodyClear` wzdłuż trasy: **PASS**.
+- W obu wariantach stosowano oryginalnie zmierzony z obu łańcuchów stóp GLB `anatomicalHeading=-2.323263891`. Żadne testy syntetycznej podłogi nie zastępują raportowanych realnych testów.
+
+**Wyniki CI**: repozytoryjne H08 źródła/test oryginalnego GLB `Tests/H55NpcRealRoute580Tests.swift`, przepustki `.github/workflows/h08-npc-route.yml`, `.github/workflows/h08-parity-check.yml`, `.github/workflows/h08-test-ipa.yml` skompilują i kontrolują nowy scenariusz. GitHub Actions jest raportowany oddzielnie po zakończeniu przebiegów. `main` pozostaje niezmienione; źródła H01–H07, H09 i inne moduły gameplay pozostawiono bez zmian.
+
+**Odbiór**: źródłowa funkcjonalność H08 + realne GLB z naprawionym powrotem PASS; nadal nie wykonano interaktywnego testu iPhone/iPad z renderowanym NPC/SceneKit (H15). H09 Foot IK/animacje kości to osobny etap i nie mogą automatycznie zwiększać procentu H08. Nie wolno twierdzić, że usterka A* w oryginalnym PC została naprawiona — zmieniono wyłącznie port iOS.
