@@ -103,7 +103,11 @@ enum H55H12Tracks580 {
         let floats:[Float]
     }
 
-    static func load(_ url:URL)throws->Library {
+    /// The user deferred autonomous H71 drones. When excluded, neither
+    /// their imported GLB loops nor their metadata loops may start
+    /// incidentally while machinery H39–H51 continues normally.
+    static func load(_ url:URL,
+                     excludeImportedDroneRoots:Bool=false)throws->Library {
         let file=try FileHandle(forReadingFrom:url)
         defer {try? file.close()}
         let header=try file.read(upToCount:20) ?? Data()
@@ -169,6 +173,28 @@ enum H55H12Tracks580 {
             }
             return steps>nodes.count ? -1 : root
         }
+        func isDroneImported(_ id:Int)->Bool {
+            let root=importRoot(id)
+            guard root>=0 else{return false}
+            let extra=object(nodes[root]["extras"])
+            let source=(str(extra["hangarLabImportName"]) ??
+                str(nodes[root]["name"]) ?? "").lowercased()
+            return source.contains("drone") || source.contains("dron")
+        }
+        // Keep any unrelated H39/ramps/lamps metadata, but never activate
+        // the deferred H71 imported drone tracks (even by metadata).
+        if excludeImportedDroneRoots {
+            loops.removeAll { loop in
+                guard let animation=byName[loop.name] else{return false}
+                let channels=list(animation["channels"])
+                return channels.contains { ch in
+                    guard let id=int(object(ch["target"])["node"]) else {
+                        return false
+                    }
+                    return isDroneImported(id)
+                }
+            }
+        }
         let metadataNames=Set(loops.map{$0.name})
         var blockedIdleNodes=Set<Int>()
         if let idle,let authored=byName[idle] {
@@ -202,6 +228,7 @@ enum H55H12Tracks580 {
                 root=importedRoot
             }
             guard valid,let root else{continue}
+            if excludeImportedDroneRoots && isDroneImported(root) {continue}
             let upper=name.uppercased()
             let score=(upper.contains("LOOP") ? 10 : 0)
                 +(upper.contains("IDLE") ? 5 : 0)
