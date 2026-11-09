@@ -738,7 +738,7 @@ struct CarbonisCombat568 {
     /// target priority rocks -> enemy fighters (no robot in sector01).
     /// The projectile changes REAL velocity before its swept collision.
     /// PC intentionally does not re-normalize the blended velocity.
-    private static func guidedSwarmVelocity(
+    static func guidedSwarmVelocity(
         shot:Projectile,dt:Float,rocks:[SphereAsteroid556],
         shooters:[Shooter])->Vec2 {
         guard shot.kind==4 else{return shot.velocity}
