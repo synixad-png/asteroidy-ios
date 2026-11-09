@@ -134,7 +134,9 @@ enum Sector01Shop568 {
                 if rapidLevel<2 {return rapidLevel==0 ? 75 : 140}
                 return 60+sector*2
             case .shield:return 12
-            case .repair:return 70+25*repairsBought
+            case .repair:
+                return repairsBought>(Int.max-70)/25
+                    ? Int.max : 70+25*repairsBought
             }
         }
         func available(_ item:Item,sector:Int=1)->Bool {
@@ -232,7 +234,8 @@ enum Sector01Shop568 {
         (0...2).contains(s.rapidLevel) &&
         (0...300).contains(s.ionAmmo) && (0...3).contains(s.bombs) &&
         (0...3).contains(s.shieldCharges) &&
-        (1...5).contains(s.lives) && s.repairsBought>=0 &&
+        (1...5).contains(s.lives) &&
+        (0...((Int.max-70)/25)).contains(s.repairsBought) &&
         (s.weapon == .pulse ||
          (s.weapon == .twin && s.twinOwned) ||
          (s.weapon == .scatter && s.scatterOwned) ||
