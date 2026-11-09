@@ -38,6 +38,11 @@ jobs:
           renderer=Path('ASTEROIDYiOS/H55DroneScene580.swift').read_text()
           nav=Path('ASTEROIDYiOS/H55DroneNavigation580.swift').read_text()
           assert 'H55DroneImports580.load(url)' in scene
+          flags=Path('ASTEROIDYiOS/H55DroneImports580.swift').read_text()
+          assert 'static let autonomousDronesEnabled=false' in flags
+          assert 'let droneSpawns=H55H12FeatureFlags580.autonomousDronesEnabled' in scene
+          assert 'if H55H12FeatureFlags580.autonomousDronesEnabled,' in scene
+          assert 'ODŁOŻONE DO PÓŹNIEJSZEGO ETAPU' in scene
           assert 'H55DroneNavigation580(clearance:' in scene
           assert 'physical.cameraClear406(x,y,z,radius:radius)' in scene
           assert 'H55DroneScene580(' in scene
