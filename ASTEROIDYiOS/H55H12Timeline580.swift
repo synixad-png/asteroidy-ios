@@ -36,6 +36,7 @@ enum H55H12Timeline580 {
     /// Tests or user-visible GLB inspector are separate explicit playback.
     static func sample(time:Float,durations:[String:Float],
                        idleMorph:String?=nil,
+                       imported:[Loop]=[],
                        metadata:[Loop]=[])->[Sample] {
         guard time.isFinite && time>=0 else{return []}
         let composite=time<32 ? docking : service
@@ -58,8 +59,13 @@ enum H55H12Timeline580 {
         if let idleMorph,idleMorph.hasSuffix(idleMorphSuffix) {
             append(idleMorph,1)
         }
-        // Renderer v443 metadata-driven independent loops follow fixed
-        // mechanisms, but H70 doors and H51 cinematics are never autoplay.
+        // H71 ConfigureImportedAutoLoops462: each imported root owns at
+        // most one selected glTF loop, overlaid before metadata motions.
+        for loop in imported where eligibleMetadata(loop.name) {
+            append(loop.name,loop.speed)
+        }
+        // Renderer v443 metadata-driven independent loops run last.
+        // Never autoplay H70 doors, NPC525, H51, docking clamps or departure.
         for loop in metadata where eligibleMetadata(loop.name) {
             append(loop.name,loop.speed)
         }
