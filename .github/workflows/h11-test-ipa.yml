@@ -209,7 +209,7 @@ jobs:
           set -euo pipefail
           if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
           xcodegen generate --spec project.yml
-      - name: Resolve exact GLTFKit2 0.5.15 dependency (bounded HTTP 504 retry)
+      - name: Resolve exact GLTFKit2 0.5.15 dependency (repair partial SwiftPM artifact on retry)
         shell: bash
         run: |
           set -euo pipefail
@@ -221,6 +221,18 @@ jobs:
               -resolvePackageDependencies 2>&1 | tee "reports/resolve-$attempt.log"; then
               success=yes
               break
+            fi
+            # Xcode/SwiftPM may leave a partially-created binary artifact
+            # folder after an interrupted GitHub release download. Retrying
+            # without clearing ONLY that exact pinned GLTFKit2 v0.5.15
+            # artifact makes all 5 attempts fail with 'already exists'.
+            cache="$HOME/Library/Caches/org.swift.swiftpm/artifacts"
+            partial="$cache/https___github_com_warrenm_GLTFKit2_releases_download_0_5_15_GLTFKit2_xcframework_zip"
+            if grep -Fq 'already exists in file system' "reports/resolve-$attempt.log"; then
+              if [ -d "$partial" ] && [ -d "$cache" ]; then
+                echo "Remove ONLY incomplete GLTFKit2 0.5.15 SwiftPM artifact, preserve other caches"
+                rm -rf -- "$partial"
+              fi
             fi
             if [ "$attempt" -lt 5 ]; then sleep $((attempt * 7)); fi
           done
