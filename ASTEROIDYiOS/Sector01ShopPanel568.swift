@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// First-sector slice of Windows RendererW3Shop321 / Game.Price and Buy.
-/// All six displayed items update real verified Sector01Combat weapons,
-/// shield/lives or persistent profile; no imaginary late-game options.
+/// All six original PC shop slots affect real C279 weapons, upgrades,
+/// ion salvos, bombs, shield/lives and the same persistent profile.
 struct Sector01ShopPanel568:View {
     let onReturnAtlas:()->Void
     @State private var state=Sector01Shop568.load()
@@ -19,11 +19,11 @@ struct Sector01ShopPanel568:View {
                    "TRZY POCISKI · PIĘĆ NA MOCY III"
         case .power:
             return state.upgradeLevel>=3 ?
-                   "MOC III · MAX (PAKIETY JONOWE W OPRACOWANIU)" :
+                   "PAKIET JONOWY +100 SALW · JON \(state.ionAmmo) / 300 · +1 OBRAŻENIE" :
                    "MOC II / III · WIĘKSZA PRĘDKOŚĆ POCISKÓW"
         case .rapid:
             return state.rapidLevel>=2 ?
-                   "TEMPO II · MAX (BOMBY W OPRACOWANIU)" :
+                   "BOMBA +1 · MASZ \(state.bombs) / 3 · PRZYCISK W WALCE" :
                    "TEMPO OGNIA +15% / +30%"
         case .shield:
             return "ŁADUNKI \(state.shieldCharges) / 3 · 1 TRAFIENIE"
@@ -74,7 +74,7 @@ struct Sector01ShopPanel568:View {
                                 in:RoundedRectangle(cornerRadius:10))
                 }
                 HStack(spacing:12) {
-                    Text("BROŃ: \(state.weapon.shortLabel)")
+                    Text("BROŃ: \(state.weapon.shortLabel) · JON \(state.ionAmmo) · BOMBY \(state.bombs)")
                         .font(.system(size:11,weight:.bold,design:.monospaced))
                         .foregroundStyle(.cyan)
                     Button("PULSE") {
