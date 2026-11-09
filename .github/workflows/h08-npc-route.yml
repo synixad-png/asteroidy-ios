@@ -1,0 +1,40 @@
+name: H08 NPC current source snapshot and validation
+on:
+  push:
+    branches: [feature/ios-h55-v580-native-entry]
+    paths:
+      - '.github/workflows/h08-npc-route.yml'
+      - 'ASTEROIDYiOS/H55Mechanic580.swift'
+      - 'ASTEROIDYiOS/H55NpcSurface580.swift'
+      - 'ASTEROIDYiOS/H55NpcDetour580.swift'
+      - 'Tests/H55NpcRealRoute580Tests.swift'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-snapshot:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile existing NPC and geometry module
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -frontend -parse ASTEROIDYiOS/H55Mechanic580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55NpcSurface580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55NpcDetour580.swift
+      - uses: actions/upload-artifact@v4
+        with:
+          name: H08-CURRENT-REAL-SOURCE-SNAPSHOT
+          path: |
+            ASTEROIDYiOS/H55Mechanic580.swift
+            ASTEROIDYiOS/H55NpcSurface580.swift
+            ASTEROIDYiOS/H55NpcDetour580.swift
+            ASTEROIDYiOS/H55Airlocks580.swift
+            ASTEROIDYiOS/H55CollisionGeometry580.swift
+            ASTEROIDYiOS/H55SpatialSupport580.swift
+            ASTEROIDYiOS/H55TriangleBody580.swift
+            ASTEROIDYiOS/H55Entry580.swift
+            Tests/H55Mechanic580Tests.swift
+          if-no-files-found: error
+          retention-days: 2
