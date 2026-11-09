@@ -5,6 +5,9 @@ on:
     paths:
       - 'Tools/audit_h55_materials580.py'
       - 'Tests/H55H13MaterialAudit580Tests.py'
+      - 'ASTEROIDYiOS/H55H13MaterialReport580.swift'
+      - 'Tests/H55H13MaterialReport580Tests.swift'
+      - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - '.github/workflows/h13-material-metadata.yml'
   workflow_dispatch:
 permissions:
@@ -17,6 +20,27 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test GLB 2.0 material reading and non-mutating behavior
         run: python3 Tests/H55H13MaterialAudit580Tests.py
+      - name: Test iOS-compatible Swift material report in isolation
+        run: |
+          set -euo pipefail
+          swiftc -Onone ASTEROIDYiOS/H55H13MaterialReport580.swift Tests/H55H13MaterialReport580Tests.swift -o /tmp/h13-native-materials
+          /tmp/h13-native-materials
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          python3 - <<'PY'
+          from pathlib import Path
+          scene=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          assert 'let metadata=try H55Asset580.inspect(url)' in scene
+          assert 'H55H13MaterialReport580.inspect(url)' in scene
+          assert scene.index('H55Asset580.inspect(url)') < scene.index('H55H13MaterialReport580.inspect(url)') < scene.index('GLTFAsset.load(with:url')
+          assert 'ShareLink(item:loader.h13MaterialReport)' in scene
+          assert '.accessibilityIdentifier("h13-share-glb-report")' in scene
+          assert 'machinery?.advance(dt:dt)' in scene and 'updateAirlocks(dt:dt)' in scene
+          assert 'H55TouchControls580(' in scene
+          assert 'H55LightBalance580.budget' in scene
+          assert 'if loader.showingWorkshop {loader.closeWorkshop()}' in scene
+          assert 'if conversationOpen || showingWorkshop {moveForward=0;moveRight=0;return}' in scene
+          print('PASS H13 integration: background-only diagnostic after source authentication, manual sharing, protected H01-H12')
+          PY
       - name: Syntax and CLI interface
         run: |
           python3 -m py_compile Tools/audit_h55_materials580.py Tests/H55H13MaterialAudit580Tests.py
