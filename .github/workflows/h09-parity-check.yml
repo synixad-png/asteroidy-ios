@@ -1,0 +1,89 @@
+name: H09 PC580 original NPC525 80-bone/480-channel parity gate
+on:
+  push:
+    branches: [feature/ios-h55-v580-native-entry]
+    paths:
+      - 'ASTEROIDYiOS/H55NpcTracks580.swift'
+      - 'ASTEROIDYiOS/H55NpcMotion580.swift'
+      - 'ASTEROIDYiOS/H55NpcSceneAnimator580.swift'
+      - 'ASTEROIDYiOS/H55ScenePage580.swift'
+      - 'Tests/H55NpcTracks580Tests.swift'
+      - 'Tests/H55NpcMotion580Tests.swift'
+      - 'Tests/H55NpcH09RealPatrol580Tests.swift'
+      - '.github/workflows/h09-parity-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-h09-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile real 80 bone original GLB mocap and original 110kg physics tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/H55NpcTracks580.swift \
+            Tests/H55NpcTracks580Tests.swift -o /tmp/h09-rig-original-glb
+          swiftc -O ASTEROIDYiOS/H55NpcTracks580.swift \
+            ASTEROIDYiOS/H55NpcMotion580.swift \
+            Tests/H55NpcMotion580Tests.swift -o /tmp/h09-motion-original-glb
+          swiftc -O \
+            ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55NpcSurface580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            ASTEROIDYiOS/H55Airlocks580.swift \
+            ASTEROIDYiOS/H55NpcTracks580.swift \
+            ASTEROIDYiOS/H55NpcMotion580.swift \
+            Tests/H55NpcH09RealPatrol580Tests.swift -o /tmp/h09-original-glb-h08-integrated
+          swiftc -frontend -parse ASTEROIDYiOS/H55NpcSceneAnimator580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+      - name: Do not regress H08/H07 or enable concurrent autoplay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          scene=Path("ASTEROIDYiOS/H55ScenePage580.swift").read_text()
+          original=Path("ASTEROIDYiOS/H55NpcMotion580.swift").read_text()
+          feet=Path("ASTEROIDYiOS/H55NpcSceneAnimator580.swift").read_text()
+          assert "H55NpcTracks580.load(url)" in scene
+          assert "npcAnimator?.apply(dt:dt" in scene
+          assert "root.position=SCNVector3(mechanic.x,mechanic.y,mechanic.z)" in scene
+          assert "airlocks.blockingGate" in scene
+          assert "if name == H55Asset580.idleClip || name == H55Asset580.walkClip {return}" in scene
+          assert "mechanicMotionPlaying" not in scene
+          assert "walkCycleMeters:Float=4.01" in original
+          assert "blendSeconds:Float=0.25" in original
+          assert "bodyMass:Float=110" in original
+          assert "landingSpring:Float=18000" in original
+          assert "activeWalk=allowWalking && mechanic.phase == .walking && mechanic.moving" in feet
+          assert "for _ in 0..<10" in feet
+          assert "point(foot.calf" in feet and "point(foot.thigh" in feet
+          assert "floor.support(" in feet and "SCNTransaction.disableActions=true" in feet
+          print("PASS H09 code gates: source motion, IK and H08/H07 unchanged")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: H09-ORIGINAL-GLB-80-BONE-MOCAP-PHYSICS-IK-SOURCES
+          path: |
+            ASTEROIDYiOS/H55NpcTracks580.swift
+            ASTEROIDYiOS/H55NpcMotion580.swift
+            ASTEROIDYiOS/H55NpcSceneAnimator580.swift
+            ASTEROIDYiOS/H55ScenePage580.swift
+            ASTEROIDYiOS/H55Mechanic580.swift
+            ASTEROIDYiOS/H55NpcDetour580.swift
+            ASTEROIDYiOS/H55NpcSurface580.swift
+            ASTEROIDYiOS/H55CollisionGeometry580.swift
+            ASTEROIDYiOS/H55SpatialSupport580.swift
+            ASTEROIDYiOS/H55TriangleBody580.swift
+            ASTEROIDYiOS/H55Airlocks580.swift
+            Tests/H55NpcTracks580Tests.swift
+            Tests/H55NpcMotion580Tests.swift
+            Tests/H55NpcH09RealPatrol580Tests.swift
+          retention-days: 14
+          if-no-files-found: error
