@@ -33,7 +33,7 @@ import Foundation
         let suite="H11-PC580-tests-"+UUID().uuidString
         let defaults=UserDefaults(suiteName:suite)!
         defer {defaults.removePersistentDomain(forName:suite)}
-        check(H55Workshop580.loadVitals(defaults:defaults)==.init(),
+        check(H55Workshop580.loadVitals(defaults:defaults) == H55Workshop580.Vitals(),
               "missing profile always starts 60/25, no fake damage")
         var vitals=H55Workshop580.Vitals(hull:23,armor:7)
         var shop=Sector01Shop568.State()
@@ -99,12 +99,12 @@ import Foundation
               H55Workshop580.loadVitals(defaults:defaults).armor==3,
               "mission actually damages two persisted gauges")
         H55Workshop580.resetVitals(defaults:defaults)
-        check(H55Workshop580.loadVitals(defaults:defaults)==.init(),
+        check(H55Workshop580.loadVitals(defaults:defaults) == H55Workshop580.Vitals(),
               "PC new game clears damage")
         vitals.hull=-1
         check(!H55Workshop580.saveVitals(vitals,defaults:defaults),
               "cannot save corrupt negative hull")
-        check(H55Workshop580.loadVitals(defaults:defaults)==.init(),
+        check(H55Workshop580.loadVitals(defaults:defaults) == H55Workshop580.Vitals(),
               "invalid state never replaces legitimate profile")
         print("PASS H11 PC580: 6 tabs, 6 ships, 5 modules source prices, rank limits, 4-step talents, real shop wallet+guns+shield, repair and persistence, no fake transactions")
     }
