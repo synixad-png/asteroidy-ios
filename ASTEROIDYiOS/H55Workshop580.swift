@@ -114,34 +114,61 @@ enum H55Workshop580 {
         }
         return .changed("PASYWNA OSŁONA UZUPEŁNIONA")
     }
+    /// PC HubWeaponOwned90, HubEquip90, Game.Price/Buy at sector >=13.
     static func weaponOwned(_ id:Int,_ shop:Sector01Shop568.State)->Bool {
         switch id {
         case 0:return true
         case 1:return shop.twinOwned
         case 2:return shop.scatterOwned
-        default:return false // rail/swarm unported in playable C279
+        case 3:return shop.railOwned
+        case 4:return shop.swarmOwned
+        default:return false
         }
     }
-    static func selectWeapon(_ id:Int,
-               shop:inout Sector01Shop568.State)->Outcome {
-        guard (0...4).contains(id) else{return .unavailable("NIEZNANA BROŃ")}
-        guard Sector01Shop568.validate(shop) else {
-            return .unavailable("NIEPRAWIDŁOWY STAN PROFILU")
+    static func weaponPrice(_ id:Int,shop:Sector01Shop568.State)->Int? {
+        switch id {
+        case 0:return 0
+        case 1:return shop.price(.twin)
+        case 2:return shop.price(.scatter)
+        case 3:return shop.advancedPrice(.rail)
+        case 4:return shop.advancedPrice(.swarm)
+        default:return nil
         }
-        guard id<=2 else {
-            return .unavailable("BROŃ DOSTĘPNA W PC OD SEKTORA 13 · EFEKT NIEPRZENIESIONY DO iOS")
+    }
+    /// All purchases are transactional. Advanced weapons are from original
+    /// PC level >=13 shop, but existing owned guns can be re-equipped freely.
+    /// Old callers default to CARBONIS sector 01, without unlocking level13.
+    static func selectWeapon(_ id:Int,sector:Int=1,
+                    shop:inout Sector01Shop568.State)->Outcome {
+        guard let weapon=Sector01Shop568.Weapon(rawValue:id),
+              Sector01Shop568.validate(shop) else {
+            return .unavailable("NIEPRAWIDŁOWY STAN PROFILU LUB BRONI")
         }
-        let weapon=Sector01Shop568.Weapon(rawValue:id)!
-        if !weaponOwned(id,shop) {
-            let item:Sector01Shop568.Item = id==1 ? .twin : .scatter
-            guard shop.available(item),shop.tokens>=shop.price(item),
-                  shop.buy(item) else {
-                return .unavailable("BROŃ NIEDOSTĘPNA · SPRAWDŹ MISJE I ŻETONY")
+        var next=shop
+        if !weaponOwned(id,next) {
+            if id>=3 {
+                guard (13..<25).contains(sector) else {
+                    return .unavailable("BROŃ DOSTĘPNA OD SEKTORA 13")
+                }
+                guard next.buyAdvanced(weapon,sector:sector) else {
+                    return .unavailable("BROŃ NIEDOSTĘPNA · SPRAWDŹ ŻETONY")
+                }
+            } else if id>0 {
+                // PC HubEquip90 forbids buying old Twin/Scatter from sector13.
+                guard (1..<13).contains(sector) else {
+                    return .unavailable("BROŃ NIEDOSTĘPNA W TYM SEKTORZE")
+                }
+                let item:Sector01Shop568.Item = id==1 ? .twin : .scatter
+                guard next.available(item),next.tokens>=next.price(item),
+                      next.buy(item) else {
+                    return .unavailable("BROŃ NIEDOSTĘPNA · SPRAWDŹ ŻETONY")
+                }
             }
         }
-        guard shop.equip(weapon) else {
+        guard next.equip(weapon),Sector01Shop568.validate(next) else {
             return .unavailable("NIE UDAŁO SIĘ WYPOSAŻYĆ BRONI")
         }
+        shop=next
         return .changed("WYPOSAŻONO: "+weapons[id])
     }
     static func moduleCost(_ id:Int,rank:Int)->Int? {
