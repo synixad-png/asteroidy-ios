@@ -36,3 +36,11 @@ Kod PC source Windows v580 i kontrolne mechanizmy H01–H07 nie zostały zastąp
 
 ## 5. Następne w harmonogramie
 Po przejściu bramki H08 i dołączeniu raportu wydania: H09 — oryginalne klipy mechanika, Foot IK, fizyka 110kg/15 kości, blend i odtwarzanie animacji przez faktyczny dystans. H15 niezależnie potwierdza realne urządzenia i FPS.
+
+## 6. Zweryfikowane wydanie H08 dla iPhone/iPad
+- GitHub Actions 42569096340 (https://github.com/synixad-png/asteroidy-ios/actions/runs/42569096340) PASS: source H01–H08, oficjalna przypięta GLTFKit2 v0.5.15, natywna kompilacja ARM64, 13/13 zasobów Carbonis/W3, CRC IPA i raporty.
+- Commit gry/IPA: 06c29d80c611c5a672595e2194cd96f4e99d3bb6. Później tylko raporty i harmonogram, brak zmiany aplikacji.
+- IPA ASTEROIDY_v580_H08_MECHANIK_PELNY_PATROL_TEST_UNSIGNED.ipa: 29919699 B, SHA256 d90a7feb4d0326e1a50444aef3c60190248dfbd2d21ed843f44329a9aa214c56, zgodny z SHA256SUMS.txt z macOS. Lokalnie niezależnie: CRC PASS, 73 rekordy, 13/13 zasobów, Payload app/Info.plist, arm64, minimum iOS 17.0.
+- GitHub artifact id 13653230471 ZIP z tą samą IPA i raportami, rozmiar 29280114 B, CRC ZIP PASS.
+- Google Drive plik odczytany po zapisaniu: https://drive.google.com/file/d/1SUCpfb-3Kmnqw00MVNm9a79KGf1skGNx/view?usp=drivesdk, rozmiar 29280114 B.
+- Niepodpisane IPA; oryginalny hangar GLB wymaga importu z Plików iOS. Fizyczne sprawdzenie chodzenia NPC/SceneKit i Foot IK H09 nadal nieprzeprowadzone, H15 otwarty. Nie utożsamiać udanej kompilacji z odbiorem interaktywnym.
