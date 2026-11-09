@@ -1,0 +1,40 @@
+name: H11 PC580 shop profile source quick gate
+on:
+  push:
+    branches: [feature/ios-h55-v580-native-entry]
+    paths:
+      - 'ASTEROIDYiOS/H55Workshop580.swift'
+      - 'ASTEROIDYiOS/H55WorkshopPanel580.swift'
+      - 'ASTEROIDYiOS/H55ScenePage580.swift'
+      - 'Tests/H55Workshop580Tests.swift'
+      - '.github/workflows/h11-fast-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-original-service:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native pure Swift source PC v580 service and wallet transaction regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/Sector01Shop568.swift \
+            ASTEROIDYiOS/H55Workshop580.swift \
+            Tests/H55Workshop580Tests.swift -o /tmp/h11-source-operations
+          /tmp/h11-source-operations
+          swiftc -frontend -parse ASTEROIDYiOS/H55WorkshopPanel580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          python3 - <<'PY'
+          from pathlib import Path
+          scene=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          assert 'workshopInitialPanel=hypot(movement.x-9.4,movement.z-9.85)<3.55 ? 4 : 0' in scene
+          assert 'showingWorkshop ? 0 : moveForward' in scene
+          assert 'H55WorkshopPanel580(initialTab:loader.workshopInitialPanel' in scene
+          assert 'mechanic.step(dt:dt' in scene
+          assert 'npcAnimator?.apply(dt:dt' in scene
+          assert 'H55Workshop580.updateFromCombat(hull:hull,armor:armor)' in Path('ASTEROIDYiOS/App.swift').read_text()
+          print('PASS H11 original H55 source interaction and shared real C279 vitals')
+          PY
