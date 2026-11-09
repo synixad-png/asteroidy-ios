@@ -14,6 +14,7 @@ import simd
     @Published private(set) var phase: Phase = .missing
     @Published private(set) var scene: SCNScene?
     @Published private(set) var camera: SCNNode?
+    @Published private(set) var firstFramePresented=false
     @Published private(set) var animationNames: [String] = []
     @Published private(set) var playingClip: String?
     @Published private(set) var inventory: H55Asset580.Inventory?
@@ -116,6 +117,16 @@ import simd
     }
     func skipArrival() {arrival.skip()}
 
+    /// Three SCNView render passes must complete before visual arrival t=0.
+    /// GLB decode / scene attach is not proof that iOS has displayed a frame.
+    func firstRenderedFramesReady(for rendered:SCNScene) {
+        guard scene === rendered, !firstFramePresented,
+              case .ready = phase else{return}
+        firstFramePresented=true
+        H55LoadDiagnostics580.mark("12A_GPU_TRZY_KLATKI_GOTOWE_START_DOLLOTU")
+        beginClock()
+    }
+
     func pauseForSettings(_ pause:Bool) {
         guard pausedForSettings != pause else{return}
         pausedForSettings=pause
@@ -125,7 +136,7 @@ import simd
             clock?.invalidate()
             clock=nil
             lastTick=nil
-        } else if case .ready = phase {
+        } else if case .ready = phase,firstFramePresented {
             beginClock()
         }
     }
@@ -318,6 +329,7 @@ import simd
         H55LoadDiagnostics580.mark("01_START_WCZYTYWANIA_H55")
         lighting=H55LightingProfile580.saved()
         firstTickLogged=false
+        firstFramePresented=false
         generation=UUID()
         let request=generation
         clock?.invalidate()
@@ -611,10 +623,14 @@ import simd
         H55LoadDiagnostics580.mark("11_MATERIALY_GOTOWE_ATTACH_KONIEC")
         scene=realScene
         camera=pointOfView
+        firstFramePresented=false
         npcAnimator?.apply(dt:0,mechanic:mechanic,allowWalking:false)
         phase = .ready
         H55LoadDiagnostics580.mark("12_SCENA_GOTOWA_PRZED_PIERWSZYM_RENDEREM_GPU")
-        beginClock()
+        // No CADisplayLink here: GPU shader/texture warmup used to consume
+        // most of the 3.25s cinematic behind the initial pink frame.
+        // H55SceneViewport580 reports the first THREE complete renders.
+
         // The H12 source-clock compositor supersedes the former ambient
         // CAAnimation players. If a particular imported GLB lacks H12
         // clips, preserve the previously verified H11 ambient animation
@@ -738,6 +754,7 @@ import simd
         lightRefresh=0
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
+        firstFramePresented=false
         pausedForSettings=false
         firstTickLogged=false
         setMove(forward:0,right:0)
@@ -848,7 +865,7 @@ struct H55ScenePage580: View {
     private var topControls:some View {
         GeometryReader { viewport in
             if case .ready = loader.phase {
-                if !showingPause && !showingSettings {
+                if loader.firstFramePresented && !showingPause && !showingSettings {
                     Button("PAUZA") { showingPause=true }
                         .font(.system(size:13,weight:.semibold,design:.monospaced))
                         .foregroundStyle(.white)
@@ -985,10 +1002,13 @@ struct H55ScenePage580: View {
                     ZStack {
                         // SceneKit draws only. It MUST NOT eat the left/right
                         // drag gestures, otherwise H06 sees zero input.
-                        SceneView(scene:scene,pointOfView:camera,
-                                  options:[.rendersContinuously])
+                        H55SceneViewport580(scene:scene,pointOfView:camera,
+                            onFirstRenderedFrames:{ rendered in
+                                loader.firstRenderedFramesReady(for:rendered)
+                            })
                             .allowsHitTesting(false)
                             .accessibilityIdentifier("h55-v580-native-scenekit")
+                        if loader.firstFramePresented {
                         H55TouchControls580(
                             onWalk:{forward,right in
                                 loader.setMove(forward:forward,right:right)
@@ -1000,13 +1020,34 @@ struct H55ScenePage580: View {
                             conversationOpen:loader.conversationOpen,
                             mechanicStatus:loader.mechanicStatus
                         )
+                        }
 
                          if loader.showingWorkshop {
                             H55WorkshopPanel580(initialTab:loader.workshopInitialPanel,
                                                 onClose:{loader.closeWorkshop()})
                                 .zIndex(5)
                         }
-                        if loader.arriving { arrivalOverlay }
+                        if loader.arriving && loader.firstFramePresented { arrivalOverlay }
+                        if !loader.firstFramePresented {
+                            // Mask SceneKit's first GPU shader/texture uploads.
+                            // No arrival time is lost behind the startup screen.
+                            Color(red:0.005,green:0.019,blue:0.033)
+                                .ignoresSafeArea()
+                                .overlay {
+                                    VStack(spacing:9) {
+                                        ProgressView().tint(gold)
+                                        Text("PRZYGOTOWYWANIE OBRAZU HANGARU")
+                                            .font(.system(size:12,weight:.semibold,
+                                                design:.monospaced))
+                                            .foregroundStyle(gold)
+                                        Text("Dolot rozpocznie się po przygotowaniu GPU")
+                                            .font(.system(size:10,design:.monospaced))
+                                            .foregroundStyle(.white.opacity(0.7))
+                                    }
+                                }
+                                .accessibilityIdentifier("h55-gpu-first-frame-mask")
+                                .zIndex(9)
+                        }
                         if loader.conversationOpen { conversationOverlay }
 
                         if ProcessInfo.processInfo.environment["ASTEROIDY_DEBUG_MENU"] == "1" { debugOverlay }
