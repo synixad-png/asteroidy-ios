@@ -3,7 +3,7 @@ import Foundation
 /// PC v580 Windows/src/H55Renderer.cs NpcRouteX525/Z525, v530 workshop
 /// pause, v528 acceleration and v533/537 anatomical-forward yaw steering.
 /// Uses the original v532 player-avoidance A* from H55NpcDetour580.
-/// v529 Foot IK and v544 airlock animation/collision are not yet ported.
+/// H08 route/clearance are sourced from PC v580; H09 will own Foot IK.
 struct H55Mechanic580 {
     enum Phase:Equatable {case idle, walking, workshop, completed, blocked}
     static let routeX:[Float]=[
@@ -22,6 +22,9 @@ struct H55Mechanic580 {
     static let braking:Float=2.80
     var x:Float=9.9248
     var z:Float=12.155
+    private(set) var y:Float=0.1095
+    private var startY:Float=0.1095
+    private var originalFoot:Float=0.10
     private(set) var phase:Phase = .idle
     private(set) var goal=0
     private(set) var speed:Float=0
@@ -51,7 +54,17 @@ struct H55Mechanic580 {
     var isPatrolling:Bool {
         doorFailure == nil && (phase == .walking || phase == .blocked || phase == .workshop)
     }
-    var moving:Bool {phase == .walking && speed>0.01}
+    // Source mode=walk is driven by actual translation, not speed requested
+    // against a blocked player, geometry or door.
+    private(set) var movedThisFrame:Float=0
+    var moving:Bool {movedThisFrame>0.00001}
+
+    /// Source NPC root TRS and floor height are measured from authenticated
+    /// GLB and verified by H55NpcSurface580 preflight before scene activation.
+    mutating func configureSpawn(x:Float,y:Float,z:Float,foot:Float) {
+        self.x=x;self.y=y;self.z=z
+        startY=y;originalFoot=foot
+    }
 
     mutating func finishConversation() {
         // Source v526: merely approaching does not start a patrol.
@@ -75,9 +88,11 @@ struct H55Mechanic580 {
     /// emulated by an arbitrary shortcut.
     mutating func step(dt raw:Float,playerX:Float,playerZ:Float,
                        canWalk:(Float,Float)->Bool,
+                       groundAt:((Float,Float)->Float?)? = nil,
                        doorBlocking:(Float,Float,Float,Float)->Int? =
                          {_,_,_,_ in nil}) {
         let dt=min(0.07,max(0,raw))
+        movedThisFrame=0
         guard dt>0 && doorFailure == nil else{return}
         detourAge+=dt
         if phase == .idle {
@@ -89,6 +104,12 @@ struct H55Mechanic580 {
             pause=max(0,pause-dt)
             speed=max(0,speed-Self.braking*dt)
             if pause<=0 {phase = .walking}
+            return
+        }
+        if phase == .completed {
+            // PC v526 aligns GLB root back to original orientation.
+            let error=Self.wrap(-yaw)
+            yaw=Self.wrap(yaw+max(-2*dt,min(2*dt,error)))
             return
         }
         guard phase == .walking || phase == .blocked else{return}
@@ -122,7 +143,11 @@ struct H55Mechanic580 {
                 }
                 return
             }
-            if key {x=destX;z=destZ}
+            if key {
+                let endStep=hypot(destX-x,destZ-z)
+                x=destX;z=destZ;distance+=endStep;movedThisFrame=endStep
+                if let h=groundAt?(x,z) {y=startY+(h-originalFoot)}
+            }
             if goal == Self.workshopIndex {
                 pause=5
                 phase = .workshop
@@ -169,7 +194,15 @@ struct H55Mechanic580 {
         // movement segment BEFORE player A*/static walkability.
         let gate=doorBlocking(x,z,nx,nz)
         if !playerBlocked && gate == nil && canWalk(nx,nz) {
-            x=nx;z=nz;distance+=move
+            // Real original floor support drives NPC GLB root Y, rather
+            // than holding it at the initial 0.1095 throughout the route.
+            let ground:Float
+            if let groundAt {
+                guard let supported=groundAt(nx,nz) else{return}
+                ground=supported
+            } else {ground=originalFoot} // Legacy synthetic tests only.
+            x=nx;z=nz;y=startY+(ground-originalFoot)
+            distance+=move;movedThisFrame=move
             blockedFrames=0
             doorWait=0
             phase = .walking
