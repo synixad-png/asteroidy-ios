@@ -523,6 +523,38 @@ struct CarbonisCombat568 {
         }
     }
 
+    /// Physics68.Explosion68: radius 330, impulse 90. Applied BEFORE
+    /// damage and splitting, to the original live rocks, fighters and loot.
+    /// Normal zero-distance fallback matches Physics68.Unit68=(1,0).
+    private mutating func bombImpulse68() {
+        let center=flight.position
+        func deltaImpulse(_ position:Vec2,_ mass:Float)->Vec2? {
+            guard mass>0 else{return nil}
+            let d=Sphere67.delta(target:position,origin:center)
+            let dist=sqrt(d.lengthSquared)
+            guard dist<330 else{return nil}
+            let dir=dist>0.00001 ? d*(1/dist) : Vec2(x:1,y:0)
+            let raw=dir*(90*(1-dist/330)/mass)
+            return CarbonisBodyContact68.transported(
+                raw,from:center,to:position)
+        }
+        for i in rocks.indices {
+            if let impulse=deltaImpulse(rocks[i].position,rocks[i].mass) {
+                rocks[i].velocity=rocks[i].velocity+impulse
+            }
+        }
+        for i in shooters.indices {
+            if let impulse=deltaImpulse(shooters[i].core.position,2) {
+                shooters[i].velocity=shooters[i].velocity+impulse
+            }
+        }
+        for i in tokenPickups.indices {
+            if let impulse=deltaImpulse(tokenPickups[i].position,1) {
+                tokenPickups[i].velocity=tokenPickups[i].velocity+impulse
+            }
+        }
+    }
+
     /// PC v580 BossTunnelGame.UseBomb, surface/Sphere67 branch.
     /// A bomb can be used only with an active threat, costs one charge,
     /// cools down for 1.5s, damages every rock/fighter by 5, clears
@@ -538,6 +570,7 @@ struct CarbonisCombat568 {
         destruction.light(at:flight.position,kind:2,life:0.5)
         destruction.burst(at:flight.position,count:28,kind:2,
                           rng:&random)
+        bombImpulse68()
         for i in rocks.indices.reversed() {
             // Match original UseBomb: always damage the rocks existing
             // when the pulse was fired, never newly split child rocks.
