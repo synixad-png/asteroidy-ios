@@ -29,8 +29,8 @@ enum H55SourceMechanics580 {
             moduleRanks.allSatisfy{(0...2).contains($0)} &&
             (0...4).contains(rateRank) &&
             bossTrophies >= 0 && timeTrophies >= 0 &&
-            (bossTrophies & ~Self.bossMask)==0 &&
-            (timeTrophies & ~Self.timeMask)==0 &&
+            (bossTrophies & ~H55SourceMechanics580.bossMask)==0 &&
+            (timeTrophies & ~H55SourceMechanics580.timeMask)==0 &&
             (guardianOwned || guardianStrike==0 && guardianFocus==0)
         }
         var trophiesEarned:Int {
