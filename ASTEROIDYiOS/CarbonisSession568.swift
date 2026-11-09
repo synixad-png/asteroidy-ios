@@ -66,6 +66,8 @@ final class CarbonisSession568: ObservableObject {
             case .pulse: weaponName="IMPULS"
             case .twin: weaponName="PODWÓJNA"
             case .scatter: weaponName="WACHLARZ"
+            case .rail: weaponName="SZYNOWA"
+            case .swarm: weaponName="NAMIERZAJĄCE"
             }
             weaponLevel=game.upgradeLevel
             rapidLevel=game.rapidLevel
