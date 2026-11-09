@@ -160,9 +160,9 @@ struct GameView: View {
             seed:Int32.random(in:0...Int32.max),
             currentLives:freshShop.lives,startingLives:freshShop.lives,
             shopProfile:freshShop) else {return false}
+        // The source profile coordinator archives all H11 records and
+        // resets them together. Never reset them separately after create().
         guard SourceNewGame568.create(choice) else {return false}
-        H55Workshop580.resetVitals() // PC new game clears previous damage
-        H55SourceMechanics580.reset() // Source v580: clear owned ships, modules and trophies
         campaign=CampaignStore556.load()
         input.releaseHeldControls()
         input.gameplayPaused=true
