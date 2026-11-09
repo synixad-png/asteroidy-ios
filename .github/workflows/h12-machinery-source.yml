@@ -45,7 +45,8 @@ jobs:
           assert 'excludeImportedDroneRoots:' in scene
           assert 'func sample(_ t:Float,into output:inout [Float])' in tracks
           assert 'binding.track.sample(sample.at,into:&frameValues)' in anim
-          assert 'source.contains("drone") || source.contains("dron")' in tracks
+          assert 'origin.contains("drone") || origin.contains("dron")' in tracks
+          assert 'rootName.contains("drone") || rootName.contains("dron")' in tracks
           assert 'machinery=nil' in scene and 'h12Status="H12: BRAK ZGODNYCH' in scene
           assert 'machinery?.advance(dt:dt)' in scene
           assert scene.index('machinery?.advance(dt:dt)')<scene.index('updateAirlocks(dt:dt)')
