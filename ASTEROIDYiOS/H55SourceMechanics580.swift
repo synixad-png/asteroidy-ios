@@ -266,8 +266,7 @@ enum H55SourceMechanics580 {
         default:
             let interval:Float=weapon==2 ? 0.31 : weapon==1 ? 0.20:0.16
             let reduction:Float=weapon==2 ? 0.03:0.02
-            base=max(0.075,(interval-reduction*Float(upgrade-1))/
-                     (1+0.15*Float(rapid))*fireScale*talent)
+            base=max(0.075,(interval-reduction*Float(upgrade-1))/(1+0.15*Float(rapid))*fireScale*talent)
         }
         let withTalent:Float=weapon>=3 ? base*fireScale*talent : base
         return max(0.065,withTalent*(1-0.06*Float(cooling)))
