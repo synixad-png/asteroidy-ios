@@ -31,6 +31,9 @@ import simd
     private let bindings:[String:Part]
     private var active:Set<String>=[]
     private var time:Float=0
+    // Source GLB morph tracks contain at most 64 floats. Reuse a single
+    // buffer across all channels at every frame to avoid GC/ARC churn.
+    private var frameValues=[Float](repeating:0,count:64)
 
     init(library:H55H12Tracks580.Library,allNodes:[SCNNode],
          excludedAirlockNames:Set<String>,
@@ -118,20 +121,22 @@ import simd
             guard let part=bindings[sample.clip] else{continue}
             names.insert(part.clip)
             for binding in part.tracks {
-                let values=binding.track.sample(sample.at)
+                binding.track.sample(sample.at,into:&frameValues)
                 let node=poses[binding.pose].node
                 switch binding.track.path {
                 case .translation:
-                    node.simdPosition=SIMD3<Float>(values[0],values[1],values[2])
+                    node.simdPosition=SIMD3<Float>(
+                        frameValues[0],frameValues[1],frameValues[2])
                 case .rotation:
-                    node.simdOrientation=simd_quatf(
-                        vector:SIMD4<Float>(values[0],values[1],values[2],values[3]))
+                    node.simdOrientation=simd_quatf(vector:SIMD4<Float>(
+                        frameValues[0],frameValues[1],frameValues[2],frameValues[3]))
                 case .scale:
-                    node.simdScale=SIMD3<Float>(values[0],values[1],values[2])
+                    node.simdScale=SIMD3<Float>(
+                        frameValues[0],frameValues[1],frameValues[2])
                 case .weights:
                     if let morpher=node.morpher {
-                        for i in values.indices {
-                            morpher.setWeight(CGFloat(values[i]),forTargetAt:i)
+                        for i in 0..<binding.track.width {
+                            morpher.setWeight(CGFloat(frameValues[i]),forTargetAt:i)
                         }
                     }
                 }
