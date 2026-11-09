@@ -1,10 +1,22 @@
 import Foundation
 
 /// H13 diagnostic for the authenticated GLB already imported by H55Asset580.
-/// Reads only the JSON chunk once, off the display thread. It never changes
-/// scene nodes, geometry, materials, shaders or the original user file.
+/// Reads only the JSON chunk once, off the display thread. The scanner itself
+/// never changes scene nodes, geometry, shaders or the original user file.
 enum H55H13MaterialReport580 {
     enum Failure: Error { case invalidHeader, invalidDocument, invalidMaterials }
+
+    struct EmissionSource {
+        let index: Int
+        let name: String
+        let factor: [Float]
+        let strength: Float
+        let hasTexture: Bool
+        let uniqueName: Bool
+        var label: String {
+            "\(index): \(name) | strength=\(strength) | factor=\(factor) | texture=\(hasTexture) | unique=\(uniqueName)"
+        }
+    }
 
     struct Snapshot {
         let materialCount: Int
@@ -18,6 +30,8 @@ enum H55H13MaterialReport580 {
         let extensions: [String: Int]
         let transmissionOrVolume: [String]
         let issues: [String]
+        let emissive: [EmissionSource]
+        let clearcoat: [String]
 
         var text: String {
             var lines = [
@@ -36,6 +50,14 @@ enum H55H13MaterialReport580 {
             if !blended.isEmpty {
                 lines.append("Materiały BLEND (indeks: nazwa):")
                 lines.append(contentsOf: blended)
+            }
+            if !clearcoat.isEmpty {
+                lines.append("Materiały clearcoat (obsługa bazowa GLTFKit2):")
+                lines.append(contentsOf: clearcoat)
+            }
+            if !emissive.isEmpty {
+                lines.append("Materiały emissive_strength (wartości źródłowe GLB):")
+                lines.append(contentsOf: emissive.map { $0.label })
             }
             if !transmissionOrVolume.isEmpty {
                 lines.append("Materiały transmission/volume (do porównania wizualnego):")
@@ -88,6 +110,11 @@ enum H55H13MaterialReport580 {
         var opaque = 0, masked = 0, doubleSided = 0, baseColorTextured = 0
         var blended = [String](), transmissionOrVolume = [String](), issues = [String]()
         var extensions = [String: Int]()
+        var emissive = [EmissionSource]()
+        var clearcoat = [String]()
+        let names = materials.compactMap { $0["name"] as? String }
+        let namesCount = Dictionary(names.map { ($0, 1) },
+                                    uniquingKeysWith: +)
         for (index, material) in materials.enumerated() {
             let name = (material["name"] as? String).flatMap { $0.isEmpty ? nil : $0 }
                 ?? "material[\(index)]"
@@ -117,6 +144,32 @@ enum H55H13MaterialReport580 {
                     continue
                 }
                 for key in entry.keys { extensions[key, default: 0] += 1 }
+                if entry["KHR_materials_clearcoat"] != nil {
+                    clearcoat.append(label)
+                }
+                if let raw = entry["KHR_materials_emissive_strength"] {
+                    guard let value = raw as? [String: Any],
+                          let number = value["emissiveStrength"] as? NSNumber ?? NSNumber(value: 1),
+                          number.doubleValue.isFinite, number.doubleValue >= 0,
+                          number.doubleValue <= Double(Float.greatestFiniteMagnitude),
+                          let sourceName = material["name"] as? String,
+                          !sourceName.isEmpty else {
+                        issues.append("\(label): nieprawidłowe emissiveStrength lub brak nazwy")
+                        continue
+                    }
+                    let factorValues = (material["emissiveFactor"] as? [NSNumber]) ??
+                        [NSNumber(value: 0), NSNumber(value: 0), NSNumber(value: 0)]
+                    guard factorValues.count == 3,
+                          factorValues.allSatisfy({ $0.doubleValue.isFinite && $0.doubleValue >= 0 && $0.doubleValue <= 1 }) else {
+                        issues.append("\(label): nieprawidłowy emissiveFactor")
+                        continue
+                    }
+                    emissive.append(.init(index: index, name: sourceName,
+                        factor: factorValues.map { $0.floatValue },
+                        strength: number.floatValue,
+                        hasTexture: material["emissiveTexture"] is [String: Any],
+                        uniqueName: namesCount[sourceName] == 1))
+                }
                 if entry["KHR_materials_transmission"] != nil ||
                     entry["KHR_materials_volume"] != nil {
                     transmissionOrVolume.append(label)
@@ -129,6 +182,7 @@ enum H55H13MaterialReport580 {
                         imageCount: images, opaque: opaque, masked: masked,
                         blended: blended, doubleSided: doubleSided,
                         baseColorTextured: baseColorTextured, extensions: extensions,
-                        transmissionOrVolume: transmissionOrVolume, issues: issues)
+                        transmissionOrVolume: transmissionOrVolume, issues: issues,
+                        emissive: emissive, clearcoat: clearcoat)
     }
 }
