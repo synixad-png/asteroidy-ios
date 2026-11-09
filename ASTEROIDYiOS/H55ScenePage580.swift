@@ -39,6 +39,8 @@ import simd
     private var lastTick:CFTimeInterval?
     @Published private(set) var mechanicNearby=false
     @Published private(set) var conversationOpen=false
+    // H11 source Hub90.OpenHubPanel90: six native panels over active H55.
+    @Published private(set) var showingWorkshop=false
     @Published private(set) var conversationsFinished=0
     // H10 canonical source HubNpcInteract526 lifecycle; published flags mirror it.
     private var dialogue=H55NpcDialogue580()
@@ -51,23 +53,24 @@ import simd
     @Published private(set) var mechanicStatus="OCZEKUJE NA ROZMOWĘ"
 
     func jump() {
-        guard !conversationOpen && arrival.walking else{return}
+        guard !conversationOpen && !showingWorkshop && arrival.walking else{return}
         guard let physical else{return}
         _=movement.jump(collision:physical)
     }
     func setMove(forward:Float,right:Float) {
         // PC HubKey90 prioritizes open dialogue over all walking/jump input.
-        if conversationOpen {moveForward=0;moveRight=0;return}
+        if conversationOpen || showingWorkshop {moveForward=0;moveRight=0;return}
         moveForward=max(-1,min(1,forward))
         moveRight=max(-1,min(1,right))
     }
     func look(dx:Float,dy:Float) {
-        guard arrival.walking else{return}
+        guard arrival.walking && !showingWorkshop else{return}
         movement.look(deltaX:dx,deltaY:dy)
         camera?.eulerAngles=SCNVector3(H55TouchMapping580.scenePitch(for:movement.pitch),
                 H55TouchMapping580.sceneYaw(for:movement.yaw),0)
     }
     func interact() {
+        guard !showingWorkshop else{return}
         let action=dialogue.interact(walking:arrival.walking,
             playerX:movement.x,playerZ:movement.z,
             npcX:mechanic.x,npcZ:mechanic.z)
@@ -87,6 +90,15 @@ import simd
         }
     }
 
+    func openWorkshop() {
+        guard arrival.walking && !conversationOpen && !showingWorkshop else{return}
+        setMove(forward:0,right:0)
+        showingWorkshop=true
+    }
+    func closeWorkshop() {
+        showingWorkshop=false
+        setMove(forward:0,right:0)
+    }
     func skipArrival() {arrival.skip()}
 
     private func beginClock() {
@@ -108,7 +120,9 @@ import simd
         arrival.advance(dt:dt)
         if arriving && !arrival.arriving {arriving=false}
         if arrival.walking && !conversationOpen,let physical {
-        movement.step(dt:dt,forward:moveForward,right:moveRight,
+        movement.step(dt:dt,
+            forward:showingWorkshop ? 0 : moveForward,
+            right:showingWorkshop ? 0 : moveRight,
             sprint:false,collision:physical,
             doorBlocks:{ax,az,bx,bz in
                 self.airlocks.blockingGate(fromX:ax,fromZ:az,toX:bx,toZ:bz) != nil
@@ -260,6 +274,7 @@ import simd
         mechanicBaseOrientation=nil
         npcAnimator=nil
         mechanicStatus="OCZEKUJE NA ROZMOWĘ"
+        showingWorkshop=false
         dialogue.reset()
         conversationOpen=false
         conversationsFinished=0
@@ -551,6 +566,7 @@ import simd
         mechanicRoot=nil
         mechanicBaseOrientation=nil
         npcAnimator=nil
+        showingWorkshop=false
         dialogue.reset()
         conversationOpen=false
         conversationsFinished=0
@@ -613,6 +629,10 @@ struct H55ScenePage580: View {
                             mechanicStatus:loader.mechanicStatus
                         )
 
+                        if loader.showingWorkshop {
+                            H55WorkshopPanel580(onClose:{loader.closeWorkshop()})
+                                .zIndex(5)
+                        }
                         if loader.arriving {
                             VStack(spacing:9) {
                                 Text("H55 — PRZYLOT · 3,25 s")
@@ -671,15 +691,24 @@ struct H55ScenePage580: View {
             }
             VStack {
                 HStack {
-                    Button(loader.conversationOpen ? "‹ ZAMKNIJ ROZMOWĘ" : "‹ MENU") {
+                    Button(loader.showingWorkshop ? "‹ WRÓĆ DO HANGARU" :
+                           loader.conversationOpen ? "‹ ZAMKNIJ ROZMOWĘ" : "‹ MENU") {
                         // PC HubKey90 ESC first closes an active conversation.
-                        if loader.conversationOpen {loader.interact()}
+                        if loader.showingWorkshop {loader.closeWorkshop()}
+                        else if loader.conversationOpen {loader.interact()}
                         else {loader.close();dismiss()}
                     }
                     .padding(12)
                     .background(Color.black.opacity(0.82))
                     .accessibilityIdentifier("h55-v580-back")
                     Spacer()
+                    if case .ready = loader.phase {
+                        Button("STANOWISKA") {loader.openWorkshop()}
+                            .disabled(loader.arriving || loader.conversationOpen || loader.showingWorkshop)
+                            .padding(12)
+                            .background(Color.black.opacity(0.82))
+                            .accessibilityIdentifier("h11-open-stations")
+                    }
                 }
                 Spacer()
             }
