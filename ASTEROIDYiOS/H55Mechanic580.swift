@@ -49,6 +49,8 @@ struct H55Mechanic580 {
     private var blockedFrames=0
     private var detourAge:Float=999
     private(set) var detoursBuilt=0
+    private(set) var playerBlockedSeconds:Float=0
+    var avoidingPlayer:Bool {detourCursor<detour.count}
     private(set) var doorWait:Float=0
     private(set) var doorFailure:Int?=nil
     var isPatrolling:Bool {
@@ -78,6 +80,7 @@ struct H55Mechanic580 {
         detourCursor=0
         detourSkipTo = -1
         blockedFrames=0
+        playerBlockedSeconds=0
         detourAge=999
         doorWait=0
         doorFailure=nil
@@ -204,6 +207,7 @@ struct H55Mechanic580 {
             x=nx;z=nz;y=startY+(ground-originalFoot)
             distance+=move;movedThisFrame=move
             blockedFrames=0
+            playerBlockedSeconds=0
             doorWait=0
             phase = .walking
             return
@@ -221,6 +225,7 @@ struct H55Mechanic580 {
             return
         }
         if playerBlocked {
+            playerBlockedSeconds+=dt
             blockedFrames+=1
             // PC v532: only the player's capsule can trigger A*.
             // Static GLB/door collision never causes a speculative bypass.
