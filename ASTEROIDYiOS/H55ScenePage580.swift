@@ -775,6 +775,47 @@ struct H55ScenePage580: View {
                     renderedHangar(scene:scene,camera:camera)
                 }
             }
+            topControls
+            if showingSettings { settingsScreen }
+        }
+        .onAppear {
+            loader.setLighting(fill:lightingFill,red:lightingRed)
+            loader.openIfAvailable()
+        }
+        .onChange(of:lightingFill) { value in
+            loader.setLighting(fill:value,red:lightingRed)
+        }
+        .onChange(of:lightingRed) { value in
+            loader.setLighting(fill:lightingFill,red:value)
+        }
+        .onChange(of:showingSettings) { visible in
+            loader.pauseForSettings(visible)
+            if !visible {loader.setLighting(fill:lightingFill,red:lightingRed)}
+        }
+        .onDisappear {showingSettings=false;loader.close()}
+        .fileImporter(isPresented:$choosingFile,
+            allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data],
+            allowsMultipleSelection:false) { result in
+            do {
+                guard let url=try result.get().first else {return}
+                let stored=try H55Asset580.install(from:url)
+                loader.open(stored)
+            } catch {
+                importError=error.localizedDescription
+            }
+        }
+        .alert("NIE MOŻNA WCZYTAĆ SCENY",isPresented:Binding(
+            get:{importError != nil},
+            set:{if !$0 {importError=nil}})) {
+            Button("OK",role:.cancel) {importError=nil}
+        } message: {
+            Text(importError ?? "")
+        }
+        .accessibilityIdentifier("h55-v580-page")
+    }
+    /// Render layer is typechecked independently of navigation, file import,
+    /// menus and settings. Fixes Xcode SwiftUI generic typecheck timeout.
+    private var topControls:some View {
             VStack {
                 HStack {
                     Button(loader.showingWorkshop ? "‹ WRÓĆ DO HANGARU" :
@@ -814,7 +855,9 @@ struct H55ScenePage580: View {
             }
             .font(.system(size:14,weight:.bold,design:.monospaced))
             .foregroundStyle(gold)
-            if showingSettings {
+    }
+
+    private var settingsScreen:some View {
                 GeometryReader { frame in
                     VStack(spacing:0) {
                         HStack {
@@ -839,45 +882,8 @@ struct H55ScenePage580: View {
                 }
                 .zIndex(30)
                 .accessibilityIdentifier("h55-settings-fullscreen")
-            }
-        }
-        .onAppear {
-            loader.setLighting(fill:lightingFill,red:lightingRed)
-            loader.openIfAvailable()
-        }
-        .onChange(of:lightingFill) { value in
-            loader.setLighting(fill:value,red:lightingRed)
-        }
-        .onChange(of:lightingRed) { value in
-            loader.setLighting(fill:lightingFill,red:value)
-        }
-        .onChange(of:showingSettings) { visible in
-            loader.pauseForSettings(visible)
-            if !visible {loader.setLighting(fill:lightingFill,red:lightingRed)}
-        }
-        .onDisappear {showingSettings=false;loader.close()}
-        .fileImporter(isPresented:$choosingFile,
-            allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data],
-            allowsMultipleSelection:false) { result in
-            do {
-                guard let url=try result.get().first else {return}
-                let stored=try H55Asset580.install(from:url)
-                loader.open(stored)
-            } catch {
-                importError=error.localizedDescription
-            }
-        }
-        .alert("NIE MOŻNA WCZYTAĆ SCENY",isPresented:Binding(
-            get:{importError != nil},
-            set:{if !$0 {importError=nil}})) {
-            Button("OK",role:.cancel) {importError=nil}
-        } message: {
-            Text(importError ?? "")
-        }
-        .accessibilityIdentifier("h55-v580-page")
     }
-    /// Render layer is typechecked independently of navigation, file import,
-    /// menus and settings. Fixes Xcode SwiftUI generic typecheck timeout.
+
     private func renderedHangar(scene:SCNScene,camera:SCNNode)->some View {
                     ZStack {
                         // SceneKit draws only. It MUST NOT eat the left/right
