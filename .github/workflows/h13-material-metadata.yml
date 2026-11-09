@@ -1,0 +1,33 @@
+name: H13 iOS - glTF H55 material metadata read-only audit
+on:
+  push:
+    branches: [feature/ios-h55-v580-native-entry]
+    paths:
+      - 'Tools/audit_h55_materials580.py'
+      - 'Tests/H55H13MaterialAudit580Tests.py'
+      - '.github/workflows/h13-material-metadata.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-glb-metadata:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test GLB 2.0 material reading and non-mutating behavior
+        run: python3 Tests/H55H13MaterialAudit580Tests.py
+      - name: Syntax and CLI interface
+        run: |
+          python3 -m py_compile Tools/audit_h55_materials580.py Tests/H55H13MaterialAudit580Tests.py
+          python3 Tools/audit_h55_materials580.py --help
+      - name: Assert no H55 scene or protected source modifications in H13 audit
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('Tools/audit_h55_materials580.py').read_text()
+          assert 'path.open("rb")' in s
+          assert '.write_bytes(' not in s
+          assert 'GLTFKit2' not in s
+          print('PASS: read-only audit, no production scene modifications')
+          PY
