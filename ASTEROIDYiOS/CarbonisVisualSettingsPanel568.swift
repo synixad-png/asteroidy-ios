@@ -318,6 +318,11 @@ struct CarbonisVisualSettingsPanel568: View {
             }
             .font(.system(size:compact ? 9:11,weight:.semibold,design:.monospaced))
             .foregroundStyle(cyan)
+            Text(H55LoadDiagnostics580.report())
+                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .foregroundStyle(.white)
+                .textSelection(.enabled)
+                .accessibilityIdentifier("h55-settings-last-load-stage")
             Text("Raport pozostaje w pamięci urządzenia także po nieoczekiwanym zamknięciu aplikacji. Otwórz USTAWIENIA → HANGAR przed ponownym uruchomieniem sceny, aby go skopiować.")
                 .font(.system(size:compact ? 9:11,design:.monospaced))
                 .foregroundStyle(muted)
