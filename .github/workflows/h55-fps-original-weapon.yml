@@ -1,0 +1,54 @@
+name: H55 iOS original PC580 hands and EXP-01 first-person weapon source gate
+on:
+  push:
+    branches: [feature/ios-h55-v580-native-entry]
+    paths:
+      - 'ASTEROIDYiOS/H55FPSAssets580.swift'
+      - 'ASTEROIDYiOS/H55FPSPose580.swift'
+      - 'ASTEROIDYiOS/H55FPSScene580.swift'
+      - 'ASTEROIDYiOS/H55ScenePage580.swift'
+      - 'Tests/H55FPSPose580Tests.swift'
+      - '.github/workflows/h55-fps-original-weapon.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-original-fps:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source PC v580 exact pose and walk-sway fixture
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/H55FPSPose580.swift Tests/H55FPSPose580Tests.swift -o /tmp/fps-source580
+          /tmp/fps-source580
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSAssets580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSScene580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          python3 - <<'PY'
+          from pathlib import Path
+          assets=Path('ASTEROIDYiOS/H55FPSAssets580.swift').read_text()
+          scene=Path('ASTEROIDYiOS/H55FPSScene580.swift').read_text()
+          main=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          checks=[
+            ('gloves_parted.glb','8a494bbd9a3dd6eb70cb5e22a7db4da7ec33b069dc1b0bab36f6a1c5b4c257ca'),
+            ('gloves_combined.glb','643bfa2799535852362103fa4d24b84d712637d686e773403214400a31ae4516'),
+            ('EXP01_SOURCE_v601.glb','07403302f23cb81ce6c26501ca7361c646550c6f91e0a949ce81566553139762')]
+          for name,sha in checks:
+              assert name in assets and sha in assets, name
+          assert 'H55FPSAssets580.install(url,as:kind)' in main
+          assert 'H55FPSScene580(camera:pointOfView' in main
+          assert 'fpsViewmodel?.advance(time:arrival.time,walking:arrival.walking' in main
+          assert 'h55-fps-import-hands' in main and 'h55-fps-import-weapon' in main
+          assert 'h55-fps-show-hands' in main and 'h55-fps-show-weapon' in main
+          assert 'source.nodes.filter{$0.geometry != nil}' in scene
+          assert 'source.defaultScene' in scene and 'protectMaterials' in scene
+          assert 'camera.addChildNode(fpsRoot)' in scene
+          assert 'fpsRoot.isHidden = !walking' in scene
+          assert 'SceneKit' in scene and 'GLTFKit2' in scene
+          assert 'SCNSphere' not in scene and 'SCNBox' not in scene and 'SCNCapsule' not in scene
+          assert 'GLOVES v417' not in scene
+          assert 'gloves_combined' in assets
+          print('PASS PC580 immutable glTF original checks and single camera-space native FPS layer')
+          PY
