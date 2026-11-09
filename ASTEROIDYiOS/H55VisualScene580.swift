@@ -28,10 +28,14 @@ import UIKit
                 if pane {
                     // PC Glass548 defaults: ALPHA=.05, TINT=.20,
                     // REFLECTION=.75, TEXTURE=false. Frames stay opaque.
-                    material.lightingModel = .physicallyBased
-                    material.diffuse.contents=UIColor(red:0.965,green:0.99,blue:1,alpha:1)
-                    material.metalness.contents=0.0
-                    material.roughness.contents=0.19
+                    // Windows Glass548: source pane alpha 5%. PBR glass
+                    // reflects SceneKit's neutral fill as opaque grey.
+                    // Transmit the separately rendered IntroSky background.
+                    material.lightingModel = .constant
+                    material.diffuse.contents=UIColor(red:0.68,green:0.86,
+                                                     blue:1,alpha:0.05)
+                    material.emission.contents=UIColor.clear
+                    material.reflective.contents=UIColor.clear
                     material.transparency=0.05
                     material.blendMode = .alpha
                     material.isDoubleSided=true
