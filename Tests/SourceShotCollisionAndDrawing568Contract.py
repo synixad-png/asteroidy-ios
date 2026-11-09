@@ -10,6 +10,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 read=lambda p:(root/p).read_text()
 physics=read("ASTEROIDYiOS/CarbonisCombat568.swift")
+source_rules=read("ASTEROIDYiOS/H55SourceMechanics580.swift")
 projectiles=read("ASTEROIDYiOS/CarbonisProjectileFX69.swift")
 renderer=read("ASTEROIDYiOS/Sector01CarbonisPreview568.swift")
 settings=read("ASTEROIDYiOS/CarbonisIOSFXBudget568.swift")
@@ -27,13 +28,21 @@ for token in (
     "Self.projectedHit71(",
     "CombatCollision556.segmentHit(",
     "moved.point=Sphere67.advance(",
-    "let base:Float=selectedWeapon == .scatter ? 0.31",
-    "cooldown=max(0.075,",
+    "let interval=H55SourceMechanics580.shotInterval(",
+    "cooldown=interval",
     "let speed=610+Float(upgradeLevel-1)*95",
 ):
     assert token in physics,token
-# Static source probabilities: only pure pretest changes, no new
-# gameplay setting, cooldown, damage, orbital movement or shot cap.
+# Static broadphase contract: exact PC580 shot cadence was moved into a
+# shared source-only module, tested numerically in H55SourceMechanics580Tests.
+# Hit geometry, orbital movement and shot cap remain unchanged.
+for token in ("static func shotInterval(weapon:Int",
+              "let interval:Float=weapon==2 ? 0.31 : weapon==1 ? 0.20:0.16",
+              "let reduction:Float=weapon==2 ? 0.03:0.02",
+              "return max(0.065,withTalent*(1-0.06*Float(cooling)))"):
+    assert token in source_rules,token
+assert "rateRank:sourceMechanics.rateRank" in physics
+assert "cooling:sourceMechanics.cooling" in physics
 assert "let gate=ShotSweepGate568(shot:shot,dt:dt)" in physics
 assert physics.count("let gate=ShotSweepGate568(shot:shot,dt:dt)")==2
 assert "public var" not in physics.split("struct ShotSweepGate568",1)[1].split("}",1)[0]
@@ -68,7 +77,7 @@ assert "CarbonisProjectileFX69.indexedGroundLights(" in renderer
 assert "projectileMeshMs:" in renderer
 assert "projectilesReduced ? [2] : [0,1,2,3]" in settings
 assert "Original hits preserved:" in tests
-print("PASS original Pulse/Twin/Scatter source hit/cooldown and geodesic motion untouched")
+print("PASS original Pulse/Twin/Scatter hit geometry + PC580 source-driven cooldown, geodesic motion untouched")
 print("PASS original Combat69 projectile shader geometry; no blanket FX quality reduction")
 print("PASS optimized iOS shooter CPU path shared by iPhone and iPad")
 print("LIMIT true iOS FPS needs physical Apple GPU measurement")
