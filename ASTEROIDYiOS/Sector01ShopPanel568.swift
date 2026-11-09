@@ -74,10 +74,7 @@ struct Sector01ShopPanel568:View {
                                 in:RoundedRectangle(cornerRadius:10))
                 }
                 HStack(spacing:12) {
-                    Text("BROŃ: \(state.weapon == .pulse ? "PULSE" :
-                                    state.weapon == .twin ? "TWIN" :
-                                    state.weapon == .scatter ? "SCATTER" :
-                                    state.weapon == .rail ? "RAIL" : "SWARM")")
+                    Text("BROŃ: \(state.weapon.shortLabel)")
                         .font(.system(size:11,weight:.bold,design:.monospaced))
                         .foregroundStyle(.cyan)
                     Button("PULSE") {
