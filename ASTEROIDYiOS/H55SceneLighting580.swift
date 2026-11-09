@@ -1,53 +1,25 @@
 import SceneKit
 import UIKit
 
-/// H13 iOS-only non-red fill for GLTFKit2 PBR hangar surfaces.
-/// One tiny shared cubemap is created once; no art/GLB edits, no per-frame
-/// texture creation and no lights attached to animated source nodes.
+/// H13-A safe fallback only. Source PC v580 renders its own GLSL lights
+/// (H55Renderer.cs); it does not construct SceneKit PBR cubemaps.
+/// Building an IBL from UIImage during a 126 MB GLB import is intentionally
+/// DISABLED after a physical-device loading crash report.
 @MainActor enum H55SceneLighting580 {
     static let fillNodeName="H55_IOS_NEUTRAL_FILL"
 
-    // Apple SceneKit accepts a single vertical 1x6 cube strip.
-    // Same one small UIImage for all H55 load cycles; intentionally neutral.
-    private static let neutralCube:UIImage = {
-        let format=UIGraphicsImageRendererFormat()
-        format.opaque=true
-        format.scale=1
-        let width:CGFloat=8
-        let colors:[UIColor]=[
-            UIColor(red:0.80,green:0.84,blue:0.91,alpha:1), // +X
-            UIColor(red:0.80,green:0.84,blue:0.91,alpha:1), // -X
-            UIColor(red:0.88,green:0.92,blue:0.99,alpha:1), // +Y
-            UIColor(red:0.53,green:0.57,blue:0.63,alpha:1), // -Y
-            UIColor(red:0.81,green:0.85,blue:0.93,alpha:1), // +Z
-            UIColor(red:0.81,green:0.85,blue:0.93,alpha:1)  // -Z
-        ]
-        return UIGraphicsImageRenderer(size:CGSize(width:width,height:width*6),
-                                      format:format).image { context in
-            for (index,color) in colors.enumerated() {
-                color.setFill()
-                context.fill(CGRect(x:0,y:CGFloat(index)*width,
-                                    width:width,height:width))
-            }
-        }
-    }()
-
     static func install(into scene:SCNScene,profile:H55LightingProfile580) {
-        // Preserve a genuine authored IBL if one exists in the imported scene.
-        if scene.lightingEnvironment.contents == nil {
-            scene.lightingEnvironment.contents=neutralCube
-        }
+        // Do not assign scene.lightingEnvironment.contents, generate a
+        // cubemap or force shader compilation at attach time.
         if scene.rootNode.childNode(withName:fillNodeName,recursively:false)==nil {
-            // IBL illuminates PBR; one modest white/cool directional source
-            // also covers non-PBR Blinn surfaces. No extra source H46 proxies.
-            let light=SCNLight()
-            light.name=fillNodeName
-            light.type = .directional
-            light.color=UIColor(red:0.88,green:0.92,blue:1,alpha:1)
-            light.castsShadow=false
+            let lamp=SCNLight()
+            lamp.name=fillNodeName
+            lamp.type = .directional
+            lamp.color=UIColor(red:0.88,green:0.92,blue:1,alpha:1)
+            lamp.castsShadow=false
             let node=SCNNode()
             node.name=fillNodeName
-            node.light=light
+            node.light=lamp
             node.eulerAngles=SCNVector3(-0.75,0.45,0)
             scene.rootNode.addChildNode(node)
         }
@@ -55,11 +27,11 @@ import UIKit
     }
 
     static func update(scene:SCNScene,profile:H55LightingProfile580) {
-        // SceneKit IBL intensity is bounded to 0...1.
-        scene.lightingEnvironment.intensity=CGFloat(profile.fill)
-        if let light=scene.rootNode.childNode(
-                withName:fillNodeName,recursively:false)?.light {
-            light.intensity=CGFloat(profile.fill)*950
+        // Conservative temporary SceneKit-only fill until H13-B ports the
+        // original six-light and albedo*0.24 GLSL model. Not PC luminance.
+        if let lamp=scene.rootNode.childNode(
+              withName:fillNodeName,recursively:false)?.light {
+            lamp.intensity=CGFloat(profile.fill)*750
         }
     }
 }
