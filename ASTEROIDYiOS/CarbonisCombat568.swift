@@ -684,8 +684,8 @@ struct CarbonisCombat568 {
         }
     }
 
-    /// Game.Fire / ShotIntervalBase97: real first-level shop weapons,
-    /// including relative Twin barrels, Scatter fan, high-power pierce.
+    /// PC v580 Game.Fire / ShotIntervalBase97. Four post-13 weapons use
+    /// the same real damage/swept-contact pipeline as the original Pulse.
     private mutating func fireSourceWeapon() {
         guard let interval=H55SourceMechanics580.shotInterval(
             weapon:selectedWeapon.rawValue,upgrade:upgradeLevel,
@@ -693,18 +693,20 @@ struct CarbonisCombat568 {
             rateRank:sourceMechanics.rateRank,
             cooling:sourceMechanics.cooling) else {return}
         cooldown=interval
-        // Original Game.Fire -> ShotEvents once per trigger.
-        emitOriginalAudio568(selectedWeapon == .twin ? 11 :
-                             selectedWeapon == .scatter ? 12 : 10)
-        let count=selectedWeapon == .twin ? 2 :
+        // MusicAudio.cs CombatSound.Shot(weapon) = 10 + source enum ID.
+        emitOriginalAudio568(10+selectedWeapon.rawValue)
+        let count=selectedWeapon == .swarm ? 3 :
+                  selectedWeapon == .twin ? 2 :
                   selectedWeapon == .scatter
                     ? (upgradeLevel==3 ? 5:3) : 1
         let direction=Vec2(x:cos(flight.heading),
                            y:sin(flight.heading))
         let side=Vec2(x:-direction.y,y:direction.x)
         for index in 0..<count {
-            let offset:Float=selectedWeapon == .scatter ?
-                (Float(index)-Float(count-1)*0.5)*0.16 : 0
+            let offset:Float=selectedWeapon == .swarm
+                ? Float(index-1)*0.18 :
+                selectedWeapon == .scatter
+                    ? (Float(index)-Float(count-1)*0.5)*0.16 : 0
             let angle=flight.heading+offset
             let heading=Vec2(x:cos(angle),y:sin(angle))
             var origin=Sphere67.offset(flight.position,by:direction*20)
@@ -713,19 +715,55 @@ struct CarbonisCombat568 {
                     by:side*(index==0 ? -9:9))
             }
             let speed=610+Float(upgradeLevel-1)*95
-            let raw=heading*speed+flight.velocity
+            let raw=selectedWeapon == .rail
+                ? direction*1050+flight.velocity
+                : heading*speed+flight.velocity
             let velocity=CarbonisBodyContact68.transported(
                 raw,from:flight.position,to:origin)
-            let damage=selectedWeapon == .pulse && upgradeLevel==3 ? 2 : 1
-            let pierce=upgradeLevel==3 &&
-                (selectedWeapon != .scatter || index==count/2) ? 2:1
+            let damage=selectedWeapon == .rail ? 4 :
+                selectedWeapon == .pulse && upgradeLevel==3 ? 2 : 1
+            let pierce=selectedWeapon == .rail ? 4 :
+                upgradeLevel==3 &&
+                    (selectedWeapon != .scatter || index==count/2) ? 2:1
             bullets.append(Projectile(
-                point:origin,velocity:velocity,life:1.1,
-                hostile:false,
-                kind:selectedWeapon == .twin ? 1 :
-                     selectedWeapon == .scatter ? 2:0,
+                point:origin,velocity:velocity,
+                life:selectedWeapon == .swarm ? 1.8 :
+                     selectedWeapon == .rail ? 1.05 : 1.1,
+                hostile:false,kind:selectedWeapon.rawValue,
                 damage:damage,pierce:pierce))
         }
+    }
+
+    /// Original Windows/src/BossTunnelGame.cs GuideSwarm: source
+    /// target priority rocks -> enemy fighters (no robot in sector01).
+    /// The projectile changes REAL velocity before its swept collision.
+    /// PC intentionally does not re-normalize the blended velocity.
+    private static func guidedSwarmVelocity(
+        shot:Projectile,dt:Float,rocks:[SphereAsteroid556],
+        shooters:[Shooter])->Vec2 {
+        guard shot.kind==4 else{return shot.velocity}
+        var nearest:Float=420
+        var delta=Vec2(x:0,y:0)
+        var found=false
+        for rock in rocks {
+            let d=Sphere67.delta(target:rock.position,origin:shot.point)
+            let distance=sqrt(d.lengthSquared)
+            if distance<nearest {
+                delta=d;nearest=distance;found=true
+            }
+        }
+        for shooter in shooters {
+            let d=Sphere67.delta(target:shooter.core.position,origin:shot.point)
+            let distance=sqrt(d.lengthSquared)
+            if distance<nearest {
+                delta=d;nearest=distance;found=true
+            }
+        }
+        guard found,nearest>0.01 else{return shot.velocity}
+        let speed=sqrt(shot.velocity.lengthSquared)
+        let desired=delta*(speed/nearest)
+        let t=min(1,dt*4)
+        return shot.velocity*(1-t)+desired*t
     }
 
     /// Source Physics68.cs:77 ImpactRock68: Pulse transfers momentum and
@@ -804,6 +842,12 @@ struct CarbonisCombat568 {
 
     private mutating func stepShots(dt:Float) {
         for i in bullets.indices.reversed() {
+            // Source GuideSwarm in BossTunnelGame.cs; no target clones or
+            // new memory allocations in this per-frame update.
+            if bullets[i].kind==4 && !bullets[i].guardian298 {
+                bullets[i].velocity=Self.guidedSwarmVelocity(
+                    shot:bullets[i],dt:dt,rocks:rocks,shooters:shooters)
+            }
             // Source GuideGuardianPlasma298 runs before each collision sweep.
             // This changes actual velocities, not just a rendered trail.
             if bullets[i].guardian298 {
@@ -815,6 +859,7 @@ struct CarbonisCombat568 {
             let shot=bullets[i]
             let gate=ShotSweepGate568(shot:shot,dt:dt)
             var impact=false
+            var advancedShooterHit=false
             // The source selects the earliest projected hit on a shooter,
             // then permits it only if NO rock intersects earlier.
             var shooterIndex:Int?=nil
@@ -847,6 +892,7 @@ struct CarbonisCombat568 {
                     shooters[j].velocity=shooters[j].velocity+recoil
                     shooters[j].core.hp-=shot.damage
                     impact=true
+                    advancedShooterHit=shot.kind==3 || shot.kind==4
                     bullets[i].hitShooterPhases.append(shooters[j].phase)
                     // BossTunnelGame.HitBug: exact 6 sparks + 3/22 burst,
                     // physical 11-part debris only on fatal hit.
@@ -918,7 +964,9 @@ struct CarbonisCombat568 {
                 }
             }
             if impact {
-                if bullets[i].pierce<=1 {
+                // PC HitBug consumes a Rail/Swarm bullet even with rock
+                // piercing remaining. Rock piercing itself is unchanged.
+                if advancedShooterHit || bullets[i].pierce<=1 {
                     bullets.remove(at:i)
                     continue
                 }
