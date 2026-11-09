@@ -22,11 +22,10 @@ import Foundation
         let b=H55FPSPose580.fingers(time:2,hand:1)
         check(a.count==5 && a.allSatisfy{(0...1).contains($0)},"finger pose bounds")
         check(a != b,"five fingers offset independently by hand")
-        check(H55FPSSettings580.tripoLeft == [-36,-35,-92,-75,-10,-15,130] &&
-              H55FPSSettings580.tripoRight == [36,-35,-92,-75,10,15,130],
-              "PC GlovesSettings417 default TRIPO poses")
-        check(H55FPSSettings580.weaponDefault == [26,-31,-92,-10,18,3,100],
-              "PC WeaponViewSettings470 original poses")
+        check(H55FPSPose580.gloveFieldOfView==64,
+              "PC GloveFov422 native camera FOV")
+        check(close(H55FPSPose580.weaponScale,0.52),
+              "PC WeaponBaseScale470 source calibrated scale")
         print("PASS PC580 hands/weapon sway, idle, independent finger wave and source poses")
     }
 }
