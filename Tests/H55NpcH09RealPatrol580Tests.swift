@@ -70,7 +70,7 @@ import Foundation
                     maxAngularError=max(maxAngularError,delta)
                 }
                 check(surface.ground(x:worker.x,z:worker.z) != nil &&
-                      p.bodyClear379(worker.x,feet:surface.foot,z:worker.z),
+                      p.bodyClear379(worker.x,feet:surface.foot,worker.z),
                       "valid source GLB floor and physical collision")
             }
             if worker.phase == .workshop {
