@@ -30,11 +30,19 @@ import Foundation
             ["name":"HL_Workshop_Part"],
             ["name":"NPC525_Character"],
             ["name":"H70_Door"],
-            ["name":"H39_Lamp"],
+            ["name":"H39_Lamp",
+             "extras":["ANIMATION_LOOP":[
+                 "H39_NODE_META_LOOP","H51_03_INVALID_AUTOPLAY",
+                 "H70_HANGAR_AIRLOCK_SLIDING_DOORS_8S",
+                 "NPC525_Walk","UNKNOWN_GLTF_CLIP"],
+                 "ANIMATION_SPEED":2.0]],
             ["name":"HL_Import_Drone","children":[7],
              "extras":["hangarLabImported":true,
                        "hangarLabImportName":"drone for service"]],
-            ["name":"HL_Drone_Rotor"]
+            ["name":"HL_Drone_Rotor"],
+            ["name":"ORPHAN_Node_Not_In_Scene",
+             "extras":["ANIMATION_LOOP":"H39_ORPHAN_META_LOOP",
+                       "ANIMATION_SPEED":2.0]]
         ]
         var bin=Data()
         var accessors=[[String:Any]]()
@@ -119,6 +127,8 @@ import Foundation
             Spec("HL_TOOL_LOOP",7,2),
             Spec("HL_TOOL_OTHER",8,2),
             Spec("H39_META_LOOP",8,5,true),
+            Spec("H39_NODE_META_LOOP",9,5),
+            Spec("H39_ORPHAN_META_LOOP",8,8),
             Spec("HL_DRONE_LOOP",6,7),
             Spec("H39_DRONE_META_LOOP",4,7,true),
             Spec("NPC525_Walk",2.375,3),
@@ -131,7 +141,7 @@ import Foundation
         // but the active H12 scene MUST exclude user-deferred drone loops.
         let withDrones=try H55H12Tracks580.load(url)
         check(withDrones.imported.count==2 &&
-              withDrones.metadata.count==2 &&
+              withDrones.metadata.count==3 &&
               withDrones.clips["HL_DRONE_LOOP"] != nil,
               "legacy authored H71 loops retained for future opt-in")
         let lib=try H55H12Tracks580.load(
@@ -139,22 +149,26 @@ import Foundation
         check(lib.imported.count==1 &&
               lib.imported[0].name=="HL_TOOL_LOOP",
               "one source-ranked LOOP per imported root, not IDLE/OTHER")
-        check(lib.metadata.count==1 &&
+        check(lib.metadata.count==2 &&
               lib.metadata[0].name=="H39_META_LOOP" &&
-              lib.metadata[0].speed==1.5,
-              "explicit authored metadata loop speed retained")
+              lib.metadata[0].speed==1.5 &&
+              lib.metadata[1].name=="H39_NODE_META_LOOP" &&
+              lib.metadata[1].speed==2.0,
+              "PC v580: animation extras plus active node extras loops, in source order")
         check(lib.clips["HL_DRONE_LOOP"] == nil &&
               lib.clips["H39_DRONE_META_LOOP"] == nil,
               "deferred drones cannot animate even through metadata GLB loops")
         check(lib.morphIdle=="H39_Idle_Natural_24s_NO_ARMS",
               "natural idle clip preserved but protected NPC bound separately")
-        check(lib.clips.count==9 &&
+        check(lib.clips.count==10 &&
+              lib.clips["H39_NODE_META_LOOP"] != nil &&
+              lib.clips["H39_ORPHAN_META_LOOP"] == nil &&
               lib.clips["HL_TOOL_IDLE"]==nil &&
               lib.clips["HL_TOOL_LOOP"] != nil &&
               lib.clips["NPC525_Walk"]==nil &&
               lib.clips["H70_HANGAR_AIRLOCK_SLIDING_DOORS_8S"]==nil &&
               lib.clips["H51_03_INVALID_AUTOPLAY"]==nil,
-              "parse exactly original six + idle + one import + metadata")
+              "parse six mechanisms, idle, imported root and both source metadata loops; reject orphan/protected extras")
         let raw=lib.clips[H55H12Timeline580.docking]!
         check(raw.tracks.count==1 && raw.tracks[0].times.count==2,
               "read original little-endian glTF accessor and two keyframes")
@@ -205,17 +219,19 @@ import Foundation
                   "120Hz quaternion trace must remain byte-equivalent with reusable buffer")
         }
         let frame=lib.frame(48)
-        check(frame.count==8 &&
+        check(frame.count==9 &&
               frame[0].clip==H55H12Timeline580.service &&
               frame[6].clip=="HL_TOOL_LOOP" &&
-              frame[7].clip=="H39_META_LOOP",
-              "source overlay order: H51, fixed, idle, imported auto, metadata")
+              frame[7].clip=="H39_META_LOOP" &&
+              frame[8].clip=="H39_NODE_META_LOOP" &&
+              abs(frame[8].at - 6)<0.001,
+              "source overlay: H51, fixed, imported, animation extras, node extras at 2x speed")
         let truncated=folder.appendingPathComponent("truncated.glb")
         var damaged=try Data(contentsOf:url)
         damaged.removeLast()
         try damaged.write(to:truncated,options:.atomic)
         check((try? H55H12Tracks580.load(truncated))==nil,
               "truncated GLB must never create synthesized animation")
-        print("PASS H12 source GLB2 parser: real FLOAT32 accessors and quaternion SLERP/STEP, 6 original durations, H51 key sampling, imported LOOP/IDLE priority, metadata speed, H70/NPC exclusions and corrupt file fail-safe")
+        print("PASS H12 GLB2: original authored floats, reusable SLERP/STEP, 12000-frame parity, node+animation metadata extras, deferred drone/orphan/protected filtering and corrupt file fail-safe")
     }
 }
