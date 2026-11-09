@@ -161,6 +161,7 @@ struct GameView: View {
             currentLives:freshShop.lives,startingLives:freshShop.lives,
             shopProfile:freshShop) else {return false}
         guard SourceNewGame568.create(choice) else {return false}
+        H55Workshop580.resetVitals() // PC new game clears previous damage
         campaign=CampaignStore556.load()
         input.releaseHeldControls()
         input.gameplayPaused=true
@@ -208,9 +209,12 @@ struct GameView: View {
                         _ = Sector01MissionSettlement568.commit(
                             report,campaign:&changed)
                         campaign=changed
-                    },onSurvivalChanged:{ lives,charges in
+                    },onSurvivalChanged:{ lives,charges,hull,armor in
                         Sector01Shop568.persistSurvival(
                             lives:lives,shieldCharges:charges)
+                        // H11: real C279 battle gauges, available for actual
+                        // H55 service/repair on return to hangar.
+                        H55Workshop580.updateFromCombat(hull:hull,armor:armor)
                     },onAudioEvent:{ code in
                         audio.sourceEffect(code)
                     },onEnginePower:{ power in
