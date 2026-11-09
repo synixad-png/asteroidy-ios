@@ -34,7 +34,8 @@ jobs:
           scene=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
           anim=Path('ASTEROIDYiOS/H55H12SceneAnimator580.swift').read_text()
           tracks=Path('ASTEROIDYiOS/H55H12Tracks580.swift').read_text()
-          assert 'let h12=try H55H12Tracks580.load(url)' in scene
+          assert 'let h12=try? H55H12Tracks580.load(url)' in scene
+          assert 'machinery=nil' in scene and 'h12Status="H12: BRAK ZGODNYCH' in scene
           assert 'machinery?.advance(dt:dt)' in scene
           assert scene.index('machinery?.advance(dt:dt)')<scene.index('updateAirlocks(dt:dt)')
           assert 'protectedNpcRoot:importedNpc' in scene
