@@ -6,6 +6,8 @@ on:
       - 'Tools/audit_h55_materials580.py'
       - 'Tests/H55H13MaterialAudit580Tests.py'
       - 'ASTEROIDYiOS/H55H13MaterialReport580.swift'
+      - 'ASTEROIDYiOS/H55H13EmissionRules580.swift'
+      - 'ASTEROIDYiOS/H55H13SceneMaterials580.swift'
       - 'Tests/H55H13MaterialReport580Tests.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - '.github/workflows/h13-material-metadata.yml'
@@ -23,14 +25,21 @@ jobs:
       - name: Test iOS-compatible Swift material report in isolation
         run: |
           set -euo pipefail
-          swiftc -Onone ASTEROIDYiOS/H55H13MaterialReport580.swift Tests/H55H13MaterialReport580Tests.swift -o /tmp/h13-native-materials
+          swiftc -Onone ASTEROIDYiOS/H55H13MaterialReport580.swift ASTEROIDYiOS/H55H13EmissionRules580.swift Tests/H55H13MaterialReport580Tests.swift -o /tmp/h13-native-materials
           /tmp/h13-native-materials
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55H13SceneMaterials580.swift
           python3 - <<'PY'
           from pathlib import Path
           scene=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
           assert 'let metadata=try H55Asset580.inspect(url)' in scene
           assert 'H55H13MaterialReport580.inspect(url)' in scene
+          assert 'H55H13SceneMaterials580.apply(' in scene
+          assert 'materialSnapshot:H55H13MaterialReport580.Snapshot?' in scene
+          assert scene.index('H55H13SceneMaterials580.apply(') < scene.index('scene=realScene')
+          assert 'H55H13EmissionRules580.gains(' in Path('ASTEROIDYiOS/H55H13SceneMaterials580.swift').read_text()
+          assert '_surface.emission.rgb *=' in Path('ASTEROIDYiOS/H55H13EmissionRules580.swift').read_text()
+          assert '.shaderModifiers = modifiers' not in Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
           assert scene.index('H55Asset580.inspect(url)') < scene.index('H55H13MaterialReport580.inspect(url)') < scene.index('GLTFAsset.load(with:url')
           assert 'ShareLink(item:loader.h13MaterialReport)' in scene
           assert '.accessibilityIdentifier("h13-share-glb-report")' in scene
@@ -45,7 +54,8 @@ jobs:
         run: |
           python3 -m py_compile Tools/audit_h55_materials580.py Tests/H55H13MaterialAudit580Tests.py
           python3 Tools/audit_h55_materials580.py --help
-      - name: Assert no H55 scene or protected source modifications in H13 audit
+      - name: Assert diagnostic GLB reader is read-only (runtime patch only in SceneKit)
+
         run: |
           python3 - <<'PY'
           from pathlib import Path
