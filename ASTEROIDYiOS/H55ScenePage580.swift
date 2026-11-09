@@ -56,6 +56,7 @@ import simd
     private var droneScene:H55DroneScene580?
     @Published private(set) var h71Status="H71: ODŁOŻONE DO PÓŹNIEJSZEGO ETAPU"
     @Published private(set) var h12Status="NIE WCZYTANO ANIMACJI H12"
+    @Published private(set) var h13MaterialReport="H13: ORYGINALNY GLB NIE WCZYTANY"
     @Published private(set) var mechanicStatus="OCZEKUJE NA ROZMOWĘ"
 
     func jump() {
@@ -297,6 +298,7 @@ import simd
         droneScene=nil
         h71Status="H71: ODŁOŻONE DO PÓŹNIEJSZEGO ETAPU"
         h12Status="NIE WCZYTANO ANIMACJI H12"
+        h13MaterialReport="H13: ORYGINALNY GLB NIE WCZYTANY"
         mechanicStatus="OCZEKUJE NA ROZMOWĘ"
         showingWorkshop=false
         dialogue.reset()
@@ -323,6 +325,11 @@ import simd
                 // H70 tracks are from the same SHA-verified GLB as collision.
                 let airlockKeys=try H55AirlockTracks580.load(from:url)
                 let npcRig=try H55NpcTracks580.load(url)
+                // H13 inspects the already authenticated GLB off the display thread.
+                // Diagnostic failure does not block entry, NPC or H12.
+                let materialReport:String
+                do {materialReport=try H55H13MaterialReport580.inspect(url).text}
+                catch {materialReport="H13: ODCZYT METADANYCH NIEUDANY — "+String(describing:error)}
                 // H12 must not regress H01–H11: an incomplete imported
                 // animation library disables H12 alone, not the hangar.
                 let h12=try? H55H12Tracks580.load(
@@ -346,7 +353,8 @@ import simd
                                         npcSurface:npcSurface,npcRig:npcRig,
                                         machineryLibrary:h12,
                                         droneSpawns:droneSpawns,
-                                        droneNavigation:droneNavigation)
+                                        droneNavigation:droneNavigation,
+                                        materialReport:materialReport)
                         }
                     } else if status == .error {
                         DispatchQueue.main.async { [weak self] in
@@ -373,7 +381,8 @@ import simd
                         npcRig:H55NpcTracks580.Rig,
                          machineryLibrary:H55H12Tracks580.Library?,
                          droneSpawns:[H55DroneImports580.Spawn],
-                         droneNavigation:H55DroneNavigation580?) {
+                         droneNavigation:H55DroneNavigation580?,
+                         materialReport:String) {
         guard let realScene=source.defaultScene else {
             phase = .failed("Plik nie zawiera sceny 3D.")
             return
@@ -500,6 +509,7 @@ import simd
             clips[$0] != nil && !H55AirlockController580.clipNames.contains($0)
         }
         self.inventory=inventory
+        h13MaterialReport=materialReport
         scene=realScene
         camera=pointOfView
         npcAnimator?.apply(dt:0,mechanic:mechanic,allowWalking:false)
@@ -797,6 +807,14 @@ struct H55ScenePage580: View {
                     .accessibilityIdentifier("h55-v580-back")
                     Spacer()
                     if case .ready = loader.phase {
+                        // Share only after an explicit tap, never automatically.
+                        ShareLink(item:loader.h13MaterialReport) {
+                            Text("RAPORT H13")
+                        }
+                        .disabled(loader.arriving || loader.conversationOpen || loader.showingWorkshop)
+                        .padding(8)
+                        .background(Color.black.opacity(0.82))
+                        .accessibilityIdentifier("h13-share-glb-report")
                         Button("STANOWISKA") {loader.openWorkshop()}
                             .disabled(loader.arriving || loader.conversationOpen || loader.showingWorkshop)
                             .padding(12)
