@@ -57,12 +57,17 @@ struct CarbonisCombat568 {
     var cooldown:Float = 0
     var hull:Int=60
     var armor:Int=25
+    // PC Talents78: these remain the source of truth for respawn/repair.
+    var maxHull:Int=60,maxArmor:Int=25
     var lives:Int=3
     var shieldCharges:Int=0
     let difficulty:CombatBalance556.Difficulty
     let selectedWeapon:Sector01Shop568.Weapon
     let upgradeLevel:Int
     let rapidLevel:Int
+    // PC580 Modules97/Talents78 independent of future ship GLB assets.
+    let sourceMechanics:H55SourceMechanics580.State
+    var guardianCharges:Int=0
     var score:Int=0
     var collectedLootTokens:Int=0
     // Source Game.Tokens: mission HUD begins with real persisted wallet.
@@ -105,6 +110,9 @@ struct CarbonisCombat568 {
         invincible=prepared.reset.invincibleSeconds
         difficulty=prepared.difficulty
         let profile=prepared.shopProfile
+        let upgrades=H55SourceMechanics580.load()
+        sourceMechanics=upgrades
+        guardianCharges=upgrades.guardianOwned ? 1 : 0
         startingTokens=profile.tokens
         selectedWeapon=profile.weapon
         upgradeLevel=profile.upgradeLevel
@@ -116,6 +124,8 @@ struct CarbonisCombat568 {
         let saved=H55Workshop580.loadVitals()
         hull=saved.hull>0 ? saved.hull : saved.maxHull
         armor=saved.armor
+        maxHull=saved.maxHull
+        maxArmor=saved.maxArmor
     }
     static func unit(_ a:Vec2)->Vec2 {
         let n=sqrt(a.lengthSquared)
@@ -130,9 +140,15 @@ struct CarbonisCombat568 {
         return CombatCollision556.segmentHit(delta:delta,
                   travel:projectile.velocity*dt,radius:radius) <= 1
     }
-    mutating func suffer(_ damage:Int) {
+    mutating func suffer(_ damage:Int,hostileProjectile:Bool=false) {
         guard phase == .playing && invincible<=0 else{return}
         lastContactCount += 1
+        // Source Game.Damage(): guardian intercept is BEFORE tarcza/shield.
+        if guardianCharges>0 {
+            guardianCharges-=1
+            invincible=1.2
+            return
+        }
         // BossTunnelGame.HitByBoss original purchased shield intercept:
         // 1 charge, one second immunity, no armor/hull damage.
         if shieldCharges>0 {
@@ -140,9 +156,15 @@ struct CarbonisCombat568 {
             invincible=1
             return
         }
-        let blocked=min(armor,damage)
+        // Modules97.DampenerRank97 only applies to hostile projectile,
+        // never asteroid/body contacts. Preserve source minimum damage 1.
+        let received=hostileProjectile
+            ? H55SourceMechanics580.hostileShotDamage(
+                damage,dampener:sourceMechanics.dampener)
+            : damage
+        let blocked=min(armor,received)
         armor-=blocked
-        hull-=damage-blocked
+        hull-=received-blocked
         invincible=0.8
         if hull>0 {return}
         // Original Windows/src/Game.cs:190 Game.Damage: fatal hull loss
@@ -152,7 +174,7 @@ struct CarbonisCombat568 {
         lives-=1
         shieldCharges=0
         if lives<=0 {phase = .defeat; hull=0;return}
-        hull=60;armor=25;invincible=4.5
+        hull=maxHull;armor=maxArmor;invincible=4.5
         // Game.Damage: respawn keeps the original Vanguard and restores
         // its heading, movement damping, bank and aiming state.
         flight.position=Vec2(x:640,y:360)
@@ -265,14 +287,20 @@ struct CarbonisCombat568 {
                 tokenPickups.remove(at:i)
                 continue
             }
-            if distance<165 && distance>0.1 {
-                let attraction=delta*(dt*210/max(distance,0.1))
+            let attractionRadius=H55SourceMechanics580.collectorRadius(
+                rank:sourceMechanics.collector)
+            if distance<attractionRadius && distance>0.1 {
+                let sourceAcceleration=H55SourceMechanics580.collectorSpeed(
+                    rank:sourceMechanics.collector,spherical:true)
+                let attraction=delta*(dt*sourceAcceleration/max(distance,0.1))
                 item.velocity=item.velocity+attraction
             }
-            let drag:Float=distance<165 ? 1.4 : 0.18
+            let drag:Float=distance<attractionRadius ? 1.4 : 0.18
             item.velocity=item.velocity*exp(-dt*drag)
             let speed=sqrt(item.velocity.lengthSquared)
-            if speed>145 {item.velocity=item.velocity*(145/speed)}
+            let cap=H55SourceMechanics580.collectorSpeedCap(
+                rank:sourceMechanics.collector)
+            if speed>cap {item.velocity=item.velocity*(cap/speed)}
             item.position=Sphere67.advance(
                 item.position,velocity:&item.velocity,dt:dt)
             // Physics68.MovePickup68: token mass .15, radius 6, genuine
@@ -619,12 +647,12 @@ struct CarbonisCombat568 {
     /// Game.Fire / ShotIntervalBase97: real first-level shop weapons,
     /// including relative Twin barrels, Scatter fan, high-power pierce.
     private mutating func fireSourceWeapon() {
-        let base:Float=selectedWeapon == .scatter ? 0.31 :
-                         selectedWeapon == .twin ? 0.20 : 0.16
-        let reduction:Float=selectedWeapon == .scatter ? 0.03 : 0.02
-        cooldown=max(0.075,
-            (base-reduction*Float(upgradeLevel-1)) /
-            (1+Float(rapidLevel)*0.15))
+        guard let interval=H55SourceMechanics580.shotInterval(
+            weapon:selectedWeapon.rawValue,upgrade:upgradeLevel,
+            rapid:rapidLevel,shipType:sourceMechanics.selectedShip,
+            rateRank:sourceMechanics.rateRank,
+            cooling:sourceMechanics.cooling) else {return}
+        cooldown=interval
         // Original Game.Fire -> ShotEvents once per trigger.
         emitOriginalAudio568(selectedWeapon == .twin ? 11 :
                              selectedWeapon == .scatter ? 12 : 10)
@@ -858,7 +886,7 @@ struct CarbonisCombat568 {
             let gate=ShotSweepGate568(shot:shot,dt:dt)
             if gate.mayReach(flight.position,radius:11.2+4.5) &&
                Self.hit(shot,flight.position,radius:11.2+4.5,dt:dt) {
-                hostileShots.remove(at:i);suffer(shot.damage);continue
+                hostileShots.remove(at:i);suffer(shot.damage,hostileProjectile:true);continue
             }
             var moved=shot
             moved.point=Sphere67.advance(shot.point,velocity:&moved.velocity,dt:dt)
