@@ -55,7 +55,9 @@ import simd
             for track in clip.tracks {
                 guard let matches=names[track.nodeName],matches.count==1,
                       let node=matches.first else {
-                    throw matchesMissing(track.nodeName,names: names)
+                    throw (names[track.nodeName]?.count ?? 0)>1
+                        ? Failure.ambiguousNode(track.nodeName)
+                        : Failure.missingNode(track.nodeName)
                 }
                 // The PC compositor applies its own airlocks/NPC AFTER H51;
                 // on iOS those are owned by separate source-verified samplers.
@@ -90,11 +92,6 @@ import simd
         poses=snapshots
         bindings=resolved
     }
-    // Declared separately to keep error reporting stable for original GLB.
-    private func matchesMissing(_ name:String,names:[String:[SCNNode]])->Failure {
-        (names[name]?.count ?? 0)>1 ? .ambiguousNode(name) : .missingNode(name)
-    }
-
     func advance(dt:Float) {
         guard dt.isFinite,dt>=0 else{return}
         time+=dt
