@@ -69,7 +69,7 @@ import Foundation
         combat.rocks=[]
         combat.shooters=Array(combat.shooters.prefix(1))
         combat.shooters[0].core.position=Sphere67.offset(
-            combat.flight.position,by:Vec2(x:110,y:0))
+            combat.flight.position,by:Vec2(x:170,y:0))
         combat.invincible=10
         combat.step(move:stationary,aim:stationary,
                     shooting:false,dt:1/60)
@@ -86,7 +86,7 @@ import Foundation
         legacy.rocks=[]
         legacy.shooters=Array(legacy.shooters.prefix(1))
         legacy.shooters[0].core.position=Sphere67.offset(
-            legacy.flight.position,by:Vec2(x:110,y:0))
+            legacy.flight.position,by:Vec2(x:170,y:0))
         legacy.step(move:stationary,aim:stationary,
                     shooting:false,dt:1/60)
         check(legacy.bullets.isEmpty && legacy.guardianCharges==0,
