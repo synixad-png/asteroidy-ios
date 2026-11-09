@@ -116,8 +116,7 @@ struct H55WorkshopPanel580:View {
                             headline("06 / MODUŁY","MODYFIKACJE JEDNOSTKI PC v580")
                             ForEach(H55Workshop580.modules.indices,id:\.self){i in
                                 itemRow(H55Workshop580.modules[i],
-                                    detail:"POZIOM 0/2 · PC: \(H55Workshop580.moduleCost(i,rank:0) ?? 0) Ż · "+
-                                        H55Workshop580.moduleAvailability(i,sector:1),
+                                    detail:"POZIOM 0/2 · PC: \(H55Workshop580.moduleCost(i,rank:0) ?? 0) Ż · \(H55Workshop580.moduleAvailability(i,sector:1))",
                                     action:nil)
                             }
                         default:EmptyView()
