@@ -242,10 +242,8 @@ enum H55SourceMechanics580 {
         let t:[Float]=[1.12,1,0.84,0.55,0.42,miningDetached ? 1.35:0.35]
         let radius:[Float]=[0.94,1,1.08,1.12,1.30,miningDetached ? 0.65:1.46]
         let mass:[Float]=[2.4,3.4,5,6.2,10,miningDetached ? 1.5:12.5]
-        return ShipStats(acceleration:245*a[type]*(1+Float(engine)*0.06)*
-                            (1+Float(thruster)*0.045),
-                         topSpeed:390*s[type]*(1+Float(engine)*0.035)*
-                            (1+Float(thruster)*0.025),
+        return ShipStats(acceleration:245*a[type]*(1+Float(engine)*0.06)*(1+Float(thruster)*0.045),
+                         topSpeed:390*s[type]*(1+Float(engine)*0.035)*(1+Float(thruster)*0.025),
                          turnSpeed:3.8*t[type]*(1+Float(stabilizer)*0.04),
                          fireRateScale:type==0 ? 1.08 : type==2 ? 0.96:1,
                          contactRadius:11.2*radius[type],mass:mass[type])
