@@ -63,6 +63,35 @@ import Foundation
         check(H55SourceMechanics580.buyAndEquipShip(1,sector:1,state:&s,wallet:&wallet) == .changed &&
               wallet.tokens==720,"return to original Vanguard does not charge")
 
+        // No-model ships can be purchased today WITHOUT silently
+        // equipping them and rendering another GLB as the correct ship.
+        var pending=H55SourceMechanics580.State()
+        var credits=Sector01Shop568.State()
+        credits.award(1300)
+        check(H55SourceMechanics580.purchaseShipForLaterModel(
+            3,sector:12,state:&pending,wallet:&credits) == .unavailable &&
+            credits.tokens==1300 && pending.selectedShip==1,
+            "Vanguard X never sold before source sector13")
+        check(H55SourceMechanics580.purchaseShipForLaterModel(
+            3,sector:13,state:&pending,wallet:&credits) == .changed &&
+            pending.vanguardXOwned && pending.selectedShip==1 &&
+            credits.tokens==1060,
+            "Vanguard X bought, model still absent, genuine selected Vanguard preserved")
+        check(H55SourceMechanics580.purchaseShipForLaterModel(
+            4,sector:13,state:&pending,wallet:&credits) == .changed &&
+            pending.titanOwned && pending.selectedShip==1 && credits.tokens==640,
+            "TITAN purchased without substituting a visual mesh")
+        check(H55SourceMechanics580.purchaseShipForLaterModel(
+            5,sector:13,state:&pending,wallet:&credits) == .changed &&
+            pending.mammothOwned && pending.selectedShip==1 && credits.tokens==20,
+            "MAMMOTH purchased and stored without fake GLB")
+        check(H55SourceMechanics580.purchaseShipForLaterModel(
+            4,sector:13,state:&pending,wallet:&credits) == .unchanged &&
+            credits.tokens==20,"never charge for duplicate model-less purchase")
+        check(H55SourceMechanics580.save(pending,defaults:d) &&
+              H55SourceMechanics580.load(defaults:d)==pending,
+              "model-independent ship ownership survives reload")
+        H55SourceMechanics580.reset(defaults:d)
         var r=H55SourceMechanics580.State()
         var w=Sector01Shop568.State()
         w.award(4000)
