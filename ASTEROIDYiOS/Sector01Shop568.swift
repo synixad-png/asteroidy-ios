@@ -1,9 +1,9 @@
 import Foundation
 
-/// Windows v568 Game.cs:105-109, first post-CARBONIS service shop.
-/// Only items whose actual effects are implemented in Sector01Combat are
-/// purchasable. Ion ammo / bombs / modules remain unported, NOT silently
-/// offered as fake purchases or charged against a user's balance.
+/// Windows Game.cs v568/v580: canonical first-sector shop and PC v580
+/// sector-13 Rail/Swarm weapon ownership. Existing JSON profiles migrate
+/// without losing credits or weapons. Ion ammo/bombs remain explicitly
+/// unimplemented and must not be falsely sold.
 enum Sector01Shop568 {
     enum Weapon:Int,Codable,CaseIterable {
         case pulse=0,twin=1,scatter=2,rail=3,swarm=4
