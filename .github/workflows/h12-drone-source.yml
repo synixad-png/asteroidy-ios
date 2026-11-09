@@ -43,7 +43,9 @@ jobs:
           assert 'H55DroneScene580(' in scene
           assert 'droneScene.advance(dt:dt' in scene
           assert 'droneScene=nil' in scene
-          assert 'b.root.simdWorldTransform=delta*b.authoredWorld' in renderer
+          assert 'b.root.simdWorldTransform=delta*b.root.simdWorldTransform' in renderer
+          assert 'func restoreSourceRoots()' in renderer
+          assert scene.index('droneScene?.restoreSourceRoots()') < scene.index('machinery?.advance(dt:dt)') < scene.index('droneScene.advance(dt:dt')
           assert 'scene.rootNode.addChildNode(' not in renderer
           assert 'return H55DroneNavigation580' not in renderer
           assert 'let bridgeHeights' in nav
