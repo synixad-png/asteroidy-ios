@@ -152,21 +152,25 @@ struct H55WorkshopPanel580:View {
     }
 
     @ViewBuilder private func weaponsTab()->some View {
-                            headline("03 / UZBROJENIE","KONFIGURACJA BRONI")
-                            ForEach(H55Workshop580.weapons.indices,id:\.self){i in
-                                let owned=H55Workshop580.weaponOwned(i,wallet)
-                                let selected=wallet.weapon.rawValue==i
-                                let price=i==1 ? wallet.price(.twin) : i==2 ? wallet.price(.scatter) : 0
-                                itemRow(H55Workshop580.weapons[i],
-                                    detail:selected ? "AKTUALNIE ZAŁOŻONA" :
-                                        i>2 ? "PC: od sektora 13 · efekt iOS jeszcze niezaimplementowany" :
-                                        owned ? "POSIADANA · WYPOSAŻ BEZ OPŁAT" : "ZAKUP: \(price) ŻETONÓW",
-                                    action:i<=2 ? {
-                                        let result=H55Workshop580.selectWeapon(i,shop:&wallet)
-                                        notice=result.message
-                                        if result.success {Sector01Shop568.save(wallet)}
-                                    } : nil)
-                            }
+        headline("03 / UZBROJENIE","KONFIGURACJA BRONI · PC v580")
+        ForEach(H55Workshop580.weapons.indices,id:\.self){i in
+            let owned=H55Workshop580.weaponOwned(i,wallet)
+            let selected=wallet.weapon.rawValue==i
+            let price=H55Workshop580.weaponPrice(i,shop:wallet) ?? 0
+            let unlocked=owned || (i<3 ? sector<13 : sector>=13 && sector<25)
+            let description=selected ? "AKTUALNIE ZAŁOŻONA" :
+                owned ? "POSIADANA · WYPOSAŻ BEZ OPŁAT" :
+                !unlocked ? (i>=3 ? "ODBLOKUJ OD SEKTORA 13" :
+                              "ZAKUP DOSTĘPNY PRZED SEKTOREM 13") :
+                "ZAKUP: \(price) ŻETONÓW"
+            itemRow(H55Workshop580.weapons[i],detail:description,
+                    action:!selected && unlocked ? {
+                let result=H55Workshop580.selectWeapon(
+                    i,sector:sector,shop:&wallet)
+                notice=result.message
+                if result.success {Sector01Shop568.save(wallet)}
+            } : nil)
+        }
     }
 
     @ViewBuilder private func trophiesTab()->some View {
