@@ -40,6 +40,8 @@ import simd
     @Published private(set) var mechanicNearby=false
     @Published private(set) var conversationOpen=false
     @Published private(set) var conversationsFinished=0
+    // H10 canonical source HubNpcInteract526 lifecycle; published flags mirror it.
+    private var dialogue=H55NpcDialogue580()
     private var mechanic=H55Mechanic580()
     private weak var mechanicRoot:SCNNode?
     private var mechanicBaseOrientation:simd_quatf?
@@ -54,6 +56,8 @@ import simd
         _=movement.jump(collision:physical)
     }
     func setMove(forward:Float,right:Float) {
+        // PC HubKey90 prioritizes open dialogue over all walking/jump input.
+        if conversationOpen {moveForward=0;moveRight=0;return}
         moveForward=max(-1,min(1,forward))
         moveRight=max(-1,min(1,right))
     }
@@ -64,18 +68,23 @@ import simd
                 H55TouchMapping580.sceneYaw(for:movement.yaw),0)
     }
     func interact() {
-        guard arrival.walking else{return}
-        if conversationOpen {
+        let action=dialogue.interact(walking:arrival.walking,
+            playerX:movement.x,playerZ:movement.z,
+            npcX:mechanic.x,npcZ:mechanic.z)
+        switch action {
+        case .ignored: return
+        case .opened:
+            setMove(forward:0,right:0) // zero existing left drag before lock
+            conversationOpen=true
+            mechanicStatus=H55NpcDialogue580.openNotice
+        case .closed:
             conversationOpen=false
-            conversationsFinished+=1
+            conversationsFinished=dialogue.finished
+            // PC H55Renderer v526 arms exactly ONE patrol on completion;
+            // actual motion only starts once the player moves >2.5m away.
             mechanic.finishConversation()
             mechanicStatus="PATROL GOTOWY — ODDAL SIĘ"
-            return
         }
-        let distance=hypot(movement.x-mechanic.x,movement.z-mechanic.z)
-        guard distance<=2.7 else{return}
-        conversationOpen=true
-        setMove(forward:0,right:0)
     }
 
     func skipArrival() {arrival.skip()}
@@ -251,7 +260,9 @@ import simd
         mechanicBaseOrientation=nil
         npcAnimator=nil
         mechanicStatus="OCZEKUJE NA ROZMOWĘ"
+        dialogue.reset()
         conversationOpen=false
+        conversationsFinished=0
         mechanicNearby=false
         phase = .loading
         scene=nil
@@ -540,7 +551,9 @@ import simd
         mechanicRoot=nil
         mechanicBaseOrientation=nil
         npcAnimator=nil
+        dialogue.reset()
         conversationOpen=false
+        conversationsFinished=0
         generation=UUID()
         guard let scene else{return}
         for key in activeKeys {scene.rootNode.removeAnimation(forKey:key)}
@@ -616,7 +629,7 @@ struct H55ScenePage580: View {
                             VStack(spacing:9) {
                                 Text("MECHANIK")
                                     .font(.system(size:14,weight:.bold,design:.monospaced))
-                                Text("WSZYSTKO W PORZĄDKU.")
+                                Text(H55NpcDialogue580.spokenLine)
                                     .font(.system(size:12,design:.monospaced))
                                 Button("ZAKOŃCZ ROZMOWĘ") {loader.interact()}
                                     .accessibilityIdentifier("h55-v580-npc-end-dialogue")
@@ -658,9 +671,10 @@ struct H55ScenePage580: View {
             }
             VStack {
                 HStack {
-                    Button("‹ MENU") {
-                        loader.close()
-                        dismiss()
+                    Button(loader.conversationOpen ? "‹ ZAMKNIJ ROZMOWĘ" : "‹ MENU") {
+                        // PC HubKey90 ESC first closes an active conversation.
+                        if loader.conversationOpen {loader.interact()}
+                        else {loader.close();dismiss()}
                     }
                     .padding(12)
                     .background(Color.black.opacity(0.82))
