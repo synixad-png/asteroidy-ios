@@ -141,33 +141,23 @@ import simd
             }
             return !weaponRoot.childNodes.isEmpty
         }
-        if kind == .tripo {
-            let original=source.nodes.filter{$0.geometry != nil}
-            guard original.count>=20 else{return false}
-            // The original PC bake_gloves417.py selected X=-0.0002 and
-            // recentered each half by its authentic original source bounds.
-            // The 25 TRIPO mesh pieces each belong to exactly one hand.
-            let centres:[SIMD3<Float>]=[
-                SIMD3<Float>(-0.3280,0.1703,0.0680),
-                SIMD3<Float>( 0.3225,0.1799,0.0718)]
-            var parts=[0,0]
-            let two:[SCNNode]=[leftRoot,rightRoot]
-            for node in original {
-                let world=node.simdWorldTransform
-                let side=world.columns.3.x < -0.0002 ? 0 : 1
-                let copy=node.clone()
-                copy.simdTransform=world
-                copy.simdPosition-=centres[side]
-                protectMaterials(copy)
-                two[side].addChildNode(copy)
-                parts[side]+=1
-            }
-            return parts[0]>5 && parts[1]>5
+        // Source PC580 baked VBO splits each TRIANGLE, not whole GLB nodes.
+        // MONOLIT uses Y and reverses anatomical mapping. Reuse the
+        // existing vertex/normal/UV/material sources for both hands.
+        guard let split=try? H55FPSMeshSplit580.build(scene:scene,kind:kind)
+        else{return false}
+        leftRoot.childNodes.forEach{$0.removeFromParentNode()}
+        rightRoot.childNodes.forEach{$0.removeFromParentNode()}
+        for node in split.left {
+            protectMaterials(node)
+            leftRoot.addChildNode(node)
         }
-        // MONOLIT is not transformed into a fake procedural glove.
-        // Its single 201,804-triangle source mesh needs a separate
-        // original-Y triangle split and GPU finger rig integration.
-        return false
+        for node in split.right {
+            protectMaterials(node)
+            rightRoot.addChildNode(node)
+        }
+        inform("FPS: RĘCE \(kind.fileName): \(split.triangles) ORYGINALNYCH TRÓJKĄTÓW")
+        return true
     }
 
     private func orientation(_ x:Float,_ y:Float,_ z:Float)->simd_quatf {
