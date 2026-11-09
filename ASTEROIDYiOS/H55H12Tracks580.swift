@@ -348,6 +348,11 @@ enum H55H12Tracks580 {
                       samplerId>=0,samplerId<samplers.count else {
                     throw Failure.channel
                 }
+                // PC v580 H55Renderer.cs:392 disallows glTF TRS
+                // animation on a node authored with a matrix transform.
+                // Morph weights are the only permitted exception.
+                guard path == .weights || nodes[id]["matrix"] == nil
+                else{throw Failure.channel}
                 let key="\(id):\(path.rawValue)"
                 guard occupied.insert(key).inserted else{throw Failure.channel}
                 let sampler=samplers[samplerId]
