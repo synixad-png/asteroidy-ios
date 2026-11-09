@@ -97,7 +97,11 @@ struct CarbonisCombat568 {
     init(_ prepared:Sector01PreparedWave568) {
         var f=SphereFlight67()
         f.heading = -Float.pi/2
-        f.flight.configuration.cruiseSpeed=156  // Campaign37 TopSpeed 390 * Physics68 0.4
+        // H11: compute original Campaign37 source bonuses in ONE place.
+        // The existing FlightDynamics556 normalized response remains the
+        // iOS motion solver; control scales by PC acceleration ratio.
+        let upgrades=H55SourceMechanics580.load()
+        Self.applySourceShipStats(&f,source:upgrades)
         f.camera=SphereCamera67(at:f.position)
         flight=f
         rocks=prepared.encounter.rocks
@@ -110,7 +114,6 @@ struct CarbonisCombat568 {
         invincible=prepared.reset.invincibleSeconds
         difficulty=prepared.difficulty
         let profile=prepared.shopProfile
-        let upgrades=H55SourceMechanics580.load()
         sourceMechanics=upgrades
         guardianCharges=upgrades.guardianOwned ? 1 : 0
         startingTokens=profile.tokens
@@ -126,6 +129,21 @@ struct CarbonisCombat568 {
         armor=saved.armor
         maxHull=saved.maxHull
         maxArmor=saved.maxArmor
+    }
+    /// No parallel ship physics implementation: exact source multipliers
+    /// come from Campaign37 in H55SourceMechanics580.shipStats().
+    /// The current verified iOS mesh is VANGUARD; other GLBs will register
+    /// against their stable source IDs without changing these formulas.
+    private static func applySourceShipStats(
+        _ flight:inout SphereFlight67,
+        source:H55SourceMechanics580.State) {
+        guard let stats=H55SourceMechanics580.shipStats(
+            type:source.selectedShip,engine:source.engine,
+            stabilizer:source.stabilizer,thruster:source.thruster) else {return}
+        flight.flight.configuration.cruiseSpeed=stats.topSpeed * 0.40
+        flight.flight.configuration.control=stats.acceleration/245
+        flight.flight.configuration.stabilizerLevel=Float(source.stabilizer)
+        flight.flight.configuration.visualTurnRate=6.2*(stats.turnSpeed/3.8)
     }
     static func unit(_ a:Vec2)->Vec2 {
         let n=sqrt(a.lengthSquared)
@@ -181,7 +199,7 @@ struct CarbonisCombat568 {
         flight.velocity=Vec2(x:0,y:0)
         flight.heading = -Float.pi/2
         flight.flight=FlightDynamics556()
-        flight.flight.configuration.cruiseSpeed=156
+        Self.applySourceShipStats(&flight,source:sourceMechanics)
         flight.camera=SphereCamera67(at:flight.position)
         bullets.removeAll(keepingCapacity:true)
         // Original Game.Damage relocates every rock within 160 atlas
