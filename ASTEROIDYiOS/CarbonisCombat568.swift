@@ -26,6 +26,8 @@ struct CarbonisCombat568 {
         var pierce:Int = 1
         var hitRockSeeds:[Int] = []
         var hitShooterPhases:[Float] = []
+        // Game.cs Guardian298 plasma shares real player-bullet collisions.
+        var guardian298:Bool = false
     }
     struct Shooter {
         var core: MissionWave568.Fighter
@@ -68,6 +70,8 @@ struct CarbonisCombat568 {
     // PC580 Modules97/Talents78 independent of future ship GLB assets.
     let sourceMechanics:H55SourceMechanics580.State
     var guardianCharges:Int=0
+    // Independent source drone: orbit, acquisition and plasma, not a fake HUD.
+    var guardianDrone=CombatGuardianDrone298()
     var score:Int=0
     var collectedLootTokens:Int=0
     // Source Game.Tokens: mission HUD begins with real persisted wallet.
@@ -246,6 +250,20 @@ struct CarbonisCombat568 {
              objectivePosition:Vec2(x:640,y:420))
         rocks.append(contentsOf:additions)
         updateShooters(dt:dt)
+        // Game.Step: StepBugs -> StepGuardian298 before solids/player Fire.
+        // Damage-bearing Guardian plasma enters the SAME swept-hit pipeline.
+        if let plasma=guardianDrone.step(
+            dt:dt,elapsed:elapsed,ship:flight.position,
+            shipVelocity:flight.velocity,shooters:shooters,rocks:rocks,
+            owned:sourceMechanics.guardianOwned,
+            strike:sourceMechanics.guardianStrike,
+            focus:sourceMechanics.guardianFocus,
+            projectileCount:bullets.count) {
+            bullets.append(Projectile(
+                point:plasma.position,velocity:plasma.velocity,
+                life:plasma.life,hostile:false,kind:2,
+                damage:plasma.damage,pierce:1,guardian298:true))
+        }
         // Original Physics68.StepSolids68 order: all solid contacts
         // BEFORE the player's new bullets are fired.
         resolveWorldContacts()
@@ -786,6 +804,14 @@ struct CarbonisCombat568 {
 
     private mutating func stepShots(dt:Float) {
         for i in bullets.indices.reversed() {
+            // Source GuideGuardianPlasma298 runs before each collision sweep.
+            // This changes actual velocities, not just a rendered trail.
+            if bullets[i].guardian298 {
+                bullets[i].velocity=guardianDrone.guidedVelocity(
+                    at:bullets[i].point,velocity:bullets[i].velocity,dt:dt,
+                    ship:flight.position,shooters:shooters,rocks:rocks,
+                    focus:sourceMechanics.guardianFocus)
+            }
             let shot=bullets[i]
             let gate=ShotSweepGate568(shot:shot,dt:dt)
             var impact=false
