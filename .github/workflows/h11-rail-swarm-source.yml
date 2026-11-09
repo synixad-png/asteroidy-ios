@@ -13,6 +13,9 @@ on:
       - 'Tests/H11RailSwarm580Tests.swift'
       - 'Tests/H11Consumables580Tests.swift'
       - 'Tests/Sector01MissionFinish568Tests.swift'
+      - 'ASTEROIDYiOS/SourceNewGame568.swift'
+      - 'Tests/SourceNewGame568Tests.swift'
+      - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - '.github/workflows/h11-rail-swarm-source.yml'
   workflow_dispatch:
@@ -61,6 +64,12 @@ jobs:
           /tmp/h11-consumables-pc580
           swiftc "${sources[@]}" Tests/Sector01MissionFinish568Tests.swift -o /tmp/h11-shop-mission-pc580
           /tmp/h11-shop-mission-pc580
+          # A new game and restore must archive the ENTIRE H11 profile
+          # before mutating any active campaign state. Original source
+          # SaveManager61.ArchiveActiveProfile358 is the acceptance rule.
+          swiftc "${sources[@]}" ASTEROIDYiOS/SourceNewGame568.swift \
+            Tests/SourceNewGame568Tests.swift -o /tmp/h11-new-game-profile358
+          /tmp/h11-new-game-profile358
           swiftc -O \
             ASTEROIDYiOS/Sector01Shop568.swift \
             ASTEROIDYiOS/H55Workshop580.swift \
