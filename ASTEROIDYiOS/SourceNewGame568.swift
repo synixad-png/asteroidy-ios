@@ -28,6 +28,39 @@ enum SourceNewGame568 {
     ]
     private static let archiveFormat="Windows-v568-profile358"
 
+    struct ArchiveEntry:Identifiable {
+        let url:URL
+        let created:Date
+        var id:URL {url}
+    }
+
+    /// Present only real, readable profile snapshots from the app's own
+    /// backups61 directory. No manual-save files or foreign paths appear.
+    static func archives(backupDirectory:URL? = nil)->[ArchiveEntry] {
+        guard let directory=archiveDirectory(backupDirectory),
+              let urls=try? FileManager.default.contentsOfDirectory(
+                at:directory,includingPropertiesForKeys:nil,
+                options:[.skipsHiddenFiles]) else{return []}
+        return urls.compactMap { url -> ArchiveEntry? in
+            guard url.lastPathComponent.hasPrefix("active-"),
+                  url.pathExtension=="plist",
+                  let bytes=try? Data(contentsOf:url),
+                  let plist=try? PropertyListSerialization.propertyList(
+                    from:bytes,format:nil) as? [String:Any],
+                  plist["source"] as? String == archiveFormat,
+                  let snapshot=plist["profile"] as? [String:Any],
+                  !snapshot.isEmpty,
+                  Set(snapshot.keys).isSubset(of:Set(profileKeys)),
+                  let created=plist["savedAt"] as? Double,
+                  created.isFinite else{return nil}
+            return ArchiveEntry(url:url,created:Date(timeIntervalSince1970:created))
+        }.sorted {
+            $0.created==$1.created
+                ? $0.url.lastPathComponent>$1.url.lastPathComponent
+                : $0.created>$1.created
+        }
+    }
+
     private static func archiveDirectory(_ override:URL?)->URL? {
         override ?? FileManager.default.urls(
             for:.applicationSupportDirectory,
