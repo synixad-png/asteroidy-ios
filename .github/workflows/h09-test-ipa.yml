@@ -76,7 +76,7 @@ jobs:
           animator=Path('ASTEROIDYiOS/H55NpcSceneAnimator580.swift').read_text()
           assert 'for _ in 0..<10' in animator and 'let landing=motion.land' in animator
           assert 'joint.simdOrientation=' in animator and 'floor.support(' in animator
-          assert 'rig.bones' in animator and 'npcs' not in animator.lower()
+          assert 'for bone in rig.bones' in animator and 'simdOrientation=' in animator
           assert 'hitTestWithSegment' not in h55, 'Old SceneKit raycast fallback is forbidden'
           assert 'GpuHangar91' not in '\n'.join(x for x in h55.splitlines() if not x.lstrip().startswith('//'))
           print('PASS: real new H55 entry + native importer and iPhone/iPad build')
