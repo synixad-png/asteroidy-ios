@@ -52,7 +52,7 @@ enum H55FPSAssets580 {
               (info[.size] as? NSNumber)?.uint64Value==kind.bytes,
               let f=try? FileHandle(forReadingFrom:url) else{return false}
         defer{try? f.close()}
-        guard let header=try? f.read(upToCount:12),let header,
+        guard let header=try? f.read(upToCount:12),
               header.count==12,
               header.prefix(4)==Data([0x67,0x6c,0x54,0x46]),
               header[4]==2,header[5]==0,header[6]==0,header[7]==0 else{return false}
