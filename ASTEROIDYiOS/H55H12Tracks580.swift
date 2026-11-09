@@ -177,9 +177,10 @@ enum H55H12Tracks580 {
             let root=importRoot(id)
             guard root>=0 else{return false}
             let extra=object(nodes[root]["extras"])
-            let source=(str(extra["hangarLabImportName"]) ??
-                str(nodes[root]["name"]) ?? "").lowercased()
-            return source.contains("drone") || source.contains("dron")
+            let origin=(str(extra["hangarLabImportName"]) ?? "").lowercased()
+            let rootName=(str(nodes[root]["name"]) ?? "").lowercased()
+            return origin.contains("drone") || origin.contains("dron") ||
+                   rootName.contains("drone") || rootName.contains("dron")
         }
         // Keep any unrelated H39/ramps/lamps metadata, but never activate
         // the deferred H71 imported drone tracks (even by metadata).
