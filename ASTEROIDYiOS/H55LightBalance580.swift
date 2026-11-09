@@ -16,9 +16,16 @@ enum H55LightBalance580 {
     }
 
     static func selectedNames(_ candidates:[Candidate])->[String] {
-        let ranked=candidates.map { ($0.name,score($0.name,distanceSquared:$0.distanceSquared)) }
-            .filter { $0.1 > 0 }
-            .sorted { a,b in a.1 == b.1 ? a.0 < b.0 : a.1 > b.1 }
+        var ranked=[(name:String,weight:Float)]()
+        ranked.reserveCapacity(candidates.count)
+        for candidate in candidates {
+            let weight=score(candidate.name,distanceSquared:candidate.distanceSquared)
+            if weight>0 {ranked.append((name:candidate.name,weight:weight))}
+        }
+        ranked.sort { a,b in
+            if a.weight == b.weight {return a.name < b.name}
+            return a.weight > b.weight
+        }
         var selected=[String]()
         var seen=Set<String>()
         var red=0
