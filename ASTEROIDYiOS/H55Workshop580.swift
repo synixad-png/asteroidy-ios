@@ -95,7 +95,7 @@ enum H55Workshop580 {
                         shop:inout Sector01Shop568.State)->Outcome {
         guard (0...3).contains(id) else{return .unavailable("BRAK TAKIEGO SERWISU")}
         if id==3 {
-            return .unavailable("VANGUARD X: OD MISJI 13 — BRAK MODELU I FIZYKI W PORCIE iOS")
+            return .unavailable("VANGUARD X: ZAKUP W PANELU STATEK OD SEKTORA 13 · MODEL GLB PÓŹNIEJ")
         }
         guard vitals.valid && Sector01Shop568.validate(shop) else {
             return .unavailable("NIEPRAWIDŁOWY STAN PROFILU")
