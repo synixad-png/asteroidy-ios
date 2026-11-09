@@ -1,9 +1,9 @@
 import Foundation
 
-/// H11: only executable PC v580 Hub90/Game.Shop operations are enabled.
-/// The iOS first-sector combat owns the canonical wallet in Sector01Shop568;
-/// never issue tokens in a parallel "hangar profile" and never charge for
-/// modules/ships whose effects aren't yet part of the playable iOS engine.
+/// H11: source PC v580 Hub90/Game.Shop, with the one canonical wallet
+/// in Sector01Shop568. Purchase/equipment rules are independent from GLB:
+/// stateless model registration is separate and never substitutes another
+/// ship's mesh. No extra credits, placeholder guns or fake transactions.
 enum H55Workshop580 {
     static let tabs=["STATEK","DRZEWKO","UZBROJENIE","TROFEA","SERWIS","MODUŁY"]
     static let ships=["KESTREL","VANGUARD","BASTION","VANGUARD X","TITAN H-01","MAMMOTH T-06"]
