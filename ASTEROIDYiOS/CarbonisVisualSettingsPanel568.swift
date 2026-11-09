@@ -6,6 +6,16 @@ import SwiftUI
 /// same persisted rendering profile consumed by CARBONIS 01 GPU.
 struct CarbonisVisualSettingsPanel568: View {
     let compact:Bool
+    // W3 Windows Menu139.cs OptionTabs139[9] is HANGAR. Returning from
+    // full-screen H55 opens directly on the original category.
+    init(compact:Bool,initialTab:Int=11) {
+        self.compact=compact
+        _tab=State(initialValue:initialTab)
+    }
+
+    @AppStorage("ASTEROIDY_H55_ENV_FILL_580") private var h55Fill=0.80
+    @AppStorage("ASTEROIDY_H55_RED_GAIN_580") private var h55Red=0.10
+    @AppStorage("ASTEROIDY_H55_SAFE_MATERIALS_580") private var h55SafeShaders=true
 
     @State private var profile=CarbonisVisualSettings568.load()
     @State private var planetProfile=SourcePlanetGraphicsSettings568.load()
@@ -141,6 +151,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     switch tab {
                     case 0: sourceGraphicsPage
                     case 3: missionObjectSizePage580
+                    case 9: hangarPage580
                     case 11: explosionPage
                     case 16: projectilePage
                     case 1: OriginalAudioSettingsPanel568(compact:compact)
@@ -255,6 +266,67 @@ struct CarbonisVisualSettingsPanel568: View {
         }
         .accessibilityIdentifier("w3-v580-object-size-settings")
     }
+    // This is the one settings owner for H55. Source:
+    // Windows/src/Menu139.cs OptionGroups139[9] =
+    // [140,134..139,102,48..53]. Other original controls remain pending
+    // H13-B port rather than becoming decorative non-functional sliders.
+    private var hangarPage580:some View {
+        VStack(alignment:.leading,spacing:compact ? 9:14) {
+            header("HANGAR H55 / WINDOWS PC v580")
+            Text("Oryginalne ustawienia PC obejmują wygląd H72, ekspozycję i kinematykę, wysokość kamery, kontrast oraz ruch. Poniższe dwie regulacje są tymczasową kalibracją SceneKit iOS, a nie udawanymi wartościami shadera PC.")
+                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .foregroundStyle(muted)
+                .fixedSize(horizontal:false,vertical:true)
+            Toggle("BEZPIECZNE ŁADOWANIE MATERIAŁÓW (ZALECANE)",isOn:$h55SafeShaders)
+                .tint(cyan)
+                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .foregroundStyle(.white)
+                .accessibilityIdentifier("h55-settings-safe-shaders")
+            Text("Włączone: bez dodatkowego kodu shadera emisji SceneKit. Wyłączone: testowa korekta emissive_strength. Po zmianie ponownie otwórz hangar. Nowa mapa IBL jest wyłączona w obu trybach.")
+                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .foregroundStyle(muted)
+                .fixedSize(horizontal:false,vertical:true)
+            HStack {
+                Text("JASNOŚĆ WYPEŁNIENIA iOS")
+                Spacer()
+                Text("\(Int((h55Fill*100).rounded()))%").foregroundStyle(gold)
+            }
+            .font(.system(size:compact ? 10:12,design:.monospaced))
+            Slider(value:$h55Fill,in:0.25...1,step:0.05)
+                .tint(cyan)
+                .accessibilityIdentifier("h55-settings-fill")
+            HStack {
+                Text("CZERWONE LAMPY iOS")
+                Spacer()
+                Text("\(Int((h55Red*100).rounded()))%").foregroundStyle(gold)
+            }
+            .font(.system(size:compact ? 10:12,design:.monospaced))
+            Slider(value:$h55Red,in:0...0.30,step:0.02)
+                .tint(cyan)
+                .accessibilityIdentifier("h55-settings-red")
+            HStack(spacing:12) {
+                Button("PRZYWRÓĆ KALIBRACJĘ iOS") {
+                    h55Fill=Double(H55LightingProfile580.defaultFill)
+                    h55Red=Double(H55LightingProfile580.defaultRed)
+                    h55SafeShaders=true
+                }
+                .accessibilityIdentifier("h55-settings-reset")
+                ShareLink(item:H55LoadDiagnostics580.report()) {
+                    Text("UDOSTĘPNIJ RAPORT WCZYTYWANIA")
+                }
+                .accessibilityIdentifier("h55-settings-share-load-report")
+            }
+            .font(.system(size:compact ? 9:11,weight:.semibold,design:.monospaced))
+            .foregroundStyle(cyan)
+            Text("Raport pozostaje w pamięci urządzenia także po nieoczekiwanym zamknięciu aplikacji. Otwórz USTAWIENIA → HANGAR przed ponownym uruchomieniem sceny, aby go skopiować.")
+                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .foregroundStyle(muted)
+                .fixedSize(horizontal:false,vertical:true)
+            Spacer(minLength:0)
+        }
+        .accessibilityIdentifier("w3-h55-original-category-settings")
+    }
+
     private var unavailableSourceCategory:some View {
         VStack(alignment:.leading,spacing:12) {
             Text("ORYGINALNA KATEGORIA / "+sourceTabs139[tab])
