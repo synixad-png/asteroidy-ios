@@ -200,7 +200,7 @@ struct H55WorkshopPanel580:View {
                                 let price=H55Workshop580.servicePrice(i,vitals:vitals,shop:wallet)
                                 itemRow(H55Workshop580.services[i],
                                     detail:i==3 ?
-                                        "PC: VANGUARD X od misji 13, 240 ż · model i fizyka iOS nieprzeniesione" :
+                                        (rules.vanguardXOwned ? "POSIADANY · MODEL GLB DO DOSTARCZENIA" : "OD SEKTORA 13 · ZAKUP 240 Ż W PANELU STATEK") :
                                         "\(current)/\(total) · \(missing==0 ? "GOTOWE" : price==0 ? "NAPRAWA GRATIS" : "\(price) ŻETONÓW")",
                                     action:i<=2 && missing>0 ? {
                                         let result=H55Workshop580.service(i,vitals:&vitals,shop:&wallet)
