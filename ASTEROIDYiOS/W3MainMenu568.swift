@@ -51,6 +51,10 @@ struct W3MainMenu568: View {
     let openDiagnostic: () -> Void
     let openCampaignOnEntry: Bool
     let startNewGame: (SourceNewGameSelection568)->Bool
+    let restoreArchivedGame:(URL)->Bool
+    @State private var restoreCandidate568:URL?
+    @State private var confirmRestore568=false
+    @State private var restoreNotice568=""
     @State private var page: Page?
     @State private var newPlayers568=1
     @State private var newDifficulty568=SourceNewGame568.selection().difficulty
@@ -167,6 +171,22 @@ struct W3MainMenu568: View {
         // Keep native buttons accessible to VoiceOver and XCTest.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("asteroidy-w3-main-menu")
+        .alert("PRZYWRÓCIĆ POPRZEDNIĄ KAMPANIĘ?",
+               isPresented:$confirmRestore568) {
+            Button("ANULUJ",role:.cancel) {restoreCandidate568=nil}
+            Button("PRZYWRÓĆ",role:.destructive) {
+                guard let archive=restoreCandidate568 else{return}
+                restoreCandidate568=nil
+                if restoreArchivedGame(archive) {
+                    restoreNotice568="PRZYWRÓCONO PEŁNY PROFIL · ŻETONY, MODUŁY, TALENTY I TROFEA"
+                    newDifficulty568=SourceNewGame568.selection().difficulty
+                } else {
+                    restoreNotice568="NIE PRZYWRÓCONO PROFILU · BŁĄD KOPII LUB ZAPISU"
+                }
+            }
+        } message: {
+            Text("Bieżący profil zostanie najpierw zachowany w nowej kopii bezpieczeństwa. Przywrócone zostaną także statki, uzbrojenie, moduły, talenty i trofea.")
+        }
         .onAppear {
             // Returning from original C279 planet restores the real
             // source-locked 26-sector campaign atlas, not the W3 home page.
@@ -494,6 +514,41 @@ struct W3MainMenu568: View {
                             }
                             .foregroundStyle(gold)
                             .accessibilityIdentifier("w3-continue-open-campaign")
+                            Text("KOPIE AUTOMATYCZNE / PEŁNE PROFILE H11")
+                                .font(.system(size:compact ? 10:13,
+                                              weight:.bold,design:.monospaced))
+                                .foregroundStyle(cyan)
+                            let archived=SourceNewGame568.archives()
+                            if archived.isEmpty {
+                                Text("BRAK ZAPISANYCH KOPII POPRZEDNICH KAMPANII")
+                                    .font(.system(size:compact ? 9:11,design:.monospaced))
+                                    .foregroundStyle(muted)
+                            } else {
+                                ScrollView(.vertical) {
+                                    VStack(alignment:.leading,spacing:8) {
+                                        ForEach(archived.prefix(8)) { copy in
+                                            Button("PRZYWRÓĆ · "+copy.created.formatted(
+                                                date:.abbreviated,time:.shortened)) {
+                                                restoreCandidate568=copy.url
+                                                confirmRestore568=true
+                                            }
+                                            .foregroundStyle(gold)
+                                            .font(.system(size:compact ? 10:12,
+                                                          design:.monospaced))
+                                            .frame(maxWidth:.infinity,
+                                                   minHeight:34,alignment:.leading)
+                                            .accessibilityIdentifier(
+                                                "w3-restore-profile-"+copy.url.lastPathComponent)
+                                        }
+                                    }
+                                }
+                                .frame(maxHeight:compact ? 112:220)
+                            }
+                            if !restoreNotice568.isEmpty {
+                                Text(restoreNotice568)
+                                    .foregroundStyle(cyan)
+                                    .font(.system(size:compact ? 10:12,design:.monospaced))
+                            }
                         }
                         Spacer(minLength:0)
                     }
@@ -645,7 +700,7 @@ struct W3MainMenu568: View {
     private func message(for item:Page) -> String {
         switch item {
         case .continueGame:
-            return "Wczytanie rzeczywistego zapisu gry Windows v568 nie jest jeszcze podłączone. Nie uruchamiam przypadkowego sektora."
+            return "Kontynuuj aktywną kampanię przez ATLAS albo wybierz lokalną kopię poprzedniego profilu H11. Wczytywanie ręcznych zapisów PC nie jest jeszcze przeniesione."
         case .hangar:
             return ""
         case .settings:
