@@ -29,7 +29,8 @@ import simd
     private var airlockLeaves:[String:SCNNode]=[:]
     private var airlockLastApplied:[Float]=[Float.nan,Float.nan]
     private var h46LightNodes:[String:SCNNode]=[:]
-    private var h46LightIntensities:[String:CGFloat]=[:]
+    private var h46RawIntensities:[String:Float]=[:]
+    private var lighting=H55LightingProfile580()
     private var lightRefresh:Float=0
     private var arrival=H55Arrival580(spawnClear:false)
     @Published private(set) var arriving=false
@@ -217,24 +218,30 @@ import simd
         }
     }
 
+    func setLighting(fill:Double,red:Double) {
+        lighting=H55LightingProfile580(fill:Float(fill),red:Float(red))
+        if let scene {H55SceneLighting580.update(scene:scene,profile:lighting)}
+        updateH46LightBudget()
+    }
+
     private func updateH46LightBudget() {
         guard !h46LightNodes.isEmpty else{return}
-        // Same source ranking as PC Lights(): 8 strongest lamps in proximity
-        // around the physically current player, rather than all 24 at once.
-        let ranked=h46LightNodes.map { (name,node) -> (String,Float) in
+        // Preserve PC distance ranking within each family. SceneKit's PBR
+        // response is different: cap RED slots to 2 so white/cyan H46 can
+        // illuminate the hangar rather than eight red lamps taking over.
+        let candidates=h46LightNodes.map { (name,node) -> H55LightBalance580.Candidate in
             let p=node.simdWorldPosition
             let dx=p.x-movement.x,dy=p.y-(movement.y+H55Walk580.eyes),dz=p.z-movement.z
-            return (name,H55LightBalance580.score(name,
-                      distanceSquared:dx*dx+dy*dy+dz*dz))
-        }.sorted { a,b in
-            if a.1 != b.1{return a.1>b.1}
-            return a.0<b.0
+            return .init(name:name,distanceSquared:dx*dx+dy*dy+dz*dz)
         }
-        let selected=Set(ranked.prefix(H55LightBalance580.budget).map{$0.0})
+        let selected=Set(H55LightBalance580.selectedNames(candidates))
         SCNTransaction.begin()
         SCNTransaction.disableActions=true
         for (name,node) in h46LightNodes {
-            let next=selected.contains(name) ? (h46LightIntensities[name] ?? 0) : 0
+            let next:CGFloat=selected.contains(name)
+                ? CGFloat(H55LightBalance580.sceneIntensity(
+                    name,raw:h46RawIntensities[name] ?? 0,redGain:lighting.red))
+                : 0
             if node.light?.intensity != next {node.light?.intensity=next}
         }
         SCNTransaction.commit()
@@ -286,7 +293,7 @@ import simd
         airlockLeaves.removeAll()
         airlockLastApplied=[Float.nan,Float.nan]
         h46LightNodes.removeAll()
-        h46LightIntensities.removeAll()
+        h46RawIntensities.removeAll()
         lightRefresh=0
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
@@ -421,6 +428,7 @@ import simd
         pointOfView.eulerAngles.y=0 // PC yaw=0 looks toward -Z
         realScene.rootNode.addChildNode(pointOfView)
 
+        H55SceneLighting580.install(into:realScene,profile:lighting)
         installH46Lights(from:asset,into:source)
         updateH46LightBudget()
         var clips:[String:GLTFSCNAnimation]=[:]
@@ -591,8 +599,7 @@ import simd
             // PC does NOT shade all 24 H46 proxies as raw 90..6100.
             // Its eight nearest-source lights are rendered by a custom shader.
             // SceneKit uses explicit, isolated gain and distance ranking.
-            h46LightIntensities[name]=CGFloat(H55LightBalance580.sceneIntensity(
-                name,raw:Float(strength.doubleValue)))
+            h46RawIntensities[name]=Float(strength.doubleValue)
             light.intensity=0
 
             if let range=proxy["range"] as? NSNumber {
@@ -665,7 +672,7 @@ import simd
         airlockLeaves.removeAll()
         airlockLastApplied=[Float.nan,Float.nan]
         h46LightNodes.removeAll()
-        h46LightIntensities.removeAll()
+        h46RawIntensities.removeAll()
         lightRefresh=0
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
