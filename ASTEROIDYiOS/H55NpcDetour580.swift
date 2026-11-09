@@ -154,7 +154,8 @@ enum H55NpcDetour580 {
             // On return (indices 12...27), that prevents every bypass.
             // Keep the original 28 user-approved points, 3-point
             // lookahead, 6m safety and A*; only select the proper leg end.
-            let legEnd=goalIndex<workshopIndex ? workshopIndex-1 : routeX.count-1
+            // Workshop is a mandatory hard stop; no A* route may skip it.
+            let legEnd=goalIndex<=workshopIndex ? workshopIndex-1 : routeX.count-1
             let limit=min(legEnd,goalIndex+3)
             if limit<goalIndex+1 {return nil}
             for i in (goalIndex+1)...limit {
