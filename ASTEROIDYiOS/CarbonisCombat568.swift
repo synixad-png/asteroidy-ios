@@ -110,6 +110,12 @@ struct CarbonisCombat568 {
         upgradeLevel=profile.upgradeLevel
         rapidLevel=profile.rapidLevel
         shieldCharges=profile.shieldCharges
+        // H11 reads the same actual saved hull/armor repaired in H55.
+        // No parallel visual-only values: these fields drive suffer(),
+        // respawn and the real mission HUD.
+        let saved=H55Workshop580.loadVitals()
+        hull=saved.hull>0 ? saved.hull : saved.maxHull
+        armor=saved.armor
     }
     static func unit(_ a:Vec2)->Vec2 {
         let n=sqrt(a.lengthSquared)
