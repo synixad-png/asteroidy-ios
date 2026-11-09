@@ -6,6 +6,9 @@ on:
     paths:
       - '.github/workflows/h55-controls-light-ipa.yml'
       - 'ASTEROIDYiOS/H55Airlocks580.swift'
+      - 'ASTEROIDYiOS/H55LightingProfile580.swift'
+      - 'ASTEROIDYiOS/H55SceneLighting580.swift'
+      - 'ASTEROIDYiOS/H55LightingPanel580.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - 'ASTEROIDYiOS/H55Mechanic580.swift'
       - 'ASTEROIDYiOS/H55Walk580.swift'
@@ -60,7 +63,7 @@ jobs:
           assert 'H55TouchMapping580.sceneYaw' in h55
           assert 'H55TouchMapping580.scenePitch' in h55
           assert 'H55LightBalance580.sceneIntensity' in h55
-          assert 'H55LightBalance580.budget' in h55
+          assert 'H55LightBalance580.selectedNames(candidates)' in h55
           assert 'H55Entry580.arrivalSeconds' in Path('ASTEROIDYiOS/H55Entry580.swift').read_text()
           assert 'hitTestWithSegment' not in h55, 'Old SceneKit raycast fallback is forbidden'
           assert 'GpuHangar91' not in '\n'.join(x for x in h55.splitlines() if not x.lstrip().startswith('//'))
@@ -88,7 +91,7 @@ jobs:
           /tmp/h55-source-sweep
           swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift ASTEROIDYiOS/H55Walk580.swift ASTEROIDYiOS/H55NpcDetour580.swift ASTEROIDYiOS/H55Mechanic580.swift ASTEROIDYiOS/H55Airlocks580.swift Tests/H55Airlocks580Tests.swift -o /tmp/h07-sluzy
           /tmp/h07-sluzy
-          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift ASTEROIDYiOS/H55Walk580.swift ASTEROIDYiOS/H55TouchMapping580.swift ASTEROIDYiOS/H55LightBalance580.swift Tests/H55TouchLightFix580Tests.swift -o /tmp/h55-touch-light
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift ASTEROIDYiOS/H55Walk580.swift ASTEROIDYiOS/H55TouchMapping580.swift ASTEROIDYiOS/H55LightingProfile580.swift ASTEROIDYiOS/H55LightBalance580.swift Tests/H55TouchLightFix580Tests.swift -o /tmp/h55-touch-light
           /tmp/h55-touch-light
           swiftc -frontend -parse ASTEROIDYiOS/H55TouchControls580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
