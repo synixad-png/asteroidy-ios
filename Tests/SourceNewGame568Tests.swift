@@ -45,7 +45,33 @@ import Foundation
         CampaignStore556.save(old,defaults:defaults)
         var oldShop=Sector01Shop568.load(defaults:defaults)
         oldShop.award(379)
+        // The H11 state MUST be included before deleting a previous
+        // campaign. Source PC580 ArchiveActiveProfile358 copies the entire
+        // active profile, not only the shop wallet.
+        oldShop.ionAmmo=137
+        oldShop.bombs=2
         Sector01Shop568.save(oldShop,defaults:defaults)
+        var oldVitals=H55Workshop580.Vitals()
+        oldVitals.hullRank=1
+        oldVitals.hull=68
+        oldVitals.armor=16
+        check(H55Workshop580.saveVitals(oldVitals,defaults:defaults),
+              "source H11 real hull/armor recorded before new campaign")
+        var oldH11=H55SourceMechanics580.State()
+        oldH11.vanguardXOwned=true
+        oldH11.selectedShip=3
+        oldH11.guardianOwned=true
+        oldH11.guardianStrike=1
+        oldH11.cooling=2
+        oldH11.collector=1
+        oldH11.bossTrophies=1 << 3
+        oldH11.timeTrophies=1
+        check(H55SourceMechanics580.save(oldH11,defaults:defaults),
+              "source H11 owned ships/modules/talents/trophies valid")
+        let originalVitals=defaults.data(forKey:
+            "asteroidy.ios.h11.pc580.c279.vitals")!
+        let originalH11=defaults.data(forKey:
+            "asteroidy.ios.pc580.h11.source-mechanics")!
         let originalShop=defaults.data(forKey:
             "asteroidy.ios.v568.shop-profile-first-sector")!
         let oldMask=defaults.integer(forKey:
@@ -59,8 +85,13 @@ import Foundation
               !CampaignStore556.load(defaults:defaults).unlocked(2),
               "new game resets actual progress and relocks sector 2")
         check(Sector01Shop568.load(defaults:defaults).tokens==0 &&
-              Sector01Shop568.load(defaults:defaults).lives==3,
-              "new game resets wallet, items, lives")
+              Sector01Shop568.load(defaults:defaults).lives==3 &&
+              Sector01Shop568.load(defaults:defaults).ionAmmo==0 &&
+              Sector01Shop568.load(defaults:defaults).bombs==0,
+              "new game resets wallet, items, consumables, lives")
+        check(H55Workshop580.loadVitals(defaults:defaults)==H55Workshop580.Vitals() &&
+              H55SourceMechanics580.load(defaults:defaults)==H55SourceMechanics580.State(),
+              "direct create atomically resets both H11 records after backup")
         check(SourceNewGame568.selection(defaults:defaults).difficulty == .hard,
               "hard difficulty persisted")
         check(defaults.integer(forKey:"asteroidy.ios.graphics.test.persistent")==173,
@@ -76,6 +107,10 @@ import Foundation
               "campaign bit mask exactly backed up")
         check(archived["asteroidy.ios.v568.shop-profile-first-sector"] as? Data ==
               originalShop,"wallet/inventory backed up byte-for-byte")
+        check(archived["asteroidy.ios.h11.pc580.c279.vitals"] as? Data ==
+              originalVitals,"H11 hull and armor archived byte-for-byte")
+        check(archived["asteroidy.ios.pc580.h11.source-mechanics"] as? Data ==
+              originalH11,"H11 ships, modules, talents and trophy bits archived byte-for-byte")
         let failingURL=FileManager.default.temporaryDirectory
             .appendingPathComponent("backup-blocker-\(UUID().uuidString)")
         try Data("blocker".utf8).write(to:failingURL)
@@ -84,8 +119,71 @@ import Foundation
               defaults:defaults,backupDirectory:failingURL),
               "failed backup rejects destructive new game")
         check(SourceNewGame568.selection(defaults:defaults).difficulty == .hard &&
-              CampaignStore556.load(defaults:defaults).completedCount==0,
-              "failed backup leaves active state unchanged")
-        print("PASS \(checks) source W3 new game / difficulty / profile358 assertions")
+              CampaignStore556.load(defaults:defaults).completedCount==0 &&
+              H55SourceMechanics580.load(defaults:defaults)==H55SourceMechanics580.State(),
+              "failed backup leaves active source state unchanged")
+
+        // Explicit rollback of the complete previous profile; current hard
+        // campaign is independently archived before restore overwrites it.
+        check(SourceNewGame568.restoreArchive(
+            at:names[0],defaults:defaults,backupDirectory:backup),
+            "restore verified original PC580 full profile")
+        check(Sector01Shop568.load(defaults:defaults)==oldShop &&
+              CampaignStore556.load(defaults:defaults).completed(1),
+              "restored wallet, Ion/Bombs and campaign completion")
+        check(H55Workshop580.loadVitals(defaults:defaults)==oldVitals &&
+              H55SourceMechanics580.load(defaults:defaults)==oldH11,
+              "restored real ship, guardian, collector, trophies, hull and armor")
+        check(SourceNewGame568.selection(defaults:defaults).difficulty == .easy &&
+              defaults.integer(forKey:"asteroidy.ios.graphics.test.persistent")==173,
+              "restored difficulty without touching graphics/settings")
+        let backupAfterRestore=try FileManager.default.contentsOfDirectory(
+            at:backup,includingPropertiesForKeys:nil)
+        check(backupAfterRestore.count==2,
+              "restore made a second recovery archive of overwritten current profile")
+
+        // Reject tampered and foreign archives BEFORE backing up / changing
+        // any live profile record; old save must be recoverable on failure.
+        let invalidURL=FileManager.default.temporaryDirectory
+            .appendingPathComponent("h11-invalid-\(UUID().uuidString).plist")
+        defer {try? FileManager.default.removeItem(at:invalidURL)}
+        var invalidPayload=payload
+        var invalidState=archived
+        invalidState["asteroidy.ios.pc580.h11.source-mechanics"]=Data([1,2,3])
+        invalidPayload["profile"]=invalidState
+        let invalidBytes=try PropertyListSerialization.data(
+            fromPropertyList:invalidPayload,format:.binary,options:0)
+        try invalidBytes.write(to:invalidURL,options:.atomic)
+        check(!SourceNewGame568.restoreArchive(
+            at:invalidURL,defaults:defaults,backupDirectory:backup),
+            "malformed H11 source state cannot corrupt an active profile")
+        check(H55SourceMechanics580.load(defaults:defaults)==oldH11 &&
+              Sector01Shop568.load(defaults:defaults)==oldShop,
+              "failed restore leaves wallet and H11 gameplay untouched")
+        check(try FileManager.default.contentsOfDirectory(
+            at:backup,includingPropertiesForKeys:nil).count==2,
+            "bad archive validation cannot create misleading recovery backup")
+
+        // Older v568 archives legitimately lack the new H11 entries.
+        let legacyURL=FileManager.default.temporaryDirectory
+            .appendingPathComponent("h11-legacy-\(UUID().uuidString).plist")
+        defer {try? FileManager.default.removeItem(at:legacyURL)}
+        var legacyPayload=payload
+        var legacyState=archived
+        legacyState.removeValue(forKey:"asteroidy.ios.pc580.h11.source-mechanics")
+        legacyState.removeValue(forKey:"asteroidy.ios.h11.pc580.c279.vitals")
+        legacyPayload["profile"]=legacyState
+        let legacyBytes=try PropertyListSerialization.data(
+            fromPropertyList:legacyPayload,format:.binary,options:0)
+        try legacyBytes.write(to:legacyURL,options:.atomic)
+        check(SourceNewGame568.restoreArchive(
+            at:legacyURL,defaults:defaults,backupDirectory:backup),
+            "valid older v568 archive remains restorable")
+        check(H55SourceMechanics580.load(defaults:defaults)==H55SourceMechanics580.State() &&
+              H55Workshop580.loadVitals(defaults:defaults)==H55Workshop580.Vitals(),
+              "legacy restore clears stale modern H11 records")
+        check(Sector01Shop568.load(defaults:defaults)==oldShop,
+              "legacy restore retains source wallet and ion/bomb purchases")
+        print("PASS \(checks) PC580 full active-profile archive, legacy migration, rollback and no-data-loss assertions")
     }
 }
