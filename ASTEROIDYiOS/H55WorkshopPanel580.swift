@@ -6,7 +6,11 @@ import SwiftUI
 /// exist. No fabricated balance, purchases, player ships or trophies.
 struct H55WorkshopPanel580:View {
     let onClose:()->Void
-    @State private var tab=4
+    @State private var tab:Int
+    init(initialTab:Int,onClose:@escaping ()->Void){
+        self.onClose=onClose
+        _tab=State(initialValue:max(0,min(5,initialTab)))
+    }
     @State private var wallet=Sector01Shop568.load()
     @State private var vitals=H55Workshop580.loadVitals()
     @State private var notice="STANOWISKA HANGARU PC v580"
@@ -141,7 +145,7 @@ struct H55WorkshopPanel580:View {
             .padding(.horizontal,compact ? 12:24)
             .padding(.top,compact ? 8:18)
             .padding(.bottom,compact ? 6:12)
-            .background(Color(red:0.008,green:0.024,blue:0.042).opacity(0.98))
+            .background(Color(red:0.008,green:0.024,blue:0.042).opacity(0.89))
             .overlay(RoundedRectangle(cornerRadius:8).stroke(cyan.opacity(0.6),lineWidth:1))
             .frame(maxWidth:.infinity,maxHeight:.infinity)
         }
