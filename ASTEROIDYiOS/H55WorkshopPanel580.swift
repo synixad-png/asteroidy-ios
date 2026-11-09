@@ -13,6 +13,9 @@ struct H55WorkshopPanel580:View {
     }
     @State private var wallet=Sector01Shop568.load()
     @State private var vitals=H55Workshop580.loadVitals()
+    // Pure source profile: ownership/talents/modules have no GLB dependency.
+    @State private var rules=H55SourceMechanics580.load()
+    private var sector:Int {min(25,CampaignStore556.load().nextAvailableSector)}
     @State private var notice="STANOWISKA HANGARU PC v580"
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.33,green:0.77,blue:0.83)
@@ -25,7 +28,7 @@ struct H55WorkshopPanel580:View {
                 HStack(spacing:12){
                     Text("H55  /  STANOWISKA").font(.system(size:compact ? 13:18,weight:.bold,design:.monospaced))
                     Spacer()
-                    Text("ŻETONY \(wallet.tokens)     KADŁUB \(vitals.hull)/\(vitals.maxHull)     PANCERZ \(vitals.armor)/\(vitals.maxArmor)")
+                    Text("ŻETONY \(wallet.tokens) · KADŁUB \(vitals.hull)/\(vitals.maxHull) · PANCERZ \(vitals.armor)/\(vitals.maxArmor) · TROFEA \(rules.trophiesFree(vitals:vitals))")
                         .font(.system(size:compact ? 9:12,design:.monospaced))
                         .foregroundStyle(cyan)
                     Button("WRÓĆ DO HANGARU",action:onClose)
@@ -54,22 +57,46 @@ struct H55WorkshopPanel580:View {
                     VStack(alignment:.leading,spacing:compact ? 8 : 12) {
                         switch tab {
                         case 0:
-                            headline("01 / FLOTA","WYBÓR ORYGINALNEGO STATKU")
+                            headline("01 / FLOTA","SZEŚĆ STATKÓW · ŹRÓDŁO CAMPAIGN37")
                             ForEach(H55Workshop580.ships.indices,id:\.self){i in
+                                let stats=H55SourceMechanics580.shipStats(
+                                    type:i,engine:rules.engine,
+                                    stabilizer:rules.stabilizer,
+                                    thruster:rules.thruster)
+                                let modeled=H55SourceMechanics580.registeredModelName(forShip:i) != nil
+                                let owned=H55SourceMechanics580.shipOwned(i,state:rules)
+                                let price=H55SourceMechanics580.shipPrice(i)
+                                let detail="A:\(Int(stats?.acceleration ?? 0)) · V:\(Int(stats?.topSpeed ?? 0)) · SKR:\(Int((stats?.turnSpeed ?? 0)*100)/100) · MASA:\(stats?.mass ?? 0)"
                                 itemRow(H55Workshop580.ships[i],
-                                    detail:i==1 ? "AKTYWNY — oryginalny VANGUARD C279" :
-                                      i==3 ? "PC: zakup w serwisie od misji 13 · iOS: niedostępny" :
-                                      i==4 ? "PC: cena 420 ż · iOS: brak silnika statku" :
-                                      i==5 ? "PC: cena 620 ż · iOS: brak silnika statku" :
-                                      "PC: statek posiadany · model i fizyka jeszcze nieprzeniesione",
-                                    action:nil)
+                                    detail:detail+" · "+(i==rules.selectedShip ? "WYBRANY" : owned ? "POSIADANY" : "KOSZT \(price ?? 0) Ż")+
+                                        (modeled ? " · MODEL iOS DOSTĘPNY" : " · GLB DO DOSTARCZENIA (NIE PODSTAWIAMY INNEGO)"),
+                                    action:modeled && i != rules.selectedShip ? {
+                                        let r=H55SourceMechanics580.buyAndEquipShip(
+                                            i,sector:sector,state:&rules,wallet:&wallet)
+                                        notice=shipMessage(r,i)
+                                        if r == .changed {persistSource()}
+                                    } : nil)
                             }
                         case 1:
-                            headline("02 / DRZEWKO","TROFEA I ULEPSZENIA")
+                            headline("02 / DRZEWKO","TALENTY 78 · AUTENTYCZNE TROFEA")
+                            Text("ZDOBYTE: \(rules.trophiesEarned) · WOLNE: \(rules.trophiesFree(vitals:vitals))")
+                                .font(.system(size:12,weight:.bold,design:.monospaced))
+                                .foregroundStyle(cyan)
                             ForEach(0..<3,id:\.self){i in
+                                let rank=i==0 ? vitals.hullRank : i==1 ? vitals.armorRank : rules.rateRank
+                                let cost=H55Workshop580.talentCost(rank:rank)
+                                let free=rules.trophiesFree(vitals:vitals)
                                 itemRow(["KADŁUB","PANCERZ","SZYBKOSTRZELNOŚĆ"][i],
-                                        detail:"PC: ranga 0/4 · następny koszt 1 trofeum. Zdobywanie trofeów w iOS jeszcze niedostępne.",
-                                        action:nil)
+                                    detail:"RANGA \(rank)/4 · "+(cost==nil ? "MAKSIMUM" : "KOLEJNY KOSZT \(cost!) TROFEÓW")+
+                                        (i==0 ? " · MAX HP \(vitals.maxHull)" :
+                                         i==1 ? " · MAX PANCERZ \(vitals.maxArmor)" :
+                                         " · MODYFIKATOR \(Int(100/(1+0.06*Double(rank))))%"),
+                                    action:rank<4 && free >= (cost ?? 999) ? {
+                                        let r=H55SourceMechanics580.buyTalent(
+                                            i,state:&rules,vitals:&vitals)
+                                        notice=r == .changed ? "ROZWINIĘTO TALENT" : "BRAK TROFEÓW"
+                                        if r == .changed {persistSource()}
+                                    } : nil)
                             }
                         case 2:
                             headline("03 / UZBROJENIE","KONFIGURACJA BRONI")
@@ -88,13 +115,20 @@ struct H55WorkshopPanel580:View {
                                     } : nil)
                             }
                         case 3:
-                            headline("04 / GALERIA","TROFEA KAMPANII")
-                            itemRow("TROFEA BOSSÓW (0/6)",
-                                    detail:"Oryginalne nagrody PC nie są jeszcze przyznawane przez obecny port pierwszej misji.",
+                            headline("04 / GALERIA","TROFEA Z RZECZYWISTYCH MISJI")
+                            itemRow("BOSSOWIE \(rules.bossTrophies.nonzeroBitCount)/6",
+                                    detail:"Poziomy 4, 8, 12, 16, 20, 24 · trofeum dopiero po podniesieniu łupu",
                                     action:nil)
-                            itemRow("PRÓBY CZASOWE (0/25)",
-                                    detail:"Czasy i 25 prób pochodzą z Talents78.cs. Brak zatwierdzonych odznaczeń.",
+                            itemRow("PRÓBY CZASOWE \(rules.timeTrophies.nonzeroBitCount)/25",
+                                    detail:"Sektor 01: limit 94 s · wynik nadawany przy prawdziwym FinishLevel",
                                     action:nil)
+                            ForEach(1...25,id:\.self){level in
+                                let cleared=(rules.timeTrophies & (1 << (level-1))) != 0
+                                itemRow("CZAS · SEKTOR \(level)",
+                                    detail:cleared ? "ZDOBYTE" :
+                                        "NIEZDOBYTE · \(H55SourceMechanics580.timeTarget(sector:level,objective:level==2 || level==11 || level==21 ? .escort : level==5 || level==14 || level==23 ? .defend : level==9 || level==17 ? .waves : .normal) ?? 0) s",
+                                    action:nil)
+                            }
                         case 4:
                             headline("05 / SERWIS","NAPRAWY I OSŁONY")
                             ForEach(H55Workshop580.services.indices,id:\.self){i in
@@ -117,11 +151,38 @@ struct H55WorkshopPanel580:View {
                                     } : nil)
                             }
                         case 5:
-                            headline("06 / MODUŁY","MODYFIKACJE JEDNOSTKI PC v580")
+                            headline("06 / MODUŁY","PIĘĆ MODUŁÓW 97 · EFEKTY ŹRÓDŁOWE")
                             ForEach(H55Workshop580.modules.indices,id:\.self){i in
+                                let rank=rules.moduleRanks[i]
+                                let cost=H55Workshop580.moduleCost(i,rank:rank)
+                                let level=H55Workshop580.moduleLevelRequired[i]
+                                let can=rank<2 && sector>=level &&
+                                    (i<3 || rules.guardianOwned)
                                 itemRow(H55Workshop580.modules[i],
-                                    detail:"POZIOM 0/2 · PC: \(H55Workshop580.moduleCost(i,rank:0) ?? 0) Ż · \(H55Workshop580.moduleAvailability(i,sector:1))",
-                                    action:nil)
+                                    detail:"RANGA \(rank)/2 · "+(cost==nil ? "MAKSIMUM" : "\(cost!) Ż")+
+                                      " · OD SEKTORA \(level)"+(i>=3 && !rules.guardianOwned ? " · WYMAGA DRONA": ""),
+                                    action:can ? {
+                                        let r=H55SourceMechanics580.buyModule(
+                                            i,sector:sector,state:&rules,wallet:&wallet)
+                                        notice=moduleMessage(r,H55Workshop580.modules[i])
+                                        if r == .changed {persistSource()}
+                                    } : nil)
+                            }
+                            headline("STARSZE MODUŁY GAME.CS","SILNIK · KOLEKTOR · DRON · STABILIZATOR")
+                            ForEach(6...9,id:\.self){id in
+                                let labels=["SILNIK","KOLEKTOR","DRON STRAŻNIK","STABILIZATOR"]
+                                let rank=id==6 ? rules.engine : id==7 ? rules.collector :
+                                             id==8 ? (rules.guardianOwned ? 1:0) : rules.stabilizer
+                                let cost=H55SourceMechanics580.legacyModuleCost(id,state:rules) ?? 0
+                                let can=(id==8 ? !rules.guardianOwned && sector>=6 : rank<2)
+                                itemRow(labels[id-6],
+                                    detail:"RANGA \(rank)/\(id==8 ? 1:2) · \(cost) Ż"+(id==8 ? " · OD SEKTORA 6":""),
+                                    action:can ? {
+                                        let result=H55SourceMechanics580.buyLegacyModule(
+                                            id,sector:sector,state:&rules,wallet:&wallet)
+                                        notice=moduleMessage(result,labels[id-6])
+                                        if result == .changed {persistSource()}
+                                    } : nil)
                             }
                         default:EmptyView()
                         }
@@ -153,8 +214,34 @@ struct H55WorkshopPanel580:View {
             // Reload canonical mission profile whenever the console is opened.
             wallet=Sector01Shop568.load()
             vitals=H55Workshop580.loadVitals()
+            rules=H55SourceMechanics580.load()
         }
         .accessibilityIdentifier("h11-authentic-w3-stations")
+    }
+    private func persistSource() {
+        // Operations have passed source validation. Store only the canonical
+        // wallet and independent no-GLB source state; never copy money.
+        Sector01Shop568.save(wallet)
+        _=H55Workshop580.saveVitals(vitals)
+        _=H55SourceMechanics580.save(rules)
+    }
+    private func moduleMessage(_ result:H55SourceMechanics580.SourceEffect,
+                               _ name:String)->String {
+        switch result {
+        case .changed:return "ZAMONTOWANO: "+name
+        case .unchanged:return "BEZ ZMIAN"
+        case .unavailable:return "MODUŁ NIEDOSTĘPNY W TYM SEKTORZE"
+        case .insufficientFunds:return "BRAKUJE ŻETONÓW"
+        }
+    }
+    private func shipMessage(_ result:H55SourceMechanics580.SourceEffect,
+                             _ index:Int)->String {
+        switch result {
+        case .changed:return "WYBRANO "+H55Workshop580.ships[index]
+        case .unchanged:return "BEZ ZMIAN"
+        case .unavailable:return "STATEK ZABLOKOWANY"
+        case .insufficientFunds:return "BRAKUJE ŻETONÓW"
+        }
     }
     private func headline(_ kicker:String,_ title:String)->some View {
         VStack(alignment:.leading,spacing:4) {
