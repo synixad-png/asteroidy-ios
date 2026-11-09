@@ -149,7 +149,7 @@ enum H55H13MaterialReport580 {
                 }
                 if let raw = entry["KHR_materials_emissive_strength"] {
                     guard let value = raw as? [String: Any],
-                          let number = value["emissiveStrength"] as? NSNumber ?? NSNumber(value: 1),
+                          let number = value["emissiveStrength"] == nil ? NSNumber(value: 1) : (value["emissiveStrength"] as? NSNumber),
                           number.doubleValue.isFinite, number.doubleValue >= 0,
                           number.doubleValue <= Double(Float.greatestFiniteMagnitude),
                           let sourceName = material["name"] as? String,
