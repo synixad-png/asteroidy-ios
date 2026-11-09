@@ -67,12 +67,16 @@ import Foundation
               upgrades.tokens==1340,"first source power upgrade 60")
         check(upgrades.buy(.power) && upgrades.upgradeLevel==3 &&
               upgrades.tokens==1190,"second source power upgrade 150")
-        check(!upgrades.buy(.power),"unported ion ammo not sold")
+        check(upgrades.buy(.power) && upgrades.ionAmmo==100 &&
+              upgrades.tokens==1137,
+              "PC580 max-rank power slot sells 100 ion salvos for 53 tokens")
         check(upgrades.buy(.rapid) && upgrades.rapidLevel==1 &&
-              upgrades.tokens==1115,"first source rapid upgrade 75")
+              upgrades.tokens==1062,"first source rapid upgrade 75")
         check(upgrades.buy(.rapid) && upgrades.rapidLevel==2 &&
-              upgrades.tokens==975,"second source rapid upgrade 140")
-        check(!upgrades.buy(.rapid),"unported bombs not sold")
+              upgrades.tokens==922,"second source rapid upgrade 140")
+        check(upgrades.buy(.rapid) && upgrades.bombs==1 &&
+              upgrades.tokens==860,
+              "PC580 max-rank rapid slot sells one bomb for 62 tokens")
         for _ in 0..<3 {check(upgrades.buy(.shield),
                                "source shield 12 tokens per charge")}
         check(upgrades.shieldCharges==3 && !upgrades.buy(.shield),
@@ -95,7 +99,8 @@ import Foundation
         let afterMission=Sector01Shop568.load(defaults:defaults)
         check(afterMission.lives==4 && afterMission.shieldCharges==1 &&
               afterMission.upgradeLevel==3 &&
-              afterMission.rapidLevel==2,
+              afterMission.rapidLevel==2 &&
+              afterMission.ionAmmo==100 && afterMission.bombs==1,
               "combat persistence preserves all purchased power and rapid")
         Sector01Shop568.persistSurvival(
             lives:0,shieldCharges:0,defaults:defaults)
@@ -108,6 +113,6 @@ import Foundation
             replay:true,elapsed:0)
         check(noRewards.collectedTokens==0 && noRewards.earnedTokens==0,
               "replay cannot claim uncollected phantom rewards")
-        print("PASS \(count) original first-sector mission settlement, replay and real 6-item service shop assertions")
+        print("PASS \(count) original first-sector mission settlement, replay, source IonAmmo/Bombs and real 6-slot service shop assertions")
     }
 }
