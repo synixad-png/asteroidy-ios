@@ -148,7 +148,14 @@ enum H55NpcDetour580 {
         let length=hypot(dx,dz)
         let pDist=hypot(goal.x-player.x,goal.z-player.z)
         if length<1.8 || pDist<1.5 {
-            let limit=min(workshopIndex-1,goalIndex+3)
+            // H08 real-GLB regression exposed an original PC v580 bug:
+            // NpcPlanPlayerBypass532 always clamps lookahead to
+            // NpcWorkshopIndex530-1 even when already on RETURN leg.
+            // On return (indices 12...27), that prevents every bypass.
+            // Keep the original 28 user-approved points, 3-point
+            // lookahead, 6m safety and A*; only select the proper leg end.
+            let legEnd=goalIndex<workshopIndex ? workshopIndex-1 : routeX.count-1
+            let limit=min(legEnd,goalIndex+3)
             if limit<goalIndex+1 {return nil}
             for i in (goalIndex+1)...limit {
                 let join=Point(x:routeX[i],z:routeZ[i])
