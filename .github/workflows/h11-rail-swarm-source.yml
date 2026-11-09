@@ -8,6 +8,8 @@ on:
       - 'ASTEROIDYiOS/H55WorkshopPanel580.swift'
       - 'ASTEROIDYiOS/CarbonisCombat568.swift'
       - 'ASTEROIDYiOS/CarbonisSession568.swift'
+      - 'ASTEROIDYiOS/Sector01ShopPanel568.swift'
+      - 'Tests/H55Workshop580Tests.swift'
       - 'Tests/H11RailSwarm580Tests.swift'
       - '.github/workflows/h11-rail-swarm-source.yml'
   workflow_dispatch:
