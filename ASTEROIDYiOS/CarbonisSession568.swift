@@ -71,7 +71,7 @@ final class CarbonisSession568: ObservableObject {
             // not executable in this first-sector port. Display actual
             // zero inventory; show an em dash for unavailable energy.
             tarczaEnergy=nil
-            ionAmmo=0; bombs=0; boostCharges=0
+            ionAmmo=game.ionAmmo; bombs=game.bombs; boostCharges=0
             let camera=game.flight.camera
             func contact(_ point:Vec2,_ kind:Int)->RadarContact? {
                 let n=Sphere67.normal(point)
@@ -117,6 +117,15 @@ final class CarbonisSession568: ObservableObject {
         if let shooting {self.shooting=shooting}
     }
     func release() {move=Vec2(x:0,y:0);aim=Vec2(x:0,y:0);shooting=false}
+    /// One physical touch is one bomb action; PC UseBomb validates
+    /// threats/inventory/cooldown atomically inside the simulation.
+    @discardableResult func useBomb()->Bool {
+        guard !paused,game.useBomb() else{return false}
+        hud=HUD(game,summarySeconds:summaryElapsed)
+        let events=game.drainOriginalAudioEvents568()
+        if !events.isEmpty {onAudioEvents?(events)}
+        return true
+    }
     func frame(at now:TimeInterval) {
         defer{lastFrame=now}
         guard let lastFrame, !paused else {return}
