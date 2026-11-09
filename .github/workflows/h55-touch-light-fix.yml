@@ -6,6 +6,9 @@ on:
       - 'ASTEROIDYiOS/H55TouchMapping580.swift'
       - 'ASTEROIDYiOS/H55TouchControls580.swift'
       - 'ASTEROIDYiOS/H55LightBalance580.swift'
+      - 'ASTEROIDYiOS/H55LightingProfile580.swift'
+      - 'ASTEROIDYiOS/H55SceneLighting580.swift'
+      - 'ASTEROIDYiOS/H55LightingPanel580.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - 'Tests/H55TouchLightFix580Tests.swift'
       - 'Tests/H55TouchRealGLB580Tests.swift'
@@ -29,6 +32,7 @@ jobs:
             ASTEROIDYiOS/H55Sweep401580.swift \
             ASTEROIDYiOS/H55Walk580.swift \
             ASTEROIDYiOS/H55TouchMapping580.swift \
+            ASTEROIDYiOS/H55LightingProfile580.swift \
             ASTEROIDYiOS/H55LightBalance580.swift \
             Tests/H55TouchLightFix580Tests.swift -o /tmp/h55-touch-light-test
           /tmp/h55-touch-light-test
@@ -60,7 +64,7 @@ jobs:
           assert 'H55TouchMapping580.scenePitch(for:movement.pitch)' in s
           assert 'H55TouchMapping580.sceneYaw(for:movement.yaw)' in s
           assert 'H55LightBalance580.sceneIntensity(' in s
-          assert 'H55LightBalance580.budget' in s
+          assert 'H55LightBalance580.selectedNames(candidates)' in s
           assert 'lightRefresh>=0.16' in s, 'bounded lighting updates'
           assert 'frame(height:105)' not in s, 'obsolete bottom-only touch strip'
           assert 'H55TouchControls580(' in s
