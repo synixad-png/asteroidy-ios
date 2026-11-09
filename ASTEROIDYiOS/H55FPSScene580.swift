@@ -95,8 +95,8 @@ import simd
                 guard let self,self.generation==request else{return}
                 self.loading.remove(kind)
                 guard status == .complete,let asset else {
-                    self.inform("FPS: BŁĄD DEKODOWANIA ORYGINAŁU \(kind.fileName): "+
-                                (error?.localizedDescription ?? "GLTFKit2"))
+                    let failure=error?.localizedDescription ?? "GLTFKit2"
+                    self.inform("FPS: BŁĄD DEKODOWANIA ORYGINAŁU \(kind.fileName): \(failure)")
                     return
                 }
                 let source=GLTFSCNSceneSource(asset:asset)
@@ -212,11 +212,10 @@ import simd
             let p=settings.weapon
             let sway=H55FPSPose580.weaponWalk(phase:bobPhase,
                             movement:movement,visualIntensity:intensity)
+            let vertical=Float(p[1])*0.01+sway.y+
+                H55FPSPose580.weaponIdle(time:time,enabled:settings.idle)
             weaponRoot.simdPosition=SIMD3<Float>(
-                Float(p[0])*0.01+sway.x,
-                Float(p[1])*0.01+sway.y+
-                    H55FPSPose580.weaponIdle(time:time,enabled:settings.idle),
-                Float(p[2])*0.01)
+                Float(p[0])*0.01+sway.x,vertical,Float(p[2])*0.01)
             let x=simd_quatf(angle:-Float.pi/2,axis:SIMD3<Float>(1,0,0))
             let z=simd_quatf(angle:Float.pi/2,axis:SIMD3<Float>(0,0,1))
             weaponRoot.simdOrientation=x*z*
