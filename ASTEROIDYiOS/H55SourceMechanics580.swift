@@ -273,7 +273,13 @@ enum H55SourceMechanics580 {
         max(1,damage-2*max(0,min(2,dampener)))
     }
     static func collectorRadius(rank:Int)->Float {165+Float(max(0,min(2,rank)))*30}
-    static func collectorSpeed(rank:Int)->Float {200+Float(max(0,min(2,rank)))*25}
+    // Flat Game.Step uses 200+25/rank. The iOS spherical level uses
+    // Physics68.MovePickup68 acceleration 210+30/rank, cap 145+20/rank.
+    static func collectorSpeed(rank:Int,spherical:Bool=false)->Float {
+        let level=Float(max(0,min(2,rank)))
+        return spherical ? 210+30*level : 200+25*level
+    }
+    static func collectorSpeedCap(rank:Int)->Float {145+Float(max(0,min(2,rank)))*20}
     static func guardianShotCooldown(strike:Int,focus:Int)->Float {
         max(0.96,1.38-0.07*Float(strike)-0.04*Float(focus))
     }
