@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          swiftc -O ASTEROIDYiOS/H55H12Timeline580.swift \
+          swiftc -Onone ASTEROIDYiOS/H55H12Timeline580.swift \
             Tests/H55H12Timeline580Tests.swift \
             -o /tmp/h12-original-pc580
           /tmp/h12-original-pc580
