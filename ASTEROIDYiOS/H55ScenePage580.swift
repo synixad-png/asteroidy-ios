@@ -54,7 +54,7 @@ import simd
     private var machinery:H55H12SceneAnimator580?
     // H71 moves only the two source-selected GLB drone prefab roots.
     private var droneScene:H55DroneScene580?
-    @Published private(set) var h71Status="H71: NIE WCZYTANO DRONÓW"
+    @Published private(set) var h71Status="H71: ODŁOŻONE DO PÓŹNIEJSZEGO ETAPU"
     @Published private(set) var h12Status="NIE WCZYTANO ANIMACJI H12"
     @Published private(set) var mechanicStatus="OCZEKUJE NA ROZMOWĘ"
 
@@ -295,7 +295,7 @@ import simd
         npcAnimator=nil
         machinery=nil
         droneScene=nil
-        h71Status="H71: NIE WCZYTANO DRONÓW"
+        h71Status="H71: ODŁOŻONE DO PÓŹNIEJSZEGO ETAPU"
         h12Status="NIE WCZYTANO ANIMACJI H12"
         mechanicStatus="OCZEKUJE NA ROZMOWĘ"
         showingWorkshop=false
@@ -328,7 +328,8 @@ import simd
                 let h12=try? H55H12Tracks580.load(url)
                 // H71 builds its source flight lattice on the background
                 // loading queue, never in the SceneKit display frame.
-                let droneSpawns=(try? H55DroneImports580.load(url)) ?? []
+                let droneSpawns=H55H12FeatureFlags580.autonomousDronesEnabled
+                    ? ((try? H55DroneImports580.load(url)) ?? []) : []
                 let droneNavigation:H55DroneNavigation580? = droneSpawns.count==2
                     ? H55DroneNavigation580(clearance:{x,y,z,radius in
                         physical.cameraClear406(x,y,z,radius:radius)
@@ -479,7 +480,8 @@ import simd
             machinery=nil
             h12Status="H12: BRAK ZGODNYCH KLIPÓW W DOSTARCZONYM GLB"
         }
-        if let droneNavigation,droneSpawns.count==2 {
+        if H55H12FeatureFlags580.autonomousDronesEnabled,
+           let droneNavigation,droneSpawns.count==2 {
             droneScene=H55DroneScene580(
                 spawns:droneSpawns,navigation:droneNavigation,
                 allNodes:source.nodes)
@@ -487,7 +489,9 @@ import simd
                 "H71: START ZABLOKOWANY — KOLIZJA LUB NIEZGODNE WĘZŁY GLB"
         } else {
             droneScene=nil
-            h71Status="H71: BRAK DWÓCH ZWERYFIKOWANYCH PREFABÓW DRONÓW"
+            h71Status=H55H12FeatureFlags580.autonomousDronesEnabled
+                ? "H71: BRAK DWÓCH ZWERYFIKOWANYCH PREFABÓW DRONÓW"
+                : "H71: ODŁOŻONE DO PÓŹNIEJSZEGO ETAPU"
         }
         animations=clips
         animationNames=inventory.animations.filter {
@@ -640,7 +644,7 @@ import simd
         npcAnimator=nil
         machinery=nil
         droneScene=nil
-        h71Status="H71: NIE WCZYTANO DRONÓW"
+        h71Status="H71: ODŁOŻONE DO PÓŹNIEJSZEGO ETAPU"
         h12Status="NIE WCZYTANO ANIMACJI H12"
         showingWorkshop=false
         dialogue.reset()
