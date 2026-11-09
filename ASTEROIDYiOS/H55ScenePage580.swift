@@ -41,6 +41,7 @@ import simd
     @Published private(set) var conversationOpen=false
     // H11 source Hub90.OpenHubPanel90: six native panels over active H55.
     @Published private(set) var showingWorkshop=false
+    @Published private(set) var workshopInitialPanel=0
     @Published private(set) var conversationsFinished=0
     // H10 canonical source HubNpcInteract526 lifecycle; published flags mirror it.
     private var dialogue=H55NpcDialogue580()
@@ -92,6 +93,9 @@ import simd
 
     func openWorkshop() {
         guard arrival.walking && !conversationOpen && !showingWorkshop else{return}
+        // PC HubWalk375.HubWalkInteract375: near console (9.4,9.85)
+        // within 3.55m => SERWIS #4, otherwise STATEK #0.
+        workshopInitialPanel=hypot(movement.x-9.4,movement.z-9.85)<3.55 ? 4 : 0
         setMove(forward:0,right:0)
         showingWorkshop=true
     }
@@ -630,7 +634,8 @@ struct H55ScenePage580: View {
                         )
 
                         if loader.showingWorkshop {
-                            H55WorkshopPanel580(onClose:{loader.closeWorkshop()})
+                            H55WorkshopPanel580(initialTab:loader.workshopInitialPanel,
+                                                onClose:{loader.closeWorkshop()})
                                 .zIndex(5)
                         }
                         if loader.arriving {
