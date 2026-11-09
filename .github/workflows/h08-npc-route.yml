@@ -16,13 +16,32 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Compile existing NPC and geometry module
+      - name: Compile real H08 NPC with original H02-H07 physics and authenticated-GLB E2E harness
         shell: bash
         run: |
           set -euo pipefail
-          swiftc -frontend -parse ASTEROIDYiOS/H55Mechanic580.swift
-          swiftc -frontend -parse ASTEROIDYiOS/H55NpcSurface580.swift
-          swiftc -frontend -parse ASTEROIDYiOS/H55NpcDetour580.swift
+          swiftc -O \
+            ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55NpcSurface580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            ASTEROIDYiOS/H55Airlocks580.swift \
+            Tests/H55NpcRealRoute580Tests.swift -o /tmp/h08-original-glb-e2e
+          swiftc -O \
+            ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            Tests/H55Mechanic580Tests.swift -o /tmp/h08-source-physics
+          /tmp/h08-source-physics
+          python3 - <<'PY'
+          from pathlib import Path
+          source=Path("ASTEROIDYiOS/H55NpcDetour580.swift").read_text()
+          assert 'let legEnd=goalIndex<workshopIndex ? workshopIndex-1 : routeX.count-1' in source
+          assert 'let limit=min(legEnd,goalIndex+3)' in source
+          assert 'NpcWorkshopIndex530-1' in source, 'original PC regression explicitly documented'
+          print("PASS: H08 return leg A* verified against source PC580 deadlock")
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: H08-CURRENT-REAL-SOURCE-SNAPSHOT
@@ -36,5 +55,6 @@ jobs:
             ASTEROIDYiOS/H55TriangleBody580.swift
             ASTEROIDYiOS/H55Entry580.swift
             Tests/H55Mechanic580Tests.swift
+            Tests/H55NpcRealRoute580Tests.swift
           if-no-files-found: error
           retention-days: 2
