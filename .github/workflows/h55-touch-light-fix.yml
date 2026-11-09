@@ -13,6 +13,9 @@ on:
       - 'ASTEROIDYiOS/H55PlayerShip580.swift'
       - 'ASTEROIDYiOS/H55SpaceBackdrop580.swift'
       - 'ASTEROIDYiOS/H55DockingPresentation580.swift'
+      - 'ASTEROIDYiOS/H55SceneViewport580.swift'
+      - 'ASTEROIDYiOS/H55RenderStartGate580.swift'
+      - 'Tests/H55RenderStartGate580Tests.swift'
       - 'Tests/H55DockingPresentation580Tests.swift'
       - 'Tests/H55VisualSource580Tests.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
@@ -66,6 +69,9 @@ jobs:
           /tmp/h55-docking
           swiftc -frontend -parse ASTEROIDYiOS/H55SpaceBackdrop580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55PlayerShip580.swift
+          swiftc ASTEROIDYiOS/H55RenderStartGate580.swift Tests/H55RenderStartGate580Tests.swift -o /tmp/h55-start-gate
+          /tmp/h55-start-gate
+          swiftc -frontend -parse ASTEROIDYiOS/H55SceneViewport580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
           swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
           swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
@@ -82,6 +88,7 @@ jobs:
           assert 'walkTranslation' not in c, 'No joystick state'
           assert 'H55DockingPresentation580.camera(time:arrival.time)' in s
           assert 'H55PlayerShip580.make()' in s and 'H55SpaceBackdrop580.make()' in s
+          assert 'H55SceneViewport580(' in s and 'h55-gpu-first-frame-mask' in s
           assert 'onWalk(0,0)' in c, 'releasing LEFT must zero velocity'
           assert '.position(x:w*0.33,y:h*0.79)' in c
           assert '.position(x:w*0.84,y:h*0.79)' in c
