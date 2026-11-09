@@ -1,4 +1,4 @@
-name: ASTEROIDY iOS H13 bright H55 lighting and no-drones unsigned iPhone+iPad TEST IPA
+name: ASTEROIDY iOS H13-C PC580 real sky Vanguard ship docking and digital controls TEST IPA
 on:
   push:
     branches:
@@ -40,6 +40,13 @@ on:
       - 'ASTEROIDYiOS/H55LightBalance580.swift'
       - 'ASTEROIDYiOS/H55SceneLighting580.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
+      - 'ASTEROIDYiOS/H55VisualScene580.swift'
+      - 'ASTEROIDYiOS/H55SpaceBackdrop580.swift'
+      - 'ASTEROIDYiOS/H55PlayerShip580.swift'
+      - 'ASTEROIDYiOS/H55DockingPresentation580.swift'
+      - 'ASTEROIDYiOS/H55TouchControls580.swift'
+      - 'ASTEROIDYiOS/H55TouchMapping580.swift'
+      - 'Tests/H55DockingPresentation580Tests.swift'
       - 'ASTEROIDYiOS/W3MainMenu568.swift'
       - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
       - 'ASTEROIDYiOS/H55LoadDiagnostics580.swift'
@@ -118,6 +125,10 @@ jobs:
           assert 'doorBlocks:' in Path('ASTEROIDYiOS/H55Walk580.swift').read_text()
           assert 'H55AirlockController580.clipNames.contains(name) {return}' in h55
           assert 'H55TouchControls580(' in h55
+          assert 'H55SpaceBackdrop580.make()' in h55
+          assert 'H55PlayerShip580.make()' in h55
+          assert 'H55DockingPresentation580.camera(time:arrival.time)' in h55
+          assert 'H55VisualScene580.apply(nodes:source.nodes)' in h55
           assert 'H55TouchMapping580.sceneYaw' in h55
           assert 'H55TouchMapping580.scenePitch' in h55
           assert 'H55LightBalance580.sceneIntensity' in h55
