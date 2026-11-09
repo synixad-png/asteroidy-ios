@@ -330,6 +330,77 @@ import Foundation
         check(failure.missionSummary==nil,
               "fatal loss never creates a mission-reward result")
         check(campaign.completedMask==0,"no fake campaign completion")
+        // H11 model-independent PC580 effects must affect the genuine
+        // first-sector physics, not just a profile inspector or shop UI.
+        var bonuses=H55SourceMechanics580.State()
+        bonuses.guardianOwned=true
+        bonuses.engine=1
+        bonuses.thruster=1
+        bonuses.stabilizer=1
+        bonuses.collector=2
+        bonuses.cooling=2
+        bonuses.dampener=2
+        bonuses.rateRank=1
+        check(H55SourceMechanics580.save(bonuses),"source H11 install")
+        var bonusVitals=H55Workshop580.Vitals()
+        bonusVitals.hullRank=1;bonusVitals.armorRank=1
+        bonusVitals.hull=75;bonusVitals.armor=40
+        check(H55Workshop580.saveVitals(bonusVitals),"source talent values persist")
+        defer {
+            H55SourceMechanics580.reset()
+            H55Workshop580.resetVitals()
+        }
+        var bonusSim=CarbonisCombat568(prepared)
+        check(bonusSim.maxHull==75 && bonusSim.maxArmor==40 &&
+              bonusSim.hull==75 && bonusSim.armor==40,
+              "H11 +15/+15 talents read by actual playable source combat")
+        let bonusStats=H55SourceMechanics580.shipStats(
+            type:1,engine:1,stabilizer:1,thruster:1)!
+        check(abs(bonusSim.flight.flight.configuration.cruiseSpeed-
+                  bonusStats.topSpeed*0.40)<0.0002 &&
+              abs(bonusSim.flight.flight.configuration.control-
+                  bonusStats.acceleration/245)<0.0002,
+              "PC v580 legacy Engine + Thruster genuinely change ship motion")
+        check(bonusSim.guardianCharges==1,"owned Guardian grants one intercept per sector")
+        bonusSim.invincible=0;bonusSim.suffer(8)
+        check(bonusSim.guardianCharges==0 && bonusSim.armor==40 &&
+              bonusSim.invincible==1.2,
+              "guardian intercept is before armor and consumable shields")
+        bonusSim.invincible=0
+        bonusSim.suffer(8)
+        check(bonusSim.armor==32,
+              "dampener never incorrectly reduces physical collisions")
+        var slowed=CarbonisCombat568(prepared)
+        slowed.guardianCharges=0;slowed.invincible=0
+        slowed.rocks=[];slowed.shooters=[]
+        slowed.hostileShots=[CarbonisCombat568.Projectile(
+            point:slowed.flight.position,velocity:Vec2(x:0,y:0),
+            life:1,hostile:true,damage:8)]
+        slowed.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                    shooting:false,dt:1/120)
+        check(slowed.armor==36,
+              "source Dampener Rank2 reduces actual hostile shot 8->4")
+        var collection=CarbonisCombat568(prepared)
+        collection.rocks=[];collection.shooters=[]
+        collection.tokenPickups=[CarbonisCombat568.TokenPickup(
+            position:Sphere67.offset(collection.flight.position,
+                                      by:Vec2(x:190,y:0)),
+            velocity:Vec2(x:0,y:0),value:3)]
+        collection.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                        shooting:false,dt:1/120)
+        check(collection.tokenPickups.count==1 &&
+              collection.tokenPickups[0].velocity.lengthSquared>0,
+              "real collector rank2 attracts tokens from 190m, beyond rank0 165m")
+        var cooling=CarbonisCombat568(prepared)
+        cooling.invincible=5
+        cooling.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                     shooting:true,dt:1/120)
+        let expectedInterval=H55SourceMechanics580.shotInterval(
+            weapon:0,upgrade:1,rapid:0,shipType:1,rateRank:1,cooling:2)!
+        check(cooling.bullets.count==1 &&
+              abs(cooling.cooldown-expectedInterval)<0.0002,
+              "actual C279 firing uses source rate talent and cooling")
+        print("PASS H11 live integration: 110kg? no — original C279 real flight, source modules/talents, guardian intercept, hostile dampener, collector and cooldown")
         print("PASS \(checks) live Carbonis C279 flight, shot, hit, victory and defeat checks")
     }
 }
