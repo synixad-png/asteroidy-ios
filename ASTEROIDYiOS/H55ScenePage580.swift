@@ -33,6 +33,9 @@ import simd
     private var h46RawIntensities:[String:Float]=[:]
     private weak var exteriorSky:SCNNode?
     private weak var playerShip:SCNNode?
+    private var fpsViewmodel:H55FPSScene580?
+    @Published private(set) var fpsStatus="FPS: MODEL RĄK LUB BRONI NIEPRZYGOTOWANY"
+    @Published private(set) var fpsMode=H55FPSSettings580().mode
     private var lighting=H55LightingProfile580.saved()
     private var lightRefresh:Float=0
     private var pausedForSettings=false
@@ -64,6 +67,18 @@ import simd
     @Published private(set) var h12Status="NIE WCZYTANO ANIMACJI H12"
     @Published private(set) var h13MaterialReport="H13: ORYGINALNY GLB NIE WCZYTANY"
     @Published private(set) var mechanicStatus="OCZEKUJE NA ROZMOWĘ"
+
+    func setFPSMode(_ mode:H55FPSSettings580.Mode) {
+        fpsMode=mode
+        fpsViewmodel?.selectMode(mode)
+    }
+    func importFPS(_ url:URL,kind:H55FPSAssets580.Kind)throws {
+        _=try H55FPSAssets580.install(url,as:kind)
+        fpsStatus="FPS: ZWERYFIKOWANO ORYGINALNY MODEL "+kind.fileName
+        if kind == .tripo {setFPSMode(.gloves)}
+        if kind == .weapon {setFPSMode(.weapon)}
+        fpsViewmodel?.reload(kind)
+    }
 
     func jump() {
         guard !conversationOpen && !showingWorkshop && arrival.walking else{return}
@@ -238,6 +253,8 @@ import simd
         let near=hypot(movement.x-mechanic.x,movement.z-mechanic.z)<=2.7
         if near != mechanicNearby {mechanicNearby=near}
         }
+        fpsViewmodel?.advance(time:arrival.time,walking:arrival.walking,
+                    bobPhase:movement.bobPhase,bobAmount:movement.bobAmount)
         // The same source sky stays in camera space, without parallax.
         if let camera {exteriorSky?.position=camera.position}
         // Continue authentic idle during arrival and conversation.
@@ -346,6 +363,9 @@ import simd
         h46RawIntensities.removeAll()
         exteriorSky=nil
         playerShip=nil
+        fpsViewmodel?.release()
+        fpsViewmodel=nil
+        fpsStatus="FPS: PRZYGOTOWANIE ORYGINALNEGO MODELU"
         lightRefresh=0
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
@@ -507,6 +527,12 @@ import simd
         pointOfView.position=SCNVector3(cameraStart.x,cameraStart.y,cameraStart.z)
         pointOfView.look(at:SCNVector3(0,4,0))
         realScene.rootNode.addChildNode(pointOfView)
+        // Camera-only visual system: no H55 GLB mutation, no new player
+        // collision, and no draw during the 3.25-second arrival.
+        fpsViewmodel=H55FPSScene580(camera:pointOfView,inform:{[weak self] result in
+            self?.fpsStatus=result
+        })
+        fpsMode=fpsViewmodel?.mode ?? .gloves
         H55LoadDiagnostics580.mark("09_KAMERA_WYKONANA_SWATLO_START")
         // H13-A: no dynamic IBL cubemap. Windows PC v580 H55Renderer.cs
         // uses its own GLSL light shader, not SceneKit environment textures.
@@ -771,6 +797,9 @@ import simd
         h46RawIntensities.removeAll()
         exteriorSky=nil
         playerShip=nil
+        fpsViewmodel?.release()
+        fpsViewmodel=nil
+        fpsStatus="FPS: PRZYGOTOWANIE ORYGINALNEGO MODELU"
         lightRefresh=0
         arrival=H55Arrival580(spawnClear:false)
         arriving=false
@@ -805,6 +834,8 @@ struct H55ScenePage580: View {
     let dismiss: () -> Void
     @StateObject private var loader=H55SceneModel580()
     @State private var choosingFile=false
+    @State private var choosingFPSModel=false
+    @State private var fpsImportKind:H55FPSAssets580.Kind = .tripo
     @State private var pickedClip=""
     @State private var importError:String?
     @State private var showingSettings=false
@@ -858,6 +889,14 @@ struct H55ScenePage580: View {
             if !visible {loader.setLighting(fill:lightingFill,red:lightingRed)}
         }
         .onDisappear {showingSettings=false;showingPause=false;loader.close()}
+        .fileImporter(isPresented:$choosingFPSModel,
+            allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data],
+            allowsMultipleSelection:false) { result in
+            do {
+                guard let url=try result.get().first else{return}
+                try loader.importFPS(url,kind:fpsImportKind)
+            }catch {importError=error.localizedDescription}
+        }
         .fileImporter(isPresented:$choosingFile,
             allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data],
             allowsMultipleSelection:false) { result in
@@ -935,6 +974,27 @@ struct H55ScenePage580: View {
                             .foregroundStyle(Color(red:0.58,green:0.79,blue:0.82))
                             .fixedSize(horizontal:false,vertical:true)
                             .accessibilityIdentifier("h71-pause-status")
+                        Text(loader.fpsStatus)
+                            .font(.system(size:compact ? 9:10,design:.monospaced))
+                            .foregroundStyle(Color(red:0.73,green:0.82,blue:0.91))
+                            .fixedSize(horizontal:false,vertical:true)
+                            .accessibilityIdentifier("h55-fps-status")
+                        HStack(spacing:8) {
+                            pauseButton("RĘCE") {loader.setFPSMode(.gloves)}
+                                .accessibilityIdentifier("h55-fps-show-hands")
+                            pauseButton("BROŃ EXP-01") {loader.setFPSMode(.weapon)}
+                                .accessibilityIdentifier("h55-fps-show-weapon")
+                        }
+                        HStack(spacing:8) {
+                            pauseButton("IMPORTUJ RĘCE GLB") {
+                                fpsImportKind = .tripo
+                                choosingFPSModel=true
+                            }.accessibilityIdentifier("h55-fps-import-hands")
+                            pauseButton("IMPORTUJ BROŃ GLB") {
+                                fpsImportKind = .weapon
+                                choosingFPSModel=true
+                            }.accessibilityIdentifier("h55-fps-import-weapon")
+                        }
                         pauseButton("KONTYNUUJ",primary:true) {showingPause=false}
                             .accessibilityIdentifier("h55-pause-resume")
                         pauseButton("USTAWIENIA") {showingSettings=true}
