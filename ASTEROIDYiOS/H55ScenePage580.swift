@@ -328,8 +328,15 @@ import simd
                 // H13 inspects the already authenticated GLB off the display thread.
                 // Diagnostic failure does not block entry, NPC or H12.
                 let materialReport:String
-                do {materialReport=try H55H13MaterialReport580.inspect(url).text}
-                catch {materialReport="H13: ODCZYT METADANYCH NIEUDANY — "+String(describing:error)}
+                let materialSnapshot:H55H13MaterialReport580.Snapshot?
+                do {
+                    let inspected=try H55H13MaterialReport580.inspect(url)
+                    materialSnapshot=inspected
+                    materialReport=inspected.text
+                } catch {
+                    materialSnapshot=nil
+                    materialReport="H13: ODCZYT METADANYCH NIEUDANY — "+String(describing:error)
+                }
                 // H12 must not regress H01–H11: an incomplete imported
                 // animation library disables H12 alone, not the hangar.
                 let h12=try? H55H12Tracks580.load(
@@ -354,7 +361,8 @@ import simd
                                         machineryLibrary:h12,
                                         droneSpawns:droneSpawns,
                                         droneNavigation:droneNavigation,
-                                        materialReport:materialReport)
+                                        materialReport:materialReport,
+                                        materialSnapshot:materialSnapshot)
                         }
                     } else if status == .error {
                         DispatchQueue.main.async { [weak self] in
@@ -382,7 +390,8 @@ import simd
                          machineryLibrary:H55H12Tracks580.Library?,
                          droneSpawns:[H55DroneImports580.Spawn],
                          droneNavigation:H55DroneNavigation580?,
-                         materialReport:String) {
+                         materialReport:String,
+                         materialSnapshot:H55H13MaterialReport580.Snapshot?) {
         guard let realScene=source.defaultScene else {
             phase = .failed("Plik nie zawiera sceny 3D.")
             return
@@ -509,7 +518,17 @@ import simd
             clips[$0] != nil && !H55AirlockController580.clipNames.contains($0)
         }
         self.inventory=inventory
-        h13MaterialReport=materialReport
+        if let materialSnapshot {
+            // Upstream GLTFKit2 omits KHR_materials_emissive_strength.
+            // Correct only named, unambiguous source materials at load time.
+            // Keep all eight BLEND materials, six clearcoat materials and
+            // original H46 lights unchanged otherwise.
+            let corrected=H55H13SceneMaterials580.apply(
+                materialSnapshot,nodes:source.nodes)
+            h13MaterialReport=materialReport+"\n"+corrected.text
+        } else {
+            h13MaterialReport=materialReport
+        }
         scene=realScene
         camera=pointOfView
         npcAnimator?.apply(dt:0,mechanic:mechanic,allowWalking:false)
