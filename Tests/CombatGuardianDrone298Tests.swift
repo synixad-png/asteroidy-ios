@@ -29,9 +29,9 @@ import Foundation
                              rocks:[],owned:true,strike:2,focus:2,
                              projectileCount:0)
         check(first != nil,"owned Guardian acquires a real shooter")
-        check(first?.damage==2 && first?.life==1.2,
+        check(first?.damage==2 && abs((first?.life ?? 0)-1.2)<0.001,
               "PC GuardianStrike2 + GuardianFocus2 plasma damage and life")
-        check(first?.velocity.lengthSquared ?? 0 > 80_000,
+        check((first?.velocity.lengthSquared ?? 0)>80_000,
               "PC plasma has real source 300+24*2 velocity")
         check(abs(drone.cooldown-1.16)<0.0001,
               "source GuardianStrike2 Focus2 exact 1.16s cooldown")
