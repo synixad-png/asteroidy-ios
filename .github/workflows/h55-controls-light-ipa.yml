@@ -8,8 +8,10 @@ on:
       - 'ASTEROIDYiOS/H55Airlocks580.swift'
       - 'ASTEROIDYiOS/H55LightingProfile580.swift'
       - 'ASTEROIDYiOS/H55SceneLighting580.swift'
-      - 'ASTEROIDYiOS/H55LightingPanel580.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
+      - 'ASTEROIDYiOS/W3MainMenu568.swift'
+      - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
+      - 'ASTEROIDYiOS/H55LoadDiagnostics580.swift'
       - 'ASTEROIDYiOS/H55Mechanic580.swift'
       - 'ASTEROIDYiOS/H55Walk580.swift'
       - 'Tests/H55Airlocks580Tests.swift'
@@ -41,6 +43,18 @@ jobs:
           assert "TARGETED_DEVICE_FAMILY: '1,2'" in project
           assert "GLTFKit2:" in project and "exactVersion: 0.5.15" in project
           assert 'H55ScenePage580(dismiss:{navigateW3(nil)})' in menu
+          assert 'if page == .hangar {' in menu and menu.count('H55ScenePage580(') == 1
+          assert 'if item == .hangar {' not in menu, 'H55 must not be nested W3 submenu'
+          assert 'H55LightingPanel580(' not in h55, 'no sliders on hangar scene'
+          assert 'CarbonisVisualSettingsPanel568(' in h55 and 'initialTab:9' in h55
+          assert 'H55LoadDiagnostics580.mark(' in h55
+          settings=Path('ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift').read_text()
+          assert 'case 9: hangarPage580' in settings
+          assert 'h55-settings-safe-shaders' in settings
+          assert 'h55-settings-share-load-report' in settings
+          lighting=Path('ASTEROIDYiOS/H55SceneLighting580.swift').read_text()
+          assert 'private static let neutralCube' not in lighting
+          assert 'scene.lightingEnvironment.contents=' not in lighting
           assert 'GLTFAsset.load(with:url' in h55
           assert 'H55Asset580.inspect(url)' in h55
           assert 'H55Walk580()' in h55
@@ -95,6 +109,9 @@ jobs:
           /tmp/h55-touch-light
           swiftc -frontend -parse ASTEROIDYiOS/H55TouchControls580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55LoadDiagnostics580.swift
           swiftc ASTEROIDYiOS/H55Airlocks580.swift Tests/H55AirlocksRealGLB580Tests.swift -o /tmp/h07-real-glb-source
 
   build-h55-ipa:
