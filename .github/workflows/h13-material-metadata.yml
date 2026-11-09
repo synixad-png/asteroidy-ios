@@ -11,8 +11,10 @@ on:
       - 'Tests/H55H13MaterialReport580Tests.swift'
       - 'ASTEROIDYiOS/H55LightingProfile580.swift'
       - 'ASTEROIDYiOS/H55SceneLighting580.swift'
-      - 'ASTEROIDYiOS/H55LightingPanel580.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
+      - 'ASTEROIDYiOS/W3MainMenu568.swift'
+      - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
+      - 'ASTEROIDYiOS/H55LoadDiagnostics580.swift'
       - '.github/workflows/h13-material-metadata.yml'
   workflow_dispatch:
 permissions:
@@ -31,6 +33,9 @@ jobs:
           swiftc -Onone ASTEROIDYiOS/H55H13MaterialReport580.swift ASTEROIDYiOS/H55H13EmissionRules580.swift Tests/H55H13MaterialReport580Tests.swift -o /tmp/h13-native-materials
           /tmp/h13-native-materials
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55LoadDiagnostics580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55H13SceneMaterials580.swift
           python3 - <<'PY'
           from pathlib import Path
