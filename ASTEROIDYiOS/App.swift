@@ -264,7 +264,19 @@ struct GameView: View {
                         audio.stopForDiagnostic()
                         showMainMenu = false
                     },openCampaignOnEntry:reopenAtlasAfterCarbonis,
-                    startNewGame:startNewGameFromW3)
+                    startNewGame:startNewGameFromW3,
+                    restoreArchivedGame:{ archive in
+                        // A restore is initiated only by a confirmed W3
+                        // user action. Refresh the actual campaign state
+                        // after the archive coordinator validates the file.
+                        guard sourceSector01==nil,
+                              SourceNewGame568.restoreArchive(at:archive)
+                        else{return false}
+                        campaign=CampaignStore556.load()
+                        input.releaseHeldControls()
+                        input.gameplayPaused=true
+                        return true
+                    })
                         .allowsHitTesting(startupSplashPassed568)
                         .accessibilityHidden(!startupSplashPassed568)
                     if !startupSplashPassed568 {
