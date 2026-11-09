@@ -64,6 +64,10 @@ struct CarbonisCombat568 {
     var maxHull:Int=60,maxArmor:Int=25
     var lives:Int=3
     var shieldCharges:Int=0
+    // Source PC580 BossTunnelGame.cs: IonAmmo and Bombs share ShopProfile56.
+    var ionAmmo:Int=0
+    var bombs:Int=0
+    var bombCooldown:Float=0
     let difficulty:CombatBalance556.Difficulty
     let selectedWeapon:Sector01Shop568.Weapon
     let upgradeLevel:Int
@@ -126,6 +130,8 @@ struct CarbonisCombat568 {
         upgradeLevel=profile.upgradeLevel
         rapidLevel=profile.rapidLevel
         shieldCharges=profile.shieldCharges
+        ionAmmo=profile.ionAmmo
+        bombs=profile.bombs
         // H11 reads the same actual saved hull/armor repaired in H55.
         // No parallel visual-only values: these fields drive suffer(),
         // respawn and the real mission HUD.
@@ -233,6 +239,7 @@ struct CarbonisCombat568 {
         let dt=min(1/60,max(0,requested))
         guard dt>0 else{return}
         elapsed+=dt; cooldown=max(0,cooldown-dt)
+        bombCooldown=max(0,bombCooldown-dt)
         destruction.tick(dt:dt)
         invincible=max(0,invincible-dt)
         flight.tick(move:move,aim:aim,dt:dt)
@@ -484,6 +491,78 @@ struct CarbonisCombat568 {
         }
     }
 
+    /// One canonical destruction/reward path for both PC bullet hits
+    /// and the source-wide bomb wave; avoids duplicate scoring or loot.
+    private mutating func destroyRock(at index:Int) {
+        let removed=rocks.remove(at:index)
+        emitOriginalAudio568(removed.size>=3 ? 21 : 20)
+        destruction.rockDestroyed(removed,time:elapsed,rng:&random)
+        rocksDestroyed+=1
+        score+=Self.sourceRockScore(removed)
+        dropSourceRockLoot(removed)
+        splitRock(removed)
+    }
+
+    private mutating func defeatShooter(at index:Int) {
+        let destroyed=shooters.remove(at:index)
+        emitOriginalAudio568(20)
+        shooterKills+=1
+        score+=destroyed.core.hunter ? 300 : 180
+        // Original BossTunnelGame.HitBug: reward remains a real pickup.
+        if !isReplay {
+            let amount=2+destroyed.core.type/2
+            if tokenPickups.count<96 {
+                let a=Float(5)*1.37
+                let velocity=Vec2(x:cos(a)*18,y:sin(a)*18)
+                tokenPickups.append(TokenPickup(
+                    position:destroyed.core.position,
+                    velocity:velocity,value:amount))
+            } else {
+                collectedLootTokens+=amount
+            }
+        }
+    }
+
+    /// PC v580 BossTunnelGame.UseBomb, surface/Sphere67 branch.
+    /// A bomb can be used only with an active threat, costs one charge,
+    /// cools down for 1.5s, damages every rock/fighter by 5, clears
+    /// all hostile bullets and grants 0.5s collision immunity.
+    /// Boss/tunnel branches remain outside the playable CARBONIS 01 scene.
+    @discardableResult mutating func useBomb()->Bool {
+        guard phase == .playing,bombs>0,bombCooldown<=0,
+              !rocks.isEmpty || !shooters.isEmpty
+        else {return false}
+        bombs-=1
+        bombCooldown=1.5
+        emitOriginalAudio568(22) // BlastSound 2 -> original SFX22
+        destruction.light(at:flight.position,kind:2,life:0.5)
+        destruction.burst(at:flight.position,count:28,kind:2,
+                          rng:&random)
+        for i in rocks.indices.reversed() {
+            // Match original UseBomb: always damage the rocks existing
+            // when the pulse was fired, never newly split child rocks.
+            rocks[i].health-=5
+            if rocks[i].health<=0 {
+                destroyRock(at:i)
+            } else {
+                destruction.rockHit(rocks[i],rng:&random)
+            }
+        }
+        for i in shooters.indices.reversed() {
+            shooters[i].core.hp-=5
+            let fatal=shooters[i].core.hp<=0
+            destruction.shooterHit(
+                at:shooters[i].core.position,
+                impactPoint:shooters[i].core.position,
+                velocity:Vec2(x:0,y:0),momentum:shooters[i].velocity,
+                defeated:fatal,time:elapsed,rng:&random)
+            if fatal {defeatShooter(at:i)}
+        }
+        hostileShots.removeAll(keepingCapacity:true)
+        invincible=max(invincible,0.5)
+        return true
+    }
+
     /// Physics68.SplitPhysical68: each large rock produces two physical
     /// spherical fragments with perpendicular 19-unit momentum and transport.
     private mutating func splitRock(_ parent:SphereAsteroid556) {
@@ -694,6 +773,10 @@ struct CarbonisCombat568 {
             rateRank:sourceMechanics.rateRank,
             cooling:sourceMechanics.cooling) else {return}
         cooldown=interval
+        // PC Game.Fire consumes exactly ONE ion unit per trigger, not one
+        // per individual Twin/Scatter/Swarm bolt.
+        let ion=ionAmmo>0 ? 1 : 0
+        ionAmmo-=ion
         // MusicAudio.cs CombatSound.Shot(weapon) = 10 + source enum ID.
         emitOriginalAudio568(10+selectedWeapon.rawValue)
         let count=selectedWeapon == .swarm ? 3 :
@@ -731,7 +814,7 @@ struct CarbonisCombat568 {
                 life:selectedWeapon == .swarm ? 1.8 :
                      selectedWeapon == .rail ? 1.05 : 1.1,
                 hostile:false,kind:selectedWeapon.rawValue,
-                damage:damage,pierce:pierce))
+                damage:damage+ion,pierce:pierce))
         }
     }
 
@@ -905,24 +988,7 @@ struct CarbonisCombat568 {
                         velocity:shot.velocity,momentum:shooters[j].velocity,
                         defeated:fatal,time:elapsed,rng:&random)
                     if fatal {
-                        emitOriginalAudio568(20) // BossTunnelGame.HitBug: default 0 blast
-                        let destroyed=shooters.remove(at:j)
-                        shooterKills+=1
-                        score+=destroyed.core.hunter ? 300 : 180
-                        // BossTunnelGame.HitBug: reward is a collectible
-                        // token pickup, not instantly credited.
-                        if !isReplay {
-                            let amount=2+destroyed.core.type/2
-                            if tokenPickups.count<96 {
-                                let a=Float(5)*1.37
-                                let velocity=Vec2(x:cos(a)*18,y:sin(a)*18)
-                                tokenPickups.append(TokenPickup(
-                                    position:destroyed.core.position,
-                                    velocity:velocity,value:amount))
-                            } else {
-                                collectedLootTokens+=amount
-                            }
-                        }
+                        defeatShooter(at:j)
                     }
                 }
             }
@@ -950,14 +1016,7 @@ struct CarbonisCombat568 {
                     impact=true
                     bullets[i].hitRockSeeds.append(rocks[j].shapeSeed)
                     if rocks[j].health<=0 {
-                        let removed=rocks.remove(at:j)
-                        emitOriginalAudio568(removed.size>=3 ? 21 : 20)
-                        destruction.rockDestroyed(
-                            removed,time:elapsed,rng:&random)
-                        rocksDestroyed+=1
-                        score+=Self.sourceRockScore(removed)
-                        dropSourceRockLoot(removed)
-                        splitRock(removed)
+                        destroyRock(at:j)
                     } else {
                         // Game.cs:258 HitFlash only, no destruction cloud.
                         destruction.rockHit(rocks[j],rng:&random)
