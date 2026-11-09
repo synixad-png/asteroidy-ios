@@ -37,7 +37,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           source=Path("ASTEROIDYiOS/H55NpcDetour580.swift").read_text()
-          assert 'let legEnd=goalIndex<workshopIndex ? workshopIndex-1 : routeX.count-1' in source
+          assert 'let legEnd=goalIndex<=workshopIndex ? workshopIndex-1 : routeX.count-1' in source
           assert 'let limit=min(legEnd,goalIndex+3)' in source
           assert 'NpcWorkshopIndex530-1' in source, 'original PC regression explicitly documented'
           print("PASS: H08 return leg A* verified against source PC580 deadlock")
