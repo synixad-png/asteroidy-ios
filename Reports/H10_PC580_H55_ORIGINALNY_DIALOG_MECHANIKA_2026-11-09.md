@@ -18,3 +18,11 @@ Data: 2026-11-09 | Gałąź: feature/ios-h55-v580-native-entry | PR #28 | H01–
 - **Nie wdrożono menu odpowiedzi, rozbudowanych kwestii, handlu, zadań dialogowych ani wyposażenia.** Oryginalny PC v580 ich tutaj nie ma; ewentualna rozbudowa to osobne zlecenie/projekt, nie zgodność H10. Warsztat i wyposażenie należą do H11.
 - Bez zmian geometrii GLB, śluz H07, ruchu gracza H06, A* H08, Foot IK H09, oświetlenia i modułów misji.
 - Dopiero test CI i kompilacja IPA potwierdzą wydanie; wynik z fizycznego iPhone/iPad nadal należy do H15. Nie deklarować wizualnej zgodności lub zakończenia projektu przed urządzeniem.
+## Końcowa kontrola wydania H10 (09.11.2026)
+- CI [42577040256](https://github.com/synixad-png/asteroidy-ios/actions/runs/42577040256): oba zadania PASS — cały zestaw H01–H10 Swift i natywna kompilacja iPhone/iPad ARM64 z dokładnie GLTFKit2 0.5.15.
+- Niezależne pobranie artefaktu GitHub id 13655648352, ZIP `ASTEROIDY_v580_H10_ROZMOWY_MECHANIK_GITHUB_PAKIET.zip`, 29 316 392 B, archiwum ZIP CRC PASS.
+- IPA `ASTEROIDY_v580_H10_ROZMOWY_MECHANIK_TEST_UNSIGNED.ipa`, **29 955 488 B**, SHA256 **`f2bdb078b4b88c8c8ed1a8e77c0e0ebf66598e6e85e759c1083a9aa235afbd75`**, identyczny z `reports/SHA256SUMS.txt` wygenerowanym na macOS. ZIP/IPA CRC PASS, 73 rekordy. Mach-O arm64 CPU 16777228, iOS minimum 17.0, UIDeviceFamily [1,2]. Raport `verify_ipa.py`: PASS original Vanguard431 GPU UV, 194427 wierzchołków, 10802 ścian, para oryginalnych zasobów i SHA256.
+- Wersja kodu aplikacji commit `484080de9ef28f1b04b58a79c869414d43eb4be8`; weryfikacja GitHub compare od tego commitu do aktualnej gałęzi wykazała **tylko raport H10 i harmonogram**, bez zmian `ASTEROIDYiOS/*.swift`.
+- Skopiowana i odczytana po zapisie kopia ZIP 29 316 392 B: https://drive.google.com/file/d/1Ro3KzhucZ8HnzCahnJn4Q4hkzlLtZepd/view?usp=drivesdk
+- Nie wykonano rzeczywistej instalacji IPA ani interaktywnego testu rozmowy na fizycznym iPhone/iPad; H15 pozostaje otwarty. Plik IPA jest niepodpisany. Oryginalny `hangar_h55.glb` nie jest dołączony; dotychczasowy zaimportowany GLB jest wymagany.
+- Harmonogram niezmienny H01–H16; H10 85% z powodu braku odbioru sprzętowego, całość szacunkowo około 60%. Nie rozpoczęto H11.
