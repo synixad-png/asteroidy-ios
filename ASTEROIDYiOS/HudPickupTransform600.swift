@@ -17,11 +17,11 @@ enum HudPickupTransform600 {
                           "shield_charge.icon","boost.icon"]
     static func sample(index:Int,time:Float,pose:HudMotion600.Pose,
                        drawableWidth:Float,drawableHeight:Float,
-                       widget:HudLayout600.Widget? = nil)->Sample? {
+                       widget:HudLayout600.Widget? = nil,
+                       viewport:CombatHUDViewport568? = nil)->Sample? {
         guard (0..<4).contains(index),time.isFinite,
               drawableWidth.isFinite,drawableHeight.isFinite,
               drawableWidth>1,drawableHeight>1 else{return nil}
-        let scale=max(0.001,min(drawableWidth/1280,drawableHeight/720))
         let phase=time*0.60+Float(index)*1.71
         let secondary=time*0.37+Float(index)*0.83
         let decay=pose.iconStrength
@@ -31,19 +31,28 @@ enum HudPickupTransform600 {
             +max(-0.09,min(0.09,pose.y*0.004*decay))
         let roll=sin(phase*0.72)*0.041
             +max(-0.065,min(0.065,pose.roll*0.012*decay))
-        // Original PC source icons: 920 + 100*i, y=628 on 1280x720.
-        // Clamp the decorative element into the physical screen, never
-        // move/crop touch regions or the stable aiming reticle.
-        let sourceX=Float(widget?.x ?? Double(895+index*100))+25
-        let x=drawableWidth-10*scale-(1280-sourceX)*scale
-              +pose.x*0.78*scale
-        let sourceY=Float(widget?.y ?? 603)+25
-        let y=drawableHeight-9*scale-(720-sourceY)*scale
-              +pose.y*0.78*scale
+        // SwiftUI and Metal must use the same four-corner origin, actual
+        // UIWindow safe margins and PC v600 top-left scaling. In adaptive
+        // phone mode the drawable can be downscaled independently of points.
+        let screen=viewport ?? CombatHUDViewport568(
+            width:Double(drawableWidth),height:Double(drawableHeight))
+        let defaultID=widgetIDs[index]
+        let icon=widget ?? HudLayout600.defaults().widget(defaultID)
+        guard let icon,
+              let source=HudWidgetPlacement600.frame(icon,sourceWidth:50,
+                  sourceHeight:50,anchor:.bottomRight,viewport:screen),
+              let pixel=HudWidgetPlacement600.pixels(source,viewport:screen,
+                  drawableWidth:Double(drawableWidth),
+                  drawableHeight:Double(drawableHeight)) else{return nil}
+        let pixelPerPointX=Double(drawableWidth)/screen.width
+        let pixelPerPointY=Double(drawableHeight)/screen.height
+        let x=Float(pixel.centerX+
+            Double(pose.x)*0.78*screen.scale*pixelPerPointX)
+        let y=Float(pixel.centerY+
+            Double(pose.y)*0.78*screen.scale*pixelPerPointY)
         let pulse=1+pose.widgetPulse(widgetIDs[index])
-        let iconSize=45*scale*Float(widget?.scale ?? 1)*pulse
-        return Sample(x:max(22*scale,min(drawableWidth-22*scale,x)),
-                      y:max(22*scale,min(drawableHeight-22*scale,y)),
+        let iconSize=Float(min(pixel.width,pixel.height)*0.9)*pulse
+        return Sample(x:x,y:y,
                       yaw:yaw+Float(widget?.yaw ?? 0)*Float.pi/180,
                       pitch:pitch+Float(widget?.pitch ?? 0)*Float.pi/180,
                       roll:roll+Float(widget?.roll ?? 0)*Float.pi/180,
