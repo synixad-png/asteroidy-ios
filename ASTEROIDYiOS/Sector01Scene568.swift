@@ -22,6 +22,7 @@ struct Sector01Scene568: View {
     // Windows v568 Game.Mode.Paused / PausedFrom=Playing:
     // user pause is independent from an iOS lock-screen suspension.
     @State private var userPaused=false
+    @State private var showingHudMotion600=false
     // Window safe areas survive a full-bleed mission view on iPad/iPhone.
     @State private var missionSafeInsets568=W3ScreenInsets568()
 
@@ -304,6 +305,20 @@ struct Sector01Scene568: View {
                                           design:.monospaced))
                             .foregroundStyle(.gray)
                         Divider().overlay(Color(red:0.88,green:0.67,blue:0.31))
+                        Button("HUD DYNAMICZNY / USTAWIENIA") {
+                            showingHudMotion600=true
+                        }
+                        .frame(maxWidth:.infinity)
+                        .padding(compact ? 7:10)
+                        .background(Color(red:0.05,green:0.15,blue:0.22),
+                                    in:RoundedRectangle(cornerRadius:5))
+                        .foregroundStyle(.cyan)
+                        .accessibilityIdentifier("sector01-hud-v600-settings")
+                        .sheet(isPresented:$showingHudMotion600) {
+                            HudMotionSettingsPanel600 {settings in
+                                session.applyHudMotion600(settings)
+                            }
+                        }
                         Button("KONTYNUUJ") {resumeMission568()}
                             .frame(maxWidth:.infinity)
                             .padding(compact ? 9:13)
