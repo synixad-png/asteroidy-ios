@@ -91,7 +91,7 @@ enum SourceControls586 {
     static func context(for action:Int)->Context {
         switch action {
         case 0...7,9,21,35,44...47:return .combat
-        case 11,12:return .hangar
+        case 11,12,59:return .hangar
         default:return .other
         }
     }
