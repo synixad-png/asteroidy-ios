@@ -25,6 +25,7 @@ jobs:
           python3 Tests/H55FPSPreviewDepth580Contract.py | tee reports/fps-source.txt
           python3 Tests/HudV600IntegrationContract.py | tee reports/hud-v600-source.txt
           python3 Tests/HudPlasmaLive600Contract.py | tee -a reports/hud-v600-source.txt
+          python3 Tests/IOSOriginalCombatHUD331Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudMotionLiveRenderer600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudPlanetariumIntegration600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudPickupMetal600Contract.py | tee -a reports/hud-v600-source.txt
@@ -35,7 +36,7 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSOverlayViewport580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSLighting580.swift
           swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift ASTEROIDYiOS/HudPlasmaLayer600.swift ASTEROIDYiOS/HudPlanetariumHost600.swift
-          swiftc -frontend -parse ASTEROIDYiOS/HudIconMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift
+          swiftc -frontend -parse ASTEROIDYiOS/HudIconMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift ASTEROIDYiOS/HudPickupTransform600.swift ASTEROIDYiOS/Sector01Scene568.swift
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudIconMotion600.swift Tests/HudIconMotion600Tests.swift -o /tmp/hud-icon-springs
           /tmp/hud-icon-springs | tee -a reports/hud-v600-source.txt
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift Tests/HudMotionProject600Tests.swift -o /tmp/hud-icon-projection
