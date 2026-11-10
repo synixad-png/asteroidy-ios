@@ -13,6 +13,8 @@ enum HudPickupTransform600 {
     static let order:[SourcePickupModels586.Kind] = [
         .energy,.bomb,.shield,.boost
     ]
+    static let widgetIDs=["ion.icon","bomb.icon",
+                          "shield_charge.icon","boost.icon"]
     static func sample(index:Int,time:Float,pose:HudMotion600.Pose,
                        drawableWidth:Float,drawableHeight:Float,
                        widget:HudLayout600.Widget? = nil)->Sample? {
@@ -43,7 +45,8 @@ enum HudPickupTransform600 {
                       yaw:yaw+Float(widget?.yaw ?? 0)*Float.pi/180,
                       pitch:pitch+Float(widget?.pitch ?? 0)*Float.pi/180,
                       roll:roll+Float(widget?.roll ?? 0)*Float.pi/180,
-                      size:45*scale*Float(widget?.scale ?? 1))
+                      size:45*scale*Float(widget?.scale ?? 1)*
+                           (1+pose.widgetPulse(widgetIDs[index])))
     }
     static func model(_ s:Sample)->simd_float4x4 {
         let rotate=simd_float4x4(simd_quatf(angle:s.yaw,axis:SIMD3<Float>(0,1,0))
