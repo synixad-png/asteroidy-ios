@@ -31,7 +31,7 @@ enum HudEnergy600 {
         for i in 0...steps {
             let local=length*Double(i)/Double(steps)
             let coordinate=local/width
-            let flow=0.42*sin(coordinate*8.1-time*2.1)
+            let flow=0.42*sin(coordinate*8.1-time*2.1+Double(style)*0.73)
             let a=wave(coordinate,time:time,seed:Double(style)*0.91+1.2)
             let b=wave(coordinate,time:time,seed:Double(style)*0.67+3.8)
             let cap=min(1,max(0.16,min((local+3)/6,(length-local+2)/7)))
