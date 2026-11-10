@@ -6,6 +6,7 @@ asset=(root/"ASTEROIDYiOS/HudPlanetariumAsset600.swift").read_text()
 tracks=(root/"ASTEROIDYiOS/HudPlanetariumTracks600.swift").read_text()
 view=(root/"ASTEROIDYiOS/HudPlanetariumScene600.swift").read_text()
 scene=(root/"ASTEROIDYiOS/Sector01Scene568.swift").read_text()
+host=(root/"ASTEROIDYiOS/HudPlanetariumHost600.swift").read_text()
 session=(root/"ASTEROIDYiOS/CarbonisSession568.swift").read_text()
 for snippet in ('static let expectedSize = 3_228_900',
                 '71ca9ff24e044a831a5c7197e343594dd1fd801284af6231870570b35ad43860',
@@ -24,10 +25,16 @@ for snippet in ('GLTFAsset.load(with:url,options:[:])',
                 'node.presentation.position.x','HudCapsuleBinding600',
                 'view.isUserInteractionEnabled=false'):
     assert snippet in view, "missing genuine SceneKit animated layer: "+snippet
-for snippet in ('HudPlanetariumScene600(', 'HudPlanetariumAsset600.availableURL()',
+for snippet in ('HudPlanetariumAsset600.availableURL()',
                 'HudPlanetariumAsset600.install(from:source)',
-                '.allowsHitTesting(false)', 'session.hud.capsuleLevels'):
+                '.allowsHitTesting(false)', 'HudPlanetariumHost600('):
     assert snippet in scene, "missing live combat HUD wiring: "+snippet
+for snippet in ('HudPlanetariumScene600(', 'liveCapsules:{ [weak session] in',
+                'HudMotionProject600.project(',
+                'session?.currentHudRenderState600().capsules'):
+    assert snippet in host, "missing live 3D HUD host wiring: "+snippet
+assert 'let frameCapsules=liveCapsules?() ?? capsule' in view
+assert 'hudLiveCapsules600=hudCapsules600.snapshot' in session
 assert 'snapshot.capsuleLevels=hudCapsules600.snapshot' in session
 assert 'session.game.step(' not in view
 assert 'Data(contentsOf:' not in view.split('func renderer(')[-1]
