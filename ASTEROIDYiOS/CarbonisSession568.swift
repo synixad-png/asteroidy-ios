@@ -104,6 +104,19 @@ final class CarbonisSession568: ObservableObject {
     private var hudLiveCapsules600=HudCapsuleController600.Snapshot(
         levels:[1,1,1],flashes:[0,0,0])
     private var hudLiveSeconds600:Double=0
+    // PC v602 DrawEnergyGauge samples the active Game directly on EVERY
+    // renderer frame. Do not step the bright gauge bars at the 10Hz
+    // @Published text/radar cadence.
+    private var hudLiveGauges600:(
+        hull:Int,armor:Int,shield:Int,maxHull:Int,maxArmor:Int
+    )=(0,0,0,1,1)
+    func currentHudGauges600()->(
+        hull:Int,armor:Int,shield:Int,maxHull:Int,maxArmor:Int
+    ) {
+        hudLayoutLock600.lock()
+        defer {hudLayoutLock600.unlock()}
+        return hudLiveGauges600
+    }
     func updateHudSafeInsets600(_ insets:W3ScreenInsets568) {
         hudLayoutLock600.lock()
         hudSafeInsetsSnapshot600=insets
@@ -176,6 +189,10 @@ final class CarbonisSession568: ObservableObject {
     init(prepared:Sector01PreparedWave568) {
         let first=CarbonisCombat568(prepared)
         game=first;hud=HUD(first)
+        hudLiveGauges600=(
+            first.hull,first.armor,
+            max(0,Int(ceil(Double(first.tarcza145.energy)))),
+            first.maxHull,first.maxArmor)
     }
     /// Genuine GameOver retry: fresh first-wave state, not a save/unlock.
     func restart(prepared:Sector01PreparedWave568) {
@@ -193,6 +210,11 @@ final class CarbonisSession568: ObservableObject {
         hudLivePose600=HudMotion600.Pose()
         hudLiveCapsules600=HudCapsuleController600.Snapshot(
             levels:[1,1,1],flashes:[0,0,0])
+        hudLiveGauges600=(
+            restarted.hull,restarted.armor,
+            max(0,Int(ceil(Double(restarted.tarcza145.energy)))),
+            restarted.maxHull,restarted.maxArmor)
+        hudLiveSeconds600=0
         hudLayoutLock600.unlock()
         hudCapsules600.reset()
         hud=HUD(restarted)
@@ -315,6 +337,10 @@ final class CarbonisSession568: ObservableObject {
         hudLayoutLock600.lock()
         hudLiveCapsules600=hudCapsules600.snapshot
         hudLiveSeconds600=Double(game.elapsed)
+        hudLiveGauges600=(
+            game.hull,game.armor,
+            max(0,Int(ceil(Double(game.tarcza145.energy)))),
+            game.maxHull,game.maxArmor)
         hudLayoutLock600.unlock()
         if now-lastHUD > 0.10 {
             lastHUD=now
