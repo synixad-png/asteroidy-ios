@@ -476,17 +476,8 @@ struct W3MainMenu568: View {
                     Text("W3 / v568")
                         .font(.system(size:compact ? 9 : 11,design:.monospaced))
                         .foregroundStyle(muted)
-                    Button("WSTECZ") {
-                        navigateW3(nil)
-                    }
-                    .font(.system(size:compact ? 11 : 13,
-                                  weight:.bold,design:.monospaced))
-                    .foregroundStyle(cyan)
-                    .padding(.horizontal,12)
-                    .frame(minHeight:38)
-                    .background(Color(red:0.014,green:0.056,blue:0.085))
-                    .overlay(Rectangle().stroke(cyan.opacity(0.55),lineWidth:1))
-                    .accessibilityIdentifier("w3-panel-back")
+                    // Accessible BACK action is at bottom left, never under system clock.
+
                 }
                 Rectangle().fill(cyan.opacity(0.36)).frame(height:1)
                 if item == .settings {
@@ -564,6 +555,18 @@ struct W3MainMenu568: View {
                     .padding(compact ? 13 : 22)
                     .background(Color(red:0.006,green:0.026,blue:0.049).opacity(0.94))
                     .overlay(Rectangle().stroke(cyan.opacity(0.22),lineWidth:1))
+                }
+                HStack {
+                    Button("WSTECZ") {navigateW3(nil)}
+                        .font(.system(size:compact ? 11 : 13,
+                                      weight:.bold,design:.monospaced))
+                        .foregroundStyle(cyan)
+                        .padding(.horizontal,20)
+                        .frame(minHeight:40)
+                        .background(Color(red:0.014,green:0.056,blue:0.085))
+                        .overlay(Rectangle().stroke(cyan.opacity(0.55),lineWidth:1))
+                        .accessibilityIdentifier("w3-panel-back")
+                    Spacer(minLength:0)
                 }
             }
             .padding(.leading,layout.safeLeft+(compact ? 12 : 24))
