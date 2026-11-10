@@ -11,6 +11,7 @@ struct H55FPSPreview580:UIViewRepresentable {
     let settings:H55FPSSettings580
     /// PC GpuWeapon470 previews: 0=static, 2=walk, 3=run.
     let motion:Int
+    let gloveBrightness:Double
     let onStatus:(String)->Void
 
     func makeCoordinator()->Coordinator {
@@ -56,6 +57,9 @@ struct H55FPSPreview580:UIViewRepresentable {
         c.currentMotion=motion
         c.onStatus=onStatus
         c.fps?.synchronizePreview(settings)
+        if settings.mode == .gloves {
+            c.fps?.refreshGloveBrightness602()
+        }
         if let scene=view.scene {
             H55FPSLighting580.configure(scene:scene,mode:settings.mode)
         }
