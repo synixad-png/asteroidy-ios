@@ -14,8 +14,11 @@ energy=read("HudEnergy600.swift")
 assert "TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active))" in p
 assert "Canvas(opaque:false,rendersAsynchronously:false)" in p
 assert "let pose=livePose()" in p
-assert "let values:[Int?]=[hull,armor,shield]" in p
-assert "let maxima=[maxHull,maxArmor,100]" in p
+assert "let values:[Int?]=[gauge.hull,gauge.armor,gauge.shield]" in p
+assert "let gauge=liveGauges()" in p
+assert "func currentHudGauges600()->(" in session
+assert "session?.currentHudGauges600()" in scene
+assert "let maxima=[gauge.maxHull,gauge.maxArmor,100]" in p
 assert "maxHull:session.hud.maxHull,maxArmor:session.hud.maxArmor" in scene
 assert "Self.draw(bar,current:values[i],maximum:maxima[i]" in p
 assert "HudEnergy600.ribbon(" in p and "for layer in 0..<5" in p
