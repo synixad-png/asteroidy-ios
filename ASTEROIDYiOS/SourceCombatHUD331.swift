@@ -55,9 +55,9 @@ struct SourceCombatHUD331: View {
 
             Self.top(topLeft,topRight,hud)
             Self.radar(bottomLeft,hud)
-            Self.gauge(bottomLeft,"KADŁUB",hud.hull,60,191,565,Self.cyan)
-            Self.gauge(bottomLeft,"PANCERZ",hud.armor,25,191,613,Self.gold)
-            Self.gauge(bottomLeft,"TARCZA",hud.tarczaEnergy,100,191,661,Self.blue)
+            Self.gauge(bottomLeft,"KADŁUB",hud.hull,60,191,565,0,Double(hud.seconds))
+            Self.gauge(bottomLeft,"PANCERZ",hud.armor,25,191,613,1,Double(hud.seconds))
+            Self.gauge(bottomLeft,"TARCZA",hud.tarczaEnergy,100,191,661,2,Double(hud.seconds))
             let counts=[hud.ionAmmo,hud.bombs,hud.shieldCharges,hud.boostCharges]
             let names=["JON","BOMBY","OSŁONY","DOPALACZ"]
             let tints=[Self.cyan,Self.dim,Self.cyan,Self.gold]
@@ -129,29 +129,59 @@ struct SourceCombatHUD331: View {
         label(right,"ŻYCIA \(hud.lives)",1195,17,white)
         line(right,776,46,1262,46,color(67,109,145,156),0.8)
     }
+    // PC v600 screen-space gauge. Uses the real HUD snapshot and source
+    // turbulence; no square segments, no images and no game-state writes.
     private static func gauge(_ c:GraphicsContext,_ name:String,_ current:Int?,
-                              _ maximum:Int,_ x:CGFloat,_ y:CGFloat,_ tint:Color) {
+                              _ maximum:Int,_ x:CGFloat,_ y:CGFloat,
+                              _ style:Int,_ time:Double) {
         label(c,name,x,y,dim)
         let value=max(0,current ?? 0)
-        let fraction=clamp(CGFloat(value)/CGFloat(max(1,maximum)))
-        let n=14, width:CGFloat=148, gap:CGFloat=3.2
-        let cell=(width-gap*CGFloat(n-1))/CGFloat(n)
-        for i in 0..<n {
-            let xx=x+CGFloat(i)*(cell+gap), yy=y+19
-            let base=polygon([
-                CGPoint(x:xx+2,y:yy),CGPoint(x:xx+cell,y:yy),
-                CGPoint(x:xx+cell-2,y:yy+9),CGPoint(x:xx,y:yy+9)
-            ])
-            c.fill(base,with:.color(color(170,9,25,35)))
-            let coverage=clamp(fraction*CGFloat(n)-CGFloat(i))
-            if coverage>0.001 {
-                let lit=max(1.2,(cell-2)*coverage)
-                let infill=polygon([
-                    CGPoint(x:xx+2,y:yy+1),CGPoint(x:xx+2+lit,y:yy+1),
-                    CGPoint(x:xx+lit,y:yy+7),CGPoint(x:xx,y:yy+7)
-                ])
-                c.fill(infill,with:.color(tint))
-                line(c,xx+2,yy+1,xx+2+lit,yy+1,color(95,243,248,250),0.55)
+        let width:Double=148
+        let fraction=HudEnergy600.fraction(current,maximum:maximum)
+        let left=Double(x)+1
+        let baseY=Double(y)+19
+        let guide=polygon([
+            CGPoint(x:left,y:baseY),
+            CGPoint(x:left+width,y:baseY),
+            CGPoint(x:left+width-2,y:baseY+9),
+            CGPoint(x:left,y:baseY+9)
+        ])
+        c.fill(guide,with:.color(color(160,8,22,31)))
+        if fraction>0 {
+            let length=(width-2)*fraction
+            let palette:[[Color]]=[
+                [color(18,255,32,23),color(46,255,41,24),
+                 color(128,231,20,11),color(210,255,60,31),color(235,255,205,150)],
+                [color(20,255,93,6),color(53,255,124,17),
+                 color(140,238,103,5),color(223,255,178,38),color(242,255,237,166)],
+                [color(18,37,255,50),color(49,55,252,56),
+                 color(129,16,205,47),color(212,104,255,72),color(236,228,255,187)]
+            ]
+            for layer in 0..<5 {
+                let vertices=HudEnergy600.ribbon(
+                    x:left,y:baseY,width:width-2,length:length,
+                    time:time,style:style,layer:layer)
+                let points=vertices.map{CGPoint(x:$0.x,y:$0.y)}
+                c.fill(polygon(points),with:.color(palette[style][layer]))
+            }
+            // Independent flame tongues trace the irregular edges.
+            for k in 0..<7 {
+                let drift=(Double(k)*0.61803398875+time*(0.072+0.011*Double(k%3))
+                          +Double(style)*0.17).truncatingRemainder(dividingBy:1)
+                let local=drift*length
+                if length-local<3.5 {continue}
+                let xx=left+local
+                let turbulence=abs(HudEnergy600.wave(local/(width-2),
+                    time:time,seed:Double(style)+Double(k)*0.89))
+                let reach=2.5+5.3*turbulence
+                let upper=k%2==0
+                let edge=baseY+(upper ? -0.3:9.3)
+                let tip=edge+(upper ? -reach:reach)
+                c.fill(polygon([
+                    CGPoint(x:xx-1.6,y:edge),
+                    CGPoint(x:xx+0.8,y:tip),
+                    CGPoint(x:xx+4.4,y:edge+(upper ? 0.4 : -0.4))
+                ]),with:.color(palette[style][2]))
             }
         }
         text(c,current.map{String(max(0,$0))} ?? "—",x+183,y+2,white,right:true)
