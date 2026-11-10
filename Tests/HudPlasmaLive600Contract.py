@@ -45,7 +45,8 @@ for color in ("color(160,8,22,31)","color(69,90,123,134)",
     assert color in hud
 assert "HudPlasmaLayer600(" in scene
 assert "active:session.hud.phase == .playing && !userPaused && !showingService" in scene
-assert "session?.currentHudRenderState600().pose" in scene
+assert "session?.currentHudVisual600().pose" in scene
+assert "func currentHudVisual600()->(" in session
 assert "maxHull=game.maxHull;maxArmor=game.maxArmor" in session
 assert "maxHull:Int" in session and "maxArmor:Int" in session
 assert "maxHull:Int=60,maxArmor:Int=25" in physics
