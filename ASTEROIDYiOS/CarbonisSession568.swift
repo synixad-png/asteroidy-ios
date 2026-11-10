@@ -92,6 +92,12 @@ final class CarbonisSession568: ObservableObject {
     var aim=Vec2(x:0,y:0)
     var shooting=false
     var paused=false
+    /// Real PC v586 mapping is owned once and loaded at mission entry.
+    /// Touch remains independent; keyboard/gamepad input shares gameplay.
+    private var controls586=SourceControls586.Profile.load()
+    private var controlRouter586=SourceControlRouter586()
+    private var touchShieldHeld586=false
+    var onPauseRequested:(()->Void)?
     var onAudioEvents:(([Int])->Void)?
     private var lastFrame:TimeInterval?
     private var lastHUD:TimeInterval=0
@@ -106,6 +112,8 @@ final class CarbonisSession568: ObservableObject {
         let restarted=CarbonisCombat568(prepared)
         game=restarted
         release()
+        controlRouter586.reset()
+        SourceHardwareInput586.shared.clearKeyboard()
         paused=false
         lastFrame=nil
         lastHUD=0
@@ -121,13 +129,14 @@ final class CarbonisSession568: ObservableObject {
         move=Vec2(x:0,y:0)
         aim=Vec2(x:0,y:0)
         shooting=false
-        // A paused backgrounded app cannot retain a stuck V-equivalent.
+        // A paused/backgrounded app cannot retain a stuck V-equivalent.
+        touchShieldHeld586=false
         game.setShieldHeld(false)
     }
     func holdShield145(_ pressed:Bool) {
-        let held=pressed && !paused && game.phase == .playing
-        game.setShieldHeld(held)
-        if !held {
+        touchShieldHeld586=pressed && !paused && game.phase == .playing
+        game.setShieldHeld(touchShieldHeld586)
+        if !touchShieldHeld586 {
             hud=HUD(game,summarySeconds:summaryElapsed)
         }
     }
@@ -147,14 +156,35 @@ final class CarbonisSession568: ObservableObject {
     }
     func frame(at now:TimeInterval) {
         defer{lastFrame=now}
+        // One device snapshot per rendered update, not per 120Hz physics
+        // substep. Never clone current sim, camera, HUD or touch controls.
+        let sourceInput=controlRouter586.read(
+            SourceHardwareInput586.shared.snapshot(),profile:controls586)
+        if sourceInput.pausePressed {
+            DispatchQueue.main.async { [weak self] in
+                self?.onPauseRequested?()
+            }
+            return
+        }
         guard let lastFrame, !paused else {return}
         let elapsed=max(0,min(0.05,now-lastFrame))
         guard elapsed>0 else{return}
+        if sourceInput.bombPressed {_=useBomb()}
+        if sourceInput.boostPressed {_=useBoost71()}
+        game.setShieldHeld(touchShieldHeld586 || sourceInput.continuous.shield)
+        let controlledMove=sourceInput.continuous.move
+        let controlledAim=sourceInput.continuous.aim
+        let effectiveMove=controlledMove.hasInput
+            ? Vec2(x:controlledMove.x,y:controlledMove.y):move
+        let effectiveAim=controlledAim.hasInput
+            ? Vec2(x:controlledAim.x,y:controlledAim.y):aim
+        let effectiveFire=shooting || sourceInput.continuous.shooting
         var remaining=Float(elapsed)
         if game.phase == .victory {summaryElapsed+=remaining}
         while remaining>0.000001 && game.phase == .playing {
             let dt=min(1.0/120.0,remaining)
-            game.step(move:move,aim:aim,shooting:shooting,dt:dt)
+            game.step(move:effectiveMove,aim:effectiveAim,
+                      shooting:effectiveFire,dt:dt)
             remaining-=dt
         }
         let soundCodes=game.drainOriginalAudioEvents568()
