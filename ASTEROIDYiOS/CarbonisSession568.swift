@@ -145,6 +145,9 @@ final class CarbonisSession568: ObservableObject {
     func applyHudMotion600(_ settings:HudMotion600.Settings) {
         hudMotion600.settings=settings
         hudMotion600.reset()
+        hudLayoutLock600.lock()
+        hudLivePose600=HudMotion600.Pose()
+        hudLayoutLock600.unlock()
     }
 
     init(prepared:Sector01PreparedWave568) {
