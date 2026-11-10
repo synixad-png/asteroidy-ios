@@ -142,12 +142,21 @@ import simd
             if let geo=n.geometry {
                 n.renderingOrder=1000
                 for material in geo.materials {
-                    // The source's PBR/UV/vertex colours remain unchanged.
-                    // Original PC weapon/gloves run a separate 64-degree
-                    // depth pass on top of the 3D hangar.
-                    material.readsFromDepthBuffer=false
-                    material.writesToDepthBuffer=false
-                    material.isDoubleSided=true
+                    // PC GpuGloves417 / GpuWeapon470 clear and ENABLE DEPTH
+                    // for a separate FPS render pass. The FPS geometry now
+                    // owns an independent transparent SceneKit scene/view.
+                    // Within that pass, opaque faces MUST depth-test/write:
+                    // disabling BOTH caused face-order shimmer on overlaps.
+                    material.readsFromDepthBuffer=true
+                    // The original EXP-01 decals are BLEND, while glove
+                    // material and all rigid metal parts are opaque.
+                    // Alpha decals may depth-test but must not hide opaque
+                    // parts behind them in the same framebuffer.
+                    material.writesToDepthBuffer =
+                        !(material.name?.hasPrefix("DECAL_") ?? false)
+                    // Never force isDoubleSided: TRIPO is authored true,
+                    // MONOLIT and almost all EXP-01 parts are authored false.
+                    // GLTFKit2 owns the original PBR, UV, alpha and sides.
                 }
             }
         }
