@@ -33,7 +33,7 @@ assert "H55FPSOverlayViewport580(scene:fpsScene,pointOfView:fpsCamera)" in stage
 assert "fpsViewmodel=H55FPSScene580(camera:fpsCamera" in stage
 assert "H55SceneViewport580(scene:scene,pointOfView:camera" in stage
 assert "view.isOpaque=false" in overlay
-assert "view.backgroundColor=.clear" in overlay
+assert "view.backgroundColor = .clear" in overlay
 assert "view.isUserInteractionEnabled=false" in overlay
 assert "view.scene?.background.contents=UIColor.clear" in overlay
 
