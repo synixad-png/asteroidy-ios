@@ -12,6 +12,28 @@ struct HudMotion600 {
         var rightSway = 400
         var parallax = true
         var reactions = true
+        // PC v600 uses schema 1 and these exact persisted field names.
+        enum CodingKeys:String,CodingKey {
+            case profile,strength,inertia,impact,parallax,reactions
+            case leftSway="left_sway",rightSway="right_sway"
+        }
+        private static let storageKey="asteroidy.ios.hud.v600.motion"
+        static func load()->Settings {
+            guard let data=UserDefaults.standard.data(forKey:storageKey),
+                  let value=try? JSONDecoder().decode(Settings.self,from:data),
+                  (0...3).contains(value.profile),
+                  (0...100).contains(value.strength),
+                  (0...100).contains(value.inertia),
+                  (0...100).contains(value.impact),
+                  (0...400).contains(value.leftSway),
+                  (0...400).contains(value.rightSway) else{return Settings()}
+            return value
+        }
+        func save()->Bool {
+            guard let data=try? JSONEncoder().encode(self) else{return false}
+            UserDefaults.standard.set(data,forKey:Self.storageKey)
+            return true
+        }
         var profileFactor: Float {
             profile == 0 ? 0 : profile == 1 ? 0.42 : profile == 3 ? 1.32 : 1
         }
