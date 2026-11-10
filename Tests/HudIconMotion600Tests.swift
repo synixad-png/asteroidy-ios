@@ -25,7 +25,8 @@ import Foundation
         close(initial.floatY,Float(sin((t*1.6+0.3)*0.66+0.3*0.5)),
               "energy first frame uses source float lift")
         let following=model.evaluate(index:0,seconds:t+0.01,motion:pose)!
-        let fresh=HudIconMotion600().evaluate(index:0,seconds:t+0.01,motion:pose)!
+        var freshModel=HudIconMotion600()
+        let fresh=freshModel.evaluate(index:0,seconds:t+0.01,motion:pose)!
         check(abs(following.yaw-initial.yaw) <= abs(fresh.yaw-initial.yaw)+0.0001,
               "per-icon spring lags target rather than snapping")
         let bomb=model.evaluate(index:1,seconds:t,motion:pose)!
