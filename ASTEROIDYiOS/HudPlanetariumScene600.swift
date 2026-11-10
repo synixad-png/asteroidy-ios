@@ -9,6 +9,8 @@ struct HudPlanetariumScene600:UIViewRepresentable {
     let original:URL
     let capsule:HudCapsuleController600.Snapshot
     let pitch:Float
+    let yaw:Float
+    let roll:Float
     let pose:HudMotion600.Pose
 
     func makeCoordinator()->Coordinator { Coordinator() }
@@ -27,7 +29,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         return view
     }
     func updateUIView(_ view:SCNView,context:Context) {
-        context.coordinator.set(capsule, pitch:pitch,pose:pose)
+        context.coordinator.set(capsule,pitch:pitch,yaw:yaw,roll:roll,pose:pose)
     }
     static func dismantleUIView(_ view:SCNView,coordinator:Coordinator) {
         view.delegate=nil
@@ -40,6 +42,8 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         private var capsule=HudCapsuleController600.Snapshot(
             levels:[1,1,1],flashes:[0,0,0])
         private var pitch:Float = -20
+        private var yaw:Float = 0
+        private var roll:Float = 0
         private var pose=HudMotion600.Pose()
         private var binding:HudCapsuleBinding600?
         private var bubbles:[Int:SCNNode]=[:]
@@ -49,10 +53,12 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         private var generation=0
 
         func set(_ updated:HudCapsuleController600.Snapshot,
-                 pitch:Float,pose:HudMotion600.Pose) {
+                 pitch:Float,yaw:Float,roll:Float,pose:HudMotion600.Pose) {
             mutex.lock()
             capsule=updated
             self.pitch=pitch
+            self.yaw=yaw
+            self.roll=roll
             self.pose=pose
             mutex.unlock()
         }
@@ -165,7 +171,8 @@ struct HudPlanetariumScene600:UIViewRepresentable {
             }
             if let camera {
                 let radians=(pitch+pose.roll*0.16)*Float.pi/180
-                camera.eulerAngles=SCNVector3(radians,0,0)
+                camera.eulerAngles=SCNVector3(radians,
+                    yaw*Float.pi/180,roll*Float.pi/180)
             }
         }
     }
