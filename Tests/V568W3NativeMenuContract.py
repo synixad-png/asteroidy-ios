@@ -90,7 +90,7 @@ assert "Sector01Shop568.save(profile,defaults:defaults)" in source_settlement
 assert "enum Item:Int,CaseIterable" in source_shop
 assert "accessibilityIdentifier(\"sector01-source-post-mission-service-shop\")" in shop_view
 
-assert "SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568)" in source_scene
+assert "SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568," in source_scene
 source_hud=(root/"ASTEROIDYiOS/SourceCombatHUD331.swift").read_text()
 assert "game.shooters.compactMap" in (root/"ASTEROIDYiOS/CarbonisSession568.swift").read_text()
 assert "hud.radarContacts" in source_hud
