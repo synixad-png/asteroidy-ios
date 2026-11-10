@@ -24,6 +24,13 @@ struct H55FPSSettingsSection580: View {
                       "OBRÓT X","OBRÓT Y","OBRÓT Z","SKALA"]
 
     private var current:H55FPSSettings580 { loader?.fpsCalibration ?? stored }
+    // Preview respects the *selected settings category* even when the
+    // in-game viewmodel is currently using the other presentation mode.
+    private var previewConfiguration:H55FPSSettings580 {
+        var p=current
+        p.mode=category
+        return p
+    }
     private var target:H55FPSSettings580.Target {
         category == .weapon ? .weapon : (rightHand ? .right : .left)
     }
@@ -173,7 +180,7 @@ struct H55FPSSettingsSection580: View {
                 Text("PODGLĄD NA ŻYWO — PRAWDZIWY MODEL 3D")
                     .font(.system(size:10,weight:.bold,design:.monospaced))
                     .foregroundStyle(gold)
-                H55FPSPreview580(settings:current,motion:previewMotion) {
+                H55FPSPreview580(settings:previewConfiguration,motion:previewMotion) {
                     previewStatus=$0
                 }
                 .id(previewRevision)
