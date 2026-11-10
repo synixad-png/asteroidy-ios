@@ -28,20 +28,7 @@ struct H55FPSPreview580:UIViewRepresentable {
         lens.fieldOfView=70
         camera.camera=lens
         scene.rootNode.addChildNode(camera)
-        // Windows Weapon470 settings preview uses a soft neutral light.
-        // This does not change original GLB textures or source PBR factors.
-        let ambient=SCNNode()
-        ambient.light=SCNLight()
-        ambient.light?.type = .ambient
-        ambient.light?.intensity=380
-        ambient.light?.color=UIColor.white
-        scene.rootNode.addChildNode(ambient)
-        let key=SCNNode()
-        key.light=SCNLight()
-        key.light?.type = .omni
-        key.light?.intensity=650
-        key.position=SCNVector3(-1.5,1.5,1)
-        scene.rootNode.addChildNode(key)
+        H55FPSLighting580.install(into:scene)
         view.scene=scene
         view.pointOfView=camera
         view.isOpaque=true
