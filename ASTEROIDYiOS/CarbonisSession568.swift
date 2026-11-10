@@ -27,6 +27,8 @@ final class CarbonisSession568: ObservableObject {
         var boostActive:Bool
         var hull:Int
         var armor:Int
+        var maxHull:Int
+        var maxArmor:Int
         var lives:Int
         var rocks:Int
         var fighters:Int
@@ -43,7 +45,9 @@ final class CarbonisSession568: ObservableObject {
         var seconds:Float
         var phase:CarbonisCombat568.Phase
         init(_ game:CarbonisCombat568,summarySeconds:Float=0) {
-            hull=game.hull;armor=game.armor;lives=game.lives
+            hull=game.hull;armor=game.armor
+            maxHull=game.maxHull;maxArmor=game.maxArmor
+            lives=game.lives
             score=game.score;collectedTokens=game.collectedLootTokens
             destroyedRocks=game.rocksDestroyed
             shotDownEnemies=game.shooterKills
@@ -71,7 +75,8 @@ final class CarbonisSession568: ObservableObject {
             rapidLevel=game.rapidLevel
             shieldCharges=game.shieldCharges
             // PC586: three independent active combat resource systems.
-            tarczaEnergy=Int(game.tarcza145.energy.rounded())
+            // PC RendererW3Combat331 uses ceiling rather than rounding.
+            tarczaEnergy=max(0,Int(ceil(Double(game.tarcza145.energy))))
             ionAmmo=game.ionAmmo; bombs=game.bombs
             boostCharges=game.boost71.charges
             boostActive=game.boost71.active
