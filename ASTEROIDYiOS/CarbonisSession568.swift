@@ -13,6 +13,7 @@ final class CarbonisSession568: ObservableObject {
             let kind:Int  // 0 asteroid, 1 fighter, 2 pickup
         }
         var radarContacts:[RadarContact]
+        var motion:HudMotion600.Pose = .init()
         var tokenBalance:Int
         var weaponName:String
         var weaponLevel:Int
@@ -102,6 +103,9 @@ final class CarbonisSession568: ObservableObject {
     private var lastFrame:TimeInterval?
     private var lastHUD:TimeInterval=0
     private var summaryElapsed:Float=0
+    // One visual solver fed by actual mission flight and survival state.
+    // This does not enter or alter Game.step, collisions or damage.
+    private var hudMotion600=HudMotion600()
 
     init(prepared:Sector01PreparedWave568) {
         let first=CarbonisCombat568(prepared)
@@ -118,6 +122,7 @@ final class CarbonisSession568: ObservableObject {
         lastFrame=nil
         lastHUD=0
         summaryElapsed=0
+        hudMotion600.reset()
         hud=HUD(restarted)
     }
     /// Refresh PC586 assignments only at an explicit scene transition.
@@ -198,9 +203,26 @@ final class CarbonisSession568: ObservableObject {
                 self?.onAudioEvents?(soundCodes)
             }
         }
+        // Sample only existing authoritative physics state. Never infer
+        // combat events from screen pixels or fabricate hit/shot counters.
+        var motionSample=HudMotion600.Sample()
+        motionSample.turnRate=game.flight.flight.angularVelocity
+        motionSample.speed=sqrt(game.flight.velocity.lengthSquared)
+        motionSample.bank=game.flight.flight.visualBank
+        motionSample.pitch=game.flight.flight.visualPitch
+        motionSample.boost=game.boost71.active ? 1 : 0
+        motionSample.hull=Float(game.hull)
+        motionSample.armor=Float(game.armor)
+        motionSample.shield=game.tarcza145.energy
+        motionSample.damage=motionSample.hull+motionSample.armor+motionSample.shield
+        motionSample.pickups=max(0,game.collectedLootTokens)
+        motionSample.shieldActive=game.tarcza145.active
+        let hudPose600=hudMotion600.update(motionSample,at:now,
+                                          active:game.phase == .playing)
         if now-lastHUD > 0.10 {
             lastHUD=now
-            let snapshot=HUD(game,summarySeconds:summaryElapsed)
+            var snapshot=HUD(game,summarySeconds:summaryElapsed)
+            snapshot.motion=hudPose600
             DispatchQueue.main.async { [weak self] in
                 self?.hud=snapshot
             }
