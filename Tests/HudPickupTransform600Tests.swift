@@ -9,17 +9,27 @@ import simd
         verify(HudPickupTransform600.order == [.energy,.bomb,.shield,.boost],
                "PC v600 four exact GLB icon identities")
         let zero=HudMotion600.Pose()
+        var spring=HudIconMotion600()
+        let active=HudMotion600.Pose(iconStrength:1,parallax:true)
         for i in 0..<4 {
+            let still=HudPickupTransform600.sample(index:i,time:0,
+                pose:zero,drawableWidth:1280,drawableHeight:720)!
+            let frame0=spring.evaluate(index:i,seconds:0,motion:active)!
+            let frame4=spring.evaluate(index:i,seconds:4,motion:active)!
             let a=HudPickupTransform600.sample(index:i,time:0,
-                pose:zero,drawableWidth:1280,drawableHeight:720)!
-            let b=HudPickupTransform600.sample(index:i,time:4.0,
-                pose:zero,drawableWidth:1280,drawableHeight:720)!
+                pose:active,drawableWidth:1280,drawableHeight:720,
+                animation:frame0)!
+            let b=HudPickupTransform600.sample(index:i,time:4,
+                pose:active,drawableWidth:1280,drawableHeight:720,
+                animation:frame4)!
             verify(a.x>20 && a.x<1260 && a.y>20 && a.y<700,
                    "HUD icons remain on-screen")
+            verify(still.yaw==0 && still.pitch==0 && still.roll==0,
+                   "disabled HUD does not fabricate 3D icon motion")
             verify(abs(a.yaw)<0.2 && abs(a.pitch)<0.2 && abs(a.roll)<0.2,
                    "original icons never spin through 360 degrees")
             verify(abs(a.yaw-b.yaw)+abs(a.pitch-b.pitch)>0.01,
-                   "original GLB icon is independently animated")
+                   "actual PC icon spring animates all four independently")
             let m=HudPickupTransform600.mvp(a,width:1280,height:720)
             verify(m.columns.3.x.isFinite && m.columns.3.y.isFinite,
                    "GPU transform is finite")
