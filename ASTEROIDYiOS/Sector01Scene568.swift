@@ -153,6 +153,19 @@ struct Sector01Scene568: View {
                         session.updateHudSafeInsets600(insets)
                     }
 
+                // PC RendererHudEnergy.DrawEnergyGauge animates five plasma
+                // layers each display frame. Keep radar/scores/text at their
+                // original lighter 10Hz snapshot cadence.
+                HudPlasmaLayer600(
+                    hull:session.hud.hull,armor:session.hud.armor,
+                    shield:session.hud.tarczaEnergy,
+                    insets:missionSafeInsets568,layout:hudLayout600,
+                    active:session.hud.phase == .playing && !userPaused && !showingService,
+                    livePose:{ [weak session] in
+                        session?.currentHudRenderState600().pose ?? HudMotion600.Pose()
+                    })
+                    .allowsHitTesting(false)
+
                 // One original 3D asset, rendered by GLTFKit2 + SceneKit.
                 // No procedural replacement if the signed-off GLB is absent.
                 if let planetariumURL600,
