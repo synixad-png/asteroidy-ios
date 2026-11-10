@@ -136,8 +136,8 @@ struct Sector01Scene568: View {
                         .gesture(aiming)
                         .accessibilityLabel("Prawy obszar: skręt i ciągły ostrzał")
                         .accessibilityIdentifier("sector01-right-steer-auto-fire")
-                .allowsHitTesting(!showingHudEditor600)
                 }
+                .allowsHitTesting(!showingHudEditor600)
                 // RendererW3Combat331.cs: native, transparent, screen-anchored
                 // HUD at the exact original 1280x720 virtual positions.
                 // All readings come from the genuine active combat snapshot.
