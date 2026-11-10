@@ -15,6 +15,9 @@ enum HudPickupTransform600 {
     ]
     static let widgetIDs=["ion.icon","bomb.icon",
                           "shield_charge.icon","boost.icon"]
+    // Fallback for pure geometry tests. All live Metal calls provide the
+    // validated layout widget; never decode JSON in the draw loop.
+    private static let defaultLayout600=HudLayout600.defaults()
     static func sample(index:Int,time:Float,pose:HudMotion600.Pose,
                        drawableWidth:Float,drawableHeight:Float,
                        widget:HudLayout600.Widget? = nil,
@@ -37,7 +40,7 @@ enum HudPickupTransform600 {
         let screen=viewport ?? CombatHUDViewport568(
             width:Double(drawableWidth),height:Double(drawableHeight))
         let defaultID=widgetIDs[index]
-        let icon=widget ?? HudLayout600.defaults().widget(defaultID)
+        let icon=widget ?? defaultLayout600.widget(defaultID)
         guard let icon,
               let source=HudWidgetPlacement600.frame(icon,sourceWidth:50,
                   sourceHeight:50,anchor:.bottomRight,viewport:screen),
