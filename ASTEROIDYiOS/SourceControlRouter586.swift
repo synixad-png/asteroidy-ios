@@ -35,6 +35,8 @@ struct SourceControlRouter586 {
         previousBomb=false
         previousBoost=false
         previousPause=false
+        previousJump=false
+        previousInteract=false
     }
 
     struct Hangar {
