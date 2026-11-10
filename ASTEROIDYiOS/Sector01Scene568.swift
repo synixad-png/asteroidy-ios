@@ -171,10 +171,8 @@ struct Sector01Scene568: View {
                     .frame(width:CGFloat(placement.width),
                            height:CGFloat(placement.height))
                     .position(
-                        x:CGFloat(placement.centerX+
-                            Double(session.hud.motion.x)*1.18*combatHUDLayout.scale),
-                        y:CGFloat(placement.centerY+
-                            Double(session.hud.motion.y)*1.18*combatHUDLayout.scale))
+                        x:CGFloat(placement.centerX + Double(session.hud.motion.x)*1.18*combatHUDLayout.scale),
+                        y:CGFloat(placement.centerY + Double(session.hud.motion.y)*1.18*combatHUDLayout.scale))
                     .allowsHitTesting(false)
                     .accessibilityIdentifier("sector01-hud-v600-original-planetarium")
                 }
