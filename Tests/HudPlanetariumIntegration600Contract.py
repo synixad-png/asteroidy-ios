@@ -45,7 +45,7 @@ assert 'hudAnchor=anchor' in view
 assert 'livePose' not in view
 assert 'HudMotion600.Pose' not in host
 assert 'view.pointOfView=cameraNode' in view
-assert 'playing:active' in host
+assert 'playing: active' in host
 assert 'if view.isPlaying != playing {view.isPlaying=playing}' in view
 assert 'view.isPlaying=playing' in view
 assert 'hudLiveCapsules600=hudCapsules600.snapshot' in session
