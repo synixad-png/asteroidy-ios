@@ -722,33 +722,60 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             /// GpuSphere67.cs:438 first-level Supply.Token:
             /// RingSphere67(p.P,4.5f, Color.FromArgb(255,222,118)).
             /// Genuine collectible token locations, not decoration.
+            /// Original PC GpuSphere67 legacy visual for tokens, or GLB
+            /// fallback when the exact source file failed SHA verification.
+            /// Source item GLBs are drawn separately in THIS Metal encoder,
+            /// so one collectible is never rendered by both paths.
             static func tokenVertices(
-                _ tokens:[CarbonisCombat568.TokenPickup])->[Float] {
+                _ tokens:[CarbonisCombat568.TokenPickup],
+                settings:SourcePickupVisual586=SourcePickupVisual586())->[Float] {
                 let shell=SphereSurfaceStamp556.normalizedShellRadius+0.014
-                let color:[Float]=[1,222.0/255.0,118.0/255.0,0.95]
                 var result:[Float]=[]
                 result.reserveCapacity(tokens.count*24*6*12)
-                func emit(_ point:Vec2) {
-                    let n=Sphere67.normal(point)
-                    result.append(contentsOf:[
-                        n.x*shell,n.y*shell,n.z*shell,
-                        n.x,n.y,n.z,color[0],color[1],color[2],color[3],0,0])
-                }
                 for token in tokens {
+                    let color:[Float]
+                    switch token.sourceKind {
+                    case .shield?:color=[0.40,1.0,0.86,0.95]
+                    case .boost?:color=[0.0,0.9,1.0,0.95]
+                    case .energy?:color=[0.0,0.75,1.0,0.95]
+                    case .bomb?:color=[1.0,0.27,0.14,0.95]
+                    case nil:color=[1,222.0/255.0,118.0/255.0,0.95]
+                    }
+                    let scale=token.sourceKind.map{
+                        settings.visualFactor($0)
+                    } ?? settings.moneyFactor
+                    let outside:Float=token.sourceKind == .shield
+                        ? 17 : token.sourceKind == .boost ? 13 : 4.5
+                    let inner=outside*scale*0.93
+                    let outer=outside*scale*1.07
+                    func emit(_ point:Vec2) {
+                        let n=Sphere67.normal(point)
+                        result.append(contentsOf:[
+                            n.x*shell,n.y*shell,n.z*shell,
+                            n.x,n.y,n.z,
+                            color[0],color[1],color[2],color[3],0,0])
+                    }
                     for i in 0..<24 {
                         let a=Float(i)*2*Float.pi/24
                         let b=Float(i+1)*2*Float.pi/24
                         let da=Vec2(x:cos(a),y:sin(a))
                         let db=Vec2(x:cos(b),y:sin(b))
-                        let a1=Sphere67.offset(token.position,by:da*4.2)
-                        let b1=Sphere67.offset(token.position,by:db*4.2)
-                        let a2=Sphere67.offset(token.position,by:da*4.8)
-                        let b2=Sphere67.offset(token.position,by:db*4.8)
+                        let a1=Sphere67.offset(token.position,by:da*inner)
+                        let b1=Sphere67.offset(token.position,by:db*inner)
+                        let a2=Sphere67.offset(token.position,by:da*outer)
+                        let b2=Sphere67.offset(token.position,by:db*outer)
                         emit(a1);emit(b1);emit(b2)
                         emit(a1);emit(b2);emit(a2)
                     }
                 }
                 return result
+            }
+
+            private func hasOriginalPickupMesh586(
+                _ pickup:CarbonisCombat568.TokenPickup)->Bool {
+                guard pickupPipeline586 != nil,let kind=pickup.sourceKind
+                else{return false}
+                return pickupModels586[kind] != nil
             }
 
             func mtkView(_ view:MTKView,drawableSizeWillChange size:CGSize) {}
@@ -843,7 +870,10 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
 
                     var debris=Self.warningVertices(session.game.shooters)
                     debris.append(contentsOf:
-                        Self.tokenVertices(session.game.tokenPickups))
+                        Self.tokenVertices(
+                            session.game.tokenPickups.filter{
+                                !hasOriginalPickupMesh586($0)
+                            },settings:pickupVisual586))
                     let destructionStart=ProcessInfo.processInfo.systemUptime
                     debris.append(contentsOf:
                         CarbonisExplosion524Meshes.vertices(
@@ -1342,7 +1372,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     } else {
                         var original=Self.warningVertices(session.game.shooters)
                         original.append(contentsOf:Self.tokenVertices(
-                            session.game.tokenPickups))
+                            session.game.tokenPickups.filter{
+                                !hasOriginalPickupMesh586($0)
+                            },settings:pickupVisual586))
                         // Original particle bursts, CombatPieces125 and
                         // Explosion524 shards on unchanged iPad path.
                         let destructionMeshStarted=ProcessInfo.processInfo.systemUptime
