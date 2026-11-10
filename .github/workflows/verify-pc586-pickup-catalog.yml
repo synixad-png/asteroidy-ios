@@ -16,6 +16,8 @@ on:
       - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
       - 'Tools/prepare_pc586_runtime_resources.py'
       - 'Tools/pack_pc586_unsigned_ipa.py'
+      - 'Tools/pack_pc586_complete_test_ipa.py'
+      - 'Tools/verify_pc586_complete_ipa.py'
       - '.github/workflows/verify-pc586-pickup-catalog.yml'
   workflow_dispatch:
 permissions:
@@ -39,5 +41,5 @@ jobs:
       - name: Enforce true gameplay to GPU to IPA integration contract
         run: |
           set -euo pipefail
-          python3 -m py_compile Tools/prepare_pc586_runtime_resources.py Tools/pack_pc586_unsigned_ipa.py
+          python3 -m py_compile Tools/prepare_pc586_runtime_resources.py Tools/pack_pc586_unsigned_ipa.py Tools/pack_pc586_complete_test_ipa.py Tools/verify_pc586_complete_ipa.py
           python3 Tests/PC586IntegrationContract.py
