@@ -164,6 +164,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var pickupPipeline586:MTLRenderPipelineState?
             private var pickupModels586:[SourcePickupModels586.Kind:SourcePickupMetal586]=[:]
             private var hudIconsAvailable600=false
+            // PC HudIconMotion owns one persistent spring state for each
+            // shared pickup model; never recreate this each GPU frame.
+            private var hudIconMotion600=HudIconMotion600()
             private var sourceShooters:[Int:(buffer:MTLBuffer,ranges:[Range<Int>])] = [:]
             private var proofScheduled=false
             var yawOffset: Float = 0
@@ -1487,16 +1490,21 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         encoder.setDepthStencilState(hudIconDepth600)
                         encoder.setRenderPipelineState(pickupPipeline)
                         encoder.setCullMode(.none)
+                        let hudRenderTime600=ProcessInfo.processInfo.systemUptime
                         for (index,kind) in HudPickupTransform600.order.enumerated() {
                             let id=HudPickupTransform600.widgetIDs[index]
                             guard let widget=hudLayout600.widget(id),
                                   widget.visible,
                                   let asset=pickupModels586[kind],
+                                  let animation=hudIconMotion600.evaluate(
+                                      index:index,seconds:hudRenderTime600,
+                                      motion:screen.pose),
                                   let icon=HudPickupTransform600.sample(
-                                    index:index,time:session.game.elapsed,
+                                    index:index,time:Float(hudRenderTime600.truncatingRemainder(dividingBy:3600)),
                                     pose:screen.pose,
                                     drawableWidth:width,drawableHeight:height,
-                                    widget:widget,viewport:viewport)
+                                    widget:widget,viewport:viewport,
+                                    animation:animation)
                             else{continue}
                             var settings=Uniforms(
                                 mvp:HudPickupTransform600.mvp(
