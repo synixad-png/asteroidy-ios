@@ -164,14 +164,24 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                         return
                     }
                     var geometryCount=0
+                    var triangleCount=0
                     model.rootNode.enumerateHierarchy { node,_ in
-                        if node.geometry != nil {geometryCount += 1}
+                        if let geometry=node.geometry {
+                            geometryCount += 1
+                            triangleCount += geometry.elements.reduce(0) {
+                                $0 + $1.primitiveCount
+                            }
+                        }
                     }
-                    guard geometryCount >= 20 else {
-                        NSLog("HUD602 planetarium: imported scene has only %ld geometry nodes, refusing silent partial import",
-                              geometryCount)
+                    guard geometryCount>0 else {
+                        NSLog("HUD602 planetarium: GLTFKit2 imported no visible geometry")
                         return
                     }
+                    // GLTFKit2 may combine original mesh nodes. Count actual
+                    // primitives, do not reject source scenes by arbitrary
+                    // node-count limits.
+                    NSLog("HUD602 planetarium: imported geometry=%ld, primitives=%ld",
+                          geometryCount,triangleCount)
                     let clip=source.animations.first(where:{
                         $0.name == HudPlanetariumAsset600.clipName
                     })
