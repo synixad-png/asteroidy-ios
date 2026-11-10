@@ -16,7 +16,7 @@ for marker in (
     "hudIconsAvailable600,",
     "let screen=session.currentHudRenderState600()",
     "viewport:viewport",
-    "pose:screen.pose,"
+    "pose:screen.pose,",
     "HudPickupTransform600.sample(",
     "HudPickupTransform600.mvp(",
     "encoder.setVertexBuffer(asset.triangles,offset:0,index:0)",
