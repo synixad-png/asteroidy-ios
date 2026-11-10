@@ -33,6 +33,11 @@ assert "pressesBegan(" in hardware and "pressesEnded(" in hardware
 assert "UIKeyboardHIDUsage" in hardware or "key.keyCode.rawValue" in hardware
 assert "GameController" in hardware and "CADisplayLink" not in hardware
 assert "SourceHardwareInput586.shared.snapshot()" in hangar
+assert "controlProfile586=SourceControls586.Profile.load()" in hangar
+assert "loader.refreshControls586()" in hangar
+assert "func refreshControls586()" in session
+assert "session.refreshControls586()" in mission
+assert "SourceControls586.Profile.load()" in session
 assert "controlRouter586.readHangar(" in hangar
 assert "sprint:input.sprintHeld && !showingWorkshop" in hangar
 assert "movement.step(dt:dt" in hangar
