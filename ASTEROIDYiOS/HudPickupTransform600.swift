@@ -14,7 +14,8 @@ enum HudPickupTransform600 {
         .energy,.bomb,.shield,.boost
     ]
     static func sample(index:Int,time:Float,pose:HudMotion600.Pose,
-                       drawableWidth:Float,drawableHeight:Float)->Sample? {
+                       drawableWidth:Float,drawableHeight:Float,
+                       widget:HudLayout600.Widget? = nil)->Sample? {
         guard (0..<4).contains(index),time.isFinite,
               drawableWidth.isFinite,drawableHeight.isFinite,
               drawableWidth>1,drawableHeight>1 else{return nil}
@@ -31,14 +32,18 @@ enum HudPickupTransform600 {
         // Original PC source icons: 920 + 100*i, y=628 on 1280x720.
         // Clamp the decorative element into the physical screen, never
         // move/crop touch regions or the stable aiming reticle.
-        let sourceX=Float(920+index*100)
+        let sourceX=Float(widget?.x ?? Double(895+index*100))+25
         let x=drawableWidth-10*scale-(1280-sourceX)*scale
               +pose.x*0.78*scale
-        let y=drawableHeight-9*scale-(720-628)*scale
+        let sourceY=Float(widget?.y ?? 603)+25
+        let y=drawableHeight-9*scale-(720-sourceY)*scale
               +pose.y*0.78*scale
         return Sample(x:max(22*scale,min(drawableWidth-22*scale,x)),
                       y:max(22*scale,min(drawableHeight-22*scale,y)),
-                      yaw:yaw,pitch:pitch,roll:roll,size:45*scale)
+                      yaw:yaw+Float(widget?.yaw ?? 0)*.pi/180,
+                      pitch:pitch+Float(widget?.pitch ?? 0)*.pi/180,
+                      roll:roll+Float(widget?.roll ?? 0)*.pi/180,
+                      size:45*scale*Float(widget?.scale ?? 1))
     }
     static func model(_ s:Sample)->simd_float4x4 {
         let rotate=simd_float4x4(simd_quatf(angle:s.yaw,axis:SIMD3<Float>(0,1,0))
