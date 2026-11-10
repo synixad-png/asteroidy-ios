@@ -14,6 +14,8 @@ import Foundation
               "all original IDs preserved")
         check(initial.keys[7]==82 && initial.pad[7]=="B3","Bomb R/Y")
         check(initial.keys[21]==86 && initial.pad[21]=="B7","Shield V/B7")
+        check(c.conflictingActions(21,profile:initial).contains(35),
+              "PC source shares pad B7 between Shield and Boost; surface this conflict instead of silently changing defaults")
         check(initial.keys[35]==70 && initial.pad[35]=="B7","Boost F/B7")
         check(initial.keys[11]==32 && initial.pad[11]=="B2","H55 jump")
         check(initial.keys[12]==69 && initial.pad[12]=="B0","H55 talk")
