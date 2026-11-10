@@ -24,6 +24,8 @@ struct Sector01Scene568: View {
     // user pause is independent from an iOS lock-screen suspension.
     @State private var userPaused=false
     @State private var showingHudMotion600=false
+    @State private var showingHudEditor600=false
+    @State private var hudLayout600=HudLayout600.load()
     @State private var showingPlanetariumImport600=false
     @State private var planetariumURL600:URL?
     @State private var planetariumIssue600:String?
@@ -361,6 +363,20 @@ struct Sector01Scene568: View {
                             Text(planetariumIssue600)
                                 .font(.system(size:10))
                                 .foregroundStyle(.orange)
+                        }
+                        Button("EDYTUJ UKŁAD HUD (46 ELEMENTÓW)") {
+                            showingHudEditor600=true
+                        }
+                        .frame(maxWidth:.infinity)
+                        .padding(compact ? 7:10)
+                        .background(Color(red:0.05,green:0.15,blue:0.22),
+                                    in:RoundedRectangle(cornerRadius:5))
+                        .foregroundStyle(.cyan)
+                        .accessibilityIdentifier("sector01-hud-v600-editor-open")
+                        .sheet(isPresented:$showingHudEditor600) {
+                            HudLayoutEditor600 {updated in
+                                hudLayout600=updated
+                            }
                         }
                         Button("HUD DYNAMICZNY / USTAWIENIA") {
                             showingHudMotion600=true
