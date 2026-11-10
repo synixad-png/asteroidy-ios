@@ -29,8 +29,10 @@ assert 'viewport:viewport' in renderer
 assert 'pose:session.hud.motion,' not in renderer
 assert 'HudPlanetariumHost600(' in scene
 assert 'livePose:{ [weak session] in' in host
-assert 'session?.currentHudRenderState600().pose' in host
+assert 'session?.currentHudVisual600().pose' in host
 assert 'HudMotionProject600.project(' in host
+assert 'func currentHudVisual600()->(' in session
+assert 'return (hudLivePose600,hudLiveCapsules600)' in session
 assert 'liveCapsules:{ [weak session] in' in host
 assert 'let framePose=livePose?() ?? pose' in planetarium
 assert 'didApplyAnimationsAtTime' in planetarium
