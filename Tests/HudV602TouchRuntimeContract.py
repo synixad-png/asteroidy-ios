@@ -80,7 +80,7 @@ assert 'seconds:now,hullPulse:hudPose600.hullPulse' in session
 assert 'seconds:Double(game.elapsed),hullPulse:' not in session
 assert 'corona?.advance(at:liveGameTime?() ?? 0)' in planetarium
 assert 'liveGameTime:{[weak session] in' in host
-assert 'active:session.hud.phase == .playing,' in scene
+assert 'active:session.hud.phase == .playing)' in scene
 assert 'motionActive:' not in scene
 assert 'livePose:{HudMotion600.Pose()}' in host
 assert '.offset(x:CGFloat(placement.centerX-placement.width*0.5)' in host
