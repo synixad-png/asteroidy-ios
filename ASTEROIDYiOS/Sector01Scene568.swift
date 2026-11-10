@@ -167,7 +167,10 @@ struct Sector01Scene568: View {
                         pitch:Float(planetarium.pitch ?? -20),
                         yaw:Float(planetarium.yaw ?? 0),
                         roll:Float(planetarium.roll ?? 0),
-                        pose:session.hud.motion)
+                        pose:session.hud.motion,
+                        livePose:{ [weak session] in
+                            session?.currentHudRenderState600().pose ?? HudMotion600.Pose()
+                        })
                     .frame(width:CGFloat(placement.width),
                            height:CGFloat(placement.height))
                     .position(
