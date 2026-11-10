@@ -14,7 +14,9 @@ on:
     paths:
       - .github/workflows/build-ios-h55-fps-preview-ipa.yml
       - ASTEROIDYiOS/HudLayoutEditor600.swift
-      - ASTEROIDYiOS/HudLayoutMarker600.swift
+      - ASTEROIDYiOS/HudEditorGeometry.swift
+      - Tests/HudEditorGeometryTests.swift
+      - ASTEROIDYiOS/HudEditorGeometry.swift
       - ASTEROIDYiOS/HudPlanetariumAsset600.swift
       - ASTEROIDYiOS/Sector01Scene568.swift
       - ASTEROIDYiOS/H55FPSLighting580.swift
@@ -71,7 +73,7 @@ jobs:
           python3 Tests/HudMotionEventCounters600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/H55FPSOriginalMaterial580Tests.py | tee -a reports/fps-source.txt
           # Validate final 352x198/16:9 preview and isolated depth source.
-          swiftc -frontend -parse ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/HudLayoutMarker600.swift
+          swiftc -frontend -parse ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/HudEditorGeometry.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumScene600.swift ASTEROIDYiOS/HudPlanetariumHost600.swift ASTEROIDYiOS/Sector01Scene568.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudEnergy600.swift ASTEROIDYiOS/HudPlasmaLayer600.swift ASTEROIDYiOS/SourceCombatHUD331.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSSettingsSection580.swift
@@ -84,6 +86,8 @@ jobs:
           /tmp/hud-icon-springs | tee -a reports/hud-v600-source.txt
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift Tests/HudMotionProject600Tests.swift -o /tmp/hud-icon-projection
           /tmp/hud-icon-projection | tee -a reports/hud-v600-source.txt
+          swiftc ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudEditorGeometry.swift Tests/HudEditorGeometryTests.swift -o /tmp/hud-editor-geometry
+          /tmp/hud-editor-geometry | tee -a reports/hud-touch-v602.txt
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-source-core
           /tmp/hud-v600-source-core | tee -a reports/hud-v600-source.txt
           swiftc ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudCapsuleController600Tests.swift -o /tmp/hud-v600-source-capsules
