@@ -53,7 +53,7 @@ assert game.index("guardianCharges>0") < game.index("tarcza145.absorb(") < game.
 assert "boostMultiplier:boosting ? 2.6 : nil" in game
 assert "boostMultiplier:Float?=nil" in flight
 assert "boostCharges=game.boost71.charges" in session
-assert "tarczaEnergy=Int(game.tarcza145.energy.rounded())" in session
+assert "tarczaEnergy=max(0,Int(ceil(Double(game.tarcza145.energy))))" in session
 for name in ("sector01-active-tarcza145-hold","sector01-active-boost71-button",
              "session.holdShield145(true)","session.holdShield145(false)",
              "session.useBoost71()"):
