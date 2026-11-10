@@ -14,7 +14,7 @@ struct H55FPSOverlayViewport580:UIViewRepresentable {
     func makeUIView(context:Context)->SCNView {
         let view=SCNView(frame:.zero)
         view.isOpaque=false
-        view.backgroundColor=.clear
+        view.backgroundColor = .clear
         view.scene=scene
         view.scene?.background.contents=UIColor.clear
         view.pointOfView=pointOfView
