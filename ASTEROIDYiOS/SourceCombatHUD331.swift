@@ -31,7 +31,7 @@ struct SourceCombatHUD331: View {
         let _ = tick.date
         Canvas(opaque:false, rendersAsynchronously:false) { context, size in
             var hud=self.hud
-            hud.motion=livePose()
+            hud.motion=active ? livePose() : HudMotion600.Pose()
             let layout=CombatHUDViewport568(
                 width:Double(size.width),height:Double(size.height),
                 safeLeft:insets.left,safeRight:insets.right,
