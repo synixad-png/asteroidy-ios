@@ -16,6 +16,9 @@ on:
       - Tests/HudLayout600Contract.py
       - Tests/HudMotionLiveRenderer600Contract.py
       - Tests/HudPlanetariumIntegration600Contract.py
+      - Tests/HudPickupMetal600Contract.py
+      - Tests/PC586InputIntegrationContract.py
+      - Tests/PC586IntegrationContract.py
       - ASTEROIDYiOS/CarbonisSession568.swift
       - ASTEROIDYiOS/Sector01CarbonisPreview568.swift
       - ASTEROIDYiOS/HudPlanetariumHost600.swift
