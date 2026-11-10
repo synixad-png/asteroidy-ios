@@ -126,7 +126,11 @@ struct SourceControlSettings586:View {
                 .frame(width:27,alignment:.leading)
             Text(SourceControls586.label(id))
                 .foregroundStyle(.white)
-            Spacer()
+            Spacer(minLength:4)
+            Text(id==60 ? "DZIAŁA / PAD" : "ZAPIS / PC")
+                .font(.system(size:compact ? 7:9,design:.monospaced))
+                .foregroundStyle(id==60 ? cyan:muted)
+                .lineLimit(1)
         }
         .font(.system(size:compact ? 9:11,design:.monospaced))
     }
@@ -228,6 +232,10 @@ struct SourceControlSettings586:View {
                     .font(.system(size:compact ? 9:11,design:.monospaced))
                     .fixedSize(horizontal:false,vertical:true)
             }
+            Text("Martwa strefa (60) działa w misji i H55. Opcje atlasu/myszy (61–64) są przechowywane dla dalszego portu PC, lecz nie sterują dziś tymi scenami.")
+                .foregroundStyle(muted)
+                .font(.system(size:compact ? 8:10,design:.monospaced))
+                .fixedSize(horizontal:false,vertical:true)
             Text("Przypisania dla funkcji nieprzeniesionych są zapisywane na przyszłość; nie uruchamiają nieistniejących mechanik. Import z PC: wybierz controls-v29.txt i opcjonalny controls-v29.txt.flight67 (dla myszy).")
                 .foregroundStyle(muted)
                 .font(.system(size:compact ? 8:10,design:.monospaced))
