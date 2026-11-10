@@ -213,12 +213,13 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     cameraNode.camera=lens
                     cameraNode.position=SCNVector3(0,0,20)
                     rendered.rootNode.addChildNode(cameraNode)
+                    var importedPlayer:SCNAnimationPlayer?
                     if let clip {
                         let player=clip.animationPlayer
                         player.animation.repeatCount = .greatestFiniteMagnitude
                         player.animation.usesSceneTimeBase=false
                         model.rootNode.addAnimationPlayer(player,forKey:"hud-planetarium-v600")
-                        player.play()
+                        importedPlayer=player
                     } else {
                         NSLog("HUD602 planetarium: original clip not imported by GLTFKit2")
                     }
@@ -236,7 +237,8 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     view.scene=rendered
                     view.pointOfView=cameraNode
                     view.isPlaying=playing
-                    NSLog("HUD602 planetarium: original GLB visible, nodes=%ld, animation=%@, capsules=%@",
+                    importedPlayer?.play()
+                    NSLog("HUD602 planetarium: original GLB attached, nodes=%ld, animation=%@, capsules=%@",
                           source.nodes.count,clip == nil ? "unavailable" : "bound",
                           activeBinding == nil ? "unavailable" : "bound")
                 }
