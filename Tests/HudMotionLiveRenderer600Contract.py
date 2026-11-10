@@ -42,7 +42,7 @@ assert 'hudScale=scaleNode' in planetarium
 assert 'camera.orthographicScale=transform.cameraHalfHeight' in planetarium
 assert 'func currentHudVisual600()->(' in session
 assert 'return (hudLivePose600,hudLiveCapsules600,hudLiveSeconds600)' in session
-assert 'liveCapsules:{[weak session] in' in host
+assert 'liveCapsules: { [weak session] in' in host
 assert 'livePose' not in planetarium
 assert 'hud.motion=active ? livePose() : HudMotion600.Pose()' in hud
 assert 'TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active))' in hud
