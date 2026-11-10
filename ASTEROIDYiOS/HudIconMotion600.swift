@@ -48,14 +48,16 @@ struct HudIconMotion600 {
         let bank=Self.bound(motion.roll/7,1)
         let climb=Self.bound(motion.y/8,1)
         let angle=seconds*style.speed+style.phase
-        let targetYaw=strength*(style.yaw*Float(sin(angle))
-            +drift*3.0*style.response)
-        let targetPitch=strength*(style.pitch*Float(cos(angle*0.83
-            +style.phase*0.35))-climb*2.2*style.response)
-        let targetRoll=strength*(style.roll*Float(sin(angle*0.71+style.phase))
-            +bank*1.7*style.response)
-        let targetLift=strength*style.lift*Float(sin(angle*0.66
-            +style.phase*0.5))
+        // Keep trigonometric sampling separate from the Float spring.
+        // Swift must not split infix operators across expression lines.
+        let yawWave=Float(sin(angle))
+        let pitchWave=Float(cos(angle*0.83+style.phase*0.35))
+        let rollWave=Float(sin(angle*0.71+style.phase))
+        let liftWave=Float(sin(angle*0.66+style.phase*0.5))
+        let targetYaw=strength*(style.yaw*yawWave+drift*3*style.response)
+        let targetPitch=strength*(style.pitch*pitchWave-climb*2.2*style.response)
+        let targetRoll=strength*(style.roll*rollWave+bank*1.7*style.response)
+        let targetLift=strength*style.lift*liftWave
         var state=states[index]
         if !state.started || seconds<state.lastTime ||
            seconds-state.lastTime>0.5 {
