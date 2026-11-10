@@ -21,19 +21,17 @@ enum HudPickupTransform600 {
     static func sample(index:Int,time:Float,pose:HudMotion600.Pose,
                        drawableWidth:Float,drawableHeight:Float,
                        widget:HudLayout600.Widget? = nil,
-                       viewport:CombatHUDViewport568? = nil)->Sample? {
+                       viewport:CombatHUDViewport568? = nil,
+                       animation:HudIconMotion600.Pose = .init())->Sample? {
         guard (0..<4).contains(index),time.isFinite,
               drawableWidth.isFinite,drawableHeight.isFinite,
               drawableWidth>1,drawableHeight>1 else{return nil}
-        let phase=time*0.60+Float(index)*1.71
-        let secondary=time*0.37+Float(index)*0.83
-        let decay=pose.iconStrength
-        let yaw=sin(phase)*0.080+cos(secondary)*0.026
-            +max(-0.13,min(0.13,pose.x*0.0030*decay))
-        let pitch=sin(secondary*1.17)*0.059
-            +max(-0.09,min(0.09,pose.y*0.004*decay))
-        let roll=sin(phase*0.72)*0.041
-            +max(-0.065,min(0.065,pose.roll*0.012*decay))
+        // PC HudIconMotion: a persistent independently damped pose per
+        // icon, supplied by the owning Metal renderer. No duplicate
+        // pseudo-animation calculated during the coordinate transform.
+        let yaw=animation.yaw*Float.pi/180
+        let pitch=animation.pitch*Float.pi/180
+        let roll=animation.roll*Float.pi/180
         // SwiftUI and Metal must use the same four-corner origin, actual
         // UIWindow safe margins and PC v600 top-left scaling. In adaptive
         // phone mode the drawable can be downscaled independently of points.
@@ -50,13 +48,16 @@ enum HudPickupTransform600 {
         let pixelPerPointX=Double(drawableWidth)/screen.width
         let pixelPerPointY=Double(drawableHeight)/screen.height
         let x=Float(pixel.centerX + Double(pose.x)*0.78*screen.scale*pixelPerPointX)
-        let y=Float(pixel.centerY + Double(pose.y)*0.78*screen.scale*pixelPerPointY)
+        let y=Float(pixel.centerY + (Double(pose.y)*0.78
+            +Double(animation.floatY))*screen.scale*pixelPerPointY)
         let pulse=1+pose.widgetPulse(widgetIDs[index])
         let iconSize=Float(min(pixel.width,pixel.height)*0.9)*pulse
         return Sample(x:x,y:y,
                       yaw:yaw+Float(widget?.yaw ?? 0)*Float.pi/180,
                       pitch:pitch+Float(widget?.pitch ?? 0)*Float.pi/180,
-                      roll:roll+Float(widget?.roll ?? 0)*Float.pi/180,
+                      // PC DrawHudGlb: F6 roll + whole HUD roll + local.
+                      roll:roll+(Float(widget?.roll ?? 0)
+                            +pose.roll*pose.weight(widgetIDs[index]))*Float.pi/180,
                       size:iconSize)
     }
     static func model(_ s:Sample)->simd_float4x4 {
