@@ -14,6 +14,9 @@ struct H55FPSSettingsSection580: View {
     @State private var importKind:H55FPSAssets580.Kind = .tripo
     @State private var importMessage=""
     @State private var rightHand=false
+    @State private var previewMotion=0
+    @State private var previewStatus="PODGLĄD: ŁADOWANIE ORYGINALNEGO GLB"
+    @State private var previewRevision=0
 
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.39,green:0.75,blue:0.79)
@@ -97,6 +100,7 @@ struct H55FPSSettingsSection580: View {
                 select(importKind)
             }
             refreshAvailable()
+            previewRevision += 1
             importMessage="ORYGINALNY MODEL ZWERYFIKOWANO I ZAPISANO"
         } catch {
             importMessage="BŁĄD IMPORTU: "+error.localizedDescription
@@ -161,6 +165,35 @@ struct H55FPSSettingsSection580: View {
             } else {
                 modelRow("BROŃ EXP-01",kind:.weapon,
                     selector:"h55-fps-show-weapon",importer:"h55-fps-import-weapon")
+            }
+            // PC GpuGloves417.RenderGlovesReal424 and
+            // GpuWeapon470.RenderWeaponPreview470: actual 3D viewmodel
+            // with independent depth + original 64° source visual framing.
+            VStack(alignment:.leading,spacing:5) {
+                Text("PODGLĄD NA ŻYWO — PRAWDZIWY MODEL 3D")
+                    .font(.system(size:10,weight:.bold,design:.monospaced))
+                    .foregroundStyle(gold)
+                H55FPSPreview580(settings:current,motion:previewMotion) {
+                    previewStatus=$0
+                }
+                .id(previewRevision)
+                .frame(height:200)
+                .background(Color.black)
+                .overlay(Rectangle().stroke(cyan.opacity(0.45),lineWidth:1))
+                .allowsHitTesting(false)
+                .accessibilityIdentifier(category == .gloves
+                    ? "h55-fps-gloves-live-preview" : "h55-fps-weapon-live-preview")
+                Picker("RUCH PODGLĄDU",selection:$previewMotion) {
+                    Text("STÓJ").tag(0)
+                    Text("CHÓD").tag(1)
+                    Text("BIEG").tag(2)
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("h55-fps-preview-motion")
+                Text(previewStatus)
+                    .font(.system(size:9,design:.monospaced))
+                    .foregroundStyle(previewStatus.contains("BŁĄD") ||
+                                     previewStatus.contains("BRAK") ? Color.orange : cyan)
             }
             ForEach(0..<7,id:\.self) {axis in axisRow(axis)}
             Button("PRZYWRÓĆ POZYCJĘ DOMYŚLNĄ") {resetPose()}
