@@ -586,6 +586,7 @@ import simd
         fpsLens.zFar=250
         fpsCamera.camera=fpsLens
         fpsScene.rootNode.addChildNode(fpsCamera)
+        H55FPSLighting580.install(into:fpsScene)
         // No world geometry in this scene: depth tests the original
         // TRIPO/MONOLIT/EXP-01 parts without being blocked by H55 walls.
         fpsOverlayCamera=fpsCamera
