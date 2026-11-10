@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// One isolated SwiftUI element per approved PC v600 HUD widget.
-/// Keeping the 46 drag views small avoids enormous ViewBuilder type graphs.
+/// Passive PC v602 F6 widget outlines. The parent HUD editor owns ONE
+/// shared hit-test/drag/pinch surface so overlapping SwiftUI marker views
+/// cannot intercept touches outside their small source-space rectangles.
 struct HudLayoutMarker600:View {
     let widget:HudLayout600.Widget
     let scale:Double
@@ -9,12 +10,7 @@ struct HudLayoutMarker600:View {
     let offsetY:Double
     let sourceWidth:Double
     let sourceHeight:Double
-    @Binding var selected:String
-    let onMove:(Double,Double)->Void
-    let onScale:(Double)->Void
-
-    @State private var startPoint:(Double,Double)?
-    @State private var initialPinchScale:Double?
+    let selected:Bool
 
     private var width:CGFloat {
         CGFloat(max(9,sourceWidth*widget.scale*scale))
@@ -28,22 +24,19 @@ struct HudLayoutMarker600:View {
     private var centerY:CGFloat {
         CGFloat(offsetY+(widget.y+sourceHeight*(widget.is3D ? 0.5 : widget.scale*0.5))*scale)
     }
-    private var isSelected:Bool {selected==widget.id}
     private var outline:Color {
-        if isSelected {return .yellow}
-        return widget.visible ? .cyan.opacity(0.5):.gray.opacity(0.4)
+        selected ? .yellow : widget.visible ? .cyan.opacity(0.5):.gray.opacity(0.4)
     }
     private var fill:Color {
-        isSelected ? .yellow.opacity(0.12):.cyan.opacity(0.025)
+        selected ? .yellow.opacity(0.12):.cyan.opacity(0.025)
     }
-
     var body:some View {
         Rectangle()
             .fill(fill)
-            .overlay {Rectangle().stroke(outline,lineWidth:isSelected ? 2:0.7)}
+            .overlay {Rectangle().stroke(outline,lineWidth:selected ? 2:0.7)}
             .frame(width:width,height:height)
             .overlay(alignment:.topLeading) {
-                if isSelected {
+                if selected {
                     Text(widget.id)
                         .font(.system(size:10,design:.monospaced))
                         .foregroundStyle(.yellow)
@@ -52,27 +45,7 @@ struct HudLayoutMarker600:View {
                 }
             }
             .position(x:centerX,y:centerY)
-            .contentShape(Rectangle())
-            .onTapGesture {selected=widget.id}
-            .gesture(DragGesture(minimumDistance:1)
-                .onChanged {gesture in
-                    if initialPinchScale != nil {return}
-                    if selected != widget.id {selected=widget.id}
-                    if startPoint == nil {startPoint=(widget.x,widget.y)}
-                    guard let start=startPoint,scale>0 else{return}
-                    let newX=start.0+Double(gesture.translation.width)/scale
-                    let newY=start.1+Double(gesture.translation.height)/scale
-                    onMove(newX,newY)
-                }
-                .onEnded {_ in startPoint=nil})
-            .simultaneousGesture(MagnificationGesture(minimumScaleDelta:0.005)
-                .onChanged { pinch in
-                    if selected != widget.id {selected=widget.id}
-                    if initialPinchScale == nil {initialPinchScale=widget.scale}
-                    guard let original=initialPinchScale else{return}
-                    onScale(original*Double(pinch))
-                }
-                .onEnded {_ in initialPinchScale=nil})
+            .allowsHitTesting(false)
             .accessibilityLabel(widget.id)
             .accessibilityIdentifier("hud-v600-widget-"+widget.id)
     }
