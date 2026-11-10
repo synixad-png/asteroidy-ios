@@ -123,8 +123,8 @@ import Foundation
               "remapped original PC axes 33/34 actually drive camera aim")
         let previousAim=c.Snapshot(axes:[0.75,0.55,0.20,0.30,0,0])
             .combat(profile:initial).aim
-        check(previousAim.x==0 && abs(previousAim.y-0.30)<0.0001,
-              "original A2/A3 are ignored after user mapping changed")
+        check(previousAim.x==0 && previousAim.y==0,
+              "source A2/A3 stay silent below the original deadzone")
         check(c.context(for:33)==(.combat) &&
               c.context(for:34)==(.combat),
               "menu marks genuinely remappable controller aim as playable")
