@@ -27,6 +27,11 @@ struct HudPlasmaLayer600:View {
         [ink(18,37,255,50),ink(49,55,252,56),ink(129,16,205,47),
          ink(212,104,255,72),ink(236,228,255,187)]
     ]
+    // PC DrawEnergyGauge uses explicit alpha=90, not premultiplication
+    // of the layer-4 alpha (235/242/236) by another opacity.
+    private static let terminals:[Color]=[
+        ink(90,255,205,150),ink(90,255,237,166),ink(90,228,255,187)
+    ]
     private static func ink(_ a:Int,_ r:Int,_ g:Int,_ b:Int)->Color {
         SourceCombatHUD331.color(a,r,g,b)
     }
@@ -120,6 +125,6 @@ struct HudPlasmaLayer600:View {
         let end=left+length
         c.fill(Path(ellipseIn:CGRect(x:end-1.65,y:barY+2.9,
                                      width:2.8,height:3.2)),
-               with:.color(tints[style][4].opacity(90.0/255.0)))
+               with:.color(terminals[style]))
     }
 }
