@@ -34,6 +34,9 @@ for snippet in ('HudPlanetariumScene600(', 'liveCapsules:{ [weak session] in',
                 'session?.currentHudVisual600().capsules'):
     assert snippet in host, "missing live 3D HUD host wiring: "+snippet
 assert 'let frameCapsules=liveCapsules?() ?? capsule' in view
+assert 'playing:active' in host
+assert 'if view.isPlaying != playing {view.isPlaying=playing}' in view
+assert 'view.isPlaying=playing' in view
 assert 'hudLiveCapsules600=hudCapsules600.snapshot' in session
 assert 'snapshot.capsuleLevels=hudCapsules600.snapshot' in session
 assert 'session.game.step(' not in view
