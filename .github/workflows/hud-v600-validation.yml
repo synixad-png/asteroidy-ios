@@ -7,6 +7,7 @@ on:
       - "ASTEROIDYiOS/HudMotion600.swift"
       - "ASTEROIDYiOS/HudLayout600.swift"
       - "ASTEROIDYiOS/HudLayoutEditor600.swift"
+      - "ASTEROIDYiOS/HudLayoutDocument600.swift"
       - "ASTEROIDYiOS/HudLayoutMarker600.swift"
       - "ASTEROIDYiOS/HudWidgetGeometry600.swift"
       - "ASTEROIDYiOS/CarbonisCombat568.swift"
@@ -76,7 +77,7 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumTracks600.swift ASTEROIDYiOS/HudPlanetariumScene600.swift
-          swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/HudLayoutMarker600.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/HudLayoutMarker600.swift ASTEROIDYiOS/HudLayoutDocument600.swift
           swiftc ASTEROIDYiOS/HudPlanetariumCorona600.swift Tests/HudPlanetariumCorona600Tests.swift -o /tmp/hud-v600-corona
           /tmp/hud-v600-corona
           swiftc -O ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudPickupTransform600.swift Tests/HudPickupTransform600Tests.swift -o /tmp/hud-v600-icons
