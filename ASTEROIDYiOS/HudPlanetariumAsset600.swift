@@ -11,6 +11,13 @@ enum HudPlanetariumAsset600 {
     static let clipName = "HUD_PLANETARIUM_PREMIUM_48S_LOOP"
     static let nodes = 141
     static let channels = 159
+    // Verified against the genuine PC v602 Shared/assets/hud/planetarium.glb
+    // using Windows/src/H55Renderer.cs MeasurePlanetBounds463:
+    // 126216 opaque glTF vertices at authored, unanimated node transforms.
+    static let pc602ModelCenterX:Float = 2.74528861
+    static let pc602ModelCenterY:Float = 0
+    static let pc602ModelCenterZ:Float = 0
+    static let pc602ModelRadius:Double = 5.112107576242468
 
     enum Failure: Error, LocalizedError {
         case missing, invalidStructure, unexpectedAsset, invalidAnimation
