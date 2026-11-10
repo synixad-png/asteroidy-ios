@@ -24,6 +24,15 @@ import simd
             verify(m.columns.3.x.isFinite && m.columns.3.y.isFinite,
                    "GPU transform is finite")
         }
+        var shotPose=HudMotion600.Pose()
+        shotPose.shotPulse=0.8
+        shotPose.pickupPulse=0.5
+        let plain=HudPickupTransform600.sample(index:0,time:0,
+            pose:zero,drawableWidth:1280,drawableHeight:720)!
+        let pulsed=HudPickupTransform600.sample(index:0,time:0,
+            pose:shotPose,drawableWidth:1280,drawableHeight:720)!
+        verify(pulsed.size>plain.size,
+               "real shot/pickup events produce local PC v600 GLB icon pulse")
         let p=HudPickupTransform600.sample(index:3,time:7,
             pose:zero,drawableWidth:1179,drawableHeight:255)!
         verify(p.x>0 && p.x<1179 && p.y>0 && p.y<255,
