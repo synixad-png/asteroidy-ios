@@ -36,6 +36,8 @@ struct CarbonisCombat568 {
         var guardian298:Bool = false
     }
     struct Shooter {
+        /// Stable combat-entity identity for one-hit-per-boost ram tracking.
+        var id:Int=0
         var core: MissionWave568.Fighter
         var velocity: Vec2 = Vec2(x:0,y:0)
         var aim: Float = 0
@@ -45,7 +47,8 @@ struct CarbonisCombat568 {
         var muzzle: Float = 0
         var burst:Int = 0
         var phase: Float
-        init(_ source:MissionWave568.Fighter) {
+        init(_ source:MissionWave568.Fighter,id:Int=0) {
+            self.id=id
             core=source; fireClock=source.fireClock; phase=source.phase
         }
     }
@@ -73,6 +76,12 @@ struct CarbonisCombat568 {
     var ionAmmo:Int=0
     var bombs:Int=0
     var bombCooldown:Float=0
+    /// Tarcza145 and Boost71 are genuine independent active abilities,
+    /// NOT aliases for the passive purchased shield charges or ion ammo.
+    var tarcza145=SourceTarcza145()
+    var boost71=SourceBoost71()
+    var shieldHeld=false
+    private var legacyDrops586=SourceLegacyPickupDrops586(seed:0)
     let difficulty:CombatBalance556.Difficulty
     let selectedWeapon:Sector01Shop568.Weapon
     let upgradeLevel:Int
@@ -120,10 +129,13 @@ struct CarbonisCombat568 {
         f.camera=SphereCamera67(at:f.position)
         flight=f
         rocks=prepared.encounter.rocks
-        shooters=prepared.encounter.fighters.map{ Shooter($0) }
+        shooters=prepared.encounter.fighters.enumerated().map {
+            Shooter($0.element,id:$0.offset+1)
+        }
         incoming=prepared.incoming
         random=prepared.encounter.randomState
         combatSupply586=SourceCombatSupply586(missionSeed:prepared.combatSupplySeed)
+        legacyDrops586=SourceLegacyPickupDrops586(seed:prepared.combatSupplySeed)
         lootYieldScale=prepared.encounter.lootYieldScale
         isReplay=prepared.isReplay
         lives=prepared.reset.lives
@@ -191,6 +203,9 @@ struct CarbonisCombat568 {
         }
         // BossTunnelGame.HitByBoss original purchased shield intercept:
         // 1 charge, one second immunity, no armor/hull damage.
+        // PC Tarcza145.cs: an active held dome absorbs 35 energy
+        // BEFORE spending a passive shop shield charge.
+        if tarcza145.absorb(invincible:&invincible) {return}
         if shieldCharges>0 {
             shieldCharges-=1
             invincible=1
@@ -241,6 +256,14 @@ struct CarbonisCombat568 {
     /// Pure simulation step, max 1/60s to retain collision fidelity.
     /// The authentic position of the first 13 rocks and four fighters is
     /// supplied by MissionWave568 rather than invented here.
+    mutating func setShieldHeld(_ held:Bool) {
+        shieldHeld=held && phase == .playing
+        if !shieldHeld {tarcza145.active=false}
+    }
+    @discardableResult mutating func activateBoost71()->Bool {
+        boost71.activate(playing:phase == .playing)
+    }
+
     mutating func step(move:Vec2,aim:Vec2,shooting:Bool,dt requested:Float) {
         guard phase == .playing else{return}
         let dt=min(1/60,max(0,requested))
@@ -249,7 +272,12 @@ struct CarbonisCombat568 {
         bombCooldown=max(0,bombCooldown-dt)
         destruction.tick(dt:dt)
         invincible=max(0,invincible-dt)
-        flight.tick(move:move,aim:aim,dt:dt)
+        tarcza145.step(dt:dt,held:shieldHeld,playing:true)
+        let boosting=boost71.advance(dt:dt)
+        if boosting {invincible=max(invincible,0.15)}
+        let previousShip=flight.position
+        flight.tick(move:move,aim:aim,dt:dt,
+                    boostMultiplier:boosting ? 2.6 : nil)
         stepTokenPickups(dt:dt)
         // Game.cs:240 — terminal debris expires BEFORE advancing rocks.
         for i in rocks.indices.reversed() {
@@ -265,6 +293,7 @@ struct CarbonisCombat568 {
              objectivePosition:Vec2(x:640,y:420))
         rocks.append(contentsOf:additions)
         updateShooters(dt:dt)
+        if boosting {applyBoostRam71(from:previousShip)}
         // Game.Step: StepBugs -> StepGuardian298 before solids/player Fire.
         // Damage-bearing Guardian plasma enters the SAME swept-hit pipeline.
         if let plasma=guardianDrone.step(
@@ -354,6 +383,18 @@ struct CarbonisCombat568 {
             let distance=sqrt(delta.lengthSquared)
             if distance<26 {
                 if let kind=item.sourceKind {
+                    if kind == .shield {
+                        let collected=tarcza145.collectCell()
+                        if collected {emitOriginalAudio568(30)}
+                        tokenPickups.remove(at:i)
+                        continue
+                    }
+                    if kind == .boost {
+                        boost71.collect()
+                        emitOriginalAudio568(30)
+                        tokenPickups.remove(at:i)
+                        continue
+                    }
                     // PC Game.Step removes an item on contact even when
                     // the magazine filled after its original drop.
                     // In that case CollectCombatSupply returns false
@@ -490,7 +531,8 @@ struct CarbonisCombat568 {
                 // Game.Step rock collision / Shop ShieldCharges:
                 // purchased armor reflects the rock (radius+32) and
                 // grants .8 s, not generic one-second shot immunity.
-                if shieldCharges>0 && invincible<=0 {
+                if shieldCharges>0 && invincible<=0 &&
+                    guardianCharges==0 && !tarcza145.active {
                     shieldCharges-=1
                     invincible=0.8
                     let delta=Sphere67.delta(
@@ -539,6 +581,8 @@ struct CarbonisCombat568 {
         rocksDestroyed+=1
         score+=Self.sourceRockScore(removed)
         dropSourceRockLoot(removed)
+        tryDropLegacyPickup586(at:removed.position,
+                               enemy:false,rockSize:removed.size)
         tryDropCombatSupply586(at:removed.position,
                                enemy:false,asteroidSize:removed.size)
         splitRock(removed)
@@ -562,7 +606,69 @@ struct CarbonisCombat568 {
                 collectedLootTokens+=amount
             }
         }
+        tryDropLegacyPickup586(at:destroyed.core.position,
+                               enemy:true,rockSize:0)
         tryDropCombatSupply586(at:destroyed.core.position,enemy:true)
+    }
+
+    /// Classic PC Tarcza145 and Boost71 drop rules on REAL actor death.
+    /// One canonical pickup array, no second collectible physics or GLB
+    /// renderer. RNG is separate to protect prior iOS mission sequences.
+    private mutating func tryDropLegacyPickup586(
+        at point:Vec2,enemy:Bool,rockSize:Int) {
+        let eligible=phase == .playing && !isReplay && lootYieldScale>0
+        if let item=legacyDrops586.shield(
+            enemy:enemy,rockSize:rockSize,eligible:eligible,
+            pickups:tokenPickups.count) {
+            tokenPickups.append(TokenPickup(
+                position:point,velocity:item.velocity,value:0,
+                sourceKind:item.kind,life:item.life))
+        }
+        guard !enemy else{return}
+        if let item=legacyDrops586.boost(
+            eligible:eligible,pickups:tokenPickups.count) {
+            tokenPickups.append(TokenPickup(
+                position:point,velocity:item.velocity,value:1,
+                sourceKind:item.kind,life:item.life))
+        }
+    }
+
+    /// PC Boost71.cs: active 0.9 s dash rams each actor at most once.
+    /// Uses existing rock/shooter health, death, debris, score and rewards.
+    private mutating func applyBoostRam71(from previous:Vec2) {
+        let travel=Sphere67.delta(target:flight.position,origin:previous)
+        guard travel.lengthSquared>0.000001 else{return}
+        for i in rocks.indices.reversed() where rocks[i].shardLife<=0 {
+            let rock=rocks[i]
+            let delta=Sphere67.delta(target:rock.position,origin:previous)
+            let t=CombatCollision556.segmentHit(
+                delta:delta,travel:travel,radius:rock.radius+11.2)
+            guard t<=1,boost71.firstRockContact(rock.shapeSeed) else{continue}
+            rocks[i].health-=8
+            let shove=CarbonisBodyContact68.transported(
+                Self.unit(travel)*55,from:previous,to:rock.position)
+            rocks[i].velocity=rocks[i].velocity+shove
+            if rocks[i].health<=0 {
+                destroyRock(at:i)
+            } else {
+                destruction.rockHit(rocks[i],rng:&random)
+            }
+        }
+        for i in shooters.indices.reversed() {
+            let fighter=shooters[i]
+            let delta=Sphere67.delta(
+                target:fighter.core.position,origin:previous)
+            let t=CombatCollision556.segmentHit(
+                delta:delta,travel:travel,radius:16+11.2)
+            guard t<=1,boost71.firstShooterContact(fighter.id) else{continue}
+            shooters[i].core.hp-=6
+            let dead=shooters[i].core.hp<=0
+            destruction.shooterHit(
+                at:fighter.core.position,impactPoint:fighter.core.position,
+                velocity:travel,momentum:fighter.velocity,
+                defeated:dead,time:elapsed,rng:&random)
+            if dead {defeatShooter(at:i)}
+        }
     }
 
     /// PC v584 single-bonus roll, seeded independently from mission RNG.
