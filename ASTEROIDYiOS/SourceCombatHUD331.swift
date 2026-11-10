@@ -207,11 +207,13 @@ struct SourceCombatHUD331: View {
     }
     // PC v600 screen-space gauge. Uses the real HUD snapshot and source
     // turbulence; no square segments, no images and no game-state writes.
-    private static func gauge(_ c:GraphicsContext,_ name:String,_ current:Int?,
+    private static func gauge(_ titleContext:GraphicsContext?,
+                              _ barContext:GraphicsContext?,
+                              _ valueContext:GraphicsContext?,
+                              _ name:String,_ current:Int?,
                               _ maximum:Int,_ x:CGFloat,_ y:CGFloat,
                               _ style:Int,_ time:Double) {
-        label(c,name,x,y,dim)
-        let value=max(0,current ?? 0)
+        if let titleContext {label(titleContext,name,x,y,dim)}
         let width:Double=148
         let fraction=HudEnergy600.fraction(current,maximum:maximum)
         let left=Double(x)+1
@@ -222,7 +224,8 @@ struct SourceCombatHUD331: View {
             CGPoint(x:left+width-2,y:baseY+9),
             CGPoint(x:left,y:baseY+9)
         ])
-        c.fill(guide,with:.color(color(160,8,22,31)))
+        if let barContext {
+            barContext.fill(guide,with:.color(color(160,8,22,31)))
         if fraction>0 {
             let length=(width-2)*fraction
             let palette:[[Color]]=[
@@ -238,7 +241,7 @@ struct SourceCombatHUD331: View {
                     x:left,y:baseY,width:width-2,length:length,
                     time:time,style:style,layer:layer)
                 let points=vertices.map{CGPoint(x:$0.x,y:$0.y)}
-                c.fill(polygon(points),with:.color(palette[style][layer]))
+                barContext.fill(polygon(points),with:.color(palette[style][layer]))
             }
             // Independent flame tongues trace the irregular edges.
             for k in 0..<7 {
@@ -254,14 +257,18 @@ struct SourceCombatHUD331: View {
                 let upper=k%2==0
                 let edge=baseY+(upper ? -0.3:9.3)
                 let tip=edge+(upper ? -reach:reach)
-                c.fill(polygon([
+                barContext.fill(polygon([
                     CGPoint(x:xx-1.6,y:edge),
                     CGPoint(x:xx+0.8,y:tip),
                     CGPoint(x:xx+4.4,y:edge+(upper ? 0.4 : -0.4))
                 ]),with:.color(palette[style][2]))
             }
         }
-        text(c,current.map{String(max(0,$0))} ?? "—",x+183,y+2,white,right:true)
+        }
+        if let valueContext {
+            text(valueContext,current.map{String(max(0,$0))} ?? "—",
+                 x+183,y+2,white,right:true)
+        }
     }
     private static func radarDot(_ c:GraphicsContext,_ center:CGPoint,
                                  _ contact:CarbonisSession568.HUD.RadarContact) {
