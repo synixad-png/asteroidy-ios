@@ -109,6 +109,9 @@ struct HudLayoutEditor600:View {
     private var editorDrag600:some Gesture {
         DragGesture(minimumDistance:0)
             .onChanged {gesture in
+                // The PC F6 gestures are exclusive: never drag a widget
+                // while the two-finger pinch adjusts its scale.
+                guard pinchStartScale600 == nil else{return}
                 if draggedWidget600 == nil {
                     guard let hit=hitWidget600(gesture.startLocation) else{return}
                     selected=hit.id
@@ -267,10 +270,10 @@ struct HudLayoutEditor600:View {
                 if inspectorOpen {
                     inspector
                         .frame(width:min(310,max(235,geo.size.width*0.34)),
-                               height:max(140,geo.size.height-CGFloat(max(88,viewport.safeBottom+65))-CGFloat(max(12,viewport.safeTop))))
+                               height:max(140,geo.size.height-CGFloat(max(88,viewport.safeBottom+65))-CGFloat(max(46,viewport.safeTop+16))))
                         .frame(maxWidth:.infinity,maxHeight:.infinity,
                                alignment:.topTrailing)
-                        .padding(.top,CGFloat(max(12,viewport.safeTop)))
+                        .padding(.top,CGFloat(max(46,viewport.safeTop+16)))
                         .padding(.trailing,CGFloat(max(12,viewport.safeRight)))
                         .padding(.bottom,CGFloat(max(88,viewport.safeBottom+65)))
                         .zIndex(20000)
