@@ -47,9 +47,14 @@ enum HudPickupTransform600 {
                   drawableHeight:Double(drawableHeight)) else{return nil}
         let pixelPerPointX=Double(drawableWidth)/screen.width
         let pixelPerPointY=Double(drawableHeight)/screen.height
-        let x=Float(pixel.centerX + Double(pose.x)*0.78*screen.scale*pixelPerPointX)
-        let y=Float(pixel.centerY + (Double(pose.y)*0.78
-            +Double(animation.floatY))*screen.scale*pixelPerPointY)
+        // Source DrawHudGlb calls HudMotionPose.Project before scaling.
+        // Whole-HUD roll rotates the icon POSITION around (640,360), not
+        // just its own polygon. Keep all user's F6 x/y unchanged.
+        let projected=HudMotionProject600.project(
+            x:icon.x+25,y:icon.y+25,pose:pose,widget:defaultID)
+        let x=Float(screen.x(projected.x,at:.bottomRight)*pixelPerPointX)
+        let y=Float(screen.y(projected.y,at:.bottomRight)*pixelPerPointY
+            +Double(animation.floatY)*screen.scale*pixelPerPointY)
         let pulse=1+pose.widgetPulse(widgetIDs[index])
         let iconSize=Float(min(pixel.width,pixel.height)*0.9)*pulse
         return Sample(x:x,y:y,
