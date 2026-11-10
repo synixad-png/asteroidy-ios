@@ -45,6 +45,10 @@ import simd
     @Published private(set) var arriving=false
     private var moveForward:Float=0
     private var moveRight:Float=0
+    /// Single canonical PC586 profile and device route; no second
+    /// walking/collision solver or 60 duplicated H55 key handlers.
+    private let controlProfile586=SourceControls586.Profile.load()
+    private var controlRouter586=SourceControlRouter586()
     private var clock:CADisplayLink?
     private var lastTick:CFTimeInterval?
     @Published private(set) var mechanicNearby=false
@@ -208,11 +212,25 @@ import simd
         if let craft=playerShip {
             H55PlayerShip580.pose(craft,time:arrival.time)
         }
+        // One keyboard/gamepad sample per existing H55 display tick.
+        // Touch walk/look remain the fallback and do not share hidden state.
+        let hardware=SourceHardwareInput586.shared.snapshot()
+        let input=controlRouter586.readHangar(
+            hardware,profile:controlProfile586)
+        if arrival.walking && !showingWorkshop {
+            if input.jumpPressed {jump()}
+            if input.interactPressed {interact()}
+            if input.lookX != 0 || input.lookY != 0 {
+                look(dx:input.lookX*135*dt,dy:input.lookY*135*dt)
+            }
+        }
         if arrival.walking && !conversationOpen,let physical {
         movement.step(dt:dt,
-            forward:showingWorkshop ? 0 : moveForward,
-            right:showingWorkshop ? 0 : moveRight,
-            sprint:false,collision:physical,
+            forward:showingWorkshop ? 0 :
+                (input.moveForward != 0 ? input.moveForward : moveForward),
+            right:showingWorkshop ? 0 :
+                (input.moveRight != 0 ? input.moveRight : moveRight),
+            sprint:input.sprintHeld && !showingWorkshop,collision:physical,
             doorBlocks:{ax,az,bx,bz in
                 self.airlocks.blockingGate(fromX:ax,fromZ:az,toX:bx,toZ:bz) != nil
             })
@@ -901,14 +919,17 @@ struct H55ScenePage580: View {
         }
         .onChange(of:showingPause) { _ in
             loader.pauseForSettings(showingPause || showingSettings)
+            if showingPause {SourceHardwareInput586.shared.clearKeyboard()}
         }
         .onChange(of:showingSettings) { visible in
             loader.pauseForSettings(showingPause || visible)
+            if visible {SourceHardwareInput586.shared.clearKeyboard()}
             if !visible {loader.setLighting(fill:lightingFill,red:lightingRed)}
         }
         .onDisappear {
             showingSettings=false
             showingPause=false
+            SourceHardwareInput586.shared.clearKeyboard()
             loader.close()
         }
         .fileImporter(isPresented:$choosingFile,
@@ -928,6 +949,17 @@ struct H55ScenePage580: View {
             Button("OK",role:.cancel) {importError=nil}
         } message: {
             Text(importError ?? "")
+        }
+        .background(alignment:.topLeading) {
+            // The same keyboard first responder as live CARBONIS.
+            // SceneKit/60 FPS H55 and the touch HUD remain unchanged.
+            SourceKeyboardCapture586 {key,held in
+                SourceHardwareInput586.shared.changeKey(
+                    key,pressed:held)
+            }
+            .frame(width:1,height:1)
+            .opacity(0.01)
+            .accessibilityHidden(true)
         }
         .accessibilityIdentifier("h55-v580-page")
     }
