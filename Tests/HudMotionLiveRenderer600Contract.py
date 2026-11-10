@@ -5,6 +5,7 @@ root=Path(__file__).resolve().parents[1]
 session=(root/"ASTEROIDYiOS/CarbonisSession568.swift").read_text()
 renderer=(root/"ASTEROIDYiOS/Sector01CarbonisPreview568.swift").read_text()
 planetarium=(root/"ASTEROIDYiOS/HudPlanetariumScene600.swift").read_text()
+host=(root/"ASTEROIDYiOS/HudPlanetariumHost600.swift").read_text()
 scene=(root/"ASTEROIDYiOS/Sector01Scene568.swift").read_text()
 placement=(root/"ASTEROIDYiOS/HudWidgetPlacement600.swift").read_text()
 icons=(root/"ASTEROIDYiOS/HudPickupTransform600.swift").read_text()
@@ -24,8 +25,11 @@ assert 'pose:screen.pose,' in renderer
 assert 'safeLeft:screen.insets.left' in renderer
 assert 'viewport:viewport' in renderer
 assert 'pose:session.hud.motion,' not in renderer
-assert 'livePose:{ [weak session] in' in scene
-assert 'session?.currentHudRenderState600().pose' in scene
+assert 'HudPlanetariumHost600(' in scene
+assert 'livePose:{ [weak session] in' in host
+assert 'session?.currentHudRenderState600().pose' in host
+assert 'HudMotionProject600.project(' in host
+assert 'liveCapsules:{ [weak session] in' in host
 assert 'let framePose=livePose?() ?? pose' in planetarium
 assert 'didApplyAnimationsAtTime' in planetarium
 assert 'framePose.roll' in planetarium
