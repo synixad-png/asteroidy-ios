@@ -143,7 +143,11 @@ struct Sector01Scene568: View {
                 // All readings come from the genuine active combat snapshot.
                 SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568,
                                    render3DIcons:session.hud3DIconsReady600,
-                                   layout600:hudLayout600)
+                                   layout600:hudLayout600,
+                                   active:session.hud.phase == .playing && !userPaused && !showingService,
+                                   livePose:{ [weak session] in
+                                       session?.currentHudVisual600().pose ?? HudMotion600.Pose()
+                                   })
                     .allowsHitTesting(false)
                     .onAppear {
                         session.updateHudLayout600(hudLayout600)
