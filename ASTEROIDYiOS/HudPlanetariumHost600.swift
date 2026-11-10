@@ -21,11 +21,11 @@ struct HudPlanetariumHost600: View {
             ) {
                 HudPlanetariumScene600(
                     original: original,
-                    projection: projection,
                     capsule: session.currentHudVisual600().capsules,
                     pitch: Float(widget.pitch ?? -20),
                     yaw: Float(widget.yaw ?? 0),
                     roll: Float(widget.roll ?? 0),
+                    projection: projection,
                     playing: active,
                     liveCapsules: { [weak session] in
                         session?.currentHudVisual600().capsules ??
