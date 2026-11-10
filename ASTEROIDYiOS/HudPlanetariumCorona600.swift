@@ -1,4 +1,5 @@
 import SceneKit
+import UIKit
 import Foundation
 
 /// PC v600 RendererHudEnergy.DrawPlanetariumCorona is attached ONLY to
@@ -116,7 +117,7 @@ final class HudPlanetariumCorona600 {
             let pulse=0.5+0.5*sin(t*(1.15+0.13*Double(i%3))+Double(i)*2.1)
             let flame=3.0+6.5*pulse
             let node=flames[i]
-            node.position=SCNVector3(100.5*cos(theta),100.5*sin(theta),0)
+            node.position=SCNVector3(Float(100.5*cos(theta)),Float(100.5*sin(theta)),0)
             node.eulerAngles.z=Float(theta+0.034*sin(t*0.83+Double(i)*0.7))
             node.scale=SCNVector3(Float(flame/9.5),1,1)
         }
