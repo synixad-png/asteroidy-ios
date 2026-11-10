@@ -25,6 +25,7 @@ struct Sector01Scene568: View {
     @State private var userPaused=false
     @State private var showingHudMotion600=false
     @State private var showingHudEditor600=false
+    @State private var hudEditorOriginal600:HudLayout600?
     @State private var hudLayout600=HudLayout600.load()
     @State private var showingPlanetariumImport600=false
     @State private var planetariumURL600:URL?
@@ -65,7 +66,8 @@ struct Sector01Scene568: View {
         onMissionPause(true)
     }
     private func resumeMission568() {
-        guard userPaused else {return}
+        // Hardware START must not resume combat under the touch editor.
+        guard userPaused && !showingHudEditor600 else {return}
         session.release() // never resurrect a held auto-fire after pause
         session.refreshControls586()
         userPaused=false
@@ -134,6 +136,7 @@ struct Sector01Scene568: View {
                         .gesture(aiming)
                         .accessibilityLabel("Prawy obszar: skręt i ciągły ostrzał")
                         .accessibilityIdentifier("sector01-right-steer-auto-fire")
+                .allowsHitTesting(!showingHudEditor600)
                 }
                 // RendererW3Combat331.cs: native, transparent, screen-anchored
                 // HUD at the exact original 1280x720 virtual positions.
@@ -339,7 +342,7 @@ struct Sector01Scene568: View {
                 // full-screen modal over the FROZEN real 3D mission.
                 // Save/Load/Highscores remain absent until their source
                 // behaviour is genuinely ported; do not display dead keys.
-                if userPaused && session.hud.phase == .playing && !showingService {
+                if userPaused && session.hud.phase == .playing && !showingService && !showingHudEditor600 {
                     Color.black.opacity(0.80).ignoresSafeArea()
                         .accessibilityIdentifier("sector01-pause-touch-blocker")
                     VStack(alignment:.leading,spacing:compact ? 11:18) {
@@ -384,6 +387,10 @@ struct Sector01Scene568: View {
                                 .foregroundStyle(.orange)
                         }
                         Button("EDYTUJ UKŁAD HUD (46 ELEMENTÓW)") {
+                            // PAUZA is already the authoritative physics/audio
+                            // gate. Snapshot only once for atomic cancel.
+                            session.release()
+                            hudEditorOriginal600=hudLayout600
                             showingHudEditor600=true
                         }
                         .frame(maxWidth:.infinity)
@@ -392,12 +399,6 @@ struct Sector01Scene568: View {
                                     in:RoundedRectangle(cornerRadius:5))
                         .foregroundStyle(.cyan)
                         .accessibilityIdentifier("sector01-hud-v600-editor-open")
-                        .sheet(isPresented:$showingHudEditor600) {
-                            HudLayoutEditor600 {updated in
-                                hudLayout600=updated
-                                session.updateHudLayout600(updated)
-                            }
-                        }
                         Button("HUD DYNAMICZNY / USTAWIENIA") {
                             showingHudMotion600=true
                         }
@@ -439,6 +440,33 @@ struct Sector01Scene568: View {
                     .overlay(RoundedRectangle(cornerRadius:12)
                         .stroke(Color(red:0.24,green:0.38,blue:0.44),lineWidth:1))
                     .accessibilityIdentifier("sector01-source-pause-overlay")
+                }
+                // The real Metal mission remains frozen and visible behind
+                // the authentic HUD. No separate simulated 1280x720 editor.
+                if showingHudEditor600 && userPaused {
+                    HudLayoutEditor600(
+                        initial:hudEditorOriginal600 ?? hudLayout600,
+                        viewport:combatHUDLayout,
+                        onPreview:{ updated in
+                            hudLayout600=updated
+                            session.updateHudLayout600(updated)
+                        },
+                        onSave:{ updated in
+                            hudLayout600=updated
+                            session.updateHudLayout600(updated)
+                            hudEditorOriginal600=nil
+                            showingHudEditor600=false
+                        },
+                        onCancel:{
+                            if let original=hudEditorOriginal600 {
+                                hudLayout600=original
+                                session.updateHudLayout600(original)
+                            }
+                            hudEditorOriginal600=nil
+                            showingHudEditor600=false
+                        })
+                        .zIndex(40)
+                        .accessibilityIdentifier("sector01-hud-v600-touch-editor-live")
                 }
             }
             .background {
