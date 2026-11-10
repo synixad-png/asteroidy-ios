@@ -12,6 +12,52 @@ import Foundation
         let prepared=Sector01PreparedWave568.prepare(
             entry:entry,campaign:campaign,hasOriginalC279Assets:true,
             difficulty:.normal,seed:1)!
+        // PC v584 supply roll: exact .NET seeded stream, one bonus per
+        // destroyed target, preserving all previous mission RNG calls.
+        check(prepared.combatSupplySeed==1,
+              "original mission seed is preserved for independent supply RNG")
+        var supplyA=SourceCombatSupply586(missionSeed:1)
+        var supplyB=SourceCombatSupply586(missionSeed:1)
+        var energyCount=0,bombCount=0
+        for _ in 0..<20_000 {
+            let a=supplyA.decide(enemy:true,asteroidSize:0,
+                currentBombs:0,currentIonAmmo:0,
+                pickupsCount:0,lootEnabled:true)
+            let b=supplyB.decide(enemy:true,asteroidSize:0,
+                currentBombs:0,currentIonAmmo:0,
+                pickupsCount:0,lootEnabled:true)
+            check(a==b,"PC RNG deterministic one-roll supply stream")
+            if a == .energy {energyCount+=1; _=supplyA.velocity(); _=supplyB.velocity()}
+            if a == .bomb {bombCount+=1; _=supplyA.velocity(); _=supplyB.velocity()}
+        }
+        check(energyCount>2700 && energyCount<3500 &&
+              bombCount>900 && bombCount<1300,
+              "original enemy drop rates remain near 15.5% energy / 5.5% bomb")
+        var blocked=SourceCombatSupply586(missionSeed:1)
+        check(blocked.decide(enemy:true,asteroidSize:0,
+            currentBombs:0,currentIonAmmo:0,
+            pickupsCount:96,lootEnabled:true)==nil,
+            "source maximum of 96 shared pickups")
+        check(blocked.decide(enemy:true,asteroidSize:0,
+            currentBombs:0,currentIonAmmo:0,
+            pickupsCount:0,lootEnabled:false)==nil,
+            "disabled/replay loot produces no bonus")
+        var ion=277, bombs=2
+        check(SourceCombatSupply586.collected(.energy,
+            ionAmmo:&ion,bombs:&bombs) && ion==300,
+            "energy pickup credits real IonAmmo capped at 300")
+        check(!SourceCombatSupply586.collected(.energy,
+            ionAmmo:&ion,bombs:&bombs),
+            "full ion inventory does not consume pickup")
+        check(SourceCombatSupply586.collected(.bomb,
+            ionAmmo:&ion,bombs:&bombs) && bombs==3,
+            "bomb pickup credits real Bombs capped at three")
+        check(!SourceCombatSupply586.collected(.bomb,
+            ionAmmo:&ion,bombs:&bombs),
+            "full bomb inventory does not consume pickup")
+        check(!SourceCombatSupply586.collected(.shield,
+            ionAmmo:&ion,bombs:&bombs),
+            "unported shield mechanic must not be faked")
         var sim=CarbonisCombat568(prepared)
         check(sim.rocks.count==13 && sim.shooters.count==4,"exact source wave")
         check(sim.flight.flight.configuration.cruiseSpeed==156,"source ship speed")
