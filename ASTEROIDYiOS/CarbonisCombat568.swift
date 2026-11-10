@@ -12,6 +12,10 @@ struct CarbonisCombat568 {
         var position:Vec2
         var velocity:Vec2
         var value:Int
+        /// Nil = original token. PC586 Energy/Bomb use this SAME pickup list,
+        /// motion, attraction and world contact path.
+        var sourceKind:SourcePickupModels586.Kind? = nil
+        var life:Float = 26
     }
     struct Projectile {
         var point: Vec2
@@ -88,6 +92,7 @@ struct CarbonisCombat568 {
     var rocksDestroyed:Int=0
     var shooterKills:Int=0
     private var random:MissionWave568.SourceRandom
+    private var combatSupply586=SourceCombatSupply586(missionSeed:0)
     private var completed=false
     // Audio events mirror original Game.ShotEvents, BlastEvents,
     // PickupEvents and EnemyShotSound79. Pure side channel only.
@@ -117,6 +122,7 @@ struct CarbonisCombat568 {
         shooters=prepared.encounter.fighters.map{ Shooter($0) }
         incoming=prepared.incoming
         random=prepared.encounter.randomState
+        combatSupply586=SourceCombatSupply586(missionSeed:prepared.combatSupplySeed)
         lootYieldScale=prepared.encounter.lootYieldScale
         isReplay=prepared.isReplay
         lives=prepared.reset.lives
@@ -321,16 +327,32 @@ struct CarbonisCombat568 {
             value:value))
     }
 
-    /// Windows Physics68.MovePickup68: pickup attraction and spherical
-    /// transport, contact radius 26 for the original collector level 0.
+    /// The original PC MovePickup68 applies to coins AND consumables.
+    /// One shared physics/attraction/contact path, no second loot pool.
     private mutating func stepTokenPickups(dt:Float) {
         for i in tokenPickups.indices.reversed() {
             var item=tokenPickups[i]
+            if item.sourceKind != nil {
+                item.life-=dt
+                if item.life<=0 {
+                    tokenPickups.remove(at:i)
+                    continue
+                }
+            }
             let delta=Sphere67.delta(target:flight.position,
                                      origin:item.position)
             let distance=sqrt(delta.lengthSquared)
             if distance<26 {
-                if !isReplay {collectedLootTokens+=item.value}
+                if let kind=item.sourceKind {
+                    guard SourceCombatSupply586.collected(
+                        kind,ionAmmo:&ionAmmo,bombs:&bombs) else {
+                        // An inventory already at cap cannot consume the item.
+                        tokenPickups[i]=item
+                        continue
+                    }
+                } else if !isReplay {
+                    collectedLootTokens+=item.value
+                }
                 emitOriginalAudio568(30) // original PickupEvents
                 tokenPickups.remove(at:i)
                 continue
@@ -378,8 +400,12 @@ struct CarbonisCombat568 {
     private mutating func finishSourceMission() {
         guard phase == .playing && missionSummary==nil else{return}
         if !isReplay {
-            collectedLootTokens+=tokenPickups.reduce(0) {$0+$1.value}
+            collectedLootTokens+=tokenPickups.reduce(0) {
+                $0+($1.sourceKind == nil ? $1.value : 0)
+            }
         }
+        // Only tokens become money; uncollected Energy/Bomb expire with
+        // the battle instead of being silently turned into currency.
         tokenPickups.removeAll(keepingCapacity:true)
         bullets.removeAll(keepingCapacity:true)
         missionSummary=Sector01MissionSummary568.completedFirstMission(
@@ -500,6 +526,8 @@ struct CarbonisCombat568 {
         rocksDestroyed+=1
         score+=Self.sourceRockScore(removed)
         dropSourceRockLoot(removed)
+        tryDropCombatSupply586(at:removed.position,
+                               enemy:false,asteroidSize:removed.size)
         splitRock(removed)
     }
 
@@ -521,6 +549,23 @@ struct CarbonisCombat568 {
                 collectedLootTokens+=amount
             }
         }
+        tryDropCombatSupply586(at:destroyed.core.position,enemy:true)
+    }
+
+    /// PC v584 single-bonus roll, seeded independently from mission RNG.
+    /// Uses the same tokenPickups list and the same lifetime/collision rules.
+    private mutating func tryDropCombatSupply586(
+        at point:Vec2,enemy:Bool,asteroidSize:Int=0) {
+        let eligible=phase == .playing && !isReplay && lootYieldScale>0
+        guard let kind=combatSupply586.decide(
+            enemy:enemy,asteroidSize:asteroidSize,
+            currentBombs:bombs,currentIonAmmo:ionAmmo,
+            pickupsCount:tokenPickups.count,lootEnabled:eligible)
+        else{return}
+        tokenPickups.append(TokenPickup(
+            position:point,velocity:combatSupply586.velocity(),
+            value:kind == .energy ? 40 : 1,
+            sourceKind:kind,life:26))
     }
 
     /// Physics68.Explosion68: radius 330, impulse 90. Applied BEFORE
