@@ -30,6 +30,8 @@ import Foundation
         let exported=try! baseline.encodeJSON()
         check((try? HudLayout600.decodeJSON(exported))==baseline,
               "PC v600 full 46-widget JSON exchange is lossless")
+        check((try? HudLayout600.decodeJSON(Data(repeating:65,count:65_537)))==nil,
+              "oversized Files JSON is rejected before decoding")
         var wrongModel=baseline
         let iconIndex=wrongModel.widgets.firstIndex(where:{$0.id=="ion.icon"})!
         wrongModel.widgets[iconIndex].glb="unknown"
