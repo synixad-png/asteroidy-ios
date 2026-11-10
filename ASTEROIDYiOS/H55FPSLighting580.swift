@@ -25,7 +25,7 @@ import UIKit
         scene.rootNode.childNode(withName:"FPS_AMBIENT_LIGHT",
                                  recursively:false)?.light?.intensity=220*gain
         for (i,spec) in lightSpecs.enumerated() {
-            scene.rootNode.childNode(withName:"FPS_SOURCE_LIGHT_\\(i)",
+            scene.rootNode.childNode(withName:"FPS_SOURCE_LIGHT_\(i)",
                                      recursively:false)?.light?.intensity=spec.2*gain
         }
     }
