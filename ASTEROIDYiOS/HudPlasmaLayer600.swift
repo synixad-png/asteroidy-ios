@@ -52,7 +52,6 @@ struct HudPlasmaLayer600:View {
                 bottom.translateBy(x:CGFloat(screen.originX(for:.bottomLeft)),
                                    y:CGFloat(screen.originY(for:.bottomLeft)))
                 bottom.scaleBy(x:CGFloat(screen.scale),y:CGFloat(screen.scale))
-                SourceCombatHUD331.applyMotion(&bottom,pose:pose,widget:"radar")
                 // PC uses current Game.Time. A timebase here is purely
                 // decorative; pause stops updates, without modifying game.
                 // Bound phase to keep sin/mod stable over long uptime.
