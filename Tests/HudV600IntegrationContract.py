@@ -56,7 +56,16 @@ assert "maxHull=game.maxHull;maxArmor=game.maxArmor" in session
 assert "tarczaEnergy=max(0,Int(ceil(Double(game.tarcza145.energy))))" in session
 assert "HudPlasmaLayer600(" in scene
 assert "session.applyHudMotion600(settings)" in scene
-assert "HudMotionSettingsPanel600" in scene
+settingsUI = (root / "ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift").read_text()
+assert "case 4: interfacePage600" in settingsUI
+assert "HudMotionSettingsPanel600" in settingsUI
+assert 'Button("EDYTUJ UKŁAD HUD (46 ELEMENTÓW)")' in settingsUI
+assert "onEditHud:(()->Void)?" in settingsUI
+assert 'Button("OPCJE / USTAWIENIA")' in scene
+assert "onEditHud:{" in scene
+assert "showingMissionSettings568=true" in scene
+assert "missionSettingsScreen568(compact:compact)" in scene
+assert "guard userPaused && !showingHudEditor600 && !showingMissionSettings568" in scene
 for marker in ("\\.strength", "\\.inertia", "\\.impact", "\\.leftSway",
                "\\.rightSway", "settings.parallax", "settings.reactions",
                "settings.profile"):
