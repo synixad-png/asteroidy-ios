@@ -159,7 +159,11 @@ struct HudLayoutEditor600:View {
                 let url=try result.get()
                 let scoped=url.startAccessingSecurityScopedResource()
                 defer {if scoped {url.stopAccessingSecurityScopedResource()}}
-                let bytes=try Data(contentsOf:url)
+                let handle=try FileHandle(forReadingFrom:url)
+                defer{try? handle.close()}
+                // Never load an arbitrary multi-megabyte Files document
+                // into the UI. Approved PC v600 JSON is only a few KiB.
+                let bytes=try handle.read(upToCount:65_537) ?? Data()
                 document=try HudLayout600.decodeJSON(bytes)
                 exchangeError600=nil
             } catch {
