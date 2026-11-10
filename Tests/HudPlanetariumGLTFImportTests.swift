@@ -38,13 +38,22 @@ import Foundation
         for i in a.indices {
             var repaired=a[i]
             if expected.contains(i) {repaired["normalized"]=true}
-            check(NSDictionary(dictionary:repaired).isEqual(
-                to:b[i]),"only COLOR_0 normalized flags may change")
+            // Compare canonical JSON bytes. Foundation NSDictionary's
+            // isEqual(to:) can disagree on bridged nested NSNumber arrays
+            // even if every value is identical (verified on Swift Linux).
+            let expected=try JSONSerialization.data(withJSONObject:repaired,
+                options:[.sortedKeys])
+            let actual=try JSONSerialization.data(withJSONObject:b[i],
+                options:[.sortedKeys])
+            check(expected==actual,
+                  "only COLOR_0 normalized flags may change (accessor \(i))")
         }
         for key in ["meshes","nodes","materials","animations","bufferViews","buffers"] {
-            check(NSDictionary(dictionary:["source":first[key]!])
-                    .isEqual(to:["source":second[key]!]),
-                  "original "+key+" data preserved")
+            let expected=try JSONSerialization.data(
+                withJSONObject:["source":first[key]!],options:[.sortedKeys])
+            let actual=try JSONSerialization.data(
+                withJSONObject:["source":second[key]!],options:[.sortedKeys])
+            check(expected==actual,"original "+key+" data preserved")
         }
         let originalBIN=original.subdata(
             in:(20+originalJSONLength)..<original.count)
