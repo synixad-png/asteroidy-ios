@@ -1475,7 +1475,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     let width=Float(view.drawableSize.width)
                     let height=Float(view.drawableSize.height)
                     if width>1 && height>1 {
-                        let screen=session.currentHudScreen600()
+                        let screen=session.currentHudRenderState600()
                         let hudLayout600=screen.layout
                         let viewport=CombatHUDViewport568(
                             width:Double(view.bounds.width),
@@ -1494,7 +1494,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                                   let asset=pickupModels586[kind],
                                   let icon=HudPickupTransform600.sample(
                                     index:index,time:session.game.elapsed,
-                                    pose:session.hud.motion,
+                                    pose:screen.pose,
                                     drawableWidth:width,drawableHeight:height,
                                     widget:widget,viewport:viewport)
                             else{continue}
