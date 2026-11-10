@@ -10,6 +10,23 @@ import Foundation
               "all approved PC v600 widgets available")
         check(Set(baseline.widgets.map(\.id)).count==46,
               "stable unique widget identities")
+        for widget in baseline.widgets {
+            guard let dims=HudWidgetGeometry600.size(widget.id),
+                  let xRange=HudWidgetGeometry600.xRange(for:widget),
+                  let yRange=HudWidgetGeometry600.yRange(for:widget) else {
+                preconditionFailure("missing original PC widget geometry: "+widget.id)
+            }
+            check(dims.width>0 && dims.height>0,
+                  "source widget hitboxes must be positive")
+            check(xRange.contains(widget.x) && yRange.contains(widget.y),
+                  "approved PC position must obey original F6 drag bounds")
+        }
+        check(HudWidgetGeometry600.size("radar")==HudWidgetGeometry600.Size(width:178,height:192),
+              "original radar geometry")
+        check(HudWidgetGeometry600.size("boss.health_bar")==HudWidgetGeometry600.Size(width:515,height:5),
+              "original boss HUD geometry")
+        check(HudWidgetGeometry600.size("unknown.widget")==nil,
+              "no guessed geometry for unknown widget")
         let planet=baseline.widget("hud.planetarium")!
         check(planet.x==64.7882 && planet.y==553.0863 &&
               planet.scale==1.4702 && planet.pitch == -20,
