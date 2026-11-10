@@ -12,6 +12,9 @@ on:
       - "ASTEROIDYiOS/CarbonisCombat568.swift"
       - "ASTEROIDYiOS/CarbonisSession568.swift"
       - "Tests/HudMotionEventCounters600Contract.py"
+      - "ASTEROIDYiOS/HudMissionGate600.swift"
+      - "Tests/HudMissionGate600Tests.swift"
+      - "Tests/HudMissionGate600Contract.py"
       - "Tests/HudLayout600Tests.swift"
       - "ASTEROIDYiOS/HudEnergy600.swift"
       - "ASTEROIDYiOS/HudCapsuleController600.swift"
@@ -46,6 +49,7 @@ jobs:
           python3 Tests/HudPlanetariumIntegration600Contract.py
           python3 Tests/HudPlanetariumCorona600Contract.py
           python3 Tests/HudMotionEventCounters600Contract.py
+          python3 Tests/HudMissionGate600Contract.py
           python3 Tests/HudPickupMetal600Contract.py
       - name: Compile and execute Swift motion and plasma reference contracts
         run: |
@@ -54,6 +58,8 @@ jobs:
           /tmp/hud-v600-core
           swiftc ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudLayout600Tests.swift -o /tmp/hud-v600-layout
           /tmp/hud-v600-layout
+          swiftc ASTEROIDYiOS/HudMissionGate600.swift Tests/HudMissionGate600Tests.swift -o /tmp/hud-v600-mission
+          /tmp/hud-v600-mission
           swiftc ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudCapsuleController600Tests.swift -o /tmp/hud-v600-capsule
           /tmp/hud-v600-capsule
           swiftc ASTEROIDYiOS/HudCapsuleController600.swift ASTEROIDYiOS/HudCapsuleBinding600.swift Tests/HudCapsuleBinding600Tests.swift -o /tmp/hud-v600-bubble
