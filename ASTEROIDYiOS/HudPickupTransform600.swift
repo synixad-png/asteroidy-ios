@@ -40,9 +40,9 @@ enum HudPickupTransform600 {
               +pose.y*0.78*scale
         return Sample(x:max(22*scale,min(drawableWidth-22*scale,x)),
                       y:max(22*scale,min(drawableHeight-22*scale,y)),
-                      yaw:yaw+Float(widget?.yaw ?? 0)*.pi/180,
-                      pitch:pitch+Float(widget?.pitch ?? 0)*.pi/180,
-                      roll:roll+Float(widget?.roll ?? 0)*.pi/180,
+                      yaw:yaw+Float(widget?.yaw ?? 0)*Float.pi/180,
+                      pitch:pitch+Float(widget?.pitch ?? 0)*Float.pi/180,
+                      roll:roll+Float(widget?.roll ?? 0)*Float.pi/180,
                       size:45*scale*Float(widget?.scale ?? 1))
     }
     static func model(_ s:Sample)->simd_float4x4 {
