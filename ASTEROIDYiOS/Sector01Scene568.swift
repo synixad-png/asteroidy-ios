@@ -139,9 +139,11 @@ struct Sector01Scene568: View {
                 // HUD at the exact original 1280x720 virtual positions.
                 // All readings come from the genuine active combat snapshot.
                 SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568,
-                                   render3DIcons:session.hud3DIconsReady600)
+                                   render3DIcons:session.hud3DIconsReady600,
+                                   layout600:hudLayout600)
                     .allowsHitTesting(false)
                     .onAppear {
+                        session.updateHudLayout600(hudLayout600)
                         if planetariumURL600 == nil {
                             planetariumURL600=HudPlanetariumAsset600.availableURL()
                         }
@@ -149,19 +151,21 @@ struct Sector01Scene568: View {
 
                 // One original 3D asset, rendered by GLTFKit2 + SceneKit.
                 // No procedural replacement if the signed-off GLB is absent.
-                if let planetariumURL600 {
+                if let planetariumURL600,
+                   let planetarium=hudLayout600.widget("hud.planetarium"),
+                   planetarium.visible {
                     HudPlanetariumScene600(
                         original:planetariumURL600,
                         capsule:session.hud.capsuleLevels,
-                        pitch:-20,
+                        pitch:Float(planetarium.pitch ?? -20),
                         pose:session.hud.motion)
                     .frame(
-                        width:CGFloat(250*1.4702*combatHUDLayout.scale),
-                        height:CGFloat(135*1.4702*combatHUDLayout.scale))
+                        width:CGFloat(250*planetarium.scale*combatHUDLayout.scale),
+                        height:CGFloat(135*planetarium.scale*combatHUDLayout.scale))
                     .position(
-                        x:CGFloat(combatHUDLayout.x(64.7882+125,
+                        x:CGFloat(combatHUDLayout.x(planetarium.x+125,
                             at:.bottomLeft)+Double(session.hud.motion.x)*1.18*combatHUDLayout.scale),
-                        y:CGFloat(combatHUDLayout.y(553.0863+67.5,
+                        y:CGFloat(combatHUDLayout.y(planetarium.y+67.5,
                             at:.bottomLeft)+Double(session.hud.motion.y)*1.18*combatHUDLayout.scale))
                     .allowsHitTesting(false)
                     .accessibilityIdentifier("sector01-hud-v600-original-planetarium")
@@ -376,6 +380,7 @@ struct Sector01Scene568: View {
                         .sheet(isPresented:$showingHudEditor600) {
                             HudLayoutEditor600 {updated in
                                 hudLayout600=updated
+                                session.updateHudLayout600(updated)
                             }
                         }
                         Button("HUD DYNAMICZNY / USTAWIENIA") {
