@@ -144,16 +144,23 @@ struct Sector01Scene568: View {
                     .allowsHitTesting(false)
                     .onAppear {
                         session.updateHudLayout600(hudLayout600)
+                        session.updateHudSafeInsets600(missionSafeInsets568)
                         if planetariumURL600 == nil {
                             planetariumURL600=HudPlanetariumAsset600.availableURL()
                         }
+                    }
+                    .onChange(of:missionSafeInsets568) { _,insets in
+                        session.updateHudSafeInsets600(insets)
                     }
 
                 // One original 3D asset, rendered by GLTFKit2 + SceneKit.
                 // No procedural replacement if the signed-off GLB is absent.
                 if let planetariumURL600,
                    let planetarium=hudLayout600.widget("hud.planetarium"),
-                   planetarium.visible {
+                   planetarium.visible,
+                   let placement=HudWidgetPlacement600.frame(
+                       planetarium,sourceWidth:250,sourceHeight:135,
+                       anchor:.bottomLeft,viewport:combatHUDLayout) {
                     HudPlanetariumScene600(
                         original:planetariumURL600,
                         capsule:session.hud.capsuleLevels,
@@ -161,14 +168,13 @@ struct Sector01Scene568: View {
                         yaw:Float(planetarium.yaw ?? 0),
                         roll:Float(planetarium.roll ?? 0),
                         pose:session.hud.motion)
-                    .frame(
-                        width:CGFloat(250*planetarium.scale*combatHUDLayout.scale),
-                        height:CGFloat(135*planetarium.scale*combatHUDLayout.scale))
+                    .frame(width:CGFloat(placement.width),
+                           height:CGFloat(placement.height))
                     .position(
-                        x:CGFloat(combatHUDLayout.x(planetarium.x+125,
-                            at:.bottomLeft)+Double(session.hud.motion.x)*1.18*combatHUDLayout.scale),
-                        y:CGFloat(combatHUDLayout.y(planetarium.y+67.5,
-                            at:.bottomLeft)+Double(session.hud.motion.y)*1.18*combatHUDLayout.scale))
+                        x:CGFloat(placement.centerX+
+                            Double(session.hud.motion.x)*1.18*combatHUDLayout.scale),
+                        y:CGFloat(placement.centerY+
+                            Double(session.hud.motion.y)*1.18*combatHUDLayout.scale))
                     .allowsHitTesting(false)
                     .accessibilityIdentifier("sector01-hud-v600-original-planetarium")
                 }
