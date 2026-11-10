@@ -75,6 +75,20 @@ struct HudMotion600 {
             if id.hasPrefix("status.") || id.hasPrefix("mission.") || id.hasPrefix("objective.") {return 0.42}
             return 0.78
         }
+        // Exact PC HudMotionPose.WidgetPulse: local visual micro-scale
+        // feedback; never changes resource values or gameplay hitboxes.
+        func widgetPulse(_ id:String)->Float {
+            if id.hasPrefix("hull.") {return hullPulse*0.028}
+            if id.hasPrefix("armor.") {return armorPulse*0.028}
+            if id.hasPrefix("shield.") {return shieldPulse*0.028}
+            if id.hasPrefix("ion.") || id.hasPrefix("bomb.") {
+                return shotPulse*0.010+pickupPulse*0.018
+            }
+            if id.hasPrefix("boost.") || id.hasPrefix("shield_charge.") {
+                return pickupPulse*0.018
+            }
+            return 0
+        }
     }
     var settings = Settings()
     private var previous: Sample?
