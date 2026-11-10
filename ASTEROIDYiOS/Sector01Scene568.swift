@@ -460,6 +460,9 @@ struct Sector01Scene568: View {
                             session.updateHudLayout600(updated)
                             hudEditorOriginal600=nil
                             showingHudEditor600=false
+                            // PC v602 RendererHudLayout.HudToggle: FinishEdit
+                            // commits layout, then resumes the paused game.
+                            resumeMission568()
                         },
                         onCancel:{
                             if let original=hudEditorOriginal600 {
@@ -468,6 +471,8 @@ struct Sector01Scene568: View {
                             }
                             hudEditorOriginal600=nil
                             showingHudEditor600=false
+                            // PC v602 HudCancel restores the snapshot and resumes.
+                            resumeMission568()
                         })
                         .zIndex(40)
                         .accessibilityIdentifier("sector01-hud-v600-touch-editor-live")
