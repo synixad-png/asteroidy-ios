@@ -14,6 +14,7 @@ final class CarbonisSession568: ObservableObject {
         }
         var radarContacts:[RadarContact]
         var motion:HudMotion600.Pose = .init()
+        var capsuleLevels:HudCapsuleController600.Snapshot = .init(levels:[1,1,1],flashes:[0,0,0])
         var tokenBalance:Int
         var weaponName:String
         var weaponLevel:Int
@@ -105,6 +106,7 @@ final class CarbonisSession568: ObservableObject {
     private var summaryElapsed:Float=0
     // One visual solver fed by actual mission flight and survival state.
     // This does not enter or alter Game.step, collisions or damage.
+    private var hudCapsules600=HudCapsuleController600()
     private var hudMotion600:HudMotion600 = {
         var solver=HudMotion600()
         solver.settings = HudMotion600.Settings.load()
@@ -131,6 +133,7 @@ final class CarbonisSession568: ObservableObject {
         lastHUD=0
         summaryElapsed=0
         hudMotion600.reset()
+        hudCapsules600.reset()
         hud=HUD(restarted)
     }
     /// Refresh PC586 assignments only at an explicit scene transition.
@@ -227,10 +230,19 @@ final class CarbonisSession568: ObservableObject {
         motionSample.shieldActive=game.tarcza145.active
         let hudPose600=hudMotion600.update(motionSample,at:now,
                                           active:game.phase == .playing)
+        // Feed normalized live values, never inventory charges as energy.
+        hudCapsules600.advance(
+            hull:Float(game.hull)/Float(max(1,game.maxHull)),
+            armor:Float(game.armor)/Float(max(1,game.maxArmor)),
+            shield:game.tarcza145.energy/100,
+            seconds:now,hullPulse:hudPose600.hullPulse,
+            armorPulse:hudPose600.armorPulse,
+            shieldPulse:hudPose600.shieldPulse)
         if now-lastHUD > 0.10 {
             lastHUD=now
             var snapshot=HUD(game,summarySeconds:summaryElapsed)
             snapshot.motion=hudPose600
+            snapshot.capsuleLevels=hudCapsules600.snapshot
             DispatchQueue.main.async { [weak self] in
                 self?.hud=snapshot
             }
