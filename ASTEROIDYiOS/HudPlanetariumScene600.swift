@@ -63,6 +63,9 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         private var bubbles:[Int:SCNNode]=[:]
         private var flashes=[SCNNode]()
         private var camera:SCNNode?
+        private var yawPivot:SCNNode?
+        private var pitchPivot:SCNNode?
+        private var rollPivot:SCNNode?
         private var scene:SCNScene?
         private var corona:HudPlanetariumCorona600?
         private var generation=0
@@ -89,6 +92,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
             scene=nil;binding=nil
             bubbles.removeAll();flashes.removeAll()
             camera=nil
+            yawPivot=nil;pitchPivot=nil;rollPivot=nil
             corona=nil
             livePose=nil
             liveCapsules=nil
@@ -138,24 +142,43 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     // Attaches to original outer sphere; never to global
                     // planetarium bounds or the three status capsules.
                     let corona=HudPlanetariumCorona600(scene:model,nodes:source.nodes)
+                    // PC v602 HudGlbAssets.DrawHudGlb:
+                    // Translate(widget center) -> Rotate Y/X/Z ->
+                    // Scale(.44*width*scale/PlanetModelRadius463) ->
+                    // Translate(-PlanetModelCenter463).
+                    // Preserve EVERY imported authored glTF node/animation.
+                    // Only re-parent the complete original hierarchy once.
+                    let sourceRoots=model.rootNode.childNodes
+                    let centered=SCNNode()
+                    centered.name="PC602_PLANET_MODEL_CENTER"
+                    centered.position=SCNVector3(
+                        -HudPlanetariumAsset600.pc602ModelCenterX,
+                        -HudPlanetariumAsset600.pc602ModelCenterY,
+                        -HudPlanetariumAsset600.pc602ModelCenterZ)
+                    for root in sourceRoots {centered.addChildNode(root)}
+                    let rollPivot=SCNNode()
+                    let pitchPivot=SCNNode()
+                    let yawPivot=SCNNode()
+                    rollPivot.name="PC602_HUD_ROLL"
+                    pitchPivot.name="PC602_HUD_PITCH"
+                    yawPivot.name="PC602_HUD_YAW"
+                    rollPivot.addChildNode(centered)
+                    pitchPivot.addChildNode(rollPivot)
+                    yawPivot.addChildNode(pitchPivot)
+                    model.rootNode.addChildNode(yawPivot)
                     let cameraNode=SCNNode()
                     let lens=SCNCamera()
                     lens.usesOrthographicProjection=true
                     lens.zNear=0.01
                     lens.zFar=1000
+                    // Source exact: pixels/modelUnit =
+                    // .44 * widget.Width * Scale / PlanetModelRadius463.
+                    // UIView scales with widget.Scale, so it cancels here.
+                    lens.orthographicScale=135.0 *
+                        HudPlanetariumAsset600.pc602ModelRadius /
+                        (0.44*250.0)
                     cameraNode.camera=lens
-                    let bounds=model.rootNode.boundingBox
-                    let minPoint=bounds.min,maxPoint=bounds.max
-                    let x=(minPoint.x+maxPoint.x)*0.5
-                    let y=(minPoint.y+maxPoint.y)*0.5
-                    let z=(minPoint.z+maxPoint.z)*0.5
-                    let width=Double(maxPoint.x-minPoint.x)
-                    let height=Double(maxPoint.y-minPoint.y)
-                    let depth=Double(maxPoint.z-minPoint.z)
-                    guard width.isFinite && height.isFinite && depth.isFinite,
-                          width>0 && height>0 else{return}
-                    lens.orthographicScale=max(height*1.2,width*1.2/(250.0/135.0))
-                    cameraNode.position=SCNVector3(x,y,z+Float(max(10,depth*2)))
+                    cameraNode.position=SCNVector3(0,0,20)
                     model.rootNode.addChildNode(cameraNode)
                     let player=clip.animationPlayer
                     player.animation.repeatCount = .greatestFiniteMagnitude
@@ -167,6 +190,9 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     self.bubbles=resolved
                     self.flashes=flashNodes
                     self.camera=cameraNode
+                    self.yawPivot=yawPivot
+                    self.pitchPivot=pitchPivot
+                    self.rollPivot=rollPivot
                     self.corona=corona
                     self.mutex.unlock()
                     view.scene=model
@@ -203,14 +229,15 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                 let flash=binding.flashScale(channel:i,flash:frameCapsules.flashes[i]) ?? 0.001
                 flashes[i].scale=SCNVector3(flash,flash,flash)
             }
-            if let camera {
-                // The authored 159-track animation is evaluated every
-                // SceneKit frame; use the same live pose as the Metal
-                // icons without publishing 60 full SwiftUI HUD snapshots.
+            if let yawPivot,let pitchPivot,let rollPivot {
+                // In PC v602 the GLB object, NOT the camera, receives the
+                // authored F6 yaw/pitch/roll. The original glTF animation
+                // remains independent and runs in the same render callback.
                 let framePose=livePose?() ?? pose
-                let radians=(pitch+framePose.roll*0.16)*Float.pi/180
-                camera.eulerAngles=SCNVector3(radians,
-                    yaw*Float.pi/180,roll*Float.pi/180)
+                let weight=framePose.weight("hud.planetarium")
+                yawPivot.eulerAngles.y=yaw*Float.pi/180
+                pitchPivot.eulerAngles.x=pitch*Float.pi/180
+                rollPivot.eulerAngles.z=(roll+framePose.roll*weight)*Float.pi/180
             }
             // PC v602 DrawPlanetariumCorona takes Game.Time, not the
             // independent renderer clock used by AnimatePlanet463.
