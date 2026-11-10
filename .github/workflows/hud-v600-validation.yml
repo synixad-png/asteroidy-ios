@@ -15,6 +15,7 @@ on:
       - "ASTEROIDYiOS/HudMissionGate600.swift"
       - "Tests/HudMissionGate600Tests.swift"
       - "Tests/HudMissionGate600Contract.py"
+      - "Tests/HudV600StressTests.swift"
       - "Tests/HudLayout600Tests.swift"
       - "ASTEROIDYiOS/HudEnergy600.swift"
       - "ASTEROIDYiOS/HudCapsuleController600.swift"
@@ -60,6 +61,8 @@ jobs:
           /tmp/hud-v600-layout
           swiftc ASTEROIDYiOS/HudMissionGate600.swift Tests/HudMissionGate600Tests.swift -o /tmp/hud-v600-mission
           /tmp/hud-v600-mission
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudV600StressTests.swift -o /tmp/hud-v600-stress
+          /tmp/hud-v600-stress
           swiftc ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudCapsuleController600Tests.swift -o /tmp/hud-v600-capsule
           /tmp/hud-v600-capsule
           swiftc ASTEROIDYiOS/HudCapsuleController600.swift ASTEROIDYiOS/HudCapsuleBinding600.swift Tests/HudCapsuleBinding600Tests.swift -o /tmp/hud-v600-bubble
