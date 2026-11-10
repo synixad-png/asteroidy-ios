@@ -97,6 +97,14 @@ import Foundation
         let movement=c.Snapshot(keys:[87,68]).combat(profile:initial).move
         check(movement.x>0.5 && movement.y < -0.5,
               "W/D diagonal maps through one normalized gameplay vector")
+        let rightStickAim=c.Snapshot(axes:[0,0,0.80,-0.55,0,0])
+            .combat(profile:initial).aim
+        check(rightStickAim.x>0.65 && rightStickAim.y < -0.45,
+              "existing right-stick controls actual CARBONIS iOS aim")
+        let noDrift=c.Snapshot(axes:[0,0,0.05,0.04,0,0])
+            .combat(profile:initial).aim
+        check(noDrift.x==0 && noDrift.y==0,
+              "original PC deadzone blocks analog aiming noise")
         let unported=c.Snapshot(keys:[163])
         check(c.context(for:40)==(.other) &&
               c.context(for:7)==(.combat) &&
