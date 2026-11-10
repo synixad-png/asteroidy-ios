@@ -8,6 +8,9 @@ on:
       - "ASTEROIDYiOS/HudLayout600.swift"
       - "ASTEROIDYiOS/HudLayoutEditor600.swift"
       - "ASTEROIDYiOS/HudLayoutDocument600.swift"
+      - "ASTEROIDYiOS/HudWidgetPlacement600.swift"
+      - "Tests/HudWidgetPlacement600Tests.swift"
+      - "ASTEROIDYiOS/CombatHUDViewport568.swift"
       - "ASTEROIDYiOS/HudLayoutMarker600.swift"
       - "ASTEROIDYiOS/HudWidgetGeometry600.swift"
       - "ASTEROIDYiOS/CarbonisCombat568.swift"
@@ -60,6 +63,8 @@ jobs:
           /tmp/hud-v600-core
           swiftc ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudLayout600Tests.swift -o /tmp/hud-v600-layout
           /tmp/hud-v600-layout
+          swiftc ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift Tests/HudWidgetPlacement600Tests.swift -o /tmp/hud-v600-placement
+          /tmp/hud-v600-placement
           swiftc ASTEROIDYiOS/HudMissionGate600.swift Tests/HudMissionGate600Tests.swift -o /tmp/hud-v600-mission
           /tmp/hud-v600-mission
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudV600StressTests.swift -o /tmp/hud-v600-stress
@@ -80,5 +85,5 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/HudLayoutMarker600.swift ASTEROIDYiOS/HudLayoutDocument600.swift
           swiftc ASTEROIDYiOS/HudPlanetariumCorona600.swift Tests/HudPlanetariumCorona600Tests.swift -o /tmp/hud-v600-corona
           /tmp/hud-v600-corona
-          swiftc -O ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudPickupTransform600.swift Tests/HudPickupTransform600Tests.swift -o /tmp/hud-v600-icons
+          swiftc -O ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift ASTEROIDYiOS/HudPickupTransform600.swift Tests/HudPickupTransform600Tests.swift -o /tmp/hud-v600-icons
           /tmp/hud-v600-icons
