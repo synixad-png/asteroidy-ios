@@ -55,6 +55,21 @@ import simd
     var gloveModel:H55FPSSettings580.Model {settings.model}
     var configuration:H55FPSSettings580 {settings}
 
+    /// Apply the user's brightness to displayed glove materials only.
+    /// Source PC v602 PBR textures, geometry and EXP-01 stay unmodified;
+    /// multiply is a reversible SceneKit runtime tint on the glove copies.
+    func refreshGloveBrightness602() {
+        let tint=UIColor(white:H55FPSLighting580.gloveBrightness,alpha:1)
+        for hand in [leftRoot,rightRoot] {
+            hand.enumerateHierarchy { node,_ in
+                guard let geometry=node.geometry else{return}
+                for material in geometry.materials {
+                    material.multiply.contents=tint
+                }
+            }
+        }
+    }
+
     func calibrate(_ target:H55FPSSettings580.Target,component:Int,value:Int) {
         settings.calibrate(target,component:component,value:value)
         refreshLastPose()
@@ -223,6 +238,7 @@ import simd
             protectMaterials(node)
             rightRoot.addChildNode(node)
         }
+        refreshGloveBrightness602()
         inform("FPS: RĘCE \(kind.fileName): \(split.triangles) ORYGINALNYCH TRÓJKĄTÓW")
         return true
     }
