@@ -23,7 +23,8 @@ assert "Double(k)*0.61803398875" in p
 assert "let reach=2.5+5.3*turbulence" in p
 assert "length-local<3.5" in p
 assert "end-1.65" in p and "width:2.8,height:3.2" in p
-assert "90.0/255.0" in p
+assert "ink(90,255,205,150)" in p and "ink(90,255,237,166)" in p
+assert "ink(90,228,255,187)" in p
 # Exact 5/5/5 ARGB from PC source; never substitute uniform regular strips.
 for pal in ("ink(18,255,32,23)","ink(46,255,41,24)","ink(128,231,20,11)",
             "ink(210,255,60,31)","ink(235,255,205,150)",
