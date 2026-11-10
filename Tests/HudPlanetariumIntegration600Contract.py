@@ -29,7 +29,7 @@ for snippet in ('HudPlanetariumAsset600.availableURL()',
                 'HudPlanetariumAsset600.install(from:source)',
                 '.allowsHitTesting(false)', 'HudPlanetariumHost600('):
     assert snippet in scene, "missing live combat HUD wiring: "+snippet
-for snippet in ('HudPlanetariumScene600(', 'liveCapsules:{[weak session] in',
+for snippet in ('HudPlanetariumScene600(', 'liveCapsules: { [weak session] in',
                 'HudPlanetariumProjection.make(',
                 'projection: projection,',
                 '.frame(width: CGFloat(viewport.width)',
