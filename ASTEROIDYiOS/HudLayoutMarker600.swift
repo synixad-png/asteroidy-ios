@@ -11,8 +11,10 @@ struct HudLayoutMarker600:View {
     let sourceHeight:Double
     @Binding var selected:String
     let onMove:(Double,Double)->Void
+    let onScale:(Double)->Void
 
     @State private var startPoint:(Double,Double)?
+    @State private var initialPinchScale:Double?
 
     private var width:CGFloat {
         CGFloat(max(9,sourceWidth*widget.scale*scale))
@@ -21,10 +23,10 @@ struct HudLayoutMarker600:View {
         CGFloat(max(7,sourceHeight*widget.scale*scale))
     }
     private var centerX:CGFloat {
-        CGFloat(offsetX+(widget.x+sourceWidth*widget.scale*0.5)*scale)
+        CGFloat(offsetX+(widget.x+sourceWidth*(widget.is3D ? 0.5 : widget.scale*0.5))*scale)
     }
     private var centerY:CGFloat {
-        CGFloat(offsetY+(widget.y+sourceHeight*widget.scale*0.5)*scale)
+        CGFloat(offsetY+(widget.y+sourceHeight*(widget.is3D ? 0.5 : widget.scale*0.5))*scale)
     }
     private var isSelected:Bool {selected==widget.id}
     private var outline:Color {
@@ -54,6 +56,7 @@ struct HudLayoutMarker600:View {
             .onTapGesture {selected=widget.id}
             .gesture(DragGesture(minimumDistance:1)
                 .onChanged {gesture in
+                    if initialPinchScale != nil {return}
                     if selected != widget.id {selected=widget.id}
                     if startPoint == nil {startPoint=(widget.x,widget.y)}
                     guard let start=startPoint,scale>0 else{return}
@@ -62,6 +65,14 @@ struct HudLayoutMarker600:View {
                     onMove(newX,newY)
                 }
                 .onEnded {_ in startPoint=nil})
+            .simultaneousGesture(MagnificationGesture(minimumScaleDelta:0.005)
+                .onChanged { pinch in
+                    if selected != widget.id {selected=widget.id}
+                    if initialPinchScale == nil {initialPinchScale=widget.scale}
+                    guard let original=initialPinchScale else{return}
+                    onScale(original*Double(pinch))
+                }
+                .onEnded {_ in initialPinchScale=nil})
             .accessibilityLabel(widget.id)
             .accessibilityIdentifier("hud-v600-widget-"+widget.id)
     }
