@@ -41,6 +41,10 @@ jobs:
           /tmp/hud-icon-springs | tee -a reports/hud-v600-source.txt
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift Tests/HudMotionProject600Tests.swift -o /tmp/hud-icon-projection
           /tmp/hud-icon-projection | tee -a reports/hud-v600-source.txt
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-source-core
+          /tmp/hud-v600-source-core | tee -a reports/hud-v600-source.txt
+          swiftc ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudCapsuleController600Tests.swift -o /tmp/hud-v600-source-capsules
+          /tmp/hud-v600-source-capsules | tee -a reports/hud-v600-source.txt
           swiftc -O ASTEROIDYiOS/H55FPSPose580.swift Tests/H55FPSPose580Tests.swift -o /tmp/h55-fps-source
           /tmp/h55-fps-source | tee -a reports/fps-source.txt
           python3 Tools/verify_ios_inputs.py | tee reports/preflight.txt
