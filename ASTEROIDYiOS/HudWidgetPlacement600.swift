@@ -1,9 +1,10 @@
 import Foundation
 
-/// Shared placement for real GLB HUD widgets. The approved PC v600 x/y
-/// coordinates describe the TOP-LEFT edge of the unscaled widget; scaling
-/// extends its width and height to the right and bottom. This preserves the
-/// same positioning semantics in SwiftUI, SceneKit and the Metal drawable.
+/// Source-exact placement for GLB HUD widgets. Windows HudLayout.cs defines
+/// ScreenLeft = X + (Width - Width*Scale)/2, likewise ScreenTop.
+/// Therefore an edited model scales AROUND its original widget center,
+/// while X/Y remain the unscaled F6 layout coordinates. This is shared
+/// between SwiftUI, SceneKit and the Metal drawable.
 /// Never assume drawable pixels equal UIKit points (adaptive iPhone GPU scale).
 enum HudWidgetPlacement600 {
     struct Frame:Equatable {
@@ -22,8 +23,8 @@ enum HudWidgetPlacement600 {
               sourceWidth.isFinite,sourceHeight.isFinite else{return nil}
         let width=sourceWidth*widget.scale*viewport.scale
         let height=sourceHeight*widget.scale*viewport.scale
-        let cx=viewport.x(widget.x+sourceWidth*widget.scale/2,at:anchor)
-        let cy=viewport.y(widget.y+sourceHeight*widget.scale/2,at:anchor)
+        let cx=viewport.x(widget.x+sourceWidth/2,at:anchor)
+        let cy=viewport.y(widget.y+sourceHeight/2,at:anchor)
         guard width.isFinite,height.isFinite,cx.isFinite,cy.isFinite
         else{return nil}
         return Frame(centerX:cx,centerY:cy,width:width,height:height)
