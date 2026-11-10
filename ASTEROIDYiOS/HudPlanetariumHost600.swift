@@ -35,6 +35,9 @@ struct HudPlanetariumHost600:View {
                     session?.currentHudVisual600().capsules ??
                         HudCapsuleController600.Snapshot(
                             levels:[1,1,1],flashes:[0,0,0])
+                },
+                liveGameTime:{ [weak session] in
+                    session?.currentHudVisual600().seconds ?? 0
                 })
             .frame(width:CGFloat(placement.width),
                    height:CGFloat(placement.height))
