@@ -111,11 +111,6 @@ final class CarbonisSession568: ObservableObject {
         hudLayoutSnapshot600=updated
         hudLayoutLock600.unlock()
     }
-    func currentHudLayout600()->HudLayout600 {
-        hudLayoutLock600.lock()
-        defer {hudLayoutLock600.unlock()}
-        return hudLayoutSnapshot600
-    }
     func setHUD3DIconsReady600(_ ready:Bool) {
         if hud3DIconsReady600 != ready {hud3DIconsReady600=ready}
     }
