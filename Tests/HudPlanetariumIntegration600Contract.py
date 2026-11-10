@@ -30,7 +30,7 @@ for snippet in ('HudPlanetariumAsset600.availableURL()',
                 '.allowsHitTesting(false)', 'HudPlanetariumHost600('):
     assert snippet in scene, "missing live combat HUD wiring: "+snippet
 for snippet in ('HudPlanetariumScene600(', 'liveCapsules:{ [weak session] in',
-                'HudMotionProject600.project(',
+                '.position(x:CGFloat(placement.centerX)',
                 'session?.currentHudVisual600().capsules'):
     assert snippet in host, "missing live 3D HUD host wiring: "+snippet
 assert 'let frameCapsules=liveCapsules?() ?? capsule' in view
