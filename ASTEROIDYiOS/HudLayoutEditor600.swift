@@ -60,9 +60,9 @@ struct HudLayoutEditor600:View {
         }
     }
     private func visual(_ bounds:CGSize)->some View {
-        let scale=min(bounds.width/1280,bounds.height/720)
-        let offsetX=(bounds.width-1280*scale)/2
-        let offsetY=(bounds.height-720*scale)/2
+        let scale=min(Double(bounds.width)/1280,Double(bounds.height)/720)
+        let offsetX=(Double(bounds.width)-1280*scale)/2
+        let offsetY=(Double(bounds.height)-720*scale)/2
         return ZStack(alignment:.topLeading) {
             Rectangle().fill(Color(red:0.012,green:0.026,blue:0.045))
             ForEach(document.widgets){widget in
@@ -81,7 +81,7 @@ struct HudLayoutEditor600:View {
                                  Color.gray.opacity(0.4)),
                             lineWidth:chosen ? 2:0.7)
                     }
-                    .frame(width:w,height:h)
+                    .frame(width:CGFloat(w),height:CGFloat(h))
                     .overlay(alignment:.topLeading) {
                         if chosen {
                             Text(widget.id)
@@ -91,7 +91,7 @@ struct HudLayoutEditor600:View {
                                 .offset(y:-14)
                         }
                     }
-                    .position(x:x+w/2,y:y+h/2)
+                    .position(x:CGFloat(x+w/2),y:CGFloat(y+h/2))
                     .contentShape(Rectangle())
                     .onTapGesture {selected=widget.id}
                     .gesture(DragGesture(minimumDistance:1)
@@ -105,8 +105,8 @@ struct HudLayoutEditor600:View {
                             }
                             guard let origin=dragOrigin else{return}
                             document.change(widget.id) { item in
-                                item.x=origin.0+Double(gesture.translation.width/scale)
-                                item.y=origin.1+Double(gesture.translation.height/scale)
+                                item.x=origin.0+Double(gesture.translation.width)/scale
+                                item.y=origin.1+Double(gesture.translation.height)/scale
                             }
                         }
                         .onEnded {_ in dragOrigin=nil})
