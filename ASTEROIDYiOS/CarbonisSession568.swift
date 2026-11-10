@@ -306,7 +306,7 @@ final class CarbonisSession568: ObservableObject {
             hull:Float(game.hull)/Float(max(1,game.maxHull)),
             armor:Float(game.armor)/Float(max(1,game.maxArmor)),
             shield:game.tarcza145.energy/100,
-            seconds:Double(game.elapsed),hullPulse:hudPose600.hullPulse,
+            seconds:now,hullPulse:hudPose600.hullPulse,
             armorPulse:hudPose600.armorPulse,
             shieldPulse:hudPose600.shieldPulse)
         // PC HudCapsuleScene.ApplyHudCapsules runs after every animated
