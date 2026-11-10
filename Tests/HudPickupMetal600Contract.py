@@ -35,6 +35,8 @@ assert "hud3DIconsReady600=false" in session
 assert "static let order:[SourcePickupModels586.Kind]" in model
 assert "import SceneKit" not in model, "shared resources must stay in Metal"
 assert "private var hudIconMotion600=HudIconMotion600()" in renderer
+assert "let hudRenderTime600=Double(session.game.elapsed)" in renderer
+assert "ProcessInfo.processInfo.systemUptime" not in renderer.split("let hudRenderTime600=")[1].split("\n")[0]
 assert "HudMotionProject600.project(" in model
 assert "yaw:Self.bound(state.yaw,9)" in spring
 assert "pitch:Self.bound(state.pitch,7)" in spring
