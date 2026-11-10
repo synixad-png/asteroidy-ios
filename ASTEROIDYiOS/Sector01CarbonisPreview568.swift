@@ -739,7 +739,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     case .boost?:color=[0.0,0.9,1.0,0.95]
                     case .energy?:color=[0.0,0.75,1.0,0.95]
                     case .bomb?:color=[1.0,0.27,0.14,0.95]
-                    case nil:color=[1,222.0/255.0,118.0/255.0,0.95]
+                    case nil:color=[1,Float(222)/255,Float(118)/255,0.95]
                     }
                     let scale=token.sourceKind.map{
                         settings.visualFactor($0)
