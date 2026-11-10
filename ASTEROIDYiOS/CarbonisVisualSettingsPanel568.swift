@@ -26,6 +26,7 @@ struct CarbonisVisualSettingsPanel568: View {
     @State private var lava287=SourceLavaLightSettings287.load()
     @State private var shipScale472=SourceShipScale472.load()
     @State private var missionSize580=SourceMissionSize580.load()
+    @State private var pickupVisual586=SourcePickupVisual586.load()
     @State private var tab:Int=11
     @State private var previewRevision=0
     @ObservedObject private var performance=SourcePerformance568.shared
@@ -59,6 +60,34 @@ struct CarbonisVisualSettingsPanel568: View {
         missionSize580.clampAll()
         missionSize580.save()
     }
+    private func savePickupVisual586(
+        _ update:(inout SourcePickupVisual586)->Void) {
+        update(&pickupVisual586)
+        pickupVisual586.clampAll()
+        pickupVisual586.save()
+    }
+    private func pickupSlider586(
+        _ title:String,
+        _ key:WritableKeyPath<SourcePickupVisual586,Int>,
+        bounds:ClosedRange<Double>,
+        identifier:String)->some View {
+        VStack(alignment:.leading,spacing:3) {
+            HStack {
+                Text(title)
+                Spacer()
+                Text("\(pickupVisual586[keyPath:key])%").foregroundStyle(gold)
+            }
+            .font(.system(size:compact ? 10:12,design:.monospaced))
+            Slider(value:Binding(
+                get:{Double(pickupVisual586[keyPath:key])},
+                set:{n in savePickupVisual586{
+                    $0[keyPath:key]=Int(n.rounded())
+                }}),in:bounds,step:1)
+                .tint(cyan)
+                .accessibilityIdentifier(identifier)
+        }
+    }
+
     private func doubleValue(_ idx:Int)->Binding<Double> {
         Binding(get:{Double(profile.value(idx))},
                 set:{n in
@@ -265,6 +294,30 @@ struct CarbonisVisualSettingsPanel568: View {
                 .tint(cyan)
                 .accessibilityIdentifier("w3-v580-asteroid-size-slider")
             Text("Wyłącznie rozmiar wizualny modeli w misji. Liczba obiektów, obrażenia, fizyka i promienie kolizji nie zmieniają się. Wartości źródłowe: 77% / 78%.")
+                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .foregroundStyle(muted)
+                .fixedSize(horizontal:false,vertical:true)
+            Rectangle().fill(cyan.opacity(0.28)).frame(height:1)
+            header("PRZEDMIOTY GLB / PC v586 — USTAWIENIA ROZGRYWKI")
+            pickupSlider586("PRZEDMIOTY GLB — JASNOŚĆ MODELI",
+                \.brightnessPercent,bounds:0...400,
+                identifier:"pc586-pickup-glb-brightness")
+            pickupSlider586("OSŁONY ENERGETYCZNE — WIELKOŚĆ",
+                \.shieldPercent,bounds:30...150,
+                identifier:"pc586-pickup-shield-size")
+            pickupSlider586("DOPALACZ GLB — WIELKOŚĆ",
+                \.boostPercent,bounds:30...150,
+                identifier:"pc586-pickup-boost-size")
+            pickupSlider586("ENERGIA GLB — WIELKOŚĆ",
+                \.energyPercent,bounds:30...150,
+                identifier:"pc586-pickup-energy-size")
+            pickupSlider586("BOMBA GLB — WIELKOŚĆ",
+                \.bombPercent,bounds:30...150,
+                identifier:"pc586-pickup-bomb-size")
+            pickupSlider586("PIENIĄDZE / ŻETONY — WIELKOŚĆ",
+                \.moneyPercent,bounds:40...150,
+                identifier:"pc586-pickup-money-size")
+            Text("Jasność 0% wyłącza tylko dodatkowe doświetlanie GLB. Rozmiar nie zmienia promienia zbierania ani obrażeń.")
                 .font(.system(size:compact ? 9:11,design:.monospaced))
                 .foregroundStyle(muted)
                 .fixedSize(horizontal:false,vertical:true)
