@@ -39,7 +39,8 @@ struct HudPlanetariumScene600:UIViewRepresentable {
     func updateUIView(_ view:SCNView,context:Context) {
         context.coordinator.set(capsule,pitch:pitch,yaw:yaw,roll:roll,
                                 pose:pose,livePose:livePose,
-                                liveCapsules:liveCapsules)
+                                liveCapsules:liveCapsules,
+                                liveGameTime:liveGameTime)
         if view.isPlaying != playing {view.isPlaying=playing}
     }
     static func dismantleUIView(_ view:SCNView,coordinator:Coordinator) {
