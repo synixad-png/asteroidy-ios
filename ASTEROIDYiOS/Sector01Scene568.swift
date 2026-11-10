@@ -164,6 +164,9 @@ struct Sector01Scene568: View {
                     active:session.hud.phase == .playing && !userPaused && !showingService,
                     livePose:{ [weak session] in
                         session?.currentHudVisual600().pose ?? HudMotion600.Pose()
+                    },
+                    liveTime:{ [weak session] in
+                        session?.currentHudVisual600().seconds ?? 0
                     })
                     .allowsHitTesting(false)
 
