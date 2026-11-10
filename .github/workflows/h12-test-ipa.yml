@@ -44,6 +44,8 @@ on:
       - 'ASTEROIDYiOS/H55FPSPose580.swift'
       - 'ASTEROIDYiOS/H55FPSScene580.swift'
       - 'ASTEROIDYiOS/H55FPSMeshSplit580.swift'
+      - 'ASTEROIDYiOS/H55FPSSettingsSection580.swift'
+      - 'Tools/pack_h55_original_models_ipa.py'
       - 'Tests/H55FPSPose580Tests.swift'
       - 'ASTEROIDYiOS/H55VisualScene580.swift'
       - 'ASTEROIDYiOS/H55SpaceBackdrop580.swift'
@@ -137,8 +139,13 @@ jobs:
           assert 'H55PlayerShip580.make()' in h55
           assert 'H55SceneViewport580(' in h55
           assert 'H55FPSScene580(camera:pointOfView' in h55
-          assert 'h55-fps-show-monolith' in h55
-          assert 'h55-fps-import-monolith' in h55
+          fpsui=Path('ASTEROIDYiOS/H55FPSSettingsSection580.swift').read_text()
+          assert 'h55-fps-show-monolith' in fpsui
+          assert 'h55-fps-import-monolith' in fpsui
+          assert 'h55-fps-show-monolith' not in h55
+          assert 'fpsLoader:loader' in h55
+          assert 'case 6: H55FPSSettingsSection580(category:.gloves' in settings
+          assert 'case 8: H55FPSSettingsSection580(category:.weapon' in settings
           assert 'fpsViewmodel?.advance(time:arrival.time,walking:arrival.walking' in h55
           assert 'H55FPSAssets580.install(url,as:kind)' in h55
           assert 'firstRenderedFramesReady(for rendered:SCNScene)' in h55
@@ -197,6 +204,7 @@ jobs:
           /tmp/h55-fps
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSAssets580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSScene580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSSettingsSection580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSMeshSplit580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55TouchControls580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
