@@ -52,6 +52,17 @@ import Foundation
         check(c.Profile.importPCText(utf8.replacingOccurrences(
               of:"82|B3",with:"-100|B3")) == nil,
               "invalid imported profile is rejected atomically")
+        var pcMouse=initial
+        pcMouse.orbitMouse=true
+        pcMouse.mouseSensitivity=175
+        pcMouse.invertMouse=true
+        let companion=pcMouse.exportPCFlight67Text()
+        let reconstructed=c.Profile.importFlight67Text(companion,into:initial)
+        check(reconstructed == pcMouse,
+              "original PC MouseFlight67 companion migrates all 3 mouse fields")
+        check(c.Profile.importFlight67Text(
+            "ASTEROIDY_FLIGHT_67\n1\n999\n0\n",into:initial)==nil,
+              "unsafe mouse sensitivity is rejected rather than clamped silently")
         let isolated="pc586-controls-tests-"+UUID().uuidString
         guard let store=UserDefaults(suiteName:isolated) else {
             fatalError("Missing isolated preferences")
