@@ -1321,8 +1321,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         if let visibilityFrame,
                            !SourceVisibleSurface73.possiblyVisible(
                             pickup.position,
-                            worldRadius:size*
-                                SphereSurfaceStamp556.normalizedScalePerArcUnit*1.8,
+                            worldRadius: size * SphereSurfaceStamp556.normalizedScalePerArcUnit * 1.8,
                             camera:visibilityFrame,aspect:aspect) {
                             continue
                         }
