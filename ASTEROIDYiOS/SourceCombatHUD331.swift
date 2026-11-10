@@ -60,6 +60,14 @@ struct SourceCombatHUD331: View {
             Self.applyMotion(&bottomRight,pose:hud.motion,widget:"ion.icon")
 
             Self.top(topLeft,topRight,hud,layout600)
+            // Windows RendererW3Combat331: mission.next appears only
+            // while active play has no rocks or Bugs left. iOS sector 01
+            // has no boss/escort/coop objective; never invent those states.
+            if hud.phase == .playing && hud.rocks==0 && hud.fighters==0,
+               let notice=Self.widgetContext(topLeft,layout600,
+                    pose:hud.motion,id:"mission.next",baseX:410,baseY:310) {
+                Self.text(notice,"OCZYSZCZONA ORBITA",640,310,Self.cyan,center:true)
+            }
             if let radarContext=Self.widgetContext(bottomLeft,layout600,pose:hud.motion,
                                       id:"radar",baseX:2,baseY:516) {
                 Self.radar(radarContext,hud)
