@@ -168,6 +168,43 @@ struct Sector01Scene568: View {
                                   y:CGFloat(combatHUDLayout.pauseCenterY+45))
                         .accessibilityIdentifier("sector01-active-bomb-button")
                     }
+                    // PC Tarcza145: held action, NOT the passive shield
+                    // purchased at the shop. Keep the source HUD untouched.
+                    if let energy=session.hud.tarczaEnergy,energy>0 {
+                        Text("TARCZA \(energy)/100")
+                            .font(.system(size:compact ? 10:12,
+                                          weight:.bold,design:.monospaced))
+                            .padding(.horizontal,compact ? 7:11)
+                            .padding(.vertical,compact ? 5:8)
+                            .foregroundStyle(.white)
+                            .background(Color.cyan.opacity(0.55),
+                                        in:RoundedRectangle(cornerRadius:5))
+                            .contentShape(Rectangle())
+                            .gesture(DragGesture(minimumDistance:0)
+                                .onChanged {_ in session.holdShield145(true)}
+                                .onEnded {_ in session.holdShield145(false)})
+                            .position(x:CGFloat(combatHUDLayout.pauseCenterX),
+                                      y:CGFloat(combatHUDLayout.pauseCenterY+90))
+                            .accessibilityLabel("Przytrzymaj: tarcza energetyczna")
+                            .accessibilityIdentifier("sector01-active-tarcza145-hold")
+                    }
+                    // PC Boost71: one press consumes one charge; real
+                    // 0.9 s movement and ram impacts remain in simulation.
+                    if session.hud.boostCharges>0 {
+                        Button("DOPALACZ \(session.hud.boostCharges)/3") {
+                            _=session.useBoost71()
+                        }
+                        .font(.system(size:compact ? 10:12,
+                                      weight:.bold,design:.monospaced))
+                        .padding(.horizontal,compact ? 7:11)
+                        .padding(.vertical,compact ? 5:8)
+                        .foregroundStyle(.white)
+                        .background(Color.blue.opacity(0.65),
+                                    in:RoundedRectangle(cornerRadius:5))
+                        .position(x:CGFloat(combatHUDLayout.pauseCenterX),
+                                  y:CGFloat(combatHUDLayout.pauseCenterY+135))
+                        .accessibilityIdentifier("sector01-active-boost71-button")
+                    }
                 }
                 // Windows Renderer.cs:200: performance overlay only during
                 // active combat, not victory/defeat/service screens.
