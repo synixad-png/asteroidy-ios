@@ -46,7 +46,7 @@ jobs:
           assert 'static let actionCount=60' in source
           assert 'static let extraCount=5' in source
           assert 'static let rowCount=65' in source
-          assert 'case 0...7,9,21,35,44...47' in source
+          assert 'case 0...7,9,21,33,34,35,44...47' in source
           assert 'case 11,12,59:return .hangar' in source
           assert 'ASTEROIDY_CONTROLS_1' in source and 'ASTEROIDY_CONTROLS_2' in source
           print('PASS fixed PC source indices; no fake co-op/atlas implementation')
