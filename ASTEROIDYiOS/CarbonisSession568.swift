@@ -101,6 +101,8 @@ final class CarbonisSession568: ObservableObject {
     private var hudLayoutSnapshot600=HudLayout600.load()
     private var hudSafeInsetsSnapshot600=W3ScreenInsets568()
     private var hudLivePose600=HudMotion600.Pose()
+    private var hudLiveCapsules600=HudCapsuleController600.Snapshot(
+        levels:[1,1,1],flashes:[0,0,0])
     func updateHudSafeInsets600(_ insets:W3ScreenInsets568) {
         hudLayoutLock600.lock()
         hudSafeInsetsSnapshot600=insets
@@ -109,11 +111,13 @@ final class CarbonisSession568: ObservableObject {
     // One immutable visual snapshot per Metal frame: no publishing and no
     // repeated 46-widget radar/scores rebuild at 60 Hz.
     func currentHudRenderState600()->(
-        layout:HudLayout600,insets:W3ScreenInsets568,pose:HudMotion600.Pose
+        layout:HudLayout600,insets:W3ScreenInsets568,pose:HudMotion600.Pose,
+        capsules:HudCapsuleController600.Snapshot
     ) {
         hudLayoutLock600.lock()
         defer {hudLayoutLock600.unlock()}
-        return (hudLayoutSnapshot600,hudSafeInsetsSnapshot600,hudLivePose600)
+        return (hudLayoutSnapshot600,hudSafeInsetsSnapshot600,
+                hudLivePose600,hudLiveCapsules600)
     }
     func updateHudLayout600(_ updated:HudLayout600) {
         guard updated.isValid else{return}
@@ -175,6 +179,8 @@ final class CarbonisSession568: ObservableObject {
         hudLayoutLock600.lock()
         hudMotion600.reset()
         hudLivePose600=HudMotion600.Pose()
+        hudLiveCapsules600=HudCapsuleController600.Snapshot(
+            levels:[1,1,1],flashes:[0,0,0])
         hudLayoutLock600.unlock()
         hudCapsules600.reset()
         hud=HUD(restarted)
@@ -291,6 +297,12 @@ final class CarbonisSession568: ObservableObject {
             seconds:now,hullPulse:hudPose600.hullPulse,
             armorPulse:hudPose600.armorPulse,
             shieldPulse:hudPose600.shieldPulse)
+        // PC HudCapsuleScene.ApplyHudCapsules runs after every animated
+        // GLB frame. Export the small immutable 3x2 state every physics tick;
+        // NEVER rebuild the HUD radar or text more frequently.
+        hudLayoutLock600.lock()
+        hudLiveCapsules600=hudCapsules600.snapshot
+        hudLayoutLock600.unlock()
         if now-lastHUD > 0.10 {
             lastHUD=now
             var snapshot=HUD(game,summarySeconds:summaryElapsed)
