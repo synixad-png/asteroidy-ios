@@ -90,6 +90,21 @@ final class CarbonisSession568: ObservableObject {
     }
     @Published private(set) var hud:HUD
     @Published private(set) var hud3DIconsReady600=false
+    // Renderer reads one stable copy per GPU frame. The lock isolates
+    // layout editing from the Metal render queue without touching physics.
+    private let hudLayoutLock600=NSLock()
+    private var hudLayoutSnapshot600=HudLayout600.load()
+    func updateHudLayout600(_ updated:HudLayout600) {
+        guard updated.isValid else{return}
+        hudLayoutLock600.lock()
+        hudLayoutSnapshot600=updated
+        hudLayoutLock600.unlock()
+    }
+    func currentHudLayout600()->HudLayout600 {
+        hudLayoutLock600.lock()
+        defer {hudLayoutLock600.unlock()}
+        return hudLayoutSnapshot600
+    }
     func setHUD3DIconsReady600(_ ready:Bool) {
         if hud3DIconsReady600 != ready {hud3DIconsReady600=ready}
     }
