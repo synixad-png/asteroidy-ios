@@ -136,7 +136,8 @@ struct Sector01Scene568: View {
                 // RendererW3Combat331.cs: native, transparent, screen-anchored
                 // HUD at the exact original 1280x720 virtual positions.
                 // All readings come from the genuine active combat snapshot.
-                SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568)
+                SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568,
+                                   render3DIcons:session.hud3DIconsReady600)
                     .allowsHitTesting(false)
                     .onAppear {
                         if planetariumURL600 == nil {
