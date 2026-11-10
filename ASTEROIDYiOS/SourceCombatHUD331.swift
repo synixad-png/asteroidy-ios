@@ -34,24 +34,28 @@ struct SourceCombatHUD331: View {
                 x:CGFloat(layout.originX(for:.topLeft)),
                 y:CGFloat(layout.originY(for:.topLeft)))
             topLeft.scaleBy(x:scale,y:scale)
+            Self.applyMotion(&topLeft,pose:hud.motion,widget:"status.mode")
 
             var topRight=context
             topRight.translateBy(
                 x:CGFloat(layout.originX(for:.topRight)),
                 y:CGFloat(layout.originY(for:.topRight)))
             topRight.scaleBy(x:scale,y:scale)
+            Self.applyMotion(&topRight,pose:hud.motion,widget:"status.sector")
 
             var bottomLeft=context
             bottomLeft.translateBy(
                 x:CGFloat(layout.originX(for:.bottomLeft)),
                 y:CGFloat(layout.originY(for:.bottomLeft)))
             bottomLeft.scaleBy(x:scale,y:scale)
+            Self.applyMotion(&bottomLeft,pose:hud.motion,widget:"radar")
 
             var bottomRight=context
             bottomRight.translateBy(
                 x:CGFloat(layout.originX(for:.bottomRight)),
                 y:CGFloat(layout.originY(for:.bottomRight)))
             bottomRight.scaleBy(x:scale,y:scale)
+            Self.applyMotion(&bottomRight,pose:hud.motion,widget:"ion.icon")
 
             Self.top(topLeft,topRight,hud)
             Self.radar(bottomLeft,hud)
@@ -71,6 +75,21 @@ struct SourceCombatHUD331: View {
         .accessibilityElement(children:.ignore)
         .accessibilityLabel("Sektor 01. Punkty \(hud.score). Żetony \(hud.tokenBalance). Życia \(hud.lives). Kadłub \(hud.hull). Pancerz \(hud.armor).")
         .accessibilityIdentifier("sector01-source-w3-hud331")
+    }
+
+    // PC HudMotionPose.Apply: independent visual matrix per anchored group.
+    // Gameplay reticle and screen-touch gesture zones are intentionally outside
+    // this drawing context and never inherit decorative HUD movement.
+    private static func applyMotion(_ context:inout GraphicsContext,
+                                    pose:HudMotion600.Pose,widget:String) {
+        let weight=CGFloat(pose.weight(widget))
+        let dx=CGFloat(pose.x)*weight,dy=CGFloat(pose.y)*weight
+        let rotation=Double(pose.roll*Float(weight))
+        guard dx != 0 || dy != 0 || rotation != 0 else {return}
+        context.translateBy(x:dx,y:dy)
+        context.translateBy(x:640,y:360)
+        context.rotate(by:.degrees(rotation))
+        context.translateBy(x:-640,y:-360)
     }
 
     private static func line(_ c:GraphicsContext,_ x0:CGFloat,_ y0:CGFloat,
