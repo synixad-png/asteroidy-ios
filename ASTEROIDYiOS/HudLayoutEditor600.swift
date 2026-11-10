@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 struct HudLayoutEditor600:View {
     @State private var document:HudLayout600
     @State private var inspectorOpen=false
-    @State private var selected="hud.planetarium"
+    @State private var selected="radar"
     @State private var importingJSON=false
     @State private var exportingJSON=false
     @State private var exportDocument600:HudLayoutDocument600?
@@ -95,7 +95,13 @@ struct HudLayoutEditor600:View {
                         sourceWidth:size.width,sourceHeight:size.height,
                         selected:$selected,
                         onMove:{x,y in
-                            changeWidget(widget.id){$0.x=x;$0.y=y}
+                            changeWidget(widget.id){ value in
+                                if let xr=HudWidgetGeometry600.xRange(for:value),
+                                   let yr=HudWidgetGeometry600.yRange(for:value) {
+                                    value.x=min(xr.upperBound,max(xr.lowerBound,x))
+                                    value.y=min(yr.upperBound,max(yr.lowerBound,y))
+                                }
+                            }
                         },
                         onScale:{newScale in
                             changeWidget(widget.id){ value in
