@@ -249,3 +249,47 @@ fragment float4 combatWreckLineFragment214(
     CombatWreckLineRaster214 in [[stage_in]]) {
     return in.color;
 }
+
+
+// PC v586: original opaque GLB pickup triangles, vertex normal and UV.
+// Same 12-float Metal geometry ABI and existing gameplay command encoder;
+// no SceneKit pass, no per-object importer, no geometry recreation in draw().
+struct PickupRaster586 {
+    float4 position [[position]];
+    float3 normal;
+    float2 uv;
+    float4 tint;
+    float sourceFill;
+};
+vertex PickupRaster586 sector01PickupVertex586(
+    uint id [[vertex_id]],
+    device const float *mesh [[buffer(0)]],
+    constant CarbonisSectorUniforms568 &u [[buffer(1)]])
+{
+    uint i=id*12u;
+    float3 p=float3(mesh[i],mesh[i+1],mesh[i+2]);
+    PickupRaster586 output;
+    output.position=u.mvp*float4(p,1);
+    float3x3 basis=float3x3(u.model[0].xyz,u.model[1].xyz,u.model[2].xyz);
+    output.normal=normalize(basis*float3(mesh[i+3],mesh[i+4],mesh[i+5]));
+    output.tint=float4(mesh[i+6],mesh[i+7],mesh[i+8],mesh[i+9]);
+    output.uv=float2(mesh[i+10],mesh[i+11]);
+    output.sourceFill=max(0.0,u.glow);
+    return output;
+}
+fragment float4 sector01PickupFragment586(
+    PickupRaster586 input [[stage_in]],
+    texture2d<float> originalSkin [[texture(0)]])
+{
+    constexpr sampler glbSampler(coord::normalized,
+                                  address::repeat,filter::linear);
+    float4 texel=originalSkin.sample(glbSampler,input.uv);
+    float3 n=normalize(input.normal);
+    float sun=max(0.0f,dot(n,normalize(float3(-0.6f,0.8f,1.4f))));
+    // 0% brightness preserves original ambient+solar illumination.
+    // Only this pickup material sees the PC ItemGlbFill control.
+    float illumination=0.28f+0.47f*sun+
+        input.sourceFill*(0.22f+0.28f*sun);
+    return float4(clamp(texel.rgb*input.tint.rgb*illumination,
+                        0.0f,1.0f),1.0f);
+}
