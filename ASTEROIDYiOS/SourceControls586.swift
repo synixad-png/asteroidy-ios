@@ -297,9 +297,17 @@ enum SourceControls586 {
             let horizontal = (a(1) ? 1 : 0) + (a(5) ? 1 : 0) - (a(0) ? 1 : 0) - (a(4) ? 1 : 0)
             let vertical = (a(3) ? 1 : 0) - (a(2) ? 1 : 0)
             let move=Vector2(x:Float(horizontal),y:Float(vertical))
-            let aim=Vector2(
+            let keyboardAim=Vector2(
                 x:Float((a(45) ? 1:0)-(a(44) ? 1:0)),
                 y:Float((a(47) ? 1:0)-(a(46) ? 1:0)))
+            // iOS playable CARBONIS orbit: the right controller stick
+            // also provides real aim, matching touch's right drag.
+            // Deadzone is the original PC pad option (action row 60).
+            let stick=Vector2(x:axis(2),y:axis(3))
+            let useStick=sqrt(stick.x*stick.x+stick.y*stick.y)
+                > Float(profile.deadZone)/100
+            let aim=keyboardAim.hasInput ? keyboardAim :
+                (useStick ? stick : Vector2(x:0,y:0))
             return Combat(move:move.clamped(),aim:aim.clamped(),
                           shooting:a(6),shield:a(21),
                           bomb:a(7),boost:a(35),pause:a(9))
