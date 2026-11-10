@@ -50,6 +50,16 @@ assert 'exportingJSON=true' in editor
 # plasma staging arrays. Five authentic v602 turbulent ribbons stay at 60Hz.
 assert 'TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active))' in plasma
 assert 'let time=liveTime().truncatingRemainder(dividingBy:3600)' in plasma
+# Literal PC v602 DrawEnergyGauge reads GAME levels per render. The 10Hz
+# published HUD is for text/radar only; bars must not visibly step at 10Hz.
+assert 'func currentHudGauges600()->(' in session
+assert 'hudLiveGauges600=(' in session
+assert 'game.hull,game.armor,' in session
+assert 'ceil(Double(game.tarcza145.energy))' in session
+assert 'let gauge=liveGauges()' in plasma
+assert 'let values:[Int?]=[gauge.hull,gauge.armor,gauge.shield]' in plasma
+assert 'session?.currentHudGauges600()' in scene
+
 assert 'hudLiveSeconds600=Double(game.elapsed)' in session
 # PC HudGlbAssets.DrawHudGlb and HudCapsuleController use renderClock,
 # RendererHudEnergy uses Game.Time; those two clocks MUST stay distinct.
