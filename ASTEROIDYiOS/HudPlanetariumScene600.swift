@@ -141,21 +141,24 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     guard resolved.count==72 && flashNodes.count==3 else{return}
                     // Attaches to original outer sphere; never to global
                     // planetarium bounds or the three status capsules.
-                    let corona=HudPlanetariumCorona600(scene:model,nodes:source.nodes)
+                    // Keep GLTFKit2's original animation root and all its
+                    // 159 authored key paths unchanged. Transform ONLY the
+                    // complete scene instance above that root.
+                    let rendered=SCNScene()
+                    let corona=HudPlanetariumCorona600(scene:rendered,nodes:source.nodes)
                     // PC v602 HudGlbAssets.DrawHudGlb:
                     // Translate(widget center) -> Rotate Y/X/Z ->
                     // Scale(.44*width*scale/PlanetModelRadius463) ->
                     // Translate(-PlanetModelCenter463).
                     // Preserve EVERY imported authored glTF node/animation.
                     // Only re-parent the complete original hierarchy once.
-                    let sourceRoots=model.rootNode.childNodes
                     let centered=SCNNode()
                     centered.name="PC602_PLANET_MODEL_CENTER"
                     centered.position=SCNVector3(
                         -HudPlanetariumAsset600.pc602ModelCenterX,
                         -HudPlanetariumAsset600.pc602ModelCenterY,
                         -HudPlanetariumAsset600.pc602ModelCenterZ)
-                    for root in sourceRoots {centered.addChildNode(root)}
+                    centered.addChildNode(model.rootNode)
                     let rollPivot=SCNNode()
                     let pitchPivot=SCNNode()
                     let yawPivot=SCNNode()
@@ -165,7 +168,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     rollPivot.addChildNode(centered)
                     pitchPivot.addChildNode(rollPivot)
                     yawPivot.addChildNode(pitchPivot)
-                    model.rootNode.addChildNode(yawPivot)
+                    rendered.rootNode.addChildNode(yawPivot)
                     let cameraNode=SCNNode()
                     let lens=SCNCamera()
                     lens.usesOrthographicProjection=true
@@ -179,13 +182,13 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                         (0.44*250.0)
                     cameraNode.camera=lens
                     cameraNode.position=SCNVector3(0,0,20)
-                    model.rootNode.addChildNode(cameraNode)
+                    rendered.rootNode.addChildNode(cameraNode)
                     let player=clip.animationPlayer
                     player.animation.repeatCount = .greatestFiniteMagnitude
                     player.animation.usesSceneTimeBase=false
                     model.rootNode.addAnimationPlayer(player,forKey:"hud-planetarium-v600")
                     self.mutex.lock()
-                    self.scene=model
+                    self.scene=rendered
                     self.binding=capsuleBinding
                     self.bubbles=resolved
                     self.flashes=flashNodes
@@ -195,7 +198,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     self.rollPivot=rollPivot
                     self.corona=corona
                     self.mutex.unlock()
-                    view.scene=model
+                    view.scene=rendered
                     view.pointOfView=cameraNode
                     view.isPlaying=playing
                     player.play()
