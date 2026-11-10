@@ -78,10 +78,13 @@ struct HudPlasmaLayer600:View {
 
     var body:some View {
         TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active)) { timeline in
-            // Explicit presentation tick. Geometry time remains the original
-            // Game.Time, frozen during a real pause as in PC v602.
-            let _ = timeline.date
             Canvas(opaque:false,rendersAsynchronously:false) { graphics,size in
+                // Canvas must READ the changing TimelineView frame INSIDE its
+                // renderer closure. A discarded tick outside Canvas was not a
+                // drawing dependency, so SwiftUI reused static plasma layers.
+                // PC v602 geometry itself still depends ONLY on Game.Time.
+                guard timeline.date.timeIntervalSinceReferenceDate.isFinite
+                else{return}
                 let screen=CombatHUDViewport568(
                     width:Double(size.width),height:Double(size.height),
                     safeLeft:insets.left,safeRight:insets.right,
