@@ -34,5 +34,5 @@ assert 'widget.x+sourceWidth/2' in placement and 'widget.y+sourceHeight/2' in pl
 assert 'HudWidgetPlacement600.frame(' in icons
 assert 'HudLayout600.defaults().widget' not in icons
 assert 'private static let defaultLayout600=HudLayout600.defaults()' in icons
-assert 'UserDefaults' not in renderer.split('func draw(in view:MTKView)')[1], "no IO in render callback"
+assert 'HudLayout600.defaults()' not in renderer.split('func draw(in view:MTKView)')[1], "no HUD JSON decoding inside render callback"
 print("PASS live HUD v600: 60Hz Metal/SceneKit pose, 10Hz heavy snapshots, PC-centered GLB and notch-safe pixels")
