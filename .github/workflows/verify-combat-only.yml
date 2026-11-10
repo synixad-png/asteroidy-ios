@@ -57,6 +57,8 @@ on:
       - 'Tests/CombatHUDViewport568Tests.swift'
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'ASTEROIDYiOS/HudPlanetariumCorona600.swift'
+      - 'Tests/HudMotionEventCounters600Contract.py'
+      - 'ASTEROIDYiOS/HudLayoutMarker600.swift'
       - 'Tests/HudPlanetariumCorona600Tests.swift'
       - 'Tests/HudPlanetariumCorona600Contract.py'
       - 'ASTEROIDYiOS/CarbonisSession568.swift'
@@ -448,6 +450,7 @@ jobs:
           /tmp/hud-v600-layout
           python3 Tests/HudPlanetariumIntegration600Contract.py
           python3 Tests/HudPlanetariumCorona600Contract.py
+          python3 Tests/HudMotionEventCounters600Contract.py
           python3 Tests/HudPickupMetal600Contract.py
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-core
           /tmp/hud-v600-core
