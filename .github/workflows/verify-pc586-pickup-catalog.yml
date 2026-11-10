@@ -1,0 +1,22 @@
+name: ASTEROIDY iOS - PC586 original pickup catalog
+on:
+  push:
+    branches: [feature/ios-h55-v580-native-entry]
+    paths:
+      - 'ASTEROIDYiOS/SourcePickupModels586.swift'
+      - 'Tests/SourcePickupModels586Tests.swift'
+      - '.github/workflows/verify-pc586-pickup-catalog.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-model-catalog:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and execute original PC586 model registry tests
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourcePickupModels586.swift Tests/SourcePickupModels586Tests.swift -o /tmp/pc586-original-models
+          /tmp/pc586-original-models
