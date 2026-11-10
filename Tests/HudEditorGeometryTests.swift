@@ -22,8 +22,7 @@ import Foundation
                "smallest visible widget wins over overlapping planetarium")
         let planet=source.widget("hud.planetarium")!
         let globe=HudEditorGeometry.rect(planet,viewport:flat)!
-        verify(abs(globe.x-(planet.x+(250-250*planet.scale)*0.5+
-                              flat.originX(for:.bottomLeft)))<0.00001,
+        verify(abs(globe.x-(planet.x+(250-250*planet.scale)*0.5 + flat.originX(for:.bottomLeft)))<0.00001,
                "GLB scaled about immutable PC widget centre")
         verify(HudEditorGeometry.hit(x:195,y:550,layout:source,
                                      viewport:flat)=="hud.planetarium",
