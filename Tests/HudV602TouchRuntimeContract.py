@@ -82,9 +82,21 @@ assert 'corona?.advance(at:liveGameTime?() ?? 0)' in planetarium
 assert 'liveGameTime:{[weak session] in' in host
 assert 'active:session.hud.phase == .playing)' in scene
 assert 'motionActive:' not in scene
-assert 'livePose:{HudMotion600.Pose()}' in host
-assert '.offset(x:CGFloat(placement.centerX-placement.width*0.5)' in host
-assert '.frame(width:CGFloat(viewport.width)' in host
+assert 'HudPlanetariumProjection.make(' in host
+assert 'projection: projection,' in host
+assert 'HudMotion600.Pose' not in host
+assert 'livePose' not in planetarium
+assert 'hudAnchor=anchor' in planetarium
+assert 'hudScale=scaleNode' in planetarium
+assert 'camera.orthographicScale=transform.cameraHalfHeight' in planetarium
+assert 'cameraNode.position=SCNVector3(0,0,1000)' in planetarium
+assert 'rollPivot.eulerAngles.z=roll*Float.pi/180' in planetarium
+assert 'scaleNode.addChildNode(yawPivot)' in planetarium
+assert 'anchor.addChildNode(scaleNode)' in planetarium
+assert 'rendered.rootNode.addChildNode(anchor)' in planetarium
+
+
+assert '.frame(width: CGFloat(viewport.width)' in host
 assert 'HudMotionProject600.project(' not in host
 assert 'hud-v602-always-visible-widget-selector' in editor
 assert 'Button("▶") {selectNeighbor600(1)}' in editor
@@ -100,7 +112,7 @@ assert asset_center in asset and asset_radius in asset
 assert 'centered.position=SCNVector3(' in planetarium
 assert 'yawPivot.eulerAngles.y=yaw*Float.pi/180' in planetarium
 assert 'pitchPivot.eulerAngles.x=pitch*Float.pi/180' in planetarium
-assert 'rollPivot.eulerAngles.z=(roll+framePose.roll*weight)*Float.pi/180' in planetarium
+
 assert 'camera.eulerAngles=' not in planetarium
 # PC GPU DrawEnergyRibbon emits TWO triangles per step, not a self-overlapping polygon.
 assert 'ribbonTriangles(_ points:[HudEnergy600.Point])->Path' in plasma
@@ -117,8 +129,8 @@ assert 'vertices.map{CGPoint' not in plasma
 assert 'for layer in 0..<5' in plasma and 'for k in 0..<7' in plasma
 # Regressions reported on iPhone landscape: the 3D widget must use ONE
 # physical-screen coordinate frame and exact PC v602 pixel-per-unit scale.
-assert 'lens.orthographicScale=(135.0 * 0.5)' in planetarium
-assert '.offset(x:CGFloat(placement.centerX-placement.width*0.5)' in host
+
+
 assert '.frame(width:CGFloat(viewport.width)' in host
 assert 'HudMotionProject600.project(' not in host
 assert 'hud-v602-always-visible-widget-selector' in editor
