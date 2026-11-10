@@ -73,7 +73,7 @@ assert 'sourceKind:SourcePickupModels586.Kind? = nil' in combat
 # Same shared photometric calibration in BOTH FPS preview and gameplay.
 expect_all(gloveLight,(
     "private static let sceneKitLightGain:CGFloat=0.35",
-    "let gain:CGFloat = mode == .gloves ? sceneKitLightGain : 1",
+    "let gain:CGFloat = mode == .gloves ? sceneKitLightGain*gloveBrightness : 1",
     "?.light?.intensity=220*gain",
     "?.light?.intensity=spec.2*gain",
 ), "hangar gloves light-clipping fix")
