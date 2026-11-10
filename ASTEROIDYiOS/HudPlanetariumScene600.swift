@@ -25,7 +25,9 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         view.allowsCameraControl=false
         view.isUserInteractionEnabled=false
         view.autoenablesDefaultLighting=true
-        view.preferredFramesPerSecond=60
+        // Auxiliary transparent 159-track SceneKit pass is 30Hz; the
+        // original Metal combat simulation and its 60Hz HUD plasma stay untouched.
+        view.preferredFramesPerSecond=30
         view.rendersContinuously=true
         view.delegate=context.coordinator
         context.coordinator.set(capsule,pitch:pitch,yaw:yaw,roll:roll,
