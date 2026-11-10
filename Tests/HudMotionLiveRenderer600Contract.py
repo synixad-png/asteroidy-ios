@@ -36,7 +36,7 @@ assert 'func currentHudVisual600()->(' in session
 assert 'return (hudLivePose600,hudLiveCapsules600,hudLiveSeconds600)' in session
 assert 'liveCapsules:{ [weak session] in' in host
 assert 'let framePose=livePose?() ?? pose' in planetarium
-assert 'hud.motion=livePose()' in hud
+assert 'hud.motion=active ? livePose() : HudMotion600.Pose()' in hud
 assert 'TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active))' in hud
 assert 'livePose:{ [weak session] in' in scene
 assert 'let hudRenderTime600=ProcessInfo.processInfo.systemUptime-started' in renderer
