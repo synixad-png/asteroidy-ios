@@ -158,6 +158,7 @@ struct Sector01Scene568: View {
                 // original lighter 10Hz snapshot cadence.
                 HudPlasmaLayer600(
                     hull:session.hud.hull,armor:session.hud.armor,
+                    maxHull:session.hud.maxHull,maxArmor:session.hud.maxArmor,
                     shield:session.hud.tarczaEnergy,
                     insets:missionSafeInsets568,layout:hudLayout600,
                     active:session.hud.phase == .playing && !userPaused && !showingService,
