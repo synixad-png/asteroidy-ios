@@ -294,10 +294,10 @@ enum SourceControls586 {
         /// if later sectors and the missing PC co-op are not implemented.
         func combat(profile:Profile)->Combat {
             let a:(Int)->Bool={held($0,profile:profile)}
-            let move=Vector2(
-                x:Float((a(1) ? 1:0)-(a(0) ? 1:0)
-                     +(a(5) ? 1:0)-(a(4) ? 1:0)),
-                y:Float((a(3) ? 1:0)-(a(2) ? 1:0)))
+            let horizontal=(a(1) ? 1:0)+(a(5) ? 1:0)
+                -(a(0) ? 1:0)-(a(4) ? 1:0)
+            let vertical=(a(3) ? 1:0)-(a(2) ? 1:0)
+            let move=Vector2(x:Float(horizontal),y:Float(vertical))
             let aim=Vector2(
                 x:Float((a(45) ? 1:0)-(a(44) ? 1:0)),
                 y:Float((a(47) ? 1:0)-(a(46) ? 1:0)))
@@ -331,11 +331,11 @@ enum SourceControls586 {
     static func conflictingActions(_ action:Int,profile:Profile)->[Int] {
         guard (0..<actionCount).contains(action),
               context(for:action) != .other else{return []}
-        let context=context(for:action)
+        let thisContext=context(for:action)
         let key=profile.keys[action]
         let pad=profile.pad[action]
         return (0..<actionCount).filter{
-            $0 != action && context(for:$0)==context &&
+            $0 != action && context(for:$0)==thisContext &&
             ((key != 0 && profile.keys[$0]==key) ||
              (!pad.isEmpty && profile.pad[$0]==pad))
         }
