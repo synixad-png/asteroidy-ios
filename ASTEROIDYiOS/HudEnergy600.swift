@@ -39,6 +39,6 @@ enum HudEnergy600 {
             top.append(Point(x:x+local,y:y+4.5+flow-half+a*jitter*cap))
             bottom.append(Point(x:x+local,y:y+4.5+flow+half+b*jitter*cap))
         }
-        return top+bottom.reversed()
+        return top+Array(bottom.reversed())
     }
 }
