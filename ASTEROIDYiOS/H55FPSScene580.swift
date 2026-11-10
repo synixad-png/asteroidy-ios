@@ -68,6 +68,29 @@ import simd
                 bobPercent:motion.bobPercent)
     }
 
+    // The settings preview uses the exact same GLB importer, triangle
+    // splitter, source poses and materials as the live H55 viewmodel.
+    // Slider changes update only transforms; a model change alone reloads GLB.
+    func synchronizePreview(_ new:H55FPSSettings580) {
+        let oldKind:H55FPSAssets580.Kind =
+            settings.mode == .weapon ? .weapon :
+                (settings.model == .tripo ? .tripo : .monolith)
+        let newKind:H55FPSAssets580.Kind =
+            new.mode == .weapon ? .weapon :
+                (new.model == .tripo ? .tripo : .monolith)
+        settings=new
+        if oldKind != newKind && newKind != .weapon {
+            loaded.remove(.tripo)
+            loaded.remove(.monolith)
+            leftRoot.childNodes.forEach{$0.removeFromParentNode()}
+            rightRoot.childNodes.forEach{$0.removeFromParentNode()}
+        }
+        if !loaded.contains(newKind) && !loading.contains(newKind) {
+            prepareCurrent()
+        }
+        refreshLastPose()
+    }
+
     func selectMode(_ mode:H55FPSSettings580.Mode) {
         settings.mode=mode
         settings.save()
