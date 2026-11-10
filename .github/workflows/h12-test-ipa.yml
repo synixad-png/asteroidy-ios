@@ -6,6 +6,11 @@ on:
     paths:
       - '.github/workflows/h12-test-ipa.yml'
       - 'ASTEROIDYiOS/SourcePickupModels586.swift'
+      - 'ASTEROIDYiOS/SourceControls586.swift'
+      - 'ASTEROIDYiOS/SourceControlRouter586.swift'
+      - 'ASTEROIDYiOS/SourceControlSettings586.swift'
+      - 'ASTEROIDYiOS/SourceHardwareInput586.swift'
+      - 'Tests/PC586InputIntegrationContract.py'
       - 'ASTEROIDYiOS/SourceCombatSupply586.swift'
       - 'ASTEROIDYiOS/SourcePickupMetal586.swift'
       - 'ASTEROIDYiOS/SourcePickupVisual586.swift'
