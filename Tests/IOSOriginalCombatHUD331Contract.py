@@ -71,7 +71,7 @@ expect_all(combat,(
     "mutating func suffer(_ damage:Int)",
 ),"wallet original model")
 expect_all(scene,(
-    "SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568)",
+    "SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568,",
     "Button(\"PAUZA\") {pauseMission568()}",
     "session.useBomb()",
     "persistConsumables580()",
