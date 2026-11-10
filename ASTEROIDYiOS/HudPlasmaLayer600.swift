@@ -12,6 +12,9 @@ struct HudPlasmaLayer600:View {
     let maxHull:Int
     let maxArmor:Int
     let shield:Int?
+    // PC v602 takes live Game.Hull/Armor/TarczaEnergy each renderer frame.
+    // This small value-only callback is independent of published radar/text.
+    let liveGauges:()->(hull:Int,armor:Int,shield:Int,maxHull:Int,maxArmor:Int)
     let insets:W3ScreenInsets568
     let layout:HudLayout600
     let active:Bool
@@ -92,8 +95,9 @@ struct HudPlasmaLayer600:View {
                 // Unlike wall time this freezes on PAUZA, so the original
                 // flow resumes smoothly without jumping to a new phase.
                 let time=liveTime().truncatingRemainder(dividingBy:3600)
-                let values:[Int?]=[hull,armor,shield]
-                let maxima=[maxHull,maxArmor,100]
+                let gauge=liveGauges()
+                let values:[Int?]=[gauge.hull,gauge.armor,gauge.shield]
+                let maxima=[gauge.maxHull,gauge.maxArmor,100]
                 for i in 0..<3 {
                     let y=CGFloat(565+48*i)
                     guard let bar=SourceCombatHUD331.widgetContext(
