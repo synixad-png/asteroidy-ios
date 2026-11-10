@@ -861,6 +861,8 @@ import simd
         playerShip=nil
         fpsViewmodel?.release()
         fpsViewmodel=nil
+        fpsOverlayScene=nil
+        fpsOverlayCamera=nil
         fpsStatus="FPS: PRZYGOTOWANIE ORYGINALNEGO MODELU"
         lightRefresh=0
         arrival=H55Arrival580(spawnClear:false)
