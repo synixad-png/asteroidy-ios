@@ -24,7 +24,8 @@ assert "HudEnergy600.ribbon(" in plasma
 assert "HudEnergy600.ribbon(" not in hud
 assert "TimelineView(.animation(minimumInterval:1.0/60.0" in plasma
 assert "Self.draw(bar,current:values[i],maximum:maxima[i]" in plasma
-assert "let maxima=[maxHull,maxArmor,100]" in plasma
+assert "let maxima=[gauge.maxHull,gauge.maxArmor,100]" in plasma
+assert "let gauge=liveGauges()" in plasma
 assert "for layer in 0..<5" in plasma and "for k in 0..<7" in plasma
 assert "SourceCombatHUD331.widgetContext(" in plasma
 assert 'id:Self.names[i]' in plasma
