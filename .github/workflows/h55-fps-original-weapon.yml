@@ -10,6 +10,8 @@ on:
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - 'ASTEROIDYiOS/H55FPSSettingsSection580.swift'
       - 'ASTEROIDYiOS/H55FPSPreview580.swift'
+      - 'ASTEROIDYiOS/H55FPSLighting580.swift'
+      - 'Tests/H55FPSOriginalMaterial580Tests.py'
       - 'ASTEROIDYiOS/H55FPSOverlayViewport580.swift'
       - 'Tests/H55FPSPreviewDepth580Contract.py'
       - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
@@ -36,6 +38,8 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSPreview580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSOverlayViewport580.swift
           python3 Tests/H55FPSPreviewDepth580Contract.py
+          python3 Tests/H55FPSOriginalMaterial580Tests.py
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSLighting580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSMeshSplit580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
           python3 - <<'PY'
