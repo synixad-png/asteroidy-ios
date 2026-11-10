@@ -158,6 +158,8 @@ struct Sector01Scene568: View {
                         original:planetariumURL600,
                         capsule:session.hud.capsuleLevels,
                         pitch:Float(planetarium.pitch ?? -20),
+                        yaw:Float(planetarium.yaw ?? 0),
+                        roll:Float(planetarium.roll ?? 0),
                         pose:session.hud.motion)
                     .frame(
                         width:CGFloat(250*planetarium.scale*combatHUDLayout.scale),
