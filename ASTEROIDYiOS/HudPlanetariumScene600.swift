@@ -35,7 +35,8 @@ struct HudPlanetariumScene600:UIViewRepresentable {
     }
     func updateUIView(_ view:SCNView,context:Context) {
         context.coordinator.set(capsule,pitch:pitch,yaw:yaw,roll:roll,
-                                pose:pose,livePose:livePose)
+                                pose:pose,livePose:livePose,
+                                liveCapsules:liveCapsules)
     }
     static func dismantleUIView(_ view:SCNView,coordinator:Coordinator) {
         view.delegate=nil
