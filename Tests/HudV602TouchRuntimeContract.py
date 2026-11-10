@@ -58,10 +58,12 @@ assert 'seconds:now,hullPulse:hudPose600.hullPulse' in session
 assert 'seconds:Double(game.elapsed),hullPulse:' not in session
 assert 'corona?.advance(at:liveGameTime?() ?? 0)' in planetarium
 assert 'liveGameTime:{ [weak session] in' in host
-assert 'active:session.hud.phase == .playing)' in scene
+assert 'active:session.hud.phase == .playing,' in scene
+assert 'motionActive:!userPaused && !showingService)' in scene
+assert 'guard motionActive else{return HudMotion600.Pose()}' in host
 # PC FramePose is assigned EVERY render; numeric HUD still snapshots at 10Hz.
 assert 'TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active))' in hud
-assert 'hud.motion=livePose()' in hud
+assert 'hud.motion=active ? livePose() : HudMotion600.Pose()' in hud
 assert 'if now-lastHUD > 0.10 {' in session
 assert 'livePose:{ [weak session] in' in scene
 # GLB positions/model rotations must be PC Y/X/Z, never a rotated camera.
