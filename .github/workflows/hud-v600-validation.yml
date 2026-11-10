@@ -7,6 +7,8 @@ on:
       - "ASTEROIDYiOS/HudMotion600.swift"
       - "ASTEROIDYiOS/HudEnergy600.swift"
       - "ASTEROIDYiOS/HudCapsuleController600.swift"
+      - "ASTEROIDYiOS/HudCapsuleBinding600.swift"
+      - "Tests/HudCapsuleBinding600Tests.swift"
       - "Tests/HudCapsuleController600Tests.swift"
       - "ASTEROIDYiOS/SourceCombatHUD331.swift"
       - "ASTEROIDYiOS/Assets/hud/default-layout.json"
@@ -28,6 +30,8 @@ jobs:
           /tmp/hud-v600-core
           swiftc ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudCapsuleController600Tests.swift -o /tmp/hud-v600-capsule
           /tmp/hud-v600-capsule
+          swiftc ASTEROIDYiOS/HudCapsuleController600.swift ASTEROIDYiOS/HudCapsuleBinding600.swift Tests/HudCapsuleBinding600Tests.swift -o /tmp/hud-v600-bubble
+          /tmp/hud-v600-bubble
   verify-ios-parser:
     runs-on: macos-latest
     steps:
