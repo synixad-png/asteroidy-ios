@@ -105,7 +105,15 @@ final class CarbonisSession568: ObservableObject {
     private var summaryElapsed:Float=0
     // One visual solver fed by actual mission flight and survival state.
     // This does not enter or alter Game.step, collisions or damage.
-    private var hudMotion600=HudMotion600()
+    private var hudMotion600:HudMotion600 = {
+        var solver=HudMotion600()
+        solver.settings = HudMotion600.Settings.load()
+        return solver
+    }()
+    func applyHudMotion600(_ settings:HudMotion600.Settings) {
+        hudMotion600.settings=settings
+        hudMotion600.reset()
+    }
 
     init(prepared:Sector01PreparedWave568) {
         let first=CarbonisCombat568(prepared)
