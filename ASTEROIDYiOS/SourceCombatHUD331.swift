@@ -185,7 +185,7 @@ struct SourceCombatHUD331: View {
             }
             // Independent flame tongues trace the irregular edges.
             for k in 0..<7 {
-                let drift=(Double(k)*0.61803398875+time*(0.072+0.011*Double(k%3))
+                let drift=(Double(k)*0.61803398875+time*(0.072+0.011*Double(k % 3))
                           +Double(style)*0.17).truncatingRemainder(dividingBy:1)
                 let local=drift*length
                 if length-local<3.5 {continue}
