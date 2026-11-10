@@ -444,6 +444,7 @@ jobs:
           swiftc ASTEROIDYiOS/HudLayout600.swift Tests/HudLayout600Tests.swift -o /tmp/hud-v600-layout
           /tmp/hud-v600-layout
           python3 Tests/HudPlanetariumIntegration600Contract.py
+          python3 Tests/HudPlanetariumCorona600Contract.py
           python3 Tests/HudPickupMetal600Contract.py
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-core
           /tmp/hud-v600-core
