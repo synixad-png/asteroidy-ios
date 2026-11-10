@@ -60,6 +60,8 @@ on:
       - 'Tests/HudMotionEventCounters600Contract.py'
       - 'ASTEROIDYiOS/HudMissionGate600.swift'
       - 'ASTEROIDYiOS/HudLayoutDocument600.swift'
+      - 'ASTEROIDYiOS/HudWidgetPlacement600.swift'
+      - 'Tests/HudWidgetPlacement600Tests.swift'
       - 'Tests/HudMissionGate600Tests.swift'
       - 'Tests/HudMissionGate600Contract.py'
       - 'Tests/HudV600StressTests.swift'
@@ -454,6 +456,8 @@ jobs:
           python3 Tests/HudLayout600Contract.py
           swiftc ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudLayout600Tests.swift -o /tmp/hud-v600-layout
           /tmp/hud-v600-layout
+          swiftc ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift Tests/HudWidgetPlacement600Tests.swift -o /tmp/hud-v600-placement
+          /tmp/hud-v600-placement
           python3 Tests/HudPlanetariumIntegration600Contract.py
           python3 Tests/HudPlanetariumCorona600Contract.py
           python3 Tests/HudMotionEventCounters600Contract.py
