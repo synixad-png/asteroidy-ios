@@ -73,9 +73,15 @@ assert 'sourceKind:SourcePickupModels586.Kind? = nil' in combat
 # Same shared photometric calibration in BOTH FPS preview and gameplay.
 expect_all(gloveLight,(
     "private static let sceneKitLightGain:CGFloat=0.35",
-    "ambientLight.intensity=220*sceneKitLightGain",
-    "lamp.intensity=spec.2*sceneKitLightGain",
+    "let gain:CGFloat = mode == .gloves ? sceneKitLightGain : 1",
+    "?.light?.intensity=220*gain",
+    "?.light?.intensity=spec.2*gain",
 ), "hangar gloves light-clipping fix")
+fpsScene=(root/"ASTEROIDYiOS/H55ScenePage580.swift").read_text()
+fpsPreview=(root/"ASTEROIDYiOS/H55FPSPreview580.swift").read_text()
+assert 'H55FPSLighting580.configure(scene:fpsOverlayScene,mode:mode)' in fpsScene
+assert 'H55FPSLighting580.configure(scene:fpsScene,mode:fpsMode)' in fpsScene
+assert 'H55FPSLighting580.configure(scene:scene,mode:settings.mode)' in fpsPreview
 # Gameplay OPTIONS must open the full W3 settings panel, not an inert pause.
 expect_all(scene,(
     'Button("OPCJE / USTAWIENIA")',
