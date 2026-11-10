@@ -23,6 +23,8 @@ on:
       - "Tests/HudV600StressTests.swift"
       - "Tests/HudLayout600Tests.swift"
       - "ASTEROIDYiOS/HudEnergy600.swift"
+      - "ASTEROIDYiOS/HudPlasmaLayer600.swift"
+      - "Tests/HudPlasmaLive600Contract.py"
       - "ASTEROIDYiOS/HudCapsuleController600.swift"
       - "ASTEROIDYiOS/HudCapsuleBinding600.swift"
       - "ASTEROIDYiOS/HudPlanetariumAsset600.swift"
@@ -52,6 +54,7 @@ jobs:
       - name: Check exact PC v600 layout and active status renderer
         run: |
           python3 Tests/HudV600IntegrationContract.py
+          python3 Tests/HudPlasmaLive600Contract.py
           python3 Tests/HudPlanetariumIntegration600Contract.py
           python3 Tests/HudPlanetariumCorona600Contract.py
           python3 Tests/HudMotionEventCounters600Contract.py
@@ -81,7 +84,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Parse active HUD view with Swift compiler
         run: |
-          swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift ASTEROIDYiOS/HudPlasmaLayer600.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumTracks600.swift ASTEROIDYiOS/HudPlanetariumScene600.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/HudLayoutMarker600.swift ASTEROIDYiOS/HudLayoutDocument600.swift
