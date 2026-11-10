@@ -26,8 +26,10 @@ enum HudEnergy600 {
         let steps=max(4,min(34,Int(ceil(length/5))))
         let jitter=[2.6,2.35,1.65,0.88,0.36][max(0,min(4,layer))]
         let r=radius(layer:layer)
-        var top=[Point](),bottom=[Point]()
-        top.reserveCapacity(steps+1);bottom.reserveCapacity(steps+1)
+        // As in PC v602: one bounded polygon buffer, not three dynamic
+        // arrays per ribbon on every UIKit display refresh.
+        var polygon=[Point](repeating:Point(x:0,y:0),count:2*(steps+1))
+        let last=polygon.count-1
         for i in 0...steps {
             let local=length*Double(i)/Double(steps)
             let coordinate=local/width
@@ -36,9 +38,9 @@ enum HudEnergy600 {
             let b=wave(coordinate,time:time,seed:Double(style)*0.67+3.8)
             let cap=min(1,max(0.16,min((local+3)/6,(length-local+2)/7)))
             let half=r*cap
-            top.append(Point(x:x+local,y:y+4.5+flow-half+a*jitter*cap))
-            bottom.append(Point(x:x+local,y:y+4.5+flow+half+b*jitter*cap))
+            polygon[i]=Point(x:x+local,y:y+4.5+flow-half+a*jitter*cap)
+            polygon[last-i]=Point(x:x+local,y:y+4.5+flow+half+b*jitter*cap)
         }
-        return top+Array(bottom.reversed())
+        return polygon
     }
 }
