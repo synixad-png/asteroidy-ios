@@ -317,8 +317,13 @@ struct CarbonisCombat568 {
         lootCarry-=Float(value)
         guard value>0 else{return}
         if tokenPickups.count>=96 {
-            if !tokenPickups.isEmpty {tokenPickups[0].value+=value}
-            else{collectedLootTokens+=value}
+            // Source money cannot be merged into an Energy or Bomb item:
+            // the unified collection may now contain both kinds.
+            if let index=tokenPickups.firstIndex(where:{$0.sourceKind == nil}) {
+                tokenPickups[index].value+=value
+            } else {
+                collectedLootTokens+=value
+            }
             return
         }
         let a=random.float(0,Float.pi*2)
@@ -349,12 +354,15 @@ struct CarbonisCombat568 {
             let distance=sqrt(delta.lengthSquared)
             if distance<26 {
                 if let kind=item.sourceKind {
-                    guard SourceCombatSupply586.collected(
-                        kind,ionAmmo:&ionAmmo,bombs:&bombs) else {
-                        // An inventory already at cap cannot consume the item.
-                        tokenPickups[i]=item
-                        continue
-                    }
+                    // PC Game.Step removes an item on contact even when
+                    // the magazine filled after its original drop.
+                    // In that case CollectCombatSupply returns false
+                    // and emits no PickupEvents / sound.
+                    let collected=SourceCombatSupply586.collected(
+                        kind,ionAmmo:&ionAmmo,bombs:&bombs)
+                    if collected {emitOriginalAudio568(30)}
+                    tokenPickups.remove(at:i)
+                    continue
                 } else if !isReplay {
                     collectedLootTokens+=item.value
                 }
