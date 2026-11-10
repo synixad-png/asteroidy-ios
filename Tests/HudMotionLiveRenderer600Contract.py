@@ -11,7 +11,9 @@ placement=(root/"ASTEROIDYiOS/HudWidgetPlacement600.swift").read_text()
 icons=(root/"ASTEROIDYiOS/HudPickupTransform600.swift").read_text()
 for marker in ('private var hudLivePose600=HudMotion600.Pose()',
                'func currentHudRenderState600()->(',
-               'return (hudLayoutSnapshot600,hudSafeInsetsSnapshot600,hudLivePose600)',
+               'return (hudLayoutSnapshot600,hudSafeInsetsSnapshot600,',
+               'hudLivePose600,hudLiveCapsules600)',
+               'hudLiveCapsules600=hudCapsules600.snapshot',
                'hudLivePose600=hudPose600',
                'hudMotion600.update(motionSample,at:now,',
                'if now-lastHUD > 0.10 {'):
