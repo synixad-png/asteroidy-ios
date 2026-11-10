@@ -22,7 +22,7 @@ hud = (root / "ASTEROIDYiOS/SourceCombatHUD331.swift").read_text()
 assert "HudEnergy600.ribbon(" in hud
 for label, style in (("KADŁUB",0),("PANCERZ",1),("TARCZA",2)):
     assert f'"{label}"' in hud
-    assert f",{style},Double(hud.seconds))" in hud
+    assert "titles[i],values[i],maximums[i],191,y,i,Double(hud.seconds))" in hud
 assert "let n=14" not in hud, "segmented status bars must be replaced"
 motion = (root / "ASTEROIDYiOS/HudMotion600.swift").read_text()
 for marker in ("leftSway = 400", "rightSway = 400",
