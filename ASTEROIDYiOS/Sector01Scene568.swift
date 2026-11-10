@@ -23,7 +23,7 @@ struct Sector01Scene568: View {
     // Windows v568 Game.Mode.Paused / PausedFrom=Playing:
     // user pause is independent from an iOS lock-screen suspension.
     @State private var userPaused=false
-    @State private var showingHudMotion600=false
+    @State private var showingMissionSettings568=false
     @State private var showingHudEditor600=false
     @State private var hudEditorOriginal600:HudLayout600?
     @State private var hudLayout600=HudLayout600.load()
@@ -67,7 +67,7 @@ struct Sector01Scene568: View {
     }
     private func resumeMission568() {
         // Hardware START must not resume combat under the touch editor.
-        guard userPaused && !showingHudEditor600 else {return}
+        guard userPaused && !showingHudEditor600 && !showingMissionSettings568 else {return}
         session.release() // never resurrect a held auto-fire after pause
         session.refreshControls586()
         userPaused=false
@@ -82,6 +82,7 @@ struct Sector01Scene568: View {
     private func exitMission568() {
         session.release()
         userPaused=false
+        showingMissionSettings568=false
         session.paused=true
         // returnToAtlas -> OriginalAudioAV568.returnToMenu() changes
         // the context atomically. Do not briefly restart combat sound.
@@ -91,6 +92,44 @@ struct Sector01Scene568: View {
                            session.game.hull,session.game.armor)
         returnToAtlas()
     }
+    /// The authoritative W3 settings panel, opened FROM the paused mission.
+    /// Same navigation as W3MainMenu568, never a duplicated settings system.
+    private func missionSettingsScreen568(compact:Bool)->some View {
+        VStack(spacing:0) {
+            HStack {
+                Text("USTAWIENIA / MISJA")
+                    .font(.system(size:13,weight:.bold,design:.monospaced))
+                    .foregroundStyle(Color(red:0.89,green:0.67,blue:0.31))
+                Spacer()
+                Button("‹ WRÓĆ DO PAUZY") {
+                    showingMissionSettings568=false
+                }
+                .font(.system(size:13,weight:.bold,design:.monospaced))
+                .padding(10)
+                .foregroundStyle(.white)
+                .background(Color(red:0.05,green:0.15,blue:0.22))
+                .accessibilityIdentifier("sector01-settings-back")
+            }
+            .padding(.horizontal,compact ? 10:24)
+            .padding(.vertical,7)
+            .background(Color(red:0.008,green:0.028,blue:0.048))
+            CarbonisVisualSettingsPanel568(
+                compact:compact,initialTab:4,
+                onEditHud:{
+                    session.release()
+                    hudEditorOriginal600=hudLayout600
+                    showingHudEditor600=true
+                },
+                onHudMotionChange:{ settings in
+                    session.applyHudMotion600(settings)
+                })
+                .frame(maxWidth:.infinity,maxHeight:.infinity)
+        }
+        .background(Color(red:0.005,green:0.018,blue:0.034))
+        .ignoresSafeArea()
+        .accessibilityIdentifier("sector01-settings-fullscreen")
+    }
+
     private var movement:some Gesture {
         DragGesture(minimumDistance:0).onChanged { v in
             session.input(move:Vec2(x:clamp(Float(v.translation.width)/110),
@@ -351,7 +390,7 @@ struct Sector01Scene568: View {
                 // full-screen modal over the FROZEN real 3D mission.
                 // Save/Load/Highscores remain absent until their source
                 // behaviour is genuinely ported; do not display dead keys.
-                if userPaused && session.hud.phase == .playing && !showingService && !showingHudEditor600 {
+                if userPaused && session.hud.phase == .playing && !showingService && !showingHudEditor600 && !showingMissionSettings568 {
                     Color.black.opacity(0.80).ignoresSafeArea()
                         .accessibilityIdentifier("sector01-pause-touch-blocker")
                     VStack(alignment:.leading,spacing:compact ? 11:18) {
@@ -395,33 +434,15 @@ struct Sector01Scene568: View {
                                 .font(.system(size:10))
                                 .foregroundStyle(.orange)
                         }
-                        Button("EDYTUJ UKŁAD HUD (46 ELEMENTÓW)") {
-                            // PAUZA is already the authoritative physics/audio
-                            // gate. Snapshot only once for atomic cancel.
-                            session.release()
-                            hudEditorOriginal600=hudLayout600
-                            showingHudEditor600=true
+                        Button("OPCJE / USTAWIENIA") {
+                            showingMissionSettings568=true
                         }
                         .frame(maxWidth:.infinity)
-                        .padding(compact ? 7:10)
+                        .padding(compact ? 9:13)
                         .background(Color(red:0.05,green:0.15,blue:0.22),
                                     in:RoundedRectangle(cornerRadius:5))
                         .foregroundStyle(.cyan)
-                        .accessibilityIdentifier("sector01-hud-v600-editor-open")
-                        Button("HUD DYNAMICZNY / USTAWIENIA") {
-                            showingHudMotion600=true
-                        }
-                        .frame(maxWidth:.infinity)
-                        .padding(compact ? 7:10)
-                        .background(Color(red:0.05,green:0.15,blue:0.22),
-                                    in:RoundedRectangle(cornerRadius:5))
-                        .foregroundStyle(.cyan)
-                        .accessibilityIdentifier("sector01-hud-v600-settings")
-                        .sheet(isPresented:$showingHudMotion600) {
-                            HudMotionSettingsPanel600 {settings in
-                                session.applyHudMotion600(settings)
-                            }
-                        }
+                        .accessibilityIdentifier("sector01-open-mission-settings")
                         Button("KONTYNUUJ") {resumeMission568()}
                             .frame(maxWidth:.infinity)
                             .padding(compact ? 9:13)
@@ -450,6 +471,13 @@ struct Sector01Scene568: View {
                         .stroke(Color(red:0.24,green:0.38,blue:0.44),lineWidth:1))
                     .accessibilityIdentifier("sector01-source-pause-overlay")
                 }
+                // W3 settings use the same 17-category panel as the main menu.
+                // Opening the Interface editor never unpauses the mission.
+                if showingMissionSettings568 && userPaused &&
+                   session.hud.phase == .playing && !showingHudEditor600 {
+                    missionSettingsScreen568(compact:compact)
+                        .zIndex(35)
+                }
                 // The real Metal mission remains frozen and visible behind
                 // the authentic HUD. No separate simulated 1280x720 editor.
                 if showingHudEditor600 && userPaused {
@@ -465,9 +493,8 @@ struct Sector01Scene568: View {
                             session.updateHudLayout600(updated)
                             hudEditorOriginal600=nil
                             showingHudEditor600=false
-                            // PC v602 RendererHudLayout.HudToggle: FinishEdit
-                            // commits layout, then resumes the paused game.
-                            resumeMission568()
+                            // Return to USTAWIENIA / INTERFEJS, keeping combat
+                            // frozen until the user explicitly resumes it.
                         },
                         onCancel:{
                             if let original=hudEditorOriginal600 {
@@ -476,8 +503,8 @@ struct Sector01Scene568: View {
                             }
                             hudEditorOriginal600=nil
                             showingHudEditor600=false
-                            // PC v602 HudCancel restores the snapshot and resumes.
-                            resumeMission568()
+                            // Cancel restores the snapshot and stays in
+                            // settings, without restarting physics or firing.
                         })
                         .zIndex(40)
                         .accessibilityIdentifier("sector01-hud-v600-touch-editor-live")
