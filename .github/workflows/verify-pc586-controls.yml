@@ -10,6 +10,9 @@ on:
       - 'ASTEROIDYiOS/CarbonisSession568.swift'
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'Tests/SourceControls586Tests.swift'
+      - 'Tests/SourceControlRouter586Tests.swift'
+      - 'ASTEROIDYiOS/SourceControlRouter586.swift'
+      - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - '.github/workflows/verify-pc586-controls.yml'
   workflow_dispatch:
 permissions:
@@ -27,6 +30,12 @@ jobs:
           set -euo pipefail
           swiftc -O ASTEROIDYiOS/SourceControls586.swift Tests/SourceControls586Tests.swift -o /tmp/test_pc586_controls
           /tmp/test_pc586_controls
+      - name: Verify shared hardware action router without a second physics loop
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/SourceControls586.swift ASTEROIDYiOS/SourceControlRouter586.swift Tests/SourceControlRouter586Tests.swift -o /tmp/test_pc586_router
+          /tmp/test_pc586_router
       - name: Assert all source actions and genuine 65-row settings
         run: |
           set -euo pipefail
@@ -37,7 +46,7 @@ jobs:
           assert 'static let extraCount=5' in source
           assert 'static let rowCount=65' in source
           assert 'case 0...7,9,21,35,44...47' in source
-          assert 'case 11,12:return .hangar' in source
+          assert 'case 11,12,59:return .hangar' in source
           assert 'ASTEROIDY_CONTROLS_1' in source and 'ASTEROIDY_CONTROLS_2' in source
           print('PASS fixed PC source indices; no fake co-op/atlas implementation')
           PY
