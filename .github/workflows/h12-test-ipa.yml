@@ -393,7 +393,13 @@ jobs:
         run: |
           set -euo pipefail
           python3 Tests/PC586IntegrationContract.py
-          python3 -m py_compile Tools/prepare_pc586_runtime_resources.py Tools/pack_pc586_unsigned_ipa.py
+          python3 Tests/PC586InputIntegrationContract.py
+          swiftc -O ASTEROIDYiOS/SourceControls586.swift Tests/SourceControls586Tests.swift -o /tmp/pc586-controls-release-gate
+          /tmp/pc586-controls-release-gate
+          swiftc -Onone ASTEROIDYiOS/SourceControls586.swift ASTEROIDYiOS/SourceControlRouter586.swift Tests/SourceControlRouter586Tests.swift -o /tmp/pc586-router-release-gate
+          /tmp/pc586-router-release-gate
+          python3 -m py_compile Tools/prepare_pc586_runtime_resources.py Tools/pack_pc586_unsigned_ipa.py Tools/pack_pc586_complete_test_ipa.py Tools/verify_pc586_complete_ipa.py
+          echo "PASS PC586: 60+5 controls, migration, real input router, pickup and original GLB contracts" | tee reports/PC586_REGRESSION_GATE.txt
           # The four original GLBs are not yet in the repository: this
           # job only prepares a freshly compiled, unsigned IPA for the
           # local SHA-verified 12-resource staging/packaging step.
@@ -472,6 +478,7 @@ jobs:
             reports/H55_FPS_SCOPE.txt
             reports/H13_LIGHTING_SCOPE.txt
             reports/PC586_PACK_REQUIRED.txt
+            reports/PC586_REGRESSION_GATE.txt
           retention-days: 14
           if-no-files-found: error
       - name: Upload compilation diagnostics on failure
