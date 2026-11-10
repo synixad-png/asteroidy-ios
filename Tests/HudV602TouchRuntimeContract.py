@@ -114,4 +114,30 @@ assert 'var polygon=[Point](repeating:' in energy
 assert 'return top+Array(bottom.reversed())' not in energy
 assert 'vertices.map{CGPoint' not in plasma
 assert 'for layer in 0..<5' in plasma and 'for k in 0..<7' in plasma
-print("PASS PC v602 iOS HUD source: planetarium interpolation, live paused touch editing, plasma memory and gameplay gates")
+# Regressions reported on iPhone landscape: the 3D widget must use ONE
+# physical-screen coordinate frame and exact PC v602 pixel-per-unit scale.
+assert 'lens.orthographicScale=(135.0 * 0.5)' in planetarium
+assert '.position(x:CGFloat(placement.centerX)' in host
+assert '.frame(width:CGFloat(viewport.width)' in host
+assert 'HudMotionProject600.project(' not in host
+assert 'hud-v602-always-visible-widget-selector' in editor
+assert 'Button("◀") {selectNeighbor600(-1)}' in editor
+assert 'Button("▶") {selectNeighbor600(1)}' in editor
+# Every settings BACK action must be at the BOTTOM, away from the clock.
+w3=read("W3MainMenu568.swift")
+hangar=read("H55ScenePage580.swift")
+assert w3.index('Button("WSTECZ")') > w3.index('if item == .settings {')
+assert scene.index('Button("‹ WRÓĆ DO PAUZY")') < scene.index('private var movement')
+assert hangar.index('Button("‹ WRÓĆ DO PAUZY")') < hangar.index('private func renderedHangar')
+# Real glove brightness is persisted, visible and applied to both original
+# hand-material copies, without ever tinting the EXP-01 weapon.
+light=read("H55FPSLighting580.swift")
+gloves=read("H55FPSScene580.swift")
+settings=read("H55FPSSettingsSection580.swift")
+assert 'ASTEROIDY_H55_GLOVE_BRIGHTNESS_602' in light
+assert 'ASTEROIDY_H55_GLOVE_BRIGHTNESS_602' in settings
+assert 'material.multiply.contents=tint' in gloves
+assert 'for hand in [leftRoot,rightRoot]' in gloves
+assert 'refreshGloveBrightness602()' in gloves
+assert 'h55-fps-gloves-brightness' in settings
+print("PASS PC v602 iOS HUD: 46 selectable widgets, fixed screen-space original GLB, safe navigation, persistent actual gloves dimmer")
