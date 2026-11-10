@@ -37,9 +37,20 @@ assert 'hudLayout600=original' in scene
 assert 'viewport.originX(for:group)' in editor
 assert 'viewport.originY(for:group)' in editor
 assert 'HudLayoutMarker600(' in editor
-assert 'MagnificationGesture(minimumScaleDelta:0.005)' in marker
-assert 'onScale(original*Double(pinch))' in marker
-assert 'selected:$selected' in editor
+# Only ONE editor-owned gesture system may receive touch input.
+assert 'MagnificationGesture(minimumScaleDelta:0.005)' in editor
+assert 'private func hitWidget600(_ point:CGPoint)' in editor
+assert 'for widget in document.widgets.reversed() where widget.visible' in editor
+assert 'if area<best {best=area;chosen=widget}' in editor
+assert 'DragGesture(minimumDistance:0)' in editor
+assert '.gesture(editorDrag600)' in editor
+assert '.simultaneousGesture(editorPinch600)' in editor
+assert '.allowsHitTesting(false)' in marker
+assert 'DragGesture(' not in marker
+assert 'MagnificationGesture(' not in marker
+assert 'selected:selected==widget.id' in editor
+assert 'max(12,viewport.safeBottom+7)' in editor
+assert 'max(12,viewport.safeRight)' in editor
 assert 'onPreview(document)' in editor
 assert 'onSave(document)' in editor
 assert 'Button("ANULUJ") {onCancel()}' in editor
