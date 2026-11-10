@@ -594,12 +594,20 @@ struct SphereFlight67 {
     var heading: Float=0
     var flight=FlightDynamics556()
     var camera=SphereCamera67(at:Vec2(x:640,y:360))
-    mutating func tick(move: Vec2, aim: Vec2, dt: Float) {
+    mutating func tick(move: Vec2, aim: Vec2, dt: Float,
+                       boostMultiplier:Float?=nil) {
         guard dt > 0 else { return }
         let inputLength=min(1,sqrt(move.lengthSquared))
         let localMove=camera.screenVector(at:position,screen:move)
         let desired=localMove * (inputLength > 0 ? flight.configuration.cruiseSpeed/max(1e-6,sqrt(localMove.lengthSquared)) : 0)
         let acceleration=flight.motion(velocity:&velocity,desired:desired,inputLength:inputLength,dt:dt)
+        // Original Boost71 is a real movement override (not HUD motion).
+        // With nil, the frozen v556 flight path above is byte-for-byte
+        // identical in arithmetic and behavior to the previous release.
+        if let multiplier=boostMultiplier,multiplier>0 {
+            let forward=Vec2(x:cos(heading),y:sin(heading))
+            velocity=forward*(flight.configuration.cruiseSpeed*multiplier)
+        }
         let old=position
         let oldHeading=Vec2(x:cos(heading),y:sin(heading))
         let headingWorld=Sphere67.vector(old,oldHeading)
