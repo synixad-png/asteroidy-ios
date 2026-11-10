@@ -207,6 +207,41 @@ enum SourceControls586 {
             return output
         }
 
+        /// Source Windows/src/MouseFlight67.cs stores the last three
+        /// input options in a separate controls-v29.txt.flight67 file.
+        /// Importing the main controls-v29.txt alone cannot recover them.
+        static func importFlight67Text(_ raw:String,
+                                       into input:Self)->Self? {
+            var lines=raw.replacingOccurrences(of:"\r\n",with:"\n")
+                .replacingOccurrences(of:"\r",with:"\n")
+                .components(separatedBy:"\n")
+            if lines.last=="" {lines.removeLast()}
+            guard lines.count==4 else{return nil}
+            lines[0]=lines[0].replacingOccurrences(of:"\u{FEFF}",with:"")
+            guard lines[0]=="ASTEROIDY_FLIGHT_67",
+                  (lines[1]=="0" || lines[1]=="1"),
+                  let sensitivity=Int(lines[2]),
+                  (25...200).contains(sensitivity),
+                  (lines[3]=="0" || lines[3]=="1")
+            else{return nil}
+            var result=input
+            result.orbitMouse=lines[1]=="1"
+            result.mouseSensitivity=sensitivity
+            result.invertMouse=lines[3]=="1"
+            result.normalize()
+            return result
+        }
+
+        func exportPCFlight67Text()->String {
+            var safe=self
+            safe.normalize()
+            return ["ASTEROIDY_FLIGHT_67",
+                    safe.orbitMouse ? "1":"0",
+                    String(safe.mouseSensitivity),
+                    safe.invertMouse ? "1":"0"]
+                .joined(separator:"\n")+"\n"
+        }
+
         func exportPCText()->String {
             var safe=self
             safe.normalize()
