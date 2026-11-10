@@ -20,6 +20,7 @@ from pack_h55_original_models_ipa import MODELS as FPS_MODELS
 from pack_h55_original_models_ipa import pack as pack_fps
 from pack_pc586_unsigned_ipa import ORIGINALS as PICKUP_MODELS
 from pack_pc586_unsigned_ipa import pack as pack_pickups
+from prepare_pc586_runtime_resources import stage as stage_pickup_resources
 
 
 def checksum(path):
@@ -30,12 +31,15 @@ def checksum(path):
     return digest.hexdigest()
 
 
-def complete(source, fps, pickups, output):
+def complete(source, fps, pickups, output, pickup_archive=None):
     for path in (source, fps):
         if not path.is_file():
             raise FileNotFoundError(path)
-    if not pickups.is_dir():
-        raise NotADirectoryError(pickups)
+    if pickup_archive is None:
+        if pickups is None or not pickups.is_dir():
+            raise NotADirectoryError(pickups)
+    elif not pickup_archive.is_file():
+        raise FileNotFoundError(pickup_archive)
     if output.resolve() == source.resolve():
         raise ValueError("The input IPA must never be overwritten")
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -43,6 +47,11 @@ def complete(source, fps, pickups, output):
         scratch = Path(scratch)
         stage_h55 = scratch / "with_h55_unsigned.ipa"
         stage_all = scratch / "with_h55_and_pc586_unsigned.ipa"
+        if pickup_archive is not None:
+            # Build all 12 resources from the user's original PC586 ZIP
+            # inside this one invocation; never substitute other models.
+            pickups = scratch / "source_verified_pc586_pickups"
+            stage_pickup_resources(pickup_archive, pickups)
         fps_receipt = pack_fps(source, fps, stage_h55)
         if fps_receipt.get("status") != "PASS":
             raise RuntimeError("H55 packer did not confirm integrity")
@@ -84,11 +93,15 @@ def main():
                         help="Fresh iOS ARM64 unsigned app IPA")
     parser.add_argument("--h55-models", type=Path, required=True,
                         help="Original H55 TRIPO/MONOLIT/EXP01 source ZIP")
-    parser.add_argument("--pc586-resources", type=Path, required=True,
-                        help="Original verified 4 GLB + 4 mesh + 4 JPEG directory")
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--pc586-resources", type=Path,
+                           help="Existing SHA-verified 12-resource directory")
+    selection.add_argument("--pc586-archive", type=Path,
+                           help="Original v586 PC reference ZIP or original four-model ZIP")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    complete(args.ipa, args.h55_models, args.pc586_resources, args.output)
+    complete(args.ipa, args.h55_models, args.pc586_resources,
+             args.output, pickup_archive=args.pc586_archive)
 
 
 if __name__ == "__main__":
