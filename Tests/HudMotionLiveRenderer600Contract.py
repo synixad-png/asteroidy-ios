@@ -29,9 +29,12 @@ assert 'safeLeft:screen.insets.left' in renderer
 assert 'viewport:viewport' in renderer
 assert 'pose:session.hud.motion,' not in renderer
 assert 'HudPlanetariumHost600(' in scene
-assert 'livePose:{ [weak session] in' in host
-assert 'session?.currentHudVisual600().pose' in host
-assert 'HudMotionProject600.project(' in host
+# Requested fixed screen position for the original PC v602 HUD planetarium.
+# Keep the real 159-channel glTF animation, not a moving SwiftUI container.
+assert 'livePose:{ HudMotion600.Pose() }' in host
+assert '.position(x:CGFloat(placement.centerX)' in host
+assert '.frame(width:CGFloat(viewport.width)' in host
+assert 'HudMotionProject600.project(' not in host
 assert 'func currentHudVisual600()->(' in session
 assert 'return (hudLivePose600,hudLiveCapsules600,hudLiveSeconds600)' in session
 assert 'liveCapsules:{ [weak session] in' in host
