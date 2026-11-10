@@ -8,6 +8,11 @@ on:
       - "ASTEROIDYiOS/HudEnergy600.swift"
       - "ASTEROIDYiOS/HudCapsuleController600.swift"
       - "ASTEROIDYiOS/HudCapsuleBinding600.swift"
+      - "ASTEROIDYiOS/HudPlanetariumAsset600.swift"
+      - "ASTEROIDYiOS/HudPlanetariumTracks600.swift"
+      - "ASTEROIDYiOS/HudPlanetariumScene600.swift"
+      - "ASTEROIDYiOS/Sector01Scene568.swift"
+      - "Tests/HudPlanetariumIntegration600Contract.py"
       - "Tests/HudCapsuleBinding600Tests.swift"
       - "Tests/HudCapsuleController600Tests.swift"
       - "ASTEROIDYiOS/SourceCombatHUD331.swift"
@@ -22,7 +27,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check exact PC v600 layout and active status renderer
-        run: python3 Tests/HudV600IntegrationContract.py
+        run: |
+          python3 Tests/HudV600IntegrationContract.py
+          python3 Tests/HudPlanetariumIntegration600Contract.py
       - name: Compile and execute Swift motion and plasma reference contracts
         run: |
           set -euo pipefail
@@ -40,3 +47,5 @@ jobs:
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift
+          swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumTracks600.swift ASTEROIDYiOS/HudPlanetariumScene600.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
