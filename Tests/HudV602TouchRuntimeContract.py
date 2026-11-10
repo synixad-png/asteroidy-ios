@@ -5,7 +5,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 read=lambda name:(root/"ASTEROIDYiOS"/name).read_text()
 asset=read("HudPlanetariumAsset600.swift")
-marker=read("HudLayoutMarker600.swift")
+geometry=read("HudEditorGeometry.swift")
 editor=read("HudLayoutEditor600.swift")
 scene=read("Sector01Scene568.swift")
 plasma=read("HudPlasmaLayer600.swift")
@@ -33,22 +33,23 @@ assert 'session.updateHudLayout600(updated)' in scene
 assert 'hudEditorOriginal600=hudLayout600' in scene
 assert 'hudLayout600=original' in scene
 
-# F6-approved four-anchor coordinate transform, not centered synthetic canvas.
-assert 'viewport.originX(for:group)' in editor
-assert 'viewport.originY(for:group)' in editor
-assert 'HudLayoutMarker600(' in editor
-# Only ONE editor-owned gesture system may receive touch input.
-assert 'MagnificationGesture(minimumScaleDelta:0.005)' in editor
-assert 'private func hitWidget600(_ point:CGPoint)' in editor
-assert 'for widget in document.widgets.reversed() where widget.visible' in editor
-assert 'if area<best {best=area;chosen=widget}' in editor
-assert 'DragGesture(minimumDistance:0)' in editor
-assert '.gesture(editorDrag600)' in editor
-assert '.simultaneousGesture(editorPinch600)' in editor
-assert '.allowsHitTesting(false)' in marker
-assert 'DragGesture(' not in marker
-assert 'MagnificationGesture(' not in marker
-assert 'selected:selected==widget.id' in editor
+# One native UIKit touch owner; source PC602 geometry, not marker overlay gestures.
+assert 'HudEditorTouchCanvas(' in editor
+assert 'struct HudEditorTouchCanvas:UIViewRepresentable' in editor
+assert 'final class TouchSurface:UIView' in editor
+assert 'override func touchesBegan(' in editor
+assert 'override func touchesMoved(' in editor
+assert 'UIPinchGestureRecognizer(' in editor
+assert 'HudEditorGeometry.hit(' in editor
+assert 'HudEditorGeometry.move(' in editor
+assert 'HudEditorGeometry.zoom(' in editor
+assert 'for widget in layout.widgets.reversed() where widget.visible' in geometry
+assert 'if bounds.area<smallest' in geometry
+assert 'widget.is3D ? (size.width-size.width*widget.scale)*0.5 : 0' in geometry
+assert 'viewport.x(x,at:anchor)' in geometry
+assert 'viewport.y(y,at:anchor)' in geometry
+assert 'DragGesture(' not in editor
+assert 'MagnificationGesture(' not in editor
 assert 'max(12,viewport.safeBottom+7)' in editor
 assert 'max(12,viewport.safeRight)' in editor
 assert 'onPreview(document)' in editor
@@ -78,11 +79,11 @@ assert 'let hudRenderTime600=ProcessInfo.processInfo.systemUptime-started' in re
 assert 'seconds:now,hullPulse:hudPose600.hullPulse' in session
 assert 'seconds:Double(game.elapsed),hullPulse:' not in session
 assert 'corona?.advance(at:liveGameTime?() ?? 0)' in planetarium
-assert 'liveGameTime:{ [weak session] in' in host
+assert 'liveGameTime:{[weak session] in' in host
 assert 'active:session.hud.phase == .playing,' in scene
-assert 'motionActive:!userPaused && !showingService)' in scene
-assert 'livePose:{ HudMotion600.Pose() }' in host
-assert '.position(x:CGFloat(placement.centerX)' in host
+assert 'motionActive:' not in scene
+assert 'livePose:{HudMotion600.Pose()}' in host
+assert '.offset(x:CGFloat(placement.centerX-placement.width*0.5)' in host
 assert '.frame(width:CGFloat(viewport.width)' in host
 assert 'HudMotionProject600.project(' not in host
 assert 'hud-v602-always-visible-widget-selector' in editor
@@ -117,7 +118,7 @@ assert 'for layer in 0..<5' in plasma and 'for k in 0..<7' in plasma
 # Regressions reported on iPhone landscape: the 3D widget must use ONE
 # physical-screen coordinate frame and exact PC v602 pixel-per-unit scale.
 assert 'lens.orthographicScale=(135.0 * 0.5)' in planetarium
-assert '.position(x:CGFloat(placement.centerX)' in host
+assert '.offset(x:CGFloat(placement.centerX-placement.width*0.5)' in host
 assert '.frame(width:CGFloat(viewport.width)' in host
 assert 'HudMotionProject600.project(' not in host
 assert 'hud-v602-always-visible-widget-selector' in editor
