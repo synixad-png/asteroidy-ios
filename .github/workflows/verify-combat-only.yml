@@ -59,6 +59,7 @@ on:
       - 'ASTEROIDYiOS/HudPlanetariumCorona600.swift'
       - 'Tests/HudMotionEventCounters600Contract.py'
       - 'ASTEROIDYiOS/HudMissionGate600.swift'
+      - 'ASTEROIDYiOS/HudLayoutDocument600.swift'
       - 'Tests/HudMissionGate600Tests.swift'
       - 'Tests/HudMissionGate600Contract.py'
       - 'Tests/HudV600StressTests.swift'
