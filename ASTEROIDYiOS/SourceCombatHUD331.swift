@@ -36,28 +36,24 @@ struct SourceCombatHUD331: View {
                 x:CGFloat(layout.originX(for:.topLeft)),
                 y:CGFloat(layout.originY(for:.topLeft)))
             topLeft.scaleBy(x:scale,y:scale)
-            Self.applyMotion(&topLeft,pose:hud.motion,widget:"status.mode")
 
             var topRight=context
             topRight.translateBy(
                 x:CGFloat(layout.originX(for:.topRight)),
                 y:CGFloat(layout.originY(for:.topRight)))
             topRight.scaleBy(x:scale,y:scale)
-            Self.applyMotion(&topRight,pose:hud.motion,widget:"status.sector")
 
             var bottomLeft=context
             bottomLeft.translateBy(
                 x:CGFloat(layout.originX(for:.bottomLeft)),
                 y:CGFloat(layout.originY(for:.bottomLeft)))
             bottomLeft.scaleBy(x:scale,y:scale)
-            Self.applyMotion(&bottomLeft,pose:hud.motion,widget:"radar")
 
             var bottomRight=context
             bottomRight.translateBy(
                 x:CGFloat(layout.originX(for:.bottomRight)),
                 y:CGFloat(layout.originY(for:.bottomRight)))
             bottomRight.scaleBy(x:scale,y:scale)
-            Self.applyMotion(&bottomRight,pose:hud.motion,widget:"ion.icon")
 
             Self.top(topLeft,topRight,hud,layout600)
             // Windows RendererW3Combat331: mission.next appears only
@@ -138,6 +134,10 @@ struct SourceCombatHUD331: View {
         guard let widget=layout.widget(id),widget.visible else{return nil}
         let factor=CGFloat(widget.scale)
         var context=base
+        // PC HudLayout.Begin applies FramePose independently per widget.
+        // A radar has weight 1.0, gauges and icons 0.78, status text 0.42.
+        // Applying one transform to an entire corner is not source parity.
+        Self.applyMotion(&context,pose:pose,widget:id)
         context.translateBy(x:CGFloat(widget.x)-baseX*factor,
                             y:CGFloat(widget.y)-baseY*factor)
         context.scaleBy(x:factor,y:factor)
