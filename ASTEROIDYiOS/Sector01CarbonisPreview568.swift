@@ -1490,7 +1490,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         encoder.setDepthStencilState(hudIconDepth600)
                         encoder.setRenderPipelineState(pickupPipeline)
                         encoder.setCullMode(.none)
-                        let hudRenderTime600=Double(session.game.elapsed)
+                        let hudRenderTime600=ProcessInfo.processInfo.systemUptime-started
                         for (index,kind) in HudPickupTransform600.order.enumerated() {
                             let id=HudPickupTransform600.widgetIDs[index]
                             guard let widget=hudLayout600.widget(id),
