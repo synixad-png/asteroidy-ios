@@ -7,6 +7,7 @@ struct SourceCombatHUD331: View {
     let hud: CarbonisSession568.HUD
     let insets: W3ScreenInsets568
     let render3DIcons:Bool
+    let layout600:HudLayout600
 
     private static let white = color(234, 228, 232, 231)
     private static let dim = color(196, 155, 180, 190)
@@ -58,18 +59,42 @@ struct SourceCombatHUD331: View {
             bottomRight.scaleBy(x:scale,y:scale)
             Self.applyMotion(&bottomRight,pose:hud.motion,widget:"ion.icon")
 
-            Self.top(topLeft,topRight,hud)
-            Self.radar(bottomLeft,hud)
-            Self.gauge(bottomLeft,"KADŁUB",hud.hull,60,191,565,0,Double(hud.seconds))
-            Self.gauge(bottomLeft,"PANCERZ",hud.armor,25,191,613,1,Double(hud.seconds))
-            Self.gauge(bottomLeft,"TARCZA",hud.tarczaEnergy,100,191,661,2,Double(hud.seconds))
+            Self.top(topLeft,topRight,hud,layout600)
+            if let radarContext=Self.widgetContext(bottomLeft,layout600,
+                                      id:"radar",baseX:2,baseY:516) {
+                Self.radar(radarContext,hud)
+            }
+            let names=["hull","armor","shield"]
+            let values:[Int?]=[hud.hull,hud.armor,hud.tarczaEnergy]
+            let maximums=[60,25,100]
+            let titles=["KADŁUB","PANCERZ","TARCZA"]
+            for i in 0..<3 {
+                let y=CGFloat(565+48*i)
+                Self.gauge(
+                    Self.widgetContext(bottomLeft,layout600,id:names[i]+".label",
+                                       baseX:191,baseY:y),
+                    Self.widgetContext(bottomLeft,layout600,id:names[i]+".bar",
+                                       baseX:191,baseY:y+19),
+                    Self.widgetContext(bottomLeft,layout600,id:names[i]+".value",
+                                       baseX:341,baseY:y),
+                    titles[i],values[i],maximums[i],191,y,i,Double(hud.seconds))
+            }
             let counts=[hud.ionAmmo,hud.bombs,hud.shieldCharges,hud.boostCharges]
-            let names=["JON","BOMBY","OSŁONY","DOPALACZ"]
+            let namesGLB=["ion","bomb","shield_charge","boost"]
+            let namesDisplay=["JON","BOMBY","OSŁONY","DOPALACZ"]
             let tints=[Self.cyan,Self.dim,Self.cyan,Self.gold]
             for i in 0..<4 {
-                Self.ability(bottomRight,type:i,cx:CGFloat(920+100*i),
-                             count:counts[i],name:names[i],tint:tints[i],
-                             renderModel:render3DIcons)
+                let cx=CGFloat(920+100*i)
+                let originalX=cx-25
+                Self.ability(
+                    Self.widgetContext(bottomRight,layout600,
+                         id:namesGLB[i]+".icon",baseX:originalX,baseY:603),
+                    Self.widgetContext(bottomRight,layout600,
+                         id:namesGLB[i]+".label",baseX:cx-45,baseY:658),
+                    Self.widgetContext(bottomRight,layout600,
+                         id:namesGLB[i]+".value",baseX:cx-44,baseY:680),
+                    type:i,cx:cx,count:counts[i],
+                    name:namesDisplay[i],tint:tints[i],renderModel:render3DIcons)
             }
         }
         .frame(maxWidth:.infinity,maxHeight:.infinity)
@@ -92,6 +117,20 @@ struct SourceCombatHUD331: View {
         context.translateBy(x:640,y:360)
         context.rotate(by:.degrees(rotation))
         context.translateBy(x:-640,y:-360)
+    }
+
+    // HUD v600 widget offsets are applied after the platform safe-area
+    // anchor. Default source-space geometry is not duplicated or rewritten.
+    private static func widgetContext(_ base:GraphicsContext,
+                                      _ layout:HudLayout600,id:String,
+                                      baseX:CGFloat,baseY:CGFloat)->GraphicsContext? {
+        guard let widget=layout.widget(id),widget.visible else{return nil}
+        let factor=CGFloat(widget.scale)
+        var context=base
+        context.translateBy(x:CGFloat(widget.x)-baseX*factor,
+                            y:CGFloat(widget.y)-baseY*factor)
+        context.scaleBy(x:factor,y:factor)
+        return context
     }
 
     private static func line(_ c:GraphicsContext,_ x0:CGFloat,_ y0:CGFloat,
@@ -139,16 +178,32 @@ struct SourceCombatHUD331: View {
         text(c,s,x,y,col)
     }
     private static func top(_ c:GraphicsContext,_ right:GraphicsContext,
-                            _ hud:CarbonisSession568.HUD) {
-        line(c,20,17,20,81,color(190,215,164,67),1.5)
-        label(c,"SYNIXAD / WALKA 3D",34,17,white)
-        label(c,"BROŃ: \(hud.weaponName)  ·  POZIOM \(hud.weaponLevel)  ·  TEMPO \(hud.rapidLevel)",
-              34,42,cyan)
-        label(right,"SEKTOR 01 / 26",777,17,white)
-        label(right,"PKT \(hud.score)",936,17,cyan)
-        label(right,"ŻETONY \(hud.tokenBalance)",1050,17,gold)
-        label(right,"ŻYCIA \(hud.lives)",1195,17,white)
-        line(right,776,46,1262,46,color(67,109,145,156),0.8)
+                            _ hud:CarbonisSession568.HUD,_ layout:HudLayout600) {
+        if let frame=widgetContext(c,layout,id:"status.frame",baseX:20,baseY:17) {
+            line(frame,20,17,20,81,color(190,215,164,67),1.5)
+        }
+        if let mode=widgetContext(c,layout,id:"status.mode",baseX:34,baseY:17) {
+            label(mode,"SYNIXAD / WALKA 3D",34,17,white)
+        }
+        if let weapon=widgetContext(c,layout,id:"status.weapon",baseX:34,baseY:42) {
+            label(weapon,"BROŃ: \(hud.weaponName)  ·  POZIOM \(hud.weaponLevel)  ·  TEMPO \(hud.rapidLevel)",
+                  34,42,cyan)
+        }
+        if let sector=widgetContext(right,layout,id:"status.sector",baseX:777,baseY:17) {
+            label(sector,"SEKTOR 01 / 26",777,17,white)
+        }
+        if let score=widgetContext(right,layout,id:"status.score",baseX:936,baseY:17) {
+            label(score,"PKT \(hud.score)",936,17,cyan)
+        }
+        if let money=widgetContext(right,layout,id:"status.money",baseX:1050,baseY:17) {
+            label(money,"ŻETONY \(hud.tokenBalance)",1050,17,gold)
+        }
+        if let lives=widgetContext(right,layout,id:"status.lives",baseX:1195,baseY:17) {
+            label(lives,"ŻYCIA \(hud.lives)",1195,17,white)
+        }
+        if let frame=widgetContext(right,layout,id:"status.frame",baseX:20,baseY:17) {
+            line(frame,776,46,1262,46,color(67,109,145,156),0.8)
+        }
     }
     // PC v600 screen-space gauge. Uses the real HUD snapshot and source
     // turbulence; no square segments, no images and no game-state writes.
@@ -287,13 +342,22 @@ struct SourceCombatHUD331: View {
                             CGPoint(x:x+3,y:y+8)]),with:.color(tint))
         }
     }
-    private static func ability(_ c:GraphicsContext,type:Int,cx:CGFloat,
-                                count:Int,name:String,tint:Color,
-                                renderModel:Bool) {
+    private static func ability(_ icon:GraphicsContext?,
+                                _ labelContext:GraphicsContext?,
+                                _ valueContext:GraphicsContext?,
+                                type:Int,cx:CGFloat,count:Int,
+                                name:String,tint:Color,renderModel:Bool) {
         let progress:CGFloat = type<2 ? (count>0 ? 0.7:0)
             : clamp(CGFloat(count)/3)
-        if !renderModel {badge(c,type,cx,628,tint,progress)}
-        text(c,name,cx,658,white,center:true)
-        text(c,type>=2 ? "\(count) / 3" : "\(count)",cx,680,cyan,center:true)
+        if !renderModel,let icon {
+            badge(icon,type,cx,628,tint,progress)
+        }
+        if let labelContext {
+            text(labelContext,name,cx,658,white,center:true)
+        }
+        if let valueContext {
+            text(valueContext,type>=2 ? "\(count) / 3" : "\(count)",
+                 cx,680,cyan,center:true)
+        }
     }
 }
