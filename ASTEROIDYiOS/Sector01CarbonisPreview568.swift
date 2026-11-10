@@ -1302,6 +1302,55 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         encoder.setDepthStencilState(depth)
                     }
                 }
+                // Windows PC586 PickupGlbModels.cs: one original mesh and
+                // texture per Supply kind, drawn in the existing CARBONIS
+                // Metal pass with the same sphere projection/depth as actors.
+                // Do not change the native coin renderer or touch HUD.
+                if let session=gameSession,let worldView=vp,
+                   let pickupPipeline=pickupPipeline586,
+                   !pickupModels586.isEmpty {
+                    encoder.setDepthStencilState(depth)
+                    encoder.setRenderPipelineState(pickupPipeline)
+                    // All four original GLB materials are doubleSided.
+                    encoder.setCullMode(.none)
+                    for pickup in session.game.tokenPickups {
+                        guard let kind=pickup.sourceKind,
+                              let model=pickupModels586[kind] else{continue}
+                        let size=kind.sourceBaseSize*
+                            pickupVisual586.visualFactor(kind)
+                        if let visibilityFrame,
+                           !SourceVisibleSurface73.possiblyVisible(
+                            pickup.position,
+                            worldRadius:size*
+                                SphereSurfaceStamp556.normalizedScalePerArcUnit*1.8,
+                            camera:visibilityFrame,aspect:aspect) {
+                            continue
+                        }
+                        let stamp=SphereSurfaceStamp556(
+                            point:pickup.position,angle:pickup.angle)
+                        let pose=stamp.columnMajor(size:size)
+                        let placement=simd_float4x4(columns:(
+                            SIMD4<Float>(pose[0],pose[1],pose[2],pose[3]),
+                            SIMD4<Float>(pose[4],pose[5],pose[6],pose[7]),
+                            SIMD4<Float>(pose[8],pose[9],pose[10],pose[11]),
+                            SIMD4<Float>(pose[12],pose[13],pose[14],pose[15])))
+                        // Original GpuRenderer.DrawItemGlbs uses local
+                        // shipTranslate(0,-.5,0) for upright centered GLB.
+                        var shift=matrix_identity_float4x4
+                        shift.columns.3.y = -0.5
+                        let instance=placement*shift
+                        uniforms=Uniforms(
+                            mvp:worldView*instance,model:instance,
+                            material:2,glow:pickupVisual586.addedFill)
+                        encoder.setVertexBuffer(model.triangles,offset:0,index:0)
+                        encoder.setVertexBytes(&uniforms,
+                            length:MemoryLayout<Uniforms>.stride,index:1)
+                        encoder.setFragmentTexture(model.skin,index:0)
+                        encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                            vertexCount:model.vertexCount)
+                    }
+                }
+
                 // Windows GpuSphere67.cs:433 calls volume explosion
                 // immediately before projectile/debris visual effects.
                 if let session=gameSession,let worldView=vp,
