@@ -7,6 +7,7 @@ renderer=(root/"ASTEROIDYiOS/Sector01CarbonisPreview568.swift").read_text()
 planetarium=(root/"ASTEROIDYiOS/HudPlanetariumScene600.swift").read_text()
 host=(root/"ASTEROIDYiOS/HudPlanetariumHost600.swift").read_text()
 scene=(root/"ASTEROIDYiOS/Sector01Scene568.swift").read_text()
+hud=(root/"ASTEROIDYiOS/SourceCombatHUD331.swift").read_text()
 placement=(root/"ASTEROIDYiOS/HudWidgetPlacement600.swift").read_text()
 icons=(root/"ASTEROIDYiOS/HudPickupTransform600.swift").read_text()
 for marker in ('private var hudLivePose600=HudMotion600.Pose()',
@@ -35,6 +36,16 @@ assert 'func currentHudVisual600()->(' in session
 assert 'return (hudLivePose600,hudLiveCapsules600,hudLiveSeconds600)' in session
 assert 'liveCapsules:{ [weak session] in' in host
 assert 'let framePose=livePose?() ?? pose' in planetarium
+assert 'hud.motion=livePose()' in hud
+assert 'TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active))' in hud
+assert 'livePose:{ [weak session] in' in scene
+assert 'let hudRenderTime600=ProcessInfo.processInfo.systemUptime-started' in renderer
+assert 'seconds:now,hullPulse:hudPose600.hullPulse' in session
+assert 'corona?.advance(at:liveGameTime?() ?? 0)' in planetarium
+assert 'camera.eulerAngles=' not in planetarium
+assert 'centered.addChildNode(model.rootNode)' in planetarium
+assert 'model.rootNode.addAnimationPlayer(player,forKey:' in planetarium
+
 assert 'didApplyAnimationsAtTime' in planetarium
 assert 'framePose.roll' in planetarium
 assert 'ScreenLeft = X + (Width - Width*Scale)/2' in placement
