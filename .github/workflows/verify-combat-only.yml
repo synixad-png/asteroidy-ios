@@ -441,6 +441,7 @@ jobs:
           # PC v600 HUD must remain wired to real iOS combat, not a static demo.
           python3 Tests/HudV600IntegrationContract.py
           python3 Tests/HudPlanetariumIntegration600Contract.py
+          python3 Tests/HudPickupMetal600Contract.py
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-core
           /tmp/hud-v600-core
           swiftc ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudCapsuleController600Tests.swift -o /tmp/hud-v600-capsules
