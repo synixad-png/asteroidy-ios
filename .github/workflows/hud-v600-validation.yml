@@ -6,6 +6,8 @@ on:
     paths:
       - "ASTEROIDYiOS/HudMotion600.swift"
       - "ASTEROIDYiOS/HudEnergy600.swift"
+      - "ASTEROIDYiOS/HudCapsuleController600.swift"
+      - "Tests/HudCapsuleController600Tests.swift"
       - "ASTEROIDYiOS/SourceCombatHUD331.swift"
       - "ASTEROIDYiOS/Assets/hud/default-layout.json"
       - "Tests/HudV600CoreTests.swift"
@@ -24,6 +26,8 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-core
           /tmp/hud-v600-core
+          swiftc ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudCapsuleController600Tests.swift -o /tmp/hud-v600-capsule
+          /tmp/hud-v600-capsule
   verify-ios-parser:
     runs-on: macos-latest
     steps:
