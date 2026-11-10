@@ -49,7 +49,8 @@ expect_all(hud,(
 expect_all(plasma,(
     "HudEnergy600.ribbon(",
     "TimelineView(.animation(minimumInterval:1.0/60.0",
-    "let maxima=[maxHull,maxArmor,100]",
+    "let gauge=liveGauges()",
+    "let maxima=[gauge.maxHull,gauge.maxArmor,100]",
     "for layer in 0..<5",
     "for k in 0..<7",
 ), "v600 animated plasma renderer")
