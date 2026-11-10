@@ -178,10 +178,10 @@ enum SourceControls586 {
                 return
             }
             if keys.count<SourceControls586.actionCount {
-                keys+=SourceControls586.defaultKeys[keys.count...]
+                keys.append(contentsOf:SourceControls586.defaultKeys[keys.count...])
             }
             if pad.count<SourceControls586.actionCount {
-                pad+=SourceControls586.defaultPad[pad.count...]
+                pad.append(contentsOf:SourceControls586.defaultPad[pad.count...])
             }
             for i in keys.indices {keys[i]=max(0,min(65535,keys[i]))}
             for i in pad.indices where !SourceControls586.validPad(pad[i]) {
