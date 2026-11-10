@@ -223,8 +223,12 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                 for id in range.bubbles {
                     guard let node=bubbles[id] else{continue}
                     let x=node.presentation.position.x
-                    node.isHidden=level<=0 ||
+                    let shouldHide=level<=0 ||
                         (level<1 && (!x.isFinite || x>cutoff))
+                    // PC v602 updates a cached HudHidden[] mask instead of
+                    // reparenting all 72 bubbles each render. Avoid writing
+                    // an unchanged SceneKit node flag on every frame.
+                    if node.isHidden != shouldHide {node.isHidden=shouldHide}
                 }
                 let flash=binding.flashScale(channel:i,flash:frameCapsules.flashes[i]) ?? 0.001
                 flashes[i].scale=SCNVector3(flash,flash,flash)
