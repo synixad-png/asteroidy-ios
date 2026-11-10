@@ -51,8 +51,7 @@ struct SourceControlRouter586 {
         profile:SourceControls586.Profile)->Hangar {
         let a:(Int)->Bool={input.held($0,profile:profile)}
         let forward:Float=(a(2) ? 1 : 0) - (a(3) ? 1 : 0)
-        let right:Float=(a(1) ? 1 : 0) + (a(5) ? 1 : 0)
-            - (a(0) ? 1 : 0) - (a(4) ? 1 : 0)
+        let right:Float = (a(1) ? 1 : 0) + (a(5) ? 1 : 0) - (a(0) ? 1 : 0) - (a(4) ? 1 : 0)
         let jump=a(11)
         let interact=a(12)
         defer {previousJump=jump;previousInteract=interact}
