@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          swiftc -O ASTEROIDYiOS/SourceControls586.swift ASTEROIDYiOS/SourceControlRouter586.swift Tests/SourceControlRouter586Tests.swift -o /tmp/test_pc586_router
+          swiftc -Onone ASTEROIDYiOS/SourceControls586.swift ASTEROIDYiOS/SourceControlRouter586.swift Tests/SourceControlRouter586Tests.swift -o /tmp/test_pc586_router
           /tmp/test_pc586_router
       - name: Assert all source actions and genuine 65-row settings
         run: |
