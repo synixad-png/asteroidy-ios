@@ -8,6 +8,8 @@ struct SourceCombatHUD331: View {
     let insets: W3ScreenInsets568
     let render3DIcons:Bool
     let layout600:HudLayout600
+    let active:Bool
+    let livePose:()->HudMotion600.Pose
 
     private static let white = color(234, 228, 232, 231)
     private static let dim = color(196, 155, 180, 190)
@@ -21,8 +23,15 @@ struct SourceCombatHUD331: View {
     }
     private static func clamp(_ v:CGFloat)->CGFloat { max(0,min(1,v)) }
 
+    // PC v602 RendererW3Combat331.DrawCombatHud331 assigns Hud.FramePose
+    // on EVERY rendered frame; telemetry remains the last authoritative
+    // 10 Hz snapshot. Do not apply the stale snapshot.motion for screen poses.
     var body: some View {
+        TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active)) { tick in
+        let _ = tick.date
         Canvas(opaque:false, rendersAsynchronously:false) { context, size in
+            var hud=self.hud
+            hud.motion=livePose()
             let layout=CombatHUDViewport568(
                 width:Double(size.width),height:Double(size.height),
                 safeLeft:insets.left,safeRight:insets.right,
@@ -107,6 +116,7 @@ struct SourceCombatHUD331: View {
         .accessibilityElement(children:.ignore)
         .accessibilityLabel("Sektor 01. Punkty \(hud.score). Żetony \(hud.tokenBalance). Życia \(hud.lives). Kadłub \(hud.hull). Pancerz \(hud.armor).")
         .accessibilityIdentifier("sector01-source-w3-hud331")
+        }
     }
 
     // PC HudMotionPose.Apply: independent visual matrix per approved widget.
