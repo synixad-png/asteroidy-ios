@@ -90,7 +90,7 @@ enum SourceControls586 {
     /// actual engine implementation and are NEVER dispatched as no-ops.
     static func context(for action:Int)->Context {
         switch action {
-        case 0...7,9,21,35,44...47:return .combat
+        case 0...7,9,21,33,34,35,44...47:return .combat
         case 11,12,59:return .hangar
         default:return .other
         }
@@ -325,6 +325,26 @@ enum SourceControls586 {
             }
             return false
         }
+        /// Resolve the analog axis selected in the ORIGINAL PC action
+        /// mapping. Positive/negative axis values both remain continuous;
+        /// the '+'/'-' direction on the binding determines orientation.
+        /// Rebinding 33/34 must affect gameplay, not only the settings UI.
+        func boundAnalog(_ action:Int,profile:Profile)->Float {
+            guard (0..<SourceControls586.actionCount).contains(action)
+            else{return 0}
+            let threshold=Float(profile.deadZone)/100
+            for binding in profile.pad[action].split(separator:";") {
+                let text=String(binding)
+                guard text.first=="A",let sign=text.last,
+                      (sign=="+" || sign=="-"),
+                      let n=Int(text.dropFirst().dropLast()),
+                      (0..<axes.count).contains(n) else{continue}
+                let value=axis(n)*(sign=="-" ? -1:1)
+                if abs(value)>threshold {return value}
+            }
+            return 0
+        }
+
         /// Only meaningful actions are routed. Keep PC IDs stable even
         /// if later sectors and the missing PC co-op are not implemented.
         func combat(profile:Profile)->Combat {
@@ -338,11 +358,9 @@ enum SourceControls586 {
             // iOS playable CARBONIS orbit: the right controller stick
             // also provides real aim, matching touch's right drag.
             // Deadzone is the original PC pad option (action row 60).
-            let stick=Vector2(x:axis(2),y:axis(3))
-            let useStick=sqrt(stick.x*stick.x+stick.y*stick.y)
-                > Float(profile.deadZone)/100
-            let aim=keyboardAim.hasInput ? keyboardAim :
-                (useStick ? stick : Vector2(x:0,y:0))
+            let stick=Vector2(x:boundAnalog(33,profile:profile),
+                              y:boundAnalog(34,profile:profile))
+            let aim=keyboardAim.hasInput ? keyboardAim : stick
             return Combat(move:move.clamped(),aim:aim.clamped(),
                           shooting:a(6),shield:a(21),
                           bomb:a(7),boost:a(35),pause:a(9))
