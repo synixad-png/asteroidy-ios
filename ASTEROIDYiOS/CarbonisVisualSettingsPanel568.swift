@@ -190,6 +190,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     case 11: explosionPage
                     case 16: projectilePage
                     case 1: OriginalAudioSettingsPanel568(compact:compact)
+                    case 2: SourceControlSettings586(compact:compact)
                     case 7: planetPage
                     case 14: postprocessPage
                     case 13: shipSizePage
