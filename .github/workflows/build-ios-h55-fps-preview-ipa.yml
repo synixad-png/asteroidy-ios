@@ -40,6 +40,9 @@ on:
       - ASTEROIDYiOS/HudPlanetariumProjection.swift
       - Tests/HudPlanetariumProjectionTests.swift
       - ASTEROIDYiOS/HudPlanetariumScene600.swift
+      - ASTEROIDYiOS/HudPlanetariumGLTFImport.swift
+      - Tests/HudPlanetariumGLTFImportContract.py
+      - Tests/HudPlanetariumGLTFImportTests.swift
       - SourceResources/PC602/planetarium.glb.xz
       - Tools/stage_pc602_planetarium.py
       - Tools/verify_pc602_planetarium_ipa.py
@@ -69,6 +72,7 @@ jobs:
           python3 Tests/IOSOriginalCombatHUD331Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudMotionLiveRenderer600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudPlanetariumIntegration600Contract.py | tee -a reports/hud-v600-source.txt
+          python3 Tests/HudPlanetariumGLTFImportContract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudPickupMetal600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudPlanetariumCorona600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudLayout600Contract.py | tee -a reports/hud-v600-source.txt
@@ -114,6 +118,11 @@ jobs:
           # Source PC v602: stage the single byte-verified original BEFORE xcodegen.
           # Missing source, modified geometry or incorrect 159-channel clip is fatal.
           python3 Tools/stage_pc602_planetarium.py | tee reports/planetarium-pc602-source.txt
+          # Compile and execute the actual Swift importer boundary with
+          # the SHA-verified, original PC602 binary. The copy must differ
+          # only in 12 glTF COLOR_0 metadata flags, never in BIN data.
+          swiftc ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumGLTFImport.swift Tests/HudPlanetariumGLTFImportTests.swift -o /tmp/pc602-gltf-import
+          /tmp/pc602-gltf-import ASTEROIDYiOS/Assets/planetarium.glb | tee reports/planetarium-pc602-import.txt
           test -f ASTEROIDYiOS/Assets/planetarium.glb
       - name: Build genuine iOS ARM64 Release with all restored original v568 resources
         shell: bash
@@ -224,6 +233,7 @@ jobs:
             reports/build-env.txt
             reports/ipa-native.txt
             reports/planetarium-pc602-source.txt
+            reports/planetarium-pc602-import.txt
             reports/planetarium-pc602-app.txt
             reports/planetarium-pc602-ipa.txt
             reports/ipa-models.json
