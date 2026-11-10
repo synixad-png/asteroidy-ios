@@ -14,11 +14,23 @@ match=re.search(r'private static let approvedJSON = #"""\s*(.*?)\s*"""#',code,re
 assert match, "no immutable PC v600 JSON in native executable"
 assert json.loads(match.group(1))==approved,"embedded defaults differ from PC v600"
 assert len(approved["widgets"])==46
-for symbol in ("ZAPISZ UKŁAD","PRZYWRÓĆ CAŁY UKŁAD PC v600",
+for symbol in ("ZAPISZ","PRZYWRÓĆ CAŁY UKŁAD PC v602",
                "PRZYWRÓĆ TEN ELEMENT","WIDOCZNY",
                'axis("YAW"','axis("PITCH"','axis("ROLL"'):
     assert symbol in editor,symbol
-assert "HudLayoutEditor600 {updated in" in scene
+assert "HudLayoutEditor600(" in scene
+assert "initial:hudEditorOriginal600 ?? hudLayout600" in scene
+assert "viewport:combatHUDLayout" in scene
+assert "onPreview:{ updated in" in scene
+assert ".sheet(isPresented:$showingHudEditor600)" not in scene
+assert "guard userPaused && !showingHudEditor600" in scene
+assert "if userPaused && session.hud.phase == .playing && !showingService && !showingHudEditor600" in scene
+marker=(root/"ASTEROIDYiOS/HudLayoutMarker600.swift").read_text()
+assert "MagnificationGesture(minimumScaleDelta:0.005)" in marker
+assert "onScale(original*Double(pinch))" in marker
+assert "viewport.originX(for:group)" in editor
+assert "viewport.originY(for:group)" in editor
+assert "onPreview(document)" in editor
 assert "session.updateHudLayout600(updated)" in scene
 assert 'planetarium.visible' in scene and 'HudWidgetPlacement600.frame(' in scene
 for marker in ('layout600:HudLayout600','widgetContext(','"radar"',
