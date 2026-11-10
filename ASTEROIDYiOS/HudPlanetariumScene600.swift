@@ -12,6 +12,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
     let yaw:Float
     let roll:Float
     let pose:HudMotion600.Pose
+    let livePose:()->HudMotion600.Pose
 
     func makeCoordinator()->Coordinator { Coordinator() }
 
@@ -25,11 +26,14 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         view.preferredFramesPerSecond=60
         view.rendersContinuously=true
         view.delegate=context.coordinator
+        context.coordinator.set(capsule,pitch:pitch,yaw:yaw,roll:roll,
+                                pose:pose,livePose:livePose)
         context.coordinator.load(original,into:view)
         return view
     }
     func updateUIView(_ view:SCNView,context:Context) {
-        context.coordinator.set(capsule,pitch:pitch,yaw:yaw,roll:roll,pose:pose)
+        context.coordinator.set(capsule,pitch:pitch,yaw:yaw,roll:roll,
+                                pose:pose,livePose:livePose)
     }
     static func dismantleUIView(_ view:SCNView,coordinator:Coordinator) {
         view.delegate=nil
@@ -45,6 +49,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         private var yaw:Float = 0
         private var roll:Float = 0
         private var pose=HudMotion600.Pose()
+        private var livePose:(()->HudMotion600.Pose)?
         private var binding:HudCapsuleBinding600?
         private var bubbles:[Int:SCNNode]=[:]
         private var flashes=[SCNNode]()
@@ -54,13 +59,15 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         private var generation=0
 
         func set(_ updated:HudCapsuleController600.Snapshot,
-                 pitch:Float,yaw:Float,roll:Float,pose:HudMotion600.Pose) {
+                 pitch:Float,yaw:Float,roll:Float,
+                 pose:HudMotion600.Pose,livePose:@escaping ()->HudMotion600.Pose) {
             mutex.lock()
             capsule=updated
             self.pitch=pitch
             self.yaw=yaw
             self.roll=roll
             self.pose=pose
+            self.livePose=livePose
             mutex.unlock()
         }
         func reset() {
@@ -70,6 +77,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
             bubbles.removeAll();flashes.removeAll()
             camera=nil
             corona=nil
+            livePose=nil
             mutex.unlock()
         }
 
@@ -176,7 +184,11 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                 flashes[i].scale=SCNVector3(flash,flash,flash)
             }
             if let camera {
-                let radians=(pitch+pose.roll*0.16)*Float.pi/180
+                // The authored 159-track animation is evaluated every
+                // SceneKit frame; use the same live pose as the Metal
+                // icons without publishing 60 full SwiftUI HUD snapshots.
+                let framePose=livePose?() ?? pose
+                let radians=(pitch+framePose.roll*0.16)*Float.pi/180
                 camera.eulerAngles=SCNVector3(radians,
                     yaw*Float.pi/180,roll*Float.pi/180)
             }
