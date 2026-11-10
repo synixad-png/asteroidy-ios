@@ -144,11 +144,14 @@ struct HudLayoutEditor600:View {
             }
             .onEnded {_ in pinchStartScale600=nil}
     }
+    private func selectNeighbor600(_ direction:Int) {
+        guard let i=document.widgets.firstIndex(where:{$0.id==selected}),
+              !document.widgets.isEmpty else{return}
+        selected=document.widgets[(i+direction+document.widgets.count)%document.widgets.count].id
+    }
     private func visual(_ bounds:CGSize)->some View {
         ZStack(alignment:.topLeading) {
             Color.clear.contentShape(Rectangle())
-                .gesture(editorDrag600)
-                .simultaneousGesture(editorPinch600)
                 .accessibilityIdentifier("hud-v600-editor-touch-blocker")
             ForEach(document.widgets) { widget in
                 if let size=HudWidgetGeometry600.size(widget.id) {
@@ -168,6 +171,11 @@ struct HudLayoutEditor600:View {
             }
         }
         .frame(width:bounds.width,height:bounds.height)
+        .contentShape(Rectangle())
+        // One full-screen gesture owner; unlike child marker views this
+        // receives touch anywhere across all four PC v602 HUD anchors.
+        .gesture(editorDrag600)
+        .simultaneousGesture(editorPinch600)
         .clipped()
         .accessibilityIdentifier("hud-v600-editing-canvas")
     }
@@ -233,10 +241,21 @@ struct HudLayoutEditor600:View {
                 VStack(spacing:0) {
                     Spacer(minLength:0)
                     HStack(spacing:8) {
-                        Text("EDYTOR HUD · GRA WSTRZYMANA")
-                            .font(.system(size:11,weight:.bold,design:.monospaced))
-                            .foregroundStyle(.yellow)
-                            .lineLimit(1).minimumScaleFactor(0.7)
+                        // Persistent native selector: 46 source widgets remain
+                        // accessible even when the hit region is only 3pt
+                        // wide or a GLB overlaps the radar.
+                        Button("◀") {selectNeighbor600(-1)}
+                            .accessibilityIdentifier("hud-v602-previous-widget")
+                        Picker("ELEMENT HUD",selection:selection) {
+                            ForEach(document.widgets) { widget in
+                                Text(widget.id).tag(widget.id)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .frame(minWidth:130,maxWidth:260)
+                        .accessibilityIdentifier("hud-v602-always-visible-widget-selector")
+                        Button("▶") {selectNeighbor600(1)}
+                            .accessibilityIdentifier("hud-v602-next-widget")
                         Spacer(minLength:4)
                         Button(inspectorOpen ? "UKRYJ OPCJE":"OPCJE") {
                             inspectorOpen.toggle()
@@ -256,7 +275,7 @@ struct HudLayoutEditor600:View {
                     .padding(.horizontal,7).padding(.vertical,4)
                     .background(Color(red:0.01,green:0.02,blue:0.04).opacity(0.94))
                     if !inspectorOpen {
-                        Text("PRZESUŃ PALCEM · SKALUJ SZCZYPIĄC DWOMA PALCAMI")
+                        Text("46 ELEMENTÓW · WYBIERZ Z LISTY LUB DOTKNIJ · PRZESUŃ / SZCZYPIJ")
                             .font(.system(size:9,design:.monospaced))
                             .foregroundStyle(.white).padding(5)
                             .background(Color.black.opacity(0.77))
