@@ -95,15 +95,20 @@ final class CarbonisSession568: ObservableObject {
     private let hudLayoutLock600=NSLock()
     private var hudLayoutSnapshot600=HudLayout600.load()
     private var hudSafeInsetsSnapshot600=W3ScreenInsets568()
+    private var hudLivePose600=HudMotion600.Pose()
     func updateHudSafeInsets600(_ insets:W3ScreenInsets568) {
         hudLayoutLock600.lock()
         hudSafeInsetsSnapshot600=insets
         hudLayoutLock600.unlock()
     }
-    func currentHudScreen600()->(layout:HudLayout600,insets:W3ScreenInsets568) {
+    // One immutable visual snapshot per Metal frame: no publishing and no
+    // repeated 46-widget radar/scores rebuild at 60 Hz.
+    func currentHudRenderState600()->(
+        layout:HudLayout600,insets:W3ScreenInsets568,pose:HudMotion600.Pose
+    ) {
         hudLayoutLock600.lock()
         defer {hudLayoutLock600.unlock()}
-        return (hudLayoutSnapshot600,hudSafeInsetsSnapshot600)
+        return (hudLayoutSnapshot600,hudSafeInsetsSnapshot600,hudLivePose600)
     }
     func updateHudLayout600(_ updated:HudLayout600) {
         guard updated.isValid else{return}
@@ -158,6 +163,9 @@ final class CarbonisSession568: ObservableObject {
         lastHUD=0
         summaryElapsed=0
         hudMotion600.reset()
+        hudLayoutLock600.lock()
+        hudLivePose600=HudMotion600.Pose()
+        hudLayoutLock600.unlock()
         hudCapsules600.reset()
         hud=HUD(restarted)
     }
@@ -259,6 +267,11 @@ final class CarbonisSession568: ObservableObject {
         motionSample.shieldActive=game.tarcza145.energy>0
         let hudPose600=hudMotion600.update(motionSample,at:now,
                                           active:game.phase == .playing)
+        // Export only the already-computed frame pose. The expensive HUD
+        // semantic/radar snapshot still publishes at its former 10 Hz.
+        hudLayoutLock600.lock()
+        hudLivePose600=hudPose600
+        hudLayoutLock600.unlock()
         // Feed normalized live values, never inventory charges as energy.
         hudCapsules600.advance(
             hull:Float(game.hull)/Float(max(1,game.maxHull)),
