@@ -32,6 +32,34 @@ assert "currentBombs<3" in supply and "currentIonAmmo<300" in supply
 assert "pickupsCount<96" in supply
 assert "min(40,max(0,300-ionAmmo))" in supply
 
+# Tarcza145 and Boost71 must stay independent of purchased passive shields.
+abilities=read("ASTEROIDYiOS/SourcePickupAbilities586.swift")
+session=read("ASTEROIDYiOS/CarbonisSession568.swift")
+touch=read("ASTEROIDYiOS/Sector01Scene568.swift")
+flight=read("ASTEROIDYiOS/Sphere67.swift")
+for rule in ("drainPerSecond:Float = 12","impactCost:Float = 35",
+             "refill:Float = 20","var energy:Float = initial",
+             "remaining=0.9","charges=min(3,charges+1)",
+             "remaining=max(0,remaining-dt)","firstRockContact",
+             "firstShooterContact","rockSize>=3 ? 0.20",
+             "untilBoost=5+random.integer(5)"):
+    assert rule in abilities, "Missing PC145/PC71 logic: "+rule
+for call in ("tarcza145.step(","tarcza145.absorb(","tarcza145.collectCell()",
+             "boost71.collect()","boost71.activate(","boost71.advance(",
+             "applyBoostRam71(from:previousShip)","rocks[i].health-=8",
+             "shooters[i].core.hp-=6","tryDropLegacyPickup586("):
+    assert call in game, "Missing real simulation path: "+call
+assert game.index("guardianCharges>0") < game.index("tarcza145.absorb(") < game.index("shieldCharges>0")
+assert "boostMultiplier:boosting ? 2.6 : nil" in game
+assert "boostMultiplier:Float?=nil" in flight
+assert "boostCharges=game.boost71.charges" in session
+assert "tarczaEnergy=Int(game.tarcza145.energy.rounded())" in session
+for name in ("sector01-active-tarcza145-hold","sector01-active-boost71-button",
+             "session.holdShield145(true)","session.holdShield145(false)",
+             "session.useBoost71()"):
+    assert name in touch, "Missing actual touch action: "+name
+assert "game.setShieldHeld(false)" in session, "Paused app must release shield"
+
 # One SHA-locked original for each source kind, and one resident GPU buffer.
 for name in ("shield","boost","energy","bomb"):
     assert f"case .{name}" in registry
