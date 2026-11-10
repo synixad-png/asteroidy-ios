@@ -6,10 +6,14 @@ import SwiftUI
 /// same persisted rendering profile consumed by CARBONIS 01 GPU.
 struct CarbonisVisualSettingsPanel568: View {
     let compact:Bool
+    /// Live FPS settings are optional outside the H55 hangar.
+    let fpsLoader:H55SceneModel580?
     // W3 Windows Menu139.cs OptionTabs139[9] is HANGAR. Returning from
     // full-screen H55 opens directly on the original category.
-    init(compact:Bool,initialTab:Int=11) {
+    init(compact:Bool,initialTab:Int=11,
+         fpsLoader:H55SceneModel580?=nil) {
         self.compact=compact
+        self.fpsLoader=fpsLoader
         _tab=State(initialValue:initialTab)
     }
 
@@ -152,6 +156,8 @@ struct CarbonisVisualSettingsPanel568: View {
                     case 0: sourceGraphicsPage
                     case 3: missionObjectSizePage580
                     case 9: hangarPage580
+                    case 6: H55FPSSettingsSection580(category:.gloves,loader:fpsLoader)
+                    case 8: H55FPSSettingsSection580(category:.weapon,loader:fpsLoader)
                     case 11: explosionPage
                     case 16: projectilePage
                     case 1: OriginalAudioSettingsPanel568(compact:compact)
