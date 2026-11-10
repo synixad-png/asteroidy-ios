@@ -16,7 +16,7 @@ struct HudPlanetariumHost600:View {
 
     var body:some View {
         TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active)) { _ in
-            let state=session.currentHudRenderState600()
+            let state=session.currentHudVisual600()
             let projected=HudMotionProject600.project(
                 x:widget.x+125,y:widget.y+67.5,
                 pose:state.pose,widget:"hud.planetarium")
@@ -28,10 +28,10 @@ struct HudPlanetariumHost600:View {
                 roll:Float(widget.roll ?? 0),
                 pose:state.pose,
                 livePose:{ [weak session] in
-                    session?.currentHudRenderState600().pose ?? HudMotion600.Pose()
+                    session?.currentHudVisual600().pose ?? HudMotion600.Pose()
                 },
                 liveCapsules:{ [weak session] in
-                    session?.currentHudRenderState600().capsules ??
+                    session?.currentHudVisual600().capsules ??
                         HudCapsuleController600.Snapshot(
                             levels:[1,1,1],flashes:[0,0,0])
                 })
