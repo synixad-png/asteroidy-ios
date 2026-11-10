@@ -85,6 +85,9 @@ import simd
     func setFPSMode(_ mode:H55FPSSettings580.Mode) {
         fpsMode=mode
         fpsViewmodel?.selectMode(mode)
+        if let fpsOverlayScene {
+            H55FPSLighting580.configure(scene:fpsOverlayScene,mode:mode)
+        }
         fpsCalibration=fpsViewmodel?.configuration ?? fpsCalibration
     }
     func setFPSCalibration(_ target:H55FPSSettings580.Target,
@@ -595,6 +598,7 @@ import simd
             self?.fpsStatus=result
         })
         fpsMode=fpsViewmodel?.mode ?? .gloves
+        H55FPSLighting580.configure(scene:fpsScene,mode:fpsMode)
         fpsCalibration=fpsViewmodel?.configuration ?? H55FPSSettings580()
         H55LoadDiagnostics580.mark("09_KAMERA_WYKONANA_SWATLO_START")
         // H13-A: no dynamic IBL cubemap. Windows PC v580 H55Renderer.cs
