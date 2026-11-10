@@ -332,20 +332,18 @@ enum SourceControls586 {
         func boundAnalog(_ action:Int,profile:Profile)->Float {
             guard (0..<SourceControls586.actionCount).contains(action)
             else{return 0}
-            var hasAnalog=false
             for binding in profile.pad[action].split(separator:";") {
                 let text=String(binding)
                 guard text.first=="A",let sign=text.last,
                       (sign=="+" || sign=="-"),
                       let n=Int(text.dropFirst().dropLast()),
                       (0..<axes.count).contains(n) else{continue}
-                hasAnalog=true
                 // Keep both signed components. The original 30% deadzone
                 // applies to the vector MAGNITUDE, not each axis alone:
                 // 0.25/0.25 must still produce a diagonal camera motion.
                 return axis(n)*(sign=="-" ? -1:1)
             }
-            return hasAnalog ? 0 : (held(action,profile:profile) ? 1:0)
+            return held(action,profile:profile) ? 1:0
         }
 
         /// Only meaningful actions are routed. Keep PC IDs stable even
