@@ -27,6 +27,24 @@ import Foundation
               "original boss HUD geometry")
         check(HudWidgetGeometry600.size("unknown.widget")==nil,
               "no guessed geometry for unknown widget")
+        let exported=try! baseline.encodeJSON()
+        check((try? HudLayout600.decodeJSON(exported))==baseline,
+              "PC v600 full 46-widget JSON exchange is lossless")
+        var wrongModel=baseline
+        let iconIndex=wrongModel.widgets.firstIndex(where:{$0.id=="ion.icon"})!
+        wrongModel.widgets[iconIndex].glb="unknown"
+        check(!wrongModel.isValid,
+              "foreign GLB identity cannot enter validated native HUD")
+        check((try? wrongModel.encodeJSON())==nil,
+              "invalid GLB mappings cannot be exported")
+        let badModelBytes=try! JSONEncoder().encode(wrongModel)
+        check((try? HudLayout600.decodeJSON(badModelBytes))==nil,
+              "foreign GLB mappings cannot be imported")
+        var wrongID=baseline
+        wrongID.widgets[0].id="status.invented"
+        let badIDBytes=try! JSONEncoder().encode(wrongID)
+        check((try? HudLayout600.decodeJSON(badIDBytes))==nil,
+              "unknown 47th/renamed widget IDs are rejected")
         let planet=baseline.widget("hud.planetarium")!
         check(planet.x==64.7882 && planet.y==553.0863 &&
               planet.scale==1.4702 && planet.pitch == -20,
