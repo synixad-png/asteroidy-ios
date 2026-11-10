@@ -223,20 +223,21 @@ enum SourceControls586 {
         for binding in raw.split(separator:";",omittingEmptySubsequences:false) {
             if binding.isEmpty{return false}
             let atoms=String(binding).split(separator:"+",omittingEmptySubsequences:false)
-            if atoms.count>1 {
-                // B9+B3 is a combination, unlike axis suffix A2+.
-                if atoms.count<2 || !atoms.allSatisfy({
-                    $0.first=="B" && Int($0.dropFirst()).map{
-                        (0...31).contains($0)
-                    } == true
-                }) {return false}
-            } else if binding.first=="B" {
-                guard let n=Int(binding.dropFirst()),(0...31).contains(n)
-                else{return false}
-            } else if binding.first=="A" {
+            if binding.first=="A" {
+                // A2+ is an axis with a sign, NOT a button combination.
                 let text=String(binding)
                 guard let sign=text.last,sign=="+" || sign=="-",
                       let n=Int(text.dropFirst().dropLast()),(0...7).contains(n)
+                else{return false}
+            } else if atoms.count>1 {
+                // B9+B3 is a combination; every part must be a button.
+                guard atoms.count>=2 && atoms.allSatisfy({
+                    $0.first=="B" && Int($0.dropFirst()).map{
+                        (0...31).contains($0)
+                    } == true
+                }) else{return false}
+            } else if binding.first=="B" {
+                guard let n=Int(binding.dropFirst()),(0...31).contains(n)
                 else{return false}
             } else {return false}
         }
