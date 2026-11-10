@@ -52,6 +52,13 @@ assert '"h55-fps-gloves-live-preview"' in settings
 assert '"h55-fps-weapon-live-preview"' in settings
 assert '"h55-fps-preview-motion"' in settings
 assert "p.mode=category" in settings
+assert ".aspectRatio(16.0/9.0,contentMode:.fit)" in settings
+assert ".frame(maxWidth:352)" in settings and ".frame(height:198)" in settings
+lights=read("ASTEROIDYiOS/H55FPSLighting580.swift")
+assert "H55FPSLighting580.install(into:fpsScene)" in stage
+assert "H55FPSLighting580.install(into:scene)" in preview
+assert "SCNVector3(-1,2,-0.6)" in lights and "SCNVector3(2,1,-1)" in lights
+assert "SCNVector3(0,3,-3)" in lights
 assert 'case 6: H55FPSSettingsSection580(category:.gloves' in tabs
 assert 'case 8: H55FPSSettingsSection580(category:.weapon' in tabs
 
