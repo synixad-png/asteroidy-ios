@@ -23,7 +23,7 @@ import Foundation
         config.boostPercent=175
         config.energyPercent=71
         config.bombPercent=41
-        config.moneyPercent=-2
+        config.moneyPercent = -2
         config.save(defaults)
         let restored=SourcePickupVisual586.load(defaults)
         precondition(restored.brightnessPercent==400)
