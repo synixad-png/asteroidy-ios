@@ -20,12 +20,12 @@ for symbol in ("ZAPISZ UKŁAD","PRZYWRÓĆ CAŁY UKŁAD PC v600",
     assert symbol in editor,symbol
 assert "HudLayoutEditor600 {updated in" in scene
 assert "session.updateHudLayout600(updated)" in scene
-assert 'planetarium.visible' in scene and 'planetarium.x+125' in scene
+assert 'planetarium.visible' in scene and 'HudWidgetPlacement600.frame(' in scene
 for marker in ('layout600:HudLayout600','widgetContext(','"radar"',
                'names[i]+".label"','namesGLB[i]+".icon"',
                'namesGLB[i]+".value"'):
     assert marker in hud,marker
-assert "session.currentHudLayout600()" in renderer
+assert "session.currentHudScreen600()" in renderer
 assert "widget.visible" in renderer
 assert "widget:widget" in renderer
 for marker in ('FileDocument','static var readableContentTypes:[UTType]',
