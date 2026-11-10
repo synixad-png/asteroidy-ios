@@ -135,7 +135,9 @@ final class HudPlanetariumCorona600 {
             let flame=3.0+6.5*pulse
             let node=flames[i]
             node.position=SCNVector3(Float(100.5*cos(theta)),Float(100.5*sin(theta)),0)
-            node.eulerAngles.z=Float(theta+0.034*sin(t*0.83+Double(i)*0.7))
+            let flutter = 0.034 * sin(t * 0.83 + Double(i) * 0.7)
+            let rotation = Float(theta + flutter)
+            node.eulerAngles = SCNVector3(0, 0, rotation)
             node.scale=SCNVector3(Float(flame/9.5),1,1)
         }
     }
