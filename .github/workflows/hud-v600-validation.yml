@@ -1,0 +1,34 @@
+name: ASTEROIDY iOS HUD v600 contracts
+on:
+  push:
+    branches:
+      - feature/ios-h55-v580-native-entry
+    paths:
+      - "ASTEROIDYiOS/HudMotion600.swift"
+      - "ASTEROIDYiOS/HudEnergy600.swift"
+      - "ASTEROIDYiOS/SourceCombatHUD331.swift"
+      - "ASTEROIDYiOS/Assets/hud/default-layout.json"
+      - "Tests/HudV600CoreTests.swift"
+      - "Tests/HudV600IntegrationContract.py"
+      - ".github/workflows/hud-v600-validation.yml"
+  workflow_dispatch:
+jobs:
+  verify-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check exact PC v600 layout and active status renderer
+        run: python3 Tests/HudV600IntegrationContract.py
+      - name: Compile and execute Swift motion and plasma reference contracts
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-core
+          /tmp/hud-v600-core
+  verify-ios-parser:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse active HUD view with Swift compiler
+        run: |
+          swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift
+          swiftc -frontend -parse ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift
