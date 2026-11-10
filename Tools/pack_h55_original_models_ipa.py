@@ -53,15 +53,16 @@ def pack(ipa_path, models_path, output):
                 assembled.writestr(root + name, payload,
                                    compress_type=zipfile.ZIP_DEFLATED,
                                    compresslevel=6)
-    with zipfile.ZipFile(output) as assembled:
+    with zipfile.ZipFile(ipa_path) as original, zipfile.ZipFile(output) as assembled:
         assert assembled.testzip() is None, "Final IPA CRC error"
         assert len(assembled.namelist()) == len(originals) + len(models)
         for name in MODELS:
             check(name, assembled.read(root + name))
-        assert all(assembled.read(name) == zipfile.ZipFile(ipa_path).read(name)
-                   for name in originals if not name.endswith("/")), (
-            "An original application resource changed unexpectedly"
-        )
+        for name in originals:
+            if not name.endswith("/"):
+                assert assembled.read(name) == original.read(name), (
+                    "An original application resource changed unexpectedly: " + name
+                )
     print(json.dumps({"status":"PASS", "output":str(output),
                       "source_ipa":str(ipa_path), "model_package":str(models_path),
                       "original_models":list(MODELS),
