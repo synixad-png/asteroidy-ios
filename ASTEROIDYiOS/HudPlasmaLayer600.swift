@@ -9,6 +9,8 @@ import SwiftUI
 struct HudPlasmaLayer600:View {
     let hull:Int
     let armor:Int
+    let maxHull:Int
+    let maxArmor:Int
     let shield:Int?
     let insets:W3ScreenInsets568
     let layout:HudLayout600
@@ -16,7 +18,6 @@ struct HudPlasmaLayer600:View {
     let livePose:()->HudMotion600.Pose
 
     private static let names=["hull.bar","armor.bar","shield.bar"]
-    private static let maximums=[60,25,100]
     // Literal ARGB from RendererHudEnergy.cs.GaugeTint.
     private static let tints:[[Color]]=[
         [ink(18,255,32,23),ink(46,255,41,24),ink(128,231,20,11),
@@ -58,12 +59,13 @@ struct HudPlasmaLayer600:View {
                 let time=timeline.date.timeIntervalSinceReferenceDate
                     .truncatingRemainder(dividingBy:3600)
                 let values:[Int?]=[hull,armor,shield]
+                let maxima=[maxHull,maxArmor,100]
                 for i in 0..<3 {
                     let y=CGFloat(565+48*i)
                     guard let bar=SourceCombatHUD331.widgetContext(
                         bottom,layout,pose:pose,id:Self.names[i],
                         baseX:191,baseY:y+19) else{continue}
-                    Self.draw(bar,current:values[i],maximum:Self.maximums[i],
+                    Self.draw(bar,current:values[i],maximum:maxima[i],
                               x:191,y:y+19,style:i,time:time)
                 }
             }
