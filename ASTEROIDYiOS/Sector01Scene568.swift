@@ -238,8 +238,7 @@ struct Sector01Scene568: View {
                         original:planetariumURL600,
                         widget:planetarium,placement:placement,
                         viewport:combatHUDLayout,session:session,
-                        active:session.hud.phase == .playing,
-                        motionActive:!userPaused && !showingService)
+                        active:session.hud.phase == .playing)
                         .allowsHitTesting(false)
                 }
 
