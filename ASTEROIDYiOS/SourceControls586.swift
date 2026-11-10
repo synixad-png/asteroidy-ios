@@ -294,9 +294,8 @@ enum SourceControls586 {
         /// if later sectors and the missing PC co-op are not implemented.
         func combat(profile:Profile)->Combat {
             let a:(Int)->Bool={held($0,profile:profile)}
-            let horizontal=(a(1) ? 1:0)+(a(5) ? 1:0)
-                -(a(0) ? 1:0)-(a(4) ? 1:0)
-            let vertical=(a(3) ? 1:0)-(a(2) ? 1:0)
+            let horizontal = (a(1) ? 1 : 0) + (a(5) ? 1 : 0) - (a(0) ? 1 : 0) - (a(4) ? 1 : 0)
+            let vertical = (a(3) ? 1 : 0) - (a(2) ? 1 : 0)
             let move=Vector2(x:Float(horizontal),y:Float(vertical))
             let aim=Vector2(
                 x:Float((a(45) ? 1:0)-(a(44) ? 1:0)),
