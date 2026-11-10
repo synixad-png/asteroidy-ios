@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Touch alternative to PC F6. Edits ALL 46 approved source widgets.
 /// Paused mission owns this view; input zones and physics are never touched.
@@ -6,6 +7,10 @@ struct HudLayoutEditor600:View {
     @Environment(\.dismiss) private var dismiss
     @State private var document=HudLayout600.load()
     @State private var selected="hud.planetarium"
+    @State private var importingJSON=false
+    @State private var exportingJSON=false
+    @State private var exportDocument600:HudLayoutDocument600?
+    @State private var exchangeError600:String?
     let onSave:(HudLayout600)->Void
 
     private var selectedWidget:HudLayout600.Widget? {document.widget(selected)}
@@ -117,6 +122,24 @@ struct HudLayoutEditor600:View {
                         }
                         .buttonStyle(.borderedProminent)
                         .accessibilityIdentifier("hud-v600-save")
+                        Button("EKSPORTUJ UKŁAD JSON") {
+                            guard document.isValid else {
+                                exchangeError600=HudLayout600.LayoutError.invalidLayout.localizedDescription
+                                return
+                            }
+                            exportDocument600=HudLayoutDocument600(layout:document)
+                            exportingJSON=true
+                        }
+                        .accessibilityIdentifier("hud-v600-export-json")
+                        Button("IMPORTUJ UKŁAD JSON") {
+                            importingJSON=true
+                        }
+                        .accessibilityIdentifier("hud-v600-import-json")
+                        if let exchangeError600 {
+                            Text(exchangeError600)
+                                .font(.system(size:10,design:.monospaced))
+                                .foregroundStyle(.orange)
+                        }
                         Button("PRZYWRÓĆ CAŁY UKŁAD PC v600") {
                             document=HudLayout600.defaults()
                         }
@@ -130,6 +153,27 @@ struct HudLayoutEditor600:View {
             .padding(.horizontal,8)
         }
         .preferredColorScheme(.dark)
+        .fileImporter(isPresented:$importingJSON,
+                      allowedContentTypes:[.json]) { result in
+            do {
+                let url=try result.get()
+                let scoped=url.startAccessingSecurityScopedResource()
+                defer {if scoped {url.stopAccessingSecurityScopedResource()}}
+                let bytes=try Data(contentsOf:url)
+                document=try HudLayout600.decodeJSON(bytes)
+                exchangeError600=nil
+            } catch {
+                exchangeError600=error.localizedDescription
+            }
+        }
+        .fileExporter(isPresented:$exportingJSON,
+                      document:exportDocument600,
+                      contentType:.json,
+                      defaultFilename:"hud-layout-v600") { result in
+            if case .failure(let error)=result {
+                exchangeError600=error.localizedDescription
+            }
+        }
         .accessibilityIdentifier("hud-v600-editor")
     }
 }
