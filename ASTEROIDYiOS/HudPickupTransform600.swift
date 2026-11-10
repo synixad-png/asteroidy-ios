@@ -53,16 +53,18 @@ enum HudPickupTransform600 {
         let projected=HudMotionProject600.project(
             x:icon.x+25,y:icon.y+25,pose:pose,widget:defaultID)
         let x=Float(screen.x(projected.x,at:.bottomRight)*pixelPerPointX)
-        let y=Float(screen.y(projected.y,at:.bottomRight)*pixelPerPointY
-            +Double(animation.floatY)*screen.scale*pixelPerPointY)
+        let animatedY=screen.y(projected.y,at:.bottomRight)*pixelPerPointY
+        let floatOffset=Double(animation.floatY)*screen.scale*pixelPerPointY
+        let y=Float(animatedY+floatOffset)
         let pulse=1+pose.widgetPulse(widgetIDs[index])
         let iconSize=Float(min(pixel.width,pixel.height)*0.9)*pulse
+        let localRoll=Float(widget?.roll ?? 0)
+        let projectedRoll=pose.roll*pose.weight(widgetIDs[index])
         return Sample(x:x,y:y,
                       yaw:yaw+Float(widget?.yaw ?? 0)*Float.pi/180,
                       pitch:pitch+Float(widget?.pitch ?? 0)*Float.pi/180,
                       // PC DrawHudGlb: F6 roll + whole HUD roll + local.
-                      roll:roll+(Float(widget?.roll ?? 0)
-                            +pose.roll*pose.weight(widgetIDs[index]))*Float.pi/180,
+                      roll:roll+(localRoll+projectedRoll)*Float.pi/180,
                       size:iconSize)
     }
     static func model(_ s:Sample)->simd_float4x4 {
