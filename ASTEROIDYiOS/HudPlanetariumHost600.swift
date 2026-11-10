@@ -15,7 +15,7 @@ struct HudPlanetariumHost600:View {
     let active:Bool
 
     var body:some View {
-        TimelineView(.animation(minimumInterval:1.0/30.0,paused:!active)) { _ in
+        TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active)) { _ in
             let state=session.currentHudVisual600()
             let projected=HudMotionProject600.project(
                 x:widget.x+125,y:widget.y+67.5,
