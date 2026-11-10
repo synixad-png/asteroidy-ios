@@ -11,6 +11,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 scene=(root/"ASTEROIDYiOS/Sector01Scene568.swift").read_text()
 hud=(root/"ASTEROIDYiOS/SourceCombatHUD331.swift").read_text()
+plasma=(root/"ASTEROIDYiOS/HudPlasmaLayer600.swift").read_text()
 session=(root/"ASTEROIDYiOS/CarbonisSession568.swift").read_text()
 combat=(root/"ASTEROIDYiOS/CarbonisCombat568.swift").read_text()
 
@@ -35,9 +36,7 @@ expect_all(hud,(
     "Self.ability(",
     "safeLeft:insets.left,safeRight:insets.right",
     "let values:[Int?]=[hud.hull,hud.armor,hud.tarczaEnergy]",
-    "let maximums=[60,25,100]",
-    "titles[i],values[i],maximums[i],191,y,i,Double(hud.seconds)",
-    "HudEnergy600.ribbon(",
+    "titles[i],values[i],191,y)",
     "let cx:CGFloat=91,cy:CGFloat=612,r:CGFloat=69",
     "for i in 0..<32",
     "920+100*i",
@@ -47,6 +46,13 @@ expect_all(hud,(
     ".allowsHitTesting(false)",
     ".accessibilityIdentifier(\"sector01-source-w3-hud331\")",
 ),"hud331")
+expect_all(plasma,(
+    "HudEnergy600.ribbon(",
+    "TimelineView(.animation(minimumInterval:1.0/60.0",
+    "let maxima=[maxHull,maxArmor,100]",
+    "for layer in 0..<5",
+    "for k in 0..<7",
+), "v600 animated plasma renderer")
 expect_all(session,(
     "struct RadarContact",
     "Sphere67.normal(point)",
@@ -58,7 +64,8 @@ expect_all(session,(
     "game.tokenPickups.compactMap",
     "tokenBalance=initialTokens>Int.max-earned ? Int.max : initialTokens+earned",
     "shieldCharges=game.shieldCharges",
-    "tarczaEnergy=Int(game.tarcza145.energy.rounded())",
+    "tarczaEnergy=max(0,Int(ceil(Double(game.tarcza145.energy))))",
+    "maxHull=game.maxHull;maxArmor=game.maxArmor",
     "ionAmmo=game.ionAmmo; bombs=game.bombs",
     "boostCharges=game.boost71.charges",
     "boostActive=game.boost71.active",
