@@ -35,12 +35,35 @@ struct HudLayout600:Codable,Equatable {
         }
         return value
     }
+    // Bind original PC v600 model identities, never arbitrary user-supplied
+    // asset paths from an imported layout.
+    private static let expectedModels:[String:String]=[
+        "ion.icon":"energy","bomb.icon":"bomb",
+        "shield_charge.icon":"shield","boost.icon":"boost",
+        "hud.planetarium":"planetarium"
+    ]
+    enum LayoutError:Error,LocalizedError {
+        case invalidLayout
+        var errorDescription:String? {
+            "Układ HUD musi zawierać dokładnie 46 zgodnych elementów PC v600."
+        }
+    }
+    static func decodeJSON(_ data:Data) throws->HudLayout600 {
+        let value=try JSONDecoder().decode(HudLayout600.self,from:data)
+        guard value.isValid else{throw LayoutError.invalidLayout}
+        return value
+    }
+    func encodeJSON() throws->Data {
+        guard isValid else{throw LayoutError.invalidLayout}
+        return try JSONEncoder().encode(self)
+    }
     var isValid:Bool {
         guard schema==1,widgets.count==46 else{return false}
         let originals=Self.approvedWidgetIDs
         guard Set(widgets.map(\.id)) == originals else{return false}
         return widgets.allSatisfy { item in
-            guard item.x.isFinite,item.y.isFinite,item.scale.isFinite,
+            guard item.glb==Self.expectedModels[item.id],
+                  item.x.isFinite,item.y.isFinite,item.scale.isFinite,
                   HudWidgetGeometry600.scaleRange(for:item).contains(item.scale),
                   let xRange=HudWidgetGeometry600.xRange(for:item),
                   let yRange=HudWidgetGeometry600.yRange(for:item),
@@ -73,7 +96,7 @@ struct HudLayout600:Codable,Equatable {
         return value
     }
     @discardableResult func save()->Bool {
-        guard isValid,let data=try? JSONEncoder().encode(self) else{return false}
+        guard let data=try? encodeJSON() else{return false}
         UserDefaults.standard.set(data,forKey:Self.key)
         return true
     }
