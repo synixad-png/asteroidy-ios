@@ -14,8 +14,9 @@ for marker in (
     "gameSession?.setHUD3DIconsReady600(true)",
     "if let session=gameSession,",
     "hudIconsAvailable600,",
-    "let screen=session.currentHudScreen600()",
+    "let screen=session.currentHudRenderState600()",
     "viewport:viewport",
+    "pose:screen.pose,"
     "HudPickupTransform600.sample(",
     "HudPickupTransform600.mvp(",
     "encoder.setVertexBuffer(asset.triangles,offset:0,index:0)",
