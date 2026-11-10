@@ -16,6 +16,7 @@ assert "Canvas(opaque:false,rendersAsynchronously:false)" in p
 assert "let pose=livePose()" in p
 assert "let values:[Int?]=[hull,armor,shield]" in p
 assert "let maxima=[maxHull,maxArmor,100]" in p
+assert "maxHull:session.hud.maxHull,maxArmor:session.hud.maxArmor" in scene
 assert "Self.draw(bar,current:values[i],maximum:maxima[i]" in p
 assert "HudEnergy600.ribbon(" in p and "for layer in 0..<5" in p
 assert "for k in 0..<7" in p
@@ -50,6 +51,7 @@ assert "maxHull:Int" in session and "maxArmor:Int" in session
 assert "maxHull:Int=60,maxArmor:Int=25" in physics
 assert "tarczaEnergy=max(0,Int(ceil(Double(game.tarcza145.energy))))" in session
 for marker in ("[9.1,6.9,4.1,2.35,0.78]","[2.6,2.35,1.65,0.88,0.36]",
-               "ceil(length/5)","style:Int,layer:Int","let cap=min(1,max(0.16"):
+               "ceil(length/5)","style:Int,layer:Int","let cap=min(1,max(0.16",
+               "coordinate*8.1-time*2.1+Double(style)*0.73"):
     assert marker in energy
 print("PASS PC v600 HUD: 15 exact plasma tints, 5 turbulent ribbons, 7 licks, terminal, 60Hz isolated Canvas, real maxima, per-widget motion")
