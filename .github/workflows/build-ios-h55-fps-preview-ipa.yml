@@ -29,6 +29,9 @@ jobs:
           python3 Tests/HudMotionLiveRenderer600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudPlanetariumIntegration600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudPickupMetal600Contract.py | tee -a reports/hud-v600-source.txt
+          python3 Tests/HudPlanetariumCorona600Contract.py | tee -a reports/hud-v600-source.txt
+          python3 Tests/HudLayout600Contract.py | tee -a reports/hud-v600-source.txt
+          python3 Tests/HudMotionEventCounters600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/H55FPSOriginalMaterial580Tests.py | tee -a reports/fps-source.txt
           # Validate final 352x198/16:9 preview and isolated depth source.
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSSettingsSection580.swift
@@ -120,6 +123,22 @@ jobs:
           unzip -t ASTEROIDY_iOS_HUD_v600_H55_PELNE_UNSIGNED.ipa | tail -1 | tee reports/ipa-crc.txt
           shasum -a 256 ASTEROIDY_iOS_HUD_v600_H55_PELNE_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
           stat -f '%z bytes' ASTEROIDY_iOS_HUD_v600_H55_PELNE_UNSIGNED.ipa | tee reports/ipa-size.txt
+          python3 - <<'PY' | tee reports/required-source-assets.txt
+          import zipfile,plistlib
+          from pathlib import Path
+          p=Path("ASTEROIDY_iOS_HUD_v600_H55_PELNE_UNSIGNED.ipa")
+          assert p.stat().st_size>30_000_000, "ABORT: truncated asset bundle; never publish 11MB IPA again"
+          with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None
+              names=z.namelist()
+              root="Payload/ASTEROIDY iOS.app/"
+              assert len([n for n in names if n.startswith(root)])>=75, "Incomplete source assets"
+              for name in ("gloves_parted.glb","gloves_combined.glb","EXP01_SOURCE_v601.glb",
+                           "boost.glb","shield.glb","energy.glb","bomb.glb",
+                           "Sector01CarbonisVertices.bin","W3HomePlanet290OriginalGPU.bin"):
+                  assert root+name in names, "Missing source GLB/texture: "+name
+          print("PASS native complete-resource IPA: original H55 hands/weapon, four pickups, combat and W3 assets")
+          PY
       - name: Publish actual full-source native IPA
         uses: actions/upload-artifact@v4
         with:
