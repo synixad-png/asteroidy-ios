@@ -60,8 +60,12 @@ struct SourceControlRouter586 {
         let jump=a(11)
         let interact=a(12)
         let deadzone=Float(profile.deadZone)/100
-        let lookX=abs(input.axis(2))>deadzone ? input.axis(2):0
-        let lookY=abs(input.axis(3))>deadzone ? input.axis(3):0
+        // Both H55 and CARBONIS must consume the SAME remappable
+        // source PC actions 33/34. No second fixed A2/A3 map.
+        let mappedX=input.boundAnalog(33,profile:profile)
+        let mappedY=input.boundAnalog(34,profile:profile)
+        let lookX=abs(mappedX)>deadzone ? mappedX:0
+        let lookY=abs(mappedY)>deadzone ? mappedY:0
         defer {previousJump=jump;previousInteract=interact}
         return Hangar(
             moveForward:max(-1,min(1,forward)),
