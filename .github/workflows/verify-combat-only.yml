@@ -110,6 +110,8 @@ on:
       - 'Tests/OriginalMusicCombatPause568Contract.py'
       - 'Tests/IOSAudioLockResume568Contract.py'
       - 'Tests/IOSSourceCombatPause568Contract.py'
+      - 'Tests/PC586InputIntegrationContract.py'
+      - 'Tests/SourceControlRouter586Tests.swift'
       - 'Tests/IOSShotExplosionAudioResume568Contract.py'
       - 'ASTEROIDYiOS/OriginalMusicTransition568.swift'
       - 'Tests/OriginalMusicTransition568Tests.swift'
