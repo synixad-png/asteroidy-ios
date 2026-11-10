@@ -18,10 +18,11 @@ final class CarbonisSession568: ObservableObject {
         var weaponLevel:Int
         var rapidLevel:Int
         var shieldCharges:Int
-        var tarczaEnergy:Int?  // nil: unported Tarcza145, never invent energy
+        var tarczaEnergy:Int?  // real PC Tarcza145 energy, separate from shieldCharges
         var ionAmmo:Int
         var bombs:Int
         var boostCharges:Int
+        var boostActive:Bool
         var hull:Int
         var armor:Int
         var lives:Int
@@ -67,10 +68,11 @@ final class CarbonisSession568: ObservableObject {
             weaponLevel=game.upgradeLevel
             rapidLevel=game.rapidLevel
             shieldCharges=game.shieldCharges
-            // PC580 IonAmmo/Bombs are real combat inventory. The Boost71
-            // and Tarcza145 systems remain unavailable in CARBONIS 01.
-            tarczaEnergy=nil
-            ionAmmo=game.ionAmmo; bombs=game.bombs; boostCharges=0
+            // PC586: three independent active combat resource systems.
+            tarczaEnergy=Int(game.tarcza145.energy.rounded())
+            ionAmmo=game.ionAmmo; bombs=game.bombs
+            boostCharges=game.boost71.charges
+            boostActive=game.boost71.active
             let camera=game.flight.camera
             func contact(_ point:Vec2,_ kind:Int)->RadarContact? {
                 let n=Sphere67.normal(point)
@@ -115,7 +117,25 @@ final class CarbonisSession568: ObservableObject {
         if let aim {self.aim=aim}
         if let shooting {self.shooting=shooting}
     }
-    func release() {move=Vec2(x:0,y:0);aim=Vec2(x:0,y:0);shooting=false}
+    func release() {
+        move=Vec2(x:0,y:0)
+        aim=Vec2(x:0,y:0)
+        shooting=false
+        // A paused backgrounded app cannot retain a stuck V-equivalent.
+        game.setShieldHeld(false)
+    }
+    func holdShield145(_ pressed:Bool) {
+        let held=pressed && !paused && game.phase == .playing
+        game.setShieldHeld(held)
+        if !held {
+            hud=HUD(game,summarySeconds:summaryElapsed)
+        }
+    }
+    @discardableResult func useBoost71()->Bool {
+        guard !paused,game.activateBoost71() else{return false}
+        hud=HUD(game,summarySeconds:summaryElapsed)
+        return true
+    }
     /// One physical touch is one bomb action; PC UseBomb validates
     /// threats/inventory/cooldown atomically inside the simulation.
     @discardableResult func useBomb()->Bool {
