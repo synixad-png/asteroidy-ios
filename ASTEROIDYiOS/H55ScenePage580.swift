@@ -47,7 +47,12 @@ import simd
     private var moveRight:Float=0
     /// Single canonical PC586 profile and device route; no second
     /// walking/collision solver or 60 duplicated H55 key handlers.
-    private let controlProfile586=SourceControls586.Profile.load()
+    private var controlProfile586=SourceControls586.Profile.load()
+    /// Read changed settings ONCE when returning from the W3 settings
+    /// screen, not in the H55 SceneKit render/physics frame loop.
+    func refreshControls586() {
+        controlProfile586=SourceControls586.Profile.load()
+    }
     private var controlRouter586=SourceControlRouter586()
     private var clock:CADisplayLink?
     private var lastTick:CFTimeInterval?
@@ -924,7 +929,10 @@ struct H55ScenePage580: View {
         .onChange(of:showingSettings) { visible in
             loader.pauseForSettings(showingPause || visible)
             if visible {SourceHardwareInput586.shared.clearKeyboard()}
-            if !visible {loader.setLighting(fill:lightingFill,red:lightingRed)}
+            if !visible {
+                loader.setLighting(fill:lightingFill,red:lightingRed)
+                loader.refreshControls586()
+            }
         }
         .onDisappear {
             showingSettings=false
