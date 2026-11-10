@@ -230,7 +230,7 @@ jobs:
           /tmp/h11-profile-archive
           /tmp/h11-source-all
           swiftc -frontend -parse ASTEROIDYiOS/H55WorkshopPanel580.swift
-          swiftc -frontend -parse ASTEROIDYiOS/CarbonisCombat568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/SourceCombatSupply586.swift ASTEROIDYiOS/CarbonisCombat568.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           python3 - <<'PY'
