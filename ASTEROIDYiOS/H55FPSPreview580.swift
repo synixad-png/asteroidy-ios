@@ -55,7 +55,8 @@ struct H55FPSPreview580:UIViewRepresentable {
         let c=context.coordinator
         c.onStatus=onStatus
         c.currentMotion=motion
-        c.fps=H55FPSScene580(camera:camera,inform:{ [weak c] message in
+        c.fps=H55FPSScene580(camera:camera,configuration:settings,
+                              inform:{ [weak c] message in
             c?.onStatus?(message)
         })
         c.fps?.synchronizePreview(settings)
