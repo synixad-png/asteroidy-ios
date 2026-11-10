@@ -15,6 +15,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
     let playing:Bool
     let livePose:()->HudMotion600.Pose
     let liveCapsules:()->HudCapsuleController600.Snapshot
+    let liveGameTime:()->Double
 
     func makeCoordinator()->Coordinator { Coordinator() }
 
@@ -30,7 +31,8 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         view.delegate=context.coordinator
         context.coordinator.set(capsule,pitch:pitch,yaw:yaw,roll:roll,
                                 pose:pose,livePose:livePose,
-                                liveCapsules:liveCapsules)
+                                liveCapsules:liveCapsules,
+                                liveGameTime:liveGameTime)
         context.coordinator.load(original,into:view,playing:playing)
         return view
     }
@@ -56,6 +58,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         private var pose=HudMotion600.Pose()
         private var livePose:(()->HudMotion600.Pose)?
         private var liveCapsules:(()->HudCapsuleController600.Snapshot)?
+        private var liveGameTime:(()->Double)?
         private var binding:HudCapsuleBinding600?
         private var bubbles:[Int:SCNNode]=[:]
         private var flashes=[SCNNode]()
@@ -67,7 +70,8 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         func set(_ updated:HudCapsuleController600.Snapshot,
                  pitch:Float,yaw:Float,roll:Float,
                  pose:HudMotion600.Pose,livePose:@escaping ()->HudMotion600.Pose,
-                 liveCapsules:@escaping ()->HudCapsuleController600.Snapshot) {
+                 liveCapsules:@escaping ()->HudCapsuleController600.Snapshot,
+                 liveGameTime:@escaping ()->Double) {
             mutex.lock()
             capsule=updated
             self.pitch=pitch
@@ -76,6 +80,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
             self.pose=pose
             self.livePose=livePose
             self.liveCapsules=liveCapsules
+            self.liveGameTime=liveGameTime
             mutex.unlock()
         }
         func reset() {
@@ -87,6 +92,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
             corona=nil
             livePose=nil
             liveCapsules=nil
+            liveGameTime=nil
             mutex.unlock()
         }
 
@@ -206,7 +212,9 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                 camera.eulerAngles=SCNVector3(radians,
                     yaw*Float.pi/180,roll*Float.pi/180)
             }
-            corona?.advance(at:time)
+            // PC v602 DrawPlanetariumCorona takes Game.Time, not the
+            // independent renderer clock used by AnimatePlanet463.
+            corona?.advance(at:liveGameTime?() ?? 0)
         }
     }
 }
