@@ -134,8 +134,21 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                 HudCapsuleBinding600(nodeNames:$0.names,
                                      translationX:$0.bubbleExtents)
             }
+            let importURL:URL
+            do {
+                importURL=try HudPlanetariumGLTFImport.compatibleURL(
+                    originalBytes:bytes)
+            } catch {
+                NSLog("HUD602 planetarium: original PC602 glTF incompatible with GLTFKit2: %@",
+                      String(describing:error))
+                return
+            }
             let loadGeneration=generation
-            GLTFAsset.load(with:url,options:[:]) { _,status,asset,error,_ in
+            GLTFAsset.load(with:importURL,options:[:]) { _,status,asset,error,_ in
+                if status == .error {
+                    NSLog("HUD602 planetarium: importer error %@",String(describing:error))
+                    return
+                }
                 if status != .complete {return}
                 guard let asset else {
                     NSLog("HUD602 planetarium: GLTFKit2 import failed: %@",
@@ -148,6 +161,15 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                           self.generation==loadGeneration else{return}
                     guard let model=source.defaultScene else {
                         NSLog("HUD602 planetarium: original GLB has no imported default scene")
+                        return
+                    }
+                    var geometryCount=0
+                    model.rootNode.enumerateHierarchy { node,_ in
+                        if node.geometry != nil {geometryCount += 1}
+                    }
+                    guard geometryCount >= 20 else {
+                        NSLog("HUD602 planetarium: imported scene has only %ld geometry nodes, refusing silent partial import",
+                              geometryCount)
                         return
                     }
                     let clip=source.animations.first(where:{
@@ -261,8 +283,9 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     view.pointOfView=cameraNode
                     view.isPlaying=playing
                     importedPlayer?.play()
-                    NSLog("HUD602 planetarium: original GLB attached, nodes=%ld, animation=%@, capsules=%@",
-                          source.nodes.count,clip == nil ? "unavailable" : "bound",
+                    NSLog("HUD602 planetarium: original GLB attached, geometry=%ld, nodes=%ld, animation=%@, capsules=%@",
+                          geometryCount,source.nodes.count,
+                          clip == nil ? "unavailable" : "bound",
                           activeBinding == nil ? "unavailable" : "bound")
                 }
             }
