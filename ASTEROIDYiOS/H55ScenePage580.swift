@@ -90,6 +90,12 @@ import simd
         }
         fpsCalibration=fpsViewmodel?.configuration ?? fpsCalibration
     }
+    func refreshGloveBrightness602() {
+        fpsViewmodel?.refreshGloveBrightness602()
+        if let fpsOverlayScene {
+            H55FPSLighting580.configure(scene:fpsOverlayScene,mode:fpsMode)
+        }
+    }
     func setFPSCalibration(_ target:H55FPSSettings580.Target,
                            component:Int,value:Int) {
         fpsViewmodel?.calibrate(target,component:component,value:value)
