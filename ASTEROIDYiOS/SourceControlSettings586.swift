@@ -41,7 +41,9 @@ struct SourceControlSettings586:View {
 
     private func status(_ action:Int)->String {
         switch SourceControls586.context(for:action) {
-        case .combat:return "DZIAŁA / MISJA 01"
+        case .combat:
+            return (action==33 || action==34)
+                ? "DZIAŁA / MISJA 01 + H55" : "DZIAŁA / MISJA 01"
         case .hangar:return "DZIAŁA / H55"
         case .other:return "NIEPRZENIESIONE / PC"
         }
