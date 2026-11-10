@@ -105,7 +105,7 @@ import simd
             return
         }
         guard let url=H55FPSAssets580.installed(kind) else {
-            inform("FPS: ZAIMPORTUJ ORYGINALNY \(kind.fileName) W MENU PAUZA")
+            inform("FPS: BRAK \(kind.fileName) — USTAWIENIA > \(kind == .weapon ? "BROŃ" : "RĘKAWICE")")
             return
         }
         loading.insert(kind)
@@ -157,8 +157,14 @@ import simd
         guard let scene=source.defaultScene else{return false}
         if kind == .weapon {
             let nodes=scene.rootNode.childNodes
-            guard !nodes.isEmpty,
-                  source.nodes.filter({$0.geometry != nil}).count>30 else{return false}
+            // GLTFKit2 may collapse intermediate original GLB nodes:
+            // reject only genuinely geometry-free source scenes.
+            guard !nodes.isEmpty else{return false}
+            var hasGeometry=false
+            scene.rootNode.enumerateHierarchy { node,_ in
+                if node.geometry != nil {hasGeometry=true}
+            }
+            guard hasGeometry else{return false}
             weaponRoot.childNodes.forEach{$0.removeFromParentNode()}
             // Keep ALL original EXP-01 parts, hierarchy, PBR and sockets.
             for node in nodes {
