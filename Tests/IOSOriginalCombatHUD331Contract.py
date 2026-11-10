@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression gate for original Windows v568 RendererW3Combat331 iOS port.
+"""Regression gate for v568 combat HUD invariants with v600 plasma upgrade.
 
 Source reference: Windows/src/RendererW3Combat331.cs
 SHA-256: 8119c1d98936e0c5ec602b49cc98f41f945312792122b33ce82740735ba0ffc3
@@ -34,10 +34,10 @@ expect_all(hud,(
     "Self.radar(bottomLeft,hud)",
     "Self.ability(bottomRight,type:i",
     "safeLeft:insets.left,safeRight:insets.right",
-    "hud.hull,60,191,565,Self.cyan",
-    "hud.armor,25,191,613,Self.gold",
-    "hud.tarczaEnergy,100,191,661,Self.blue",
-    "let n=14, width:CGFloat=148, gap:CGFloat=3.2",
+    "hud.hull,60,191,565,0,Double(hud.seconds)",
+    "hud.armor,25,191,613,1,Double(hud.seconds)",
+    "hud.tarczaEnergy,100,191,661,2,Double(hud.seconds)",
+    "HudEnergy600.ribbon(",
     "let cx:CGFloat=91,cy:CGFloat=612,r:CGFloat=69",
     "for i in 0..<32",
     "920+100*i",
@@ -109,4 +109,4 @@ assert "AVAudioPlayer" not in hud
 assert "Timer(" not in hud
 assert "DispatchQueue" not in hud
 assert "MetalRenderer" not in hud
-print("PASS RendererW3Combat331 source-contract: four-corner screen anchors, live safe areas, source values, hemispherical radar, noninterference with audio/touch/120Hz gameplay")
+print("PASS RendererW3Combat331/v600 source-contract: four-corner anchors, live plasma and telemetry, radar, unchanged audio/touch/120Hz gameplay")
