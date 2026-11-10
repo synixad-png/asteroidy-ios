@@ -8,17 +8,29 @@ import GameController
 /// No own render loop, repeating timer, polling service or global hooks.
 final class SourceHardwareInput586 {
     static let shared=SourceHardwareInput586()
-    private(set) var pressed:Set<Int>=[]
+    // UIKit press events and MTKView draw callbacks can occur on different
+    // threads. Protect the small Set; never mutate it during rendering.
+    private var pressed:Set<Int>=[]
+    private let pressedLock=NSLock()
     private init() {}
 
     func changeKey(_ code:Int,pressed down:Bool) {
         guard code>0 else{return}
+        pressedLock.lock()
         if down {pressed.insert(code)}
         else {pressed.remove(code)}
+        pressedLock.unlock()
     }
-    func clearKeyboard() {pressed.removeAll()}
+    func clearKeyboard() {
+        pressedLock.lock()
+        pressed.removeAll()
+        pressedLock.unlock()
+    }
 
     func snapshot()->SourceControls586.Snapshot {
+        pressedLock.lock()
+        let keys=pressed
+        pressedLock.unlock()
         var buttons:Set<Int>=[]
         var axes:[Float]=Array(repeating:0,count:6)
         if let gamepad=GCController.controllers().first(where:{
@@ -52,7 +64,7 @@ final class SourceHardwareInput586 {
             axes[5]=gamepad.rightTrigger.value
         }
         return SourceControls586.Snapshot(
-            keys:pressed,buttons:buttons,axes:axes)
+            keys:keys,buttons:buttons,axes:axes)
     }
 
     /// UIKit HID usage numbers, converted to PC v586 virtual-key IDs.
