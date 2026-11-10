@@ -56,10 +56,10 @@ enum HudPlanetariumTracks600 {
             guard let viewOffset=view["byteOffset"] as? Int,
                   let viewLength=view["byteLength"] as? Int,
                   viewOffset>=0,viewLength>=12,
-                  let strideValue=view["byteStride"] as? Int ?? 12,
-                  strideValue>=12,strideValue<=256,
-                  let accessorOffset=accessor["byteOffset"] as? Int ?? 0,
-                  accessorOffset>=0 else{return nil}
+                  viewLength>=12 else{return nil}
+            let strideValue=view["byteStride"] as? Int ?? 12
+            let accessorOffset=accessor["byteOffset"] as? Int ?? 0
+            guard strideValue>=12,strideValue<=256,accessorOffset>=0 else{return nil}
             let last=accessorOffset+(count-1)*strideValue+12
             guard last<=viewLength,
                   viewOffset<=Int(binaryLength),
