@@ -11,6 +11,10 @@ scene=read("Sector01Scene568.swift")
 plasma=read("HudPlasmaLayer600.swift")
 energy=read("HudEnergy600.swift")
 session=read("CarbonisSession568.swift")
+renderer=read("Sector01CarbonisPreview568.swift")
+hud=read("SourceCombatHUD331.swift")
+planetarium=read("HudPlanetariumScene600.swift")
+host=read("HudPlanetariumHost600.swift")
 
 # Previous literal backslash escaped Swift interpolation and rejected all 72
 # genuine CAPSULE_{0,1,2}_WATER_BUBBLE_* nodes in SHA-approved PC v602 GLB.
@@ -47,6 +51,37 @@ assert 'exportingJSON=true' in editor
 assert 'TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active))' in plasma
 assert 'let time=liveTime().truncatingRemainder(dividingBy:3600)' in plasma
 assert 'hudLiveSeconds600=Double(game.elapsed)' in session
+# PC HudGlbAssets.DrawHudGlb and HudCapsuleController use renderClock,
+# RendererHudEnergy uses Game.Time; those two clocks MUST stay distinct.
+assert 'let hudRenderTime600=ProcessInfo.processInfo.systemUptime-started' in renderer
+assert 'seconds:now,hullPulse:hudPose600.hullPulse' in session
+assert 'seconds:Double(game.elapsed),hullPulse:' not in session
+assert 'corona?.advance(at:liveGameTime?() ?? 0)' in planetarium
+assert 'liveGameTime:{ [weak session] in' in host
+assert 'active:session.hud.phase == .playing)' in scene
+# PC FramePose is assigned EVERY render; numeric HUD still snapshots at 10Hz.
+assert 'TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active))' in hud
+assert 'hud.motion=livePose()' in hud
+assert 'if now-lastHUD > 0.10 {' in session
+assert 'livePose:{ [weak session] in' in scene
+# GLB positions/model rotations must be PC Y/X/Z, never a rotated camera.
+asset_center='static let pc602ModelCenterX:Float = 2.74528861'
+asset_radius='static let pc602ModelRadius:Double = 5.112107576242468'
+assert asset_center in asset and asset_radius in asset
+assert 'centered.position=SCNVector3(' in planetarium
+assert 'yawPivot.eulerAngles.y=yaw*Float.pi/180' in planetarium
+assert 'pitchPivot.eulerAngles.x=pitch*Float.pi/180' in planetarium
+assert 'rollPivot.eulerAngles.z=(roll+framePose.roll*weight)*Float.pi/180' in planetarium
+assert 'camera.eulerAngles=' not in planetarium
+# PC GPU DrawEnergyRibbon emits TWO triangles per step, not a self-overlapping polygon.
+assert 'ribbonTriangles(_ points:[HudEnergy600.Point])->Path' in plasma
+assert 'triangle(points[i],points[i+1],points[last-i])' in plasma
+assert 'triangle(points[i+1],points[last-i-1],points[last-i])' in plasma
+assert 'c.fill(ribbonTriangles(vertices)' in plasma
+assert 'return top+Array(bottom.reversed())' not in energy
+# F6 editor must leave BOTH touch zones inactive on a paused real-world canvas.
+assert '.allowsHitTesting(!showingHudEditor600)' in scene
+assert 'hudEditorOriginal600=hudLayout600' in scene
 assert 'var polygon=[Point](repeating:' in energy
 assert 'return top+Array(bottom.reversed())' not in energy
 assert 'vertices.map{CGPoint' not in plasma
