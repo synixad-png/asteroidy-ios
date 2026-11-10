@@ -87,7 +87,7 @@ struct SourceCombatHUD331: View {
                                        baseX:191,baseY:y+19),
                     Self.widgetContext(bottomLeft,layout600,pose:hud.motion,id:names[i]+".value",
                                        baseX:341,baseY:y),
-                    titles[i],values[i],maximums[i],191,y,i,Double(hud.seconds))
+                    titles[i],values[i],191,y)
             }
             let counts=[hud.ionAmmo,hud.bombs,hud.shieldCharges,hud.boostCharges]
             let namesGLB=["ion","bomb","shield_charge","boost"]
@@ -117,7 +117,7 @@ struct SourceCombatHUD331: View {
     // PC HudMotionPose.Apply: independent visual matrix per anchored group.
     // Gameplay reticle and screen-touch gesture zones are intentionally outside
     // this drawing context and never inherit decorative HUD movement.
-    private static func applyMotion(_ context:inout GraphicsContext,
+    static func applyMotion(_ context:inout GraphicsContext,
                                     pose:HudMotion600.Pose,widget:String) {
         let weight=CGFloat(pose.weight(widget))
         let dx=CGFloat(pose.x)*weight,dy=CGFloat(pose.y)*weight
@@ -131,7 +131,7 @@ struct SourceCombatHUD331: View {
 
     // HUD v600 widget offsets are applied after the platform safe-area
     // anchor. Default source-space geometry is not duplicated or rewritten.
-    private static func widgetContext(_ base:GraphicsContext,
+    static func widgetContext(_ base:GraphicsContext,
                                       _ layout:HudLayout600,
                                       pose:HudMotion600.Pose,id:String,
                                       baseX:CGFloat,baseY:CGFloat)->GraphicsContext? {
@@ -225,65 +225,28 @@ struct SourceCombatHUD331: View {
             line(frame,776,46,1262,46,color(67,109,145,156),0.8)
         }
     }
-    // PC v600 screen-space gauge. Uses the real HUD snapshot and source
-    // turbulence; no square segments, no images and no game-state writes.
+    // PC RendererHudEnergy.DrawEnergyGauge: the base guide and both
+    // thin outline rails are static. Dynamic plasma/terminal are rendered
+    // separately by HudPlasmaLayer600 at display cadence, avoiding 60Hz
+    // regeneration of scores, text and radar geometry.
     private static func gauge(_ titleContext:GraphicsContext?,
                               _ barContext:GraphicsContext?,
                               _ valueContext:GraphicsContext?,
                               _ name:String,_ current:Int?,
-                              _ maximum:Int,_ x:CGFloat,_ y:CGFloat,
-                              _ style:Int,_ time:Double) {
+                              _ x:CGFloat,_ y:CGFloat) {
         if let titleContext {label(titleContext,name,x,y,dim)}
-        let width:Double=148
-        let fraction=HudEnergy600.fraction(current,maximum:maximum)
-        let left=Double(x)+1
-        let baseY=Double(y)+19
-        let guide=polygon([
-            CGPoint(x:left,y:baseY),
-            CGPoint(x:left+width,y:baseY),
-            CGPoint(x:left+width-2,y:baseY+9),
-            CGPoint(x:left,y:baseY+9)
-        ])
         if let barContext {
-            barContext.fill(guide,with:.color(color(160,8,22,31)))
-        if fraction>0 {
-            let length=(width-2)*fraction
-            let palette:[[Color]]=[
-                [color(18,255,32,23),color(46,255,41,24),
-                 color(128,231,20,11),color(210,255,60,31),color(235,255,205,150)],
-                [color(20,255,93,6),color(53,255,124,17),
-                 color(140,238,103,5),color(223,255,178,38),color(242,255,237,166)],
-                [color(18,37,255,50),color(49,55,252,56),
-                 color(129,16,205,47),color(212,104,255,72),color(236,228,255,187)]
-            ]
-            for layer in 0..<5 {
-                let vertices=HudEnergy600.ribbon(
-                    x:left,y:baseY,width:width-2,length:length,
-                    time:time,style:style,layer:layer)
-                let points=vertices.map{CGPoint(x:$0.x,y:$0.y)}
-                barContext.fill(polygon(points),with:.color(palette[style][layer]))
-            }
-            // Independent flame tongues trace the irregular edges.
-            for k in 0..<7 {
-                let drift = (Double(k) * 0.61803398875
-                    + time * (0.072 + 0.011 * Double(k % 3))
-                    + Double(style) * 0.17).truncatingRemainder(dividingBy: 1)
-                let local=drift*length
-                if length-local<3.5 {continue}
-                let xx=left+local
-                let turbulence=abs(HudEnergy600.wave(local/(width-2),
-                    time:time,seed:Double(style)+Double(k)*0.89))
-                let reach=2.5+5.3*turbulence
-                let upper=k%2==0
-                let edge=baseY+(upper ? -0.3:9.3)
-                let tip=edge+(upper ? -reach:reach)
-                barContext.fill(polygon([
-                    CGPoint(x:xx-1.6,y:edge),
-                    CGPoint(x:xx+0.8,y:tip),
-                    CGPoint(x:xx+4.4,y:edge+(upper ? 0.4 : -0.4))
-                ]),with:.color(palette[style][2]))
-            }
-        }
+            let barY=y+19
+            barContext.fill(polygon([
+                CGPoint(x:x+2,y:barY),
+                CGPoint(x:x+148,y:barY),
+                CGPoint(x:x+146,y:barY+9),
+                CGPoint(x:x,y:barY+9)
+            ]),with:.color(color(160,8,22,31)))
+            line(barContext,x+1,barY-0.4,x+147.4,barY-0.4,
+                 color(69,90,123,134),0.7)
+            line(barContext,x,barY+9.3,x+146,barY+9.3,
+                 color(55,74,101,111),0.7)
         }
         if let valueContext {
             text(valueContext,current.map{String(max(0,$0))} ?? "—",
