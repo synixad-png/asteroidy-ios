@@ -11,6 +11,7 @@ on:
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'Tests/SourceControls586Tests.swift'
       - 'Tests/SourceControlRouter586Tests.swift'
+      - 'Tests/PC586InputIntegrationContract.py'
       - 'ASTEROIDYiOS/SourceControlRouter586.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - '.github/workflows/verify-pc586-controls.yml'
@@ -50,3 +51,7 @@ jobs:
           assert 'ASTEROIDY_CONTROLS_1' in source and 'ASTEROIDY_CONTROLS_2' in source
           print('PASS fixed PC source indices; no fake co-op/atlas implementation')
           PY
+      - name: Guard W3 native 65-row menu and real CARBONIS/H55 input integration
+        run: |
+          set -euo pipefail
+          python3 Tests/PC586InputIntegrationContract.py
