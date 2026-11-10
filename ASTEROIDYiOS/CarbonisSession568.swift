@@ -245,8 +245,12 @@ final class CarbonisSession568: ObservableObject {
         motionSample.armor=Float(game.armor)
         motionSample.shield=game.tarcza145.energy
         motionSample.damage=motionSample.hull+motionSample.armor+motionSample.shield
-        motionSample.pickups=max(0,game.collectedLootTokens)
-        motionSample.shieldActive=game.tarcza145.active
+        // PC HudMotionSample.Read: lifetime mission event counters, not
+        // active bullet count or wallet balance. Pickups include consumables.
+        motionSample.shots=game.hudEvents.shots
+        motionSample.hits=game.hudEvents.hits
+        motionSample.pickups=game.hudEvents.pickups
+        motionSample.shieldActive=game.tarcza145.energy>0
         let hudPose600=hudMotion600.update(motionSample,at:now,
                                           active:game.phase == .playing)
         // Feed normalized live values, never inventory charges as energy.
