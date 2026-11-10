@@ -1,0 +1,43 @@
+name: ASTEROIDY iOS - PC586 controls 60 + 5 regression
+on:
+  push:
+    branches: [feature/ios-h55-v580-native-entry]
+    paths:
+      - 'ASTEROIDYiOS/SourceControls586.swift'
+      - 'ASTEROIDYiOS/SourceControlSettings586.swift'
+      - 'ASTEROIDYiOS/SourceHardwareInput586.swift'
+      - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
+      - 'ASTEROIDYiOS/CarbonisSession568.swift'
+      - 'ASTEROIDYiOS/Sector01Scene568.swift'
+      - 'Tests/SourceControls586Tests.swift'
+      - '.github/workflows/verify-pc586-controls.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-pc586-controls:
+    name: Exact 60 source actions, migration, safe router and 65-row rules
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile pure Foundation PC control profile and run all tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/SourceControls586.swift Tests/SourceControls586Tests.swift -o /tmp/test_pc586_controls
+          /tmp/test_pc586_controls
+      - name: Assert all source actions and genuine 65-row settings
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          source=Path('ASTEROIDYiOS/SourceControls586.swift').read_text()
+          assert 'static let actionCount=60' in source
+          assert 'static let extraCount=5' in source
+          assert 'static let rowCount=65' in source
+          assert 'case 0...7,9,21,35,44...47' in source
+          assert 'case 11,12:return .hangar' in source
+          assert 'ASTEROIDY_CONTROLS_1' in source and 'ASTEROIDY_CONTROLS_2' in source
+          print('PASS fixed PC source indices; no fake co-op/atlas implementation')
+          PY
