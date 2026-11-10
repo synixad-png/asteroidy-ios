@@ -40,6 +40,9 @@ struct SourceControlRouter586 {
     struct Hangar {
         let moveForward:Float
         let moveRight:Float
+        let lookX:Float
+        let lookY:Float
+        let sprintHeld:Bool
         let jumpPressed:Bool
         let interactPressed:Bool
     }
@@ -54,10 +57,15 @@ struct SourceControlRouter586 {
         let right:Float = (a(1) ? 1 : 0) + (a(5) ? 1 : 0) - (a(0) ? 1 : 0) - (a(4) ? 1 : 0)
         let jump=a(11)
         let interact=a(12)
+        let deadzone=Float(profile.deadZone)/100
+        let lookX=abs(input.axis(2))>deadzone ? input.axis(2):0
+        let lookY=abs(input.axis(3))>deadzone ? input.axis(3):0
         defer {previousJump=jump;previousInteract=interact}
         return Hangar(
             moveForward:max(-1,min(1,forward)),
             moveRight:max(-1,min(1,right)),
+            lookX:lookX,lookY:lookY,
+            sprintHeld:a(59),
             jumpPressed:jump && !previousJump,
             interactPressed:interact && !previousInteract)
     }
