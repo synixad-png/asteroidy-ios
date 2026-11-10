@@ -89,6 +89,10 @@ final class CarbonisSession568: ObservableObject {
         }
     }
     @Published private(set) var hud:HUD
+    @Published private(set) var hud3DIconsReady600=false
+    func setHUD3DIconsReady600(_ ready:Bool) {
+        if hud3DIconsReady600 != ready {hud3DIconsReady600=ready}
+    }
     private(set) var game:CarbonisCombat568
     var move=Vec2(x:0,y:0)
     var aim=Vec2(x:0,y:0)
