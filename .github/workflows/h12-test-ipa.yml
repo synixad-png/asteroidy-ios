@@ -25,6 +25,8 @@ on:
       - 'Tests/H55SourceMechanics580Tests.swift'
       - 'ASTEROIDYiOS/H55WorkshopPanel580.swift'
       - 'ASTEROIDYiOS/CombatGuardianDrone298.swift'
+      - 'ASTEROIDYiOS/SourcePickupAbilities586.swift'
+      - 'ASTEROIDYiOS/Sphere67.swift'
       - 'ASTEROIDYiOS/CarbonisCombat568.swift'
       - 'ASTEROIDYiOS/Sector01Shop568.swift'
       - 'ASTEROIDYiOS/CarbonisSession568.swift'
@@ -237,7 +239,7 @@ jobs:
           /tmp/h11-profile-archive
           /tmp/h11-source-all
           swiftc -frontend -parse ASTEROIDYiOS/H55WorkshopPanel580.swift
-          swiftc -frontend -parse ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/SourceCombatSupply586.swift ASTEROIDYiOS/CarbonisCombat568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/SourceCombatSupply586.swift ASTEROIDYiOS/SourcePickupAbilities586.swift ASTEROIDYiOS/CarbonisCombat568.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
           python3 - <<'PY'
