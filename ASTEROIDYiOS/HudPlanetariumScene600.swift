@@ -103,23 +103,39 @@ struct HudPlanetariumScene600:UIViewRepresentable {
 
         func load(_ url:URL,into view:SCNView,playing:Bool) {
             guard let bytes=try? Data(contentsOf:url),
-                  (try? HudPlanetariumAsset600.validate(bytes)) != nil,
-                  let inventory=HudPlanetariumTracks600.inspect(bytes),
-                  let capsuleBinding=HudCapsuleBinding600(
-                      nodeNames:inventory.names,
-                      translationX:inventory.bubbleExtents)
-            else {return}
+                  (try? HudPlanetariumAsset600.validate(bytes)) != nil
+            else {
+                NSLog("HUD602 planetarium: missing or non-original GLB at %@",url.path)
+                return
+            }
+            // PC v602 HudGlbAssets.EnsureHudAsset loads and displays the
+            // original scene regardless of optional capsule-masking binding.
+            // Only this iOS version incorrectly rejected the ENTIRE GLB
+            // whenever bubble names/accessors were not imported as expected.
+            let inventory=HudPlanetariumTracks600.inspect(bytes)
+            let capsuleBinding=inventory.flatMap {
+                HudCapsuleBinding600(nodeNames:$0.names,
+                                     translationX:$0.bubbleExtents)
+            }
             let loadGeneration=generation
-            GLTFAsset.load(with:url,options:[:]) { _,status,asset,_,_ in
-                guard status == .complete,let asset else{return}
+            GLTFAsset.load(with:url,options:[:]) { _,status,asset,error,_ in
+                if status != .complete {return}
+                guard let asset else {
+                    NSLog("HUD602 planetarium: GLTFKit2 import failed: %@",
+                          String(describing:error))
+                    return
+                }
                 let source=GLTFSCNSceneSource(asset:asset)
                 DispatchQueue.main.async { [weak self,weak view] in
                     guard let self,let view,
-                          self.generation==loadGeneration,
-                          let model=source.defaultScene,
-                          let clip=source.animations.first(where:{
-                              $0.name == HudPlanetariumAsset600.clipName
-                          }) else {return}
+                          self.generation==loadGeneration else{return}
+                    guard let model=source.defaultScene else {
+                        NSLog("HUD602 planetarium: original GLB has no imported default scene")
+                        return
+                    }
+                    let clip=source.animations.first(where:{
+                        $0.name == HudPlanetariumAsset600.clipName
+                    })
                     let nodesByName=Dictionary(
                         grouping:source.nodes.compactMap{node -> (String,SCNNode)? in
                             guard let name=node.name else{return nil}
@@ -127,19 +143,32 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                         },by:{$0.0})
                     var resolved=[Int:SCNNode]()
                     var flashNodes=[SCNNode]()
-                    for capsule in capsuleBinding.capsules {
-                        for id in capsule.bubbles {
-                            let key=inventory.names[id]
-                            guard let node=nodesByName[key]?.first?.1,
-                                  nodesByName[key]?.count==1 else{return}
-                            resolved[id]=node
+                    var completeCapsules=true
+                    if let capsuleBinding,let inventory {
+                        for capsule in capsuleBinding.capsules {
+                            for id in capsule.bubbles {
+                                let key=inventory.names[id]
+                                guard let node=nodesByName[key]?.first?.1,
+                                      nodesByName[key]?.count==1 else {
+                                    completeCapsules=false;break
+                                }
+                                resolved[id]=node
+                            }
+                            let key=inventory.names[capsule.flash]
+                            if let node=nodesByName[key]?.first?.1,
+                               nodesByName[key]?.count==1 {
+                                flashNodes.append(node)
+                            } else {completeCapsules=false}
                         }
-                        let key=inventory.names[capsule.flash]
-                        guard let node=nodesByName[key]?.first?.1,
-                              nodesByName[key]?.count==1 else{return}
-                        flashNodes.append(node)
+                    } else {completeCapsules=false}
+                    // PC HudCapsuleScene.BindHudCapsules is OPTIONAL to
+                    // H55Scene.Render: if missing, show every original mesh
+                    // rather than returning an empty transparent SCNView.
+                    let activeBinding=(completeCapsules && resolved.count==72 &&
+                                       flashNodes.count==3) ? capsuleBinding : nil
+                    if activeBinding == nil {
+                        NSLog("HUD602 planetarium: bubble mask not bound; original geometry remains visible")
                     }
-                    guard resolved.count==72 && flashNodes.count==3 else{return}
                     // Attaches to original outer sphere; never to global
                     // planetarium bounds or the three status capsules.
                     // Keep GLTFKit2's original animation root and all its
@@ -184,15 +213,20 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     cameraNode.camera=lens
                     cameraNode.position=SCNVector3(0,0,20)
                     rendered.rootNode.addChildNode(cameraNode)
-                    let player=clip.animationPlayer
-                    player.animation.repeatCount = .greatestFiniteMagnitude
-                    player.animation.usesSceneTimeBase=false
-                    model.rootNode.addAnimationPlayer(player,forKey:"hud-planetarium-v600")
+                    if let clip {
+                        let player=clip.animationPlayer
+                        player.animation.repeatCount = .greatestFiniteMagnitude
+                        player.animation.usesSceneTimeBase=false
+                        model.rootNode.addAnimationPlayer(player,forKey:"hud-planetarium-v600")
+                        player.play()
+                    } else {
+                        NSLog("HUD602 planetarium: original clip not imported by GLTFKit2")
+                    }
                     self.mutex.lock()
                     self.scene=rendered
-                    self.binding=capsuleBinding
-                    self.bubbles=resolved
-                    self.flashes=flashNodes
+                    self.binding=activeBinding
+                    self.bubbles=activeBinding == nil ? [:] : resolved
+                    self.flashes=activeBinding == nil ? [] : flashNodes
                     self.camera=cameraNode
                     self.yawPivot=yawPivot
                     self.pitchPivot=pitchPivot
@@ -202,7 +236,9 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     view.scene=rendered
                     view.pointOfView=cameraNode
                     view.isPlaying=playing
-                    player.play()
+                    NSLog("HUD602 planetarium: original GLB visible, nodes=%ld, animation=%@, capsules=%@",
+                          source.nodes.count,clip == nil ? "unavailable" : "bound",
+                          activeBinding == nil ? "unavailable" : "bound")
                 }
             }
         }
@@ -213,29 +249,28 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                       didApplyAnimationsAtTime time:TimeInterval) {
             mutex.lock()
             defer{mutex.unlock()}
-            guard let binding else{return}
-            // The 159-track original glTF is animated at scene frame rate;
-            // sample its 3 current resource levels and hit flashes at the
-            // same cadence, independent of 10Hz text/radar publication.
-            let frameCapsules=liveCapsules?() ?? capsule
-            guard frameCapsules.levels.count==3,
-                  frameCapsules.flashes.count==3 else{return}
-            for i in 0..<3 {
-                let range=binding.capsules[i]
-                let level=HudCapsuleController600.clamp(frameCapsules.levels[i])
-                let cutoff=range.xMin+(range.xMax-range.xMin)*level
-                for id in range.bubbles {
-                    guard let node=bubbles[id] else{continue}
-                    let x=node.presentation.position.x
-                    let shouldHide=level<=0 ||
-                        (level<1 && (!x.isFinite || x>cutoff))
-                    // PC v602 updates a cached HudHidden[] mask instead of
-                    // reparenting all 72 bubbles each render. Avoid writing
-                    // an unchanged SceneKit node flag on every frame.
-                    if node.isHidden != shouldHide {node.isHidden=shouldHide}
+            // PC v602 preserves original GLB rendering even when optional
+            // capsule filtering could not be bound. Rotation and corona still
+            // advance independently of the bubble mask.
+            if let binding {
+                let frameCapsules=liveCapsules?() ?? capsule
+                if frameCapsules.levels.count==3 && frameCapsules.flashes.count==3 {
+                    for i in 0..<3 {
+                        let range=binding.capsules[i]
+                        let level=HudCapsuleController600.clamp(frameCapsules.levels[i])
+                        let cutoff=range.xMin+(range.xMax-range.xMin)*level
+                        for id in range.bubbles {
+                            guard let node=bubbles[id] else{continue}
+                            let x=node.presentation.position.x
+                            let shouldHide=level<=0 ||
+                                (level<1 && (!x.isFinite || x>cutoff))
+                            if node.isHidden != shouldHide {node.isHidden=shouldHide}
+                        }
+                        let flash=binding.flashScale(
+                            channel:i,flash:frameCapsules.flashes[i]) ?? 0.001
+                        flashes[i].scale=SCNVector3(flash,flash,flash)
+                    }
                 }
-                let flash=binding.flashScale(channel:i,flash:frameCapsules.flashes[i]) ?? 0.001
-                flashes[i].scale=SCNVector3(flash,flash,flash)
             }
             if let yawPivot,let pitchPivot,let rollPivot {
                 // In PC v602 the GLB object, NOT the camera, receives the
