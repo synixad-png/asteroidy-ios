@@ -438,6 +438,15 @@ jobs:
           python3 Tests/IOSAudioLockResume568Contract.py
           python3 Tests/IOSSourceCombatPause568Contract.py
           python3 Tests/IOSOriginalCombatHUD331Contract.py
+          # PC v600 HUD must remain wired to real iOS combat, not a static demo.
+          python3 Tests/HudV600IntegrationContract.py
+          python3 Tests/HudPlanetariumIntegration600Contract.py
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-core
+          /tmp/hud-v600-core
+          swiftc ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudCapsuleController600Tests.swift -o /tmp/hud-v600-capsules
+          /tmp/hud-v600-capsules
+          swiftc ASTEROIDYiOS/HudCapsuleController600.swift ASTEROIDYiOS/HudCapsuleBinding600.swift Tests/HudCapsuleBinding600Tests.swift -o /tmp/hud-v600-node-bindings
+          /tmp/hud-v600-node-bindings
           swiftc ASTEROIDYiOS/CombatHUDViewport568.swift Tests/CombatHUDViewport568Tests.swift -o /tmp/combat-hud-viewport568
           /tmp/combat-hud-viewport568
           python3 Tests/IOSShotExplosionAudioResume568Contract.py
