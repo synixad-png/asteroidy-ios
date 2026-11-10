@@ -134,11 +134,54 @@ enum SourceControls586 {
         var mouseSensitivity=100
         var invertMouse=false
 
+        init() {}
+
+        private enum CodingKeys:String,CodingKey {
+            case version,keys,pad,deadZone,invertOrbitPitch
+            case orbitMouse,mouseSensitivity,invertMouse
+        }
+
+        /// Upgrade existing iOS JSON profiles without discarding genuine
+        /// user bindings when early builds saved only 10–59 actions or
+        /// omitted settings that PC586 added later.
+        init(from decoder:Decoder) throws {
+            let c=try decoder.container(keyedBy:CodingKeys.self)
+            version=try c.decodeIfPresent(Int.self,forKey:.version) ?? 1
+            keys=try c.decodeIfPresent([Int].self,forKey:.keys)
+                ?? SourceControls586.defaultKeys
+            pad=try c.decodeIfPresent([String].self,forKey:.pad)
+                ?? SourceControls586.defaultPad
+            deadZone=try c.decodeIfPresent(Int.self,forKey:.deadZone) ?? 30
+            invertOrbitPitch=try c.decodeIfPresent(Bool.self,
+                forKey:.invertOrbitPitch) ?? false
+            orbitMouse=try c.decodeIfPresent(Bool.self,
+                forKey:.orbitMouse) ?? false
+            mouseSensitivity=try c.decodeIfPresent(Int.self,
+                forKey:.mouseSensitivity) ?? 100
+            invertMouse=try c.decodeIfPresent(Bool.self,
+                forKey:.invertMouse) ?? false
+            if version<1 || version>2 {
+                throw DecodingError.dataCorruptedError(
+                    forKey:.version,in:c,
+                    debugDescription:"Unsupported PC586 controls profile version")
+            }
+            normalize()
+        }
+
         mutating func normalize() {
-            if keys.count != SourceControls586.actionCount ||
-               pad.count != SourceControls586.actionCount {
+            // Preserve existing action IDs exactly. Legacy 10-action
+            // profiles receive ONLY the missing defaults (indices 10..59).
+            guard (10...SourceControls586.actionCount).contains(keys.count),
+                  (10...SourceControls586.actionCount).contains(pad.count)
+            else {
                 self=Self()
                 return
+            }
+            if keys.count<SourceControls586.actionCount {
+                keys+=SourceControls586.defaultKeys[keys.count...]
+            }
+            if pad.count<SourceControls586.actionCount {
+                pad+=SourceControls586.defaultPad[pad.count...]
             }
             for i in keys.indices {keys[i]=max(0,min(65535,keys[i]))}
             for i in pad.indices where !SourceControls586.validPad(pad[i]) {
