@@ -23,10 +23,10 @@ struct HudLayoutMarker600:View {
         CGFloat(max(7,sourceHeight*widget.scale*scale))
     }
     private var centerX:CGFloat {
-        CGFloat(offsetX+(widget.x+sourceWidth*(widget.is3D ? 0.5 : widget.scale*0.5))*scale)
+        CGFloat(offsetX+(widget.x+sourceWidth*0.5)*scale)
     }
     private var centerY:CGFloat {
-        CGFloat(offsetY+(widget.y+sourceHeight*(widget.is3D ? 0.5 : widget.scale*0.5))*scale)
+        CGFloat(offsetY+(widget.y+sourceHeight*0.5)*scale)
     }
     private var isSelected:Bool {selected==widget.id}
     private var outline:Color {
