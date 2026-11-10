@@ -120,7 +120,12 @@ jobs:
           assert 'H55NpcDialogue580' in Path('ASTEROIDYiOS/H55NpcDialogue580.swift').read_text()
           assert 'mechanic.finishConversation()' in h55
           assert 'H55WorkshopPanel580(' in h55
-          assert 'showingWorkshop ? 0 : moveForward' in h55
+          assert 'showingWorkshop ? 0 :' in h55
+          assert '(input.moveForward != 0 ? input.moveForward : moveForward)' in h55
+          assert '(input.moveRight != 0 ? input.moveRight : moveRight)' in h55
+          assert 'sprint:input.sprintHeld && !showingWorkshop' in h55
+          assert 'SourceHardwareInput586.shared.snapshot()' in h55
+          assert 'controlRouter586.readHangar(' in h55
           assert 'H55Workshop580.loadVitals()' in Path('ASTEROIDYiOS/CarbonisCombat568.swift').read_text()
           assert 'H55Workshop580.updateFromCombat(hull:hull,armor:armor)' in Path('ASTEROIDYiOS/App.swift').read_text()
           assert 'onSurvivalChanged:(Int,Int,Int,Int)->Void' in Path('ASTEROIDYiOS/Sector01Scene568.swift').read_text()
