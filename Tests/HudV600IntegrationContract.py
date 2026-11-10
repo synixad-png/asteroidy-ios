@@ -28,4 +28,24 @@ motion = (root / "ASTEROIDYiOS/HudMotion600.swift").read_text()
 for marker in ("leftSway = 400", "rightSway = 400",
                "func update(", "func weight(", "let settle:Float"):
     assert marker in motion
+session = (root / "ASTEROIDYiOS/CarbonisSession568.swift").read_text()
+scene = (root / "ASTEROIDYiOS/Sector01Scene568.swift").read_text()
+panel = (root / "ASTEROIDYiOS/HudMotionSettingsPanel600.swift").read_text()
+for marker in ("motionSample.turnRate=game.flight.flight.angularVelocity",
+               "motionSample.bank=game.flight.flight.visualBank",
+               "motionSample.pitch=game.flight.flight.visualPitch",
+               "motionSample.hull=Float(game.hull)",
+               "motionSample.armor=Float(game.armor)",
+               "motionSample.shield=game.tarcza145.energy",
+               "snapshot.motion=hudPose600"):
+    assert marker in session, marker
+for marker in ("Self.applyMotion(&topLeft", "Self.applyMotion(&topRight",
+               "Self.applyMotion(&bottomLeft", "Self.applyMotion(&bottomRight"):
+    assert marker in hud, marker
+assert "session.applyHudMotion600(settings)" in scene
+assert "HudMotionSettingsPanel600" in scene
+for marker in ("\\.strength", "\\.inertia", "\\.impact", "\\.leftSway",
+               "\\.rightSway", "settings.parallax", "settings.reactions",
+               "settings.profile"):
+    assert marker in panel, marker
 print("PASS PC v600 HUD: 46 layout, placement, source status ribbons and motion contracts")
