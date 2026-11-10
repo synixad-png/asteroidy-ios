@@ -854,13 +854,10 @@ struct H55ScenePage580: View {
     let dismiss: () -> Void
     @StateObject private var loader=H55SceneModel580()
     @State private var choosingFile=false
-    @State private var choosingFPSModel=false
-    @State private var fpsImportKind:H55FPSAssets580.Kind = .tripo
     @State private var pickedClip=""
     @State private var importError:String?
     @State private var showingSettings=false
     @State private var showingPause=false
-    @State private var showingFPSCalibration=false
     @AppStorage("ASTEROIDY_H55_ENV_FILL_580") private var lightingFill=0.80
     @AppStorage("ASTEROIDY_H55_RED_GAIN_580") private var lightingRed=0.10
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
@@ -891,10 +888,6 @@ struct H55ScenePage580: View {
             topControls
             if showingPause && !showingSettings { pauseScreen }
             if showingSettings { settingsScreen }
-            if showingFPSCalibration {
-                H55FPSCalibration580(loader:loader) { showingFPSCalibration=false }
-                    .zIndex(30)
-            }
         }
         .onAppear {
             loader.setLighting(fill:lightingFill,red:lightingRed)
@@ -914,18 +907,9 @@ struct H55ScenePage580: View {
             if !visible {loader.setLighting(fill:lightingFill,red:lightingRed)}
         }
         .onDisappear {
-            showingFPSCalibration=false
             showingSettings=false
             showingPause=false
             loader.close()
-        }
-        .fileImporter(isPresented:$choosingFPSModel,
-            allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data],
-            allowsMultipleSelection:false) { result in
-            do {
-                guard let url=try result.get().first else{return}
-                try loader.importFPS(url,kind:fpsImportKind)
-            }catch {importError=error.localizedDescription}
         }
         .fileImporter(isPresented:$choosingFile,
             allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data],
@@ -1009,31 +993,6 @@ struct H55ScenePage580: View {
                             .foregroundStyle(Color(red:0.73,green:0.82,blue:0.91))
                             .fixedSize(horizontal:false,vertical:true)
                             .accessibilityIdentifier("h55-fps-status")
-                        HStack(spacing:8) {
-                            pauseButton("RĘCE TRIPO") {loader.setFPSGloves(.tripo)}
-                                .accessibilityIdentifier("h55-fps-show-hands")
-                            pauseButton("RĘCE MONOLIT") {loader.setFPSGloves(.monolith)}
-                                .accessibilityIdentifier("h55-fps-show-monolith")
-                            pauseButton("BROŃ EXP-01") {loader.setFPSMode(.weapon)}
-                                .accessibilityIdentifier("h55-fps-show-weapon")
-                        }
-                        HStack(spacing:8) {
-                            pauseButton("IMPORT TRIPO GLB") {
-                                fpsImportKind = .tripo
-                                choosingFPSModel=true
-                            }.accessibilityIdentifier("h55-fps-import-hands")
-                            pauseButton("IMPORT MONOLIT GLB") {
-                                fpsImportKind = .monolith
-                                choosingFPSModel=true
-                            }.accessibilityIdentifier("h55-fps-import-monolith")
-                            pauseButton("IMPORT BROŃ GLB") {
-                                fpsImportKind = .weapon
-                                choosingFPSModel=true
-                            }.accessibilityIdentifier("h55-fps-import-weapon")
-                        }
-                        pauseButton("KALIBRACJA RĄK / BRONI") {
-                            showingFPSCalibration=true
-                        }.accessibilityIdentifier("h55-fps-calibration")
                         pauseButton("KONTYNUUJ",primary:true) {showingPause=false}
                             .accessibilityIdentifier("h55-pause-resume")
                         pauseButton("USTAWIENIA") {showingSettings=true}
@@ -1112,7 +1071,8 @@ struct H55ScenePage580: View {
                         .padding(4)
                         .background(Color(red:0.008,green:0.028,blue:0.048))
                         CarbonisVisualSettingsPanel568(
-                            compact:frame.size.width<850,initialTab:9)
+                            compact:frame.size.width<850,initialTab:9,
+                            fpsLoader:loader)
                             .frame(maxWidth:.infinity,maxHeight:.infinity)
                     }
                     .background(Color(red:0.005,green:0.018,blue:0.034))
