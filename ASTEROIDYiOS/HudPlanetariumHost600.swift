@@ -27,6 +27,7 @@ struct HudPlanetariumHost600:View {
                 yaw:Float(widget.yaw ?? 0),
                 roll:Float(widget.roll ?? 0),
                 pose:state.pose,
+                playing:active,
                 livePose:{ [weak session] in
                     session?.currentHudVisual600().pose ?? HudMotion600.Pose()
                 },
