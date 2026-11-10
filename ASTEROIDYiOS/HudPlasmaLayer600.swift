@@ -48,6 +48,19 @@ struct HudPlasmaLayer600:View {
         return path
     }
 
+    // Small detached tongues originate as CGPoint triangles in the PC
+    // geometry path; keep their tiny native representation, while the
+    // expensive ribbons use the single allocated HudEnergy600.Point buffer.
+    private static func shape(_ points:[CGPoint])->Path {
+        var path=Path()
+        if let first=points.first {
+            path.move(to:first)
+            for point in points.dropFirst() {path.addLine(to:point)}
+            path.closeSubpath()
+        }
+        return path
+    }
+
     var body:some View {
         TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active)) { timeline in
             Canvas(opaque:false,rendersAsynchronously:false) { graphics,size in
