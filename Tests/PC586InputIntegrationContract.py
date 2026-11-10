@@ -18,7 +18,9 @@ assert "static let actionCount=60" in controls
 assert "static let rowCount=65" in controls
 assert "case 11,12,59:return .hangar" in controls
 assert "static func importPCText" in controls and "importFlight67Text" in controls
-assert "case 0...7,9,21,35,44...47:return .combat" in controls
+assert "case 0...7,9,21,33,34,35,44...47:return .combat" in controls
+assert "boundAnalog(33,profile:profile)" in controls
+assert "boundAnalog(34,profile:profile)" in controls
 assert "case .other:return" in settings or "case .other:return" in visual
 assert "LazyVStack(" in settings and "ForEach(0..<SourceControls586.actionCount" in settings
 assert "optionTitle(60)" in settings and "optionTitle(64)" in settings
