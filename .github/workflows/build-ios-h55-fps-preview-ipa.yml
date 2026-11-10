@@ -16,6 +16,8 @@ on:
       - ASTEROIDYiOS/HudLayoutMarker600.swift
       - ASTEROIDYiOS/HudPlanetariumAsset600.swift
       - ASTEROIDYiOS/Sector01Scene568.swift
+      - ASTEROIDYiOS/H55FPSLighting580.swift
+      - ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
       - ASTEROIDYiOS/HudEnergy600.swift
       - ASTEROIDYiOS/HudPlasmaLayer600.swift
       - Tests/HudV602TouchRuntimeContract.py
@@ -26,6 +28,7 @@ on:
       - Tests/HudPlasmaLive600Contract.py
       - Tests/HudPlanetariumCorona600Contract.py
       - Tests/HudV600IntegrationContract.py
+      - Tests/IOSOriginalCombatHUD331Contract.py
       - Tests/PC586InputIntegrationContract.py
       - Tests/PC586IntegrationContract.py
       - ASTEROIDYiOS/CarbonisSession568.swift
