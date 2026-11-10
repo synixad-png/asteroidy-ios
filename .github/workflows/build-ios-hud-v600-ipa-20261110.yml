@@ -1,0 +1,104 @@
+# Explicit user-requested iPhone+iPad IPA, 2026-11-10.
+# Single source revision, no recurring builds from ordinary code changes.
+# This IPA is UNSIGNED; physical device installation requires signing.
+name: ASTEROIDY iOS HUD v600 - iPhone+iPad unsigned IPA 20261110
+on:
+  push:
+    branches: [feature/ios-h55-v580-native-entry]
+    paths: [.github/workflows/build-ios-hud-v600-ipa-20261110.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-hud-v600:
+    name: Compile Release arm64 and publish verified unsigned IPA
+    runs-on: macos-15-intel
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify source and original resource prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python3 Tools/verify_ios_inputs.py | tee reports/preflight.txt
+          python3 Tools/prepare_vanguard431_assets.py | tee reports/vanguard-import.txt
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets | tee reports/vanguard-resources.txt
+          python3 Tests/HudV600IntegrationContract.py | tee reports/hud-contract.txt
+          python3 Tests/HudLayout600Contract.py | tee -a reports/hud-contract.txt
+          python3 Tests/HudMotionLiveRenderer600Contract.py | tee -a reports/hud-contract.txt
+          python3 Tests/HudPickupMetal600Contract.py | tee -a reports/hud-contract.txt
+          python3 Tests/HudMissionGate600Contract.py | tee -a reports/hud-contract.txt
+      - name: Record source revision and Apple SDK
+        run: |
+          set -euo pipefail
+          { echo "GitHub commit: $GITHUB_SHA"; xcodebuild -version; sw_vers; xcrun --sdk iphoneos --show-sdk-version; } | tee reports/environment.txt
+          grep -q "TARGETED_DEVICE_FAMILY: '1,2'" project.yml
+      - name: Generate native Xcode project
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+      - name: Build actual ARM64 iPhone and iPad application
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/HUD600" \
+            build >reports/xcodebuild.log 2>&1 || {
+              tail -n 150 reports/xcodebuild.log
+              exit 1
+            }
+      - name: Package and audit authentic unsigned IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/HUD600/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" && test -f "$APP/Info.plist"
+          python3 - "$APP" <<'PY' | tee reports/hud-v600-app-check.txt
+          import pathlib,plistlib,sys
+          app=pathlib.Path(sys.argv[1])
+          info=plistlib.loads((app/"Info.plist").read_bytes())
+          assert set(info["UIDeviceFamily"])=={1,2},info["UIDeviceFamily"]
+          assert info["CFBundleSupportedPlatforms"]==["iPhoneOS"]
+          assert list(app.rglob("default.metallib")),"Metal shader library missing"
+          print("PASS unsigned native iPhone+iPad GLB/Metal app:",app)
+          PY
+          mkdir -p distribution/Payload
+          cp -R "$APP" distribution/Payload/
+          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_HUD_v600_iPhone_iPad_UNSIGNED.ipa Payload)
+          python3 Tools/verify_ipa.py ASTEROIDY_iOS_HUD_v600_iPhone_iPad_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-check.txt
+          unzip -t ASTEROIDY_iOS_HUD_v600_iPhone_iPad_UNSIGNED.ipa | tail -n 1 | tee -a reports/ipa-check.txt
+          shasum -a 256 ASTEROIDY_iOS_HUD_v600_iPhone_iPad_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
+          stat -f '%z bytes' ASTEROIDY_iOS_HUD_v600_iPhone_iPad_UNSIGNED.ipa | tee reports/ipa-size.txt
+      - name: Publish actual unsigned IPA and build proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-iOS-HUD-v600-UNSIGNED-IPA
+          path: |
+            ASTEROIDY_iOS_HUD_v600_iPhone_iPad_UNSIGNED.ipa
+            reports/preflight.txt
+            reports/hud-contract.txt
+            reports/environment.txt
+            reports/vanguard-import.txt
+            reports/vanguard-resources.txt
+            reports/hud-v600-app-check.txt
+            reports/ipa-check.txt
+            reports/SHA256SUMS.txt
+            reports/ipa-size.txt
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-iOS-HUD-v600-IPA-BUILD-ERROR
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 7
