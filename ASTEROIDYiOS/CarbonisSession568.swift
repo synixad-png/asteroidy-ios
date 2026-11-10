@@ -103,6 +103,7 @@ final class CarbonisSession568: ObservableObject {
     private var hudLivePose600=HudMotion600.Pose()
     private var hudLiveCapsules600=HudCapsuleController600.Snapshot(
         levels:[1,1,1],flashes:[0,0,0])
+    private var hudLiveSeconds600:Double=0
     func updateHudSafeInsets600(_ insets:W3ScreenInsets568) {
         hudLayoutLock600.lock()
         hudSafeInsetsSnapshot600=insets
@@ -123,11 +124,12 @@ final class CarbonisSession568: ObservableObject {
     // Do not copy the 46-widget layout or safe-area metadata just to
     // animate plasma and the three source capsules.
     func currentHudVisual600()->(
-        pose:HudMotion600.Pose,capsules:HudCapsuleController600.Snapshot
+        pose:HudMotion600.Pose,capsules:HudCapsuleController600.Snapshot,
+        seconds:Double
     ) {
         hudLayoutLock600.lock()
         defer {hudLayoutLock600.unlock()}
-        return (hudLivePose600,hudLiveCapsules600)
+        return (hudLivePose600,hudLiveCapsules600,hudLiveSeconds600)
     }
     func updateHudLayout600(_ updated:HudLayout600) {
         guard updated.isValid else{return}
@@ -304,7 +306,7 @@ final class CarbonisSession568: ObservableObject {
             hull:Float(game.hull)/Float(max(1,game.maxHull)),
             armor:Float(game.armor)/Float(max(1,game.maxArmor)),
             shield:game.tarcza145.energy/100,
-            seconds:now,hullPulse:hudPose600.hullPulse,
+            seconds:Double(game.elapsed),hullPulse:hudPose600.hullPulse,
             armorPulse:hudPose600.armorPulse,
             shieldPulse:hudPose600.shieldPulse)
         // PC HudCapsuleScene.ApplyHudCapsules runs after every animated
@@ -312,6 +314,7 @@ final class CarbonisSession568: ObservableObject {
         // NEVER rebuild the HUD radar or text more frequently.
         hudLayoutLock600.lock()
         hudLiveCapsules600=hudCapsules600.snapshot
+        hudLiveSeconds600=Double(game.elapsed)
         hudLayoutLock600.unlock()
         if now-lastHUD > 0.10 {
             lastHUD=now
