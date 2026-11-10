@@ -56,6 +56,9 @@ on:
       - 'ASTEROIDYiOS/CombatHUDViewport568.swift'
       - 'Tests/CombatHUDViewport568Tests.swift'
       - 'ASTEROIDYiOS/Sector01Scene568.swift'
+      - 'ASTEROIDYiOS/HudPlanetariumCorona600.swift'
+      - 'Tests/HudPlanetariumCorona600Tests.swift'
+      - 'Tests/HudPlanetariumCorona600Contract.py'
       - 'ASTEROIDYiOS/CarbonisSession568.swift'
       - 'ASTEROIDYiOS/H55Workshop580.swift'
       - 'ASTEROIDYiOS/H55SourceMechanics580.swift'
@@ -656,6 +659,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Xcode compiler
         run: xcodebuild -version
+      - name: Verify native outer-sphere HUD corona geometry and animation
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/HudPlanetariumCorona600.swift Tests/HudPlanetariumCorona600Tests.swift -o /tmp/hud-v600-corona
+          /tmp/hud-v600-corona
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Prepare ONLY original source-verified PlayerShip367 assets for native iOS compilation
