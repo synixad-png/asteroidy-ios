@@ -1480,7 +1480,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         encoder.setRenderPipelineState(pickupPipeline)
                         encoder.setCullMode(.none)
                         for (index,kind) in HudPickupTransform600.order.enumerated() {
-                            let id=["ion.icon","bomb.icon","shield_charge.icon","boost.icon"][index]
+                            let id=HudPickupTransform600.widgetIDs[index]
                             guard let widget=hudLayout600.widget(id),
                                   widget.visible,
                                   let asset=pickupModels586[kind],
