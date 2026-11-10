@@ -93,6 +93,15 @@ struct CarbonisCombat568 {
     var guardianDrone=CombatGuardianDrone298()
     var score:Int=0
     var collectedLootTokens:Int=0
+    // PC v600 HudMotionSample reads monotonic Game.Shots/Hits/PickupEvents.
+    // This is read-only telemetry: increments never affect physics, RNG,
+    // collision eligibility, player resources, or audio dispatch.
+    struct HUDEvents {
+        fileprivate(set) var shots:Int=0
+        fileprivate(set) var hits:Int=0
+        fileprivate(set) var pickups:Int=0
+    }
+    private(set) var hudEvents=HUDEvents()
     // Source Game.Tokens: mission HUD begins with real persisted wallet.
     let startingTokens:Int
     private var lootCarry:Float=0
@@ -113,6 +122,9 @@ struct CarbonisCombat568 {
         return result
     }
     private mutating func emitOriginalAudio568(_ id:Int) {
+        // PC Game.PickupEvents is emitted at the same authoritative
+        // successful pickup branch as original audio event 30.
+        if id==30 {hudEvents.pickups += 1}
         if originalAudioEvents568.count<64 {originalAudioEvents568.append(id)}
     }
     private var sourceClearHold:Float=0
@@ -970,6 +982,8 @@ struct CarbonisCombat568 {
             rateRank:sourceMechanics.rateRank,
             cooling:sourceMechanics.cooling) else {return}
         cooldown=interval
+        // One source fire trigger, not each Twin/Scatter projectile.
+        hudEvents.shots += 1
         // PC Game.Fire consumes exactly ONE ion unit per trigger, not one
         // per individual Twin/Scatter/Swarm bolt.
         let ion=ionAmmo>0 ? 1 : 0
@@ -1172,6 +1186,7 @@ struct CarbonisCombat568 {
                         to:shooters[j].core.position)*0.035
                     shooters[j].velocity=shooters[j].velocity+recoil
                     shooters[j].core.hp-=shot.damage
+                    hudEvents.hits += 1
                     impact=true
                     advancedShooterHit=shot.kind==3 || shot.kind==4
                     bullets[i].hitShooterPhases.append(shooters[j].phase)
@@ -1210,6 +1225,7 @@ struct CarbonisCombat568 {
                 if let j=hitIndex {
                     Self.impactRock68(&rocks[j],shot:shot)
                     rocks[j].health-=shot.damage
+                    hudEvents.hits += 1
                     impact=true
                     bullets[i].hitRockSeeds.append(rocks[j].shapeSeed)
                     if rocks[j].health<=0 {
