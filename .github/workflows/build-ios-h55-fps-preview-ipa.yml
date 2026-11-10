@@ -1,6 +1,12 @@
 # One explicitly requested native iOS H55 hands/weapon repair release.
 # Sources: previous verified full HUD v600, PC v580 original GLB depth pass.
 name: ASTEROIDY iOS HUD v600 + H55 FPS - full source Release IPA
+# Avoid launching another obsolete full IPA build after every small patch.
+# GitHub retains only the latest queued/running run within this workflow
+# and branch; the newest commit is always the authoritative candidate.
+concurrency:
+  group: ios-hud-v602-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 on:
   push:
     branches: [feature/ios-h55-v580-native-entry]
@@ -17,6 +23,8 @@ on:
       - Tests/HudMotionLiveRenderer600Contract.py
       - Tests/HudPlanetariumIntegration600Contract.py
       - Tests/HudPickupMetal600Contract.py
+      - Tests/HudPlasmaLive600Contract.py
+      - Tests/HudV600IntegrationContract.py
       - Tests/PC586InputIntegrationContract.py
       - Tests/PC586IntegrationContract.py
       - ASTEROIDYiOS/CarbonisSession568.swift
