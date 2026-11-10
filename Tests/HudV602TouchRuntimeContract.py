@@ -81,7 +81,12 @@ assert 'corona?.advance(at:liveGameTime?() ?? 0)' in planetarium
 assert 'liveGameTime:{ [weak session] in' in host
 assert 'active:session.hud.phase == .playing,' in scene
 assert 'motionActive:!userPaused && !showingService)' in scene
-assert 'guard motionActive else{return HudMotion600.Pose()}' in host
+assert 'livePose:{ HudMotion600.Pose() }' in host
+assert '.position(x:CGFloat(placement.centerX)' in host
+assert '.frame(width:CGFloat(viewport.width)' in host
+assert 'HudMotionProject600.project(' not in host
+assert 'hud-v602-always-visible-widget-selector' in editor
+assert 'Button("▶") {selectNeighbor600(1)}' in editor
 # PC FramePose is assigned EVERY render; numeric HUD still snapshots at 10Hz.
 assert 'TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active))' in hud
 assert 'hud.motion=active ? livePose() : HudMotion600.Pose()' in hud
