@@ -18,13 +18,15 @@ import simd
     private var loaded:Set<H55FPSAssets580.Kind>=[]
     private var loading:Set<H55FPSAssets580.Kind>=[]
     private var generation=UUID()
-    private var settings=H55FPSSettings580()
+    private var settings:H55FPSSettings580
     private var lastMotion:(time:Float,walking:Bool,bobPhase:Float,
                             bobAmount:Float,bobPercent:Float)?
     private let inform:(String)->Void
 
-    init(camera:SCNNode,inform:@escaping(String)->Void) {
+    init(camera:SCNNode,configuration:H55FPSSettings580?=nil,
+         inform:@escaping(String)->Void) {
         self.camera=camera
+        self.settings=configuration ?? H55FPSSettings580()
         self.inform=inform
         fpsRoot.name="H55_PC580_FPS_VIEWMODEL"
         // SceneKit H55 camera FOV is 70°, original PC gloves and weapon 64°.
