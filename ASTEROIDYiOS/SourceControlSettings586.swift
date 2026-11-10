@@ -217,27 +217,59 @@ struct SourceControlSettings586:View {
                     .font(.system(size:compact ? 9:11,design:.monospaced))
                     .fixedSize(horizontal:false,vertical:true)
             }
-            Text("Przypisania dla funkcji nieprzeniesionych są zapisywane na przyszłość; nie uruchamiają nieistniejących mechanik. Kody 11/12 dotyczą H55. Import obsługuje oryginalny controls-v29.txt v1/v2.")
+            Text("Przypisania dla funkcji nieprzeniesionych są zapisywane na przyszłość; nie uruchamiają nieistniejących mechanik. Import z PC: wybierz controls-v29.txt i opcjonalny controls-v29.txt.flight67 (dla myszy).")
                 .foregroundStyle(muted)
                 .font(.system(size:compact ? 8:10,design:.monospaced))
                 .fixedSize(horizontal:false,vertical:true)
         }
         .fileImporter(isPresented:$importingPC,
-                      allowedContentTypes:[.plainText],
-                      allowsMultipleSelection:false) {outcome in
+                      allowedContentTypes:[.plainText,.data],
+                      allowsMultipleSelection:true) {outcome in
             do {
-                guard let url=try outcome.get().first else{return}
-                let granted=url.startAccessingSecurityScopedResource()
-                defer {if granted {url.stopAccessingSecurityScopedResource()}}
-                let text=try String(contentsOf:url,encoding:.utf8)
-                guard let migrated=SourceControls586.Profile.importPCText(text)
-                else {
-                    notice="ODRZUCONO: nieprawidłowy format albo przypisania PC"
+                let urls=try outcome.get()
+                guard (1...2).contains(urls.count) else {
+                    notice="WYBIERZ JEDEN LUB DWA ORYGINALNE PLIKI PC"
                     return
                 }
-                profile=migrated
+                var importedControls:SourceControls586.Profile?
+                var flightFile:String?
+                for url in urls {
+                    let granted=url.startAccessingSecurityScopedResource()
+                    defer {if granted {url.stopAccessingSecurityScopedResource()}}
+                    let raw=try String(contentsOf:url,encoding:.utf8)
+                    let first=raw.replacingOccurrences(of:"\u{FEFF}",with:"")
+                    if first.hasPrefix("ASTEROIDY_CONTROLS_") {
+                        guard importedControls==nil,
+                              let decoded=SourceControls586.Profile.importPCText(raw)
+                        else {
+                            notice="ODRZUCONO: nieprawidłowe lub powtórzone przypisania"
+                            return
+                        }
+                        importedControls=decoded
+                    } else if first.hasPrefix("ASTEROIDY_FLIGHT_67") {
+                        guard flightFile==nil else {
+                            notice="ODRZUCONO: zduplikowany plik myszy"
+                            return
+                        }
+                        flightFile=raw
+                    } else {
+                        notice="ODRZUCONO: nieznany format PC"
+                        return
+                    }
+                }
+                var merged=importedControls ?? profile
+                if let flight=flightFile {
+                    guard let updated=SourceControls586.Profile.importFlight67Text(
+                        flight,into:merged) else {
+                        notice="ODRZUCONO: nieprawidłowy plik .flight67"
+                        return
+                    }
+                    merged=updated
+                }
+                // No partial writes: both files are validated before save.
+                profile=merged
                 profile.save()
-                notice="ZAIMPORTOWANO: oryginalne przypisania controls-v29"
+                notice="ZAIMPORTOWANO: sterowanie PC (v1/v2) i ustawienia myszy, jeśli wybrano."
             } catch {
                 notice="BŁĄD IMPORTU: \(error.localizedDescription)"
             }
