@@ -14,6 +14,9 @@ hud=(root/"ASTEROIDYiOS/SourceCombatHUD331.swift").read_text()
 plasma=(root/"ASTEROIDYiOS/HudPlasmaLayer600.swift").read_text()
 session=(root/"ASTEROIDYiOS/CarbonisSession568.swift").read_text()
 combat=(root/"ASTEROIDYiOS/CarbonisCombat568.swift").read_text()
+pickup=(root/"ASTEROIDYiOS/Sector01CarbonisPreview568.swift").read_text()
+interface=(root/"ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift").read_text()
+gloveLight=(root/"ASTEROIDYiOS/H55FPSLighting580.swift").read_text()
 
 def expect_all(data, needles, what):
     for needle in needles:
@@ -54,6 +57,39 @@ expect_all(plasma,(
     "for layer in 0..<5",
     "for k in 0..<7",
 ), "v600 animated plasma renderer")
+# Source PC v602 DrawCoin is a gold, filled, spinning ellipse with engraving.
+# The legacy geodesic ring remains, but it cannot replace the money sprite.
+expect_all(pickup,(
+    "private static func appendMoneyCoin568(",
+    "radius*abs(cos(token.angle+time*2.4))",
+    "ellipse(width+edge,radius+edge",
+    "ellipse(width,radius",
+    "outline(width,radius",
+    "if token.sourceKind == nil {",
+    "appendMoneyCoin568(token,scale:scale,time:time,",
+    "time:session.game.elapsed))",
+), "original PC v602 source money coin")
+assert 'sourceKind:SourcePickupModels586.Kind? = nil' in combat
+# Same shared photometric calibration in BOTH FPS preview and gameplay.
+expect_all(gloveLight,(
+    "private static let sceneKitLightGain:CGFloat=0.35",
+    "ambientLight.intensity=220*sceneKitLightGain",
+    "lamp.intensity=spec.2*sceneKitLightGain",
+), "hangar gloves light-clipping fix")
+# Gameplay OPTIONS must open the full W3 settings panel, not an inert pause.
+expect_all(scene,(
+    'Button("OPCJE / USTAWIENIA")',
+    'showingMissionSettings568=true',
+    'missionSettingsScreen568(compact:compact)',
+    'initialTab:4,',
+    'onEditHud:{',
+), "mission settings entry")
+expect_all(interface,(
+    'case 4: interfacePage600',
+    'Button("EDYTUJ UKŁAD HUD (46 ELEMENTÓW)")',
+    'HudMotionSettingsPanel600 { value in',
+), "W3 Interface HUD settings")
+
 expect_all(session,(
     "struct RadarContact",
     "Sphere67.normal(point)",
