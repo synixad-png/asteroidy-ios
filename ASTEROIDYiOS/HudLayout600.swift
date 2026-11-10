@@ -49,13 +49,16 @@ struct HudLayout600:Codable,Equatable {
         }
     }
     static func decodeJSON(_ data:Data) throws->HudLayout600 {
+        guard data.count<=65_536 else{throw LayoutError.invalidLayout}
         let value=try JSONDecoder().decode(HudLayout600.self,from:data)
         guard value.isValid else{throw LayoutError.invalidLayout}
         return value
     }
     func encodeJSON() throws->Data {
         guard isValid else{throw LayoutError.invalidLayout}
-        return try JSONEncoder().encode(self)
+        let bytes=try JSONEncoder().encode(self)
+        guard bytes.count<=65_536 else{throw LayoutError.invalidLayout}
+        return bytes
     }
     var isValid:Bool {
         guard schema==1,widgets.count==46 else{return false}
