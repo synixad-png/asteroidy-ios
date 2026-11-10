@@ -60,6 +60,7 @@ struct Sector01Scene568: View {
     private func resumeMission568() {
         guard userPaused else {return}
         session.release() // never resurrect a held auto-fire after pause
+        session.refreshControls586()
         userPaused=false
         session.paused=scenePhase != .active
         onMissionPause(false)
