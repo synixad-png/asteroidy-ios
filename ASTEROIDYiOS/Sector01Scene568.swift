@@ -101,14 +101,6 @@ struct Sector01Scene568: View {
                     .font(.system(size:13,weight:.bold,design:.monospaced))
                     .foregroundStyle(Color(red:0.89,green:0.67,blue:0.31))
                 Spacer()
-                Button("‹ WRÓĆ DO PAUZY") {
-                    showingMissionSettings568=false
-                }
-                .font(.system(size:13,weight:.bold,design:.monospaced))
-                .padding(10)
-                .foregroundStyle(.white)
-                .background(Color(red:0.05,green:0.15,blue:0.22))
-                .accessibilityIdentifier("sector01-settings-back")
             }
             .padding(.horizontal,compact ? 10:24)
             .padding(.vertical,7)
@@ -124,6 +116,20 @@ struct Sector01Scene568: View {
                     session.applyHudMotion600(settings)
                 })
                 .frame(maxWidth:.infinity,maxHeight:.infinity)
+            HStack {
+                Button("‹ WRÓĆ DO PAUZY") {
+                    showingMissionSettings568=false
+                }
+                .font(.system(size:13,weight:.bold,design:.monospaced))
+                .frame(minHeight:42)
+                .padding(.horizontal,16)
+                .foregroundStyle(.white)
+                .background(Color(red:0.05,green:0.15,blue:0.22))
+                .accessibilityIdentifier("sector01-settings-back")
+                Spacer(minLength:0)
+            }
+            .padding(.leading,CGFloat(max(12,missionSafeInsets568.left+12)))
+            .padding(.bottom,CGFloat(max(10,missionSafeInsets568.bottom+6)))
         }
         .background(Color(red:0.005,green:0.018,blue:0.034))
         .ignoresSafeArea()
