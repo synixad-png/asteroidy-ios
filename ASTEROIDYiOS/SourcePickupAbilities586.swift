@@ -94,9 +94,11 @@ struct SourceLegacyPickupDrops586 {
     private var untilBoost:Int
 
     init(seed:Int32) {
-        random=MissionWave568.SourceRandom(
+        var rng=MissionWave568.SourceRandom(
             seed:seed ^ Int32(bitPattern:0x37C9E215))
-        untilBoost=4+random.integer(4)
+        let firstBoost=4+rng.integer(4)
+        random=rng
+        untilBoost=firstBoost
     }
 
     mutating func shield(enemy:Bool,rockSize:Int,
