@@ -7,13 +7,19 @@ import UIKit
 /// are calibrated for visibility, not claimed bit-identical to PC GLSL.
 /// Does not touch or replace source glTF material, UV, PBR or emission.
 @MainActor enum H55FPSLighting580 {
+    // SceneKit intensity units are not equivalent to PC GpuGloves417's
+    // explicitly tone-mapped GLSL lights. The former 1.0 photometric gain
+    // clipped the authored glove highlights to white in the FPS overlay.
+    // Keep original light positions, RGB ratios and glTF PBR unchanged.
+    private static let sceneKitLightGain:CGFloat=0.35
+
     static func install(into scene:SCNScene) {
         let ambient=SCNNode()
         ambient.name="FPS_AMBIENT_LIGHT"
         let ambientLight=SCNLight()
         ambientLight.type = .ambient
         ambientLight.color=UIColor.white
-        ambientLight.intensity=220
+        ambientLight.intensity=220*sceneKitLightGain
         ambient.light=ambientLight
         scene.rootNode.addChildNode(ambient)
 
@@ -29,7 +35,7 @@ import UIKit
             let lamp=SCNLight()
             lamp.type = .omni
             lamp.color=spec.1
-            lamp.intensity=spec.2
+            lamp.intensity=spec.2*sceneKitLightGain
             node.light=lamp
             scene.rootNode.addChildNode(node)
         }
