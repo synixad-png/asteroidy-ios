@@ -29,7 +29,9 @@ struct HudLayout600:Codable,Equatable {
         let data=Data(approvedJSON.utf8)
         guard let value=try? JSONDecoder().decode(HudLayout600.self,from:data),
               value.isValid else {
-            preconditionFailure("Bundled PC v600 HUD layout is invalid")
+            // Fail visibly without terminating combat or substituting old v568 data.
+            NSLog("ASTEROIDY HUD v600: approved layout invalid — no fallback layout")
+            return HudLayout600(schema:1,widgets:[])
         }
         return value
     }
