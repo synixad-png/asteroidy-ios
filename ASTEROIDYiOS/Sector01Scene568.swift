@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// CARBONIS 01 native interactive combat on the verified source planet C279.
 /// Wave actors, player flight, shots and HUD share the persistent combat state.
@@ -23,6 +24,9 @@ struct Sector01Scene568: View {
     // user pause is independent from an iOS lock-screen suspension.
     @State private var userPaused=false
     @State private var showingHudMotion600=false
+    @State private var showingPlanetariumImport600=false
+    @State private var planetariumURL600:URL?
+    @State private var planetariumIssue600:String?
     // Window safe areas survive a full-bleed mission view on iPad/iPhone.
     @State private var missionSafeInsets568=W3ScreenInsets568()
 
@@ -134,6 +138,31 @@ struct Sector01Scene568: View {
                 // All readings come from the genuine active combat snapshot.
                 SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568)
                     .allowsHitTesting(false)
+                    .onAppear {
+                        if planetariumURL600 == nil {
+                            planetariumURL600=HudPlanetariumAsset600.availableURL()
+                        }
+                    }
+
+                // One original 3D asset, rendered by GLTFKit2 + SceneKit.
+                // No procedural replacement if the signed-off GLB is absent.
+                if let planetariumURL600 {
+                    HudPlanetariumScene600(
+                        original:planetariumURL600,
+                        capsule:session.hud.capsuleLevels,
+                        pitch:-20,
+                        pose:session.hud.motion)
+                    .frame(
+                        width:CGFloat(250*1.4702*combatHUDLayout.scale),
+                        height:CGFloat(135*1.4702*combatHUDLayout.scale))
+                    .position(
+                        x:CGFloat(combatHUDLayout.x(64.7882+125,
+                            at:.bottomLeft)+Double(session.hud.motion.x)*1.18*combatHUDLayout.scale),
+                        y:CGFloat(combatHUDLayout.y(553.0863+67.5,
+                            at:.bottomLeft)+Double(session.hud.motion.y)*1.18*combatHUDLayout.scale))
+                    .allowsHitTesting(false)
+                    .accessibilityIdentifier("sector01-hud-v600-original-planetarium")
+                }
 
                 // The touch-only pause affordance is separate from the PC HUD.
                 // Keep the real source Game.Paused action and preserve
@@ -305,6 +334,33 @@ struct Sector01Scene568: View {
                                           design:.monospaced))
                             .foregroundStyle(.gray)
                         Divider().overlay(Color(red:0.88,green:0.67,blue:0.31))
+                        if planetariumURL600 == nil {
+                            Button("WCZYTAJ PLANETARIUM GLB v600") {
+                                showingPlanetariumImport600=true
+                            }
+                            .fileImporter(
+                                isPresented:$showingPlanetariumImport600,
+                                allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data]
+                            ) { result in
+                                do {
+                                    let source=try result.get()
+                                    planetariumURL600=try HudPlanetariumAsset600.install(from:source)
+                                    planetariumIssue600=nil
+                                } catch {
+                                    planetariumIssue600=error.localizedDescription
+                                }
+                            }
+                            .frame(maxWidth:.infinity)
+                            .padding(compact ? 7:10)
+                            .background(Color(red:0.05,green:0.15,blue:0.22),
+                                        in:RoundedRectangle(cornerRadius:5))
+                            .foregroundStyle(.cyan)
+                        }
+                        if let planetariumIssue600 {
+                            Text(planetariumIssue600)
+                                .font(.system(size:10))
+                                .foregroundStyle(.orange)
+                        }
                         Button("HUD DYNAMICZNY / USTAWIENIA") {
                             showingHudMotion600=true
                         }
