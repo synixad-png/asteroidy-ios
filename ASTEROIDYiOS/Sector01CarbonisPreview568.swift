@@ -102,6 +102,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var previousRockFrame: TimeInterval?
             private let depth:MTLDepthStencilState
             private let noDepthWrite:MTLDepthStencilState
+            // Shared original PC586 Metal resources, never duplicated for HUD.
+            private let hudIconDepth600:MTLDepthStencilState
             // Source v568: 3D cap drawn after planet; additive halo only
             // for 2D menu preview, exactly as GpuSphere67/PlanetScreen.
             private let planetAtmospherePipeline:MTLRenderPipelineState
@@ -542,7 +544,18 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 guard let noWrite=device.makeDepthStencilState(
                     descriptor:effectsDepth) else {throw SourceError.metal}
                 noDepthWrite=noWrite
+                let hudDepth=MTLDepthStencilDescriptor()
+                hudDepth.depthCompareFunction = .always
+                hudDepth.isDepthWriteEnabled=false
+                guard let hudDepthState=device.makeDepthStencilState(descriptor:hudDepth)
+                else{throw SourceError.metal}
+                hudIconDepth600=hudDepthState
                 super.init()
+                if pickupPipeline586 != nil && pickupModels586.count==4 {
+                    DispatchQueue.main.async { [weak gameSession] in
+                        gameSession?.setHUD3DIconsReady600(true)
+                    }
+                }
             }
             /// Rebuild only when PLANETY → JASNOŚĆ EMISJI LAWY changes.
             /// A fresh texture avoids overwriting texels still being sampled
@@ -1450,6 +1463,39 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             length:MemoryLayout<Uniforms>.stride,index:1)
                         encoder.drawPrimitives(type:.triangle,vertexStart:0,
                                                vertexCount:values.count/12)
+                    }
+                }
+                // 4 HUD GLBs reuse existing resident world-pickup geometry,
+                // textures and pipeline. No second GPU upload or drawables.
+                if let session=gameSession,
+                   session.hud3DIconsReady600,
+                   let pickupPipeline=pickupPipeline586,
+                   pickupModels586.count==4 {
+                    let width=Float(view.drawableSize.width)
+                    let height=Float(view.drawableSize.height)
+                    if width>1 && height>1 {
+                        encoder.setDepthStencilState(hudIconDepth600)
+                        encoder.setRenderPipelineState(pickupPipeline)
+                        encoder.setCullMode(.none)
+                        for (index,kind) in HudPickupTransform600.order.enumerated() {
+                            guard let asset=pickupModels586[kind],
+                                  let icon=HudPickupTransform600.sample(
+                                    index:index,time:session.game.elapsed,
+                                    pose:session.hud.motion,
+                                    drawableWidth:width,drawableHeight:height)
+                            else{continue}
+                            var settings=Uniforms(
+                                mvp:HudPickupTransform600.mvp(
+                                    icon,width:width,height:height),
+                                model:HudPickupTransform600.model(icon),
+                                material:2,glow:pickupVisual586.addedFill)
+                            encoder.setVertexBuffer(asset.triangles,offset:0,index:0)
+                            encoder.setVertexBytes(&settings,
+                                length:MemoryLayout<Uniforms>.stride,index:1)
+                            encoder.setFragmentTexture(asset.skin,index:0)
+                            encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                                                   vertexCount:asset.vertexCount)
+                        }
                     }
                 }
                 encoder.endEncoding()
