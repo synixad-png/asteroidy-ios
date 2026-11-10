@@ -38,6 +38,9 @@ on:
       - "ASTEROIDYiOS/HudPlanetariumAsset600.swift"
       - "ASTEROIDYiOS/HudPlanetariumTracks600.swift"
       - "ASTEROIDYiOS/HudPlanetariumScene600.swift"
+      - "ASTEROIDYiOS/HudPlanetariumGLTFImport.swift"
+      - "Tests/HudPlanetariumGLTFImportContract.py"
+      - "Tests/HudPlanetariumGLTFImportTests.swift"
       - "ASTEROIDYiOS/HudPlanetariumCorona600.swift"
       - "Tests/HudPlanetariumCorona600Tests.swift"
       - "Tests/HudPlanetariumCorona600Contract.py"
@@ -64,6 +67,7 @@ jobs:
           python3 Tests/HudV600IntegrationContract.py
           python3 Tests/HudPlasmaLive600Contract.py
           python3 Tests/HudPlanetariumIntegration600Contract.py
+          python3 Tests/HudPlanetariumGLTFImportContract.py
           python3 Tests/HudPlanetariumCorona600Contract.py
           python3 Tests/HudMotionEventCounters600Contract.py
           python3 Tests/HudMotionLiveRenderer600Contract.py
