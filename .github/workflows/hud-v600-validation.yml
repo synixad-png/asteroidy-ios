@@ -12,6 +12,9 @@ on:
       - "ASTEROIDYiOS/HudPlanetariumTracks600.swift"
       - "ASTEROIDYiOS/HudPlanetariumScene600.swift"
       - "ASTEROIDYiOS/Sector01Scene568.swift"
+      - "ASTEROIDYiOS/HudPickupTransform600.swift"
+      - "Tests/HudPickupTransform600Tests.swift"
+      - "Tests/HudPickupMetal600Contract.py"
       - "Tests/HudPlanetariumIntegration600Contract.py"
       - "Tests/HudCapsuleBinding600Tests.swift"
       - "Tests/HudCapsuleController600Tests.swift"
@@ -30,6 +33,7 @@ jobs:
         run: |
           python3 Tests/HudV600IntegrationContract.py
           python3 Tests/HudPlanetariumIntegration600Contract.py
+          python3 Tests/HudPickupMetal600Contract.py
       - name: Compile and execute Swift motion and plasma reference contracts
         run: |
           set -euo pipefail
@@ -49,3 +53,5 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumTracks600.swift ASTEROIDYiOS/HudPlanetariumScene600.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
+          swiftc -O ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudPickupTransform600.swift Tests/HudPickupTransform600Tests.swift -o /tmp/hud-v600-icons
+          /tmp/hud-v600-icons
