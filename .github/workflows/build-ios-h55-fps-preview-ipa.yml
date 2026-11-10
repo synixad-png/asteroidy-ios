@@ -37,6 +37,8 @@ on:
       - ASTEROIDYiOS/CarbonisSession568.swift
       - ASTEROIDYiOS/Sector01CarbonisPreview568.swift
       - ASTEROIDYiOS/HudPlanetariumHost600.swift
+      - ASTEROIDYiOS/HudPlanetariumProjection.swift
+      - Tests/HudPlanetariumProjectionTests.swift
       - ASTEROIDYiOS/HudPlanetariumScene600.swift
       - SourceResources/PC602/planetarium.glb.xz
       - Tools/stage_pc602_planetarium.py
@@ -74,7 +76,7 @@ jobs:
           python3 Tests/H55FPSOriginalMaterial580Tests.py | tee -a reports/fps-source.txt
           # Validate final 352x198/16:9 preview and isolated depth source.
           swiftc -frontend -parse ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/HudEditorGeometry.swift
-          swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumScene600.swift ASTEROIDYiOS/HudPlanetariumHost600.swift ASTEROIDYiOS/Sector01Scene568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumProjection.swift ASTEROIDYiOS/HudPlanetariumScene600.swift ASTEROIDYiOS/HudPlanetariumHost600.swift ASTEROIDYiOS/Sector01Scene568.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudEnergy600.swift ASTEROIDYiOS/HudPlasmaLayer600.swift ASTEROIDYiOS/SourceCombatHUD331.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSSettingsSection580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSPreview580.swift
@@ -88,6 +90,8 @@ jobs:
           /tmp/hud-icon-projection | tee -a reports/hud-v600-source.txt
           swiftc ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudEditorGeometry.swift Tests/HudEditorGeometryTests.swift -o /tmp/hud-editor-geometry
           /tmp/hud-editor-geometry | tee -a reports/hud-touch-v602.txt
+          swiftc ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift ASTEROIDYiOS/HudPlanetariumProjection.swift Tests/HudPlanetariumProjectionTests.swift -o /tmp/hud-planetarium-screen
+          /tmp/hud-planetarium-screen | tee -a reports/hud-touch-v602.txt
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-source-core
           /tmp/hud-v600-source-core | tee -a reports/hud-v600-source.txt
           swiftc ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudCapsuleController600Tests.swift -o /tmp/hud-v600-source-capsules
