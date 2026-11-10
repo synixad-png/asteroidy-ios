@@ -219,7 +219,9 @@ enum SourceControls586 {
             var output=Self()
             if lines[0]=="ASTEROIDY_CONTROLS_1" {
                 guard (lines.count==12 || lines.count==13),
-                      let deadZone=Int(lines[1]) else{return nil}
+                      let deadZone=Int(lines[1]),
+                      lines.count==12 || ["0","1"].contains(lines[12])
+                else{return nil}
                 for i in 0..<10 {
                     let parts=lines[2+i].components(separatedBy:"|")
                     guard parts.count==2,let key=Int(parts[0]),
