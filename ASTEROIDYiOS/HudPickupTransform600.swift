@@ -49,10 +49,8 @@ enum HudPickupTransform600 {
                   drawableHeight:Double(drawableHeight)) else{return nil}
         let pixelPerPointX=Double(drawableWidth)/screen.width
         let pixelPerPointY=Double(drawableHeight)/screen.height
-        let x=Float(pixel.centerX+
-            Double(pose.x)*0.78*screen.scale*pixelPerPointX)
-        let y=Float(pixel.centerY+
-            Double(pose.y)*0.78*screen.scale*pixelPerPointY)
+        let x=Float(pixel.centerX + Double(pose.x)*0.78*screen.scale*pixelPerPointX)
+        let y=Float(pixel.centerY + Double(pose.y)*0.78*screen.scale*pixelPerPointY)
         let pulse=1+pose.widgetPulse(widgetIDs[index])
         let iconSize=Float(min(pixel.width,pixel.height)*0.9)*pulse
         return Sample(x:x,y:y,
