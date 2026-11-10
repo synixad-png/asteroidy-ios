@@ -6,6 +6,8 @@ import UniformTypeIdentifiers
 struct HudLayoutEditor600:View {
     @State private var document:HudLayout600
     @State private var inspectorOpen=false
+    @State private var draggedWidget600:(id:String,x:Double,y:Double)?
+    @State private var pinchStartScale600:Double?
     @State private var selected="radar"
     @State private var importingJSON=false
     @State private var exportingJSON=false
@@ -81,9 +83,69 @@ struct HudLayoutEditor600:View {
         document.change(id,edit)
         onPreview(document)
     }
+    /// PC v602 HudLayout.SelectAt: smallest visible containing widget wins;
+    /// ties preserve the reverse draw order. Hit boxes have original GLB
+    /// center-scale semantics and the existing four screen safe-area anchors.
+    private func hitWidget600(_ point:CGPoint)->HudLayout600.Widget? {
+        var chosen:HudLayout600.Widget?
+        var best=Double.infinity
+        for widget in document.widgets.reversed() where widget.visible {
+            guard let size=HudWidgetGeometry600.size(widget.id) else{continue}
+            let scale=widget.scale*viewport.scale
+            let x=viewport.originX(for:anchor(widget.id))
+                +(widget.x+(widget.is3D ? (size.width-size.width*widget.scale)*0.5 : 0))*viewport.scale
+            let y=viewport.originY(for:anchor(widget.id))
+                +(widget.y+(widget.is3D ? (size.height-size.height*widget.scale)*0.5 : 0))*viewport.scale
+            let width=size.width*scale,height=size.height*scale
+            guard Double(point.x)>=x,Double(point.x)<=x+width,
+                  Double(point.y)>=y,Double(point.y)<=y+height else{continue}
+            let area=width*height
+            if area<best {best=area;chosen=widget}
+        }
+        return chosen
+    }
+    /// A single touch surface prevents 46 overlapping SwiftUI views from
+    /// intercepting gestures outside their authored PC v602 bounds.
+    private var editorDrag600:some Gesture {
+        DragGesture(minimumDistance:0)
+            .onChanged {gesture in
+                if draggedWidget600 == nil {
+                    guard let hit=hitWidget600(gesture.startLocation) else{return}
+                    selected=hit.id
+                    draggedWidget600=(hit.id,hit.x,hit.y)
+                }
+                guard let drag=draggedWidget600,viewport.scale>0 else{return}
+                let x=drag.x+Double(gesture.translation.width)/viewport.scale
+                let y=drag.y+Double(gesture.translation.height)/viewport.scale
+                changeWidget(drag.id){ value in
+                    if let xr=HudWidgetGeometry600.xRange(for:value),
+                       let yr=HudWidgetGeometry600.yRange(for:value) {
+                        value.x=min(xr.upperBound,max(xr.lowerBound,x))
+                        value.y=min(yr.upperBound,max(yr.lowerBound,y))
+                    }
+                }
+            }
+            .onEnded {_ in draggedWidget600=nil}
+    }
+    private var editorPinch600:some Gesture {
+        MagnificationGesture(minimumScaleDelta:0.005)
+            .onChanged { factor in
+                guard let widget=selectedWidget else{return}
+                if pinchStartScale600 == nil {pinchStartScale600=widget.scale}
+                guard let starting=pinchStartScale600 else{return}
+                let value=starting*Double(factor)
+                changeWidget(widget.id){ item in
+                    let bounds=HudWidgetGeometry600.scaleRange(for:item)
+                    item.scale=min(bounds.upperBound,max(bounds.lowerBound,value))
+                }
+            }
+            .onEnded {_ in pinchStartScale600=nil}
+    }
     private func visual(_ bounds:CGSize)->some View {
         ZStack(alignment:.topLeading) {
             Color.clear.contentShape(Rectangle())
+                .gesture(editorDrag600)
+                .simultaneousGesture(editorPinch600)
                 .accessibilityIdentifier("hud-v600-editor-touch-blocker")
             ForEach(document.widgets) { widget in
                 if let size=HudWidgetGeometry600.size(widget.id) {
@@ -109,7 +171,9 @@ struct HudLayoutEditor600:View {
                                 value.scale=min(limit.upperBound,max(limit.lowerBound,newScale))
                             }
                         })
-                        // PC F6 prefers small overlapping elements.
+                        .allowsHitTesting(false)
+                        // PC v602 selects the smallest source hitbox, NOT the
+                        // last full-screen SwiftUI .position gesture owner.
                         .zIndex(selected==widget.id ? 10000 :
                                 1.0/max(1,size.width*size.height))
                 }
@@ -179,6 +243,7 @@ struct HudLayoutEditor600:View {
             ZStack(alignment:.topLeading) {
                 visual(geo.size)
                 VStack(spacing:0) {
+                    Spacer(minLength:0)
                     HStack(spacing:8) {
                         Text("EDYTOR HUD · GRA WSTRZYMANA")
                             .font(.system(size:11,weight:.bold,design:.monospaced))
@@ -202,7 +267,6 @@ struct HudLayoutEditor600:View {
                     .buttonStyle(.bordered)
                     .padding(.horizontal,7).padding(.vertical,4)
                     .background(Color(red:0.01,green:0.02,blue:0.04).opacity(0.94))
-                    Spacer(minLength:0)
                     if !inspectorOpen {
                         Text("PRZESUŃ PALCEM · SKALUJ SZCZYPIĄC DWOMA PALCAMI")
                             .font(.system(size:9,design:.monospaced))
@@ -211,13 +275,21 @@ struct HudLayoutEditor600:View {
                             .allowsHitTesting(false)
                     }
                 }
+                // Landscape iPhone clock/battery occupy the upper-right
+                // status area. Keep ALL editor actions above the home bar,
+                // not beneath system chrome at the top of the screen.
+                .padding(.bottom,CGFloat(max(12,viewport.safeBottom+7)))
                 if inspectorOpen {
                     inspector
                         .frame(width:min(310,max(235,geo.size.width*0.34)),
-                               height:max(140,geo.size.height-52))
+                               height:max(140,geo.size.height-
+                                    CGFloat(max(88,viewport.safeBottom+65))-
+                                    CGFloat(max(12,viewport.safeTop))))
                         .frame(maxWidth:.infinity,maxHeight:.infinity,
                                alignment:.topTrailing)
-                        .padding(.top,45)
+                        .padding(.top,CGFloat(max(12,viewport.safeTop)))
+                        .padding(.trailing,CGFloat(max(12,viewport.safeRight)))
+                        .padding(.bottom,CGFloat(max(88,viewport.safeBottom+65)))
                         .zIndex(20000)
                 }
             }
