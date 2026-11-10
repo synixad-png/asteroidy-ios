@@ -119,6 +119,16 @@ final class CarbonisSession568: ObservableObject {
         return (hudLayoutSnapshot600,hudSafeInsetsSnapshot600,
                 hudLivePose600,hudLiveCapsules600)
     }
+    // Hot 60Hz SceneKit/SwiftUI consumers need only 12 small Float fields.
+    // Do not copy the 46-widget layout or safe-area metadata just to
+    // animate plasma and the three source capsules.
+    func currentHudVisual600()->(
+        pose:HudMotion600.Pose,capsules:HudCapsuleController600.Snapshot
+    ) {
+        hudLayoutLock600.lock()
+        defer {hudLayoutLock600.unlock()}
+        return (hudLivePose600,hudLiveCapsules600)
+    }
     func updateHudLayout600(_ updated:HudLayout600) {
         guard updated.isValid else{return}
         hudLayoutLock600.lock()
