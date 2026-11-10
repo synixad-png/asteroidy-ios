@@ -1316,8 +1316,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     for pickup in session.game.tokenPickups {
                         guard let kind=pickup.sourceKind,
                               let model=pickupModels586[kind] else{continue}
-                        let size=kind.sourceBaseSize*
-                            pickupVisual586.visualFactor(kind)
+                        let size = kind.sourceBaseSize * pickupVisual586.visualFactor(kind)
                         if let visibilityFrame,
                            !SourceVisibleSurface73.possiblyVisible(
                             pickup.position,
