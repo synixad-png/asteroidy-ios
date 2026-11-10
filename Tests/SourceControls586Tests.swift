@@ -30,17 +30,22 @@ import Foundation
         let utf8=initial.exportPCText()
         let imported=c.Profile.importPCText(utf8)
         check(imported == initial,"PC v2 controls 60 action roundtrip")
-        let pcV1=(["ASTEROIDY_CONTROLS_1","42"]+
-                    (0..<10).map{String(initial.keys[$0])+"|"+initial.pad[$0]}+
-                    ["1"]).joined(separator:"\r\n")
+        var pcV1Lines=["ASTEROIDY_CONTROLS_1","42"]
+        pcV1Lines.append(contentsOf:(0..<10).map{
+            String(initial.keys[$0])+"|"+initial.pad[$0]
+        })
+        pcV1Lines.append("1")
+        let pcV1=pcV1Lines.joined(separator:"\r\n")
         let legacy=c.Profile.importPCText(pcV1)
         check(legacy != nil && legacy!.keys==initial.keys &&
               legacy!.pad==initial.pad && legacy!.deadZone==42 &&
               legacy!.invertOrbitPitch,
               "original v1 ten actions migrate keeping remaining 50 defaults")
-        let cut=(["ASTEROIDY_CONTROLS_2","30","0","10"]+
-                    (0..<10).map{String(initial.keys[$0])+"|"+initial.pad[$0]}
-                ).joined(separator:"\n")
+        var cutLines=["ASTEROIDY_CONTROLS_2","30","0","10"]
+        cutLines.append(contentsOf:(0..<10).map{
+            String(initial.keys[$0])+"|"+initial.pad[$0]
+        })
+        let cut=cutLines.joined(separator:"\n")
         let ten=c.Profile.importPCText(cut)
         check(ten != nil && ten!.keys==initial.keys && ten!.pad==initial.pad,
               "source v2 with ten rows does not break next 50 indices")
