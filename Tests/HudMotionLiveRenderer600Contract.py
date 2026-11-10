@@ -31,14 +31,19 @@ assert 'pose:session.hud.motion,' not in renderer
 assert 'HudPlanetariumHost600(' in scene
 # Requested fixed screen position for the original PC v602 HUD planetarium.
 # Keep the real 159-channel glTF animation, not a moving SwiftUI container.
-assert 'livePose:{HudMotion600.Pose()}' in host
-assert '.offset(x:CGFloat(placement.centerX-placement.width*0.5)' in host
-assert '.frame(width:CGFloat(viewport.width)' in host
+assert 'HudPlanetariumProjection.make(' in host
+assert 'projection: projection,' in host
+assert '.frame(width: CGFloat(viewport.width)' in host
+assert 'HudMotion600.Pose' not in host
 assert 'HudMotionProject600.project(' not in host
+assert 'HudPlanetariumProjection.Transform' in planetarium
+assert 'hudAnchor=anchor' in planetarium
+assert 'hudScale=scaleNode' in planetarium
+assert 'camera.orthographicScale=transform.cameraHalfHeight' in planetarium
 assert 'func currentHudVisual600()->(' in session
 assert 'return (hudLivePose600,hudLiveCapsules600,hudLiveSeconds600)' in session
 assert 'liveCapsules:{[weak session] in' in host
-assert 'let framePose=livePose?() ?? pose' in planetarium
+assert 'livePose' not in planetarium
 assert 'hud.motion=active ? livePose() : HudMotion600.Pose()' in hud
 assert 'TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active))' in hud
 assert 'livePose:{ [weak session] in' in scene
@@ -50,11 +55,11 @@ assert 'centered.addChildNode(model.rootNode)' in planetarium
 assert 'model.rootNode.addAnimationPlayer(player,forKey:' in planetarium
 
 assert 'didApplyAnimationsAtTime' in planetarium
-assert 'framePose.roll' in planetarium
+assert 'rollPivot.eulerAngles.z=roll*Float.pi/180' in planetarium
 assert 'ScreenLeft = X + (Width - Width*Scale)/2' in placement
 assert 'widget.x+sourceWidth/2' in placement and 'widget.y+sourceHeight/2' in placement
 assert 'HudWidgetPlacement600.frame(' in icons
 assert 'HudLayout600.defaults().widget' not in icons
 assert 'private static let defaultLayout600=HudLayout600.defaults()' in icons
 assert 'HudLayout600.defaults()' not in renderer.split('func draw(in view:MTKView)')[1], "no HUD JSON decoding inside render callback"
-print("PASS live HUD v600: 60Hz Metal/SceneKit pose, 10Hz heavy snapshots, PC-centered GLB and notch-safe pixels")
+print("PASS live HUD v600: 60Hz Metal pose, fixed full-screen PC602 GLB, 10Hz heavy snapshots, original 159 glTF channels")
