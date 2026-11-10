@@ -183,6 +183,11 @@ struct Sector01Scene568: View {
                         pose:session.hud.motion,
                         livePose:{ [weak session] in
                             session?.currentHudRenderState600().pose ?? HudMotion600.Pose()
+                        },
+                        liveCapsules:{ [weak session] in
+                            session?.currentHudRenderState600().capsules
+                                ?? HudCapsuleController600.Snapshot(
+                                    levels:[1,1,1],flashes:[0,0,0])
                         })
                     .frame(width:CGFloat(placement.width),
                            height:CGFloat(placement.height))
