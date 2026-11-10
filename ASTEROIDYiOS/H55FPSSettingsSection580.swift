@@ -184,7 +184,11 @@ struct H55FPSSettingsSection580: View {
                     previewStatus=$0
                 }
                 .id(previewRevision)
-                .frame(height:200)
+                // PC GpuGloves417 / GpuWeapon470 preview: exact 16:9
+                // inset geometry, not stretched across an iPad-wide panel.
+                .aspectRatio(16.0/9.0,contentMode:.fit)
+                .frame(maxWidth:352)
+                .frame(height:198)
                 .background(Color.black)
                 .overlay(Rectangle().stroke(cyan.opacity(0.45),lineWidth:1))
                 .allowsHitTesting(false)
