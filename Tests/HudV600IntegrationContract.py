@@ -19,10 +19,18 @@ for wid,model in (
     ("shield_charge.icon","shield"),("boost.icon","boost")):
     assert next(w for w in widgets if w["id"] == wid)["glb"] == model
 hud = (root / "ASTEROIDYiOS/SourceCombatHUD331.swift").read_text()
-assert "HudEnergy600.ribbon(" in hud
+plasma = (root / "ASTEROIDYiOS/HudPlasmaLayer600.swift").read_text()
+assert "HudEnergy600.ribbon(" in plasma
+assert "HudEnergy600.ribbon(" not in hud
+assert "TimelineView(.animation(minimumInterval:1.0/60.0" in plasma
+assert "Self.draw(bar,current:values[i],maximum:maxima[i]" in plasma
+assert "let maxima=[maxHull,maxArmor,100]" in plasma
+assert "for layer in 0..<5" in plasma and "for k in 0..<7" in plasma
+assert "SourceCombatHUD331.widgetContext(" in plasma
+assert 'id:Self.names[i]' in plasma
 for label, style in (("KADŁUB",0),("PANCERZ",1),("TARCZA",2)):
     assert f'"{label}"' in hud
-    assert "titles[i],values[i],maximums[i],191,y,i,Double(hud.seconds))" in hud
+    assert "titles[i],values[i],191,y)" in hud
 assert "let n=14" not in hud, "segmented status bars must be replaced"
 motion = (root / "ASTEROIDYiOS/HudMotion600.swift").read_text()
 for marker in ("leftSway = 400", "rightSway = 400",
@@ -39,9 +47,13 @@ for marker in ("motionSample.turnRate=game.flight.flight.angularVelocity",
                "motionSample.shield=game.tarcza145.energy",
                "snapshot.motion=hudPose600"):
     assert marker in session, marker
-for marker in ("Self.applyMotion(&topLeft", "Self.applyMotion(&topRight",
-               "Self.applyMotion(&bottomLeft", "Self.applyMotion(&bottomRight"):
-    assert marker in hud, marker
+assert "Self.applyMotion(&context,pose:pose,widget:id)" in hud
+assert "Self.applyMotion(&bottomLeft" not in hud
+assert "Self.applyMotion(&bottomRight" not in hud
+assert "SourceCombatHUD331.applyMotion(&bottom" not in plasma
+assert "maxHull=game.maxHull;maxArmor=game.maxArmor" in session
+assert "tarczaEnergy=max(0,Int(ceil(Double(game.tarcza145.energy))))" in session
+assert "HudPlasmaLayer600(" in scene
 assert "session.applyHudMotion600(settings)" in scene
 assert "HudMotionSettingsPanel600" in scene
 for marker in ("\\.strength", "\\.inertia", "\\.impact", "\\.leftSway",
