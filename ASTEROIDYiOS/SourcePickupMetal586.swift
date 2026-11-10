@@ -49,8 +49,8 @@ struct SourcePickupMetal586 {
         let original=Self.expected(kind)
         guard bytes.count==40+original.count*48,
               bytes[0]==0x50,bytes[1]==0x35,bytes[2]==0x38,bytes[3]==0x36,
-              (UInt32(bytes[4]) | UInt32(bytes[5])<<8
-                | UInt32(bytes[6])<<16 | UInt32(bytes[7])<<24)
+              Int(UInt32(bytes[4]) | (UInt32(bytes[5]) << 8)
+                | (UInt32(bytes[6]) << 16) | (UInt32(bytes[7]) << 24))
                     == original.count,
               Self.sha(bytes)==original.mesh,
               Self.sha(jpeg)==original.jpg,
