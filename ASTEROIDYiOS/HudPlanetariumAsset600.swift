@@ -35,7 +35,7 @@ enum HudPlanetariumAsset600 {
     static func validate(_ bytes:Data) throws {
         guard bytes.count==expectedSize else{throw Failure.unexpectedAsset}
         guard uint32(bytes,0)==0x46546c67,
-              uint32(bytes,4)==2,uint32(bytes,8)==bytes.count,
+              uint32(bytes,4)==2,uint32(bytes,8)==UInt32(bytes.count),
               uint32(bytes,16)==0x4e4f534a,
               let jsonLength=uint32(bytes,12),
               jsonLength>0,
@@ -93,7 +93,11 @@ enum HudPlanetariumAsset600 {
             .appendingPathComponent(UUID().uuidString+".glb")
         do {
             try bytes.write(to:temp,options:.atomic)
-            try FileManager.default.moveItem(at:temp,to:destination)
+            if FileManager.default.fileExists(atPath:destination.path) {
+                _ = try FileManager.default.replaceItemAt(destination,withItemAt:temp)
+            } else {
+                try FileManager.default.moveItem(at:temp,to:destination)
+            }
         } catch {
             try? FileManager.default.removeItem(at:temp)
             throw error
