@@ -50,6 +50,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         private var flashes=[SCNNode]()
         private var camera:SCNNode?
         private var scene:SCNScene?
+        private var corona:HudPlanetariumCorona600?
         private var generation=0
 
         func set(_ updated:HudCapsuleController600.Snapshot,
@@ -68,6 +69,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
             scene=nil;binding=nil
             bubbles.removeAll();flashes.removeAll()
             camera=nil
+            corona=nil
             mutex.unlock()
         }
 
@@ -110,6 +112,9 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                         flashNodes.append(node)
                     }
                     guard resolved.count==72 && flashNodes.count==3 else{return}
+                    // Attaches to original outer sphere; never to global
+                    // planetarium bounds or the three status capsules.
+                    let corona=HudPlanetariumCorona600(scene:model,nodes:source.nodes)
                     let cameraNode=SCNNode()
                     let lens=SCNCamera()
                     lens.usesOrthographicProjection=true
@@ -139,6 +144,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     self.bubbles=resolved
                     self.flashes=flashNodes
                     self.camera=cameraNode
+                    self.corona=corona
                     self.mutex.unlock()
                     view.scene=model
                     view.pointOfView=cameraNode
@@ -174,6 +180,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                 camera.eulerAngles=SCNVector3(radians,
                     yaw*Float.pi/180,roll*Float.pi/180)
             }
+            corona?.advance(at:time)
         }
     }
 }
