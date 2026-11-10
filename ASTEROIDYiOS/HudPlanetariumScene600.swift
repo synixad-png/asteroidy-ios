@@ -12,6 +12,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
     let yaw:Float
     let roll:Float
     let pose:HudMotion600.Pose
+    let playing:Bool
     let livePose:()->HudMotion600.Pose
     let liveCapsules:()->HudCapsuleController600.Snapshot
 
@@ -30,13 +31,14 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         context.coordinator.set(capsule,pitch:pitch,yaw:yaw,roll:roll,
                                 pose:pose,livePose:livePose,
                                 liveCapsules:liveCapsules)
-        context.coordinator.load(original,into:view)
+        context.coordinator.load(original,into:view,playing:playing)
         return view
     }
     func updateUIView(_ view:SCNView,context:Context) {
         context.coordinator.set(capsule,pitch:pitch,yaw:yaw,roll:roll,
                                 pose:pose,livePose:livePose,
                                 liveCapsules:liveCapsules)
+        if view.isPlaying != playing {view.isPlaying=playing}
     }
     static func dismantleUIView(_ view:SCNView,coordinator:Coordinator) {
         view.delegate=nil
@@ -88,7 +90,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
             mutex.unlock()
         }
 
-        func load(_ url:URL,into view:SCNView) {
+        func load(_ url:URL,into view:SCNView,playing:Bool) {
             guard let bytes=try? Data(contentsOf:url),
                   (try? HudPlanetariumAsset600.validate(bytes)) != nil,
                   let inventory=HudPlanetariumTracks600.inspect(bytes),
@@ -163,7 +165,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     self.mutex.unlock()
                     view.scene=model
                     view.pointOfView=cameraNode
-                    view.isPlaying=true
+                    view.isPlaying=playing
                     player.play()
                 }
             }
