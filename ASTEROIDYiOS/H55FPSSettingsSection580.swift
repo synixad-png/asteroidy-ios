@@ -17,6 +17,8 @@ struct H55FPSSettingsSection580: View {
     @State private var previewMotion=0
     @State private var previewStatus="PODGLĄD: ŁADOWANIE ORYGINALNEGO GLB"
     @State private var previewRevision=0
+    @AppStorage("ASTEROIDY_H55_GLOVE_BRIGHTNESS_602")
+    private var gloveBrightness=0.65
 
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.39,green:0.75,blue:0.79)
@@ -24,6 +26,10 @@ struct H55FPSSettingsSection580: View {
                       "OBRÓT X","OBRÓT Y","OBRÓT Z","SKALA"]
 
     private var current:H55FPSSettings580 { loader?.fpsCalibration ?? stored }
+    private func changeGloveBrightness602(_ value:Double) {
+        gloveBrightness=max(0.20,min(1.50,value))
+        loader?.refreshGloveBrightness602()
+    }
     // Preview respects the *selected settings category* even when the
     // in-game viewmodel is currently using the other presentation mode.
     private var previewConfiguration:H55FPSSettings580 {
@@ -163,6 +169,25 @@ struct H55FPSSettingsSection580: View {
                     selector:"h55-fps-show-hands",importer:"h55-fps-import-hands")
                 modelRow("RĘCE MONOLIT",kind:.monolith,
                     selector:"h55-fps-show-monolith",importer:"h55-fps-import-monolith")
+                VStack(alignment:.leading,spacing:4) {
+                    HStack {
+                        Text("JASNOŚĆ RĘKAWIC / TEKSTUR")
+                        Spacer(minLength:8)
+                        Text("\(Int((gloveBrightness*100).rounded()))%")
+                            .monospacedDigit()
+                            .foregroundStyle(gold)
+                    }
+                    .font(.system(size:11,weight:.semibold,design:.monospaced))
+                    Slider(value:Binding(
+                        get:{gloveBrightness},
+                        set:{changeGloveBrightness602($0)}),
+                        in:0.20...1.50,step:0.01)
+                        .tint(cyan)
+                        .accessibilityIdentifier("h55-fps-gloves-brightness")
+                    Text("Regulacja tylko rękawic, bez zmiany oryginalnych plików GLB i broni")
+                        .font(.system(size:9,design:.monospaced))
+                        .foregroundStyle(.secondary)
+                }
                 Picker("DŁOŃ",selection:$rightHand) {
                     Text("LEWA").tag(false)
                     Text("PRAWA").tag(true)
@@ -180,7 +205,9 @@ struct H55FPSSettingsSection580: View {
                 Text("PODGLĄD NA ŻYWO — PRAWDZIWY MODEL 3D")
                     .font(.system(size:10,weight:.bold,design:.monospaced))
                     .foregroundStyle(gold)
-                H55FPSPreview580(settings:previewConfiguration,motion:previewMotion) {
+                H55FPSPreview580(settings:previewConfiguration,
+                                 motion:previewMotion,
+                                 gloveBrightness:gloveBrightness) {
                     previewStatus=$0
                 }
                 .id(previewRevision)
