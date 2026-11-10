@@ -120,6 +120,11 @@ final class CarbonisSession568: ObservableObject {
         summaryElapsed=0
         hud=HUD(restarted)
     }
+    /// Refresh PC586 assignments only at an explicit scene transition.
+    /// Never read UserDefaults in the 120 Hz CARBONIS physics step.
+    func refreshControls586() {
+        controls586=SourceControls586.Profile.load()
+    }
     func input(move:Vec2? = nil,aim:Vec2? = nil,shooting:Bool? = nil) {
         if let move {self.move=move}
         if let aim {self.aim=aim}
