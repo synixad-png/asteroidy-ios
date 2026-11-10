@@ -59,6 +59,7 @@ on:
       - 'ASTEROIDYiOS/HudPlanetariumCorona600.swift'
       - 'Tests/HudMotionEventCounters600Contract.py'
       - 'ASTEROIDYiOS/HudLayoutMarker600.swift'
+      - 'ASTEROIDYiOS/HudWidgetGeometry600.swift'
       - 'Tests/HudPlanetariumCorona600Tests.swift'
       - 'Tests/HudPlanetariumCorona600Contract.py'
       - 'ASTEROIDYiOS/CarbonisSession568.swift'
@@ -446,7 +447,7 @@ jobs:
           # PC v600 HUD must remain wired to real iOS combat, not a static demo.
           python3 Tests/HudV600IntegrationContract.py
           python3 Tests/HudLayout600Contract.py
-          swiftc ASTEROIDYiOS/HudLayout600.swift Tests/HudLayout600Tests.swift -o /tmp/hud-v600-layout
+          swiftc ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudLayout600Tests.swift -o /tmp/hud-v600-layout
           /tmp/hud-v600-layout
           python3 Tests/HudPlanetariumIntegration600Contract.py
           python3 Tests/HudPlanetariumCorona600Contract.py
