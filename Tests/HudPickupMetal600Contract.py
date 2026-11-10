@@ -23,7 +23,7 @@ for marker in (
     assert marker in renderer, marker
 assert renderer.count("SourcePickupMetal586(")==1, "HUD must not load extra texture/model copies"
 assert "render3DIcons:session.hud3DIconsReady600" in scene
-assert "if !renderModel {badge(" in hud
+assert "if !renderModel,let icon {" in hud
 assert "hud3DIconsReady600=false" in session
 assert "static let order:[SourcePickupModels586.Kind]" in model
 assert "import SceneKit" not in model, "shared resources must stay in Metal"
