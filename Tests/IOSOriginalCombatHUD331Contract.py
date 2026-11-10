@@ -58,8 +58,10 @@ expect_all(session,(
     "game.tokenPickups.compactMap",
     "tokenBalance=initialTokens>Int.max-earned ? Int.max : initialTokens+earned",
     "shieldCharges=game.shieldCharges",
-    "tarczaEnergy=nil",
-    "ionAmmo=game.ionAmmo; bombs=game.bombs; boostCharges=0",
+    "tarczaEnergy=Int(game.tarcza145.energy.rounded())",
+    "ionAmmo=game.ionAmmo; bombs=game.bombs",
+    "boostCharges=game.boost71.charges",
+    "boostActive=game.boost71.active",
     "if now-lastHUD > 0.10",
 ),"source combat HUD data")
 expect_all(combat,(
