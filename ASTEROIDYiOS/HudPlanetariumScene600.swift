@@ -13,6 +13,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
     let roll:Float
     let pose:HudMotion600.Pose
     let livePose:()->HudMotion600.Pose
+    let liveCapsules:()->HudCapsuleController600.Snapshot
 
     func makeCoordinator()->Coordinator { Coordinator() }
 
@@ -27,7 +28,8 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         view.rendersContinuously=true
         view.delegate=context.coordinator
         context.coordinator.set(capsule,pitch:pitch,yaw:yaw,roll:roll,
-                                pose:pose,livePose:livePose)
+                                pose:pose,livePose:livePose,
+                                liveCapsules:liveCapsules)
         context.coordinator.load(original,into:view)
         return view
     }
@@ -50,6 +52,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
         private var roll:Float = 0
         private var pose=HudMotion600.Pose()
         private var livePose:(()->HudMotion600.Pose)?
+        private var liveCapsules:(()->HudCapsuleController600.Snapshot)?
         private var binding:HudCapsuleBinding600?
         private var bubbles:[Int:SCNNode]=[:]
         private var flashes=[SCNNode]()
@@ -60,7 +63,8 @@ struct HudPlanetariumScene600:UIViewRepresentable {
 
         func set(_ updated:HudCapsuleController600.Snapshot,
                  pitch:Float,yaw:Float,roll:Float,
-                 pose:HudMotion600.Pose,livePose:@escaping ()->HudMotion600.Pose) {
+                 pose:HudMotion600.Pose,livePose:@escaping ()->HudMotion600.Pose,
+                 liveCapsules:@escaping ()->HudCapsuleController600.Snapshot) {
             mutex.lock()
             capsule=updated
             self.pitch=pitch
@@ -68,6 +72,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
             self.roll=roll
             self.pose=pose
             self.livePose=livePose
+            self.liveCapsules=liveCapsules
             mutex.unlock()
         }
         func reset() {
@@ -78,6 +83,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
             camera=nil
             corona=nil
             livePose=nil
+            liveCapsules=nil
             mutex.unlock()
         }
 
@@ -168,11 +174,16 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                       didApplyAnimationsAtTime time:TimeInterval) {
             mutex.lock()
             defer{mutex.unlock()}
-            guard let binding,capsule.levels.count==3,
-                  capsule.flashes.count==3 else{return}
+            guard let binding else{return}
+            // The 159-track original glTF is animated at scene frame rate;
+            // sample its 3 current resource levels and hit flashes at the
+            // same cadence, independent of 10Hz text/radar publication.
+            let frameCapsules=liveCapsules?() ?? capsule
+            guard frameCapsules.levels.count==3,
+                  frameCapsules.flashes.count==3 else{return}
             for i in 0..<3 {
                 let range=binding.capsules[i]
-                let level=HudCapsuleController600.clamp(capsule.levels[i])
+                let level=HudCapsuleController600.clamp(frameCapsules.levels[i])
                 let cutoff=range.xMin+(range.xMax-range.xMin)*level
                 for id in range.bubbles {
                     guard let node=bubbles[id] else{continue}
@@ -180,7 +191,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     node.isHidden=level<=0 ||
                         (level<1 && (!x.isFinite || x>cutoff))
                 }
-                let flash=binding.flashScale(channel:i,flash:capsule.flashes[i]) ?? 0.001
+                let flash=binding.flashScale(channel:i,flash:frameCapsules.flashes[i]) ?? 0.001
                 flashes[i].scale=SCNVector3(flash,flash,flash)
             }
             if let camera {
