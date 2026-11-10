@@ -18,9 +18,12 @@ import SceneKit
                 "two source arcs and 11 animated tongues")
         aura.advance(at:0)
         require(!aura.root.isHidden,"globe corona must be visible")
-        require(abs(aura.root.position.x-5)<0.01 &&
-                abs(aura.root.position.y-3)<0.01,
-                "aura must be centered on the actual outer sphere")
+        // No GPU frame has been presented on headless CI. The imported
+        // model's .presentation pose is authoritative even at t=0.
+        let initialDisplay=original.presentation.convertPosition(SCNVector3Zero,to:nil)
+        require(abs(aura.root.position.x-initialDisplay.x)<0.01 &&
+                abs(aura.root.position.y-initialDisplay.y)<0.01,
+                "aura must be centered on the presented outer sphere")
         let expectedScale = CGFloat(HudPlanetariumCorona600.originalSphereRadius) / 100
         require(abs(aura.root.scale.x - expectedScale) < 0.001,
                 "aura must track glTF outer sphere radius, not panel bounds")
