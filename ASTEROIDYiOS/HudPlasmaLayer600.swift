@@ -103,9 +103,10 @@ struct HudPlasmaLayer600:View {
         // Source has no regular particle grid; these independent flame
         // tongues have quasi-periodic, non-axial drift on both edges.
         for k in 0..<7 {
-            let drift=(Double(k)*0.61803398875
-                + time*(0.072+0.011*Double(k%3))
-                + Double(style)*0.17).truncatingRemainder(dividingBy:1)
+            let driftBase=Double(k)*0.61803398875
+            let driftRate=time*(0.072+0.011*Double(k%3))
+            let drift=(driftBase+driftRate+Double(style)*0.17)
+                .truncatingRemainder(dividingBy:1)
             let local=drift*length
             if length-local<3.5 {continue}
             let xx=left+local
