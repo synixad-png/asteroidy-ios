@@ -174,6 +174,51 @@ import Foundation
               boosted.invincible>=0.14 &&
               CarbonisCombat568.distance(beforeTravel,boosted.flight.position)>0,
               "boost physically moves the real player, grants protection and advances timer")
+        // Original PC145/PC71 probabilities and cooldown counter use
+        // deterministic seeds without contaminating the ship/AI RNG.
+        var sourceLegacyA=SourceLegacyPickupDrops586(seed:17)
+        var sourceLegacyB=SourceLegacyPickupDrops586(seed:17)
+        var shieldDrops=0,boostDrops=0
+        for _ in 0..<300 {
+            let sa=sourceLegacyA.shield(
+                enemy:false,rockSize:3,eligible:true,pickups:0)
+            let sb=sourceLegacyB.shield(
+                enemy:false,rockSize:3,eligible:true,pickups:0)
+            check(sa?.kind==sb?.kind && sa?.life==sb?.life &&
+                  sa?.velocity.x==sb?.velocity.x,
+                  "source original shield drop stream reproducible")
+            if sa != nil {shieldDrops+=1}
+            let ba=sourceLegacyA.boost(eligible:true,pickups:0)
+            let bb=sourceLegacyB.boost(eligible:true,pickups:0)
+            check(ba?.kind==bb?.kind && ba?.life==bb?.life &&
+                  ba?.velocity.y==bb?.velocity.y,
+                  "source original boost drop counter reproducible")
+            if ba != nil {boostDrops+=1}
+        }
+        check(shieldDrops>=35 && shieldDrops<=85,
+              "big rock shield cell probability stays near original 20%")
+        check(boostDrops>=30 && boostDrops<=65,
+              "source boost drops once per 4-7 then 5-9 rock kills")
+        var ram=CarbonisCombat568(prepared)
+        var testRock=ram.rocks[0]
+        testRock.health=50
+        testRock.velocity=Vec2(x:0,y:0)
+        let forward=Vec2(x:cos(ram.flight.heading),
+                         y:sin(ram.flight.heading))
+        testRock.position=Sphere67.offset(ram.flight.position,by:forward*8)
+        ram.rocks=[testRock]
+        ram.shooters.removeAll()
+        ram.boost71.collect()
+        check(ram.activateBoost71(),
+              "original Boost71 can be activated from a collected charge")
+        ram.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                 shooting:false,dt:1/120)
+        check(ram.rocks.count==1 && ram.rocks[0].health==42,
+              "actual ram hits REAL rock HP for original 8 damage")
+        ram.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                 shooting:false,dt:1/120)
+        check(ram.rocks[0].health==42,
+              "one 0.9-second boost does not damage the same rock twice")
         var sim=CarbonisCombat568(prepared)
         check(sim.rocks.count==13 && sim.shooters.count==4,"exact source wave")
         check(sim.flight.flight.configuration.cruiseSpeed==156,"source ship speed")
