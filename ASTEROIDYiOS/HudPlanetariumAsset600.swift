@@ -56,7 +56,7 @@ enum HudPlanetariumAsset600 {
         }
         let names=gltfNodes.compactMap{$0["name"] as? String}
         for i in 0..<3 {
-            guard names.filter{$0.hasPrefix("CAPSULE_\\(i)_WATER_BUBBLE_")}.count==24
+            guard names.filter{$0.hasPrefix("CAPSULE_\(i)_WATER_BUBBLE_")}.count==24
             else{throw Failure.invalidAnimation}
         }
         for name in ["DAMAGE_HULL_FLASH_SOCKET","DAMAGE_ARMOR_FLASH_SOCKET",
