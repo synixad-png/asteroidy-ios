@@ -204,10 +204,13 @@ struct HudPlanetariumScene600:UIViewRepresentable {
                     lens.usesOrthographicProjection=true
                     lens.zNear=0.01
                     lens.zFar=1000
-                    // Source exact: pixels/modelUnit =
-                    // .44 * widget.Width * Scale / PlanetModelRadius463.
-                    // UIView scales with widget.Scale, so it cancels here.
-                    lens.orthographicScale=135.0 *
+                    // PC v602 HudGlbAssets.DrawHudGlb:
+                    // pixels/modelUnit = 0.44 * 250 * scale / radius.
+                    // SCNCamera.orthographicScale is a HALF vertical view
+                    // extent; a full-height value made the entire authored
+                    // GLB appear 2x too small on real iPhones.
+                    // UIView already incorporates widget.Scale.
+                    lens.orthographicScale=(135.0 * 0.5) *
                         HudPlanetariumAsset600.pc602ModelRadius /
                         (0.44*250.0)
                     cameraNode.camera=lens
