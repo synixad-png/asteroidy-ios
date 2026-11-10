@@ -32,6 +32,29 @@ import simd
             pose:zero,drawableWidth:1024,drawableHeight:768)!
         verify(q.x>0 && q.x<1024 && q.y>0 && q.y<768,
                "iPad 4:3 HUD remains on-screen")
+        var layout=HudLayout600.defaults()
+        let defaultIcon=layout.widget("ion.icon")!
+        let start=HudPickupTransform600.sample(index:0,time:2,
+            pose:zero,drawableWidth:1280,drawableHeight:720,
+            widget:defaultIcon)!
+        layout.change("ion.icon") {
+            $0.x += 80
+            $0.y -= 35
+            $0.scale=1.75
+            $0.yaw=23
+            $0.pitch = -11
+            $0.roll=7
+        }
+        let edited=HudPickupTransform600.sample(index:0,time:2,
+            pose:zero,drawableWidth:1280,drawableHeight:720,
+            widget:layout.widget("ion.icon"))!
+        verify(edited.x>start.x && edited.y<start.y,
+               "edited HUD GLB coordinates affect real Metal placement")
+        verify(edited.size>start.size*1.7,
+               "HUD editor scale affects existing Metal model")
+        verify(edited.yaw>start.yaw && edited.pitch<start.pitch &&
+               edited.roll>start.roll,
+               "independent yaw pitch roll reach shared Metal geometry")
         verify(HudPickupTransform600.sample(index:4,time:0,pose:zero,
             drawableWidth:1024,drawableHeight:768)==nil,
             "unexpected fifth model is rejected")
