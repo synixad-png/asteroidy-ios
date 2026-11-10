@@ -26,8 +26,12 @@ assert ".sheet(isPresented:$showingHudEditor600)" not in scene
 assert "guard userPaused && !showingHudEditor600" in scene
 assert "if userPaused && session.hud.phase == .playing && !showingService && !showingHudEditor600" in scene
 marker=(root/"ASTEROIDYiOS/HudLayoutMarker600.swift").read_text()
-assert "MagnificationGesture(minimumScaleDelta:0.005)" in marker
-assert "onScale(original*Double(pinch))" in marker
+assert "MagnificationGesture(minimumScaleDelta:0.005)" in editor
+assert "onScale(original*Double(pinch))" not in marker
+assert ".allowsHitTesting(false)" in marker
+assert "for widget in document.widgets.reversed() where widget.visible" in editor
+assert "if area<best {best=area;chosen=widget}" in editor
+assert "max(12,viewport.safeBottom+7)" in editor
 assert "viewport.originX(for:group)" in editor
 assert "viewport.originY(for:group)" in editor
 assert "onPreview(document)" in editor
