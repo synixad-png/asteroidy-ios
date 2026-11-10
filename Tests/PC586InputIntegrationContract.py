@@ -24,6 +24,8 @@ assert "boundAnalog(34,profile:profile)" in controls
 assert "case .other:return" in settings or "case .other:return" in visual
 assert "LazyVStack(" in settings and "ForEach(0..<SourceControls586.actionCount" in settings
 assert "optionTitle(60)" in settings and "optionTitle(64)" in settings
+assert 'id==60 ? "DZIAŁA / PAD" : "ZAPIS / PC"' in settings
+assert "Opcje atlasu/myszy (61–64) są przechowywane" in settings
 assert "allowsMultipleSelection:true" in settings
 assert "SourceControls586.Profile.importPCText" in settings
 assert "SourceControls586.Profile.importFlight67Text" in settings
