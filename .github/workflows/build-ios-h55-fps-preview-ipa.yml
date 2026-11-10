@@ -6,6 +6,14 @@ on:
     branches: [feature/ios-h55-v580-native-entry]
     paths:
       - .github/workflows/build-ios-h55-fps-preview-ipa.yml
+      - ASTEROIDYiOS/HudLayoutEditor600.swift
+      - ASTEROIDYiOS/HudLayoutMarker600.swift
+      - ASTEROIDYiOS/HudPlanetariumAsset600.swift
+      - ASTEROIDYiOS/Sector01Scene568.swift
+      - ASTEROIDYiOS/HudEnergy600.swift
+      - ASTEROIDYiOS/HudPlasmaLayer600.swift
+      - Tests/HudV602TouchRuntimeContract.py
+      - Tests/HudLayout600Contract.py
   workflow_dispatch:
 
 permissions:
@@ -23,6 +31,8 @@ jobs:
           set -euo pipefail
           mkdir -p reports
           python3 Tests/H55FPSPreviewDepth580Contract.py | tee reports/fps-source.txt
+          python3 Tests/HudLayout600Contract.py | tee reports/hud-touch-v602.txt
+          python3 Tests/HudV602TouchRuntimeContract.py | tee -a reports/hud-touch-v602.txt
           python3 Tests/HudV600IntegrationContract.py | tee reports/hud-v600-source.txt
           python3 Tests/HudPlasmaLive600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/IOSOriginalCombatHUD331Contract.py | tee -a reports/hud-v600-source.txt
@@ -34,6 +44,9 @@ jobs:
           python3 Tests/HudMotionEventCounters600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/H55FPSOriginalMaterial580Tests.py | tee -a reports/fps-source.txt
           # Validate final 352x198/16:9 preview and isolated depth source.
+          swiftc -frontend -parse ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/HudLayoutMarker600.swift
+          swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/Sector01Scene568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/HudEnergy600.swift ASTEROIDYiOS/HudPlasmaLayer600.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSSettingsSection580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSPreview580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSOverlayViewport580.swift
@@ -148,6 +161,7 @@ jobs:
             reports/preflight.txt
             reports/fps-source.txt
             reports/hud-v600-source.txt
+            reports/hud-touch-v602.txt
             reports/all-asset-coverage.txt
             reports/pc586-embedded.json
             reports/build-env.txt
