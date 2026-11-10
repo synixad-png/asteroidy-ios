@@ -1,6 +1,11 @@
 import SceneKit
-import UIKit
 import Foundation
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+private typealias UIColor = NSColor
+#endif
 
 /// PC v600 RendererHudEnergy.DrawPlanetariumCorona is attached ONLY to
 /// the original SPHERE_OUTER_DOTTED_SKIN (mesh six, radius 2.1958).
