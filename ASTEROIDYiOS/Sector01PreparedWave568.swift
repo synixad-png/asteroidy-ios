@@ -12,6 +12,8 @@ struct Sector01PreparedWave568 {
     /// further token rewards. The original completion bit is immutable.
     var isReplay:Bool = false
     var shopProfile:Sector01Shop568.State = Sector01Shop568.State()
+    /// Original Game(int seed): independent PC v584 combat supply stream.
+    var combatSupplySeed:Int32 = 0
 
     static func prepare(entry: Sector01Entry568,
                         campaign: CampaignProgress556,
@@ -34,11 +36,13 @@ struct Sector01PreparedWave568 {
               let encounter = MissionWave568.generate(
                 level: entry.sector, difficulty: difficulty, seed: seed,
                 ship: Vec2(x:640,y:360)) else { return nil }
-        return Self(reset:reset,encounter:encounter,
+        var prepared=Self(reset:reset,encounter:encounter,
                     incoming:MissionIncoming568(from:encounter,difficulty:difficulty),
                     difficulty:difficulty,
                     isReplay:campaign.completed(1),
                     shopProfile:shopProfile)
+        prepared.combatSupplySeed=seed
+        return prepared
     }
 
     /// Runtime transition remains blocked until wave entities are actually
