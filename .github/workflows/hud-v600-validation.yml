@@ -25,6 +25,11 @@ on:
       - "ASTEROIDYiOS/HudEnergy600.swift"
       - "ASTEROIDYiOS/HudPlasmaLayer600.swift"
       - "Tests/HudPlasmaLive600Contract.py"
+      - "ASTEROIDYiOS/HudIconMotion600.swift"
+      - "ASTEROIDYiOS/HudMotionProject600.swift"
+      - "ASTEROIDYiOS/HudPlanetariumHost600.swift"
+      - "Tests/HudIconMotion600Tests.swift"
+      - "Tests/HudMotionProject600Tests.swift"
       - "ASTEROIDYiOS/HudCapsuleController600.swift"
       - "ASTEROIDYiOS/HudCapsuleBinding600.swift"
       - "ASTEROIDYiOS/HudPlanetariumAsset600.swift"
@@ -66,6 +71,10 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-core
           /tmp/hud-v600-core
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudIconMotion600.swift Tests/HudIconMotion600Tests.swift -o /tmp/hud-v600-springs
+          /tmp/hud-v600-springs
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift Tests/HudMotionProject600Tests.swift -o /tmp/hud-v600-project
+          /tmp/hud-v600-project
           swiftc ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudLayout600Tests.swift -o /tmp/hud-v600-layout
           /tmp/hud-v600-layout
           swiftc ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift Tests/HudWidgetPlacement600Tests.swift -o /tmp/hud-v600-placement
@@ -84,11 +93,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Parse active HUD view with Swift compiler
         run: |
-          swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift ASTEROIDYiOS/HudPlasmaLayer600.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift ASTEROIDYiOS/HudPlasmaLayer600.swift ASTEROIDYiOS/HudPlanetariumHost600.swift
+          swiftc -frontend -parse ASTEROIDYiOS/HudIconMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumTracks600.swift ASTEROIDYiOS/HudPlanetariumScene600.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/HudLayoutMarker600.swift ASTEROIDYiOS/HudLayoutDocument600.swift
           swiftc ASTEROIDYiOS/HudPlanetariumCorona600.swift Tests/HudPlanetariumCorona600Tests.swift -o /tmp/hud-v600-corona
           /tmp/hud-v600-corona
-          swiftc -O ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift ASTEROIDYiOS/HudPickupTransform600.swift Tests/HudPickupTransform600Tests.swift -o /tmp/hud-v600-icons
+          swiftc -O ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudIconMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift ASTEROIDYiOS/HudPickupTransform600.swift Tests/HudPickupTransform600Tests.swift -o /tmp/hud-v600-icons
           /tmp/hud-v600-icons
