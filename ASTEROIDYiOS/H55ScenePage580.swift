@@ -34,6 +34,10 @@ import simd
     private weak var exteriorSky:SCNNode?
     private weak var playerShip:SCNNode?
     private var fpsViewmodel:H55FPSScene580?
+    // Original PC viewmodels draw after the world with a freshly cleared
+    // depth buffer. Own one transparent FPS-only SceneKit render pass.
+    @Published private(set) var fpsOverlayScene:SCNScene?
+    @Published private(set) var fpsOverlayCamera:SCNNode?
     @Published private(set) var fpsStatus="FPS: MODEL RĄK LUB BRONI NIEPRZYGOTOWANY"
     @Published private(set) var fpsMode=H55FPSSettings580().mode
     @Published private(set) var fpsCalibration=H55FPSSettings580()
@@ -407,6 +411,8 @@ import simd
         playerShip=nil
         fpsViewmodel?.release()
         fpsViewmodel=nil
+        fpsOverlayScene=nil
+        fpsOverlayCamera=nil
         fpsStatus="FPS: PRZYGOTOWANIE ORYGINALNEGO MODELU"
         lightRefresh=0
         arrival=H55Arrival580(spawnClear:false)
@@ -571,7 +577,20 @@ import simd
         realScene.rootNode.addChildNode(pointOfView)
         // Camera-only visual system: no H55 GLB mutation, no new player
         // collision, and no draw during the 3.25-second arrival.
-        fpsViewmodel=H55FPSScene580(camera:pointOfView,inform:{[weak self] result in
+        let fpsScene=SCNScene()
+        fpsScene.background.contents=UIColor.clear
+        let fpsCamera=SCNNode()
+        let fpsLens=SCNCamera()
+        fpsLens.fieldOfView=70
+        fpsLens.zNear=0.06
+        fpsLens.zFar=250
+        fpsCamera.camera=fpsLens
+        fpsScene.rootNode.addChildNode(fpsCamera)
+        // No world geometry in this scene: depth tests the original
+        // TRIPO/MONOLIT/EXP-01 parts without being blocked by H55 walls.
+        fpsOverlayCamera=fpsCamera
+        fpsOverlayScene=fpsScene
+        fpsViewmodel=H55FPSScene580(camera:fpsCamera,inform:{[weak self] result in
             self?.fpsStatus=result
         })
         fpsMode=fpsViewmodel?.mode ?? .gloves
@@ -1132,6 +1151,12 @@ struct H55ScenePage580: View {
                             })
                             .allowsHitTesting(false)
                             .accessibilityIdentifier("h55-v580-native-scenekit")
+                        if let fpsScene=loader.fpsOverlayScene,
+                           let fpsCamera=loader.fpsOverlayCamera {
+                            H55FPSOverlayViewport580(scene:fpsScene,pointOfView:fpsCamera)
+                                .allowsHitTesting(false)
+                                .accessibilityIdentifier("h55-fps-original-depth-overlay")
+                        }
                         if loader.firstFramePresented {
                         H55TouchControls580(
                             onWalk:{forward,right in
