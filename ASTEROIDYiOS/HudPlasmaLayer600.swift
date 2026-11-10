@@ -36,14 +36,26 @@ struct HudPlasmaLayer600:View {
     private static func ink(_ a:Int,_ r:Int,_ g:Int,_ b:Int)->Color {
         SourceCombatHUD331.color(a,r,g,b)
     }
-    private static func shape(_ points:[HudEnergy600.Point])->Path {
+    // PC v602 RendererHudEnergy.DrawEnergyRibbon: the GPU branch issues
+    // exactly TWO TRIANGLES PER STEP. Do not send the self-overlapping
+    // polygon to CoreGraphics triangulation, which has a different cost
+    // and fill behavior from the native Windows OpenGL triangle stream.
+    private static func ribbonTriangles(_ points:[HudEnergy600.Point])->Path {
         var path=Path()
-        if let first=points.first {
-            path.move(to:CGPoint(x:first.x,y:first.y))
-            for point in points.dropFirst() {
-                path.addLine(to:CGPoint(x:point.x,y:point.y))
-            }
+        guard points.count>=10,points.count%2==0 else{return path}
+        let steps=points.count/2-1
+        let last=points.count-1
+        func triangle(_ a:HudEnergy600.Point,
+                      _ b:HudEnergy600.Point,
+                      _ c:HudEnergy600.Point) {
+            path.move(to:CGPoint(x:a.x,y:a.y))
+            path.addLine(to:CGPoint(x:b.x,y:b.y))
+            path.addLine(to:CGPoint(x:c.x,y:c.y))
             path.closeSubpath()
+        }
+        for i in 0..<steps {
+            triangle(points[i],points[i+1],points[last-i])
+            triangle(points[i+1],points[last-i-1],points[last-i])
         }
         return path
     }
@@ -63,6 +75,9 @@ struct HudPlasmaLayer600:View {
 
     var body:some View {
         TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active)) { timeline in
+            // Explicit presentation tick. Geometry time remains the original
+            // Game.Time, frozen during a real pause as in PC v602.
+            let _ = timeline.date
             Canvas(opaque:false,rendersAsynchronously:false) { graphics,size in
                 let screen=CombatHUDViewport568(
                     width:Double(size.width),height:Double(size.height),
@@ -112,7 +127,7 @@ struct HudPlasmaLayer600:View {
                 x:left,y:barY,width:width-2,length:length,
                 time:time,style:style,layer:layer)
             guard !vertices.isEmpty else{continue}
-            c.fill(shape(vertices),with:.color(tints[style][layer]))
+            c.fill(ribbonTriangles(vertices),with:.color(tints[style][layer]))
         }
         // Source has no regular particle grid; these independent flame
         // tongues have quasi-periodic, non-axial drift on both edges.
