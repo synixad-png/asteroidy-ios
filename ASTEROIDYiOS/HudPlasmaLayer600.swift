@@ -16,6 +16,7 @@ struct HudPlasmaLayer600:View {
     let layout:HudLayout600
     let active:Bool
     let livePose:()->HudMotion600.Pose
+    let liveTime:()->Double
 
     private static let names=["hull.bar","armor.bar","shield.bar"]
     // Literal ARGB from RendererHudEnergy.cs.GaugeTint.
@@ -57,11 +58,10 @@ struct HudPlasmaLayer600:View {
                 bottom.translateBy(x:CGFloat(screen.originX(for:.bottomLeft)),
                                    y:CGFloat(screen.originY(for:.bottomLeft)))
                 bottom.scaleBy(x:CGFloat(screen.scale),y:CGFloat(screen.scale))
-                // PC uses current Game.Time. A timebase here is purely
-                // decorative; pause stops updates, without modifying game.
-                // Bound phase to keep sin/mod stable over long uptime.
-                let time=timeline.date.timeIntervalSinceReferenceDate
-                    .truncatingRemainder(dividingBy:3600)
+                // Windows RendererHudEnergy samples Game.Elapsed.
+                // Unlike wall time this freezes on PAUZA, so the original
+                // flow resumes smoothly without jumping to a new phase.
+                let time=liveTime().truncatingRemainder(dividingBy:3600)
                 let values:[Int?]=[hull,armor,shield]
                 let maxima=[maxHull,maxArmor,100]
                 for i in 0..<3 {
