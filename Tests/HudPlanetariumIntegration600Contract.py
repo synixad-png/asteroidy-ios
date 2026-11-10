@@ -19,7 +19,7 @@ for snippet in ('channels.count==HudPlanetariumAsset600.channels',
                 'target["path"] as? String == "translation"',
                 'UInt32(bytes.count)'):
     assert snippet in tracks or snippet in asset, "missing original glTF accessor gate: "+snippet
-for snippet in ('GLTFAsset.load(with:url,options:[:])',
+for snippet in ('GLTFAsset.load(with:importURL,options:[:])',
                 'GLTFSCNSceneSource(asset:asset)',
                 'clip.animationPlayer', 'didApplyAnimationsAtTime',
                 'node.presentation.position.x','HudCapsuleBinding600',
