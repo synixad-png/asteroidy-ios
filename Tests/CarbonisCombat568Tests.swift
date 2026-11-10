@@ -81,6 +81,8 @@ import Foundation
               "collected PC586 supplies leave the unified source pickup list")
         check(realPickup.drainOriginalAudioEvents568().filter{$0==30}.count==2,
               "one original pickup audio event for each collected supply")
+        check(realPickup.hudEvents.pickups==2,
+              "PC v600 HUD counts both real consumables, not only token currency")
         // PC Game.Step removes a source pickup on contact even if the
         // ammunition magazine filled after the drop. No false SFX event.
         var fullPickup=CarbonisCombat568(prepared)
@@ -99,6 +101,8 @@ import Foundation
               "PC580 full magazines remove expended supply pickups")
         check(!fullPickup.drainOriginalAudioEvents568().contains(30),
               "full magazines do not trigger false pickup notification")
+        check(fullPickup.hudEvents.pickups==0,
+              "rejected full-magazine supplies never pulse HUD")
         var expiredPickup=CarbonisCombat568(prepared)
         expiredPickup.tokenPickups=[
             CarbonisCombat568.TokenPickup(
@@ -245,6 +249,8 @@ import Foundation
         touchFire.step(move:still,aim:still,shooting:true,dt:1/120)
         check(touchFire.bullets.count==1,
               "first right-side contact fires immediately without a button")
+        check(touchFire.hudEvents.shots==1,
+              "PC v600 shot event increments exactly once on real fire")
         let firstAudio=touchFire.drainOriginalAudioEvents568()
         check(firstAudio.contains(10),
               "true first Pulse fire emits original CombatSound code 10")
@@ -255,6 +261,8 @@ import Foundation
         }
         check(touchFire.bullets.count>=2,
               "holding right side repeats Pulse via original shot cadence")
+        check(touchFire.hudEvents.shots>=2,
+              "shot event counter is monotonic beyond active bullet lifetimes")
         let emitted=touchFire.bullets.count
         let positionBefore=touchFire.flight.position
         for _ in 0..<12 {
@@ -351,6 +359,8 @@ import Foundation
               "Source HitBug prevents firing through nearer asteroid")
         check(cover.rocks[0].health==1,
               "Occluding asteroid receives physical Pulse impact")
+        check(cover.hudEvents.hits==1,
+              "real obstructing asteroid hit creates exactly one HUD hit event")
         check(cover.destruction.explosions.isEmpty &&
               cover.destruction.particles.count==3,
               "one nonfatal rock hit adds original three cyan trails, not a death cloud")
@@ -366,6 +376,8 @@ import Foundation
                        shooting:false,dt:1.0/60)
         check(clearShot.shooters.isEmpty && clearShot.shooterKills==1,
               "Unobstructed type0 enemy is destroyed by source Pulse hit")
+        check(clearShot.hudEvents.hits==1,
+              "real enemy shot impact feeds source HUD hit telemetry")
         check(clearShot.score==180,"Source Bug kill reward 180")
         check(clearShot.drainOriginalAudioEvents568().contains(20),
               "original destroyed shooter dispatches fuel blast SFX code20")
