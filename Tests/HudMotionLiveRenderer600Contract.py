@@ -32,7 +32,7 @@ assert 'livePose:{ [weak session] in' in host
 assert 'session?.currentHudVisual600().pose' in host
 assert 'HudMotionProject600.project(' in host
 assert 'func currentHudVisual600()->(' in session
-assert 'return (hudLivePose600,hudLiveCapsules600)' in session
+assert 'return (hudLivePose600,hudLiveCapsules600,hudLiveSeconds600)' in session
 assert 'liveCapsules:{ [weak session] in' in host
 assert 'let framePose=livePose?() ?? pose' in planetarium
 assert 'didApplyAnimationsAtTime' in planetarium
