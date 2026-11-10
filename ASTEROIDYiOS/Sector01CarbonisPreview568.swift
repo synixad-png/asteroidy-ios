@@ -1475,15 +1475,20 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     let width=Float(view.drawableSize.width)
                     let height=Float(view.drawableSize.height)
                     if width>1 && height>1 {
+                        let hudLayout600=session.currentHudLayout600()
                         encoder.setDepthStencilState(hudIconDepth600)
                         encoder.setRenderPipelineState(pickupPipeline)
                         encoder.setCullMode(.none)
                         for (index,kind) in HudPickupTransform600.order.enumerated() {
-                            guard let asset=pickupModels586[kind],
+                            let id=["ion.icon","bomb.icon","shield_charge.icon","boost.icon"][index]
+                            guard let widget=hudLayout600.widget(id),
+                                  widget.visible,
+                                  let asset=pickupModels586[kind],
                                   let icon=HudPickupTransform600.sample(
                                     index:index,time:session.game.elapsed,
                                     pose:session.hud.motion,
-                                    drawableWidth:width,drawableHeight:height)
+                                    drawableWidth:width,drawableHeight:height,
+                                    widget:widget)
                             else{continue}
                             var settings=Uniforms(
                                 mvp:HudPickupTransform600.mvp(
