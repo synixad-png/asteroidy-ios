@@ -25,16 +25,27 @@ assert "onPreview:{ updated in" in scene
 assert ".sheet(isPresented:$showingHudEditor600)" not in scene
 assert "guard userPaused && !showingHudEditor600" in scene
 assert "if userPaused && session.hud.phase == .playing && !showingService && !showingHudEditor600" in scene
-marker=(root/"ASTEROIDYiOS/HudLayoutMarker600.swift").read_text()
-assert "MagnificationGesture(minimumScaleDelta:0.005)" in editor
-assert "onScale(original*Double(pinch))" not in marker
-assert ".allowsHitTesting(false)" in marker
-assert "for widget in document.widgets.reversed() where widget.visible" in editor
-assert "if area<best {best=area;chosen=widget}" in editor
-assert "max(12,viewport.safeBottom+7)" in editor
-assert "viewport.originX(for:group)" in editor
-assert "viewport.originY(for:group)" in editor
-assert "onPreview(document)" in editor
+geometry=(root/"ASTEROIDYiOS/HudEditorGeometry.swift").read_text()
+assert 'struct HudLayoutEditor600:View' in editor
+assert 'HudEditorTouchCanvas(' in editor
+assert 'struct HudEditorTouchCanvas:UIViewRepresentable' in editor
+assert 'final class TouchSurface:UIView' in editor
+assert 'override func touchesBegan(' in editor
+assert 'override func touchesMoved(' in editor
+assert 'UIPinchGestureRecognizer(' in editor
+assert 'func updateUIView(_ view:TouchSurface' in editor
+assert 'HudEditorGeometry.hit(' in editor
+assert 'HudEditorGeometry.move(' in editor
+assert 'HudEditorGeometry.zoom(' in editor
+assert 'for widget in layout.widgets.reversed() where widget.visible' in geometry
+assert 'if bounds.area<smallest' in geometry
+assert 'viewport.x(x,at:anchor)' in geometry
+assert 'viewport.y(y,at:anchor)' in geometry
+assert 'max(12,viewport.safeBottom+7)' in editor
+assert 'max(12,viewport.safeRight)' in editor
+assert 'onPreview(document)' in editor
+assert 'DragGesture(' not in editor
+assert 'MagnificationGesture(' not in editor
 assert "session.updateHudLayout600(updated)" in scene
 assert 'planetarium.visible' in scene and 'HudWidgetPlacement600.frame(' in scene
 for marker in ('layout600:HudLayout600','widgetContext(','"radar"',
