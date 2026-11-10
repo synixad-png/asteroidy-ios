@@ -25,7 +25,7 @@ for marker in ('layout600:HudLayout600','widgetContext(','"radar"',
                'names[i]+".label"','namesGLB[i]+".icon"',
                'namesGLB[i]+".value"'):
     assert marker in hud,marker
-assert "session.currentHudScreen600()" in renderer
+assert "session.currentHudRenderState600()" in renderer
 assert "widget.visible" in renderer
 assert "widget:widget" in renderer
 for marker in ('FileDocument','static var readableContentTypes:[UTType]',
