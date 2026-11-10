@@ -8,12 +8,19 @@ struct CarbonisVisualSettingsPanel568: View {
     let compact:Bool
     /// Live FPS settings are optional outside the H55 hangar.
     let fpsLoader:H55SceneModel580?
+    /// Optional live mission actions; W3 and hangar reuse this same panel.
+    let onEditHud:(()->Void)?
+    let onHudMotionChange:((HudMotion600.Settings)->Void)?
     // W3 Windows Menu139.cs OptionTabs139[9] is HANGAR. Returning from
     // full-screen H55 opens directly on the original category.
     init(compact:Bool,initialTab:Int=11,
-         fpsLoader:H55SceneModel580?=nil) {
+         fpsLoader:H55SceneModel580?=nil,
+         onEditHud:(()->Void)?=nil,
+         onHudMotionChange:((HudMotion600.Settings)->Void)?=nil) {
         self.compact=compact
         self.fpsLoader=fpsLoader
+        self.onEditHud=onEditHud
+        self.onHudMotionChange=onHudMotionChange
         _tab=State(initialValue:initialTab)
     }
 
@@ -29,6 +36,7 @@ struct CarbonisVisualSettingsPanel568: View {
     @State private var pickupVisual586=SourcePickupVisual586.load()
     @State private var tab:Int=11
     @State private var previewRevision=0
+    @State private var showingHudMotionSheet600=false
     @ObservedObject private var performance=SourcePerformance568.shared
     @State private var iosFX=CarbonisIOSFXBudget568.load()
 
@@ -184,6 +192,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     switch tab {
                     case 0: sourceGraphicsPage
                     case 3: missionObjectSizePage580
+                    case 4: interfacePage600
                     case 9: hangarPage580
                     case 6: H55FPSSettingsSection580(category:.gloves,loader:fpsLoader)
                     case 8: H55FPSSettingsSection580(category:.weapon,loader:fpsLoader)
@@ -390,6 +399,47 @@ struct CarbonisVisualSettingsPanel568: View {
             Spacer(minLength:0)
         }
         .accessibilityIdentifier("w3-h55-original-category-settings")
+    }
+
+    /// One W3 INTERFEJS owner for pause settings and the HUD editor.
+    /// The actual live layout overlay remains hosted in Sector01Scene568.
+    private var interfacePage600:some View {
+        VStack(alignment:.leading,spacing:12) {
+            Text("INTERFEJS / HUD")
+                .font(.system(size:14,weight:.bold,design:.monospaced))
+                .foregroundStyle(gold)
+            if let edit=onEditHud {
+                Button("EDYTUJ UKŁAD HUD (46 ELEMENTÓW)") {edit()}
+                    .frame(maxWidth:.infinity,alignment:.leading)
+                    .padding(12)
+                    .foregroundStyle(cyan)
+                    .background(Color(red:0.04,green:0.12,blue:0.19))
+                    .overlay(Rectangle().stroke(cyan.opacity(0.4),lineWidth:1))
+                    .accessibilityIdentifier("w3-interface-edit-hud")
+            } else {
+                Text("EDYTOR UKŁADU HUD JEST DOSTĘPNY PODCZAS PAUZY MISJI.")
+                    .font(.system(size:11,design:.monospaced))
+                    .foregroundStyle(muted)
+            }
+            Button("HUD DYNAMICZNY / USTAWIENIA") {
+                showingHudMotionSheet600=true
+            }
+            .frame(maxWidth:.infinity,alignment:.leading)
+            .padding(12)
+            .foregroundStyle(cyan)
+            .background(Color(red:0.04,green:0.12,blue:0.19))
+            .overlay(Rectangle().stroke(cyan.opacity(0.4),lineWidth:1))
+            .accessibilityIdentifier("w3-interface-hud-motion")
+            Text("Zmiany dotyczą wyłącznie rozmieszczenia i animacji HUD-u. Sterowanie, kolizje oraz nagrody misji pozostają bez zmian.")
+                .font(.system(size:11,design:.monospaced))
+                .foregroundStyle(muted)
+        }
+        .sheet(isPresented:$showingHudMotionSheet600) {
+            HudMotionSettingsPanel600 { value in
+                onHudMotionChange?(value)
+            }
+        }
+        .accessibilityIdentifier("w3-interface-hud-settings")
     }
 
     private var unavailableSourceCategory:some View {
