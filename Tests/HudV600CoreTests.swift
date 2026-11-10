@@ -35,6 +35,19 @@ import Foundation
         s.shots=11
         check(motion.update(s,at:5+1.0/60,active:true).shotPulse>0,
               "actual shot counter produces one impulse")
+        s.hits=1
+        check(motion.update(s,at:5+2.0/60,active:true).hitPulse>0,
+              "source projectile hit counter drives a real collision reaction")
+        s.pickups=1
+        let pickupPose=motion.update(s,at:5+3.0/60,active:true)
+        check(pickupPose.pickupPulse>0,
+              "successful pickup counter drives independent collection impulse")
+        check(pickupPose.widgetPulse("ion.icon")>0,
+              "source HUD icon consumes shot/collection pulse")
+        check(pickupPose.widgetPulse("boost.value")>0,
+              "source HUD boost inventory consumes collection pulse")
+        check(pickupPose.widgetPulse("status.mode")==0,
+              "top UI text never inherits resource micro-pulses")
         check(motion.update(s,at:6,active:false).shotPulse==0,
               "inactive mission resets impulses")
         check(HudEnergy600.fraction(30,maximum:60)==0.5,
