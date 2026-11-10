@@ -21,8 +21,11 @@ final class HudPlanetariumCorona600 {
         let m=SCNMaterial()
         m.name="HUD600_CORONA_SOURCE_COLOR"
         m.lightingModel = .constant
-        m.diffuse.contents=tint
-        m.emission.contents=tint
+        // Apply authored alpha exactly once (24/255 and 37/255),
+        // otherwise a tinted diffuse AND transparency square opacity.
+        let opaqueTint=tint.withAlphaComponent(1)
+        m.diffuse.contents=opaqueTint
+        m.emission.contents=opaqueTint
         m.transparency=CGFloat(tint.cgColor.alpha)
         m.blendMode = .alpha
         m.isDoubleSided=true
