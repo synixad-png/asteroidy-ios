@@ -6,6 +6,7 @@ root=Path(__file__).resolve().parents[1]
 approved=json.loads((root/"ASTEROIDYiOS/Assets/hud/default-layout.json").read_text())
 code=(root/"ASTEROIDYiOS/HudLayout600.swift").read_text()
 editor=(root/"ASTEROIDYiOS/HudLayoutEditor600.swift").read_text()
+document=(root/"ASTEROIDYiOS/HudLayoutDocument600.swift").read_text()
 scene=(root/"ASTEROIDYiOS/Sector01Scene568.swift").read_text()
 hud=(root/"ASTEROIDYiOS/SourceCombatHUD331.swift").read_text()
 renderer=(root/"ASTEROIDYiOS/Sector01CarbonisPreview568.swift").read_text()
@@ -27,4 +28,12 @@ for marker in ('layout600:HudLayout600','widgetContext(','"radar"',
 assert "session.currentHudLayout600()" in renderer
 assert "widget.visible" in renderer
 assert "widget:widget" in renderer
-print("PASS iOS HUD v600: 46 byte-equivalent source widgets, touch editor, persisted live Metal/SceneKit layout")
+for marker in ('FileDocument','static var readableContentTypes:[UTType]',
+               'HudLayout600.decodeJSON(bytes)','layout.encodeJSON()'):
+    assert marker in document, "missing validated native Files JSON exchange: "+marker
+for marker in ('"EKSPORTUJ UKŁAD JSON"','"IMPORTUJ UKŁAD JSON"',
+               '.fileImporter(','.fileExporter(',
+               'document=try HudLayout600.decodeJSON(bytes)'):
+    assert marker in editor, "missing user-accessible JSON exchange: "+marker
+assert '"ion.icon":"energy"' in code and '"hud.planetarium":"planetarium"' in code
+print("PASS iOS HUD v600: exact 46-widget PC layout, native import/export, GLB key gate, touch editor and live Metal/SceneKit")
