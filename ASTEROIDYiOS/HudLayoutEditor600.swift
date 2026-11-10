@@ -155,22 +155,7 @@ struct HudLayoutEditor600:View {
                         offsetX:viewport.originX(for:group),
                         offsetY:viewport.originY(for:group),
                         sourceWidth:size.width,sourceHeight:size.height,
-                        selected:$selected,
-                        onMove:{x,y in
-                            changeWidget(widget.id){ value in
-                                if let xr=HudWidgetGeometry600.xRange(for:value),
-                                   let yr=HudWidgetGeometry600.yRange(for:value) {
-                                    value.x=min(xr.upperBound,max(xr.lowerBound,x))
-                                    value.y=min(yr.upperBound,max(yr.lowerBound,y))
-                                }
-                            }
-                        },
-                        onScale:{newScale in
-                            changeWidget(widget.id){ value in
-                                let limit=HudWidgetGeometry600.scaleRange(for:value)
-                                value.scale=min(limit.upperBound,max(limit.lowerBound,newScale))
-                            }
-                        })
+                        selected:selected==widget.id)
                         .allowsHitTesting(false)
                         // PC v602 selects the smallest source hitbox, NOT the
                         // last full-screen SwiftUI .position gesture owner.
