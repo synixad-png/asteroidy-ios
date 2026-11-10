@@ -40,13 +40,14 @@ enum HudPickupTransform600 {
         let sourceY=Float(widget?.y ?? 603)+25
         let y=drawableHeight-9*scale-(720-sourceY)*scale
               +pose.y*0.78*scale
+        let pulse=1+pose.widgetPulse(widgetIDs[index])
+        let iconSize=45*scale*Float(widget?.scale ?? 1)*pulse
         return Sample(x:max(22*scale,min(drawableWidth-22*scale,x)),
                       y:max(22*scale,min(drawableHeight-22*scale,y)),
                       yaw:yaw+Float(widget?.yaw ?? 0)*Float.pi/180,
                       pitch:pitch+Float(widget?.pitch ?? 0)*Float.pi/180,
                       roll:roll+Float(widget?.roll ?? 0)*Float.pi/180,
-                      size:45*scale*Float(widget?.scale ?? 1)*
-                           (1+pose.widgetPulse(widgetIDs[index])))
+                      size:iconSize)
     }
     static func model(_ s:Sample)->simd_float4x4 {
         let rotate=simd_float4x4(simd_quatf(angle:s.yaw,axis:SIMD3<Float>(0,1,0))
