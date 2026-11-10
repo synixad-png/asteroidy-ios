@@ -1475,7 +1475,15 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     let width=Float(view.drawableSize.width)
                     let height=Float(view.drawableSize.height)
                     if width>1 && height>1 {
-                        let hudLayout600=session.currentHudLayout600()
+                        let screen=session.currentHudScreen600()
+                        let hudLayout600=screen.layout
+                        let viewport=CombatHUDViewport568(
+                            width:Double(view.bounds.width),
+                            height:Double(view.bounds.height),
+                            safeLeft:screen.insets.left,
+                            safeRight:screen.insets.right,
+                            safeTop:screen.insets.top,
+                            safeBottom:screen.insets.bottom)
                         encoder.setDepthStencilState(hudIconDepth600)
                         encoder.setRenderPipelineState(pickupPipeline)
                         encoder.setCullMode(.none)
@@ -1488,7 +1496,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                                     index:index,time:session.game.elapsed,
                                     pose:session.hud.motion,
                                     drawableWidth:width,drawableHeight:height,
-                                    widget:widget)
+                                    widget:widget,viewport:viewport)
                             else{continue}
                             var settings=Uniforms(
                                 mvp:HudPickupTransform600.mvp(
