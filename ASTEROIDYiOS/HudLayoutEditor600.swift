@@ -45,19 +45,6 @@ struct HudLayoutEditor600:View {
             ),in:-180...180,step:1).tint(.cyan)
         }.font(.system(size:11,design:.monospaced))
     }
-    private func widgetSize(_ id:String)->(Double,Double) {
-        switch id {
-        case "radar":return (178,192)
-        case "hud.planetarium":return (250,135)
-        case "status.frame":return (1242,65)
-        case "status.weapon":return (550,24)
-        case "boss.panel":return (545,105)
-        default:
-            if id.hasSuffix(".bar"){return (148,12)}
-            if id.hasSuffix(".icon"){return (50,50)}
-            return (100,24)
-        }
-    }
     private func visual(_ bounds:CGSize)->some View {
         let scale=min(Double(bounds.width)/1280,Double(bounds.height)/720)
         let offsetX=(Double(bounds.width)-1280*scale)/2
@@ -65,14 +52,16 @@ struct HudLayoutEditor600:View {
         return ZStack(alignment:.topLeading) {
             Rectangle().fill(Color(red:0.012,green:0.026,blue:0.045))
             ForEach(document.widgets) { widget in
-                let dims=widgetSize(widget.id)
-                HudLayoutMarker600(
-                    widget:widget,scale:scale,offsetX:offsetX,offsetY:offsetY,
-                    sourceWidth:dims.0,sourceHeight:dims.1,selected:$selected
-                ) { x,y in
-                    document.change(widget.id) {
-                        $0.x=x
-                        $0.y=y
+                if let dims=HudWidgetGeometry600.size(widget.id) {
+                    HudLayoutMarker600(
+                        widget:widget,scale:scale,offsetX:offsetX,offsetY:offsetY,
+                        sourceWidth:dims.width,sourceHeight:dims.height,
+                        selected:$selected
+                    ) { x,y in
+                        document.change(widget.id) {
+                            $0.x=x
+                            $0.y=y
+                        }
                     }
                 }
             }
@@ -105,9 +94,9 @@ struct HudLayoutEditor600:View {
                                 get:{w.visible},
                                 set:{value in mutate{$0.visible=value}}
                             ))
-                            number("X",\.x,bounds:-250...1530,step:0.5)
-                            number("Y",\.y,bounds:-250...970,step:0.5)
-                            number("SKALA",\.scale,bounds:0.25...4,step:0.01)
+                            number("X",\.x,bounds:HudWidgetGeometry600.xRange(for:w) ?? 0...1268,step:0.5)
+                            number("Y",\.y,bounds:HudWidgetGeometry600.yRange(for:w) ?? 0...708,step:0.5)
+                            number("SKALA",\.scale,bounds:HudWidgetGeometry600.scaleRange(for:w),step:0.01)
                             if w.is3D {
                                 axis("YAW",\.yaw)
                                 axis("PITCH",\.pitch)
