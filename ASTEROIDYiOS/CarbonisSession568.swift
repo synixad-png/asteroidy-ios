@@ -94,6 +94,17 @@ final class CarbonisSession568: ObservableObject {
     // layout editing from the Metal render queue without touching physics.
     private let hudLayoutLock600=NSLock()
     private var hudLayoutSnapshot600=HudLayout600.load()
+    private var hudSafeInsetsSnapshot600=W3ScreenInsets568()
+    func updateHudSafeInsets600(_ insets:W3ScreenInsets568) {
+        hudLayoutLock600.lock()
+        hudSafeInsetsSnapshot600=insets
+        hudLayoutLock600.unlock()
+    }
+    func currentHudScreen600()->(layout:HudLayout600,insets:W3ScreenInsets568) {
+        hudLayoutLock600.lock()
+        defer {hudLayoutLock600.unlock()}
+        return (hudLayoutSnapshot600,hudSafeInsetsSnapshot600)
+    }
     func updateHudLayout600(_ updated:HudLayout600) {
         guard updated.isValid else{return}
         hudLayoutLock600.lock()
