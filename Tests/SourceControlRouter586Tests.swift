@@ -67,6 +67,18 @@ import Foundation
         action=hangar.readHangar(look,profile:profile)
         check(abs(action.lookX-0.7)<0.0001 && abs(action.lookY+0.4)<0.0001,
               "right stick drives real H55 look with original deadzone")
+        var remappedH55=profile
+        remappedH55.pad[33]="A0+"
+        remappedH55.pad[34]="A1-"
+        let changed=SourceControls586.Snapshot(
+            axes:[0.7,0.8,0,0,0,0])
+        let mappedLook=hangar.readHangar(changed,profile:remappedH55)
+        check(abs(mappedLook.lookX-0.7)<0.0001 &&
+              abs(mappedLook.lookY+0.8)<0.0001,
+              "H55 real camera follows user-mapped axes 33/34, not fixed A2/A3")
+        let oldLook=hangar.readHangar(changed,profile:profile)
+        check(oldLook.lookX==0 && oldLook.lookY==0,
+              "H55 default axes ignore unmapped left-stick look")
         let drift=SourceControls586.Snapshot(axes:[0,0,0.12,0.18,0,0])
         action=hangar.readHangar(drift,profile:profile)
         check(action.lookX==0 && action.lookY==0,
