@@ -59,7 +59,7 @@ assert "struct SourceControlRouter586" in router
 assert "bombPressed:c.bomb && !previousBomb" in router
 assert "pausePressed:c.pause && !previousPause" in router
 assert "let right:Float = (a(1) ? 1 : 0) - (a(0) ? 1 : 0)" in router
-assert "SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568)" in mission
+assert "SourceCombatHUD331(hud:session.hud,insets:missionSafeInsets568," in mission
 # H55 existing real physics and session body remain canonical; no new solver.
 for forbidden in ("class NewPhysics", "struct DuplicateCombatSim",
                   "WebView", "UIWebView", "Timer.scheduledTimer"):
