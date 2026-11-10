@@ -22,8 +22,8 @@ checks={
 }
 for fragment,meaning in checks.items():
     assert fragment in corona,f"Missing {meaning}: {fragment}"
-assert "HudPlanetariumCorona600(scene:model,nodes:source.nodes)" in scene
-assert "corona?.advance(at:time)" in scene
+assert "HudPlanetariumCorona600(scene:rendered,nodes:source.nodes)" in scene
+assert "corona?.advance(at:liveGameTime?() ?? 0)" in scene
 assert "root.isHidden=true" in corona
 routine=corona.split('func advance(at time:TimeInterval)')[1]
 for banned in ('SCNGeometry(', 'SCNGeometrySource(', 'Data(contentsOf:',
