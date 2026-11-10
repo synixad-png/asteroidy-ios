@@ -66,8 +66,7 @@ import simd
                 let py=Float(bitPattern:u32(data,start+4))
                 let pz=Float(bitPattern:u32(data,start+8))
                 let a=r.axis
-                axisPositions[v]=m.columns.0[a]*px+m.columns.1[a]*py+
-                                 m.columns.2[a]*pz+m.columns.3[a]
+                axisPositions[v] = m.columns.0[a] * px + m.columns.1[a] * py + m.columns.2[a] * pz + m.columns.3[a]
             }
             var elements=[[SCNGeometryElement](),[SCNGeometryElement]()]
             var mats=[[SCNMaterial](),[SCNMaterial]()]
