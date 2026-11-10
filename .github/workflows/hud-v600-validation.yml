@@ -5,6 +5,9 @@ on:
       - feature/ios-h55-v580-native-entry
     paths:
       - "ASTEROIDYiOS/HudMotion600.swift"
+      - "ASTEROIDYiOS/HudLayout600.swift"
+      - "ASTEROIDYiOS/HudLayoutEditor600.swift"
+      - "Tests/HudLayout600Tests.swift"
       - "ASTEROIDYiOS/HudEnergy600.swift"
       - "ASTEROIDYiOS/HudCapsuleController600.swift"
       - "ASTEROIDYiOS/HudCapsuleBinding600.swift"
@@ -39,6 +42,8 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-core
           /tmp/hud-v600-core
+          swiftc ASTEROIDYiOS/HudLayout600.swift Tests/HudLayout600Tests.swift -o /tmp/hud-v600-layout
+          /tmp/hud-v600-layout
           swiftc ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudCapsuleController600Tests.swift -o /tmp/hud-v600-capsule
           /tmp/hud-v600-capsule
           swiftc ASTEROIDYiOS/HudCapsuleController600.swift ASTEROIDYiOS/HudCapsuleBinding600.swift Tests/HudCapsuleBinding600Tests.swift -o /tmp/hud-v600-bubble
@@ -52,6 +57,6 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumTracks600.swift ASTEROIDYiOS/HudPlanetariumScene600.swift
-          swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift ASTEROIDYiOS/HudLayoutEditor600.swift
           swiftc -O ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudPickupTransform600.swift Tests/HudPickupTransform600Tests.swift -o /tmp/hud-v600-icons
           /tmp/hud-v600-icons
