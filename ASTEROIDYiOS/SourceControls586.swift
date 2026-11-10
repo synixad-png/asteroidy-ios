@@ -332,17 +332,20 @@ enum SourceControls586 {
         func boundAnalog(_ action:Int,profile:Profile)->Float {
             guard (0..<SourceControls586.actionCount).contains(action)
             else{return 0}
-            let threshold=Float(profile.deadZone)/100
+            var hasAnalog=false
             for binding in profile.pad[action].split(separator:";") {
                 let text=String(binding)
                 guard text.first=="A",let sign=text.last,
                       (sign=="+" || sign=="-"),
                       let n=Int(text.dropFirst().dropLast()),
                       (0..<axes.count).contains(n) else{continue}
-                let value=axis(n)*(sign=="-" ? -1:1)
-                if abs(value)>threshold {return value}
+                hasAnalog=true
+                // Keep both signed components. The original 30% deadzone
+                // applies to the vector MAGNITUDE, not each axis alone:
+                // 0.25/0.25 must still produce a diagonal camera motion.
+                return axis(n)*(sign=="-" ? -1:1)
             }
-            return 0
+            return hasAnalog ? 0 : (held(action,profile:profile) ? 1:0)
         }
 
         /// Only meaningful actions are routed. Keep PC IDs stable even
@@ -360,7 +363,10 @@ enum SourceControls586 {
             // Deadzone is the original PC pad option (action row 60).
             let stick=Vector2(x:boundAnalog(33,profile:profile),
                               y:boundAnalog(34,profile:profile))
-            let aim=keyboardAim.hasInput ? keyboardAim : stick
+            let useStick=sqrt(stick.x*stick.x+stick.y*stick.y)
+                > Float(profile.deadZone)/100
+            let aim=keyboardAim.hasInput ? keyboardAim :
+                (useStick ? stick:Vector2(x:0,y:0))
             return Combat(move:move.clamped(),aim:aim.clamped(),
                           shooting:a(6),shield:a(21),
                           bomb:a(7),boost:a(35),pause:a(9))
