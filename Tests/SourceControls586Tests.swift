@@ -79,6 +79,53 @@ import Foundation
               "keyboard and controller rebinding persists")
         check(restored.deadZone==60 && restored.mouseSensitivity==25,
               "original PC input setting constraints apply on load")
+        // Legacy iOS persisted JSON may carry only 10 or 38 actions,
+        // and omit mouse options added after the first controls release.
+        // Do not discard a user's old bomb, shield or stick bindings.
+        var oldKeys=Array(initial.keys.prefix(10))
+        oldKeys[7]=66
+        var oldPad=Array(initial.pad.prefix(10))
+        oldPad[7]="B4"
+        let legacyJSON:[String:Any]=[
+            "version":1,"keys":oldKeys,"pad":oldPad,
+            "deadZone":45,"invertOrbitPitch":true
+        ]
+        store.set(try! JSONSerialization.data(withJSONObject:legacyJSON),
+                  forKey:c.Profile.storageKey)
+        let migrated10=c.Profile.load(store)
+        check(migrated10.keys.count==60 && migrated10.pad.count==60 &&
+              migrated10.keys[7]==66 && migrated10.pad[7]=="B4" &&
+              migrated10.deadZone==45 && migrated10.invertOrbitPitch,
+              "legacy v1 JSON migrates without losing original user keys")
+        check(migrated10.keys[21]==initial.keys[21] &&
+              migrated10.pad[35]==initial.pad[35] &&
+              !migrated10.invertMouse && migrated10.mouseSensitivity==100,
+              "unprovided 50 action IDs and new mouse options use source defaults")
+        migrated10.save(store)
+        let migratedAgain=c.Profile.load(store)
+        check(migratedAgain==migrated10 && migratedAgain.version==2,
+              "once-migrated JSON saves and reloads idempotently as v2")
+
+        var mixedKeys=Array(initial.keys.prefix(38))
+        mixedKeys[35]=72
+        let partialJSON:[String:Any]=[
+            "version":2,"keys":mixedKeys,
+            "pad":Array(initial.pad.prefix(60)),
+            "orbitMouse":true,"mouseSensitivity":155
+        ]
+        store.set(try! JSONSerialization.data(withJSONObject:partialJSON),
+                  forKey:c.Profile.storageKey)
+        let migrated38=c.Profile.load(store)
+        check(migrated38.keys[35]==72 && migrated38.keys[59]==initial.keys[59] &&
+              migrated38.pad==initial.pad && migrated38.orbitMouse &&
+              migrated38.mouseSensitivity==155,
+              "partially saved v2 keyboard list preserves options and appends missing IDs")
+        var incompatible=legacyJSON
+        incompatible["version"]=999
+        store.set(try! JSONSerialization.data(withJSONObject:incompatible),
+                  forKey:c.Profile.storageKey)
+        check(c.Profile.load(store)==initial,
+              "unknown future schema is rejected without interpreting it as legacy")
         store.set(Data("NOT_JSON".utf8),forKey:c.Profile.storageKey)
         check(c.Profile.load(store)==initial,
               "corrupted settings fall back to source defaults")
