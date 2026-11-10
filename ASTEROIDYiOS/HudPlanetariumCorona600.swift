@@ -74,6 +74,15 @@ final class HudPlanetariumCorona600 {
         let node=SCNNode(geometry:geometry(
             points:vertices,indices:[0,1,2],tint:tint))
         node.name="HUD600_CORONA_TONGUE_\(index)"
+        // PC v600 adds a .65px inner luminous stroke to each tongue.
+        // Use a shared parent transform, so the tip follows the same pulse.
+        let inner=amber ? color(255,182,77,70):color(117,236,245,70)
+        let fine=SCNNode(geometry:geometry(
+            points:[SIMD3(3,-0.325,0.002),SIMD3(9.5,0,0.002),
+                    SIMD3(3,0.325,0.002)],
+            indices:[0,1,2],tint:inner))
+        fine.name="HUD600_CORONA_TONGUE_INNER"
+        node.addChildNode(fine)
         return node
     }
     init?(scene:SCNScene,nodes:[SCNNode]) {
