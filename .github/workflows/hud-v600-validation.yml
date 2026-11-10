@@ -10,6 +10,7 @@ on:
       - "ASTEROIDYiOS/HudLayoutDocument600.swift"
       - "ASTEROIDYiOS/HudWidgetPlacement600.swift"
       - "Tests/HudWidgetPlacement600Tests.swift"
+      - "Tests/HudMotionLiveRenderer600Contract.py"
       - "ASTEROIDYiOS/CombatHUDViewport568.swift"
       - "ASTEROIDYiOS/HudLayoutMarker600.swift"
       - "ASTEROIDYiOS/HudWidgetGeometry600.swift"
@@ -54,6 +55,7 @@ jobs:
           python3 Tests/HudPlanetariumIntegration600Contract.py
           python3 Tests/HudPlanetariumCorona600Contract.py
           python3 Tests/HudMotionEventCounters600Contract.py
+          python3 Tests/HudMotionLiveRenderer600Contract.py
           python3 Tests/HudMissionGate600Contract.py
           python3 Tests/HudPickupMetal600Contract.py
       - name: Compile and execute Swift motion and plasma reference contracts
