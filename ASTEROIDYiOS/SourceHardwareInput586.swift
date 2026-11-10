@@ -68,8 +68,10 @@ final class SourceHardwareInput586 {
         case 42:return 8 // Delete/backspace
         case 43:return 9 // Tab
         case 44:return 32 // Space
-        case 45,86:return 189 // - / numpad -
-        case 46,87:return 187 // = / numpad +
+        case 45:return 189 // main row -
+        case 46:return 187 // main row =
+        case 86:return 109 // numpad -
+        case 87:return 107 // numpad +
         case 54:return 188 // ,
         case 55:return 190 // .
         case 79:return 39 // right
@@ -79,7 +81,8 @@ final class SourceHardwareInput586 {
         case 75:return 33 // Page Up
         case 78:return 34 // Page Down
         case 58...69:return 112+hid-58 // F1..F12
-        case 84...85:return 111+hid-84 // Num / *, unavailable VK override
+        case 84:return 111 // keypad divide
+        case 85:return 106 // keypad multiply
         case 89...97:return 97+hid-89 // Numpad 1..9
         case 98:return 96 // Numpad 0
         case 224:return 162 // left CTRL
