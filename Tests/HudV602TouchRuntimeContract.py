@@ -79,7 +79,7 @@ assert 'let hudRenderTime600=ProcessInfo.processInfo.systemUptime-started' in re
 assert 'seconds:now,hullPulse:hudPose600.hullPulse' in session
 assert 'seconds:Double(game.elapsed),hullPulse:' not in session
 assert 'corona?.advance(at:liveGameTime?() ?? 0)' in planetarium
-assert 'liveGameTime:{[weak session] in' in host
+assert 'liveGameTime: { [weak session] in' in host
 assert 'active:session.hud.phase == .playing)' in scene
 assert 'motionActive:' not in scene
 assert 'HudPlanetariumProjection.make(' in host
@@ -131,7 +131,7 @@ assert 'for layer in 0..<5' in plasma and 'for k in 0..<7' in plasma
 # physical-screen coordinate frame and exact PC v602 pixel-per-unit scale.
 
 
-assert '.frame(width:CGFloat(viewport.width)' in host
+assert '.frame(width: CGFloat(viewport.width)' in host
 assert 'HudMotionProject600.project(' not in host
 assert 'hud-v602-always-visible-widget-selector' in editor
 assert 'Button("◀") {selectNeighbor600(-1)}' in editor
