@@ -1,6 +1,7 @@
-# One explicitly requested native iOS H55 hands/weapon repair release.
-# Sources: previous verified full HUD v600, PC v580 original GLB depth pass.
-name: ASTEROIDY iOS HUD v600 + H55 FPS - full source Release IPA
+# Single authoritative release: original PC v602 planetarium is versioned
+# and embedded during CI BEFORE the IPA is published.
+# No downloading an incomplete artifact and patching it locally afterward.
+name: ASTEROIDY iOS - PC v602 HUD - kompletna Release IPA
 # Avoid launching another obsolete full IPA build after every small patch.
 # GitHub retains only the latest queued/running run within this workflow
 # and branch; the newest commit is always the authoritative candidate.
@@ -35,6 +36,9 @@ on:
       - ASTEROIDYiOS/Sector01CarbonisPreview568.swift
       - ASTEROIDYiOS/HudPlanetariumHost600.swift
       - ASTEROIDYiOS/HudPlanetariumScene600.swift
+      - SourceResources/PC602/planetarium.glb.xz
+      - Tools/stage_pc602_planetarium.py
+      - Tools/verify_pc602_planetarium_ipa.py
       - ASTEROIDYiOS/HudCapsuleController600.swift
       - ASTEROIDYiOS/SourceCombatHUD331.swift
   workflow_dispatch:
@@ -99,6 +103,10 @@ jobs:
           python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets | tee reports/player367.txt
           python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required | tee reports/w3-menu.txt
           python3 Tools/materialize_pc586_original_resources.py --source SourceResources/PC586 --report reports/original-pc586.json | tee reports/pc586-source.txt
+          # Source PC v602: stage the single byte-verified original BEFORE xcodegen.
+          # Missing source, modified geometry or incorrect 159-channel clip is fatal.
+          python3 Tools/stage_pc602_planetarium.py | tee reports/planetarium-pc602-source.txt
+          test -f ASTEROIDYiOS/Assets/planetarium.glb
       - name: Build genuine iOS ARM64 Release with all restored original v568 resources
         shell: bash
         run: |
@@ -116,6 +124,22 @@ jobs:
               tail -n 160 reports/xcodebuild.log
               exit 1
             }
+      - name: Verify exact PC v602 original planetarium is embedded in compiled .app
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/H55FPS/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" && test -f "$APP/Info.plist"
+          test -f "$APP/planetarium.glb"
+          python3 - "$APP/planetarium.glb" <<'PY' | tee reports/planetarium-pc602-app.txt
+          from pathlib import Path
+          import hashlib,sys
+          from Tools.stage_pc602_planetarium import SIZE,SHA256,verified_bytes
+          model=Path(sys.argv[1]).read_bytes()
+          assert len(model)==SIZE and hashlib.sha256(model).hexdigest()==SHA256
+          assert model==verified_bytes()
+          print('PASS original PC v602 planetarium embedded at .app root: SHA256',SHA256)
+          PY
       - name: Verify and embed all 15 exact PC586 H55 hands/EXP-01/pickup resources
         shell: bash
         run: |
@@ -153,16 +177,17 @@ jobs:
           APP=$(find build/H55FPS/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
           mkdir -p dist/Payload
           cp -R "$APP" dist/Payload/
-          (cd dist && zip -q -r -y ../ASTEROIDY_iOS_HUD_v600_H55_PELNE_UNSIGNED.ipa Payload)
-          python3 Tools/verify_ipa.py ASTEROIDY_iOS_HUD_v600_H55_PELNE_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-native.txt
-          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_HUD_v600_H55_PELNE_UNSIGNED.ipa | tee reports/ipa-models.json
-          unzip -t ASTEROIDY_iOS_HUD_v600_H55_PELNE_UNSIGNED.ipa | tail -1 | tee reports/ipa-crc.txt
-          shasum -a 256 ASTEROIDY_iOS_HUD_v600_H55_PELNE_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
-          stat -f '%z bytes' ASTEROIDY_iOS_HUD_v600_H55_PELNE_UNSIGNED.ipa | tee reports/ipa-size.txt
+          (cd dist && zip -q -r -y ../ASTEROIDY_iOS_PC602_KOMPLETNA_UNSIGNED.ipa Payload)
+          python3 Tools/verify_ipa.py ASTEROIDY_iOS_PC602_KOMPLETNA_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-native.txt
+          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_PC602_KOMPLETNA_UNSIGNED.ipa | tee reports/ipa-models.json
+          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_PC602_KOMPLETNA_UNSIGNED.ipa | tee reports/planetarium-pc602-ipa.txt
+          unzip -t ASTEROIDY_iOS_PC602_KOMPLETNA_UNSIGNED.ipa | tail -1 | tee reports/ipa-crc.txt
+          shasum -a 256 ASTEROIDY_iOS_PC602_KOMPLETNA_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
+          stat -f '%z bytes' ASTEROIDY_iOS_PC602_KOMPLETNA_UNSIGNED.ipa | tee reports/ipa-size.txt
           python3 - <<'PY' | tee reports/required-source-assets.txt
           import zipfile,plistlib
           from pathlib import Path
-          p=Path("ASTEROIDY_iOS_HUD_v600_H55_PELNE_UNSIGNED.ipa")
+          p=Path("ASTEROIDY_iOS_PC602_KOMPLETNA_UNSIGNED.ipa")
           assert p.stat().st_size>30_000_000, "ABORT: truncated asset bundle; never publish 11MB IPA again"
           with zipfile.ZipFile(p) as z:
               assert z.testzip() is None
@@ -170,6 +195,7 @@ jobs:
               root="Payload/ASTEROIDY iOS.app/"
               assert len([n for n in names if n.startswith(root)])>=75, "Incomplete source assets"
               for name in ("gloves_parted.glb","gloves_combined.glb","EXP01_SOURCE_v601.glb",
+                           "planetarium.glb",
                            "boost.glb","shield.glb","energy.glb","bomb.glb",
                            "Sector01CarbonisVertices.bin","W3HomePlanet290OriginalGPU.bin"):
                   assert root+name in names, "Missing source GLB/texture: "+name
@@ -178,9 +204,9 @@ jobs:
       - name: Publish actual full-source native IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ASTEROIDY-iOS-HUD-v600-H55-FULL-IPA
+          name: ASTEROIDY-iOS-PC602-KOMPLETNA-IPA
           path: |
-            ASTEROIDY_iOS_HUD_v600_H55_PELNE_UNSIGNED.ipa
+            ASTEROIDY_iOS_PC602_KOMPLETNA_UNSIGNED.ipa
             reports/preflight.txt
             reports/fps-source.txt
             reports/hud-v600-source.txt
@@ -189,6 +215,9 @@ jobs:
             reports/pc586-embedded.json
             reports/build-env.txt
             reports/ipa-native.txt
+            reports/planetarium-pc602-source.txt
+            reports/planetarium-pc602-app.txt
+            reports/planetarium-pc602-ipa.txt
             reports/ipa-models.json
             reports/SHA256SUMS.txt
             reports/ipa-size.txt
