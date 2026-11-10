@@ -72,7 +72,6 @@ struct SourceCombatHUD331: View {
             }
             let names=["hull","armor","shield"]
             let values:[Int?]=[hud.hull,hud.armor,hud.tarczaEnergy]
-            let maximums=[60,25,100]
             let titles=["KADŁUB","PANCERZ","TARCZA"]
             for i in 0..<3 {
                 let y=CGFloat(565+48*i)
@@ -110,7 +109,7 @@ struct SourceCombatHUD331: View {
         .accessibilityIdentifier("sector01-source-w3-hud331")
     }
 
-    // PC HudMotionPose.Apply: independent visual matrix per anchored group.
+    // PC HudMotionPose.Apply: independent visual matrix per approved widget.
     // Gameplay reticle and screen-touch gesture zones are intentionally outside
     // this drawing context and never inherit decorative HUD movement.
     static func applyMotion(_ context:inout GraphicsContext,
