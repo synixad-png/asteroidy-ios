@@ -12,6 +12,13 @@ import UIKit
     // clipped the authored glove highlights to white in the FPS overlay.
     // Keep original light positions, RGB ratios and glTF PBR unchanged.
     private static let sceneKitLightGain:CGFloat=0.35
+    static let gloveBrightnessKey="ASTEROIDY_H55_GLOVE_BRIGHTNESS_602"
+    // AppStorage/UI controls this exact same persisted value. The original
+    // glTF textures/PBR are never baked or overwritten.
+    static var gloveBrightness:CGFloat {
+        let stored=UserDefaults.standard.object(forKey:gloveBrightnessKey) as? Double ?? 0.65
+        return CGFloat(max(0.20,min(1.50,stored.isFinite ? stored:0.65)))
+    }
     private static let lightSpecs:[(SCNVector3,UIColor,CGFloat)]=[
         (SCNVector3(-1,2,-0.6),UIColor(red:0.8,green:0.8,blue:0.8,alpha:1),720),
         (SCNVector3(2,1,-1),UIColor(red:0.5,green:0.5,blue:0.6,alpha:1),450),
@@ -21,7 +28,7 @@ import UIKit
     /// Only gloves use the lower gain: leave the original EXP-01 weapon
     /// preview and first-person lighting unchanged.
     static func configure(scene:SCNScene,mode:H55FPSSettings580.Mode) {
-        let gain:CGFloat = mode == .gloves ? sceneKitLightGain : 1
+        let gain:CGFloat = mode == .gloves ? sceneKitLightGain*gloveBrightness : 1
         scene.rootNode.childNode(withName:"FPS_AMBIENT_LIGHT",
                                  recursively:false)?.light?.intensity=220*gain
         for (i,spec) in lightSpecs.enumerated() {
