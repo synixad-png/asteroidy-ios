@@ -16,13 +16,22 @@ struct SourceControlSettings586:View {
     private let cyan=Color(red:0.39,green:0.75,blue:0.79)
     private let muted=Color(red:0.63,green:0.73,blue:0.77)
 
-    private static let availableKeys:[Int] = [0,9,13,27,32,33,34,37,38,39,40]
-        + Array(48...57)+Array(65...90)+Array(96...105)
-        + Array(112...123)+[160,161,162,163,164,165,187,188,189,190]
-    private static let availablePad:[String] = [""]+
-        (0...14).map{"B\($0)"} +
-        (0...5).flatMap{["A\($0)-","A\($0)+"]} +
-        ["B9+B3"]
+    private static let availableKeys:[Int] = {
+        var values=[0,9,13,27,32,33,34,37,38,39,40]
+        values.append(contentsOf:Array(48...57))
+        values.append(contentsOf:Array(65...90))
+        values.append(contentsOf:Array(96...105))
+        values.append(contentsOf:Array(112...123))
+        values.append(contentsOf:[160,161,162,163,164,165,187,188,189,190])
+        return values
+    }()
+    private static let availablePad:[String] = {
+        var values=[""]
+        values.append(contentsOf:(0...14).map{"B\($0)"})
+        values.append(contentsOf:(0...5).flatMap{["A\($0)-","A\($0)+"]})
+        values.append("B9+B3")
+        return values
+    }()
 
     private func mutate(_ change:(inout SourceControls586.Profile)->Void) {
         change(&profile)
