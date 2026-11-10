@@ -95,6 +95,7 @@ final class HudPlanetariumCorona600 {
             $0.geometry != nil}
         guard candidates.count==1 else{return nil}
         self.sphere=candidates[0]
+        self.flames=(0..<11).map(Self.tongue(index:))
         root.name="HUD600_CORONA_ORIGINAL_OUTER_SPHERE"
         root.renderingOrder=70
         root.constraints=[SCNBillboardConstraint()]
@@ -102,7 +103,6 @@ final class HudPlanetariumCorona600 {
                                     tint:Self.color(43,183,214,24)))
         root.addChildNode(Self.arc(start:149,sweep:152,thickness:3.1,
                                     tint:Self.color(50,172,202,21)))
-        flames=(0..<11).map(Self.tongue(index:))
         for flame in flames {root.addChildNode(flame)}
         scene.rootNode.addChildNode(root)
     }
