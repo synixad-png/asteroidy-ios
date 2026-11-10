@@ -1120,32 +1120,31 @@ struct H55ScenePage580: View {
     }
 
     private var settingsScreen:some View {
-                GeometryReader { frame in
-                    VStack(spacing:0) {
-                        VStack(spacing:3) {
-                            Text("USTAWIENIA / HANGAR")
-                                .font(.system(size:12,weight:.bold,design:.monospaced))
-                                .foregroundStyle(gold)
-                            Button("‹ WRÓĆ DO PAUZY") {showingSettings=false}
-                                .font(.system(size:14,weight:.bold,design:.monospaced))
-                                .frame(maxWidth:250,minHeight:38)
-                                .foregroundStyle(.white)
-                                .background(Color(red:0.05,green:0.15,blue:0.22))
-                                .accessibilityIdentifier("h55-settings-back")
-                        }
-                        .frame(maxWidth:.infinity)
-                        .padding(4)
-                        .background(Color(red:0.008,green:0.028,blue:0.048))
-                        CarbonisVisualSettingsPanel568(
-                            compact:frame.size.width<850,initialTab:9,
-                            fpsLoader:loader)
-                            .frame(maxWidth:.infinity,maxHeight:.infinity)
-                    }
-                    .background(Color(red:0.005,green:0.018,blue:0.034))
-                    .ignoresSafeArea()
-                }
-                .zIndex(30)
-                .accessibilityIdentifier("h55-settings-fullscreen")
+        GeometryReader { frame in
+            VStack(spacing:0) {
+                Text("USTAWIENIA / HANGAR")
+                    .font(.system(size:12,weight:.bold,design:.monospaced))
+                    .foregroundStyle(gold)
+                    .frame(maxWidth:.infinity)
+                    .padding(7)
+                    .background(Color(red:0.008,green:0.028,blue:0.048))
+                CarbonisVisualSettingsPanel568(
+                    compact:frame.size.width<850,initialTab:9,
+                    fpsLoader:loader)
+                    .frame(maxWidth:.infinity,maxHeight:.infinity)
+                Button("‹ WRÓĆ DO PAUZY") {showingSettings=false}
+                    .font(.system(size:14,weight:.bold,design:.monospaced))
+                    .frame(maxWidth:250,minHeight:40)
+                    .foregroundStyle(.white)
+                    .background(Color(red:0.05,green:0.15,blue:0.22))
+                    .accessibilityIdentifier("h55-settings-back")
+                    .padding(.bottom,14)
+            }
+            .background(Color(red:0.005,green:0.018,blue:0.034))
+            .ignoresSafeArea()
+        }
+        .zIndex(30)
+        .accessibilityIdentifier("h55-settings-fullscreen")
     }
 
     private func renderedHangar(scene:SCNScene,camera:SCNNode)->some View {
