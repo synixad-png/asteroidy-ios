@@ -40,12 +40,15 @@ struct HudLayout600:Codable,Equatable {
         let originals=Self.approvedWidgetIDs
         guard Set(widgets.map(\.id)) == originals else{return false}
         return widgets.allSatisfy { item in
-            item.x.isFinite && item.y.isFinite && item.scale.isFinite &&
-            item.x >= -250 && item.x <= 1530 &&
-            item.y >= -250 && item.y <= 970 &&
-            item.scale >= 0.25 && item.scale <= 4 &&
-            [item.yaw,item.pitch,item.roll].allSatisfy { $0 == nil ||
-                ($0!.isFinite && abs($0!)<=180) }
+            guard item.x.isFinite,item.y.isFinite,item.scale.isFinite,
+                  HudWidgetGeometry600.scaleRange(for:item).contains(item.scale),
+                  let xRange=HudWidgetGeometry600.xRange(for:item),
+                  let yRange=HudWidgetGeometry600.yRange(for:item),
+                  xRange.contains(item.x),yRange.contains(item.y) else{return false}
+            return [item.yaw,item.pitch,item.roll].allSatisfy { value in
+                guard let value else{return true}
+                return value.isFinite && abs(value)<=180
+            }
         }
     }
     private static var approvedWidgetIDs:Set<String> {
