@@ -6,6 +6,7 @@ import SwiftUI
 struct SourceCombatHUD331: View {
     let hud: CarbonisSession568.HUD
     let insets: W3ScreenInsets568
+    let render3DIcons:Bool
 
     private static let white = color(234, 228, 232, 231)
     private static let dim = color(196, 155, 180, 190)
@@ -67,7 +68,8 @@ struct SourceCombatHUD331: View {
             let tints=[Self.cyan,Self.dim,Self.cyan,Self.gold]
             for i in 0..<4 {
                 Self.ability(bottomRight,type:i,cx:CGFloat(920+100*i),
-                             count:counts[i],name:names[i],tint:tints[i])
+                             count:counts[i],name:names[i],tint:tints[i],
+                             renderModel:render3DIcons)
             }
         }
         .frame(maxWidth:.infinity,maxHeight:.infinity)
@@ -286,10 +288,11 @@ struct SourceCombatHUD331: View {
         }
     }
     private static func ability(_ c:GraphicsContext,type:Int,cx:CGFloat,
-                                count:Int,name:String,tint:Color) {
+                                count:Int,name:String,tint:Color,
+                                renderModel:Bool) {
         let progress:CGFloat = type<2 ? (count>0 ? 0.7:0)
             : clamp(CGFloat(count)/3)
-        badge(c,type,cx,628,tint,progress)
+        if !renderModel {badge(c,type,cx,628,tint,progress)}
         text(c,name,cx,658,white,center:true)
         text(c,type>=2 ? "\(count) / 3" : "\(count)",cx,680,cyan,center:true)
     }
