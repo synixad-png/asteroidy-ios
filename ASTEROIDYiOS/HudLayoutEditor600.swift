@@ -267,9 +267,7 @@ struct HudLayoutEditor600:View {
                 if inspectorOpen {
                     inspector
                         .frame(width:min(310,max(235,geo.size.width*0.34)),
-                               height:max(140,geo.size.height-
-                                    CGFloat(max(88,viewport.safeBottom+65))-
-                                    CGFloat(max(12,viewport.safeTop))))
+                               height:max(140,geo.size.height-CGFloat(max(88,viewport.safeBottom+65))-CGFloat(max(12,viewport.safeTop))))
                         .frame(maxWidth:.infinity,maxHeight:.infinity,
                                alignment:.topTrailing)
                         .padding(.top,CGFloat(max(12,viewport.safeTop)))
