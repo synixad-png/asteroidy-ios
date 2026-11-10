@@ -54,7 +54,9 @@ struct SourceControlRouter586 {
         profile:SourceControls586.Profile)->Hangar {
         let a:(Int)->Bool={input.held($0,profile:profile)}
         let forward:Float=(a(2) ? 1 : 0) - (a(3) ? 1 : 0)
-        let right:Float = (a(1) ? 1 : 0) + (a(5) ? 1 : 0) - (a(0) ? 1 : 0) - (a(4) ? 1 : 0)
+        // H55 HubKey90 uses A/D for side movement; E is interact,
+        // not "strafe right" action 5 from the atlas context.
+        let right:Float = (a(1) ? 1 : 0) - (a(0) ? 1 : 0)
         let jump=a(11)
         let interact=a(12)
         let deadzone=Float(profile.deadZone)/100
