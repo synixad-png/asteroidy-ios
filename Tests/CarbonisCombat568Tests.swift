@@ -58,6 +58,58 @@ import Foundation
         check(!SourceCombatSupply586.collected(.shield,
             ionAmmo:&ion,bombs:&bombs),
             "unported shield mechanic must not be faked")
+        // Integration on the REAL CARBONIS combat state, not merely a
+        // test of the standalone picker. Two original PC586 supplies must
+        // change the existing ammo/bomb fields and their source HUD events.
+        var realPickup=CarbonisCombat568(prepared)
+        realPickup.ionAmmo=260
+        realPickup.bombs=2
+        let place=realPickup.flight.position
+        realPickup.tokenPickups=[
+            CarbonisCombat568.TokenPickup(
+                position:place,velocity:Vec2(x:0,y:0),value:40,
+                sourceKind:.energy),
+            CarbonisCombat568.TokenPickup(
+                position:place,velocity:Vec2(x:0,y:0),value:1,
+                sourceKind:.bomb)
+        ]
+        realPickup.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                        shooting:false,dt:1/120)
+        check(realPickup.ionAmmo==300 && realPickup.bombs==3,
+              "physical pickups mutate the REAL mission IonAmmo and Bombs")
+        check(realPickup.tokenPickups.isEmpty,
+              "collected PC586 supplies leave the unified source pickup list")
+        check(realPickup.drainOriginalAudioEvents568().filter{$0==30}.count==2,
+              "one original pickup audio event for each collected supply")
+        // PC Game.Step removes a source pickup on contact even if the
+        // ammunition magazine filled after the drop. No false SFX event.
+        var fullPickup=CarbonisCombat568(prepared)
+        fullPickup.ionAmmo=300
+        fullPickup.bombs=3
+        fullPickup.tokenPickups=[
+            CarbonisCombat568.TokenPickup(position:fullPickup.flight.position,
+                velocity:Vec2(x:0,y:0),value:40,sourceKind:.energy),
+            CarbonisCombat568.TokenPickup(position:fullPickup.flight.position,
+                velocity:Vec2(x:0,y:0),value:1,sourceKind:.bomb)
+        ]
+        fullPickup.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                        shooting:false,dt:1/120)
+        check(fullPickup.tokenPickups.isEmpty &&
+              fullPickup.ionAmmo==300 && fullPickup.bombs==3,
+              "PC580 full magazines remove expended supply pickups")
+        check(!fullPickup.drainOriginalAudioEvents568().contains(30),
+              "full magazines do not trigger false pickup notification")
+        var expiredPickup=CarbonisCombat568(prepared)
+        expiredPickup.tokenPickups=[
+            CarbonisCombat568.TokenPickup(
+                position:expiredPickup.flight.position,
+                velocity:Vec2(x:0,y:0),value:40,
+                sourceKind:.energy,life:0.00001)
+        ]
+        expiredPickup.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                           shooting:false,dt:1/120)
+        check(expiredPickup.tokenPickups.isEmpty && expiredPickup.ionAmmo==0,
+              "expired 26-second PC586 consumable cannot be collected")
         var sim=CarbonisCombat568(prepared)
         check(sim.rocks.count==13 && sim.shooters.count==4,"exact source wave")
         check(sim.flight.flight.configuration.cruiseSpeed==156,"source ship speed")
