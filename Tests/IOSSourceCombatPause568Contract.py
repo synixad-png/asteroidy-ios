@@ -22,7 +22,19 @@ def part(text, beginning, end):
 # Real flight/enemy/bullet/reward simulation is frozen by existing session
 # gate rather than a new fake clock or HUD-only disabled overlay.
 assert "guard let lastFrame, !paused else {return}" in session
-assert "game.step(move:move,aim:aim,shooting:shooting,dt:dt)" in session
+# Real PC586 hardware routing now composes keyboard/controller with the
+# existing touch state BEFORE calling the same original combat simulation.
+# Preserve the pause gate, original 120Hz substeps and NO new game clock.
+assert "guard let lastFrame, !paused else {return}" in session
+assert "let sourceInput=controlRouter586.read(" in session
+assert "let effectiveMove=controlledMove.hasInput" in session
+assert "let effectiveAim=controlledAim.hasInput" in session
+assert "let effectiveFire=shooting || sourceInput.continuous.shooting" in session
+assert "game.step(move:effectiveMove,aim:effectiveAim," in session
+assert "shooting:effectiveFire,dt:dt)" in session
+assert "while remaining>0.000001 && game.phase == .playing" in session
+assert "if sourceInput.pausePressed {" in session
+assert "self?.onPauseRequested?()" in session
 assert "defer{lastFrame=now}" in session
 assert "private var userPaused=false" in scene
 pause=part(scene,"    private func pauseMission568() {","    private func resumeMission568() {")
