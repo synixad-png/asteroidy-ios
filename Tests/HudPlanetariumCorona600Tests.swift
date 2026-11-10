@@ -21,8 +21,8 @@ import SceneKit
         require(abs(aura.root.position.x-5)<0.01 &&
                 abs(aura.root.position.y-3)<0.01,
                 "aura must be centered on the actual outer sphere")
-        require(abs(aura.root.scale.x-
-            HudPlanetariumCorona600.originalSphereRadius/100)<0.001,
+        let expectedScale = HudPlanetariumCorona600.originalSphereRadius / 100
+        require(abs(aura.root.scale.x - expectedScale) < 0.001,
                 "aura must track glTF outer sphere radius, not panel bounds")
         let tongue=aura.root.childNodes.last!
         let old=tongue.position
