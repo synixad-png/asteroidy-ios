@@ -1,0 +1,169 @@
+{
+  "version": "PC586-ORIGINAL-15",
+  "excluded": [
+    "hangar_h55.glb"
+  ],
+  "files": [
+    {
+      "name": "shield.glb",
+      "bytes": 478320,
+      "sha256": "531f1d49ea9782a2c40ce6870cd308d067461cc5f80cfaefc659f3db4ffe5a62"
+    },
+    {
+      "name": "shield.mesh",
+      "bytes": 1323256,
+      "sha256": "706a39a504ade3f6b51ffa49f439c25e737ee42d92173cc23029d3bb573a7c2e"
+    },
+    {
+      "name": "shield.jpg",
+      "bytes": 175891,
+      "sha256": "1612ebb5d9d8c79f0232f885fbbc52483ab6df8f5b22743b0ac2253b01713964"
+    },
+    {
+      "name": "boost.glb",
+      "bytes": 502996,
+      "sha256": "6f7a083b493b029f4907988b55dbf9cdc49c7d5d187e023fa20521319b494362"
+    },
+    {
+      "name": "boost.mesh",
+      "bytes": 1336216,
+      "sha256": "087de160a554328b975306decf7527f0c9aa7b44f459135e2ccf360214b8f67e"
+    },
+    {
+      "name": "boost.jpg",
+      "bytes": 186455,
+      "sha256": "ae87f82d0bee71adaaa480ed5a520977a777ba1c1a09275a2d2947354d384bd2"
+    },
+    {
+      "name": "energy.glb",
+      "bytes": 506076,
+      "sha256": "df9c3a85ef45d55d3ce08d9d82ec9ec1f0ec1b8c2cdf06fb35550eb96aa3aca1"
+    },
+    {
+      "name": "energy.mesh",
+      "bytes": 1377256,
+      "sha256": "9795e046475988c504159b41f54c4600499bf250c479c181094759940d481663"
+    },
+    {
+      "name": "energy.jpg",
+      "bytes": 178226,
+      "sha256": "5457560331a6f61a3a9af518c595a2ecc03b8c8a74980b4f044c9cfed9266a6c"
+    },
+    {
+      "name": "bomb.glb",
+      "bytes": 483424,
+      "sha256": "e8787ce4b11c8b44b6b710a93419b0c8cc263cafe27c35e580b0c4cb8bffaaee"
+    },
+    {
+      "name": "bomb.mesh",
+      "bytes": 1332040,
+      "sha256": "c6eb907b60b28889220be4d97076aa93a87f14d4ef701541a0afae6062ef7c58"
+    },
+    {
+      "name": "bomb.jpg",
+      "bytes": 157658,
+      "sha256": "4228a05eee0cd83c6e36bd3cdbed67ff661129d4550f2a22089c5c28196481ff"
+    },
+    {
+      "name": "gloves_parted.glb",
+      "bytes": 4968356,
+      "sha256": "8a494bbd9a3dd6eb70cb5e22a7db4da7ec33b069dc1b0bab36f6a1c5b4c257ca"
+    },
+    {
+      "name": "gloves_combined.glb",
+      "bytes": 4144252,
+      "sha256": "643bfa2799535852362103fa4d24b84d712637d686e773403214400a31ae4516"
+    },
+    {
+      "name": "EXP01_SOURCE_v601.glb",
+      "bytes": 4504600,
+      "sha256": "07403302f23cb81ce6c26501ca7361c646550c6f91e0a949ce81566553139762"
+    }
+  ],
+  "large_models_parts": [
+    {
+      "model": "gloves_parted.glb",
+      "part": "gloves_parted.glb.part00",
+      "bytes": 1048576,
+      "sha256": "d78f39dad5d2485549b6cdf678d6a8be0b1316c5947cc3dc9eec50f01a96bf39"
+    },
+    {
+      "model": "gloves_parted.glb",
+      "part": "gloves_parted.glb.part01",
+      "bytes": 1048576,
+      "sha256": "2ed184281a24d684327fb9d0587f7a7a9ba8850a2e2642ed8df268d3d45b1406"
+    },
+    {
+      "model": "gloves_parted.glb",
+      "part": "gloves_parted.glb.part02",
+      "bytes": 1048576,
+      "sha256": "f317309f9ad67f7cf10aad153da25163e5c1a5f74d1a58b369b04c9167f29eb2"
+    },
+    {
+      "model": "gloves_parted.glb",
+      "part": "gloves_parted.glb.part03",
+      "bytes": 1048576,
+      "sha256": "817a07484ec79a2bfb0d9b815da4179ce3a091196e7a7ae644ca34a0f9904de5"
+    },
+    {
+      "model": "gloves_parted.glb",
+      "part": "gloves_parted.glb.part04",
+      "bytes": 774052,
+      "sha256": "24c4d308558833a7c35134f536066ddc6296c5fc10f5c7438c35282f6c3e2fba"
+    },
+    {
+      "model": "gloves_combined.glb",
+      "part": "gloves_combined.glb.part00",
+      "bytes": 1048576,
+      "sha256": "88424900d8f72b50936c04ae96e6464390727133dd5fda2724c1553455cc1f93"
+    },
+    {
+      "model": "gloves_combined.glb",
+      "part": "gloves_combined.glb.part01",
+      "bytes": 1048576,
+      "sha256": "b4513e497945f8df92c8fd6c701a2048d3103d358a5141c05af93e88d2968bfa"
+    },
+    {
+      "model": "gloves_combined.glb",
+      "part": "gloves_combined.glb.part02",
+      "bytes": 1048576,
+      "sha256": "91b5cda55a251f06215d7c7634b3a65debc333de23466cf01a91533e363c5cbc"
+    },
+    {
+      "model": "gloves_combined.glb",
+      "part": "gloves_combined.glb.part03",
+      "bytes": 998524,
+      "sha256": "46219039e287477e0291ad1760e8bb25dc52773b668c6cc76343f0811f8e3487"
+    },
+    {
+      "model": "EXP01_SOURCE_v601.glb",
+      "part": "EXP01_SOURCE_v601.glb.part00",
+      "bytes": 1048576,
+      "sha256": "f797bc735d58323c984f24c07c6bcd2f01e8b05601f986c5992a1d9b0fad1438"
+    },
+    {
+      "model": "EXP01_SOURCE_v601.glb",
+      "part": "EXP01_SOURCE_v601.glb.part01",
+      "bytes": 1048576,
+      "sha256": "f76c1908b7c1b8c4a09c13276d65cfdfa07b8e6750e71a244dcd6324e0e49091"
+    },
+    {
+      "model": "EXP01_SOURCE_v601.glb",
+      "part": "EXP01_SOURCE_v601.glb.part02",
+      "bytes": 1048576,
+      "sha256": "543462a45a5104e95a980fa93012d68c44158b0cb224c6266de526d8dbd99fe7"
+    },
+    {
+      "model": "EXP01_SOURCE_v601.glb",
+      "part": "EXP01_SOURCE_v601.glb.part03",
+      "bytes": 1048576,
+      "sha256": "6ec1e1a10c64392093be3ef66373acc36097b0c5d0a6857b4bde63aa5043bd25"
+    },
+    {
+      "model": "EXP01_SOURCE_v601.glb",
+      "part": "EXP01_SOURCE_v601.glb.part04",
+      "bytes": 310296,
+      "sha256": "4f628421bd9a2932087320d366e92c827dd69c8557be490cf8338f30b6914de7"
+    }
+  ]
+}
