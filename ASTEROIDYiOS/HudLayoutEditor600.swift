@@ -6,7 +6,6 @@ struct HudLayoutEditor600:View {
     @Environment(\.dismiss) private var dismiss
     @State private var document=HudLayout600.load()
     @State private var selected="hud.planetarium"
-    @State private var dragOrigin:(Double,Double)?
     let onSave:(HudLayout600)->Void
 
     private var selectedWidget:HudLayout600.Widget? {document.widget(selected)}
@@ -65,53 +64,17 @@ struct HudLayoutEditor600:View {
         let offsetY=(Double(bounds.height)-720*scale)/2
         return ZStack(alignment:.topLeading) {
             Rectangle().fill(Color(red:0.012,green:0.026,blue:0.045))
-            ForEach(document.widgets){widget in
+            ForEach(document.widgets) { widget in
                 let dims=widgetSize(widget.id)
-                let chosen=widget.id==selected
-                let w=max(9,dims.0*widget.scale*scale)
-                let h=max(7,dims.1*widget.scale*scale)
-                let x=offsetX+widget.x*scale
-                let y=offsetY+widget.y*scale
-                Rectangle()
-                    .fill(chosen ? Color.yellow.opacity(0.12):Color.cyan.opacity(0.025))
-                    .overlay {
-                        Rectangle().stroke(
-                            chosen ? Color.yellow :
-                                (widget.visible ? Color.cyan.opacity(0.5):
-                                 Color.gray.opacity(0.4)),
-                            lineWidth:chosen ? 2:0.7)
+                HudLayoutMarker600(
+                    widget:widget,scale:scale,offsetX:offsetX,offsetY:offsetY,
+                    sourceWidth:dims.0,sourceHeight:dims.1,selected:$selected
+                ) { x,y in
+                    document.change(widget.id) {
+                        $0.x=x
+                        $0.y=y
                     }
-                    .frame(width:CGFloat(w),height:CGFloat(h))
-                    .overlay(alignment:.topLeading) {
-                        if chosen {
-                            Text(widget.id)
-                                .font(.system(size:10,design:.monospaced))
-                                .foregroundStyle(.yellow)
-                                .fixedSize()
-                                .offset(y:-14)
-                        }
-                    }
-                    .position(x:CGFloat(x+w/2),y:CGFloat(y+h/2))
-                    .contentShape(Rectangle())
-                    .onTapGesture {selected=widget.id}
-                    .gesture(DragGesture(minimumDistance:1)
-                        .onChanged {gesture in
-                            if selected != widget.id {
-                                selected=widget.id
-                                dragOrigin=(widget.x,widget.y)
-                            }
-                            if dragOrigin==nil {
-                                dragOrigin=(widget.x,widget.y)
-                            }
-                            guard let origin=dragOrigin else{return}
-                            document.change(widget.id) { item in
-                                item.x=origin.0+Double(gesture.translation.width)/scale
-                                item.y=origin.1+Double(gesture.translation.height)/scale
-                            }
-                        }
-                        .onEnded {_ in dragOrigin=nil})
-                    .accessibilityLabel(widget.id)
-                    .accessibilityIdentifier("hud-v600-widget-"+widget.id)
+                }
             }
         }
         .clipped()
