@@ -13,23 +13,26 @@ struct HudPlanetariumHost600:View {
     let viewport:CombatHUDViewport568
     let session:CarbonisSession568
     let active:Bool
+    let motionActive:Bool
 
     var body:some View {
         TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active)) { _ in
             let state=session.currentHudVisual600()
+            let renderedPose=motionActive ? state.pose : HudMotion600.Pose()
             let projected=HudMotionProject600.project(
                 x:widget.x+125,y:widget.y+67.5,
-                pose:state.pose,widget:"hud.planetarium")
+                pose:renderedPose,widget:"hud.planetarium")
             HudPlanetariumScene600(
                 original:original,
                 capsule:state.capsules,
                 pitch:Float(widget.pitch ?? -20),
                 yaw:Float(widget.yaw ?? 0),
                 roll:Float(widget.roll ?? 0),
-                pose:state.pose,
+                pose:renderedPose,
                 playing:active,
                 livePose:{ [weak session] in
-                    session?.currentHudVisual600().pose ?? HudMotion600.Pose()
+                    guard motionActive else{return HudMotion600.Pose()}
+                    return session?.currentHudVisual600().pose ?? HudMotion600.Pose()
                 },
                 liveCapsules:{ [weak session] in
                     session?.currentHudVisual600().capsules ??
