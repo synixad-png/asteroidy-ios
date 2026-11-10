@@ -163,7 +163,7 @@ struct Sector01Scene568: View {
                     insets:missionSafeInsets568,layout:hudLayout600,
                     active:session.hud.phase == .playing && !userPaused && !showingService,
                     livePose:{ [weak session] in
-                        session?.currentHudRenderState600().pose ?? HudMotion600.Pose()
+                        session?.currentHudVisual600().pose ?? HudMotion600.Pose()
                     })
                     .allowsHitTesting(false)
 
