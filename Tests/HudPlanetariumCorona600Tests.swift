@@ -31,9 +31,13 @@ import SceneKit
                 "source plasma tongues must animate")
         original.position=SCNVector3(13,9,-2)
         aura.advance(at:4)
-        require(abs(aura.root.position.x-13)<0.01 &&
-                abs(aura.root.position.y-9)<0.01,
-                "aura must follow globe translation")
+        // SceneKit presentation transforms can remain at the last rendered
+        // frame on headless macOS; compare to that authoritative pose,
+        // not to the model node's newer unpresented transform.
+        let displayed=original.presentation.convertPosition(SCNVector3Zero,to:nil)
+        require(abs(aura.root.position.x-displayed.x)<0.01 &&
+                abs(aura.root.position.y-displayed.y)<0.01,
+                "aura tracks the currently presented glTF globe")
         require(HudPlanetariumCorona600(scene:scene,nodes:[])==nil,
                 "never attach aura to arbitrary planetarium geometry")
         print("PASS HUD v600 corona: original sphere binding, 2 arcs, 11 animated rays, true node translation")
