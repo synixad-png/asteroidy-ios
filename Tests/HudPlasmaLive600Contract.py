@@ -49,7 +49,7 @@ assert "session?.currentHudVisual600().pose" in scene
 assert "session?.currentHudVisual600().seconds" in scene
 assert "let time=liveTime().truncatingRemainder(dividingBy:3600)" in p
 assert "hudLiveSeconds600=Double(game.elapsed)" in session
-assert "seconds:Double(game.elapsed),hullPulse:" in session
+assert "seconds:now,hullPulse:" in session
 assert "func currentHudVisual600()->(" in session
 assert "maxHull=game.maxHull;maxArmor=game.maxArmor" in session
 assert "maxHull:Int" in session and "maxArmor:Int" in session
