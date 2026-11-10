@@ -112,6 +112,22 @@ import Foundation
             .combat(profile:initial).aim
         check(rightStickAim.x>0.65 && rightStickAim.y < -0.45,
               "existing right-stick controls actual CARBONIS iOS aim")
+        // Actual action 33/34 rebinding must change the aim axis.
+        var remappedStick=initial
+        remappedStick.pad[33]="A0+"
+        remappedStick.pad[34]="A1-"
+        let changedAim=c.Snapshot(axes:[0.75,0.55,0.20,0.30,0,0])
+            .combat(profile:remappedStick).aim
+        check(abs(changedAim.x-0.75)<0.0001 &&
+              abs(changedAim.y+0.55)<0.0001,
+              "remapped original PC axes 33/34 actually drive camera aim")
+        let previousAim=c.Snapshot(axes:[0.75,0.55,0.20,0.30,0,0])
+            .combat(profile:initial).aim
+        check(previousAim.x==0 && abs(previousAim.y-0.30)<0.0001,
+              "original A2/A3 are ignored after user mapping changed")
+        check(c.context(for:33)==(.combat) &&
+              c.context(for:34)==(.combat),
+              "menu marks genuinely remappable controller aim as playable")
         let noDrift=c.Snapshot(axes:[0,0,0.05,0.04,0,0])
             .combat(profile:initial).aim
         check(noDrift.x==0 && noDrift.y==0,
