@@ -5,6 +5,13 @@ on:
       - feature/ios-h55-v580-native-entry
     paths:
       - '.github/workflows/h12-test-ipa.yml'
+      - 'ASTEROIDYiOS/SourcePickupModels586.swift'
+      - 'ASTEROIDYiOS/SourceCombatSupply586.swift'
+      - 'ASTEROIDYiOS/SourcePickupMetal586.swift'
+      - 'ASTEROIDYiOS/SourcePickupVisual586.swift'
+      - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
+      - 'ASTEROIDYiOS/Sector01Carbonis568.metal'
+      - 'Tests/PC586IntegrationContract.py'
       - 'ASTEROIDYiOS/H55H12Timeline580.swift'
       - 'ASTEROIDYiOS/H55H12Tracks580.swift'
       - 'ASTEROIDYiOS/H55H12SceneAnimator580.swift'
@@ -369,6 +376,20 @@ jobs:
             echo "Pinned GLTFKit2 binary unavailable after five attempts"
             exit 1
           fi
+      - name: Verify original PC586 pickup integration before build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tests/PC586IntegrationContract.py
+          python3 -m py_compile Tools/prepare_pc586_runtime_resources.py Tools/pack_pc586_unsigned_ipa.py
+          # The four original GLBs are not yet in the repository: this
+          # job only prepares a freshly compiled, unsigned IPA for the
+          # local SHA-verified 12-resource staging/packaging step.
+          for f in shield boost energy bomb; do
+            test ! -f "ASTEROIDYiOS/Assets/$f.glb" || {
+              echo "Unsupported unverified committed GLB $f"; exit 1;
+            }
+          done
       - name: Build actual arm64 device app (unsigned)
         shell: bash
         run: |
@@ -419,6 +440,7 @@ jobs:
           print('PASS zip CRC, valid Payload, source v580 H55 requires one-time Files import')
           PY
           shasum -a 256 ASTEROIDY_v580_H55_FPS_RECE_BRON_TEST_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
+          echo "PC586 original pickup GLB: this GitHub artifact is an unsigned intermediate only. It MUST be packed with the 12 SHA-verified original resources in the subsequent final IPA stage." | tee reports/PC586_PACK_REQUIRED.txt
           echo "Source commit: $GITHUB_SHA" | tee reports/build-commit.txt
           echo "H12/H71: original H51/H39/H46, arms/crane; two imported GLB drones enabled with source clearance and safe fail-closed" | tee reports/H12_RELEASE_SCOPE.txt
           echo "H55 FPS: original Tripo gloves_parted.glb and EXP01_SOURCE_v601.glb imported one time through Files and verified with SHA256, not bundled; PC source left/right and weapon poses, 64 degree source FOV scaled to SceneKit; MONOLIT original GLB triangle split enabled, but 15-bone finger skin deformation still not ported/tested; no fake assets" | tee reports/H55_FPS_SCOPE.txt
@@ -437,6 +459,7 @@ jobs:
             reports/H12_RELEASE_SCOPE.txt
             reports/H55_FPS_SCOPE.txt
             reports/H13_LIGHTING_SCOPE.txt
+            reports/PC586_PACK_REQUIRED.txt
           retention-days: 14
           if-no-files-found: error
       - name: Upload compilation diagnostics on failure
