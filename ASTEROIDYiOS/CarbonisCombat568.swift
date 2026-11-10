@@ -16,6 +16,7 @@ struct CarbonisCombat568 {
         /// motion, attraction and world contact path.
         var sourceKind:SourcePickupModels586.Kind? = nil
         var life:Float = 26
+        var angle:Float = 0
     }
     struct Projectile {
         var point: Vec2
@@ -332,6 +333,10 @@ struct CarbonisCombat568 {
     private mutating func stepTokenPickups(dt:Float) {
         for i in tokenPickups.indices.reversed() {
             var item=tokenPickups[i]
+            if item.sourceKind != nil {
+                // Original PC Game.Step advances pickup model orientation.
+                item.angle+=dt*0.8
+            }
             if item.sourceKind != nil {
                 item.life-=dt
                 if item.life<=0 {
