@@ -163,6 +163,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             /// One verified model + texture upload per kind, never per pickup.
             private var pickupPipeline586:MTLRenderPipelineState?
             private var pickupModels586:[SourcePickupModels586.Kind:SourcePickupMetal586]=[:]
+            private var hudIconsAvailable600=false
             private var sourceShooters:[Int:(buffer:MTLBuffer,ranges:[Range<Int>])] = [:]
             private var proofScheduled=false
             var yawOffset: Float = 0
@@ -551,7 +552,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 else{throw SourceError.metal}
                 hudIconDepth600=hudDepthState
                 super.init()
-                if pickupPipeline586 != nil && pickupModels586.count==4 {
+                hudIconsAvailable600 = pickupPipeline586 != nil && pickupModels586.count==4
+                if hudIconsAvailable600 {
                     DispatchQueue.main.async { [weak gameSession] in
                         gameSession?.setHUD3DIconsReady600(true)
                     }
@@ -1468,9 +1470,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 // 4 HUD GLBs reuse existing resident world-pickup geometry,
                 // textures and pipeline. No second GPU upload or drawables.
                 if let session=gameSession,
-                   session.hud3DIconsReady600,
-                   let pickupPipeline=pickupPipeline586,
-                   pickupModels586.count==4 {
+                   hudIconsAvailable600,
+                   let pickupPipeline=pickupPipeline586 {
                     let width=Float(view.drawableSize.width)
                     let height=Float(view.drawableSize.height)
                     if width>1 && height>1 {
