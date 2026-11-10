@@ -29,6 +29,7 @@ struct H55FPSPreview580:UIViewRepresentable {
         camera.camera=lens
         scene.rootNode.addChildNode(camera)
         H55FPSLighting580.install(into:scene)
+        H55FPSLighting580.configure(scene:scene,mode:settings.mode)
         view.scene=scene
         view.pointOfView=camera
         view.isOpaque=true
@@ -55,6 +56,9 @@ struct H55FPSPreview580:UIViewRepresentable {
         c.currentMotion=motion
         c.onStatus=onStatus
         c.fps?.synchronizePreview(settings)
+        if let scene=view.scene {
+            H55FPSLighting580.configure(scene:scene,mode:settings.mode)
+        }
     }
     static func dismantleUIView(_ view:SCNView,coordinator:Coordinator) {
         coordinator.stop()
