@@ -24,6 +24,11 @@ jobs:
           mkdir -p reports
           python3 Tests/H55FPSPreviewDepth580Contract.py | tee reports/fps-source.txt
           python3 Tests/H55FPSOriginalMaterial580Tests.py | tee -a reports/fps-source.txt
+          # Validate final 352x198/16:9 preview and isolated depth source.
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSSettingsSection580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSPreview580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSOverlayViewport580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSLighting580.swift
           swiftc -O ASTEROIDYiOS/H55FPSPose580.swift Tests/H55FPSPose580Tests.swift -o /tmp/h55-fps-source
           /tmp/h55-fps-source | tee -a reports/fps-source.txt
           python3 Tools/verify_ios_inputs.py | tee reports/preflight.txt
