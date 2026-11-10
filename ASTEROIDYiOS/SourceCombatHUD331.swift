@@ -60,7 +60,7 @@ struct SourceCombatHUD331: View {
             Self.applyMotion(&bottomRight,pose:hud.motion,widget:"ion.icon")
 
             Self.top(topLeft,topRight,hud,layout600)
-            if let radarContext=Self.widgetContext(bottomLeft,layout600,
+            if let radarContext=Self.widgetContext(bottomLeft,layout600,pose:hud.motion,
                                       id:"radar",baseX:2,baseY:516) {
                 Self.radar(radarContext,hud)
             }
@@ -71,11 +71,11 @@ struct SourceCombatHUD331: View {
             for i in 0..<3 {
                 let y=CGFloat(565+48*i)
                 Self.gauge(
-                    Self.widgetContext(bottomLeft,layout600,id:names[i]+".label",
+                    Self.widgetContext(bottomLeft,layout600,pose:hud.motion,id:names[i]+".label",
                                        baseX:191,baseY:y),
-                    Self.widgetContext(bottomLeft,layout600,id:names[i]+".bar",
+                    Self.widgetContext(bottomLeft,layout600,pose:hud.motion,id:names[i]+".bar",
                                        baseX:191,baseY:y+19),
-                    Self.widgetContext(bottomLeft,layout600,id:names[i]+".value",
+                    Self.widgetContext(bottomLeft,layout600,pose:hud.motion,id:names[i]+".value",
                                        baseX:341,baseY:y),
                     titles[i],values[i],maximums[i],191,y,i,Double(hud.seconds))
             }
@@ -87,11 +87,11 @@ struct SourceCombatHUD331: View {
                 let cx=CGFloat(920+100*i)
                 let originalX=cx-25
                 Self.ability(
-                    Self.widgetContext(bottomRight,layout600,
+                    Self.widgetContext(bottomRight,layout600,pose:hud.motion,
                          id:namesGLB[i]+".icon",baseX:originalX,baseY:603),
-                    Self.widgetContext(bottomRight,layout600,
+                    Self.widgetContext(bottomRight,layout600,pose:hud.motion,
                          id:namesGLB[i]+".label",baseX:cx-45,baseY:658),
-                    Self.widgetContext(bottomRight,layout600,
+                    Self.widgetContext(bottomRight,layout600,pose:hud.motion,
                          id:namesGLB[i]+".value",baseX:cx-44,baseY:680),
                     type:i,cx:cx,count:counts[i],
                     name:namesDisplay[i],tint:tints[i],renderModel:render3DIcons)
@@ -122,7 +122,8 @@ struct SourceCombatHUD331: View {
     // HUD v600 widget offsets are applied after the platform safe-area
     // anchor. Default source-space geometry is not duplicated or rewritten.
     private static func widgetContext(_ base:GraphicsContext,
-                                      _ layout:HudLayout600,id:String,
+                                      _ layout:HudLayout600,
+                                      pose:HudMotion600.Pose,id:String,
                                       baseX:CGFloat,baseY:CGFloat)->GraphicsContext? {
         guard let widget=layout.widget(id),widget.visible else{return nil}
         let factor=CGFloat(widget.scale)
@@ -130,6 +131,15 @@ struct SourceCombatHUD331: View {
         context.translateBy(x:CGFloat(widget.x)-baseX*factor,
                             y:CGFloat(widget.y)-baseY*factor)
         context.scaleBy(x:factor,y:factor)
+        let pulse=CGFloat(pose.widgetPulse(id))
+        if pulse>0,let dims=HudWidgetGeometry600.size(id) {
+            // PC HudLayout.Begin: micro-scale around original widget center.
+            let centerX=baseX+CGFloat(dims.width)*0.5
+            let centerY=baseY+CGFloat(dims.height)*0.5
+            context.translateBy(x:centerX,y:centerY)
+            context.scaleBy(x:1+pulse,y:1+pulse)
+            context.translateBy(x:-centerX,y:-centerY)
+        }
         return context
     }
 
@@ -179,29 +189,29 @@ struct SourceCombatHUD331: View {
     }
     private static func top(_ c:GraphicsContext,_ right:GraphicsContext,
                             _ hud:CarbonisSession568.HUD,_ layout:HudLayout600) {
-        if let frame=widgetContext(c,layout,id:"status.frame",baseX:20,baseY:17) {
+        if let frame=widgetContext(c,layout,pose:hud.motion,id:"status.frame",baseX:20,baseY:17) {
             line(frame,20,17,20,81,color(190,215,164,67),1.5)
         }
-        if let mode=widgetContext(c,layout,id:"status.mode",baseX:34,baseY:17) {
+        if let mode=widgetContext(c,layout,pose:hud.motion,id:"status.mode",baseX:34,baseY:17) {
             label(mode,"SYNIXAD / WALKA 3D",34,17,white)
         }
-        if let weapon=widgetContext(c,layout,id:"status.weapon",baseX:34,baseY:42) {
+        if let weapon=widgetContext(c,layout,pose:hud.motion,id:"status.weapon",baseX:34,baseY:42) {
             label(weapon,"BROŃ: \(hud.weaponName)  ·  POZIOM \(hud.weaponLevel)  ·  TEMPO \(hud.rapidLevel)",
                   34,42,cyan)
         }
-        if let sector=widgetContext(right,layout,id:"status.sector",baseX:777,baseY:17) {
+        if let sector=widgetContext(right,layout,pose:hud.motion,id:"status.sector",baseX:777,baseY:17) {
             label(sector,"SEKTOR 01 / 26",777,17,white)
         }
-        if let score=widgetContext(right,layout,id:"status.score",baseX:936,baseY:17) {
+        if let score=widgetContext(right,layout,pose:hud.motion,id:"status.score",baseX:936,baseY:17) {
             label(score,"PKT \(hud.score)",936,17,cyan)
         }
-        if let money=widgetContext(right,layout,id:"status.money",baseX:1050,baseY:17) {
+        if let money=widgetContext(right,layout,pose:hud.motion,id:"status.money",baseX:1050,baseY:17) {
             label(money,"ŻETONY \(hud.tokenBalance)",1050,17,gold)
         }
-        if let lives=widgetContext(right,layout,id:"status.lives",baseX:1195,baseY:17) {
+        if let lives=widgetContext(right,layout,pose:hud.motion,id:"status.lives",baseX:1195,baseY:17) {
             label(lives,"ŻYCIA \(hud.lives)",1195,17,white)
         }
-        if let frame=widgetContext(right,layout,id:"status.frame",baseX:20,baseY:17) {
+        if let frame=widgetContext(right,layout,pose:hud.motion,id:"status.frame",baseX:20,baseY:17) {
             line(frame,776,46,1262,46,color(67,109,145,156),0.8)
         }
     }
