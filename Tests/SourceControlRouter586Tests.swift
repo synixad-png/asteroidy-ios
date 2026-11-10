@@ -63,6 +63,15 @@ import Foundation
         action=hangar.readHangar(h55,profile:profile)
         check(!action.jumpPressed && !action.interactPressed && action.sprintHeld,
               "H55 jump/talk are edge actions; sprint remains held")
+        // A genuine device disconnect or scene teardown clears H55 edges.
+        // Never call reset on pause: a held key must not toggle twice.
+        hangar.reset()
+        action=hangar.readHangar(h55,profile:profile)
+        check(action.jumpPressed && action.interactPressed,
+              "H55 jump/interact edges rearm after genuine device reset")
+        action=hangar.readHangar(h55,profile:profile)
+        check(!action.jumpPressed && !action.interactPressed,
+              "H55 fires once per held press even after reset")
         let look=SourceControls586.Snapshot(axes:[0,0,0.7,-0.4,0,0])
         action=hangar.readHangar(look,profile:profile)
         check(abs(action.lookX-0.7)<0.0001 && abs(action.lookY+0.4)<0.0001,
