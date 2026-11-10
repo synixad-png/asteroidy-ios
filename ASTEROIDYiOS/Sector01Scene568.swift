@@ -174,28 +174,12 @@ struct Sector01Scene568: View {
                    let placement=HudWidgetPlacement600.frame(
                        planetarium,sourceWidth:250,sourceHeight:135,
                        anchor:.bottomLeft,viewport:combatHUDLayout) {
-                    HudPlanetariumScene600(
+                    HudPlanetariumHost600(
                         original:planetariumURL600,
-                        capsule:session.hud.capsuleLevels,
-                        pitch:Float(planetarium.pitch ?? -20),
-                        yaw:Float(planetarium.yaw ?? 0),
-                        roll:Float(planetarium.roll ?? 0),
-                        pose:session.hud.motion,
-                        livePose:{ [weak session] in
-                            session?.currentHudRenderState600().pose ?? HudMotion600.Pose()
-                        },
-                        liveCapsules:{ [weak session] in
-                            session?.currentHudRenderState600().capsules
-                                ?? HudCapsuleController600.Snapshot(
-                                    levels:[1,1,1],flashes:[0,0,0])
-                        })
-                    .frame(width:CGFloat(placement.width),
-                           height:CGFloat(placement.height))
-                    .position(
-                        x:CGFloat(placement.centerX + Double(session.hud.motion.x)*1.18*combatHUDLayout.scale),
-                        y:CGFloat(placement.centerY + Double(session.hud.motion.y)*1.18*combatHUDLayout.scale))
-                    .allowsHitTesting(false)
-                    .accessibilityIdentifier("sector01-hud-v600-original-planetarium")
+                        widget:planetarium,placement:placement,
+                        viewport:combatHUDLayout,session:session,
+                        active:session.hud.phase == .playing && !userPaused)
+                        .allowsHitTesting(false)
                 }
 
                 // The touch-only pause affordance is separate from the PC HUD.
