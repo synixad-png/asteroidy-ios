@@ -167,6 +167,10 @@ struct Sector01Scene568: View {
                     hull:session.hud.hull,armor:session.hud.armor,
                     maxHull:session.hud.maxHull,maxArmor:session.hud.maxArmor,
                     shield:session.hud.tarczaEnergy,
+                    liveGauges:{ [weak session] in
+                        session?.currentHudGauges600() ?? (
+                            hull:0,armor:0,shield:0,maxHull:1,maxArmor:1)
+                    },
                     insets:missionSafeInsets568,layout:hudLayout600,
                     active:session.hud.phase == .playing && !userPaused && !showingService,
                     livePose:{ [weak session] in
