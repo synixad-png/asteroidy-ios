@@ -110,6 +110,70 @@ import Foundation
                            shooting:false,dt:1/120)
         check(expiredPickup.tokenPickups.isEmpty && expiredPickup.ionAmmo==0,
               "expired 26-second PC586 consumable cannot be collected")
+        // PC v586 shield & boost models are REAL collectible abilities.
+        // Do not silently replace Tarcza145 with purchased passive shields.
+        var legacy=CarbonisCombat568(prepared)
+        legacy.tarcza145.energy=80
+        legacy.tokenPickups=[
+            CarbonisCombat568.TokenPickup(
+                position:legacy.flight.position,
+                velocity:Vec2(x:0,y:0),value:0,
+                sourceKind:.shield,life:23),
+            CarbonisCombat568.TokenPickup(
+                position:legacy.flight.position,
+                velocity:Vec2(x:0,y:0),value:1,
+                sourceKind:.boost,life:25)
+        ]
+        legacy.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                    shooting:false,dt:1/120)
+        check(legacy.tokenPickups.isEmpty &&
+              legacy.tarcza145.energy==100 &&
+              legacy.boost71.charges==1,
+              "two original GLB pickups update genuine Tarcza145/Boost71 inventory")
+        check(legacy.drainOriginalAudioEvents568().filter{$0==30}.count==2,
+              "shield/boost pickups share source audio event path")
+
+        var activeShield=CarbonisCombat568(prepared)
+        activeShield.shieldCharges=1
+        activeShield.tarcza145.energy=100
+        activeShield.invincible=0
+        activeShield.setShieldHeld(true)
+        activeShield.rocks.removeAll()
+        activeShield.shooters.removeAll()
+        activeShield.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                          shooting:false,dt:1/120)
+        let beforeShield=activeShield.tarcza145.energy
+        check(beforeShield<100 && beforeShield>99.8,
+              "held active shield drains exactly 12 energy/sec")
+        activeShield.suffer(18)
+        check(abs(activeShield.tarcza145.energy-(beforeShield-35))<0.001 &&
+              activeShield.shieldCharges==1 &&
+              activeShield.armor==25 && activeShield.hull==60 &&
+              activeShield.invincible>=0.28,
+              "active Tarcza145 intercepts one hit before passive shop shield")
+        activeShield.setShieldHeld(false)
+        check(!activeShield.tarcza145.active,
+              "releasing touch shield stops drain/absorption immediately")
+        check(activeShield.boost71.charges==0,
+              "active shield is not an alias for Boost71 charges")
+
+        var boosted=CarbonisCombat568(prepared)
+        boosted.boost71.collect()
+        boosted.invincible=0
+        check(boosted.activateBoost71() &&
+              boosted.boost71.charges==0 &&
+              boosted.boost71.remaining==0.9,
+              "one tap uses one stored Boost71 charge for 0.9 seconds")
+        check(!boosted.activateBoost71(),
+              "a second press cannot spend another charge during active boost")
+        let beforeTravel=boosted.flight.position
+        boosted.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                     shooting:false,dt:1/120)
+        check(boosted.boost71.remaining<0.9 &&
+              boosted.boost71.remaining>0.88 &&
+              boosted.invincible>=0.14 &&
+              CarbonisCombat568.distance(beforeTravel,boosted.flight.position)>0,
+              "boost physically moves the real player, grants protection and advances timer")
         var sim=CarbonisCombat568(prepared)
         check(sim.rocks.count==13 && sim.shooters.count==4,"exact source wave")
         check(sim.flight.flight.configuration.cruiseSpeed==156,"source ship speed")
