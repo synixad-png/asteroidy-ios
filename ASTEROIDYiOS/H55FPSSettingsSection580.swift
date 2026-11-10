@@ -31,10 +31,21 @@ struct H55FPSSettingsSection580: View {
     }
     private func select(_ kind:H55FPSAssets580.Kind) {
         if let loader {
+            // Changing a slider must not re-decode the entire GLB on every
+            // drag tick. Switch the model only if it actually changed.
             switch kind {
-            case .tripo:loader.setFPSGloves(.tripo)
-            case .monolith:loader.setFPSGloves(.monolith)
-            case .weapon:loader.setFPSMode(.weapon)
+            case .tripo:
+                if loader.fpsMode != .gloves ||
+                   loader.fpsCalibration.model != .tripo {
+                    loader.setFPSGloves(.tripo)
+                }
+            case .monolith:
+                if loader.fpsMode != .gloves ||
+                   loader.fpsCalibration.model != .monolith {
+                    loader.setFPSGloves(.monolith)
+                }
+            case .weapon:
+                if loader.fpsMode != .weapon {loader.setFPSMode(.weapon)}
             }
             stored=loader.fpsCalibration
         } else {
