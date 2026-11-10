@@ -143,9 +143,11 @@ final class CarbonisSession568: ObservableObject {
         return solver
     }()
     func applyHudMotion600(_ settings:HudMotion600.Settings) {
+        // The SwiftUI sheet updates on main while Metal advances physics.
+        // Serialize the solver itself with the live pose, not only its copy.
+        hudLayoutLock600.lock()
         hudMotion600.settings=settings
         hudMotion600.reset()
-        hudLayoutLock600.lock()
         hudLivePose600=HudMotion600.Pose()
         hudLayoutLock600.unlock()
     }
@@ -165,8 +167,8 @@ final class CarbonisSession568: ObservableObject {
         lastFrame=nil
         lastHUD=0
         summaryElapsed=0
-        hudMotion600.reset()
         hudLayoutLock600.lock()
+        hudMotion600.reset()
         hudLivePose600=HudMotion600.Pose()
         hudLayoutLock600.unlock()
         hudCapsules600.reset()
@@ -268,13 +270,14 @@ final class CarbonisSession568: ObservableObject {
         motionSample.hits=game.hudEvents.hits
         motionSample.pickups=game.hudEvents.pickups
         motionSample.shieldActive=game.tarcza145.energy>0
+        // The native pause-sheet may change solver settings concurrently.
+        // Update the solver and export the pose inside ONE lock region.
+        hudLayoutLock600.lock()
         let hudPose600=hudMotion600.update(motionSample,at:now,
                                           active:game.phase == .playing)
-        // Export only the already-computed frame pose. The expensive HUD
-        // semantic/radar snapshot still publishes at its former 10 Hz.
-        hudLayoutLock600.lock()
         hudLivePose600=hudPose600
         hudLayoutLock600.unlock()
+        // Radar/scores/semantic HUD continue publishing at 10 Hz.
         // Feed normalized live values, never inventory charges as energy.
         hudCapsules600.advance(
             hull:Float(game.hull)/Float(max(1,game.maxHull)),
