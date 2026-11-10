@@ -337,6 +337,17 @@ struct Sector01Scene568: View {
                     .frame(width:0,height:0)
                     .allowsHitTesting(false)
             }
+            .background(alignment:.topLeading) {
+                // 1px invisible UIKit first-responder for hardware keys.
+                // Full-screen touch halves and original HUD are untouched.
+                SourceKeyboardCapture586 {key,held in
+                    SourceHardwareInput586.shared.changeKey(
+                        key,pressed:held)
+                }
+                .frame(width:1,height:1)
+                .opacity(0.01)
+                .accessibilityHidden(true)
+            }
         }
         // Full-bleed mission uses the entire physical viewport; only the
         // four HUD corners are inset via actual UIWindow.safeAreaInsets.
@@ -368,6 +379,7 @@ struct Sector01Scene568: View {
         .onChange(of:scenePhase) { phase in
             if phase != .active {
                 session.release()
+                SourceHardwareInput586.shared.clearKeyboard()
                 session.paused=true
             } else {
                 session.release()
@@ -375,12 +387,20 @@ struct Sector01Scene568: View {
             }
         }
         .onAppear {
+            // PC action 9 (P / gamepad START) toggles the genuine pause
+            // transaction, never a second fake pause state.
+            session.onPauseRequested = {
+                if userPaused {resumeMission568()}
+                else {pauseMission568()}
+            }
             session.onAudioEvents = { sourceCodes in
                 for code in sourceCodes { onAudioEvent(code) }
             }
         }
         .onDisappear {
             onEnginePower(0)
+            SourceHardwareInput586.shared.clearKeyboard()
+            session.onPauseRequested=nil
             session.onAudioEvents=nil
             session.paused=true
             session.release()
