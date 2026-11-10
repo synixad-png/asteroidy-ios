@@ -36,6 +36,7 @@ import simd
     private var fpsViewmodel:H55FPSScene580?
     @Published private(set) var fpsStatus="FPS: MODEL RĄK LUB BRONI NIEPRZYGOTOWANY"
     @Published private(set) var fpsMode=H55FPSSettings580().mode
+    @Published private(set) var fpsCalibration=H55FPSSettings580()
     private var lighting=H55LightingProfile580.saved()
     private var lightRefresh:Float=0
     private var pausedForSettings=false
@@ -71,6 +72,16 @@ import simd
     func setFPSMode(_ mode:H55FPSSettings580.Mode) {
         fpsMode=mode
         fpsViewmodel?.selectMode(mode)
+        fpsCalibration=fpsViewmodel?.configuration ?? fpsCalibration
+    }
+    func setFPSCalibration(_ target:H55FPSSettings580.Target,
+                           component:Int,value:Int) {
+        fpsViewmodel?.calibrate(target,component:component,value:value)
+        fpsCalibration=fpsViewmodel?.configuration ?? fpsCalibration
+    }
+    func resetFPSCalibration(_ target:H55FPSSettings580.Target) {
+        fpsViewmodel?.resetCalibration(target)
+        fpsCalibration=fpsViewmodel?.configuration ?? fpsCalibration
     }
     func setFPSGloves(_ model:H55FPSSettings580.Model) {
         fpsViewmodel?.selectGloves(model)
@@ -541,6 +552,7 @@ import simd
             self?.fpsStatus=result
         })
         fpsMode=fpsViewmodel?.mode ?? .gloves
+        fpsCalibration=fpsViewmodel?.configuration ?? H55FPSSettings580()
         H55LoadDiagnostics580.mark("09_KAMERA_WYKONANA_SWATLO_START")
         // H13-A: no dynamic IBL cubemap. Windows PC v580 H55Renderer.cs
         // uses its own GLSL light shader, not SceneKit environment textures.
@@ -848,6 +860,7 @@ struct H55ScenePage580: View {
     @State private var importError:String?
     @State private var showingSettings=false
     @State private var showingPause=false
+    @State private var showingFPSCalibration=false
     @AppStorage("ASTEROIDY_H55_ENV_FILL_580") private var lightingFill=0.80
     @AppStorage("ASTEROIDY_H55_RED_GAIN_580") private var lightingRed=0.10
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
@@ -878,6 +891,10 @@ struct H55ScenePage580: View {
             topControls
             if showingPause && !showingSettings { pauseScreen }
             if showingSettings { settingsScreen }
+            if showingFPSCalibration {
+                H55FPSCalibration580(loader:loader) { showingFPSCalibration=false }
+                    .zIndex(30)
+            }
         }
         .onAppear {
             loader.setLighting(fill:lightingFill,red:lightingRed)
@@ -896,7 +913,12 @@ struct H55ScenePage580: View {
             loader.pauseForSettings(showingPause || visible)
             if !visible {loader.setLighting(fill:lightingFill,red:lightingRed)}
         }
-        .onDisappear {showingSettings=false;showingPause=false;loader.close()}
+        .onDisappear {
+            showingFPSCalibration=false
+            showingSettings=false
+            showingPause=false
+            loader.close()
+        }
         .fileImporter(isPresented:$choosingFPSModel,
             allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data],
             allowsMultipleSelection:false) { result in
@@ -1009,6 +1031,9 @@ struct H55ScenePage580: View {
                                 choosingFPSModel=true
                             }.accessibilityIdentifier("h55-fps-import-weapon")
                         }
+                        pauseButton("KALIBRACJA RĄK / BRONI") {
+                            showingFPSCalibration=true
+                        }.accessibilityIdentifier("h55-fps-calibration")
                         pauseButton("KONTYNUUJ",primary:true) {showingPause=false}
                             .accessibilityIdentifier("h55-pause-resume")
                         pauseButton("USTAWIENIA") {showingSettings=true}

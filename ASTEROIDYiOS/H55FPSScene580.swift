@@ -19,6 +19,8 @@ import simd
     private var loading:Set<H55FPSAssets580.Kind>=[]
     private var generation=UUID()
     private var settings=H55FPSSettings580()
+    private var lastMotion:(time:Float,walking:Bool,bobPhase:Float,
+                            bobAmount:Float,bobPercent:Float)?
     private let inform:(String)->Void
 
     init(camera:SCNNode,inform:@escaping(String)->Void) {
@@ -49,6 +51,22 @@ import simd
 
     var mode:H55FPSSettings580.Mode {settings.mode}
     var gloveModel:H55FPSSettings580.Model {settings.model}
+    var configuration:H55FPSSettings580 {settings}
+
+    func calibrate(_ target:H55FPSSettings580.Target,component:Int,value:Int) {
+        settings.calibrate(target,component:component,value:value)
+        refreshLastPose()
+    }
+    func resetCalibration(_ target:H55FPSSettings580.Target) {
+        settings.reset(target)
+        refreshLastPose()
+    }
+    private func refreshLastPose() {
+        guard let motion=lastMotion else{return}
+        advance(time:motion.time,walking:motion.walking,
+                bobPhase:motion.bobPhase,bobAmount:motion.bobAmount,
+                bobPercent:motion.bobPercent)
+    }
 
     func selectMode(_ mode:H55FPSSettings580.Mode) {
         settings.mode=mode
@@ -78,8 +96,12 @@ import simd
         let kind:H55FPSAssets580.Kind =
           settings.mode == .weapon ? .weapon :
             (settings.model == .tripo ? .tripo : .monolith)
-        guard !loaded.contains(kind) && !loading.contains(kind) else {
+        if loaded.contains(kind) {
             inform("FPS: ORYGINALNY MODEL \(kind.fileName) GOTOWY")
+            return
+        }
+        if loading.contains(kind) {
+            inform("FPS: TRWA ŁADOWANIE \(kind.fileName)")
             return
         }
         guard let url=H55FPSAssets580.installed(kind) else {
@@ -94,6 +116,11 @@ import simd
             DispatchQueue.main.async {
                 guard let self,self.generation==request else{return}
                 self.loading.remove(kind)
+                // An earlier asynchronous import must not overwrite the
+                // currently selected TRIPO, MONOLIT or EXP-01 viewmodel.
+                let selected:H55FPSAssets580.Kind = self.settings.mode == .weapon
+                    ? .weapon : (self.settings.model == .tripo ? .tripo : .monolith)
+                guard kind == selected else{return}
                 guard status == .complete,let asset else {
                     let failure=error?.localizedDescription ?? "GLTFKit2"
                     self.inform("FPS: BŁĄD DEKODOWANIA ORYGINAŁU \(kind.fileName): \(failure)")
@@ -170,6 +197,7 @@ import simd
 
     func advance(time:Float,walking:Bool,bobPhase:Float,bobAmount:Float,
                  bobPercent:Float=50) {
+        lastMotion=(time,walking,bobPhase,bobAmount,bobPercent)
         fpsRoot.isHidden = !walking
         guard walking else{return}
         let movement=settings.bob ? bobAmount : 0
