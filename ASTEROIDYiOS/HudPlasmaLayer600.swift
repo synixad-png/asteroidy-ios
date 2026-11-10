@@ -36,11 +36,13 @@ struct HudPlasmaLayer600:View {
     private static func ink(_ a:Int,_ r:Int,_ g:Int,_ b:Int)->Color {
         SourceCombatHUD331.color(a,r,g,b)
     }
-    private static func shape(_ points:[CGPoint])->Path {
+    private static func shape(_ points:[HudEnergy600.Point])->Path {
         var path=Path()
         if let first=points.first {
-            path.move(to:first)
-            for point in points.dropFirst(){path.addLine(to:point)}
+            path.move(to:CGPoint(x:first.x,y:first.y))
+            for point in points.dropFirst() {
+                path.addLine(to:CGPoint(x:point.x,y:point.y))
+            }
             path.closeSubpath()
         }
         return path
@@ -97,8 +99,7 @@ struct HudPlasmaLayer600:View {
                 x:left,y:barY,width:width-2,length:length,
                 time:time,style:style,layer:layer)
             guard !vertices.isEmpty else{continue}
-            let points=vertices.map{CGPoint(x:$0.x,y:$0.y)}
-            c.fill(shape(points),with:.color(tints[style][layer]))
+            c.fill(shape(vertices),with:.color(tints[style][layer]))
         }
         // Source has no regular particle grid; these independent flame
         // tongues have quasi-periodic, non-axial drift on both edges.
