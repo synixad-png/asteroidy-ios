@@ -64,6 +64,22 @@ import simd
         verify(edited.yaw>start.yaw && edited.pitch<start.pitch &&
                edited.roll>start.roll,
                "independent yaw pitch roll reach shared Metal geometry")
+        let notchViewport=CombatHUDViewport568(width:1179,height:255,
+            safeLeft:59,safeRight:59,safeTop:0,safeBottom:0)
+        let item=layout.widget("boost.icon")!
+        let screen=HudWidgetPlacement600.frame(item,sourceWidth:50,
+            sourceHeight:50,anchor:.bottomRight,viewport:notchViewport)!
+        let expected=HudWidgetPlacement600.pixels(screen,
+            viewport:notchViewport,drawableWidth:1768.5,
+            drawableHeight:382.5)!
+        let metal=HudPickupTransform600.sample(index:3,time:0,pose:zero,
+            drawableWidth:1768.5,drawableHeight:382.5,
+            widget:item,viewport:notchViewport)!
+        verify(abs(Double(metal.x)-expected.centerX)<0.02 &&
+               abs(Double(metal.y)-expected.centerY)<0.02,
+               "Metal model center matches SwiftUI on iPhone with Dynamic Island")
+        verify(abs(Double(metal.size)-min(expected.width,expected.height)*0.9)<0.02,
+               "adaptive iPhone drawable uses approved GLB icon size")
         verify(HudPickupTransform600.sample(index:4,time:0,pose:zero,
             drawableWidth:1024,drawableHeight:768)==nil,
             "unexpected fifth model is rejected")
