@@ -30,10 +30,21 @@ for snippet in ('HudPlanetariumAsset600.availableURL()',
                 '.allowsHitTesting(false)', 'HudPlanetariumHost600('):
     assert snippet in scene, "missing live combat HUD wiring: "+snippet
 for snippet in ('HudPlanetariumScene600(', 'liveCapsules:{[weak session] in',
-                '.offset(x:CGFloat(placement.centerX-placement.width*0.5)',
+                'HudPlanetariumProjection.make(',
+                'projection: projection,',
+                '.frame(width: CGFloat(viewport.width)',
                 'session?.currentHudVisual600().capsules'):
     assert snippet in host, "missing live 3D HUD host wiring: "+snippet
 assert 'let frameCapsules=liveCapsules?() ?? capsule' in view
+assert 'anchor.addChildNode(scaleNode)' in view
+assert 'rendered.rootNode.addChildNode(anchor)' in view
+assert 'lens.usesOrthographicProjection=true' in view
+assert 'lens.projectionDirection = .vertical' in view
+assert 'camera.orthographicScale=transform.cameraHalfHeight' in view
+assert 'hudAnchor=anchor' in view
+assert 'livePose' not in view
+assert 'HudMotion600.Pose' not in host
+assert 'view.pointOfView=cameraNode' in view
 assert 'playing:active' in host
 assert 'if view.isPlaying != playing {view.isPlaying=playing}' in view
 assert 'view.isPlaying=playing' in view
