@@ -41,6 +41,9 @@ import Foundation
               legacy!.pad==initial.pad && legacy!.deadZone==42 &&
               legacy!.invertOrbitPitch,
               "original v1 ten actions migrate keeping remaining 50 defaults")
+        check(c.Profile.importPCText(
+            pcV1.replacingOccurrences(of:"\r\n1",with:"\r\nINVALID")) == nil,
+            "original v1 invalid optional inversion bit cannot silently import")
         var cutLines=["ASTEROIDY_CONTROLS_2","30","0","10"]
         cutLines.append(contentsOf:(0..<10).map{
             String(initial.keys[$0])+"|"+initial.pad[$0]
