@@ -1,18 +1,19 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
-/// Touch alternative to PC F6. Edits ALL 46 approved source widgets.
-/// Paused mission owns this view; input zones and physics are never touched.
+/// Native editor of the paused, *real* combat HUD. The 46 markers share one
+/// UIKit touch surface; no nested SwiftUI DragGesture or hit-test interception.
+/// Selection, geometry and movement come from PC v602 HudLayout.SelectAt/Drag.
 struct HudLayoutEditor600:View {
     @State private var document:HudLayout600
-    @State private var inspectorOpen=false
-    @State private var draggedWidget600:(id:String,x:Double,y:Double)?
-    @State private var pinchStartScale600:Double?
     @State private var selected="radar"
+    @State private var inspectorOpen=false
     @State private var importingJSON=false
     @State private var exportingJSON=false
     @State private var exportDocument600:HudLayoutDocument600?
     @State private var exchangeError600:String?
+
     let viewport:CombatHUDViewport568
     let onPreview:(HudLayout600)->Void
     let onSave:(HudLayout600)->Void
@@ -33,178 +34,94 @@ struct HudLayoutEditor600:View {
     private var selection:Binding<String> {
         Binding(get:{selected},set:{selected=$0})
     }
-    private func mutate(_ edit:@escaping (inout HudLayout600.Widget)->Void) {
-        document.change(selected,edit)
+
+    private func change(_ id:String,_ edit:(inout HudLayout600.Widget)->Void) {
+        document.change(id,edit)
         onPreview(document)
     }
-    private func number(_ title:String,_ key:WritableKeyPath<HudLayout600.Widget,Double>,
-                        bounds:ClosedRange<Double>,step:Double)->some View {
-        VStack(alignment:.leading,spacing:2) {
+    private func move(_ id:String,from original:HudLayout600.Widget,
+                      dx:Double,dy:Double) {
+        HudEditorGeometry.move(id,from:original,deltaX:dx,deltaY:dy,
+                               viewport:viewport,in:&document)
+        onPreview(document)
+    }
+    private func zoom(_ id:String,from scale:Double,factor:Double) {
+        HudEditorGeometry.zoom(id,originalScale:scale,factor:factor,in:&document)
+        onPreview(document)
+    }
+    private func selectNeighbor600(_ delta:Int) {
+        guard !document.widgets.isEmpty else{return}
+        let current=document.widgets.firstIndex(where:{$0.id==selected}) ?? 0
+        let count=document.widgets.count
+        selected=document.widgets[(current+delta+count)%count].id
+    }
+
+    private func number(_ label:String,_ key:WritableKeyPath<HudLayout600.Widget,Double>,
+                        limits:ClosedRange<Double>,step:Double)->some View {
+        VStack(alignment:.leading,spacing:3) {
             HStack {
-                Text(title)
+                Text(label)
                 Spacer()
                 Text(String(format:"%.2f",selectedWidget?[keyPath:key] ?? 0))
                     .monospacedDigit()
             }
             Slider(value:Binding(
                 get:{selectedWidget?[keyPath:key] ?? 0},
-                set:{newValue in mutate{$0[keyPath:key]=newValue}}
-            ),in:bounds,step:step).tint(.cyan)
+                set:{value in change(selected){$0[keyPath:key]=value}}
+            ),in:limits,step:step)
+            .tint(.cyan)
         }
         .font(.system(size:11,design:.monospaced))
     }
-    private func axis(_ title:String,_ key:WritableKeyPath<HudLayout600.Widget,Double?>)->some View {
-        VStack(alignment:.leading,spacing:2) {
+
+    private func axis(_ label:String,_ key:WritableKeyPath<HudLayout600.Widget,Double?>)->some View {
+        VStack(alignment:.leading,spacing:3) {
             HStack {
-                Text(title)
+                Text(label)
                 Spacer()
                 Text(String(format:"%.0f°",selectedWidget?[keyPath:key] ?? 0))
                     .monospacedDigit()
             }
             Slider(value:Binding(
                 get:{selectedWidget?[keyPath:key] ?? 0},
-                set:{newValue in mutate{$0[keyPath:key]=newValue}}
-            ),in:-180...180,step:1).tint(.cyan)
-        }.font(.system(size:11,design:.monospaced))
-    }
-    // Actual PC v602 HUD groups have independent safe-area origins.
-    private func anchor(_ id:String)->CombatHUDViewport568.Anchor {
-        if ["status.sector","status.score","status.money","status.lives"].contains(id)
-            || id.hasPrefix("coop.") {return .topRight}
-        if id == "radar" || id == "hud.planetarium"
-            || id.hasPrefix("hull.") || id.hasPrefix("armor.")
-            || id.hasPrefix("shield.") {return .bottomLeft}
-        if ["ion.","bomb.","shield_charge.","boost."].contains(where:id.hasPrefix) {
-            return .bottomRight
+                set:{value in change(selected){$0[keyPath:key]=value}}
+            ),in:-180...180,step:1)
+            .tint(.cyan)
         }
-        return .topLeft
+        .font(.system(size:11,design:.monospaced))
     }
-    private func changeWidget(_ id:String,_ edit:(inout HudLayout600.Widget)->Void) {
-        document.change(id,edit)
-        onPreview(document)
-    }
-    /// PC v602 HudLayout.SelectAt: smallest visible containing widget wins;
-    /// ties preserve the reverse draw order. Hit boxes have original GLB
-    /// center-scale semantics and the existing four screen safe-area anchors.
-    private func hitWidget600(_ point:CGPoint)->HudLayout600.Widget? {
-        var chosen:HudLayout600.Widget?
-        var best=Double.infinity
-        for widget in document.widgets.reversed() where widget.visible {
-            guard let size=HudWidgetGeometry600.size(widget.id) else{continue}
-            let scale=widget.scale*viewport.scale
-            let x=viewport.originX(for:anchor(widget.id))
-                +(widget.x+(widget.is3D ? (size.width-size.width*widget.scale)*0.5 : 0))*viewport.scale
-            let y=viewport.originY(for:anchor(widget.id))
-                +(widget.y+(widget.is3D ? (size.height-size.height*widget.scale)*0.5 : 0))*viewport.scale
-            let width=size.width*scale,height=size.height*scale
-            guard Double(point.x)>=x,Double(point.x)<=x+width,
-                  Double(point.y)>=y,Double(point.y)<=y+height else{continue}
-            let area=width*height
-            if area<best {best=area;chosen=widget}
-        }
-        return chosen
-    }
-    /// A single touch surface prevents 46 overlapping SwiftUI views from
-    /// intercepting gestures outside their authored PC v602 bounds.
-    private var editorDrag600:some Gesture {
-        DragGesture(minimumDistance:0)
-            .onChanged {gesture in
-                // The PC F6 gestures are exclusive: never drag a widget
-                // while the two-finger pinch adjusts its scale.
-                guard pinchStartScale600 == nil else{return}
-                if draggedWidget600 == nil {
-                    guard let hit=hitWidget600(gesture.startLocation) else{return}
-                    selected=hit.id
-                    draggedWidget600=(hit.id,hit.x,hit.y)
-                }
-                guard let drag=draggedWidget600,viewport.scale>0 else{return}
-                let x=drag.x+Double(gesture.translation.width)/viewport.scale
-                let y=drag.y+Double(gesture.translation.height)/viewport.scale
-                changeWidget(drag.id){ value in
-                    if let xr=HudWidgetGeometry600.xRange(for:value),
-                       let yr=HudWidgetGeometry600.yRange(for:value) {
-                        value.x=min(xr.upperBound,max(xr.lowerBound,x))
-                        value.y=min(yr.upperBound,max(yr.lowerBound,y))
-                    }
-                }
-            }
-            .onEnded {_ in draggedWidget600=nil}
-    }
-    private var editorPinch600:some Gesture {
-        MagnificationGesture(minimumScaleDelta:0.005)
-            .onChanged { factor in
-                guard let widget=selectedWidget else{return}
-                if pinchStartScale600 == nil {pinchStartScale600=widget.scale}
-                guard let starting=pinchStartScale600 else{return}
-                let value=starting*Double(factor)
-                changeWidget(widget.id){ item in
-                    let bounds=HudWidgetGeometry600.scaleRange(for:item)
-                    item.scale=min(bounds.upperBound,max(bounds.lowerBound,value))
-                }
-            }
-            .onEnded {_ in pinchStartScale600=nil}
-    }
-    private func selectNeighbor600(_ direction:Int) {
-        guard let i=document.widgets.firstIndex(where:{$0.id==selected}),
-              !document.widgets.isEmpty else{return}
-        selected=document.widgets[(i+direction+document.widgets.count)%document.widgets.count].id
-    }
-    private func visual(_ bounds:CGSize)->some View {
-        ZStack(alignment:.topLeading) {
-            Color.clear.contentShape(Rectangle())
-                .accessibilityIdentifier("hud-v600-editor-touch-blocker")
-            ForEach(document.widgets) { widget in
-                if let size=HudWidgetGeometry600.size(widget.id) {
-                    let group=anchor(widget.id)
-                    HudLayoutMarker600(
-                        widget:widget,scale:viewport.scale,
-                        offsetX:viewport.originX(for:group),
-                        offsetY:viewport.originY(for:group),
-                        sourceWidth:size.width,sourceHeight:size.height,
-                        selected:selected==widget.id)
-                        .allowsHitTesting(false)
-                        // PC v602 selects the smallest source hitbox, NOT the
-                        // last full-screen SwiftUI .position gesture owner.
-                        .zIndex(selected==widget.id ? 10000 :
-                                1.0/max(1,size.width*size.height))
-                }
-            }
-        }
-        .frame(width:bounds.width,height:bounds.height)
-        .contentShape(Rectangle())
-        // One full-screen gesture owner; unlike child marker views this
-        // receives touch anywhere across all four PC v602 HUD anchors.
-        .gesture(editorDrag600)
-        .simultaneousGesture(editorPinch600)
-        .clipped()
-        .accessibilityIdentifier("hud-v600-editing-canvas")
-    }
+
     private var inspector:some View {
         ScrollView {
-            VStack(alignment:.leading,spacing:7) {
+            VStack(alignment:.leading,spacing:8) {
                 Text("ZAZNACZONY ELEMENT")
                     .font(.system(size:11,weight:.bold,design:.monospaced))
                 Picker("Element",selection:selection) {
-                    ForEach(document.widgets) {widget in Text(widget.id).tag(widget.id)}
-                }.pickerStyle(.menu)
-                if let w=selectedWidget {
+                    Text("BRAK").tag("")
+                    ForEach(document.widgets) { item in
+                        Text(item.id).tag(item.id)
+                    }
+                }
+                .pickerStyle(.menu)
+                if let widget=selectedWidget {
                     Toggle("WIDOCZNY",isOn:Binding(
-                        get:{w.visible},set:{value in mutate{$0.visible=value}}
+                        get:{selectedWidget?.visible ?? false},
+                        set:{flag in change(widget.id){$0.visible=flag}}
                     ))
-                    number("X",\.x,
-                        bounds:HudWidgetGeometry600.xRange(for:w) ?? 0...1268,step:0.5)
-                    number("Y",\.y,
-                        bounds:HudWidgetGeometry600.yRange(for:w) ?? 0...708,step:0.5)
+                    number("X",\.x,limits:HudWidgetGeometry600.xRange(for:widget) ?? 0...1268,
+                           step:0.5)
+                    number("Y",\.y,limits:HudWidgetGeometry600.yRange(for:widget) ?? 0...708,
+                           step:0.5)
                     number("SKALA",\.scale,
-                        bounds:HudWidgetGeometry600.scaleRange(for:w),step:0.01)
-                    if w.is3D {
+                           limits:HudWidgetGeometry600.scaleRange(for:widget),step:0.01)
+                    if widget.is3D {
                         axis("YAW",\.yaw)
                         axis("PITCH",\.pitch)
                         axis("ROLL",\.roll)
                     }
                     Button("PRZYWRÓĆ TEN ELEMENT") {
-                        if let source=HudLayout600.defaults().widget(selected) {
-                            changeWidget(selected){$0=source}
+                        if let original=HudLayout600.defaults().widget(widget.id) {
+                            change(widget.id){$0=original}
                         }
                     }
                 }
@@ -216,116 +133,255 @@ struct HudLayoutEditor600:View {
                     }
                     exportDocument600=HudLayoutDocument600(layout:document)
                     exportingJSON=true
-                }.accessibilityIdentifier("hud-v600-export-json")
+                }
+                .accessibilityIdentifier("hud-v600-export-json")
                 Button("IMPORTUJ UKŁAD JSON") {importingJSON=true}
                     .accessibilityIdentifier("hud-v600-import-json")
                 Button("PRZYWRÓĆ CAŁY UKŁAD PC v602") {
                     document=HudLayout600.defaults()
                     onPreview(document)
-                }.foregroundStyle(.orange)
-                if let exchangeError600 {
-                    Text(exchangeError600).font(.system(size:10))
-                        .foregroundStyle(.orange)
                 }
-            }.padding(10)
+                .foregroundStyle(.orange)
+                if let exchangeError600 {
+                    Text(exchangeError600).foregroundStyle(.orange)
+                        .font(.system(size:10))
+                }
+            }
+            .padding(10)
         }
         .font(.system(size:11,design:.monospaced))
         .background(Color(red:0.018,green:0.034,blue:0.056).opacity(0.97))
         .overlay(Rectangle().stroke(Color.cyan.opacity(0.6),lineWidth:1))
         .accessibilityIdentifier("hud-v600-inspector")
     }
+
+    private var toolbar:some View {
+        VStack(spacing:0) {
+            Spacer(minLength:0)
+            HStack(spacing:7) {
+                Button("◀") {selectNeighbor600(-1)}
+                    .accessibilityIdentifier("hud-v602-previous-widget")
+                Picker("ELEMENT HUD",selection:selection) {
+                    Text("BRAK").tag("")
+                    ForEach(document.widgets) {widget in
+                        Text(widget.id).tag(widget.id)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(minWidth:120,maxWidth:245)
+                .accessibilityIdentifier("hud-v602-always-visible-widget-selector")
+                Button("▶") {selectNeighbor600(1)}
+                    .accessibilityIdentifier("hud-v602-next-widget")
+                Spacer(minLength:0)
+                Button(inspectorOpen ? "UKRYJ OPCJE":"OPCJE") {
+                    inspectorOpen.toggle()
+                }
+                .accessibilityIdentifier("hud-v600-editor-inspector-toggle")
+                Button("ZAPISZ") {
+                    guard document.save() else {
+                        exchangeError600=HudLayout600.LayoutError.invalidLayout.localizedDescription
+                        inspectorOpen=true
+                        return
+                    }
+                    onSave(document)
+                }
+                .accessibilityIdentifier("hud-v600-save")
+                Button("ANULUJ") {onCancel()}
+            }
+            .font(.system(size:11,weight:.semibold,design:.monospaced))
+            .buttonStyle(.bordered)
+            .padding(.horizontal,7)
+            .padding(.vertical,5)
+            .background(Color(red:0.01,green:0.02,blue:0.04).opacity(0.95))
+            Text("46 ELEMENTÓW · DOTKNIJ / PRZESUŃ · SZCZYPIJ LUB UŻYJ OPCJI")
+                .font(.system(size:9,design:.monospaced))
+                .foregroundStyle(.white)
+                .padding(4)
+                .background(Color.black.opacity(0.80))
+                .allowsHitTesting(false)
+        }
+        .padding(.bottom,CGFloat(max(12,viewport.safeBottom+7)))
+    }
+
     var body:some View {
         GeometryReader { geo in
             ZStack(alignment:.topLeading) {
-                visual(geo.size)
-                VStack(spacing:0) {
-                    Spacer(minLength:0)
-                    HStack(spacing:8) {
-                        // Persistent native selector: 46 source widgets remain
-                        // accessible even when the hit region is only 3pt
-                        // wide or a GLB overlaps the radar.
-                        Button("◀") {selectNeighbor600(-1)}
-                            .accessibilityIdentifier("hud-v602-previous-widget")
-                        Picker("ELEMENT HUD",selection:selection) {
-                            ForEach(document.widgets) { widget in
-                                Text(widget.id).tag(widget.id)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .frame(minWidth:130,maxWidth:260)
-                        .accessibilityIdentifier("hud-v602-always-visible-widget-selector")
-                        Button("▶") {selectNeighbor600(1)}
-                            .accessibilityIdentifier("hud-v602-next-widget")
-                        Spacer(minLength:4)
-                        Button(inspectorOpen ? "UKRYJ OPCJE":"OPCJE") {
-                            inspectorOpen.toggle()
-                        }.accessibilityIdentifier("hud-v600-editor-inspector-toggle")
-                        Button("ZAPISZ") {
-                            guard document.save() else {
-                                exchangeError600=HudLayout600.LayoutError.invalidLayout.localizedDescription
-                                inspectorOpen=true
-                                return
-                            }
-                            onSave(document)
-                        }.accessibilityIdentifier("hud-v600-save")
-                        Button("ANULUJ") {onCancel()}
-                    }
-                    .font(.system(size:11,weight:.semibold,design:.monospaced))
-                    .buttonStyle(.bordered)
-                    .padding(.horizontal,7).padding(.vertical,4)
-                    .background(Color(red:0.01,green:0.02,blue:0.04).opacity(0.94))
-                    if !inspectorOpen {
-                        Text("46 ELEMENTÓW · WYBIERZ Z LISTY LUB DOTKNIJ · PRZESUŃ / SZCZYPIJ")
-                            .font(.system(size:9,design:.monospaced))
-                            .foregroundStyle(.white).padding(5)
-                            .background(Color.black.opacity(0.77))
-                            .allowsHitTesting(false)
-                    }
-                }
-                // Landscape iPhone clock/battery occupy the upper-right
-                // status area. Keep ALL editor actions above the home bar,
-                // not beneath system chrome at the top of the screen.
-                .padding(.bottom,CGFloat(max(12,viewport.safeBottom+7)))
+                HudEditorTouchCanvas(
+                    layout:document,viewport:viewport,selection:selected,
+                    onSelect:{selected=$0},
+                    onMove:{id,original,dx,dy in
+                        move(id,from:original,dx:dx,dy:dy)
+                    },
+                    onScale:{id,originalScale,factor in
+                        zoom(id,from:originalScale,factor:factor)
+                    })
+                    .frame(width:geo.size.width,height:geo.size.height)
+                    .accessibilityIdentifier("hud-v600-editing-canvas")
+                toolbar
                 if inspectorOpen {
                     inspector
                         .frame(width:min(310,max(235,geo.size.width*0.34)),
-                               height:max(140,geo.size.height-CGFloat(max(88,viewport.safeBottom+65))-CGFloat(max(46,viewport.safeTop+16))))
-                        .frame(maxWidth:.infinity,maxHeight:.infinity,
-                               alignment:.topTrailing)
+                               height:max(140,geo.size.height-
+                                   CGFloat(max(88,viewport.safeBottom+65))-
+                                   CGFloat(max(46,viewport.safeTop+16))))
+                        .frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.topTrailing)
                         .padding(.top,CGFloat(max(46,viewport.safeTop+16)))
                         .padding(.trailing,CGFloat(max(12,viewport.safeRight)))
                         .padding(.bottom,CGFloat(max(88,viewport.safeBottom+65)))
-                        .zIndex(20000)
+                        .zIndex(20)
                 }
             }
+            .frame(width:geo.size.width,height:geo.size.height)
         }
         .preferredColorScheme(.dark)
-        .fileImporter(isPresented:$importingJSON,
-                      allowedContentTypes:[.json]) { result in
+        .fileImporter(isPresented:$importingJSON,allowedContentTypes:[.json]) { result in
             do {
                 let url=try result.get()
                 let scoped=url.startAccessingSecurityScopedResource()
                 defer {if scoped {url.stopAccessingSecurityScopedResource()}}
                 let handle=try FileHandle(forReadingFrom:url)
-                defer{try? handle.close()}
-                // Never load an arbitrary multi-megabyte Files document
-                // into the UI. Approved PC v600 JSON is only a few KiB.
+                defer {try? handle.close()}
                 let bytes=try handle.read(upToCount:65_537) ?? Data()
                 document=try HudLayout600.decodeJSON(bytes)
                 onPreview(document)
                 exchangeError600=nil
-            } catch {
-                exchangeError600=error.localizedDescription
-            }
+            } catch {exchangeError600=error.localizedDescription}
         }
-        .fileExporter(isPresented:$exportingJSON,
-                      document:exportDocument600,
-                      contentType:.json,
-                      defaultFilename:"hud-layout-v600") { result in
-            if case .failure(let error)=result {
-                exchangeError600=error.localizedDescription
-            }
+        .fileExporter(isPresented:$exportingJSON,document:exportDocument600,
+                      contentType:.json,defaultFilename:"hud-layout-v602") { result in
+            if case .failure(let error)=result {exchangeError600=error.localizedDescription}
         }
         .accessibilityIdentifier("hud-v600-editor")
+    }
+}
+
+/// A single native view receives touches in the same logical space as the
+/// original F6 selector. It never intercepts pause/options controls layered
+/// above it and never changes the actual Metal combat camera or physics.
+private struct HudEditorTouchCanvas:UIViewRepresentable {
+    let layout:HudLayout600
+    let viewport:CombatHUDViewport568
+    let selection:String
+    let onSelect:(String)->Void
+    let onMove:(String,HudLayout600.Widget,Double,Double)->Void
+    let onScale:(String,Double,Double)->Void
+
+    func makeUIView(context:Context)->TouchSurface {
+        TouchSurface(frame:.zero)
+    }
+    func updateUIView(_ view:TouchSurface,context:Context) {
+        view.layout=layout
+        view.viewport=viewport
+        view.selection=selection
+        view.onSelect=onSelect
+        view.onMove=onMove
+        view.onScale=onScale
+        view.setNeedsDisplay()
+    }
+
+    final class TouchSurface:UIView {
+        var layout=HudLayout600.defaults()
+        var viewport=CombatHUDViewport568(width:1280,height:720)
+        var selection=""
+        var onSelect:((String)->Void)?
+        var onMove:((String,HudLayout600.Widget,Double,Double)->Void)?
+        var onScale:((String,Double,Double)->Void)?
+        private var dragStart:(widget:HudLayout600.Widget,point:CGPoint)?
+        private var pinchStart:(id:String,scale:Double)?
+
+        override init(frame:CGRect) {
+            super.init(frame:frame)
+            configure()
+        }
+        required init?(coder:NSCoder) {
+            super.init(coder:coder)
+            configure()
+        }
+        private func configure() {
+            isOpaque=false
+            backgroundColor = .clear
+            isMultipleTouchEnabled=true
+            contentMode = .redraw
+            accessibilityIdentifier="hud-v600-editor-touch-blocker"
+            let pinch=UIPinchGestureRecognizer(
+                target:self,action:#selector(handlePinch(_:)))
+            pinch.cancelsTouchesInView=false
+            addGestureRecognizer(pinch)
+        }
+
+        override func touchesBegan(_ touches:Set<UITouch>,with event:UIEvent?) {
+            super.touchesBegan(touches,with:event)
+            guard event?.allTouches?.count == 1,let touch=touches.first else {
+                dragStart=nil
+                return
+            }
+            let point=touch.location(in:self)
+            let id=HudEditorGeometry.hit(x:Double(point.x),y:Double(point.y),
+                                         layout:layout,viewport:viewport)
+            onSelect?(id ?? "")
+            dragStart=id.flatMap { key in
+                layout.widget(key).map {(widget:$0,point:point)}
+            }
+        }
+
+        override func touchesMoved(_ touches:Set<UITouch>,with event:UIEvent?) {
+            super.touchesMoved(touches,with:event)
+            guard event?.allTouches?.count == 1,
+                  pinchStart == nil,
+                  let start=dragStart,let touch=touches.first else{return}
+            let point=touch.location(in:self)
+            onMove?(start.widget.id,start.widget,
+                    Double(point.x-start.point.x),
+                    Double(point.y-start.point.y))
+        }
+
+        override func touchesEnded(_ touches:Set<UITouch>,with event:UIEvent?) {
+            super.touchesEnded(touches,with:event)
+            dragStart=nil
+        }
+        override func touchesCancelled(_ touches:Set<UITouch>,with event:UIEvent?) {
+            super.touchesCancelled(touches,with:event)
+            dragStart=nil
+        }
+
+        @objc private func handlePinch(_ gesture:UIPinchGestureRecognizer) {
+            switch gesture.state {
+            case .began:
+                dragStart=nil
+                if let item=layout.widget(selection) {
+                    pinchStart=(item.id,item.scale)
+                }
+            case .changed:
+                if let start=pinchStart {
+                    onScale?(start.id,start.scale,Double(gesture.scale))
+                }
+            case .ended,.cancelled,.failed:
+                pinchStart=nil
+            default:break
+            }
+        }
+
+        override func draw(_ rect:CGRect) {
+            guard let ctx=UIGraphicsGetCurrentContext() else{return}
+            for widget in layout.widgets {
+                guard let f=HudEditorGeometry.rect(widget,viewport:viewport) else{continue}
+                let border:CGRect=CGRect(x:f.x,y:f.y,width:f.width,height:f.height)
+                let chosen=widget.id==selection
+                let color:UIColor=chosen ? .systemYellow :
+                    (widget.visible ? .cyan.withAlphaComponent(0.5) :
+                     .lightGray.withAlphaComponent(0.32))
+                ctx.setStrokeColor(color.cgColor)
+                ctx.setLineWidth(chosen ? 2 : 0.8)
+                ctx.stroke(border)
+                if chosen {
+                    (widget.id as NSString).draw(
+                        at:CGPoint(x:border.minX+3,y:max(0,border.minY-18)),
+                        withAttributes:[
+                            .font:UIFont.monospacedSystemFont(ofSize:11,weight:.medium),
+                            .foregroundColor:UIColor.systemYellow
+                        ])
+                }
+            }
+        }
     }
 }
