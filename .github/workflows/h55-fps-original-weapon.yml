@@ -9,6 +9,9 @@ on:
       - 'ASTEROIDYiOS/H55FPSMeshSplit580.swift'
       - 'ASTEROIDYiOS/H55ScenePage580.swift'
       - 'ASTEROIDYiOS/H55FPSSettingsSection580.swift'
+      - 'ASTEROIDYiOS/H55FPSPreview580.swift'
+      - 'ASTEROIDYiOS/H55FPSOverlayViewport580.swift'
+      - 'Tests/H55FPSPreviewDepth580Contract.py'
       - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
       - 'Tools/pack_h55_original_models_ipa.py'
       - 'Tests/H55FPSPose580Tests.swift'
@@ -30,6 +33,9 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSAssets580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSScene580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSSettingsSection580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSPreview580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSOverlayViewport580.swift
+          python3 Tests/H55FPSPreviewDepth580Contract.py
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSMeshSplit580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
           python3 - <<'PY'
@@ -47,7 +53,9 @@ jobs:
           for name,sha in checks:
               assert name in assets and sha in assets, name
           assert 'H55FPSAssets580.install(url,as:kind)' in main
-          assert 'H55FPSScene580(camera:pointOfView' in main
+          assert 'H55FPSScene580(camera:fpsCamera' in main
+          assert 'H55FPSOverlayViewport580(scene:fpsScene,pointOfView:fpsCamera)' in main
+          assert 'fpsOverlayScene=fpsScene' in main and 'fpsOverlayCamera=fpsCamera' in main
           assert 'fpsViewmodel?.advance(time:arrival.time,walking:arrival.walking' in main
           assert 'h55-fps-import-hands' in ui and 'h55-fps-import-weapon' in ui
           assert 'h55-fps-show-hands' in ui and 'h55-fps-show-weapon' in ui
