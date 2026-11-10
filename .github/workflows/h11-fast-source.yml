@@ -31,7 +31,10 @@ jobs:
           from pathlib import Path
           scene=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
           assert 'workshopInitialPanel=hypot(movement.x-9.4,movement.z-9.85)<3.55 ? 4 : 0' in scene
-          assert 'showingWorkshop ? 0 : moveForward' in scene
+          assert 'forward:showingWorkshop ? 0 :' in scene and '(input.moveForward != 0 ? input.moveForward : moveForward)' in scene
+          assert 'right:showingWorkshop ? 0 :' in scene
+          assert 'input.moveRight != 0 ? input.moveRight : moveRight' in scene
+          assert 'if arrival.walking && !conversationOpen,let physical {' in scene
           assert 'H55WorkshopPanel580(initialTab:loader.workshopInitialPanel' in scene
           assert 'mechanic.step(dt:dt' in scene
           assert 'npcAnimator?.apply(dt:dt' in scene
