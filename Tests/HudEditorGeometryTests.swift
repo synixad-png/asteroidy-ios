@@ -24,7 +24,7 @@ import Foundation
         let globe=HudEditorGeometry.rect(planet,viewport:flat)!
         verify(abs(globe.x-(planet.x+(250-250*planet.scale)*0.5 + flat.originX(for:.bottomLeft)))<0.00001,
                "GLB scaled about immutable PC widget centre")
-        verify(HudEditorGeometry.hit(x:195,y:550,layout:source,
+        verify(HudEditorGeometry.hit(x:210,y:550,layout:source,
                                      viewport:flat)=="hud.planetarium",
                "planetarium independently selectable outside radar")
         verify(HudEditorGeometry.hit(x:650,y:450,layout:source,
