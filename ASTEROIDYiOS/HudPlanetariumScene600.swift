@@ -79,7 +79,7 @@ struct HudPlanetariumScene600:UIViewRepresentable {
             mutex.lock()
             capsule=updated
             self.pitch=pitch
-            self.yaw=y
+            self.yaw=yaw
             self.roll=roll
             self.liveCapsules=liveCapsules
             self.liveGameTime=liveGameTime
