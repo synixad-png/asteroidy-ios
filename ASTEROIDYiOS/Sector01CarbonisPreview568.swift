@@ -744,9 +744,91 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             /// fallback when the exact source file failed SHA verification.
             /// Source item GLBs are drawn separately in THIS Metal encoder,
             /// so one collectible is never rendered by both paths.
+            /// PC v602 BossTunnelRenderer.DrawCoin: filled gold ellipse,
+            /// dark side, bright rim and the original angular Z engraving.
+            /// Draw on the same geodesic shell as the existing token ring;
+            /// no new pickup instance, collision body or shader is created.
+            private static func appendMoneyCoin568(
+                _ token:CarbonisCombat568.TokenPickup,scale:Float,
+                time:Float,shell:Float,into vertices:inout [Float]) {
+                let radius:Float=4.5*scale
+                let width=max(radius*0.13,
+                              radius*abs(cos(token.angle+time*2.4)))
+                let edge=max(radius*0.08,0.24*scale)
+                let dark:[Float]=[107/255.0,66/255.0,19/255.0,1]
+                let face:[Float]=[241/255.0,169/255.0,48/255.0,1]
+                let rim:[Float]=[1,223/255.0,126/255.0,1]
+                let recess:[Float]=[153/255.0,93/255.0,24/255.0,1]
+                let engraved:[Float]=[1,235/255.0,169/255.0,1]
+                func emit(_ x:Float,_ y:Float,_ h:Float,_ color:[Float]) {
+                    let surface=Sphere67.offset(token.position,
+                                                 by:Vec2(x:x,y:y))
+                    let normal=Sphere67.normal(surface)
+                    let radius=shell+h
+                    vertices.append(contentsOf:[
+                        normal.x*radius,normal.y*radius,normal.z*radius,
+                        normal.x,normal.y,normal.z,
+                        color[0],color[1],color[2],color[3],0,0])
+                }
+                func triangle(_ a:SIMD2<Float>,_ b:SIMD2<Float>,
+                              _ c:SIMD2<Float>,_ h:Float,_ tint:[Float]) {
+                    emit(a.x,a.y,h,tint);emit(b.x,b.y,h,tint)
+                    emit(c.x,c.y,h,tint)
+                }
+                func ellipse(_ rx:Float,_ ry:Float,_ h:Float,
+                             _ tint:[Float]) {
+                    let center=SIMD2<Float>(repeating:0)
+                    for i in 0..<24 {
+                        let a=Float(i)*Float.pi/12
+                        let b=Float(i+1)*Float.pi/12
+                        triangle(center,SIMD2(rx*cos(a),ry*sin(a)),
+                                 SIMD2(rx*cos(b),ry*sin(b)),h,tint)
+                    }
+                }
+                func outline(_ rx:Float,_ ry:Float,_ stroke:Float,
+                             _ h:Float,_ tint:[Float]) {
+                    for i in 0..<24 {
+                        let a=Float(i)*Float.pi/12
+                        let b=Float(i+1)*Float.pi/12
+                        let u=SIMD2(rx*cos(a),ry*sin(a))
+                        let v=SIMD2(rx*cos(b),ry*sin(b))
+                        let innerU=SIMD2((rx-stroke)*cos(a),
+                                         (ry-stroke)*sin(a))
+                        let innerV=SIMD2((rx-stroke)*cos(b),
+                                         (ry-stroke)*sin(b))
+                        triangle(u,innerU,v,h,tint)
+                        triangle(v,innerU,innerV,h,tint)
+                    }
+                }
+                func line(_ a:SIMD2<Float>,_ b:SIMD2<Float>,
+                          _ thickness:Float,_ h:Float,_ tint:[Float]) {
+                    let d=b-a
+                    let length=simd_length(d)
+                    guard length>0.0001 else{return}
+                    let offset=SIMD2<Float>(-d.y,d.x)*(thickness/length)
+                    triangle(a+offset,a-offset,b+offset,h,tint)
+                    triangle(b+offset,a-offset,b-offset,h,tint)
+                }
+                ellipse(width+edge,radius+edge,0.010,dark)
+                ellipse(width,radius,0.014,face)
+                outline(width,radius,max(radius*0.10,0.22*scale),
+                        0.017,rim)
+                if width>radius*0.32 {
+                    outline(width*0.70,radius*0.73,
+                            max(0.12*scale,radius*0.06),0.020,recess)
+                    let x=width*0.28
+                    let y=radius*0.37
+                    let t=max(0.17*scale,radius*0.085)
+                    line(SIMD2(-x,-y),SIMD2(x,-y),t,0.023,engraved)
+                    line(SIMD2(x,-y),SIMD2(-x,y),t,0.023,engraved)
+                    line(SIMD2(-x,y),SIMD2(x,y),t,0.023,engraved)
+                }
+            }
+
             static func tokenVertices(
                 _ tokens:[CarbonisCombat568.TokenPickup],
-                settings:SourcePickupVisual586=SourcePickupVisual586())->[Float] {
+                settings:SourcePickupVisual586=SourcePickupVisual586(),
+                time:Float=0)->[Float] {
                 let shell=SphereSurfaceStamp556.normalizedShellRadius+0.014
                 var result:[Float]=[]
                 result.reserveCapacity(tokens.count*24*6*12)
@@ -784,6 +866,10 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         let b2=Sphere67.offset(token.position,by:db*outer)
                         emit(a1);emit(b1);emit(b2)
                         emit(a1);emit(b2);emit(a2)
+                    }
+                    if token.sourceKind == nil {
+                        appendMoneyCoin568(token,scale:scale,time:time,
+                                           shell:shell,into:&result)
                     }
                 }
                 return result
@@ -891,7 +977,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         Self.tokenVertices(
                             session.game.tokenPickups.filter{
                                 !hasOriginalPickupMesh586($0)
-                            },settings:pickupVisual586))
+                            },settings:pickupVisual586,
+                             time:session.game.elapsed))
                     let destructionStart=ProcessInfo.processInfo.systemUptime
                     debris.append(contentsOf:
                         CarbonisExplosion524Meshes.vertices(
@@ -1439,7 +1526,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         original.append(contentsOf:Self.tokenVertices(
                             session.game.tokenPickups.filter{
                                 !hasOriginalPickupMesh586($0)
-                            },settings:pickupVisual586))
+                            },settings:pickupVisual586,
+                             time:session.game.elapsed))
                         // Original particle bursts, CombatPieces125 and
                         // Explosion524 shards on unchanged iPad path.
                         let destructionMeshStarted=ProcessInfo.processInfo.systemUptime
