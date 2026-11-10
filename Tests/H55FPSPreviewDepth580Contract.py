@@ -46,7 +46,11 @@ assert "SCNGeometry(" not in preview
 assert "view.isPlaying=true" in preview
 assert "fps?.advance(time:t,walking:true,bobPhase:t*5" in preview
 assert "fps?.synchronizePreview(settings)" in preview
-assert 'H55FPSPreview580(settings:previewConfiguration,motion:previewMotion)' in settings
+assert 'H55FPSPreview580(settings:previewConfiguration,' in settings
+assert 'gloveBrightness:gloveBrightness)' in settings
+assert 'h55-fps-gloves-brightness' in settings
+assert 'refreshGloveBrightness602()' in preview
+assert 'material.multiply.contents=tint' in read("ASTEROIDYiOS/H55FPSScene580.swift")
 assert 'previewRevision += 1' in settings
 assert '"h55-fps-gloves-live-preview"' in settings
 assert '"h55-fps-weapon-live-preview"' in settings
