@@ -66,10 +66,17 @@ enum H55FPSAssets580 {
         return digest.finalize().map{String(format:"%02x",$0)}.joined()==kind.sha256
     }
 
+    /// Load the exact, verified source GLB from either the app bundle
+    /// or the optional one-time Files import. Never use a placeholder.
     static func installed(_ kind:Kind)->URL? {
-        guard let folder=try? directory() else{return nil}
-        let url=folder.appendingPathComponent(kind.fileName)
-        return valid(url,as:kind) ? url : nil
+        if let folder=try? directory() {
+            let stored=folder.appendingPathComponent(kind.fileName)
+            if valid(stored,as:kind) {return stored}
+        }
+        guard let bundled=Bundle.main.url(forResource:kind.fileName,
+                                          withExtension:nil),
+              valid(bundled,as:kind) else{return nil}
+        return bundled
     }
     /// FileImporter grants temporary security scope; persist a validated
     /// copy in the app sandbox, once, separately from the 126 MB hangar GLB.
