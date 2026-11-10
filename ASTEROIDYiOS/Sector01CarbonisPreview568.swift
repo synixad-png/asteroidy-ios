@@ -117,6 +117,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private let planetFx568=SourcePlanetGraphicsSettings568.load()
             private let shipScale472=SourceShipScale472.load()
             private var sourceMissionSize580=SourceMissionSize580.load()
+            private var pickupVisual586=SourcePickupVisual586.load()
             private let missionTerrainScale523:Float
             private let vertexBuffer:MTLBuffer
             private let indexBuffer:MTLBuffer
@@ -156,6 +157,10 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             // pipeline for all actual rock/enemy death events.
             private var destructionRenderer:CarbonisExplosion524Renderer?
             private var shooterPipeline:MTLRenderPipelineState?
+            /// Shared with the existing CARBONIS GPU encoder and geometry ABI.
+            /// One verified model + texture upload per kind, never per pickup.
+            private var pickupPipeline586:MTLRenderPipelineState?
+            private var pickupModels586:[SourcePickupModels586.Kind:SourcePickupMetal586]=[:]
             private var sourceShooters:[Int:(buffer:MTLBuffer,ranges:[Range<Int>])] = [:]
             private var proofScheduled=false
             var yawOffset: Float = 0
@@ -463,6 +468,31 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     shooterSpec.depthAttachmentPixelFormat = .depth32Float
                     shooterPipeline=try device.makeRenderPipelineState(
                         descriptor:shooterSpec)
+                    // Optional original PC586 pickup resources. Failure
+                    // retains the existing physical pickup + ring fallback,
+                    // without breaking gameplay scene initialization.
+                    if let pickupVertex=library.makeFunction(
+                        name:"sector01PickupVertex586"),
+                       let pickupFragment=library.makeFunction(
+                        name:"sector01PickupFragment586") {
+                        let originalSpec=MTLRenderPipelineDescriptor()
+                        originalSpec.vertexFunction=pickupVertex
+                        originalSpec.fragmentFunction=pickupFragment
+                        originalSpec.colorAttachments[0].pixelFormat = .bgra8Unorm
+                        originalSpec.depthAttachmentPixelFormat = .depth32Float
+                        originalSpec.colorAttachments[0].isBlendingEnabled=false
+                        pickupPipeline586=try? device.makeRenderPipelineState(
+                            descriptor:originalSpec)
+                        if pickupPipeline586 != nil {
+                            let pickupTextures=MTKTextureLoader(device:device)
+                            for kind in SourcePickupModels586.Kind.allCases {
+                                if let loaded=SourcePickupMetal586(
+                                    kind:kind,device:device,textures:pickupTextures) {
+                                    pickupModels586[kind]=loaded
+                                }
+                            }
+                        }
+                    }
                     // Original Explosion524.InitExplosion524 catches an
                     // unavailable GPU volume path without hiding the
                     // playable planet. Keep impact sparks/3D metal debris.
@@ -771,6 +801,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     if preparationStart>=nextVisualReload {
                         visualSettings=CarbonisVisualSettings568.load()
                         fxBudget=CarbonisIOSFXBudget568.load()
+                        pickupVisual586=SourcePickupVisual586.load()
                         let newLava=SourceLavaLightSettings287.load()
                         if newLava != lava287 {
                             rebakeCarbonis469(newLava.intensity)
@@ -868,6 +899,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     visualSettings=CarbonisVisualSettings568.load()
                     fxBudget=CarbonisIOSFXBudget568.load()
                     sourceMissionSize580=SourceMissionSize580.load()
+                    pickupVisual586=SourcePickupVisual586.load()
                     let newLava=SourceLavaLightSettings287.load()
                     if newLava != lava287 {
                         rebakeCarbonis469(newLava.intensity)
