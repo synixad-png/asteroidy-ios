@@ -19,18 +19,17 @@ assert(orbital.triangles.allSatisfy{$0.isFinite})
 assert(orbital.lines.allSatisfy{$0.isFinite})
 // Identical prefix proves the authored hull and all seven lamps did not
 // drift when switching from original combat to original orbital debris.
-let count=min(ordinary.triangles.count,orbital.triangles.count)
-var shared=0
-while shared<count && ordinary.triangles[shared]==orbital.triangles[shared] {
-    shared+=1
-}
-assert(shared>=110_000, "Do not substitute/reorder the original PC source hull")
-let lineCount=min(ordinary.lines.count,orbital.lines.count)
-var sharedLines=0
-while sharedLines<lineCount && ordinary.lines[sharedLines]==orbital.lines[sharedLines] {
-    sharedLines+=1
-}
-assert(sharedLines>=10_000, "Original WreckSketchBox215 must be preserved")
+assert(ordinary.hullVertices>0 && ordinary.hullLineVertices>0)
+assert(ordinary.hullVertices==orbital.hullVertices)
+assert(ordinary.hullLineVertices==orbital.hullLineVertices)
+let shared=ordinary.hullVertices*11
+let sharedLines=ordinary.hullLineVertices*7
+assert(ordinary.triangles.prefix(shared).elementsEqual(
+    orbital.triangles.prefix(shared)),
+    "Every actual original source hull vertex/normal/color/lamp phase differs")
+assert(ordinary.lines.prefix(sharedLines).elementsEqual(
+    orbital.lines.prefix(sharedLines)),
+    "Every authored WreckSketchBox215 grime/scratch line must be identical")
 let phases:Set<Int>=Set(stride(from:10,to:orbital.triangles.count,by:11)
     .map { Int((orbital.triangles[$0]*100).rounded()) }
     .filter {$0>=0})
