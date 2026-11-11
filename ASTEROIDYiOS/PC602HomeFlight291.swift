@@ -226,11 +226,16 @@ struct PC602HomeFlight291 {
     /// this saved-mask snapshot and the source's next-target selection.
     mutating func applyCompletedMask(_ mask:Int) {
         completedMask=mask & ((1 << 26)-1)
-        if !Self.unlocked(target,mask:completedMask) {
-            target=(1...26).first {
+        // Orbit50.EnterOrbit50(reset:false) advances a completed target
+        // to the first unlocked unfinished mission, without fabricating a
+        // reward, changing other campaign entries or changing ship position.
+        if !Self.unlocked(target,mask:completedMask) ||
+            Self.completed(target,mask:completedMask) {
+            if let next=(1...26).first(where:{
                 Self.unlocked($0,mask:completedMask) &&
                     !Self.completed($0,mask:completedMask)
-            } ?? 1
+            }) {target=next}
+            else if !Self.unlocked(target,mask:completedMask) {target=1}
         }
         orbitDistance=home.distanceToSector(orbitPosition,level:target) ?? 0
     }
