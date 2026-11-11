@@ -37,7 +37,7 @@ struct HudControlLayout600:Codable,Equatable {
         controls.allSatisfy {
             $0.x.isFinite && $0.y.isFinite && $0.scale.isFinite &&
             (-1500...1500).contains($0.x) && (-900...900).contains($0.y) &&
-            (0.65...3.5).contains($0.scale)
+            Self.scaleRange(for:$0.id).contains($0.scale)
         }
     }
 
@@ -57,7 +57,15 @@ struct HudControlLayout600:Codable,Equatable {
         return defaults()
     }
 
+    static func scaleRange(for id:String)->ClosedRange<Double> {
+        // The wide paused OPTIONS row must not grow large enough to
+        // obscure every other pause-menu recovery action.
+        id=="control.options" ? 0.65...1.5 : 0.65...3.5
+    }
     func control(_ id:String)->Control? {controls.first{$0.id==id}}
+    func resolved(_ id:String)->Control {
+        control(id) ?? Control(id:id,x:0,y:0,scale:1)
+    }
     mutating func change(_ id:String,_ edit:(inout Control)->Void) {
         guard let index=controls.firstIndex(where:{$0.id==id}) else{return}
         let previous=controls[index]
@@ -96,7 +104,8 @@ struct HudControlLayout600:Codable,Equatable {
             // Reference rectangle for the OPTIONS control shown only in
             // pause menu. The modal uses the SAME offset and scale.
             baselineY=viewport.height/2+(compact ? 2:12)
-            nativeWidth=compact ? 210:285
+            nativeWidth=max(44,min(viewport.width-32,650)-
+                            (compact ? 32:56))
         }
         let w=max(44,nativeWidth*control.scale)
         let h=max(44,(compact ? 42:48)*control.scale)
@@ -156,7 +165,8 @@ struct HudControlLayout600:Codable,Equatable {
         guard originalScale.isFinite,factor.isFinite,
               originalScale>0,factor>0 else{return}
         change(id){control in
-            let next=min(3.5,max(0.65,originalScale*factor))
+            let r=Self.scaleRange(for:id)
+            let next=min(r.upperBound,max(r.lowerBound,originalScale*factor))
             let ranges=Self.limits(id,viewport:viewport,compact:compact,
                                    scale:next)
             control.scale=next
