@@ -47,7 +47,8 @@ assert 'onPreview(document)' in editor
 assert 'DragGesture(' not in editor
 assert 'MagnificationGesture(' not in editor
 assert "session.updateHudLayout600(updated)" in scene
-assert 'planetarium.visible' in scene and 'HudWidgetPlacement600.frame(' in scene
+assert 'HudPlanetariumHost600(' not in scene
+assert 'HudWidgetPlacement600.frame(' in (root/"ASTEROIDYiOS/HudPlanetariumMetal600.swift").read_text()
 for marker in ('layout600:HudLayout600','widgetContext(','"radar"',
                'names[i]+".label"','namesGLB[i]+".icon"',
                'namesGLB[i]+".value"'):
@@ -63,4 +64,4 @@ for marker in ('"EKSPORTUJ UKŁAD JSON"','"IMPORTUJ UKŁAD JSON"',
                'document=try HudLayout600.decodeJSON(bytes)'):
     assert marker in editor, "missing user-accessible JSON exchange: "+marker
 assert '"ion.icon":"energy"' in code and '"hud.planetarium":"planetarium"' in code
-print("PASS iOS HUD v600: exact 46-widget PC layout, native import/export, GLB key gate, touch editor and live Metal/SceneKit")
+print("PASS iOS HUD v600: exact 46-widget PC layout, native import/export, GLB key gate, touch editor and live native Metal")
