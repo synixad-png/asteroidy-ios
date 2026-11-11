@@ -71,7 +71,8 @@ final class HudPlanetariumMetal600 {
     private static func hudMatrix(
             _ projection:HudPlanetariumProjection.Transform,
             width:Double,height:Double,
-            widget:HudLayout600.Widget)->simd_float4x4 {
+            widget:HudLayout600.Widget,
+            pose:HudMotion600.Pose)->simd_float4x4 {
         let w=Float(width),h=Float(height)
         var ortho=matrix_identity_float4x4
         ortho.columns.0.x=2/w
@@ -87,7 +88,8 @@ final class HudPlanetariumMetal600 {
             angle:Float(widget.pitch ?? -20)*Float.pi/180,
             axis:SIMD3<Float>(1,0,0)))
         let roll=simd_float4x4(simd_quatf(
-            angle:Float(widget.roll ?? 0)*Float.pi/180,
+            angle:(Float(widget.roll ?? 0)+
+                    HudPlanetariumPlasmaAnchor600.visualRoll(pose:pose))*Float.pi/180,
             axis:SIMD3<Float>(0,0,1)))
         let pixels=Float(projection.pixelsPerModelUnit)
         return ortho *
@@ -104,6 +106,7 @@ final class HudPlanetariumMetal600 {
                 depthTexture:MTLTexture?,
                 layout:HudLayout600,
                 viewport:CombatHUDViewport568,
+                pose:HudMotion600.Pose,
                 seconds:Double,
                 capsules:HudCapsuleController600.Snapshot) {
         guard let widget=layout.widget("hud.planetarium"),
@@ -115,6 +118,8 @@ final class HudPlanetariumMetal600 {
                   placement:placement,viewport:viewport,
                   widget:widget,
                   modelRadius:HudPlanetariumAsset600.pc602ModelRadius),
+              let center=HudPlanetariumPlasmaAnchor600.screenCenter(
+                  widget:widget,layout:layout,pose:pose,viewport:viewport),
               let depthTexture,
               drawable.texture.width>1,drawable.texture.height>1
         else{return}
@@ -135,8 +140,16 @@ final class HudPlanetariumMetal600 {
         encoder.label="PC602_Original_Animated_HUD_Planetarium"
         encoder.setCullMode(.none)
         let frame=original.sample(at:seconds,capsules:capsules)
-        let hud=Self.hudMatrix(projection,
-                width:viewport.width,height:viewport.height,widget:widget)
+        // The shared gauge group supplies only the on-screen pivot.
+        // Original F6 scale/pitch/yaw and the 159 glTF tracks stay intact.
+        let attached=HudPlanetariumProjection.Transform(
+            x:center.x-viewport.width*0.5,
+            y:viewport.height*0.5-center.y,
+            pixelsPerModelUnit:projection.pixelsPerModelUnit,
+            cameraHalfHeight:projection.cameraHalfHeight)
+        let hud=Self.hudMatrix(attached,
+                width:viewport.width,height:viewport.height,
+                widget:widget,pose:pose)
 
         for mode in 0...1 {
             encoder.setRenderPipelineState(mode==0 ? opaque:translucent)
