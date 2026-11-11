@@ -24,8 +24,9 @@ assert 'Path(ellipseIn:CGRect(x:end-1.65,y:barY+2.9' in plasma
 assert 'HudPlasmaBridge600' not in plasma
 assert 'HudPlanetariumPlasmaAnchor600' not in planet
 assert 'HudMotionProject600.project(' in planet
-assert 'widget:widget.id' in planet
-assert 'pose.roll*pose.weight(widget.id)' in planet
+assert 'private static let plasmaGroupMotionID="armor.bar"' in planet
+assert 'widget:Self.plasmaGroupMotionID' in planet
+assert 'pose.roll*pose.weight(Self.plasmaGroupMotionID)' in planet
 assert 'original.sample(at:seconds,capsules:capsules)' in planet
 assert 'HudLayoutEditor600' in scene
 assert '"hud.planetarium","x":64.7882' in layout
