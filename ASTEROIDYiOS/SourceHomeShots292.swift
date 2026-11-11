@@ -13,6 +13,7 @@ final class SourceHomeShots292 {
     private static let maxVertices = Self.maxBullets * PC602HomeShotGeometry292.verticesPerShot
     private static let byteCount = Self.maxVertices * PC602HomeShotGeometry292.floatsPerVertex * MemoryLayout<Float>.size
     private let pipeline:MTLRenderPipelineState
+    private let discPipeline:MTLRenderPipelineState
     private let depth:MTLDepthStencilState
     private let vertices:[MTLBuffer]
     private let slots=DispatchSemaphore(value:3)
@@ -36,6 +37,19 @@ final class SourceHomeShots292 {
         descriptor.colorAttachments[0].sourceAlphaBlendFactor = .one
         descriptor.colorAttachments[0].destinationAlphaBlendFactor = .one
         pipeline=try device.makeRenderPipelineState(descriptor:descriptor)
+        let discs=MTLRenderPipelineDescriptor()
+        discs.vertexFunction=vertex
+        discs.fragmentFunction=fragment
+        discs.colorAttachments[0].pixelFormat = .bgra8Unorm
+        discs.depthAttachmentPixelFormat = .depth32Float
+        discs.colorAttachments[0].isBlendingEnabled=true
+        // Source OrbDisc150 has already premultiplied RGB by its alpha,
+        // and uses GL_ONE/GL_ONE. It must NOT be dimmed by alpha again.
+        discs.colorAttachments[0].sourceRGBBlendFactor = .one
+        discs.colorAttachments[0].destinationRGBBlendFactor = .one
+        discs.colorAttachments[0].sourceAlphaBlendFactor = .one
+        discs.colorAttachments[0].destinationAlphaBlendFactor = .one
+        discPipeline=try device.makeRenderPipelineState(descriptor:discs)
         let ds=MTLDepthStencilDescriptor()
         ds.depthCompareFunction = .lessEqual
         ds.isDepthWriteEnabled=false
@@ -64,7 +78,8 @@ final class SourceHomeShots292 {
               view:[Float],
               mvp:simd_float4x4) {
         guard !bullets.isEmpty else{return}
-        PC602HomeShotGeometry292.build(home:home,bullets:bullets,
+        let ribbonVertices=PC602HomeShotGeometry292.build(
+            home:home,bullets:bullets,
             camera:camera,view:view,into:&scratch)
         guard !scratch.isEmpty,
               scratch.count%PC602HomeShotGeometry292.floatsPerVertex==0
@@ -90,7 +105,15 @@ final class SourceHomeShots292 {
         encoder.setVertexBuffer(buffer,offset:0,index:0)
         encoder.setVertexBytes(&matrix,
             length:MemoryLayout<simd_float4x4>.stride,index:1)
-        encoder.drawPrimitives(type:.triangle,vertexStart:0,
-            vertexCount:scratch.count / PC602HomeShotGeometry292.floatsPerVertex)
+        if ribbonVertices>0 {
+            encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                vertexCount:ribbonVertices)
+        }
+        let all=scratch.count/PC602HomeShotGeometry292.floatsPerVertex
+        if all>ribbonVertices {
+            encoder.setRenderPipelineState(discPipeline)
+            encoder.drawPrimitives(type:.triangle,
+                vertexStart:ribbonVertices,vertexCount:all-ribbonVertices)
+        }
     }
 }
