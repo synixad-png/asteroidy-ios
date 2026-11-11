@@ -17,8 +17,7 @@ assert(belt.stones.filter{$0.vertexCount==960}.count==656)
 assert(belt.sourcePlacementValid(home:home),
        "Original H290 flight shell: all 820 authored rocks must remain above terrain")
 assert(belt.stones.first?.firstVertex==0)
-assert(belt.stones.last!.firstVertex+belt.stones.last!.vertexCount==
-       belt.vertexCount)
+assert(belt.stones.last!.firstVertex + belt.stones.last!.vertexCount == belt.vertexCount)
 
 let identity:[Float]=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,-400,1]
 let count=belt.stones.filter {
