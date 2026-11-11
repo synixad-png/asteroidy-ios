@@ -11,7 +11,9 @@ enum PC602HomeShotGeometry292 {
     static let floatsPerVertex=7
     static let ribbonSegments=6
     static let ribbonLayers=3
-    static let verticesPerShot=ribbonSegments*6*ribbonLayers
+    static let ribbonVerticesPerShot=ribbonSegments*6*ribbonLayers
+    static let orbVerticesPerShot=(32+28+24)*6
+    static let verticesPerShot=ribbonVerticesPerShot+orbVerticesPerShot
 
     private static func vector(_ p:SphereVector3)->SIMD3<Float> {
         SIMD3(p.x,p.y,p.z)
@@ -32,11 +34,11 @@ enum PC602HomeShotGeometry292 {
     private static func tint(_ kind:PC602HomeWeaponTest292.Weapon)
         ->SIMD3<Float> {
         switch kind {
-        case .twin:return SIMD3(255,197,62)/255
-        case .scatter:return SIMD3(255,92,190)/255
-        case .rail:return SIMD3(181,123,255)/255
-        case .swarm:return SIMD3(88,255,143)/255
-        case .pulse:return SIMD3(55,215,255)/255
+        case .twin:return SIMD3<Float>(255,197,62)/255
+        case .scatter:return SIMD3<Float>(255,92,190)/255
+        case .rail:return SIMD3<Float>(181,123,255)/255
+        case .swarm:return SIMD3<Float>(88,255,143)/255
+        case .pulse:return SIMD3<Float>(55,215,255)/255
         }
     }
 
@@ -54,16 +56,55 @@ enum PC602HomeShotGeometry292 {
             p.x,p.y,p.z,color.x,color.y,color.z,color.w])
     }
 
+    private static func unit(_ v:SIMD3<Float>)->SIMD3<Float> {
+        let d=length(v)
+        return d>1e-6 ? v/d : SIMD3<Float>(1,0,0)
+    }
+
+    /// Source Combat69.OrbDisc150 from three source DrawShipShots69 calls,
+    /// actual billboard normal and source pixels-per-unit from the shared
+    /// IntroProjection (720px vertical focal length). No textured impostor.
+    /// Source calls GL_TRIANGLE_STRIP, converted to exact two triangles per
+    /// angular segment with original premultiplied colors for GL_ONE/GL_ONE.
+    private static func disc(_ center:SIMD3<Float>,
+                             _ right:SIMD3<Float>,
+                             _ up:SIMD3<Float>,
+                             inner:Float,outer:Float,
+                             innerRGB:SIMD3<Float>,innerAlpha:Float,
+                             outerRGB:SIMD3<Float>,outerAlpha:Float,
+                             segments:Int,into out:inout [Float]) {
+        let inTint=SIMD4<Float>(
+            innerRGB.x*innerAlpha,innerRGB.y*innerAlpha,
+            innerRGB.z*innerAlpha,innerAlpha)
+        let outTint=SIMD4<Float>(
+            outerRGB.x*outerAlpha,outerRGB.y*outerAlpha,
+            outerRGB.z*outerAlpha,outerAlpha)
+        for j in 0..<segments {
+            let a=Float(j)*2*Float.pi/Float(segments)
+            let b=Float(j+1)*2*Float.pi/Float(segments)
+            let v0=right*cos(a)+up*sin(a)
+            let v1=right*cos(b)+up*sin(b)
+            let o0=center+v0*outer,i0=center+v0*inner
+            let o1=center+v1*outer,i1=center+v1*inner
+            append(o0,outTint,to:&out)
+            append(i0,inTint,to:&out)
+            append(o1,outTint,to:&out)
+            append(o1,outTint,to:&out)
+            append(i0,inTint,to:&out)
+            append(i1,inTint,to:&out)
+        }
+    }
+
     /// Reuses caller-owned capacity. The Metal renderer allocates fixed
     /// triple GPU buffers at initialization, never during the draw loop.
     static func build(home:PC602NewHome290,
                       bullets:[PC602HomeWeaponTest292.Bullet],
                       camera:SIMD3<Float>,
-                      view:[Float],into result:inout [Float]) {
+                      view:[Float],into result:inout [Float])->Int {
         result.removeAll(keepingCapacity:true)
         guard view.count==16 && view.allSatisfy({$0.isFinite}),
               camera.x.isFinite && camera.y.isFinite && camera.z.isFinite
-        else{return}
+        else{return 0}
         result.reserveCapacity(max(result.capacity,
             bullets.count*verticesPerShot*floatsPerVertex))
         for bullet in bullets {
@@ -117,5 +158,44 @@ enum PC602HomeShotGeometry292 {
                 }
             }
         }
+        // Source DrawShipShots69 renders ALL ribbon calls first, flushes,
+        // then renders the three separate OrbDisc150 concentric source discs.
+        let ribbonCount=result.count/floatsPerVertex
+        for bullet in bullets {
+            let n=vector(Sphere67.normal(bullet.position))
+            guard let h=home.surface(n) else {continue}
+            let center=n*(h+13+3.8) // ShotPosition292(p,.8 + 3)
+            let eye=camera-center
+            var right=cross(eye,SIMD3<Float>(0,1,0))
+            if length(right)<0.01 {right=SIMD3<Float>(1,0,0)}
+            right=unit(right)
+            let up=unit(cross(right,eye))
+            let eyeZ=view[2]*center.x+view[6]*center.y+
+                     view[10]*center.z+view[14]
+            let depth=max(1,-eyeZ)
+            let corePixels:Float=bullet.kind == .rail ? 4.2:3.6
+            let pixelsPerUnit=max(0.01,720/depth)
+            let radius=(corePixels/pixelsPerUnit) *
+                PC602HomeShipPose291.originalWorldScale
+            let hue=tint(bullet.kind)
+            let opaqueWhite=SIMD3<Float>(249,253,255)/255
+            let paleEdge=SIMD3<Float>(230,246,255)/255
+            // Three original rounds, in source order: halo 32 segments,
+            // weapon tinted shell 28, intense white-blue core 24.
+            disc(center,right,up,inner:radius*0.67,
+                 outer:radius*2.3,
+                 innerRGB:hue,innerAlpha:48/255,
+                 outerRGB:hue,outerAlpha:0,segments:32,into:&result)
+            disc(center,right,up,inner:radius*0.30,
+                 outer:radius,
+                 innerRGB:hue,innerAlpha:178/255,
+                 outerRGB:hue,outerAlpha:0,segments:28,into:&result)
+            disc(center,right,up,inner:0,
+                 outer:radius*0.48,
+                 innerRGB:opaqueWhite,innerAlpha:250/255,
+                 outerRGB:paleEdge,outerAlpha:66/255,
+                 segments:24,into:&result)
+        }
+        return ribbonCount
     }
 }
