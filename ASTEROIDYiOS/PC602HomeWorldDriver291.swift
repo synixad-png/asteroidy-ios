@@ -105,12 +105,26 @@ final class PC602HomeWorldDriver291:ObservableObject {
     }
 
     func setSuspended(_ state:Bool) {
-        withLock{suspended=state}
+        withLock {
+            suspended=state
+            if state {
+                touchMove=Vec2(x:0,y:0)
+                touchAim=Vec2(x:0,y:0)
+                touchFire=false
+            }
+        }
         if state {SourceHardwareInput586.shared.clearKeyboard()}
     }
 
     func setPaused(_ value:Bool) {
-        withLock{session?.setPaused(value)}
+        withLock {
+            session?.setPaused(value)
+            if value {
+                touchMove=Vec2(x:0,y:0)
+                touchAim=Vec2(x:0,y:0)
+                touchFire=false
+            }
+        }
         paused=value
         if value {SourceHardwareInput586.shared.clearKeyboard()}
     }
@@ -213,6 +227,11 @@ final class PC602HomeWorldDriver291:ObservableObject {
         let permitted=withLock{session?.requestDock(context:.init(
             planetHub:true,orbitMode:true)) ?? false}
         if permitted {
+            withLock {
+                touchMove=Vec2(x:0,y:0)
+                touchAim=Vec2(x:0,y:0)
+                touchFire=false
+            }
             presentingH55=true
             SourceHardwareInput586.shared.clearKeyboard()
         }
