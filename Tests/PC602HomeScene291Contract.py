@@ -137,8 +137,8 @@ assert 'combatWreckTriangleVertex214' in combat_wreck
 assert 'combatWreckTriangleVertex214' in combat_shader
 assert "WreckWarningLamp213" in combat_shader
 assert "sourceScale=PC602NewHome290.wreckScale295" in wreck
-assert "Self.translate(dock)*Self.rotateY(31)*" in wreck
-assert "Self.rotateZ(-9)*scale" in wreck
+assert "let orientation=Self.rotateY(31) * Self.rotateZ(-9)" in wreck
+assert "let transform=Self.translate(dock) * orientation * scale" in wreck
 assert "let angle:Float=0.62+max(0,time)*0.047" in wreck
 assert "drawPrimitives(type:.triangle" in wreck
 assert "drawPrimitives(type:.line" in wreck
@@ -174,7 +174,7 @@ assert "sourceVanguardTexturedToonFragment431" in ship_shader
 assert "PC602HomeShipPose291" not in app
 
 # This is a source renderer, NOT a complete orbit gameplay/menu substitution.
-assert "PC602HomeScene291(" not in app
+assert "PC602HomeWorldPage291(" in app
 assert "PC602HomeFlight291(" not in app
 print("PASS PC602: original shared H290 source GPU, true world 100x geometry, "+
       "Toon60/lava source, 26 height-derived additive beacons, unchanged W3")
