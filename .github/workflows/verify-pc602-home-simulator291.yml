@@ -59,6 +59,9 @@ jobs:
         run: |
           set -euo pipefail
           UDID=$(cat diagnostics/device-udid.txt)
+          # Avoid counting a cold CoreSimulator boot as an audio-start delay.
+          xcrun simctl boot "$UDID" 2>/dev/null || true
+          xcrun simctl bootstatus "$UDID" -b
           xcodebuild test -project ASTEROIDYiOS.xcodeproj \
             -scheme ASTEROIDYiOS -configuration Debug \
             -destination "platform=iOS Simulator,id=$UDID" \
@@ -68,6 +71,20 @@ jobs:
             -resultBundlePath "$PWD/diagnostics/PC602-H290-Real-UI.xcresult" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
             > diagnostics/xcodebuild-simulator.log 2>&1 || {
+              # A real device-frame capture is best-effort and must never
+              # mask the first failure or block the workflow indefinitely.
+              python3 - <<'PY'
+          import subprocess
+          from pathlib import Path
+          udid=Path("diagnostics/device-udid.txt").read_text().strip()
+          try:
+              p=subprocess.run(["xcrun","simctl","io",udid,"screenshot",
+                  "diagnostics/simulator-failure-state.png"],
+                  capture_output=True,text=True,timeout=15)
+              print("SIMULATOR_FRAME_CAPTURE",p.returncode,p.stderr[-500:])
+          except subprocess.TimeoutExpired:
+              print("SIMULATOR_FRAME_CAPTURE_TIMEOUT (original XCUITest error preserved)")
+          PY
               grep -n -A 8 -B 4 -E 'error:|failed|FAILED|Timed out' diagnostics/xcodebuild-simulator.log | tail -n 110 || true
               tail -n 85 diagnostics/xcodebuild-simulator.log
               exit 1

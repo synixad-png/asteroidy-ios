@@ -17,19 +17,31 @@ final class PC602HomeOrbitUITests: XCTestCase {
 
     private func require(_ element: XCUIElement, _ description: String,
                          timeout: TimeInterval = 30) {
-        guard element.waitForExistence(timeout: timeout) else {
-            XCTContext.runActivity(named: "Actual iOS simulator UI failure") { activity in
-                let proof = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-                proof.name = "PC602-H290-UI-Failure"
-                proof.lifetime = .keepAlways
-                activity.add(proof)
-                print("PC602_ORBIT_UI_TREE_BEGIN")
-                print(element.debugDescription)
-                print("PC602_ORBIT_UI_TREE_END")
-            }
-            XCTFail(description)
-            return
+        // Screenshots inside the failure handler can hang a busy simulator,
+        // hiding the original failure behind a second 60-second timeout.
+        // Keep the failing step and its real identifier in the xcresult.
+        XCTAssertTrue(element.waitForExistence(timeout: timeout),
+                      description)
+    }
+
+    private func waitForActualW3Menu(_ app: XCUIApplication) {
+        let campaign = app.buttons["w3-home-2"]
+        // OriginalAudioAV568.prepareMenuAtStartup() synthesizes both
+        // source menu tracks before it sets startupComplete. The original
+        // 90-second generic UI timeout is NOT a source startup deadline.
+        // Keep real audio preparation; never bypass it in gameplay code.
+        for attempt in 1...6 {
+            if campaign.waitForExistence(timeout: 60) { return }
+            // Progress is recorded every minute without a potentially
+            // blocking XCUIScreen screenshot or full hierarchy snapshot.
+            let visible = app.staticTexts.allElementsBoundByIndex.prefix(12)
+                .map { $0.label }
+                .filter { !$0.isEmpty }
+            print("PC602_W3_AUDIO_STARTUP_WAIT_\(attempt): \(visible)")
         }
+        XCTFail("Original W3 campaign button missing after 360 seconds of " +
+                "real source audio preparation; inspect logged loading " +
+                "screen statuses and the simulator process logs")
     }
 
     func testRealCampaignToOrbitHUDAtlasAndReturn() {
@@ -39,8 +51,9 @@ final class PC602HomeOrbitUITests: XCTestCase {
         app.launchEnvironment["ASTEROIDY_W3_MENU_VERIFY"] = "1"
         app.launch()
 
+        waitForActualW3Menu(app)
         let campaign = app.buttons["w3-home-2"]
-        require(campaign, "Original W3 campaign entry missing", timeout: 90)
+        require(campaign, "Original W3 campaign entry missing")
         campaign.tap()
 
         let enterOrbit = app.buttons["campaign-enter-original-orbit291"]
@@ -54,8 +67,8 @@ final class PC602HomeOrbitUITests: XCTestCase {
                 timeout: 90)
         require(byID(app, "pc602-orbit-live-touch-hud"),
                 "Source H290 active touch HUD missing")
-        XCTAssertFalse(byID(app, "pc602-orbit-return-w3").exists == false,
-                       "Orbital W3 return control missing")
+        require(app.buttons["pc602-orbit-return-w3"],
+                "Orbital W3 return control missing")
 
         // The captured image comes from THIS installed simulator build, not
         // a concept/mock-up or a screenshot of a different application.
