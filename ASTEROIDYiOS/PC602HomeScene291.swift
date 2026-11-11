@@ -112,8 +112,7 @@ struct PC602HomeScene291: UIViewRepresentable {
                 var glowPower:Float=1.8
             }
             private struct Lighting {
-                var eyeWorld:SIMD4<Float>
-                var sourceKeyWorld:SIMD4<Float>
+                var sourceKeyEye:SIMD4<Float>
                 var smooth65:UInt32=0
                 var padding0:Float=0
                 var padding1:Float=0
@@ -153,14 +152,15 @@ struct PC602HomeScene291: UIViewRepresentable {
                 // Windows GpuNewHome290: planetPush();shipScale(100,100,100).
                 // The 24.8 MB original triangle stream is NEVER rebuilt.
                 let model=simd_float4x4(diagonal:SIMD4(100,100,100,1))
+                // OpenGL gl_NormalMatrix and the specular view vector use
+                // MODEL-VIEW coordinates (not untransformed world space).
+                let modelView=viewMatrix*model
                 var uniforms=Uniforms(
-                    mvp:projection*viewMatrix*model,model:model,
+                    mvp:projection*modelView,model:modelView,
                     glowPower:lava287.intensity)
-                // GpuShip.FighterLight(false) keyPosition=(-.6,.8,1.4,0);
-                // light was specified in world units before GL model draw.
-                var light=Lighting(
-                    eyeWorld:SIMD4(frame.eye.x,frame.eye.y,frame.eye.z,1),
-                    sourceKeyWorld:SIMD4(-0.6,0.8,1.4,0))
+                // GpuShip.FighterLight(false) runs with OrbitWorld50.View
+                // active; GL_LIGHT0 is therefore EYE-space, as in PC602.
+                var light=Lighting(sourceKeyEye:SIMD4(-0.6,0.8,1.4,0))
                 renderPass.colorAttachments[0].loadAction = .clear
                 renderPass.colorAttachments[0].clearColor =
                     MTLClearColor(red:0.012,green:0.021,blue:0.04,alpha:1)
