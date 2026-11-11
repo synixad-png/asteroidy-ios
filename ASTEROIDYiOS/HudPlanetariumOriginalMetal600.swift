@@ -327,11 +327,14 @@ final class HudPlanetariumOriginal600 {
         }
         capsuleNodes=nodeGroups
         capsuleExtents=bounds
-        flashNodes=try ["DAMAGE_HULL_FLASH_SOCKET","DAMAGE_ARMOR_FLASH_SOCKET",
-                         "DAMAGE_SHIELD_FLASH_SOCKET"].map{name in
-            guard let idx=nodes.firstIndex(where:{$0.name==name}) else {
-                throw Failure.unsupportedSource
-            }
+        // Resolve against the already-parsed local glTF JSON. Capturing
+        // self.nodes here is invalid before every stored property is set.
+        let sockets=["DAMAGE_HULL_FLASH_SOCKET","DAMAGE_ARMOR_FLASH_SOCKET",
+                     "DAMAGE_SHIELD_FLASH_SOCKET"]
+        flashNodes=try sockets.map{name in
+            guard let idx=nodeRecords.firstIndex(where:{
+                ($0["name"] as? String)==name
+            }) else{throw Failure.unsupportedSource}
             return idx
         }
         let rendered=nodes.filter{$0.mesh != nil}.count
