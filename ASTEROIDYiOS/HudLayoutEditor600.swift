@@ -188,7 +188,9 @@ struct HudLayoutEditor600:View {
                         compact:viewport.height<550,scale:control.scale)
                     controlNumber("PRZESUNIĘCIE X",\.x,limits:limits.x,step:0.5)
                     controlNumber("PRZESUNIĘCIE Y",\.y,limits:limits.y,step:0.5)
-                    controlNumber("WIELKOŚĆ",\.scale,limits:0.65...3.5,step:0.05)
+                    controlNumber("WIELKOŚĆ",\.scale,
+                                  limits:HudControlLayout600.scaleRange(for:control.id),
+                                  step:0.05)
                     Button("PRZYWRÓĆ TEN PRZYCISK") {
                         if let original=HudControlLayout600.defaults()
                             .control(control.id) {
