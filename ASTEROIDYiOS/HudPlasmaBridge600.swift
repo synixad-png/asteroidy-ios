@@ -44,6 +44,24 @@ enum HudPlasmaBridge600 {
         ("armor.bar",3.18,0,0),
         ("shield.bar",3.18,-1.28,0)
     ]
+    // Approved PC v602 F6 bar geometry has hull.bar at the LOWER row
+    // (Y=654.6442) and shield.bar at the UPPER row (Y=577.9584),
+    // while the original GLB's HULL socket is upper and SHIELD lower.
+    // Visible labels and resource values stay HULL / ARMOR / SHIELD from
+    // top to bottom. Connect by the physical DISPLAY ROW, not by the
+    // inverted F6 geometry IDs, so red and green do not cross.
+    //
+    // This affects ONLY the plasma's terminal coordinate lookup:
+    // source energy/color, GLB socket, saved F6 JSON and other HUD
+    // widgets are unchanged.
+    static func terminalWidgetID(for sourceID:String)->String? {
+        switch sourceID {
+        case "hull.bar": return "shield.bar"
+        case "armor.bar": return "armor.bar"
+        case "shield.bar": return "hull.bar"
+        default: return nil
+        }
+    }
     private static let width=148.0
     private static let sourceX=192.0
 
@@ -52,8 +70,9 @@ enum HudPlasmaBridge600 {
                         viewport:CombatHUDViewport568,
                         fill:Double)->Segment? {
         guard let spec=sockets.first(where:{$0.id==id}),
+              let terminalID=terminalWidgetID(for:id),
               let widget=layout.widget("hud.planetarium"),widget.visible,
-              let bar=layout.widget(id),bar.visible,
+              let bar=layout.widget(terminalID),bar.visible,
               bar.scale>0,bar.scale.isFinite,
               fill.isFinite,fill>0,
               let dims=HudWidgetGeometry600.size(widget.id),
@@ -94,7 +113,7 @@ enum HudPlasmaBridge600 {
         let logicalX=bar.x+bar.scale*(1+litLength)
         let logicalY=bar.y+bar.scale*4.5
         let corrected=HudMotionProject600.project(
-            x:logicalX,y:logicalY,pose:pose,widget:id)
+            x:logicalX,y:logicalY,pose:pose,widget:terminalID)
         let end=Point(x:viewport.x(corrected.x,at:.bottomLeft),
                       y:viewport.y(corrected.y,at:.bottomLeft))
         return Segment(start:start,end:end,length:litLength,
