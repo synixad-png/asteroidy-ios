@@ -255,30 +255,30 @@ struct Sector01Scene568: View {
                 // at the new position. The editor blocks actions while open.
                 if session.hud.phase == .playing && !showingService && !userPaused {
                     Button("PAUZA") {pauseMission568()}
-                        .font(.system(size:(compact ? 10:12)*pauseControl.scale,
+                        .font(.system(size:CGFloat((compact ? 10.0:12.0)*pauseControl.scale),
                                       weight:.semibold,design:.monospaced))
                         .foregroundStyle(Color(red:0.85,green:0.88,blue:0.90))
-                        .frame(width:pauseFrame.width,height:pauseFrame.height)
+                        .frame(width:CGFloat(pauseFrame.width),height:CGFloat(pauseFrame.height))
                         .background(Color.black.opacity(0.36),
                                     in:RoundedRectangle(cornerRadius:4))
                         .overlay(RoundedRectangle(cornerRadius:4)
                             .stroke(.cyan.opacity(0.45),lineWidth:1))
                         .contentShape(Rectangle())
-                        .position(x:pauseFrame.centerX,y:pauseFrame.centerY)
+                        .position(x:CGFloat(pauseFrame.centerX),y:CGFloat(pauseFrame.centerY))
                         .accessibilityIdentifier("sector01-pause-button")
 
                     if session.hud.bombs>0 {
                         Button("BOMBA \(session.hud.bombs)") {
                             _=session.useBomb()
                         }
-                        .font(.system(size:(compact ? 10:12)*bombControl.scale,
+                        .font(.system(size:CGFloat((compact ? 10.0:12.0)*bombControl.scale),
                                       weight:.bold,design:.monospaced))
                         .foregroundStyle(.white)
-                        .frame(width:bombFrame.width,height:bombFrame.height)
+                        .frame(width:CGFloat(bombFrame.width),height:CGFloat(bombFrame.height))
                         .background(Color.red.opacity(0.75),
                                     in:RoundedRectangle(cornerRadius:5))
                         .contentShape(Rectangle())
-                        .position(x:bombFrame.centerX,y:bombFrame.centerY)
+                        .position(x:CGFloat(bombFrame.centerX),y:CGFloat(bombFrame.centerY))
                         .accessibilityIdentifier("sector01-active-bomb-button")
                     }
 
@@ -286,18 +286,18 @@ struct Sector01Scene568: View {
                     // rectangle must receive both touch-down and release.
                     if let energy=session.hud.tarczaEnergy,energy>0 {
                         Text("TARCZA \(energy)/100")
-                            .font(.system(size:(compact ? 10:12)*shieldControl.scale,
+                            .font(.system(size:CGFloat((compact ? 10.0:12.0)*shieldControl.scale),
                                           weight:.bold,design:.monospaced))
                             .foregroundStyle(.white)
-                            .frame(width:shieldFrame.width,
-                                   height:shieldFrame.height)
+                            .frame(width:CGFloat(shieldFrame.width),
+                                   height:CGFloat(shieldFrame.height))
                             .background(Color.cyan.opacity(0.55),
                                         in:RoundedRectangle(cornerRadius:5))
                             .contentShape(Rectangle())
                             .gesture(DragGesture(minimumDistance:0)
                                 .onChanged {_ in session.holdShield145(true)}
                                 .onEnded {_ in session.holdShield145(false)})
-                            .position(x:shieldFrame.centerX,y:shieldFrame.centerY)
+                            .position(x:CGFloat(shieldFrame.centerX),y:CGFloat(shieldFrame.centerY))
                             .accessibilityLabel("Przytrzymaj: tarcza energetyczna")
                             .accessibilityIdentifier("sector01-active-tarcza145-hold")
                     }
@@ -305,14 +305,14 @@ struct Sector01Scene568: View {
                         Button("DOPALACZ \(session.hud.boostCharges)/3") {
                             _=session.useBoost71()
                         }
-                        .font(.system(size:(compact ? 10:12)*boostControl.scale,
+                        .font(.system(size:CGFloat((compact ? 10.0:12.0)*boostControl.scale),
                                       weight:.bold,design:.monospaced))
                         .foregroundStyle(.white)
-                        .frame(width:boostFrame.width,height:boostFrame.height)
+                        .frame(width:CGFloat(boostFrame.width),height:CGFloat(boostFrame.height))
                         .background(Color.blue.opacity(0.65),
                                     in:RoundedRectangle(cornerRadius:5))
                         .contentShape(Rectangle())
-                        .position(x:boostFrame.centerX,y:boostFrame.centerY)
+                        .position(x:CGFloat(boostFrame.centerX),y:CGFloat(boostFrame.centerY))
                         .accessibilityIdentifier("sector01-active-boost71-button")
                     }
                 }
@@ -447,15 +447,15 @@ struct Sector01Scene568: View {
                             showingMissionSettings568=true
                         }
                         .frame(maxWidth:.infinity)
-                        .padding((compact ? 9:13) *
-                            (hudControlLayout600.control("control.options")?.scale ?? 1))
+                        .padding(CGFloat((compact ? 9.0:13.0) *
+                            (hudControlLayout600.control("control.options")?.scale ?? 1)))
                         .background(Color(red:0.05,green:0.15,blue:0.22),
                                     in:RoundedRectangle(cornerRadius:5))
                         .foregroundStyle(.cyan)
                         .scaleEffect(hudControlLayout600.control("control.options")?.scale ?? 1)
                         .offset(
-                            x:(hudControlLayout600.control("control.options")?.x ?? 0)*combatHUDLayout.scale,
-                            y:(hudControlLayout600.control("control.options")?.y ?? 0)*combatHUDLayout.scale)
+                            x:CGFloat((hudControlLayout600.control("control.options")?.x ?? 0)*combatHUDLayout.scale),
+                            y:CGFloat((hudControlLayout600.control("control.options")?.y ?? 0)*combatHUDLayout.scale))
                         .accessibilityIdentifier("sector01-open-mission-settings")
                         Button("KONTYNUUJ") {resumeMission568()}
                             .frame(maxWidth:.infinity)
