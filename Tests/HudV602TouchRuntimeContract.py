@@ -113,7 +113,9 @@ assert 'let roll=simd_float4x4(simd_quatf(' in metal
 assert 'ribbonTriangles(_ points:[HudEnergy600.Point])->Path' in plasma
 assert 'triangle(points[i],points[i+1],points[last-i])' in plasma
 assert 'triangle(points[i+1],points[last-i-1],points[last-i])' in plasma
-assert 'c.fill(ribbonTriangles(vertices)' in plasma
+assert 'c.fill(ribbonTriangles(bridge == nil ? vertices :' in plasma
+assert 'HudPlasmaBridge600.segment(' in plasma
+assert 'Self.draw(graphics,current:values[i]' in plasma
 assert 'return top+Array(bottom.reversed())' not in energy
 # F6 editor must leave BOTH touch zones inactive on a paused real-world canvas.
 assert '.allowsHitTesting(!showingHudEditor600)' in scene
