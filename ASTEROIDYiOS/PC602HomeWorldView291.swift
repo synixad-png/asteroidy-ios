@@ -72,8 +72,7 @@ struct PC602HomeWorldView291 {
         let delta=point-eye
         for k in 1..<22 {
             let sample=eye+delta*(Float(k)/22)
-            let distance=sqrt(sample.x*sample.x+sample.y*sample.y+
-                              sample.z*sample.z)
+            let distance=sqrt(sample.x * sample.x + sample.y * sample.y + sample.z * sample.z)
             guard let terrain=home.surface(sample) else{return false}
             if distance<terrain+0.6 {return false}
         }
