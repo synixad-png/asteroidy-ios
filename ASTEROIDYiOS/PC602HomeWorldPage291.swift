@@ -20,7 +20,8 @@ struct PC602HomeWorldPage291:View {
             ZStack {
                 Color(red:0.008,green:0.018,blue:0.03).ignoresSafeArea()
                 if driver.presentingH55 {
-                    H55ScenePage580(dismiss:{driver.exitH55()})
+                    H55ScenePage580(dismiss:{driver.exitH55()},
+                                    exitTitle:"POWRÓT NA ORBITĘ")
                         .ignoresSafeArea()
                         .accessibilityIdentifier("pc602-real-h55-from-orbit")
                 } else if let flight=driver.readFlight() {
