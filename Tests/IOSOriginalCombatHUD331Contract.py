@@ -137,8 +137,14 @@ expect_all(scene,(
     "safeRight:missionSafeInsets568.right",
     "safeTop:missionSafeInsets568.top",
     "safeBottom:missionSafeInsets568.bottom",
-    "combatHUDLayout.pauseCenterX",
-    "combatHUDLayout.pauseCenterY",
+    "HudControlLayout600.frame(",
+    "hudControlLayout600.control(",
+    "pauseFrame.centerX",
+    "pauseFrame.centerY",
+    "shieldFrame.centerX",
+    "shieldFrame.centerY",
+    "boostFrame.centerX",
+    "boostFrame.centerY",
     ".ignoresSafeArea()",
 ),"scene integration")
 for old in (
