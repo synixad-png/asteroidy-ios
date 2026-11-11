@@ -10,10 +10,8 @@ import simd
 final class SourceHomeShots292 {
     enum SourceError:Error {case pipeline,buffer}
     private static let maxBullets=145
-    private static let maxVertices=Self.maxBullets *
-        PC602HomeShotGeometry292.verticesPerShot
-    private static let byteCount=Self.maxVertices *
-        PC602HomeShotGeometry292.floatsPerVertex*MemoryLayout<Float>.size
+    private static let maxVertices = Self.maxBullets * PC602HomeShotGeometry292.verticesPerShot
+    private static let byteCount = Self.maxVertices * PC602HomeShotGeometry292.floatsPerVertex * MemoryLayout<Float>.size
     private let pipeline:MTLRenderPipelineState
     private let depth:MTLDepthStencilState
     private let vertices:[MTLBuffer]
@@ -52,8 +50,7 @@ final class SourceHomeShots292 {
             allocated.append(buffer)
         }
         vertices=allocated
-        scratch.reserveCapacity(Self.maxVertices *
-            PC602HomeShotGeometry292.floatsPerVertex)
+        scratch.reserveCapacity(Self.maxVertices * PC602HomeShotGeometry292.floatsPerVertex)
     }
 
     /// Renders exactly the source-owned projectiles, never claims a
