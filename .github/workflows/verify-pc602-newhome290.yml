@@ -1,0 +1,63 @@
+name: PC602 NewHome290 - exact source terrain and atlas tests
+
+on:
+  push:
+    branches:
+      - feature/ios-pc602-newhome-world-source
+    paths:
+      - .github/workflows/verify-pc602-newhome290.yml
+      - Tools/stage_pc602_newhome290.py
+      - ASTEROIDYiOS/PC602NewHome290.swift
+      - Tests/PC602NewHome290Tests.swift
+  pull_request:
+    paths:
+      - .github/workflows/verify-pc602-newhome290.yml
+      - Tools/stage_pc602_newhome290.py
+      - ASTEROIDYiOS/PC602NewHome290.swift
+      - Tests/PC602NewHome290Tests.swift
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-v602-h290:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate exact GitHub source archives and extract PC602 surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
+          shasum -a 256 ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+          python3 - <<'PY'
+          import hashlib, pathlib
+          base=pathlib.Path("ASTEROIDYiOS/Assets")
+          expected={
+            "W3HomePlanet290OriginalGPU.bin":"e93a0bbafc9bb50a25726a828ada81f36675bf88d802c5a8f985b89b6dc96c1b",
+            "W3HomePlanet290Base.dat":"4987f35cd6f021fd98794f406c641f4853c538a82b10625e6b79e860c8a787c0",
+            "W3HomePlanet293Glow.dat":"6f1debd175f52b7ce1fbc687e9977597335ee432858d7d6d6e47cf66b5f9aa39",
+            "PC602Home290HeightMap.bin":"12d56a99634e4fc28ded9e03bcac34de05020750cc18e86d1086db8542b2d18d",
+          }
+          for name,digest in expected.items():
+              path=base/name
+              assert path.exists() and hashlib.sha256(path.read_bytes()).hexdigest()==digest,name
+          print("PASS: all four v602 runtime assets independently SHA-checked in GitHub CI")
+          PY
+      - name: Compile and execute exact H290 surface and 26-beacon math
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602NewHome290Tests.swift /tmp/main.swift
+          xcrun swiftc ASTEROIDYiOS/PC602NewHome290.swift /tmp/main.swift -o /tmp/pc602-newhome-tests
+          /tmp/pc602-newhome-tests ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+      - name: Document scope accurately (no fake gameplay acceptance)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f ASTEROIDYiOS/PC602NewHome290.swift
+          test -f ASTEROIDYiOS/W3HomePlanetMetal568.swift
+          echo "PASS: PC602 planet geometry, height and atlas verified."
+          echo "NOT TESTED: active HomeFlight291, 820-asteroid belt, wreck mesh, docking, 3D world camera, full iOS scene, iPhone/iPad."
