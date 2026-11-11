@@ -337,7 +337,7 @@ private struct OrbitTouchStick291:View {
                                     y:Float(dy*fraction/(r*0.85))))
                     }
                     .onEnded {_ in
-                        movement=.zero
+                        movement = .zero
                         onMove(Vec2(x:0,y:0))
                     })
             }

@@ -61,9 +61,13 @@ assert "elapsed<=0.15" in world
 assert "func frame(dt:TimeInterval)->PC602HomeFlight291?" in driver
 assert "lastUIUpdate>=0.125" in driver
 assert "NSLock()" in driver
+# Full-line documentation comments must not trigger this real-code gate.
+# Check that the driver does not CREATE another timer/executor.
+executable_driver = "\n".join(line for line in driver.splitlines()
+    if not line.lstrip().startswith("//"))
 for name in ("CADisplayLink","Timer.scheduledTimer","TimelineView",
              "DispatchQueue.main.asyncAfter","Task.detached"):
-    assert name not in driver, name
+    assert name not in executable_driver, name
 assert "SourceKeyboardCapture586" in page
 assert "OrbitTouchStick291(title:\"LOT / RUCH\"" in page
 assert 'title:"CELOWANIE"' in page

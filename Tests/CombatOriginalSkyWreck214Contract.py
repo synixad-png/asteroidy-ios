@@ -72,7 +72,8 @@ for token in (
 ):
     assert token in wreck,token
 for token in (
-    'let debris=112',
+    'func drawSourceWreck214(seed:Int,debris:Int=112,trail:Float=118)',
+    'builder.drawSourceWreck214(seed:sector+214)',
     'drawSourceWreck214(seed:sector+214)',
     'box(19.2,cos(angle)*3.9,sin(angle)*3.5,',
     'panelGrid(-46,0,0,1.8,17.5,13,1,5',

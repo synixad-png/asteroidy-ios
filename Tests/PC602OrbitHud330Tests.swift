@@ -22,8 +22,8 @@ for level in 1...26 {
     guard let beacon=home.beacon(level) else {
         fatalError("All original 26 authored NewHome290 beacons must exist")
     }
-    let raw=beacon/sqrt(beacon.x*beacon.x+
-                        beacon.y*beacon.y+beacon.z*beacon.z)
+    let radius=sqrt(beacon.x*beacon.x+beacon.y*beacon.y+beacon.z*beacon.z)
+    let raw=beacon/radius
     var phi=atan2(raw.z,raw.x)
     if phi<0 {phi+=2*Float.pi}
     let row=raw.y>1/3 ? 1:raw.y < -1/3 ? 2:0
