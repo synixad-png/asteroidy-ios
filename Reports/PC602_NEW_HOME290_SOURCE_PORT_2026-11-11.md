@@ -33,7 +33,7 @@ Oryginalne źródła `home290.mesh.gz` (`025a3ad6...`), `home290.texture.jpg` (`
 
 ## NIEUKOŃCZONE — nie deklarować dostępności planety w grze
 
-- Aktywne źródłowe `HomeFlight291`, w tym `DirectMotion298`, `DirectFlight67`, `MoveShip67`, `UpdateSphereCamera67`, sterowanie, fizyka bezwładności, parametry statków, prawdziwy lot na sferze i bezkolizyjność;
+- Runtime aktywnego świata i jego interaktywny ekran: implementacja `PC602HomeFlight291.swift` istnieje i ma testy autonomicznej fizyki, ale nie jest jeszcze połączona z rzeczywistym trybem gry; oryginalny `Ram71` i kolizje pasa pozostają niewdrożone;
 - natywne Metal `HomeScene291` dla pełnego świata, nie mylić z działającym W3 podglądem planety;
 - 820 asteroid oryginalnego pasa (wraz z fizyką), wrak i jego źródłowa geometria, oświetlenie pocisków, statek/strzały w trybie niebojowym;
 - prawdziwe aktywne markery 26 sektorów, wybór/odblokowania i lot do misji;
@@ -43,6 +43,17 @@ Oryginalne źródła `home290.mesh.gz` (`025a3ad6...`), `home290.texture.jpg` (`
 
 Nie wolno podmieniać przycisku NOWA GRA, dopóki kompletna ścieżka źródłowego lotu, misji i hangaru nie jest gotowa. Poprzednie źródłowe mechanizmy W3/H55/C279/HUD są na bazowej gałęzi nienaruszone.
 
+## Etap 2 — HomeFlight291, zweryfikowana fizyka i kamera
+
+- Nowy `ASTEROIDYiOS/PC602HomeFlight291.swift`: źródłowe `EnterOrbit50(reset:true)` + `InitializeHomeFlight291`, `StepHomeFlight291`, `DirectFlight67`, `MoveShip67`, `UpdateSphereCamera67` z użyciem istniejącego `Sphere67`, `SphereFlight67` i `FlightDynamics556` (bez drugiego silnika ruchu).
+- Przeniesiono oryginalne parametry wszystkich sześciu statków z `Campaign37.cs` i `Physics68.cs`, wraz z silnikami, stabilizatorami i rangą dysz, masą, czasami reakcji, różnymi czasami roll/pitch dla TITAN/MAMMOTH oraz ograniczeniem skrętu VANGUARD X.
+- Rozróżniono stan sterowania, blokadę kierunku prawego drążka po jego puszczeniu, przerwanie tej blokady klawiaturą, 12 m nad rzeczywistą siatką, bezwładność po puszczeniu gazu, obliczenie dystansu do hangaru i stref misji.
+- Rozszerzono tylko konfigurację już istniejącego `FlightDynamics556`: nowe pola mają domyślne wartości identyczne z dotychczasową ścieżką iOS. Nie zmieniono `CarbonisCombat568.swift`, `W3MainMenu568.swift`, `App.swift`, `H55ScenePage580.swift` ani misji.
+- Nowy `ASTEROIDYiOS/PC602HomeWorldView291.swift`: oryginalna macierz `OrbitWorld50.View` dla kamery 400 m, perspektywa źródła `.4/1600` z adaptacją depth OpenGL→Metal, prawdziwa kontrola zasłonięcia beaconów przez geometrię H290 (21 próbek), format 16:9 i 4:3.
+- `Tests/PC602HomeFlight291Tests.swift` kompiluje rzeczywiste źródłowe `Sphere67.swift`, `FlightDynamics556.swift` i `PC602HomeFlight291.swift` ze strukturą `Vec2` pobraną bez zmiany z `GameCore.swift`. Sprawdza 6 mas/prędkości, czas reakcji, ekranowe wejście sterowania, wysokość nad autentycznym H290, kamerę, geodezję, latanie bez napędu, 26 sektorów i Aim latch.
+- Test podstawowej mechaniki HomeFlight z realnym kompilatorem Swift/macOS: PASS https://github.com/synixad-png/asteroidy-ios/actions/runs/43064119991.
+- Testy rozszerzonej kamery i zasłaniania beaconów: do potwierdzenia osobno, zgodnie ze stanem CI.
+
 ## Następna implementacja
 
-Przenieść dokładny `HomeFlight291` i współdzielony `Sphere67`/attitude z PC v602 na istniejące sprawdzone iOS typy (bez równoległej fizyki), następnie rzeczywisty renderer `HomeScene291`, pas/wrak, nawigację i dock. Testować niezależnymi golden-traces PC→Swift na tych samych danych i iOS ARM64 przed wpięciem menu. Nie podnosić procentu "pełnej planety" za sam source-import.
+Doprowadzić dedykowany natywny renderer `HomeScene291` do użycia oryginalnej GLB H290 (100% siatki), zgodnego oświetlenia PC602 i wspólnej fizyki, następnie oryginalny pas 820 asteroid, statek, wrak, nawigację i dock. Testować niezależnymi golden-traces PC→Swift na tych samych danych i iOS ARM64 przed wpięciem menu. Nie podnosić procentu "pełnej planety" za sam source-import.
