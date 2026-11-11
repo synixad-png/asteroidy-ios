@@ -109,7 +109,6 @@ assert "runStart+runCount==stone.firstVertex" in world
 assert "vertexStart:runStart,vertexCount:runCount" in world
 assert 'name:"pc602Belt51Vertex"' in world
 assert 'name:"pc602Belt51Fragment"' in world
-assert "const uint" not in belt_shader or "id*10u" in belt_shader
 assert "uint offset=id*10u;" in belt_shader
 assert "float band=0.25f+0.33f*smoothstep(0.30f,0.32f,d)" in belt_shader
 assert "float3 view=normalize(-in.eyePosition);" in belt_shader
