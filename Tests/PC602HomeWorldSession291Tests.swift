@@ -16,7 +16,8 @@ assert(session.steppedFrames==0)
 assert(!session.paused)
 
 let empty=SourceControls586.Snapshot()
-assert(try !session.advance(snapshot:empty,dt:0))
+let zeroAdvance=try session.advance(snapshot:empty,dt:0)
+assert(!zeroAdvance)
 assert(session.steppedFrames==0)
 do {
     _=try session.advance(snapshot:empty,dt:Float.nan)
@@ -25,19 +26,22 @@ do {
 
 // Use canonical existing PC586 keyboard mapping, not hardcoded read in
 // session. PC v602 DirectFlight67 has no false motion when input is empty.
-assert(try session.advance(snapshot:.init(keys:[87]),dt:1/60))
+let initialMove=try session.advance(snapshot:.init(keys:[87]),dt:1/60)
+assert(initialMove)
 assert(session.steppedFrames==1)
 assert(session.flight.orbitSpeed>0)
 assert(session.flight.orbitTime>0)
 let previous=session.flight.orbitTime
 session.setPaused(true)
 assert(!session.requestDock(context:.init(planetHub:true,orbitMode:true)))
-assert(try !session.advance(snapshot:.init(keys:[87]),dt:1/60))
+let whilePaused=try session.advance(snapshot:.init(keys:[87]),dt:1/60)
+assert(!whilePaused)
 assert(session.flight.orbitTime==previous)
 assert(session.steppedFrames==1)
 assert(session.canEnterAuthoredMissionArea==0)
 session.setPaused(false)
-assert(try session.advance(snapshot:empty,dt:1/60))
+let afterPause=try session.advance(snapshot:empty,dt:1/60)
+assert(afterPause)
 assert(session.steppedFrames==2)
 assert(session.flight.orbitTime>previous)
 
@@ -48,7 +52,8 @@ revised.keys[2]=84
 session.adoptControls(revised)
 assert(session.controls.keys[2]==84)
 assert(profile.keys[2]==87)
-assert(try session.advance(snapshot:.init(keys:[84]),dt:1/60))
+let reboundMove=try session.advance(snapshot:.init(keys:[84]),dt:1/60)
+assert(reboundMove)
 assert(session.flight.thrusting)
 assert(session.steppedFrames==3)
 
