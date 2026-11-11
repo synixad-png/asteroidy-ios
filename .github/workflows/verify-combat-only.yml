@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - '.github/workflows/verify-combat-only.yml'
+      - 'Tests/IOSInterruptedTouchSourceContract.py'
+      - 'ASTEROIDYiOS/App.swift'
+      - 'ASTEROIDYiOS/PC602HomeWorldPage291.swift'
+      - 'ASTEROIDYiOS/PC602HomeWorldDriver291.swift'
       - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
       - 'ASTEROIDYiOS/GameCore.swift'
       - 'ASTEROIDYiOS/SphereSector556.swift'
