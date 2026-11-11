@@ -6,6 +6,9 @@ on:
     paths:
       - .github/workflows/verify-pc602-wreck-dock209.yml
       - ASTEROIDYiOS/PC602WreckDebris209.swift
+      - ASTEROIDYiOS/ResearchWreckGeometry214.swift
+      - ASTEROIDYiOS/SourceHomeWreck209.swift
+      - Tests/PC602OrbitWreck211Tests.swift
       - ASTEROIDYiOS/PC602HomeHubRoute90.swift
       - ASTEROIDYiOS/PC602HomeFlight291.swift
       - ASTEROIDYiOS/PC602NewHome290.swift
@@ -14,6 +17,9 @@ on:
     paths:
       - .github/workflows/verify-pc602-wreck-dock209.yml
       - ASTEROIDYiOS/PC602WreckDebris209.swift
+      - ASTEROIDYiOS/ResearchWreckGeometry214.swift
+      - ASTEROIDYiOS/SourceHomeWreck209.swift
+      - Tests/PC602OrbitWreck211Tests.swift
       - ASTEROIDYiOS/PC602HomeHubRoute90.swift
       - Tests/PC602WreckDock209Tests.swift
   workflow_dispatch:
@@ -70,6 +76,14 @@ jobs:
             /tmp/main.swift -o /tmp/pc602-wreck-dock-source-test
           /tmp/pc602-wreck-dock-source-test \
             ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+      - name: Run actual original complete 3D wreck source golden Swift tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602OrbitWreck211Tests.swift /tmp/main.swift
+          swiftc -Onone ASTEROIDYiOS/ResearchWreckGeometry214.swift \
+            /tmp/main.swift -o /tmp/pc602-full-original-wreck-test
+          /tmp/pc602-full-original-wreck-test
       - name: Assert routing does not change active W3 and H55 scene
         shell: bash
         run: |
