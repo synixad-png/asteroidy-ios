@@ -15,6 +15,8 @@ on:
       - ASTEROIDYiOS/PC602HomeFlightInput291.swift
       - ASTEROIDYiOS/SourceControls586.swift
       - Tests/PC602HomeFlightInput291Tests.swift
+      - ASTEROIDYiOS/PC602HomeWorldSession291.swift
+      - Tests/PC602HomeWorldSession291Tests.swift
       - ASTEROIDYiOS/PC602HomeHubRoute90.swift
       - ASTEROIDYiOS/PC602HomeFlight291.swift
       - ASTEROIDYiOS/PC602NewHome290.swift
@@ -32,6 +34,8 @@ on:
       - ASTEROIDYiOS/PC602HomeFlightInput291.swift
       - ASTEROIDYiOS/SourceControls586.swift
       - Tests/PC602HomeFlightInput291Tests.swift
+      - ASTEROIDYiOS/PC602HomeWorldSession291.swift
+      - Tests/PC602HomeWorldSession291Tests.swift
       - ASTEROIDYiOS/PC602HomeHubRoute90.swift
       - Tests/PC602WreckDock209Tests.swift
   workflow_dispatch:
@@ -132,6 +136,24 @@ jobs:
             ASTEROIDYiOS/PC602HomeFlightInput291.swift \
             /tmp/main.swift -o /tmp/pc602-orbit-saved-controls
           /tmp/pc602-orbit-saved-controls
+      - name: Compile source world state coordination (flight-controls-missions-H55)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602HomeWorldSession291Tests.swift /tmp/main.swift
+          swiftc -Onone \
+            /tmp/PC602ActualGameVec2.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602HomeFlight291.swift \
+            ASTEROIDYiOS/PC602HomeHubRoute90.swift \
+            ASTEROIDYiOS/SourceControls586.swift \
+            ASTEROIDYiOS/PC602HomeFlightInput291.swift \
+            ASTEROIDYiOS/PC602HomeWorldSession291.swift \
+            /tmp/main.swift -o /tmp/pc602-original-home-session
+          /tmp/pc602-original-home-session \
+            ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
       - name: Run actual original complete 3D wreck source golden Swift tests
         shell: bash
         run: |
