@@ -21,7 +21,12 @@ struct HudPlasmaLayer600:View {
     let livePose:()->HudMotion600.Pose
     let liveTime:()->Double
 
-    private static let names=["hull.bar","armor.bar","shield.bar"]
+    // The approved F6 JSON stores hull.bar on the bottom row and
+    // shield.bar on the top row. Assign resource COLOURS/VALUES by the
+    // actual display row instead: red hull top, amber armor centre,
+    // green shield bottom. No saved widget coordinates are modified.
+    // Each bar is drawn independently through its existing F6 context.
+    private static let displayBars=["shield.bar","armor.bar","hull.bar"]
     // Literal ARGB from RendererHudEnergy.cs.GaugeTint.
     private static let tints:[[Color]]=[
         [ink(18,255,32,23),ink(46,255,41,24),ink(128,231,20,11),
@@ -103,22 +108,12 @@ struct HudPlasmaLayer600:View {
                 let maxima=[gauge.maxHull,gauge.maxArmor,100]
                 for i in 0..<3 {
                     let y=CGFloat(565+48*i)
-                    // Full-screen dual endpoint: original glTF damage
-                    // socket at the left, active plasma terminal on the
-                    // saved F6 bar at the right. Both inherit one live pose.
-                    let fraction=HudEnergy600.fraction(
-                        values[i],maximum:maxima[i])
-                    if let bridge=HudPlasmaBridge600.segment(
-                        id:Self.names[i],layout:layout,pose:pose,
-                        viewport:screen,fill:fraction) {
-                        Self.draw(graphics,current:values[i],
-                                  maximum:maxima[i],x:191,y:0,
-                                  style:i,time:time,bridge:bridge)
-                    } else if let bar=SourceCombatHUD331.widgetContext(
-                        bottom,layout,pose:pose,id:Self.names[i],
+                    // No plasma-to-planetarium attachment or shared
+                    // endpoints. Every glowing bar follows only the F6
+                    // widget at its visible row, including touch edits.
+                    if let bar=SourceCombatHUD331.widgetContext(
+                        bottom,layout,pose:pose,id:Self.displayBars[i],
                         baseX:191,baseY:y+19) {
-                        // Original source behavior remains the fallback
-                        // when the planetarium is hidden or not available.
                         Self.draw(bar,current:values[i],maximum:maxima[i],
                                   x:191,y:y+19,style:i,time:time)
                     }
@@ -136,17 +131,7 @@ struct HudPlasmaLayer600:View {
     /// The dark guide and both rails are in SourceCombatHUD331, so they
     /// are not redrawn at 60 Hz. No guessing at game resource values.
     private static func draw(_ c:GraphicsContext,current:Int?,maximum:Int,
-                             x:CGFloat,y:CGFloat,style:Int,time:Double,
-                             bridge:HudPlasmaBridge600.Segment?=nil) {
-        func mapped(_ point:HudEnergy600.Point)->HudEnergy600.Point {
-            guard let bridge else{return point}
-            let value=bridge.project(point)
-            return HudEnergy600.Point(x:value.x,y:value.y)
-        }
-        func mapped(_ x:Double,_ y:Double)->CGPoint {
-            let pt=mapped(HudEnergy600.Point(x:x,y:y))
-            return CGPoint(x:pt.x,y:pt.y)
-        }
+                             x:CGFloat,y:CGFloat,style:Int,time:Double) {
         let fraction=HudEnergy600.fraction(current,maximum:maximum)
         let width=148.0
         let left=Double(x)+1
@@ -158,9 +143,7 @@ struct HudPlasmaLayer600:View {
                 x:left,y:barY,width:width-2,length:length,
                 time:time,style:style,layer:layer)
             guard !vertices.isEmpty else{continue}
-            c.fill(ribbonTriangles(bridge == nil ? vertices :
-                    vertices.map{mapped($0)}),
-                   with:.color(tints[style][layer]))
+            c.fill(ribbonTriangles(vertices),with:.color(tints[style][layer]))
         }
         // Source has no regular particle grid; these independent flame
         // tongues have quasi-periodic, non-axial drift on both edges.
@@ -179,18 +162,15 @@ struct HudPlasmaLayer600:View {
             let edge=barY+(upper ? -0.3:9.3)
             let tip=edge+(upper ? -reach:reach)
             c.fill(shape([
-                mapped(xx-1.6,edge),
-                mapped(xx+0.8,tip),
-                mapped(xx+4.4,edge+(upper ? 0.4:-0.4))
+                CGPoint(x:xx-1.6,y:edge),
+                CGPoint(x:xx+0.8,y:tip),
+                CGPoint(x:xx+4.4,y:edge+(upper ? 0.4:-0.4))
             ]),with:.color(tints[style][2]))
         }
         // PC RendererHudEnergy.cs: 2.8 x 3.2 alpha-90 terminal.
         let end=left+length
-        let spot=mapped(end,barY+4.5)
-        let size=bridge?.thickness ?? 1
-        c.fill(Path(ellipseIn:CGRect(x:spot.x-1.4*size,
-                                     y:spot.y-1.6*size,
-                                     width:2.8*size,height:3.2*size)),
+        c.fill(Path(ellipseIn:CGRect(x:end-1.65,y:barY+2.9,
+                                     width:2.8,height:3.2)),
                with:.color(terminals[style]))
     }
 }
