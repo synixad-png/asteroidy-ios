@@ -42,8 +42,7 @@ vertex PC602HomePlasmaVertex491 pc602HomePlasmaVertex491(
         // GL_TRIANGLES: (first left, first right, next left),
         // then (next left, first right, next right).
         bool second=corner==2u || corner==3u || corner==5u;
-        bool positive=corner==0u || corner==2u ||
-                      corner==3u || corner==5u;
+        bool positive=corner==0u || corner==2u || corner==3u;
         float t=float(segment+(second?1u:0u))/16.0f;
         float3 origin=(engine==0u?u.engine0:u.engine1).xyz;
         float x=origin.x,ey=origin.y,z=origin.z;
