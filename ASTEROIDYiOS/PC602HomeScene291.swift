@@ -48,6 +48,9 @@ struct PC602HomeScene291: UIViewRepresentable {
             let queue:MTLCommandQueue
             let pipeline:MTLRenderPipelineState
             let beaconPipeline:MTLRenderPipelineState
+            let beltPipeline:MTLRenderPipelineState
+            let belt:PC602OrbitBelt51
+            let beltBuffer:MTLBuffer
             let depth:MTLDepthStencilState
             let beaconDepth:MTLDepthStencilState
             let source:SourceNewHome290MetalAssets
@@ -63,6 +66,18 @@ struct PC602HomeScene291: UIViewRepresentable {
                 self.device=device
                 self.queue=queue
                 source=try SourceNewHome290MetalAssets.shared(device:device)
+                let originalBelt=try PC602OrbitBelt51.load()
+                belt=originalBelt
+                let geometryLength=originalBelt.vertexCount *
+                    PC602OrbitBelt51.vertexStride
+                guard let beltGPU=originalBelt.sourceBytes.withUnsafeBytes({
+                    raw in raw.baseAddress.flatMap { base in
+                        device.makeBuffer(
+                            bytes:base.advanced(by:originalBelt.vertexOffset),
+                            length:geometryLength,options:[])
+                    }
+                }) else {throw SourceError.metal}
+                beltBuffer=beltGPU
                 let library=try device.makeDefaultLibrary(bundle:.main)
                 guard let vertex=library.makeFunction(name:"home291Vertex"),
                       let fragment=library.makeFunction(name:"home291Fragment")
@@ -89,6 +104,17 @@ struct PC602HomeScene291: UIViewRepresentable {
                 markers.colorAttachments[0].sourceAlphaBlendFactor = .one
                 markers.colorAttachments[0].destinationAlphaBlendFactor = .one
                 beaconPipeline=try device.makeRenderPipelineState(descriptor:markers)
+                guard let rockVertex=library.makeFunction(name:"pc602Belt51Vertex"),
+                      let rockFragment=library.makeFunction(name:"pc602Belt51Fragment")
+                else {throw SourceError.metal}
+                let rockDesc=MTLRenderPipelineDescriptor()
+                rockDesc.vertexFunction=rockVertex
+                rockDesc.fragmentFunction=rockFragment
+                rockDesc.colorAttachments[0].pixelFormat = .bgra8Unorm
+                rockDesc.depthAttachmentPixelFormat = .depth32Float
+                rockDesc.colorAttachments[0].isBlendingEnabled=false
+                beltPipeline=try device.makeRenderPipelineState(
+                    descriptor:rockDesc)
                 let depthDescriptor=MTLDepthStencilDescriptor()
                 depthDescriptor.depthCompareFunction = .lessEqual
                 depthDescriptor.isDepthWriteEnabled=true
@@ -111,6 +137,12 @@ struct PC602HomeScene291: UIViewRepresentable {
                 var material:UInt32=0
                 var glowPower:Float=1.8
             }
+            private struct BeltUniforms {
+                var mvp:simd_float4x4
+                var modelView:simd_float4x4
+                var sourceLightEye:SIMD4<Float>
+            }
+
             private struct Lighting {
                 var sourceKeyEye:SIMD4<Float>
                 var smooth65:UInt32=0
@@ -190,6 +222,30 @@ struct PC602HomeScene291: UIViewRepresentable {
                 encoder.drawPrimitives(type:.triangle,
                     vertexStart:SourceNewHome290MetalAssets.terrainVertices,
                     vertexCount:SourceNewHome290MetalAssets.armorVertices)
+
+                // Exact PC602 GpuIntro41.DrawIntroBelt(orbital135:true):
+                // one immutable buffer, original 820 source-defined meshes,
+                // original conservative camera-frustum culling, true 3.2x
+                // world model. No asteroid can be replaced by an impostor.
+                let rockModel=simd_float4x4(
+                    diagonal:SIMD4(3.2,3.2,3.2,1))
+                let rockMV=viewMatrix*rockModel
+                var rockUniform=BeltUniforms(
+                    mvp:projection*rockMV,modelView:rockMV,
+                    sourceLightEye:SIMD4(-0.6,0.8,1.4,0))
+                encoder.setRenderPipelineState(beltPipeline)
+                encoder.setDepthStencilState(depth)
+                encoder.setVertexBuffer(beltBuffer,offset:0,index:0)
+                encoder.setVertexBytes(&rockUniform,
+                    length:MemoryLayout<BeltUniforms>.stride,index:1)
+                encoder.setFragmentBytes(&rockUniform,
+                    length:MemoryLayout<BeltUniforms>.stride,index:1)
+                for stone in belt.stones where
+                    belt.visible(stone,view:frame.view,aspect:aspect) {
+                    encoder.drawPrimitives(type:.triangle,
+                        vertexStart:stone.firstVertex,
+                        vertexCount:stone.vertexCount)
+                }
 
                 // CPU marker geometry changes ONLY when campaign progress or
                 // the chosen destination changes; never rebuild 26 rings
