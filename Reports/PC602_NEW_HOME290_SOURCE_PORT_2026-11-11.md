@@ -34,11 +34,11 @@ Oryginalne źródła `home290.mesh.gz` (`025a3ad6...`), `home290.texture.jpg` (`
 ## NIEUKOŃCZONE — nie deklarować dostępności planety w grze
 
 - Runtime aktywnego świata i jego interaktywny ekran: implementacja `PC602HomeFlight291.swift` istnieje i ma testy autonomicznej fizyki, ale nie jest jeszcze połączona z rzeczywistym trybem gry; oryginalny `Ram71` i kolizje pasa pozostają niewdrożone;
-- natywne Metal `HomeScene291` dla pełnego świata, nie mylić z działającym W3 podglądem planety;
+- `PC602HomeScene291.swift` i shader `.metal` są przygotowane do prawdziwego renderowania H290 w świecie orbitalnym, ale **jeszcze nie są połączone z aktywną grą**; nie ma potwierdzonego renderu GPU z urządzenia ani zweryfikowanego porównania pikseli z PC;
 - 820 asteroid oryginalnego pasa (wraz z fizyką), wrak i jego źródłowa geometria, oświetlenie pocisków, statek/strzały w trybie niebojowym;
-- prawdziwe aktywne markery 26 sektorów, wybór/odblokowania i lot do misji;
+- przygotowano geometrię i rysowanie 26 oryginalnych markerów `PC602HomeBeacons291.swift` w rendererze świata; sterowanie wyborem i lotem do misji oraz przejście scen w grze pozostają niepodłączone;
 - przejście NOWA GRA → planeta główna zamiast obecnego skrótu do CARBONIS, dopiero po źródłowym runtime;
-- oryginalne dokowanie, H55, zapisy profili i regresja na iPhone/iPad;
+- źródłowa bramka dokowania `Hub90.CanDock90` i faktyczny punkt wraku są zaimplementowane w stanie `PC602HomeFlight291`, ale **nie podłączono jeszcze wejścia do H55**, zapisu aktywnego świata ani testu na urządzeniu;
 - pełny rzeczywisty build Release IPA z nowym grywalnym światem i test sprzętowy.
 
 Nie wolno podmieniać przycisku NOWA GRA, dopóki kompletna ścieżka źródłowego lotu, misji i hangaru nie jest gotowa. Poprzednie źródłowe mechanizmy W3/H55/C279/HUD są na bazowej gałęzi nienaruszone.
@@ -54,6 +54,27 @@ Nie wolno podmieniać przycisku NOWA GRA, dopóki kompletna ścieżka źródłow
 - Test podstawowej mechaniki HomeFlight z realnym kompilatorem Swift/macOS: PASS https://github.com/synixad-png/asteroidy-ios/actions/runs/43064119991.
 - Testy rozszerzonej kamery i zasłaniania beaconów: do potwierdzenia osobno, zgodnie ze stanem CI.
 
+## Etap 3 — rzeczywista scena planety Metal (kod źródłowy, jeszcze bez wpięcia)
+
+- `ASTEROIDYiOS/SourceNewHome290MetalAssets.swift`: 1 właściciel bufora GPU (24 797 952 bajty dokładnej geometrii), oryginalnego JPEG i mapy emisji, odtwarzanych z istniejących GitHub ZIP v568, w pełni sprawdzanych SHA-256. Wspólny `MTLDevice` → 1 niemodyfikowany zasób GPU współdzielony przez menu W3 i nową scenę.
+- `W3HomePlanetMetal568.swift` używa tego współdzielonego właściciela; bez ponownego wczytywania JPEG i kopiowania geometrii w pamięci GPU. Renderer W3 zachowuje tryb przezroczysty i oryginalne transformacje; jego fragment `W3HomePlanet290.metal` pozostał bez zmian merytorycznych.
+- `SourceHome290Vertex.metalh`: wspólny dekoder dokładnego układu 12×float GLB bez duplikacji implementacji, używany przez podgląd W3 i `PC602HomeScene291.metal`.
+- `PC602HomeScene291.swift` i `.metal`: prawdziwe 172 208 trójkątów H290, skala 100, kamera świata `PC602HomeWorldView291`, dwie oryginalne grupy materiałowe, mieszanie emisji lawy w tym samym przebiegu shadera. Scena przyjmuje realny stan `PC602HomeFlight291`, nie wykonuje własnego ruchu planety.
+- `PC602HomeBeacons291.swift`: 26 faktycznych punktów przy powierzchni H290, po 40 linii pierścienia, promień 8 m / 3,4 m, kolory zależne od rzeczywistego stanu ukończenia; marker GPU renderowany po planecie z testem głębokości i wyłączonym zapisem Z. Przebudowa bufora tylko przy zmianie wybranego celu lub postępu kampanii, nie w każdej klatce.
+- `PC602HomeFlight291.swift`: położenie doku jest zawsze obliczane z `NewHome290.WreckPosition`, już od inicjalizacji znana jest prawdziwa odległość od doku. `Hub90.CanDock90`: próg 43,2 m oraz wymagane planetHub/orbit/!busy/!talentOpen/!miningDetached. Bramka nie uruchamia jeszcze H55.
+- `Tests/PC602HomeFlight291Tests.swift`: wartości referencyjne źródłowych markerów 26 sektorów i bramki dokowania; `Tests/PC602HomeScene291Contract.py`: dedykowany kontrakt zgodności źródła i braku duplikacji GPU.
+- `.github/workflows/verify-pc602-home-metal291.yml`: rzeczywisty `xcodebuild` iPhone+iPad ARM64, testy regresji oryginalnego menu W3 i kontroli zasobów, bez pakowania IPA.
+
+### Wynik weryfikacji na obecnym etapie
+
+- Wcześniejsze testy pierwotnych H290 + matematyki lotu/camera Swift: PASS, np. https://github.com/synixad-png/asteroidy-ios/actions/runs/43065654956.
+- Audyt `No Slop` po zmianach: PASS, np. https://github.com/synixad-png/asteroidy-ios/actions/runs/43069193783.
+- Pierwszy nowy ARM64 build https://github.com/synixad-png/asteroidy-ios/actions/runs/43067551826 wykrył błąd składni w sprawdzeniu rozmiaru bufora; poprawiono w commit `3acb063f205473a93889c1e9db51a2327395956a`.
+- Późniejsze przebiegi z poprawką i nowymi markerami / dockiem: **w kolejce**, np. https://github.com/synixad-png/asteroidy-ios/actions/runs/43069193932. Brak podstaw do deklaracji udanej nowej kompilacji ARM64 lub fizycznego testu GPU.
+- Rzeczywistego aktywnego świata orbitalnego, pełnej nawigacji, modeli wraku, 820 asteroid, statku i integracji startu misji **nie ukończono**. Nie utworzono IPA.
+
+**Zasada przechowywania:** pełny ZIP v602 zostaje tylko w Bibliotece ChatGPT. Do repozytorium trafiają wyłącznie konkretne implementowane moduły i zasoby konieczne w runtime, albo możliwe do byte-identycznego odtworzenia z GitHuba. Nie wolno kopiować pełnego ZIP ani masowo przenosić zbędnych archiwów źródłowych.
+
 ## Następna implementacja
 
-Doprowadzić dedykowany natywny renderer `HomeScene291` do użycia oryginalnej GLB H290 (100% siatki), zgodnego oświetlenia PC602 i wspólnej fizyki, następnie oryginalny pas 820 asteroid, statek, wrak, nawigację i dock. Testować niezależnymi golden-traces PC→Swift na tych samych danych i iOS ARM64 przed wpięciem menu. Nie podnosić procentu "pełnej planety" za sam source-import.
+Najpierw uzyskać pełny PASS macOS/iOS ARM64 dla dodanego renderera, a następnie porównać prawdziwy render na iOS z kodem PC. Dopiero potem dołączać oryginalny pas 820 asteroid, statek, siatkę wraku i dokowanie do H55, oryginalną nawigację/wybór misji. Żadnych zastępczych modeli. Wpiąć menu dopiero po pełnej, rzeczywistej ścieżce gameplay i testach regresji. Nie podnosić procentu ukończenia pełnej planety za sam import źródeł.
