@@ -11,8 +11,7 @@ import Foundation
 struct PC602HomeWorldSession291 {
     enum SourceError:Error {case invalidFrame}
     private(set) var flight:PC602HomeFlight291
-    private(set) var weapons=PC602HomeWeaponTest292(
-        settings:PC602HomeWeaponTest292.Settings(weapon:.pulse)!)
+    private(set) var weapons:PC602HomeWeaponTest292
     private(set) var route=PC602HomeHubRoute90()
     private(set) var controls:SourceControls586.Profile
     private(set) var paused=false
@@ -23,6 +22,10 @@ struct PC602HomeWorldSession291 {
          completedMask:Int=0,
          controls:SourceControls586.Profile) throws {
         self.controls=controls
+        // Source Settings(weapon:.pulse) succeeds for the verified
+        // initial default. Use a nonfailable, explicit source constant.
+        self.weapons=PC602HomeWeaponTest292(
+            settings:PC602HomeWeaponTest292.Settings.defaultPulse)
         self.flight=try PC602HomeFlight291(
             home:home,equipment:equipment,completedMask:completedMask)
     }
