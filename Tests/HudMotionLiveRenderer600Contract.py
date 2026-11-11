@@ -22,7 +22,10 @@ assert "let hudRenderTime600=ProcessInfo.processInfo.systemUptime-started" in re
 assert "let screen=session.currentHudRenderState600()" in renderer
 assert "pose:screen.pose," in renderer
 assert "let visual=session.currentHudVisual600()" in renderer
-assert "seconds:visual.seconds,capsules:visual.capsules" in renderer
+assert "seconds:hudRenderTime600,capsules:visual.capsules" in renderer
+assert "seconds:visual.seconds,capsules:visual.capsules" not in renderer
+assert renderer.index("let hudRenderTime600=ProcessInfo.processInfo.systemUptime-started") < renderer.index("planetarium.render(")
+assert "let time=liveTime().truncatingRemainder(dividingBy:3600)" in (r/"ASTEROIDYiOS/HudPlasmaLayer600.swift").read_text()
 assert "func currentHudVisual600()->(" in session
 assert "return (hudLivePose600,hudLiveCapsules600,hudLiveSeconds600)" in session
 assert "HudPickupTransform600.sample(" in renderer
