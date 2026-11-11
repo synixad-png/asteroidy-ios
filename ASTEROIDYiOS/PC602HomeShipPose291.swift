@@ -12,10 +12,8 @@ enum PC602HomeShipPose291 {
     // HomeScene291 scales 0.65*1.35 and then OrbitShipScale472.
     static let sourceContactRadius:Float=11.2
     static let sourceHomeWorldOuterRadius:Float=144.19674
-    static let originalWorldScale:Float=
-        (sourceHomeWorldOuterRadius+15)/(720/Float.pi)
-    static let sourceShipScale:Float=
-        sourceContactRadius*originalWorldScale*0.65*1.35
+    static let originalWorldScale:Float = (sourceHomeWorldOuterRadius+15)/(720/Float.pi)
+    static let sourceShipScale:Float = sourceContactRadius*originalWorldScale*0.65*1.35
 
     struct Pose {
         // OpenGL source sphereMatrix67: unrotated 4x4 column-major basis.
