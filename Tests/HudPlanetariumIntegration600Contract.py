@@ -47,15 +47,11 @@ for s in ("makeDefaultLibrary()","hudPlanetariumVertex600","hudPlanetariumFragme
     assert s in metal,s
 assert "device const float *vertices" in shader
 assert "tint*state.baseColor" in shader
-tether=(ios/"HudPlanetariumPlasmaAnchor600.swift").read_text()
-assert 'HudMotionProject600.project(' in tether
-assert 'widget:"armor.bar"' in tether
-assert '["hull.bar", "armor.bar", "shield.bar"]' in tether
-assert 'let approved = HudLayout600.defaults()' in tether
-assert 'deltaX/Double(count)' in tether
-assert 'deltaY/Double(count)' in tether
-assert 'HudPlanetariumPlasmaAnchor600.screenCenter(' in metal
-assert 'HudPlanetariumPlasmaAnchor600.visualRoll(' in metal
+assert 'HudPlanetariumPlasmaAnchor600' not in metal
+assert 'HudMotionProject600.project(' in metal
+assert 'pose.roll*pose.weight(widget.id)' in metal
+assert 'widget:widget.id' in metal
+assert not (ios/"HudPlanetariumPlasmaAnchor600.swift").exists()
 assert 'pose:snapshot.pose' in renderer
 assert "HudPlanetariumMetal600(" in renderer
 assert "hudPlanetariumMetal600" in renderer
