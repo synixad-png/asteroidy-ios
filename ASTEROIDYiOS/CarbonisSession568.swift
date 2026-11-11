@@ -80,6 +80,13 @@ final class CarbonisSession568: ObservableObject {
             ionAmmo=game.ionAmmo; bombs=game.bombs
             boostCharges=game.boost71.charges
             boostActive=game.boost71.active
+            radarContacts=Self.radarContacts(for:game)
+        }
+
+        // The one authoritative PC radar projection. Called from the
+        // 10 Hz semantic snapshot AND from the 60 Hz visual channel;
+        // never maintain two independent geometry implementations.
+        static func radarContacts(for game:CarbonisCombat568)->[RadarContact] {
             let camera=game.flight.camera
             func contact(_ point:Vec2,_ kind:Int)->RadarContact? {
                 let n=Sphere67.normal(point)
@@ -88,11 +95,19 @@ final class CarbonisSession568: ObservableObject {
                     x:SphereVector3.dot(n,camera.right),
                     y:-SphereVector3.dot(n,camera.up),kind:kind)
             }
-            radarContacts=game.rocks.compactMap {contact($0.position,0)}
+            return game.rocks.compactMap {contact($0.position,0)}
                 + game.shooters.compactMap {contact($0.core.position,1)}
                 + game.tokenPickups.compactMap {contact($0.position,2)}
         }
     }
+
+    // Immutable radar + HUD movement from the SAME completed gameplay frame.
+    // Reading this does not publish or copy the heavy 46-widget HUD state.
+    struct RadarFrame600 {
+        let pose:HudMotion600.Pose
+        let contacts:[HUD.RadarContact]
+    }
+
     @Published private(set) var hud:HUD
     @Published private(set) var hud3DIconsReady600=false
     // Renderer reads one stable copy per GPU frame. The lock isolates
@@ -101,15 +116,21 @@ final class CarbonisSession568: ObservableObject {
     private var hudLayoutSnapshot600=HudLayout600.load()
     private var hudSafeInsetsSnapshot600=W3ScreenInsets568()
     private var hudLivePose600=HudMotion600.Pose()
+    private var hudLiveRadar600=[HUD.RadarContact]()
     private var hudLiveCapsules600=HudCapsuleController600.Snapshot(
         levels:[1,1,1],flashes:[0,0,0])
     private var hudLiveSeconds600:Double=0
     // PC v602 DrawEnergyGauge samples the active Game directly on EVERY
-    // renderer frame. Do not step the bright gauge bars at the 10Hz
-    // @Published text/radar cadence.
+    // renderer frame. Radar positions and HUD motion also have a separate
+    // high-frequency channel. Keep only semantic TEXT/COUNTERS at 10 Hz.
     private var hudLiveGauges600:(
         hull:Int,armor:Int,shield:Int,maxHull:Int,maxArmor:Int
     )=(0,0,0,1,1)
+    func currentHudRadarFrame600()->RadarFrame600 {
+        hudLayoutLock600.lock()
+        defer {hudLayoutLock600.unlock()}
+        return RadarFrame600(pose:hudLivePose600,contacts:hudLiveRadar600)
+    }
     func currentHudGauges600()->(
         hull:Int,armor:Int,shield:Int,maxHull:Int,maxArmor:Int
     ) {
@@ -123,7 +144,7 @@ final class CarbonisSession568: ObservableObject {
         hudLayoutLock600.unlock()
     }
     // One immutable visual snapshot per Metal frame: no publishing and no
-    // repeated 46-widget radar/scores rebuild at 60 Hz.
+    // repeated 46-widget layout/scores rebuild at 60 Hz.
     func currentHudRenderState600()->(
         layout:HudLayout600,insets:W3ScreenInsets568,pose:HudMotion600.Pose,
         capsules:HudCapsuleController600.Snapshot
@@ -189,6 +210,7 @@ final class CarbonisSession568: ObservableObject {
     init(prepared:Sector01PreparedWave568) {
         let first=CarbonisCombat568(prepared)
         game=first;hud=HUD(first)
+        hudLiveRadar600=hud.radarContacts
         hudLiveGauges600=(
             first.hull,first.armor,
             max(0,Int(ceil(Double(first.tarcza145.energy)))),
@@ -208,6 +230,7 @@ final class CarbonisSession568: ObservableObject {
         hudLayoutLock600.lock()
         hudMotion600.reset()
         hudLivePose600=HudMotion600.Pose()
+        hudLiveRadar600=HUD.radarContacts(for:restarted)
         hudLiveCapsules600=HudCapsuleController600.Snapshot(
             levels:[1,1,1],flashes:[0,0,0])
         hudLiveGauges600=(
@@ -316,13 +339,17 @@ final class CarbonisSession568: ObservableObject {
         motionSample.pickups=game.hudEvents.pickups
         motionSample.shieldActive=game.tarcza145.energy>0
         // The native pause-sheet may change solver settings concurrently.
-        // Update the solver and export the pose inside ONE lock region.
+        // A single lightweight 60 Hz radar + pose snapshot must use the
+        // SAME completed game-camera frame. The heavy @Published semantic
+        // HUD and its text/counters still refresh only at 10 Hz.
+        let radarContacts600=HUD.radarContacts(for:game)
         hudLayoutLock600.lock()
         let hudPose600=hudMotion600.update(motionSample,at:now,
                                           active:game.phase == .playing)
         hudLivePose600=hudPose600
+        hudLiveRadar600=radarContacts600
         hudLayoutLock600.unlock()
-        // Radar/scores/semantic HUD continue publishing at 10 Hz.
+        // Scores and semantic text continue publishing at 10 Hz.
         // Feed normalized live values, never inventory charges as energy.
         hudCapsules600.advance(
             hull:Float(game.hull)/Float(max(1,game.maxHull)),
@@ -333,7 +360,7 @@ final class CarbonisSession568: ObservableObject {
             shieldPulse:hudPose600.shieldPulse)
         // PC HudCapsuleScene.ApplyHudCapsules runs after every animated
         // GLB frame. Export the small immutable 3x2 state every physics tick;
-        // NEVER rebuild the HUD radar or text more frequently.
+        // never republish the heavy semantic HUD more frequently.
         hudLayoutLock600.lock()
         hudLiveCapsules600=hudCapsules600.snapshot
         hudLiveSeconds600=Double(game.elapsed)
