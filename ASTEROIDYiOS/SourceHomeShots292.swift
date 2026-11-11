@@ -91,7 +91,6 @@ final class SourceHomeShots292 {
         encoder.setVertexBytes(&matrix,
             length:MemoryLayout<simd_float4x4>.stride,index:1)
         encoder.drawPrimitives(type:.triangle,vertexStart:0,
-            vertexCount:scratch.count /
-                        PC602HomeShotGeometry292.floatsPerVertex)
+            vertexCount:scratch.count / PC602HomeShotGeometry292.floatsPerVertex)
     }
 }
