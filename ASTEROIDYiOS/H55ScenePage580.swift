@@ -22,6 +22,7 @@ import simd
     private var activeKeys: Set<String> = []
     private var generation = UUID()
     private var movement=H55Walk580()
+    private var eyeHeight580=H55EyeHeight580.load()
     private var physical:H55SpatialSupport580?
     private var npcSurface:H55NpcSurface580?
     // H07 source PC580 independent H70 doors, separate from static H02-H04.
@@ -56,6 +57,15 @@ import simd
     /// screen, not in the H55 SceneKit render/physics frame loop.
     func refreshControls586() {
         controlProfile586=SourceControls586.Profile.load()
+    }
+    // Only the camera's visual Y changes; physical feet and all H04
+    // collision, footsteps, jump and NPC eye measurements remain original.
+    func setEyeHeight580(_ value:Float) {
+        eyeHeight580=H55EyeHeight580.valid(value)
+        H55EyeHeight580.save(eyeHeight580)
+    }
+    func refreshEyeHeight580() {
+        eyeHeight580=H55EyeHeight580.load()
     }
     private var controlRouter586=SourceControlRouter586()
     private var clock:CADisplayLink?
@@ -259,8 +269,20 @@ import simd
         let sway=sin(phase)*0.042*bobPower
         let bounce=sin(phase*2)*0.052*bobPower
         let cy=cos(movement.yaw),sy=sin(movement.yaw)
+        let eyeFeet=movement.cameraFeet
+        let visualEyeY:Float
+        if let physical {
+            visualEyeY=H55EyeHeight580.safeY(
+                feet:eyeFeet,desired:eyeHeight580,
+                clear:{height in
+                    physical.cameraClear406(movement.x,height,movement.z,
+                                            radius:0.095)
+                })
+        } else {
+            visualEyeY=eyeFeet+H55Walk580.eyes
+        }
         camera?.position=SCNVector3(movement.x+cy*sway,
-                movement.cameraFeet+H55Walk580.eyes+bounce,
+                visualEyeY+bounce,
                 movement.z+sy*sway)
         let roll=(sin(phase)*0.0085+movement.lean*0.006)*bobPower
         camera?.eulerAngles=SCNVector3(H55TouchMapping580.scenePitch(for:movement.pitch),
@@ -408,6 +430,7 @@ import simd
         clock=nil
         lastTick=nil
         movement=H55Walk580()
+        eyeHeight580=H55EyeHeight580.load()
         physical=nil
         npcSurface=nil
         airlocks=H55AirlockController580()
@@ -964,6 +987,7 @@ struct H55ScenePage580: View {
             if !visible {
                 loader.setLighting(fill:lightingFill,red:lightingRed)
                 loader.refreshControls586()
+                loader.refreshEyeHeight580()
             }
         }
         .onDisappear {
