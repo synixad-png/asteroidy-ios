@@ -103,8 +103,6 @@ jobs:
           /tmp/hud-planetarium-screen
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudPlanetariumPlasmaAnchor600.swift Tests/HudPlanetariumPlasmaAnchorTests.swift -o /tmp/hud-plasma-planetarium
           /tmp/hud-plasma-planetarium
-          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift ASTEROIDYiOS/HudEnergy600.swift ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift ASTEROIDYiOS/HudPlanetariumProjection.swift ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumPlasmaAnchor600.swift ASTEROIDYiOS/HudPlasmaBridge600.swift Tests/HudPlasmaBridgeTests.swift -o /tmp/hud-plasma-double-anchors
-          /tmp/hud-plasma-double-anchors
           swiftc ASTEROIDYiOS/HudMissionGate600.swift Tests/HudMissionGate600Tests.swift -o /tmp/hud-v600-mission
           /tmp/hud-v600-mission
           swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudV600StressTests.swift -o /tmp/hud-v600-stress
@@ -125,6 +123,8 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumTracks600.swift ASTEROIDYiOS/HudPlanetariumProjection.swift ASTEROIDYiOS/HudPlanetariumScene600.swift
           swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/HudEditorGeometry.swift ASTEROIDYiOS/HudLayoutDocument600.swift
           swiftc -typecheck ASTEROIDYiOS/HudPlanetariumOriginalMetal600.swift ASTEROIDYiOS/HudPlanetariumMetal600.swift ASTEROIDYiOS/HudPlanetariumPlasmaAnchor600.swift ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumProjection.swift ASTEROIDYiOS/HudCapsuleController600.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift ASTEROIDYiOS/CombatHUDViewport568.swift
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift ASTEROIDYiOS/HudEnergy600.swift ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift ASTEROIDYiOS/HudPlanetariumProjection.swift ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumPlasmaAnchor600.swift ASTEROIDYiOS/HudPlasmaBridge600.swift Tests/HudPlasmaBridgeTests.swift -o /tmp/hud-plasma-double-anchors
+          /tmp/hud-plasma-double-anchors
           swiftc ASTEROIDYiOS/HudPlanetariumOriginalMetal600.swift ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudPlanetariumBubbleWrapTests.swift -o /tmp/hud-planetarium-bubble
           /tmp/hud-planetarium-bubble
           swiftc ASTEROIDYiOS/HudPlanetariumCorona600.swift Tests/HudPlanetariumCorona600Tests.swift -o /tmp/hud-v600-corona
