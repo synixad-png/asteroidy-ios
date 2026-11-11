@@ -24,6 +24,10 @@ world_shader=read("PC602HomeScene291.metal")
 beacons=read("PC602HomeBeacons291.swift")
 belt=read("PC602OrbitBelt51.swift")
 belt_shader=read("PC602OrbitBelt51.metal")
+wreck=read("SourceHomeWreck209.swift")
+wreck_mesh=read("ResearchWreckGeometry214.swift")
+combat_wreck=read("SourceCombatWreck214.swift")
+combat_shader=read("Sector01Carbonis568.metal")
 app=read("App.swift")
 
 # Exactly ONE immutable Metal resource cache for these TWO consumers.
@@ -114,10 +118,37 @@ assert "float band=0.25f+0.33f*smoothstep(0.30f,0.32f,d)" in belt_shader
 assert "float3 view=normalize(-in.eyePosition);" in belt_shader
 assert "device const float *geometry" in belt_shader
 
+# The REAL original GpuIntro41 full orbital research wreck must use the
+# preexisting proven hull, not the partial 161-box debris mesh as a substitute.
+assert "makeOrbitHome602()->Mesh" in wreck_mesh
+assert "builder.drawSourceWreck214(seed:211,debris:146,trail:178)" in wreck_mesh
+assert "func drawSourceWreck214(seed:Int,debris:Int=112,trail:Float=118)" in wreck_mesh
+assert "builder.drawSourceWreck214(seed:sector+214)" in wreck_mesh
+assert "mesh.hullVertices=mesh.triangleCount" in wreck_mesh
+assert "mesh.hullLineVertices=mesh.lineCount" in wreck_mesh
+assert "ResearchWreckGeometry214.makeOrbitHome602()" in wreck
+assert 'combatWreckTriangleVertex214' in wreck
+assert 'combatWreckLineFragment214' in wreck
+assert 'combatWreckTriangleVertex214' in combat_wreck
+assert 'combatWreckTriangleVertex214' in combat_shader
+assert "WreckWarningLamp213" in combat_shader
+assert "sourceScale=PC602NewHome290.wreckScale295" in wreck
+assert "Self.translate(dock)*Self.rotateY(31)*" in wreck
+assert "Self.rotateZ(-9)*scale" in wreck
+assert "let angle:Float=0.62+max(0,time)*0.047" in wreck
+assert "drawPrimitives(type:.triangle" in wreck
+assert "drawPrimitives(type:.line" in wreck
+assert "originalWreck=try SourceHomeWreck209(device:device)" in world
+assert "originalWreck.draw(encoder:encoder,projection:projection" in world
+assert "dock:flight.dockPosition" in world
+assert world.index("for stone in belt.stones") < world.index("originalWreck.draw")
+assert world.index("originalWreck.draw") < world.index("PC602HomeBeacons291.vertices(")
+assert "PC602WreckDebris209.structuralBoxFaces" not in world
+
 # This is a source renderer, NOT a complete orbit gameplay/menu substitution.
 assert "PC602HomeScene291(" not in app
 assert "PC602HomeFlight291(" not in app
 print("PASS PC602: original shared H290 source GPU, true world 100x geometry, "+
       "Toon60/lava source, 26 height-derived additive beacons, unchanged W3")
-print("LIMIT: source contract does NOT confirm Apple device rendering, "+
-      "player ship, 820-belt, wreck, docking or playable orbit mode")
+print("LIMIT: source contract does NOT confirm actual Apple GPU framebuffer, "+
+      "player ship, physical docking, full 26-mission integration or playable orbit mode")
