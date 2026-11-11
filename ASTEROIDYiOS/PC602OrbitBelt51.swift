@@ -45,7 +45,7 @@ struct PC602OrbitBelt51 {
         guard data.count>=Self.headerBytes+Self.asteroidCount*Self.sourceStoneStride,
               data.prefix(4)==Data([66,48,53,49]),
               Self.uint32(data,4)==1,
-              Self.uint32(data,8)==Self.asteroidCount
+              Self.uint32(data,8)==UInt32(Self.asteroidCount)
         else {throw SourceError.badHeader}
         let number=Int(Self.uint32(data,12))
         let start=Self.headerBytes+Self.asteroidCount*Self.sourceStoneStride
