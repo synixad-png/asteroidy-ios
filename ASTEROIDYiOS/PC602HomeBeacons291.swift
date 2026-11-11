@@ -44,11 +44,11 @@ enum PC602HomeBeacons291 {
                 level,mask:completedMask)
             let rgb:SIMD3<Float>
             if complete {
-                rgb=SIMD3(95/255,236/255,161/255)
+                rgb=SIMD3(95.0/255,236.0/255,161.0/255)
             } else if unlocked {
-                rgb=SIMD3(82/255,217/255,255/255)
+                rgb=SIMD3(82.0/255,217.0/255,1.0)
             } else {
-                rgb=SIMD3(110/255,124/255,139/255)
+                rgb=SIMD3(110.0/255,124.0/255,139.0/255)
             }
             let selectedMarker=level==selected
             let tint=SIMD4(rgb.x,rgb.y,rgb.z,
