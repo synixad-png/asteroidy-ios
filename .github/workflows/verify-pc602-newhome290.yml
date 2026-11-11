@@ -10,6 +10,7 @@ on:
       - ASTEROIDYiOS/PC602NewHome290.swift
       - Tests/PC602NewHome290Tests.swift
       - ASTEROIDYiOS/PC602HomeFlight291.swift
+      - ASTEROIDYiOS/PC602HomeWorldView291.swift
       - ASTEROIDYiOS/FlightDynamics556.swift
       - Tests/PC602HomeFlight291Tests.swift
   pull_request:
@@ -19,6 +20,7 @@ on:
       - ASTEROIDYiOS/PC602NewHome290.swift
       - Tests/PC602NewHome290Tests.swift
       - ASTEROIDYiOS/PC602HomeFlight291.swift
+      - ASTEROIDYiOS/PC602HomeWorldView291.swift
       - ASTEROIDYiOS/FlightDynamics556.swift
       - Tests/PC602HomeFlight291Tests.swift
   workflow_dispatch:
@@ -90,6 +92,7 @@ jobs:
             ASTEROIDYiOS/FlightDynamics556.swift \
             ASTEROIDYiOS/PC602NewHome290.swift \
             ASTEROIDYiOS/PC602HomeFlight291.swift \
+            ASTEROIDYiOS/PC602HomeWorldView291.swift \
             /tmp/main.swift -o /tmp/pc602-homeflight-tests
           /tmp/pc602-homeflight-tests ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
       - name: Document scope accurately (no fake gameplay acceptance)
