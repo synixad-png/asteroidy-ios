@@ -91,17 +91,23 @@ final class HudPlanetariumMetal600 {
         let pitch=simd_float4x4(simd_quatf(
             angle:Float(widget.pitch ?? -20)*Float.pi/180,
             axis:SIMD3<Float>(1,0,0)))
-        // Keep the approved F6 model orientation but inherit the same
-        // 0.78 live HUD bank as all three freely editable plasma bars.
-        let rollDegrees=Float(widget.roll ?? 0) +
-            pose.roll*pose.weight(Self.plasmaGroupMotionID)
-        let roll=simd_float4x4(simd_quatf(
-            angle:rollDegrees*Float.pi/180,
+        // F6 rotation is an authored MODEL rotation (Y/X/Z order).
+        // Live banking is instead a SCREEN rotation shared by the plasma
+        // bars. Never add it inside Yaw*Pitch*Roll: that changes the 3D
+        // bank axis when pitch/yaw is nonzero (PC602 pitch=-20).
+        let authoredRoll=simd_float4x4(simd_quatf(
+            angle:Float(widget.roll ?? 0)*Float.pi/180,
+            axis:SIMD3<Float>(0,0,1)))
+        // HudMotionProject600 projects in screen coordinates with +Y
+        // downward. The GLB uses +Y upward: negate bank in 3D space
+        // so its visual roll matches SwiftUI's GraphicsContext rotation.
+        let liveBank=simd_float4x4(simd_quatf(
+            angle:-pose.roll*pose.weight(Self.plasmaGroupMotionID)*Float.pi/180,
             axis:SIMD3<Float>(0,0,1)))
         let pixels=Float(projection.pixelsPerModelUnit)
         return ortho *
             translate(Float(projection.x),Float(projection.y),0) *
-            yaw*pitch*roll *
+            liveBank*yaw*pitch*authoredRoll *
             scale(pixels,pixels,pixels) *
             translate(-HudPlanetariumAsset600.pc602ModelCenterX,
                       -HudPlanetariumAsset600.pc602ModelCenterY,
