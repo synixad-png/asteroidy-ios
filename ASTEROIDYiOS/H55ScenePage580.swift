@@ -926,6 +926,12 @@ import simd
 
 struct H55ScenePage580: View {
     let dismiss: () -> Void
+    let exitTitle:String
+    init(dismiss:@escaping () -> Void,
+         exitTitle:String="WYJDŹ DO MENU") {
+        self.dismiss=dismiss
+        self.exitTitle=exitTitle
+    }
     @StateObject private var loader=H55SceneModel580()
     @State private var choosingFile=false
     @State private var pickedClip=""
@@ -1112,7 +1118,7 @@ struct H55ScenePage580: View {
                                 .overlay(Rectangle().stroke(gold.opacity(0.25),lineWidth:1))
                         }
                         .accessibilityIdentifier("h13-share-glb-report")
-                        pauseButton("WYJDŹ DO MENU") {
+                        pauseButton(exitTitle) {
                             if loader.showingWorkshop {loader.closeWorkshop()}
                             loader.close()
                             dismiss()
