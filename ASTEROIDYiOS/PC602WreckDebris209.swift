@@ -51,8 +51,7 @@ enum PC602WreckDebris209 {
             let jx=spaceRand207(wreckSeed,index,8)-0.5
             let jy=spaceRand207(wreckSeed,index,14)-0.5
             let jz=spaceRand207(wreckSeed,index,29)-0.5
-            let x=20+PC602NewHome290.wreckTrailLength295*t+
-                jx*(7+41*t)
+            let x = 20 + PC602NewHome290.wreckTrailLength295 * t + jx * (7 + 41*t)
             let y=14*t+jy*(6+28*t)+5.2*sin(t*7.2+Float(wreckSeed)*0.01)
             let z=7+15*t+jz*(6+36*t)+2.6*cos(t*8)
             let radius=(0.88+spaceRand207(wreckSeed,index,55)*3.8)*
