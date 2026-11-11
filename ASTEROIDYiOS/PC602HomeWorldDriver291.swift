@@ -17,6 +17,8 @@ final class PC602HomeWorldDriver291:ObservableObject {
         var canDock=false
         var missionEntrance:Int=0
         var physicalFrames:Int=0
+        var projectiles:Int=0
+        var weaponName:String="IMPULS"
     }
 
     @Published private(set) var hud=HUD()
@@ -27,6 +29,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
     private var session:PC602HomeWorldSession291?
     private var touchMove=Vec2(x:0,y:0)
     private var touchAim=Vec2(x:0,y:0)
+    private var touchFire=false
     private var suspended=true
     private var lastUIUpdate:TimeInterval=0
 
@@ -68,15 +71,23 @@ final class PC602HomeWorldDriver291:ObservableObject {
         if progress.unlocked(progress.selectedSector) {
             _=initial.selectMission(progress.selectedSector)
         }
+        let shop=Sector01Shop568.load()
+        if let gun=PC602HomeWeaponTest292.Weapon(rawValue:shop.weapon.rawValue),
+           let settings=PC602HomeWeaponTest292.Settings(
+                weapon:gun,upgrade:shop.upgradeLevel,
+                rapid:shop.rapidLevel) {
+            initial.setWeaponSettings(settings)
+        }
         let copy=initial.flight
         withLock {
             session=initial
             suspended=false
             touchMove=Vec2(x:0,y:0)
             touchAim=Vec2(x:0,y:0)
+            touchFire=false
             lastUIUpdate=0
         }
-        hud=Self.measure(copy,frames:0)
+        hud=Self.measure(copy,frames:0,weapons:initial.weapons)
         paused=false
         presentingH55=false
         error=nil
@@ -88,6 +99,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
             suspended=true
             touchMove=Vec2(x:0,y:0)
             touchAim=Vec2(x:0,y:0)
+            touchFire=false
         }
         SourceHardwareInput586.shared.clearKeyboard()
     }
@@ -109,6 +121,10 @@ final class PC602HomeWorldDriver291:ObservableObject {
             if let aim {touchAim=Self.clamped(aim)}
         }
     }
+    func setFiring(_ firing:Bool) {
+        withLock {touchFire=firing}
+    }
+
     private static func clamped(_ v:Vec2)->Vec2 {
         guard v.x.isFinite,v.y.isFinite else{return Vec2(x:0,y:0)}
         let distance=sqrt(v.lengthSquared)
@@ -118,15 +134,30 @@ final class PC602HomeWorldDriver291:ObservableObject {
     func readFlight()->PC602HomeFlight291? {
         withLock{session?.flight}
     }
+    func readProjectiles()->[PC602HomeWeaponTest292.Bullet] {
+        withLock{session?.weapons.projectiles ?? []}
+    }
 
     private static func measure(_ flight:PC602HomeFlight291,
-                                frames:Int)->HUD {
-        HUD(target:flight.target,completed:flight.completedMask.nonzeroBitCount,
+                                frames:Int,
+                                weapons:PC602HomeWeaponTest292?=nil)->HUD {
+        let gun=weapons?.settings.weapon
+        let gunLabel:String
+        switch gun {
+        case .twin:gunLabel="PODWÓJNA"
+        case .scatter:gunLabel="WACHLARZ"
+        case .rail:gunLabel="GAUSS"
+        case .swarm:gunLabel="RÓJ"
+        default:gunLabel="IMPULS"
+        }
+        return HUD(target:flight.target,completed:flight.completedMask.nonzeroBitCount,
             speed:flight.orbitSpeed,sectorDistance:flight.orbitDistance,
             dockDistance:flight.dockDistance,orbitTime:flight.orbitTime,
             canDock:flight.canDock90(context:.init(
                 planetHub:true,orbitMode:true)),
-            missionEntrance:flight.entryMission,physicalFrames:frames)
+            missionEntrance:flight.entryMission,physicalFrames:frames,
+            projectiles:weapons?.projectiles.count ?? 0,
+            weaponName:gunLabel)
     }
 
     /// Called by HomeScene291.draw(in:) exactly once per Metal frame.
@@ -142,14 +173,15 @@ final class PC602HomeWorldDriver291:ObservableObject {
                 do {
                     _=try session.advance(snapshot:snapshot,
                                           touchMove:touchMove,touchAim:touchAim,
-                                          dt:Float(dt))
+                                          touchFire:touchFire,dt:Float(dt))
                 } catch {sourceError=error;suspended=true}
                 self.session=session
             }
             if lastUIUpdate==0 || now-lastUIUpdate>=0.125 {
                 lastUIUpdate=now
                 newHud=Self.measure(session.flight,
-                                    frames:session.steppedFrames)
+                                    frames:session.steppedFrames,
+                                    weapons:session.weapons)
             }
             return session.flight
         }
