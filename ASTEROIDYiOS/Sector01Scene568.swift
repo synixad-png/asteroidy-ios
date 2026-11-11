@@ -27,6 +27,8 @@ struct Sector01Scene568: View {
     @State private var showingHudEditor600=false
     @State private var hudEditorOriginal600:HudLayout600?
     @State private var hudLayout600=HudLayout600.load()
+    @State private var hudControlLayout600=HudControlLayout600.load()
+    @State private var hudControlOriginal600:HudControlLayout600?
     @State private var showingPlanetariumImport600=false
     @State private var planetariumURL600:URL?
     @State private var planetariumIssue600:String?
@@ -110,6 +112,7 @@ struct Sector01Scene568: View {
                 onEditHud:{
                     session.release()
                     hudEditorOriginal600=hudLayout600
+                    hudControlOriginal600=hudControlLayout600
                     showingHudEditor600=true
                 },
                 onHudMotionChange:{ settings in
@@ -162,6 +165,18 @@ struct Sector01Scene568: View {
                 safeRight:missionSafeInsets568.right,
                 safeTop:missionSafeInsets568.top,
                 safeBottom:missionSafeInsets568.bottom)
+            let pauseControl=hudControlLayout600.control("control.pause") ??
+                HudControlLayout600.defaults().control("control.pause")!
+            let bombControl=hudControlLayout600.control("control.bomb") ??
+                HudControlLayout600.defaults().control("control.bomb")!
+            let shieldControl=hudControlLayout600.control("control.shield") ??
+                HudControlLayout600.defaults().control("control.shield")!
+            let boostControl=hudControlLayout600.control("control.boost") ??
+                HudControlLayout600.defaults().control("control.boost")!
+            let pauseFrame=HudControlLayout600.frame(pauseControl,viewport:combatHUDLayout,compact:compact)
+            let bombFrame=HudControlLayout600.frame(bombControl,viewport:combatHUDLayout,compact:compact)
+            let shieldFrame=HudControlLayout600.frame(shieldControl,viewport:combatHUDLayout,compact:compact)
+            let boostFrame=HudControlLayout600.frame(boostControl,viewport:combatHUDLayout,compact:compact)
             ZStack {
                 Color(red:0.008,green:0.014,blue:0.032).ignoresSafeArea()
                 Sector01CarbonisPreview568(
@@ -234,76 +249,70 @@ struct Sector01Scene568: View {
                 // No independent SceneKit overlay / miniature camera.
                 // The working 46-widget editor remains in SwiftUI.
 
-                // The touch-only pause affordance is separate from the PC HUD.
-                // Keep the real source Game.Paused action and preserve
-                // both full-screen drag zones, including iPhone safe areas.
+                // Native functional buttons are independent of the original
+                // 46 HUD widgets. Their visible geometry AND actual hit area
+                // use one saved transform, so a moved button still responds
+                // at the new position. The editor blocks actions while open.
                 if session.hud.phase == .playing && !showingService && !userPaused {
                     Button("PAUZA") {pauseMission568()}
-                        .font(.system(size:compact ? 10:12,weight:.semibold,
-                                      design:.monospaced))
-                        .padding(.horizontal,compact ? 7:11)
-                        .padding(.vertical,compact ? 4:7)
+                        .font(.system(size:(compact ? 10:12)*pauseControl.scale,
+                                      weight:.semibold,design:.monospaced))
                         .foregroundStyle(Color(red:0.85,green:0.88,blue:0.90))
+                        .frame(width:pauseFrame.width,height:pauseFrame.height)
                         .background(Color.black.opacity(0.36),
                                     in:RoundedRectangle(cornerRadius:4))
                         .overlay(RoundedRectangle(cornerRadius:4)
                             .stroke(.cyan.opacity(0.45),lineWidth:1))
-                        .position(x:CGFloat(combatHUDLayout.pauseCenterX),
-                                  y:CGFloat(combatHUDLayout.pauseCenterY))
+                        .contentShape(Rectangle())
+                        .position(x:pauseFrame.centerX,y:pauseFrame.centerY)
                         .accessibilityIdentifier("sector01-pause-button")
-                    // PC Game.UseBomb is a discrete action (R / pad Y),
-                    // not a held drag. Touch location follows the pause
-                    // control without shrinking either steering half.
+
                     if session.hud.bombs>0 {
                         Button("BOMBA \(session.hud.bombs)") {
                             _=session.useBomb()
                         }
-                        .font(.system(size:compact ? 10:12,
+                        .font(.system(size:(compact ? 10:12)*bombControl.scale,
                                       weight:.bold,design:.monospaced))
-                        .padding(.horizontal,compact ? 7:11)
-                        .padding(.vertical,compact ? 5:8)
                         .foregroundStyle(.white)
+                        .frame(width:bombFrame.width,height:bombFrame.height)
                         .background(Color.red.opacity(0.75),
                                     in:RoundedRectangle(cornerRadius:5))
-                        .position(x:CGFloat(combatHUDLayout.pauseCenterX),
-                                  y:CGFloat(combatHUDLayout.pauseCenterY+45))
+                        .contentShape(Rectangle())
+                        .position(x:bombFrame.centerX,y:bombFrame.centerY)
                         .accessibilityIdentifier("sector01-active-bomb-button")
                     }
-                    // PC Tarcza145: held action, NOT the passive shield
-                    // purchased at the shop. Keep the source HUD untouched.
+
+                    // PC Tarcza145: this is a HELD action. Its new hit
+                    // rectangle must receive both touch-down and release.
                     if let energy=session.hud.tarczaEnergy,energy>0 {
                         Text("TARCZA \(energy)/100")
-                            .font(.system(size:compact ? 10:12,
+                            .font(.system(size:(compact ? 10:12)*shieldControl.scale,
                                           weight:.bold,design:.monospaced))
-                            .padding(.horizontal,compact ? 7:11)
-                            .padding(.vertical,compact ? 5:8)
                             .foregroundStyle(.white)
+                            .frame(width:shieldFrame.width,
+                                   height:shieldFrame.height)
                             .background(Color.cyan.opacity(0.55),
                                         in:RoundedRectangle(cornerRadius:5))
                             .contentShape(Rectangle())
                             .gesture(DragGesture(minimumDistance:0)
                                 .onChanged {_ in session.holdShield145(true)}
                                 .onEnded {_ in session.holdShield145(false)})
-                            .position(x:CGFloat(combatHUDLayout.pauseCenterX),
-                                      y:CGFloat(combatHUDLayout.pauseCenterY+90))
+                            .position(x:shieldFrame.centerX,y:shieldFrame.centerY)
                             .accessibilityLabel("Przytrzymaj: tarcza energetyczna")
                             .accessibilityIdentifier("sector01-active-tarcza145-hold")
                     }
-                    // PC Boost71: one press consumes one charge; real
-                    // 0.9 s movement and ram impacts remain in simulation.
                     if session.hud.boostCharges>0 {
                         Button("DOPALACZ \(session.hud.boostCharges)/3") {
                             _=session.useBoost71()
                         }
-                        .font(.system(size:compact ? 10:12,
+                        .font(.system(size:(compact ? 10:12)*boostControl.scale,
                                       weight:.bold,design:.monospaced))
-                        .padding(.horizontal,compact ? 7:11)
-                        .padding(.vertical,compact ? 5:8)
                         .foregroundStyle(.white)
+                        .frame(width:boostFrame.width,height:boostFrame.height)
                         .background(Color.blue.opacity(0.65),
                                     in:RoundedRectangle(cornerRadius:5))
-                        .position(x:CGFloat(combatHUDLayout.pauseCenterX),
-                                  y:CGFloat(combatHUDLayout.pauseCenterY+135))
+                        .contentShape(Rectangle())
+                        .position(x:boostFrame.centerX,y:boostFrame.centerY)
                         .accessibilityIdentifier("sector01-active-boost71-button")
                     }
                 }
@@ -431,14 +440,22 @@ struct Sector01Scene568: View {
                                 .font(.system(size:10))
                                 .foregroundStyle(.orange)
                         }
+                        // The existing PAUSE-MENU action is still the
+                        // single real Options button. F6 controls only its
+                        // visual size/position; no duplicate settings UI.
                         Button("OPCJE / USTAWIENIA") {
                             showingMissionSettings568=true
                         }
                         .frame(maxWidth:.infinity)
-                        .padding(compact ? 9:13)
+                        .padding((compact ? 9:13) *
+                            (hudControlLayout600.control("control.options")?.scale ?? 1))
                         .background(Color(red:0.05,green:0.15,blue:0.22),
                                     in:RoundedRectangle(cornerRadius:5))
                         .foregroundStyle(.cyan)
+                        .scaleEffect(hudControlLayout600.control("control.options")?.scale ?? 1)
+                        .offset(
+                            x:(hudControlLayout600.control("control.options")?.x ?? 0)*combatHUDLayout.scale,
+                            y:(hudControlLayout600.control("control.options")?.y ?? 0)*combatHUDLayout.scale)
                         .accessibilityIdentifier("sector01-open-mission-settings")
                         Button("KONTYNUUJ") {resumeMission568()}
                             .frame(maxWidth:.infinity)
@@ -480,10 +497,18 @@ struct Sector01Scene568: View {
                 if showingHudEditor600 && userPaused {
                     HudLayoutEditor600(
                         initial:hudEditorOriginal600 ?? hudLayout600,
+                        initialControls:hudControlOriginal600 ?? hudControlLayout600,
                         viewport:combatHUDLayout,
                         onPreview:{ updated in
                             hudLayout600=updated
                             session.updateHudLayout600(updated)
+                        },
+                        onPreviewControls:{ updated in
+                            hudControlLayout600=updated
+                        },
+                        onSaveControls:{ updated in
+                            hudControlLayout600=updated
+                            hudControlOriginal600=nil
                         },
                         onSave:{ updated in
                             hudLayout600=updated
@@ -498,6 +523,10 @@ struct Sector01Scene568: View {
                                 hudLayout600=original
                                 session.updateHudLayout600(original)
                             }
+                            if let original=hudControlOriginal600 {
+                                hudControlLayout600=original
+                            }
+                            hudControlOriginal600=nil
                             hudEditorOriginal600=nil
                             showingHudEditor600=false
                             // Cancel restores the snapshot and stays in
