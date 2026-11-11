@@ -100,8 +100,7 @@ enum PC602HomeShotGeometry292 {
                     guard sideLength>1e-6 else {continue}
                     let side=sideRaw/sideLength
                     // Original IntroProject: -eye Z = front-facing depth.
-                    let eyeZ=view[2]*middle.x+view[6]*middle.y+
-                             view[10]*middle.z+view[14]
+                    let eyeZ = view[2]*middle.x+view[6]*middle.y+view[10]*middle.z+view[14]
                     let depth=max(1,-eyeZ)
                     let half=width*depth/1440
                     let q0=half*(0.90+0.10*u0)
