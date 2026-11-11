@@ -13,8 +13,8 @@ energy=read("HudEnergy600.swift")
 session=read("CarbonisSession568.swift")
 renderer=read("Sector01CarbonisPreview568.swift")
 hud=read("SourceCombatHUD331.swift")
-planetarium=read("HudPlanetariumScene600.swift")
-host=read("HudPlanetariumHost600.swift")
+planetarium=read("HudPlanetariumOriginalMetal600.swift")
+metal=read("HudPlanetariumMetal600.swift")
 
 # Previous literal backslash escaped Swift interpolation and rejected all 72
 # genuine CAPSULE_{0,1,2}_WATER_BUBBLE_* nodes in SHA-approved PC v602 GLB.
@@ -78,26 +78,21 @@ assert 'hudLiveSeconds600=Double(game.elapsed)' in session
 assert 'let hudRenderTime600=ProcessInfo.processInfo.systemUptime-started' in renderer
 assert 'seconds:now,hullPulse:hudPose600.hullPulse' in session
 assert 'seconds:Double(game.elapsed),hullPulse:' not in session
-assert 'corona?.advance(at:liveGameTime?() ?? 0)' in planetarium
-assert 'liveGameTime: { [weak session] in' in host
-assert 'active:session.hud.phase == .playing)' in scene
-assert 'motionActive:' not in scene
-assert 'HudPlanetariumProjection.make(' in host
-assert 'projection: projection,' in host
-assert 'HudMotion600.Pose' not in host
-assert 'livePose' not in planetarium
-assert 'hudAnchor=anchor' in planetarium
-assert 'hudScale=scaleNode' in planetarium
-assert 'camera.orthographicScale=transform.cameraHalfHeight' in planetarium
-assert 'cameraNode.position=SCNVector3(0,0,1000)' in planetarium
-assert 'rollPivot.eulerAngles.z=roll*Float.pi/180' in planetarium
-assert 'scaleNode.addChildNode(yawPivot)' in planetarium
-assert 'anchor.addChildNode(scaleNode)' in planetarium
-assert 'rendered.rootNode.addChildNode(anchor)' in planetarium
+# PC602 20-mesh/159-track HUD model must share the four icon's Metal
+# command buffer, not an independent camera/SceneKit UI hierarchy.
+assert 'HudPlanetariumMetal600(' in renderer
+assert 'planetarium.render(' in renderer
+assert 'HudPlanetariumHost600(' not in scene
+assert 'GLTFSCNSceneSource' not in metal
+assert 'gameSession?.game.tokenPickups' not in metal
+assert 'HudPlanetariumProjection.make(' in metal
+assert 'HudWidgetPlacement600.frame(' in metal
+assert 'original.sample(at:seconds,capsules:capsules)' in metal
+assert 'simd_slerp(a,b,blend)' in planetarium
+assert 'pass.depthAttachment.loadAction = .clear' in metal
+assert 'pass.colorAttachments[0].loadAction = .load' in metal
+assert 'HudMotionProject600.project(' not in metal
 
-
-assert '.frame(width: CGFloat(viewport.width)' in host
-assert 'HudMotionProject600.project(' not in host
 assert 'hud-v602-always-visible-widget-selector' in editor
 assert 'Button("▶") {selectNeighbor600(1)}' in editor
 # PC FramePose is assigned EVERY render; numeric HUD still snapshots at 10Hz.
@@ -109,11 +104,11 @@ assert 'livePose:{ [weak session] in' in scene
 asset_center='static let pc602ModelCenterX:Float = 2.74528861'
 asset_radius='static let pc602ModelRadius:Double = 5.112107576242468'
 assert asset_center in asset and asset_radius in asset
-assert 'centered.position=SCNVector3(' in planetarium
-assert 'yawPivot.eulerAngles.y=yaw*Float.pi/180' in planetarium
-assert 'pitchPivot.eulerAngles.x=pitch*Float.pi/180' in planetarium
+assert 'translate(-HudPlanetariumAsset600.pc602ModelCenterX' in metal
+assert 'let yaw=simd_float4x4(simd_quatf(' in metal
+assert 'let pitch=simd_float4x4(simd_quatf(' in metal
+assert 'let roll=simd_float4x4(simd_quatf(' in metal
 
-assert 'camera.eulerAngles=' not in planetarium
 # PC GPU DrawEnergyRibbon emits TWO triangles per step, not a self-overlapping polygon.
 assert 'ribbonTriangles(_ points:[HudEnergy600.Point])->Path' in plasma
 assert 'triangle(points[i],points[i+1],points[last-i])' in plasma
@@ -131,8 +126,6 @@ assert 'for layer in 0..<5' in plasma and 'for k in 0..<7' in plasma
 # physical-screen coordinate frame and exact PC v602 pixel-per-unit scale.
 
 
-assert '.frame(width: CGFloat(viewport.width)' in host
-assert 'HudMotionProject600.project(' not in host
 assert 'hud-v602-always-visible-widget-selector' in editor
 assert 'Button("◀") {selectNeighbor600(-1)}' in editor
 assert 'Button("▶") {selectNeighbor600(1)}' in editor
@@ -153,4 +146,4 @@ assert 'material.multiply.contents=tint' in gloves
 assert 'for hand in [leftRoot,rightRoot]' in gloves
 assert 'refreshGloveBrightness602()' in gloves
 assert 'h55-fps-gloves-brightness' in settings
-print("PASS PC v602 iOS HUD: 46 selectable widgets, fixed screen-space original GLB, safe navigation, persistent actual gloves dimmer")
+print("PASS PC v602 iOS HUD: 46 selectable widgets, native Metal original 159-track GLB, safe navigation, persistent actual gloves dimmer")
