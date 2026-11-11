@@ -77,10 +77,21 @@ var visual=[Float]()
 let cameraEye=SIMD3<Float>(ship.camera.focus.x,
                           ship.camera.focus.y,
                           ship.camera.focus.z)*400
-PC602HomeShotGeometry292.build(home:home,bullets:five.projectiles,
+let ribbonVertices=PC602HomeShotGeometry292.build(
+    home:home,bullets:five.projectiles,
     camera:cameraEye,view:camera.view,into:&visual)
+assert(ribbonVertices==5*PC602HomeShotGeometry292.ribbonVerticesPerShot)
 assert(visual.count==5*PC602HomeShotGeometry292.verticesPerShot*7)
 assert(visual.allSatisfy{$0.isFinite})
+// First outer OrbDisc150 ring has original premultiplied alpha zero.
+// Its next source inner ring has original weapon RGB * 48/255.
+let orbStart=ribbonVertices*7
+expect(visual[orbStart+6],0,tolerance:0.000001,
+       "Source ring outer alpha zero")
+expect(visual[orbStart+7+6],48/255,tolerance:0.000001,
+       "Source ring inner 48-alpha halo")
+expect(visual[orbStart+7+3],48/255,tolerance:0.000001,
+       "Premultiplied source scatter-red halo")
 expect(visual[3],255/255,tolerance:0.0001,
        "Original scatter RGB source shot tint red")
 expect(visual[4],92/255,tolerance:0.0001,
@@ -88,8 +99,10 @@ expect(visual[4],92/255,tolerance:0.0001,
 expect(visual[6],27/255,tolerance:0.0001,
        "Original source 27-alpha halo")
 let capacity=visual.capacity
-PC602HomeShotGeometry292.build(home:home,bullets:[],
-    camera:cameraEye,view:camera.view,into:&visual)
+let emptyVertices=PC602HomeShotGeometry292.build(
+    home:home,bullets:[],camera:cameraEye,
+    view:camera.view,into:&visual)
+assert(emptyVertices==0)
 assert(visual.isEmpty && visual.capacity>=capacity)
 print("PASS source PC602 HomeShotPass292: five genuine weapon patterns, " +
       "1/3/5 shot spreads, source cooldowns, 67 geodesic speed, " +
