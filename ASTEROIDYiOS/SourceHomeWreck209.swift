@@ -126,8 +126,8 @@ final class SourceHomeWreck209 {
         let sourceScale=PC602NewHome290.wreckScale295
         let scale=simd_float4x4(
             diagonal:SIMD4(sourceScale,sourceScale,sourceScale,1))
-        let transform=Self.translate(dock)*Self.rotateY(31)*
-                      Self.rotateZ(-9)*scale
+        let orientation=Self.rotateY(31) * Self.rotateZ(-9)
+        let transform=Self.translate(dock) * orientation * scale
         let sun=Self.sunDirection111(time)
         var uniform=Uniforms(mvp:projection*view*transform,model:transform,
                              sunAndTime:SIMD4(sun.x,sun.y,sun.z,time))
