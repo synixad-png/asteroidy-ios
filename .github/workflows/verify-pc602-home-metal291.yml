@@ -20,6 +20,8 @@ on:
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
       - ASTEROIDYiOS/PC602HomeWeaponTest292.swift
       - ASTEROIDYiOS/PC602HomeShotGeometry292.swift
+      - ASTEROIDYiOS/PC602OrbitHud330.swift
+      - Tests/PC602OrbitHud330Tests.swift
       - ASTEROIDYiOS/SourceHomeShots292.swift
       - ASTEROIDYiOS/PC602HomeShots292.metal
       - Tests/PC602HomeWeapons292Tests.swift
@@ -56,6 +58,8 @@ on:
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
       - ASTEROIDYiOS/PC602HomeWeaponTest292.swift
       - ASTEROIDYiOS/PC602HomeShotGeometry292.swift
+      - ASTEROIDYiOS/PC602OrbitHud330.swift
+      - Tests/PC602OrbitHud330Tests.swift
       - ASTEROIDYiOS/SourceHomeShots292.swift
       - ASTEROIDYiOS/PC602HomeShots292.metal
       - Tests/PC602HomeWeapons292Tests.swift
