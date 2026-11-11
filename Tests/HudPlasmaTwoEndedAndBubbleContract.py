@@ -72,4 +72,4 @@ for required in (
     assert required in bridge,required
 assert 'HudPlanetariumPlasmaAnchor600.visualRoll(pose:pose)' in renderer
 assert 'HudPlasmaBridge600.segment(' not in renderer  # only one owner of ribbons
-print("PASS original PC602 GLB: 72 animated water bubbles, 432 reset transitions (4/6/8 per track); two real anchored endpoints with unchanged F6 data")
+print("PASS original PC602 GLB: 72 animated water bubbles, 418 reset transitions (4/6/8 per track); two real anchored endpoints with unchanged F6 data")
