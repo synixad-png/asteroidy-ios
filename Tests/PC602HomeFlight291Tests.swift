@@ -103,11 +103,24 @@ assert(PC602HomeFlight291.unlocked(26,mask:1<<23),
        "source mission 26 is unlocked by finished sector 24")
 assert(!flight.select(2),"locked mission must not be selectable")
 flight.applyCompletedMask(1)
+assert(flight.target==2,"PC602 return from mission auto-advances to first unfinished sector")
 assert(flight.select(2),"completed mission 1 unlocks sector 2")
 assert(flight.target==2)
 flight.cycleTarget()
 assert(flight.target==1,"source target cycle goes to replayable mission 1")
 assert(PC602HomeFlight291.Equipment(craft:.vanguard,engineLevel:-1)==nil)
+
+// The PC C# code normalizes the vector (1,1) to unit length for
+// translation, but explicitly preserves sqrt(2) for exhaust-power output.
+var diagonal=try PC602HomeFlight291(
+    home:home,equipment:equipment(.vanguard))
+try diagonal.step(.init(move:Vec2(x:1,y:1)),dt:1/60,dockPosition:dock)
+let diagonalPower=(0.48+0.52*sqrt(Float(2))) *
+    (1-exp(-Float(7)/60))
+close(diagonal.flight.flight.visualPower,diagonalPower,0.0001,
+      "source diagonal thrust magnitude")
+close(diagonal.orbitSpeed,156*(1-exp(-3.0/60)),0.06,
+      "source diagonal vector remains normalized for movement")
 
 // PAD AIM latching; source AimX/Y priority cannot be overwritten by motion
 // while the right stick is released. Real C# retains the chosen heading.
