@@ -51,6 +51,7 @@ struct PC602HomeScene291: UIViewRepresentable {
             let beltPipeline:MTLRenderPipelineState
             let belt:PC602OrbitBelt51
             let beltBuffer:MTLBuffer
+            let originalWreck:SourceHomeWreck209
             let depth:MTLDepthStencilState
             let beaconDepth:MTLDepthStencilState
             let source:SourceNewHome290MetalAssets
@@ -66,6 +67,9 @@ struct PC602HomeScene291: UIViewRepresentable {
                 self.device=device
                 self.queue=queue
                 source=try SourceNewHome290MetalAssets.shared(device:device)
+                // Shares the existing source-verified full hull generator;
+                // never invent a second partial GLB or duplicate debris.
+                originalWreck=try SourceHomeWreck209(device:device)
                 let originalBelt=try PC602OrbitBelt51.load()
                 belt=originalBelt
                 let geometryLength=originalBelt.vertexCount *
@@ -270,6 +274,14 @@ struct PC602HomeScene291: UIViewRepresentable {
                     encoder.drawPrimitives(type:.triangle,
                         vertexStart:runStart,vertexCount:runCount)
                 }
+
+                // Exact PC602 HomeScene291 draws the whole authored research
+                // wreck AFTER the original 820-rock belt, BEFORE the 26
+                // mission beacons. The same H290 source WreckPosition is
+                // also used by Hub90.CanDock90; never relocate either.
+                originalWreck.draw(encoder:encoder,projection:projection,
+                    view:viewMatrix,dock:flight.dockPosition,
+                    time:flight.orbitTime)
 
                 // CPU marker geometry changes ONLY when campaign progress or
                 // the chosen destination changes; never rebuild 26 rings
