@@ -6,6 +6,11 @@ on:
     paths:
       - .github/workflows/verify-pc602-home-metal291.yml
       - ASTEROIDYiOS/SourceHome290Vertex.metalh
+      - Tools/PC602OrbitBelt51.cs
+      - Tools/stage_pc602_orbit_belt51.py
+      - ASTEROIDYiOS/PC602OrbitBelt51.swift
+      - ASTEROIDYiOS/PC602OrbitBelt51.metal
+      - Tests/PC602OrbitBelt51Tests.py
       - ASTEROIDYiOS/PC602HomeBeacons291.swift
       - Tests/PC602HomeScene291Contract.py
       - ASTEROIDYiOS/W3HomePlanet290.metal
@@ -20,6 +25,11 @@ on:
       - ASTEROIDYiOS/PC602HomeScene291.swift
       - ASTEROIDYiOS/SourceNewHome290MetalAssets.swift
       - ASTEROIDYiOS/SourceHome290Vertex.metalh
+      - Tools/PC602OrbitBelt51.cs
+      - Tools/stage_pc602_orbit_belt51.py
+      - ASTEROIDYiOS/PC602OrbitBelt51.swift
+      - ASTEROIDYiOS/PC602OrbitBelt51.metal
+      - Tests/PC602OrbitBelt51Tests.py
       - ASTEROIDYiOS/PC602HomeBeacons291.swift
       - Tests/PC602HomeScene291Contract.py
   workflow_dispatch:
@@ -33,11 +43,16 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
       - name: Verify exact PC v602 H290 resources on GitHub
         shell: bash
         run: |
           set -euo pipefail
           python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin
           python3 Tests/V568W3HomeSourceLightTests.py
           python3 Tests/V568W3PlanetTransparentSourceContract.py
           python3 Tests/SourceLavaLight287SourceContract.py
@@ -74,6 +89,7 @@ jobs:
           assert (app/"default.metallib").is_file()
           assert (app/"W3HomePlanet290OriginalGPU.bin").is_file()
           assert (app/"PC602Home290HeightMap.bin").is_file()
+          assert (app/"PC602OrbitBelt51.bin").is_file()
           assert (app/"W3HomePlanet290Base.dat").is_file()
           assert (app/"W3HomePlanet293Glow.dat").is_file()
           print("PASS: real iPhone/iPad ARM64 Swift and Metal, source H290 bundle")
