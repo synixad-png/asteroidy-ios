@@ -264,7 +264,9 @@ struct PC602HomeFlight291 {
         let magnitude=sqrt(raw.move.lengthSquared)
         let move=magnitude>1
             ? raw.move*(1/magnitude) : raw.move
-        let length=min(1,magnitude)
+        // PC DirectFlight67 retains the raw magnitude for exhaust power even
+        // after normalizing diagonal movement to a unit screen vector.
+        let length=magnitude
         // DirectMotion298: screen-projected controls, source cruise limit,
         // mass, upgrades, heavy-craft inertia and non-powered glide.
         let desired=flight.camera.screenVector(at:flight.position,
