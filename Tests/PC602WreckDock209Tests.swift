@@ -52,6 +52,34 @@ close(last.localCenter.x,191.60283,0.0003,"last PC wreck box x")
 close(last.localCenter.y,31.55221,0.0003,"last PC wreck box y")
 close(last.localCenter.z,38.12467,0.0003,"last PC wreck box z")
 close(last.localSize.x,1.6708254,0.0003,"last source radius")
+// PC602 WreckBox209: six original faces, each 2 triangles, no reversed
+// surfaces or missing back side. This checks source structure independently
+// of the still-pending grime/scratch/contour stage and whole-hull model.
+let boxFaces=PC602WreckDebris209.structuralBoxFaces()
+assert(boxFaces.count==161*36)
+assert(boxFaces.count/3==1932)
+let box0=Array(boxFaces.prefix(36))
+close(box0[0].position.x,first.localCenter.x-first.localSize.x/2,
+      0.00001,"source face +Z first vertex X")
+close(box0[0].position.y,first.localCenter.y-first.localSize.y/2,
+      0.00001,"source face +Z first vertex Y")
+close(box0[0].position.z,first.localCenter.z+first.localSize.z/2,
+      0.00001,"source face +Z first vertex Z")
+assert(box0[0].normal==SIMD3<Float>(0,0,1))
+assert(box0[6].normal==SIMD3<Float>(0,0,-1))
+assert(box0[12].normal==SIMD3<Float>(0,-1,0))
+assert(box0[18].normal==SIMD3<Float>(0,1,0))
+assert(box0[24].normal==SIMD3<Float>(-1,0,0))
+assert(box0[30].normal==SIMD3<Float>(1,0,0))
+close(box0[6].tint.x,first.color.x*0.86,
+      0.00001,"source WreckBox209 back face red attenuation")
+close(box0[12].tint.z,first.color.z*0.97,
+      0.00001,"source WreckBox209 bottom face blue attenuation")
+assert(boxFaces.allSatisfy{ v in
+    v.position.x.isFinite && v.position.y.isFinite &&
+    v.position.z.isFinite && v.tint.w==1
+})
+
 let accent=fragments.first(where:{$0.isAccent && $0.originalIndex==0})!
 close(accent.localCenter.x,first.localCenter.x+first.localSize.x*0.9,
       0.00002,"source accent x")
@@ -116,4 +144,4 @@ assert(!menu.mustDisplayPhysicalH55)
 assert(menu.transitions==2)
 assert(!menu.enterFromOrbit(distance:0,miningDetached:false,context:eligible))
 print("PASS PC602 original 146+15 wreck debris, hash, world alignment and " +
-      "Hub90 original dock/menu/H55 transitions; no invented GLB or IPA claim")
+      "1932 original box triangles and Hub90 dock/menu/H55 routing; no invented GLB or IPA claim")
