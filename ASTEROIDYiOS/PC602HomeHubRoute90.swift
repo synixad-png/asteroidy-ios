@@ -27,7 +27,20 @@ struct PC602HomeHubRoute90 {
     @discardableResult
     mutating func enterFromOrbit(_ flight:PC602HomeFlight291,
                                  context:PC602HomeFlight291.DockContext)->Bool {
-        guard location == .orbit,flight.canDock90(context:context)
+        enterFromOrbit(distance:flight.dockDistance,
+                       miningDetached:flight.equipment.miningDetached,
+                       context:context)
+    }
+
+    /// Typed source gate, used by the flight entry and native regression tests.
+    /// The UI integration must pass the CURRENT flight snapshot, never
+    /// invent a near-wreck distance or skip the gate for the H55 view.
+    @discardableResult
+    mutating func enterFromOrbit(distance:Float,miningDetached:Bool,
+                                 context:PC602HomeFlight291.DockContext)->Bool {
+        guard location == .orbit,
+              PC602HomeFlight291.canDock90(distance:distance,
+                       miningDetached:miningDetached,context:context)
         else {return false}
         location = .hangarFromOrbit
         transitions+=1
