@@ -14,7 +14,7 @@ struct PC602HomeScene291: UIViewRepresentable {
     func makeCoordinator()->Coordinator {Coordinator()}
 
     func makeUIView(context:Context)->MTKView {
-        let view=MTKView(frame:.zero,device:MTLCreateSystemDefaultDevice())
+        let view=MTKView(frame:.zero,device:SourceNewHome290MetalAssets.defaultDevice)
         view.isOpaque=true
         view.clearColor=MTLClearColor(red:0.012,green:0.021,blue:0.04,alpha:1)
         view.colorPixelFormat = .bgra8Unorm
