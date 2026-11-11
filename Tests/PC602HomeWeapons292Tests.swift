@@ -81,8 +81,10 @@ PC602HomeShotGeometry292.build(home:home,bullets:five.projectiles,
     camera:cameraEye,view:camera.view,into:&visual)
 assert(visual.count==5*PC602HomeShotGeometry292.verticesPerShot*7)
 assert(visual.allSatisfy{$0.isFinite})
-expect(visual[3],55/255,tolerance:0.0001,
-       "Original pulse RGB source shot tint red")
+expect(visual[3],255/255,tolerance:0.0001,
+       "Original scatter RGB source shot tint red")
+expect(visual[4],92/255,tolerance:0.0001,
+       "Original scatter RGB source shot tint green")
 expect(visual[6],27/255,tolerance:0.0001,
        "Original source 27-alpha halo")
 let capacity=visual.capacity
