@@ -81,15 +81,15 @@ jobs:
                       break
           assert end is not None
           Path("/tmp/PC602ActualGameVec2.swift").write_text(
-              "import Foundation\\n"+source[start:end]+"\\n")
+              "import Foundation\n"+source[start:end]+"\n")
           PY
           cp Tests/PC602HomeFlight291Tests.swift /tmp/main.swift
-          xcrun swiftc -O \\
-            /tmp/PC602ActualGameVec2.swift \\
-            ASTEROIDYiOS/Sphere67.swift \\
-            ASTEROIDYiOS/FlightDynamics556.swift \\
-            ASTEROIDYiOS/PC602NewHome290.swift \\
-            ASTEROIDYiOS/PC602HomeFlight291.swift \\
+          xcrun swiftc -O \
+            /tmp/PC602ActualGameVec2.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602HomeFlight291.swift \
             /tmp/main.swift -o /tmp/pc602-homeflight-tests
           /tmp/pc602-homeflight-tests ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
       - name: Document scope accurately (no fake gameplay acceptance)
