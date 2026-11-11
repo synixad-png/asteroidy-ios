@@ -30,6 +30,11 @@ final class HudPlanetariumOriginal600 {
         let path:Path
         let times:[Float]
         let values:[SIMD4<Float>]
+        // The 72 original water bubbles wrap from the capsule outlet
+        // (X≈7) back to its inlet (X≈3.2) in a single source key interval.
+        // Never interpolate through that teleport; keep the original
+        // 193 key times and all ordinary glTF LINEAR interpolation.
+        let bubbleWrap:Bool
         func at(_ time:Float)->SIMD4<Float> {
             guard values.count>1 else{return values[0]}
             if time<=times[0] {return values[0]}
@@ -41,6 +46,12 @@ final class HudPlanetariumOriginal600 {
             }
             let duration=times[hi]-times[lo]
             let blend=duration>0 ? min(1,max(0,(time-times[lo])/duration)) : 0
+            // A bubble's source-authored reset is discontinuous. Linear
+            // interpolation across -3.8 original model units makes it
+            // streak backwards through its complete capsule in 0.25s.
+            if bubbleWrap && values[hi].x-values[lo].x < -3.0 {
+                return values[lo]
+            }
             if case .rotation=path {
                 let a=simd_quatf(vector:values[lo])
                 let b=simd_quatf(vector:values[hi])
@@ -298,7 +309,12 @@ final class HudPlanetariumOriginal600 {
                 return SIMD4(data[base],data[base+1],data[base+2],
                              components==4 ? data[base+3] : 0)
             }
-            parsedTracks.append(Track(node:node,path:path,times:times,values:values))
+            let name=nodeRecords[node]["name"] as? String ?? ""
+            let resettable = path == .translation &&
+                name.hasPrefix("CAPSULE_") &&
+                name.contains("_WATER_BUBBLE_")
+            parsedTracks.append(Track(node:node,path:path,times:times,
+                                      values:values,bubbleWrap:resettable))
         }
         self.tracks=parsedTracks
         duration=parsedTracks.compactMap{$0.times.last}.max() ?? 0
