@@ -104,8 +104,8 @@ struct HudControlLayout600:Codable,Equatable {
             // Reference rectangle for the OPTIONS control shown only in
             // pause menu. The modal uses the SAME offset and scale.
             baselineY=viewport.height/2+(compact ? 2:12)
-            nativeWidth=max(44,min(viewport.width-32,650)-
-                            (compact ? 32:56))
+            nativeWidth = max(44.0, min(viewport.width - 32.0, 650.0)
+                               - (compact ? 32.0 : 56.0))
         }
         let w=max(44,nativeWidth*control.scale)
         let h=max(44,(compact ? 42:48)*control.scale)
