@@ -190,8 +190,11 @@ struct Sector01Scene568: View {
                                    render3DIcons:session.hud3DIconsReady600,
                                    layout600:hudLayout600,
                                    active:session.hud.phase == .playing && !userPaused && !showingService,
-                                   livePose:{ [weak session] in
-                                       session?.currentHudVisual600().pose ?? HudMotion600.Pose()
+                                   liveRadar:{ [weak session] in
+                                       session?.currentHudRadarFrame600() ??
+                                           CarbonisSession568.RadarFrame600(
+                                               pose:HudMotion600.Pose(),
+                                               contacts:[])
                                    })
                     .allowsHitTesting(false)
                     .onAppear {
@@ -205,9 +208,9 @@ struct Sector01Scene568: View {
                         session.updateHudSafeInsets600(insets)
                     }
 
-                // PC RendererHudEnergy.DrawEnergyGauge animates five plasma
-                // layers each display frame. Keep radar/scores/text at their
-                // original lighter 10Hz snapshot cadence.
+                // Plasma remains an independent animated Canvas at 60 Hz.
+                // Radar and HUD movement now read lightweight 60 Hz
+                // camera data; semantic scores/text remain at 10 Hz.
                 HudPlasmaLayer600(
                     hull:session.hud.hull,armor:session.hud.armor,
                     maxHull:session.hud.maxHull,maxArmor:session.hud.maxArmor,
