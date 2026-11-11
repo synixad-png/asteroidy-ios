@@ -68,6 +68,10 @@ expect(rapid.interval,0.16/1.30*0.88,tolerance:0.0001,
        "Original Modules97 CoolingRank + rapid purchased profile")
 assert(PC602HomeWeaponTest292.Settings(
     weapon:.pulse,upgrade:5)==nil)
+assert(PC602HomeWeaponTest292.Settings(
+    weapon:.pulse,cooling:3)==nil)
+assert(PC602HomeWeaponTest292.Settings(
+    weapon:.pulse,cooling:2) != nil)
 
 guard let camera=PC602HomeWorldView291(
     camera:ship.camera,aspect:16.0/9.0) else {
