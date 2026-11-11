@@ -151,6 +151,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var craftVertexCount=0
             private var craftPipeline:MTLRenderPipelineState?
             private var craftEnginePipeline491:MTLRenderPipelineState?
+            private var shieldShell145:SourceShieldShell145?
             private var tracerPipeline:MTLRenderPipelineState?
             private var projectilePipeline:MTLRenderPipelineState?
             private var projectileGroundPipeline:MTLRenderPipelineState?
@@ -428,6 +429,17 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         data:Self.verified("Vanguard431Source.mesh"))
                     craftBuffer=try Self.makeBuffer(parsed.vertices,device:device)
                     craftVertexCount=parsed.vertexCount
+                    // One precompiled shell, size taken directly from the
+                    // SHA-verified source Vanguard mesh (never a second ship).
+                    // A missing visual pipeline must not prevent playing.
+                    do {
+                        shieldShell145=try SourceShieldShell145(
+                            device:device,library:library,
+                            sourceMesh:parsed.vertices)
+                    } catch {
+                        NSLog("TARCZA145: plasma shell renderer unavailable: %@",
+                              String(describing:error))
+                    }
                     craftTexture=try texLoader.newTexture(
                         data:Self.verified("Vanguard431Base.jpg"),options:opts)
                     guard let fighterFragment=library.makeFunction(
@@ -1418,6 +1430,26 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                             length:MemoryLayout<EngineUniforms491>.stride,index:0)
                         encoder.drawPrimitives(type:.triangle,vertexStart:0,
                             vertexCount:IntroEnginePlasma491.vertexCount)
+                        encoder.setDepthStencilState(depth)
+                    }
+                    // Only genuine manually held Tarcza145: no passive
+                    // shield charge, no HUD impostor and no simulation
+                    // change. Draw a transparent world-space plasma dome
+                    // around the ACTUAL Vanguard on the same draw encoder.
+                    if session.game.tarcza145.active,
+                       let shieldShell145 {
+                        let source=session.game.tarcza145
+                        let eye=SphereCameraView556(
+                            camera:session.game.flight.camera).eye
+                        encoder.setDepthStencilState(noDepthWrite)
+                        shieldShell145.draw(
+                            encoder:encoder,
+                            viewProjection:worldView,
+                            shipMatrix:shipMatrix,
+                            cameraEye:eye,
+                            time:session.game.elapsed,
+                            energy:source.energy,
+                            flash:source.flash)
                         encoder.setDepthStencilState(depth)
                     }
                 }
