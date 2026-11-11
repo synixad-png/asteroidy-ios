@@ -44,10 +44,15 @@ struct PC602HomeScene291: UIViewRepresentable {
 
         final class Renderer:NSObject,MTKViewDelegate {
             enum SourceError:Error {case metal,invalidCamera}
+            let device:MTLDevice
             let queue:MTLCommandQueue
             let pipeline:MTLRenderPipelineState
+            let beaconPipeline:MTLRenderPipelineState
             let depth:MTLDepthStencilState
+            let beaconDepth:MTLDepthStencilState
             let source:SourceNewHome290MetalAssets
+            private var beaconBuffer:MTLBuffer?
+            private var beaconCacheKey:(Int,Int)?
             let lava287=SourceLavaLightSettings287.load()
             var flight:PC602HomeFlight291?
 
@@ -55,6 +60,7 @@ struct PC602HomeScene291: UIViewRepresentable {
                 guard let queue=device.makeCommandQueue() else {
                     throw SourceError.metal
                 }
+                self.device=device
                 self.queue=queue
                 source=try SourceNewHome290MetalAssets.shared(device:device)
                 let library=try device.makeDefaultLibrary(bundle:.main)
@@ -69,12 +75,33 @@ struct PC602HomeScene291: UIViewRepresentable {
                 // The source terrain GLB is opaque and depth-tested.
                 descriptor.colorAttachments[0].isBlendingEnabled=false
                 pipeline=try device.makeRenderPipelineState(descriptor:descriptor)
+                guard let beaconVertex=library.makeFunction(name:"home291BeaconVertex"),
+                      let beaconFragment=library.makeFunction(name:"home291BeaconFragment")
+                else {throw SourceError.metal}
+                let markers=MTLRenderPipelineDescriptor()
+                markers.vertexFunction=beaconVertex
+                markers.fragmentFunction=beaconFragment
+                markers.colorAttachments[0].pixelFormat = .bgra8Unorm
+                markers.depthAttachmentPixelFormat = .depth32Float
+                markers.colorAttachments[0].isBlendingEnabled=true
+                markers.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
+                markers.colorAttachments[0].destinationRGBBlendFactor = .one
+                markers.colorAttachments[0].sourceAlphaBlendFactor = .one
+                markers.colorAttachments[0].destinationAlphaBlendFactor = .one
+                beaconPipeline=try device.makeRenderPipelineState(descriptor:markers)
                 let depthDescriptor=MTLDepthStencilDescriptor()
                 depthDescriptor.depthCompareFunction = .lessEqual
                 depthDescriptor.isDepthWriteEnabled=true
                 guard let depth=device.makeDepthStencilState(
                     descriptor:depthDescriptor) else {throw SourceError.metal}
                 self.depth=depth
+                let beaconDescriptor=MTLDepthStencilDescriptor()
+                beaconDescriptor.depthCompareFunction = .lessEqual
+                // PC HomeScene291 disables depth writes for 26 additive lines.
+                beaconDescriptor.isDepthWriteEnabled=false
+                guard let markerDepth=device.makeDepthStencilState(
+                    descriptor:beaconDescriptor) else {throw SourceError.metal}
+                beaconDepth=markerDepth
                 super.init()
             }
 
@@ -163,6 +190,33 @@ struct PC602HomeScene291: UIViewRepresentable {
                 encoder.drawPrimitives(type:.triangle,
                     vertexStart:SourceNewHome290MetalAssets.terrainVertices,
                     vertexCount:SourceNewHome290MetalAssets.armorVertices)
+
+                // CPU marker geometry changes ONLY when campaign progress or
+                // the chosen destination changes; never rebuild 26 rings
+                // every render frame. All positions use original H290 heights.
+                let key=(flight.target,flight.completedMask)
+                if beaconCacheKey?.0 != key.0 || beaconCacheKey?.1 != key.1 {
+                    beaconCacheKey=key
+                    if let lines=PC602HomeBeacons291.vertices(
+                        home:flight.home,selected:key.0,completedMask:key.1) {
+                        beaconBuffer=lines.withUnsafeBytes { raw in
+                            raw.baseAddress.flatMap {
+                                device.makeBuffer(bytes:$0,length:raw.count,options:[])
+                            }
+                        }
+                    } else {beaconBuffer=nil}
+                }
+                if let beaconBuffer {
+                    var vp=projection*viewMatrix
+                    encoder.setRenderPipelineState(beaconPipeline)
+                    encoder.setDepthStencilState(beaconDepth)
+                    encoder.setVertexBuffer(beaconBuffer,offset:0,index:0)
+                    encoder.setVertexBytes(&vp,
+                        length:MemoryLayout<simd_float4x4>.stride,index:1)
+                    encoder.drawPrimitives(type:.line,vertexStart:0,
+                        vertexCount:PC602HomeBeacons291.levels *
+                                    PC602HomeBeacons291.verticesPerLevel)
+                }
                 encoder.endEncoding()
                 command.present(drawable)
                 command.commit()
