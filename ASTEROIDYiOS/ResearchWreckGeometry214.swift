@@ -9,6 +9,10 @@ enum ResearchWreckGeometry214 {
     struct Mesh {
         var triangles:[Float] = []
         var lines:[Float] = []
+        // A true source-code boundary: hull and surface marks precede
+        // orbit-specific debris. Avoid heuristics in golden-prefix tests.
+        var hullVertices:Int=0
+        var hullLineVertices:Int=0
         var triangleCount:Int { triangles.count/11 }
         var lineCount:Int { lines.count/7 }
     }
@@ -384,6 +388,8 @@ enum ResearchWreckGeometry214 {
             warningLamp(-10.4,1.6,-5.6,orange:false,phase:4.2)
             warningLamp(9,-4.1,8.4,orange:true,phase:4.9)
             // PC602 orbit:true = 146 source debris; combat = original 112.
+            mesh.hullVertices=mesh.triangleCount
+            mesh.hullLineVertices=mesh.lineCount
             for i in 0..<debris {
                 let t=Float(i)/Float(debris-1)
                 let jx=Self.spaceRand207(seed,i,8)-0.5
