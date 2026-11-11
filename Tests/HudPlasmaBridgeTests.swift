@@ -41,9 +41,14 @@ import Foundation
         moved.change("armor.bar"){$0.x += 16;$0.y -= 12}
         let shifted=HudPlasmaBridge600.segment(
             id:id,layout:moved,pose:still,viewport:vp,fill:1)!
-        check(near(shifted.start.x,bridge.start.x) &&
-              near(shifted.start.y,bridge.start.y),
-              "moving a gauge cannot drag the original GLB socket")
+        // The existing approved F6 planetarium tether follows the
+        // AVERAGE displacement of all three plasma widgets. A single
+        // moved widget therefore moves the 3D start by exactly 1/3.
+        check(near(shifted.start.x-bridge.start.x,
+                   16.0/3.0*vp.scale) &&
+              near(shifted.start.y-bridge.start.y,
+                   -12.0/3.0*vp.scale),
+              "GLB socket follows the existing 3-gauge average tether")
         check(near(shifted.end.x-bridge.end.x,16*vp.scale) &&
               near(shifted.end.y-bridge.end.y,-12*vp.scale),
               "second endpoint follows separately edited gauge")
