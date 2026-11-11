@@ -19,6 +19,11 @@ final class PC602HomeWorldDriver291:ObservableObject {
         var physicalFrames:Int=0
         var projectiles:Int=0
         var weaponName:String="IMPULS"
+        var zone:Int=1
+        var altitude:Float=12
+        var courseDegrees:Float=0
+        var selectedUnlocked:Bool=true
+        var selectedCompleted:Bool=false
     }
 
     @Published private(set) var hud=HUD()
@@ -164,6 +169,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
         case .swarm:gunLabel="RÓJ"
         default:gunLabel="IMPULS"
         }
+        let source330=PC602OrbitHud330.measure(flight)
         return HUD(target:flight.target,completed:flight.completedMask.nonzeroBitCount,
             speed:flight.orbitSpeed,sectorDistance:flight.orbitDistance,
             dockDistance:flight.dockDistance,orbitTime:flight.orbitTime,
@@ -171,7 +177,12 @@ final class PC602HomeWorldDriver291:ObservableObject {
                 planetHub:true,orbitMode:true)),
             missionEntrance:flight.entryMission,physicalFrames:frames,
             projectiles:weapons?.projectiles.count ?? 0,
-            weaponName:gunLabel)
+            weaponName:gunLabel,
+            zone:source330?.zone ?? 1,
+            altitude:source330?.altitude ?? 12,
+            courseDegrees:source330?.course ?? 0,
+            selectedUnlocked:source330?.unlocked ?? false,
+            selectedCompleted:source330?.completed ?? false)
     }
 
     /// Called by HomeScene291.draw(in:) exactly once per Metal frame.
@@ -212,12 +223,33 @@ final class PC602HomeWorldDriver291:ObservableObject {
         return latest
     }
 
-    func cycleMission() {
+    @discardableResult
+    func selectMission(_ level:Int)->Bool {
         let copy=withLock{()->PC602HomeFlight291? in
+            guard session?.selectMission(level)==true else{return nil}
+            return session?.flight
+        }
+        guard let copy else{return false}
+        // PC OrbitClick51 selects only unlocked stages and preserves the
+        // real completion mask. Write only the existing W3 selection key.
+        var saved=CampaignStore556.load()
+        if saved.selectUnlocked(level) {CampaignStore556.save(saved)}
+        hud=Self.measure(copy,frames:hud.physicalFrames)
+        return true
+    }
+
+    func cycleMission() {
+        let result=withLock{()->PC602HomeFlight291? in
             session?.cycleMission()
             return session?.flight
         }
-        if let copy {hud=Self.measure(copy,frames:hud.physicalFrames)}
+        if let result {
+            var saved=CampaignStore556.load()
+            if saved.selectUnlocked(result.target) {
+                CampaignStore556.save(saved)
+            }
+            hud=Self.measure(result,frames:hud.physicalFrames)
+        }
     }
 
     /// Underlying pilot must be WITHIN 43.2 metres of the actual wreck.
