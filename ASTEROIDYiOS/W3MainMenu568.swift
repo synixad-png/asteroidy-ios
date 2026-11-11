@@ -51,6 +51,7 @@ struct W3MainMenu568: View {
     let openDiagnostic: () -> Void
     let openCampaignOnEntry: Bool
     let startNewGame: (SourceNewGameSelection568)->Bool
+    let openOrbit:()->String?
     let restoreArchivedGame:(URL)->Bool
     @State private var restoreCandidate568:URL?
     @State private var confirmRestore568=false
@@ -489,7 +490,8 @@ struct W3MainMenu568: View {
                     CampaignAtlas556(progress:progress,
                                      dismiss:{page=nil},
                                      onSelect:selectMission,
-                                     onInspect:inspectSector)
+                                     onInspect:inspectSector,
+                                     onEnterOrbit:openOrbit)
                         .frame(maxWidth:.infinity,maxHeight:.infinity)
                 } else if item == .newGame {
                     newGamePage(compact:compact)
