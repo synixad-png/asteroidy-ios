@@ -74,13 +74,48 @@ struct GameView: View {
     @StateObject private var input = FlightInput()
     @StateObject private var missionIntroInput568 = FlightInput()
     @StateObject private var audio = OriginalAudioAV568()
+    @StateObject private var homeWorld291=PC602HomeWorldDriver291()
     @State private var campaign = CampaignStore556.load()
+    @State private var showingHomeWorld291=false
+    @State private var returnHomeWorldAfterCarbonis291=false
     // Native CARBONIS first mission runs an original source-driven state,
     // isolated from Boreas diagnostic scenes and unported later sectors.
     @State private var sourceSector01: Sector01Entry568?
     @State private var sourceSector01Setup: Sector01PreparedWave568?
     @State private var showingMissionIntro568 = false
     @State private var reopenAtlasAfterCarbonis = false
+
+    // The player starts physical orbit from the actual W3 campaign page.
+    // A menu action must never manufacture a mission or reset the campaign.
+    private func enterHomeWorld291()->String? {
+        guard sourceSector01==nil else{return "MISJA JUŻ TRWA"}
+        do {
+            try homeWorld291.start(progress:campaign)
+            input.releaseHeldControls()
+            input.gameplayPaused=true
+            audio.stopForDiagnostic()
+            showingHomeWorld291=true
+            showMainMenu=false
+            return nil
+        } catch {
+            return "NIE MOŻNA OTWORZYĆ ORBITY: "+String(describing:error)
+        }
+    }
+
+    private func enterOrbitMission291(_ level:Int) {
+        // Only source Carbonis 01 is available as playable combat on iOS.
+        guard level==1,sourceSector01==nil,
+              Sector01CarbonisPreview568.isAvailable else{return}
+        returnHomeWorldAfterCarbonis291=true
+        homeWorld291.setSuspended(true)
+        inspectSourceSector(1)
+        if sourceSector01 != nil {
+            showingHomeWorld291=false
+        } else {
+            returnHomeWorldAfterCarbonis291=false
+            homeWorld291.setSuspended(scenePhase != .active)
+        }
+    }
 
     private func beginMissionIntro568(sector:Int) {
         // Only launch after original mission assets, shop and Wave()
