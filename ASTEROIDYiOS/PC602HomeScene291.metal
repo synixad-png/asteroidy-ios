@@ -60,3 +60,26 @@ fragment float4 home291Fragment(
     }
     return float4(clamp(ink,0.0f,1.0f),clamp(base.a,0.0f,1.0f));
 }
+
+struct Home291BeaconVertex {
+    float4 position;
+    float4 tint;
+};
+struct Home291BeaconOutput {
+    float4 position [[position]];
+    float4 tint;
+};
+vertex Home291BeaconOutput home291BeaconVertex(
+    uint id [[vertex_id]],
+    device const Home291BeaconVertex *segments [[buffer(0)]],
+    constant float4x4 &viewProjection [[buffer(1)]])
+{
+    Home291BeaconOutput o;
+    o.position=viewProjection*segments[id].position;
+    o.tint=segments[id].tint;
+    return o;
+}
+fragment float4 home291BeaconFragment(Home291BeaconOutput in [[stage_in]]) {
+    // Source HomeScene291 uses (GL_SRC_ALPHA, GL_ONE) and glDepthMask(0).
+    return in.tint;
+}
