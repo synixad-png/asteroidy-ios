@@ -12,6 +12,8 @@ struct PC602HomeWorldPage291:View {
     @ObservedObject var driver:PC602HomeWorldDriver291
     let onExitToW3:()->Void
     let onEnterMission:(Int)->Void
+    @State private var showingAtlas330=false
+    @State private var previouslyPaused330=false
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.39,green:0.75,blue:0.79)
 
@@ -35,6 +37,7 @@ struct PC602HomeWorldPage291:View {
                         .ignoresSafeArea()
                         .accessibilityIdentifier("pc602-orbit-live-metal")
                     overlay(screen:screen)
+                    if showingAtlas330 {atlasPanel(screen:screen)}
                 } else {
                     VStack(spacing:12) {
                         Text("PC602 / ORBITA NIEGOTOWA")
@@ -74,6 +77,93 @@ struct PC602HomeWorldPage291:View {
             }
         }
         .accessibilityIdentifier("pc602-orbit-real-gameplay-page")
+    }
+
+    private func dismissAtlas330() {
+        showingAtlas330=false
+        driver.setPaused(previouslyPaused330)
+    }
+
+    /// Original PC602 OrbitHud330: eight columns, four rows, 26 authored
+    /// source mission numbers, dark 170/165-alpha locked/unlocked cards.
+    /// On 932pt iPhone the 29px source tiles are too small for touch, so
+    /// they are enlarged ONLY while the modal atlas is explicitly open.
+    /// This is the exact same CampaignStore556, NOT another save file.
+    private func atlasPanel(screen:GeometryProxy)->some View {
+        let compact=screen.size.height<450
+        let cell:CGFloat=compact ? 40:44
+        return ZStack {
+            Color.black.opacity(0.72)
+                .ignoresSafeArea()
+                .onTapGesture {dismissAtlas330()}
+            VStack(spacing:7) {
+                HStack {
+                    Text("ATLAS / 26 SEKTORÓW")
+                        .font(.system(size:compact ? 12:16,
+                                      weight:.bold,design:.monospaced))
+                        .foregroundStyle(gold)
+                    Spacer()
+                    Button("WRÓĆ DO LOTU") {dismissAtlas330()}
+                        .foregroundStyle(cyan)
+                        .font(.system(size:compact ? 10:13,
+                                      weight:.bold,design:.monospaced))
+                        .accessibilityIdentifier("pc602-orbit-close-atlas330")
+                }
+                Text("CEL \(String(format:"%02d",driver.hud.target)) · " +
+                     "POSTĘP \(driver.hud.completed)/26")
+                    .font(.system(size:10,design:.monospaced))
+                    .foregroundStyle(cyan)
+                LazyVGrid(columns:Array(repeating:GridItem(.fixed(cell),
+                                 spacing:4),count:8),spacing:4) {
+                    ForEach(1...26,id:\.self) { level in
+                        let finished=PC602HomeFlight291.completed(
+                            level,mask:driver.hud.completedMask)
+                        let available=PC602HomeFlight291.unlocked(
+                            level,mask:driver.hud.completedMask)
+                        let selected=level==driver.hud.target
+                        Button {
+                            if available && driver.selectMission(level) {
+                                dismissAtlas330()
+                            }
+                        } label: {
+                            Text(String(format:"%02d",level))
+                                .font(.system(size:12,weight:.bold,
+                                              design:.monospaced))
+                                .foregroundStyle(selected ? gold :
+                                    finished ? .green :
+                                    available ? cyan : .gray)
+                                .frame(width:cell,height:cell)
+                                .background(finished
+                                    ? Color(red:65/255,green:168/255,
+                                            blue:139/255).opacity(174/255)
+                                    : available
+                                    ? Color(red:28/255,green:75/255,
+                                            blue:98/255).opacity(170/255)
+                                    : Color(red:17/255,green:30/255,
+                                            blue:43/255).opacity(165/255))
+                                .overlay(Rectangle().stroke(
+                                    selected ? cyan : cyan.opacity(0.12),
+                                    lineWidth:selected ? 2:1))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!available)
+                        .accessibilityIdentifier(
+                            "pc602-orbit-sector-\(level)")
+                    }
+                }
+                Text("WYBÓR NIE ZALICZA MISJI · BLOKADY Z KAMPANII PC")
+                    .font(.system(size:compact ? 9:11,
+                                  design:.monospaced))
+                    .foregroundStyle(.white.opacity(0.78))
+                    .multilineTextAlignment(.center)
+            }
+            .padding(compact ? 12:18)
+            .frame(maxWidth:500)
+            .background(Color(red:0.008,green:0.028,blue:0.048))
+            .overlay(Rectangle().stroke(gold.opacity(0.75),lineWidth:1))
+        }
+        .zIndex(15)
+        .accessibilityIdentifier("pc602-orbit-original-26-tile-atlas330")
     }
 
     private func panel(_ label:String)->some View {
@@ -118,6 +208,19 @@ struct PC602HomeWorldPage291:View {
             .padding(.leading,leftInset)
             .padding(.trailing,rightInset)
             .padding(.top,topInset)
+            HStack(spacing:12) {
+                Text("STREFA \(driver.hud.zone)")
+                Text("PUŁAP \(Int(driver.hud.altitude)) m")
+                Text("KURS \(Int(abs(driver.hud.courseDegrees)))° " +
+                     (driver.hud.courseDegrees<0 ? "W LEWO":"W PRAWO"))
+                Spacer(minLength:0)
+            }
+            .font(.system(size:compact ? 9:11,
+                          weight:.semibold,design:.monospaced))
+            .foregroundStyle(cyan)
+            .padding(.leading,leftInset)
+            .padding(.trailing,rightInset)
+            .padding(.top,4)
             Spacer(minLength:0)
             if let error=driver.error {
                 Text(error)
@@ -138,6 +241,12 @@ struct PC602HomeWorldPage291:View {
                         driver.setPaused(!driver.paused)
                     }
                     .accessibilityIdentifier("pc602-orbit-pause")
+                    Button("ATLAS 26") {
+                        previouslyPaused330=driver.paused
+                        showingAtlas330=true
+                        driver.setPaused(true)
+                    }
+                    .accessibilityIdentifier("pc602-orbit-open-atlas330")
                     Button("CEL +") {driver.cycleMission()}
                         .disabled(driver.paused)
                         .accessibilityIdentifier("pc602-orbit-next-sector")
