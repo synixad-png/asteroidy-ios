@@ -29,7 +29,7 @@ struct W3HomePlanetMetal568: UIViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeUIView(context: Context) -> MTKView {
-        let view=MTKView(frame:.zero,device:MTLCreateSystemDefaultDevice())
+        let view=MTKView(frame:.zero,device:SourceNewHome290MetalAssets.defaultDevice)
         // GPU source preview clears DEPTH only. A separate Metal view must
         // keep its color attachment fully transparent instead of drawing a
         // black/offscreen panel over the shared W3 background.
