@@ -7,6 +7,7 @@ import UniformTypeIdentifiers
 /// Selection, geometry and movement come from PC v602 HudLayout.SelectAt/Drag.
 struct HudLayoutEditor600:View {
     @State private var document:HudLayout600
+    @State private var controlDocument:HudControlLayout600
     @State private var selected="radar"
     @State private var inspectorOpen=false
     @State private var importingJSON=false
@@ -16,21 +17,32 @@ struct HudLayoutEditor600:View {
 
     let viewport:CombatHUDViewport568
     let onPreview:(HudLayout600)->Void
+    let onPreviewControls:(HudControlLayout600)->Void
     let onSave:(HudLayout600)->Void
+    let onSaveControls:(HudControlLayout600)->Void
     let onCancel:()->Void
 
-    init(initial:HudLayout600,viewport:CombatHUDViewport568,
+    init(initial:HudLayout600,initialControls:HudControlLayout600,
+         viewport:CombatHUDViewport568,
          onPreview:@escaping (HudLayout600)->Void,
+         onPreviewControls:@escaping (HudControlLayout600)->Void,
+         onSaveControls:@escaping (HudControlLayout600)->Void,
          onSave:@escaping (HudLayout600)->Void,
          onCancel:@escaping ()->Void) {
         self.viewport=viewport
         self.onPreview=onPreview
+        self.onPreviewControls=onPreviewControls
         self.onSave=onSave
+        self.onSaveControls=onSaveControls
         self.onCancel=onCancel
         _document=State(initialValue:initial)
+        _controlDocument=State(initialValue:initialControls)
     }
 
     private var selectedWidget:HudLayout600.Widget? {document.widget(selected)}
+    private var selectedControl:HudControlLayout600.Control? {
+        controlDocument.control(selected)
+    }
     private var selection:Binding<String> {
         Binding(get:{selected},set:{selected=$0})
     }
@@ -49,11 +61,30 @@ struct HudLayoutEditor600:View {
         HudEditorGeometry.zoom(id,originalScale:scale,factor:factor,in:&document)
         onPreview(document)
     }
+    private func changeControl(_ id:String,
+                               _ edit:(inout HudControlLayout600.Control)->Void) {
+        controlDocument.change(id,edit)
+        onPreviewControls(controlDocument)
+    }
+    private func moveControl(_ id:String,from original:HudControlLayout600.Control,
+                             dx:Double,dy:Double) {
+        controlDocument.move(id,from:original,deltaX:dx,deltaY:dy,
+                             viewport:viewport,compact:viewport.height<550)
+        onPreviewControls(controlDocument)
+    }
+    private func zoomControl(_ id:String,from scale:Double,factor:Double) {
+        controlDocument.zoom(id,originalScale:scale,factor:factor,
+                             viewport:viewport,compact:viewport.height<550)
+        onPreviewControls(controlDocument)
+    }
+    private var selectionIDs600:[String] {
+        document.widgets.map(\.id)+controlDocument.controls.map(\.id)
+    }
     private func selectNeighbor600(_ delta:Int) {
-        guard !document.widgets.isEmpty else{return}
-        let current=document.widgets.firstIndex(where:{$0.id==selected}) ?? 0
-        let count=document.widgets.count
-        selected=document.widgets[(current+delta+count)%count].id
+        let ids=selectionIDs600
+        guard !ids.isEmpty else{return}
+        let current=ids.firstIndex(of:selected) ?? 0
+        selected=ids[(current+delta+ids.count)%ids.count]
     }
 
     private func number(_ label:String,_ key:WritableKeyPath<HudLayout600.Widget,Double>,
@@ -68,6 +99,25 @@ struct HudLayoutEditor600:View {
             Slider(value:Binding(
                 get:{selectedWidget?[keyPath:key] ?? 0},
                 set:{value in change(selected){$0[keyPath:key]=value}}
+            ),in:limits,step:step)
+            .tint(.cyan)
+        }
+        .font(.system(size:11,design:.monospaced))
+    }
+
+    private func controlNumber(_ label:String,
+                               _ key:WritableKeyPath<HudControlLayout600.Control,Double>,
+                               limits:ClosedRange<Double>,step:Double)->some View {
+        VStack(alignment:.leading,spacing:3) {
+            HStack {
+                Text(label)
+                Spacer()
+                Text(String(format:"%.2f",selectedControl?[keyPath:key] ?? 0))
+                    .monospacedDigit()
+            }
+            Slider(value:Binding(
+                get:{selectedControl?[keyPath:key] ?? 0},
+                set:{value in changeControl(selected){$0[keyPath:key]=value}}
             ),in:limits,step:step)
             .tint(.cyan)
         }
@@ -101,6 +151,10 @@ struct HudLayoutEditor600:View {
                     ForEach(document.widgets) { item in
                         Text(item.id).tag(item.id)
                     }
+                    ForEach(controlDocument.controls) { control in
+                        Text("PRZYCISK / "+HudControlLayout600.title(control.id))
+                            .tag(control.id)
+                    }
                 }
                 .pickerStyle(.menu)
                 if let widget=selectedWidget {
@@ -124,6 +178,23 @@ struct HudLayoutEditor600:View {
                             change(widget.id){$0=original}
                         }
                     }
+                } else if let control=selectedControl {
+                    Text("PRZYCISK FUNKCYJNY / AKTYWNY OBSZAR DOTYKU")
+                        .font(.system(size:10,weight:.semibold,design:.monospaced))
+                    Text("Pozycja i wielkość przycisku zmieniają również jego rzeczywisty obszar dotyku.")
+                        .font(.system(size:10))
+                    let limits=HudControlLayout600.limits(
+                        control.id,viewport:viewport,
+                        compact:viewport.height<550,scale:control.scale)
+                    controlNumber("PRZESUNIĘCIE X",\.x,limits:limits.x,step:0.5)
+                    controlNumber("PRZESUNIĘCIE Y",\.y,limits:limits.y,step:0.5)
+                    controlNumber("WIELKOŚĆ",\.scale,limits:0.65...3.5,step:0.05)
+                    Button("PRZYWRÓĆ TEN PRZYCISK") {
+                        if let original=HudControlLayout600.defaults()
+                            .control(control.id) {
+                            changeControl(control.id){$0=original}
+                        }
+                    }
                 }
                 Divider()
                 Button("EKSPORTUJ UKŁAD JSON") {
@@ -139,7 +210,9 @@ struct HudLayoutEditor600:View {
                     .accessibilityIdentifier("hud-v600-import-json")
                 Button("PRZYWRÓĆ CAŁY UKŁAD PC v602") {
                     document=HudLayout600.defaults()
+                    controlDocument=HudControlLayout600.defaults()
                     onPreview(document)
+                    onPreviewControls(controlDocument)
                 }
                 .foregroundStyle(.orange)
                 if let exchangeError600 {
@@ -166,6 +239,10 @@ struct HudLayoutEditor600:View {
                     ForEach(document.widgets) {widget in
                         Text(widget.id).tag(widget.id)
                     }
+                    ForEach(controlDocument.controls) {control in
+                        Text("PRZYCISK / "+HudControlLayout600.title(control.id))
+                            .tag(control.id)
+                    }
                 }
                 .pickerStyle(.menu)
                 .frame(minWidth:120,maxWidth:245)
@@ -178,11 +255,13 @@ struct HudLayoutEditor600:View {
                 }
                 .accessibilityIdentifier("hud-v600-editor-inspector-toggle")
                 Button("ZAPISZ") {
-                    guard document.save() else {
-                        exchangeError600=HudLayout600.LayoutError.invalidLayout.localizedDescription
+                    guard document.isValid,controlDocument.isValid,
+                          document.save(),controlDocument.save() else {
+                        exchangeError600="Nieprawidłowe ustawienia HUD lub przycisków."
                         inspectorOpen=true
                         return
                     }
+                    onSaveControls(controlDocument)
                     onSave(document)
                 }
                 .accessibilityIdentifier("hud-v600-save")
@@ -193,7 +272,7 @@ struct HudLayoutEditor600:View {
             .padding(.horizontal,7)
             .padding(.vertical,5)
             .background(Color(red:0.01,green:0.02,blue:0.04).opacity(0.95))
-            Text("46 ELEMENTÓW · DOTKNIJ / PRZESUŃ · SZCZYPIJ LUB UŻYJ OPCJI")
+            Text("46 ELEMENTÓW + 5 PRZYCISKÓW · PRZESUŃ / SZCZYPIJ / OPCJE")
                 .font(.system(size:9,design:.monospaced))
                 .foregroundStyle(.white)
                 .padding(4)
@@ -207,13 +286,20 @@ struct HudLayoutEditor600:View {
         GeometryReader { geo in
             ZStack(alignment:.topLeading) {
                 HudEditorTouchCanvas(
-                    layout:document,viewport:viewport,selection:selected,
+                    layout:document,controlLayout:controlDocument,
+                    viewport:viewport,selection:selected,
                     onSelect:{selected=$0},
                     onMove:{id,original,dx,dy in
                         move(id,from:original,dx:dx,dy:dy)
                     },
                     onScale:{id,originalScale,factor in
                         zoom(id,from:originalScale,factor:factor)
+                    },
+                    onControlMove:{id,original,dx,dy in
+                        moveControl(id,from:original,dx:dx,dy:dy)
+                    },
+                    onControlScale:{id,originalScale,factor in
+                        zoomControl(id,from:originalScale,factor:factor)
                     })
                     .frame(width:geo.size.width,height:geo.size.height)
                     .accessibilityIdentifier("hud-v600-editing-canvas")
