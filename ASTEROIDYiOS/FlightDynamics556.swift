@@ -40,7 +40,10 @@ struct FlightDynamics556 {
     // `desired` replaces the v556 ScreenVector67(move)*limit calculation.
     mutating func motion(velocity: inout Vec2, desired: Vec2, inputLength: Float, dt: Float) -> Vec2 {
         guard dt > 0 else { return .init(x:0,y:0) }
-        let length = max(0, min(1, inputLength))
+        // The original DirectMotion298 normalizes the movement vector but keeps
+        // its pre-normalization magnitude for engine power (e.g. diagonals).
+        // Existing iOS SphereFlight67 callers already supply <=1.
+        let length = max(0, inputLength)
         let previous = velocity
         let rate: Float = length > 0.01 ? 3 * configuration.control : 1.55 * (1 + configuration.stabilizerLevel * 0.16) * configuration.coastMassFactor * configuration.coastRateMultiplier
         velocity = velocity + (desired - velocity) * Self.response(rate:rate,dt:dt)
