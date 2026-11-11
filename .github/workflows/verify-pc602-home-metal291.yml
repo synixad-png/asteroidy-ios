@@ -1,0 +1,84 @@
+name: PC602 NewHome291 - native iPhone/iPad Metal source compile (NO IPA)
+
+on:
+  push:
+    branches: [feature/ios-pc602-newhome-world-source]
+    paths:
+      - .github/workflows/verify-pc602-home-metal291.yml
+      - ASTEROIDYiOS/SourceHome290Vertex.metalh
+      - ASTEROIDYiOS/W3HomePlanet290.metal
+      - ASTEROIDYiOS/PC602HomeScene291.metal
+      - ASTEROIDYiOS/PC602HomeScene291.swift
+      - ASTEROIDYiOS/SourceNewHome290MetalAssets.swift
+      - ASTEROIDYiOS/W3HomePlanetMetal568.swift
+  pull_request:
+    paths:
+      - .github/workflows/verify-pc602-home-metal291.yml
+      - ASTEROIDYiOS/PC602HomeScene291.metal
+      - ASTEROIDYiOS/PC602HomeScene291.swift
+      - ASTEROIDYiOS/SourceNewHome290MetalAssets.swift
+      - ASTEROIDYiOS/SourceHome290Vertex.metalh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-home-metal:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact PC v602 H290 resources on GitHub
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tests/V568W3HomeSourceLightTests.py
+          python3 Tests/V568W3PlanetTransparentSourceContract.py
+          python3 Tests/SourceLavaLight287SourceContract.py
+          python3 Tools/code_quality_audit.py --root . --gate
+      - name: Build actual Swift and Metal for physical iPhone and iPad (no IPA)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics
+          xcodebuild -version
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Debug \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/PC602Home291" \
+            build > diagnostics/xcodebuild.log 2>&1 || {
+              grep -n -A 9 -B 4 -E 'error:|FAILED|failed' diagnostics/xcodebuild.log | tail -n 130
+              tail -n 45 diagnostics/xcodebuild.log
+              exit 1
+            }
+          python3 - <<'PY'
+          from pathlib import Path
+          import plistlib
+          build=Path("build/PC602Home291/Build/Products/Debug-iphoneos")
+          apps=list(build.glob("*.app"))
+          assert len(apps)==1, apps
+          app=apps[0]
+          info=plistlib.loads((app/"Info.plist").read_bytes())
+          assert set(info["UIDeviceFamily"])=={1,2}
+          assert (app/"default.metallib").is_file()
+          assert (app/"W3HomePlanet290OriginalGPU.bin").is_file()
+          assert (app/"PC602Home290HeightMap.bin").is_file()
+          assert (app/"W3HomePlanet290Base.dat").is_file()
+          assert (app/"W3HomePlanet293Glow.dat").is_file()
+          print("PASS: real iPhone/iPad ARM64 Swift and Metal, source H290 bundle")
+          print("NOT TESTED: native GPU draw, 820-asteroid belt, docking, complete active world")
+          PY
+      - name: Source-only diagnostics (no unsigned IPA or executable artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PC602-NewHome291-Metal-ARM64-build-log
+          path: diagnostics/
+          if-no-files-found: ignore
+          retention-days: 7
