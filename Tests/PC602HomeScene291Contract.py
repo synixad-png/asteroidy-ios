@@ -57,12 +57,15 @@ assert "float band=0.25f+0.78f*d;" in shader
 assert "simd_float4x4(diagonal:SIMD4(100,100,100,1))" in world
 assert "PC602HomeWorldView291(" in world
 assert "camera:flight.flight.camera" in world
-assert "mvp:projection*viewMatrix*model" in world
+assert "let modelView=viewMatrix*model" in world
+assert "mvp:projection*modelView,model:modelView" in world
 assert "float band=0.25f+0.33f*smoothstep(0.30f,0.32f,d)" in world_shader
 assert "smoothstep(0.24f,0.58f,heat)" in world_shader
 assert "float3(1.0f,0.30f,0.07f)*core*0.68f" in world_shader
 assert "if(u.material==0u)" in world_shader
-assert "sourceKeyWorld:SIMD4(-0.6,0.8,1.4,0)" in world
+assert "sourceKeyEye:SIMD4(-0.6,0.8,1.4,0)" in world
+assert "float3 l=normalize(light.sourceKeyEye.xyz);" in world_shader
+assert "float3 view=normalize(-in.viewPosition);" in world_shader
 assert "encoder.setCullMode(.none)" in world
 assert "vertexCount:SourceNewHome290MetalAssets.terrainVertices" in world
 assert "vertexCount:SourceNewHome290MetalAssets.armorVertices" in world
