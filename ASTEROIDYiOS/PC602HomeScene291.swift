@@ -52,6 +52,8 @@ struct PC602HomeScene291: UIViewRepresentable {
             let belt:PC602OrbitBelt51
             let beltBuffer:MTLBuffer
             let originalWreck:SourceHomeWreck209
+            let originalShip:SourceHomeVanguard431
+            let orbitVisualScale:Float
             let depth:MTLDepthStencilState
             let beaconDepth:MTLDepthStencilState
             let source:SourceNewHome290MetalAssets
@@ -70,6 +72,8 @@ struct PC602HomeScene291: UIViewRepresentable {
                 // Shares the existing source-verified full hull generator;
                 // never invent a second partial GLB or duplicate debris.
                 originalWreck=try SourceHomeWreck209(device:device)
+                originalShip=try SourceHomeVanguard431(device:device)
+                orbitVisualScale=SourceShipScale472.load().orbitFactor
                 let originalBelt=try PC602OrbitBelt51.load()
                 belt=originalBelt
                 let geometryLength=originalBelt.vertexCount *
@@ -309,6 +313,12 @@ struct PC602HomeScene291: UIViewRepresentable {
                         vertexCount:PC602HomeBeacons291.levels *
                                     PC602HomeBeacons291.verticesPerLevel)
                 }
+                // Original HomeScene291 draws the source 4311 fighter AFTER
+                // beacons, with depth write and actual live DirectFlight298
+                // visual heading/roll/pitch (no ship-shaped impostor).
+                originalShip.draw(encoder:encoder,flight:flight,
+                    projection:projection,view:viewMatrix,
+                    orbitScale:orbitVisualScale)
                 encoder.endEncoding()
                 command.present(drawable)
                 command.commit()
