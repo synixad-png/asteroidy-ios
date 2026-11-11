@@ -32,8 +32,8 @@ assert "HudPickupTransform600.sample(" in renderer
 assert "pose:snapshot.pose" in renderer
 assert "HudPlanetariumPlasmaAnchor600" not in metal
 assert "HudMotionProject600.project(" in metal
-assert "widget:widget.id" in metal
-assert "pose.roll*pose.weight(widget.id)" in metal
+assert "widget:Self.plasmaGroupMotionID" in metal
+assert "pose.roll*pose.weight(Self.plasmaGroupMotionID)" in metal
 assert "HudPlanetariumMetal600(" in renderer
 assert "HudPlanetariumHost600(" not in scene
 assert "HudMotionProject600.project(" in metal
