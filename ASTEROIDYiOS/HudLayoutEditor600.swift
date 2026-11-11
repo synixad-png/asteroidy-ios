@@ -344,34 +344,45 @@ struct HudLayoutEditor600:View {
 /// above it and never changes the actual Metal combat camera or physics.
 private struct HudEditorTouchCanvas:UIViewRepresentable {
     let layout:HudLayout600
+    let controlLayout:HudControlLayout600
     let viewport:CombatHUDViewport568
     let selection:String
     let onSelect:(String)->Void
     let onMove:(String,HudLayout600.Widget,Double,Double)->Void
     let onScale:(String,Double,Double)->Void
+    let onControlMove:(String,HudControlLayout600.Control,Double,Double)->Void
+    let onControlScale:(String,Double,Double)->Void
 
     func makeUIView(context:Context)->TouchSurface {
         TouchSurface(frame:.zero)
     }
     func updateUIView(_ view:TouchSurface,context:Context) {
         view.layout=layout
+        view.controlLayout=controlLayout
         view.viewport=viewport
         view.selection=selection
         view.onSelect=onSelect
         view.onMove=onMove
         view.onScale=onScale
+        view.onControlMove=onControlMove
+        view.onControlScale=onControlScale
         view.setNeedsDisplay()
     }
 
     final class TouchSurface:UIView {
         var layout=HudLayout600.defaults()
+        var controlLayout=HudControlLayout600.defaults()
         var viewport=CombatHUDViewport568(width:1280,height:720)
         var selection=""
         var onSelect:((String)->Void)?
         var onMove:((String,HudLayout600.Widget,Double,Double)->Void)?
         var onScale:((String,Double,Double)->Void)?
+        var onControlMove:((String,HudControlLayout600.Control,Double,Double)->Void)?
+        var onControlScale:((String,Double,Double)->Void)?
         private var dragStart:(widget:HudLayout600.Widget,point:CGPoint)?
+        private var controlDragStart:(control:HudControlLayout600.Control,point:CGPoint)?
         private var pinchStart:(id:String,scale:Double)?
+        private var controlPinchStart:(id:String,scale:Double)?
 
         override init(frame:CGRect) {
             super.init(frame:frame)
@@ -397,50 +408,79 @@ private struct HudEditorTouchCanvas:UIViewRepresentable {
             super.touchesBegan(touches,with:event)
             guard event?.allTouches?.count == 1,let touch=touches.first else {
                 dragStart=nil
+                controlDragStart=nil
                 return
             }
             let point=touch.location(in:self)
-            let id=HudEditorGeometry.hit(x:Double(point.x),y:Double(point.y),
-                                         layout:layout,viewport:viewport)
-            onSelect?(id ?? "")
-            dragStart=id.flatMap { key in
-                layout.widget(key).map {(widget:$0,point:point)}
+            let controlID=HudControlLayout600.hit(
+                x:Double(point.x),y:Double(point.y),
+                layout:controlLayout,viewport:viewport,
+                compact:viewport.height<550)
+            if let id=controlID,let control=controlLayout.control(id) {
+                onSelect?(id)
+                controlDragStart=(control:control,point:point)
+                dragStart=nil
+            } else {
+                let id=HudEditorGeometry.hit(
+                    x:Double(point.x),y:Double(point.y),
+                    layout:layout,viewport:viewport)
+                onSelect?(id ?? "")
+                dragStart=id.flatMap { key in
+                    layout.widget(key).map {(widget:$0,point:point)}
+                }
+                controlDragStart=nil
             }
         }
 
         override func touchesMoved(_ touches:Set<UITouch>,with event:UIEvent?) {
             super.touchesMoved(touches,with:event)
             guard event?.allTouches?.count == 1,
-                  pinchStart == nil,
-                  let start=dragStart,let touch=touches.first else{return}
+                  pinchStart == nil,controlPinchStart == nil,
+                  let touch=touches.first else{return}
             let point=touch.location(in:self)
-            onMove?(start.widget.id,start.widget,
-                    Double(point.x-start.point.x),
-                    Double(point.y-start.point.y))
+            if let start=controlDragStart {
+                onControlMove?(start.control.id,start.control,
+                               Double(point.x-start.point.x),
+                               Double(point.y-start.point.y))
+            } else if let start=dragStart {
+                onMove?(start.widget.id,start.widget,
+                        Double(point.x-start.point.x),
+                        Double(point.y-start.point.y))
+            }
         }
 
         override func touchesEnded(_ touches:Set<UITouch>,with event:UIEvent?) {
             super.touchesEnded(touches,with:event)
             dragStart=nil
+            controlDragStart=nil
         }
         override func touchesCancelled(_ touches:Set<UITouch>,with event:UIEvent?) {
             super.touchesCancelled(touches,with:event)
             dragStart=nil
+            controlDragStart=nil
         }
 
         @objc private func handlePinch(_ gesture:UIPinchGestureRecognizer) {
             switch gesture.state {
             case .began:
                 dragStart=nil
-                if let item=layout.widget(selection) {
+                controlDragStart=nil
+                if let control=controlLayout.control(selection) {
+                    controlPinchStart=(control.id,control.scale)
+                    pinchStart=nil
+                } else if let item=layout.widget(selection) {
                     pinchStart=(item.id,item.scale)
+                    controlPinchStart=nil
                 }
             case .changed:
-                if let start=pinchStart {
+                if let start=controlPinchStart {
+                    onControlScale?(start.id,start.scale,Double(gesture.scale))
+                } else if let start=pinchStart {
                     onScale?(start.id,start.scale,Double(gesture.scale))
                 }
             case .ended,.cancelled,.failed:
                 pinchStart=nil
+                controlPinchStart=nil
             default:break
             }
         }
@@ -449,7 +489,7 @@ private struct HudEditorTouchCanvas:UIViewRepresentable {
             guard let ctx=UIGraphicsGetCurrentContext() else{return}
             for widget in layout.widgets {
                 guard let f=HudEditorGeometry.rect(widget,viewport:viewport) else{continue}
-                let border:CGRect=CGRect(x:f.x,y:f.y,width:f.width,height:f.height)
+                let border=CGRect(x:f.x,y:f.y,width:f.width,height:f.height)
                 let chosen=widget.id==selection
                 let color:UIColor=chosen ? .systemYellow :
                     (widget.visible ? .cyan.withAlphaComponent(0.5) :
@@ -462,6 +502,30 @@ private struct HudEditorTouchCanvas:UIViewRepresentable {
                         at:CGPoint(x:border.minX+3,y:max(0,border.minY-18)),
                         withAttributes:[
                             .font:UIFont.monospacedSystemFont(ofSize:11,weight:.medium),
+                            .foregroundColor:UIColor.systemYellow
+                        ])
+                }
+            }
+
+            // Actual button hitboxes, not decorative markers. The pause
+            // options action is normally hidden while editing, therefore
+            // its frame is also shown here for direct drag and pinch.
+            for control in controlLayout.controls {
+                let frame=HudControlLayout600.frame(
+                    control,viewport:viewport,compact:viewport.height<550)
+                let border=CGRect(x:frame.centerX-frame.width/2,
+                                  y:frame.centerY-frame.height/2,
+                                  width:frame.width,height:frame.height)
+                let chosen=control.id==selection
+                ctx.setStrokeColor((chosen ? UIColor.systemYellow :
+                                    UIColor.systemOrange.withAlphaComponent(0.86)).cgColor)
+                ctx.setLineWidth(chosen ? 2:1.2)
+                ctx.stroke(border)
+                if chosen {
+                    (HudControlLayout600.title(control.id) as NSString).draw(
+                        at:CGPoint(x:border.minX+3,y:max(0,border.minY-18)),
+                        withAttributes:[
+                            .font:UIFont.monospacedSystemFont(ofSize:11,weight:.semibold),
                             .foregroundColor:UIColor.systemYellow
                         ])
                 }
