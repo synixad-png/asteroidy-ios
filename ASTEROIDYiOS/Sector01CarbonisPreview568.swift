@@ -164,6 +164,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var pickupPipeline586:MTLRenderPipelineState?
             private var pickupModels586:[SourcePickupModels586.Kind:SourcePickupMetal586]=[:]
             private var hudIconsAvailable600=false
+            // One original 159-track HUD scene, resident in the SAME Metal
+            // renderer as the four verified 3D pickup icons. No SceneKit.
+            private var hudPlanetariumMetal600:HudPlanetariumMetal600?
             // PC HudIconMotion owns one persistent spring state for each
             // shared pickup model; never recreate this each GPU frame.
             private var hudIconMotion600=HudIconMotion600()
@@ -555,6 +558,17 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 else{throw SourceError.metal}
                 hudIconDepth600=hudDepthState
                 super.init()
+                if gameSession != nil {
+                    do {
+                        hudPlanetariumMetal600=try HudPlanetariumMetal600(
+                            device:device,
+                            originalURL:HudPlanetariumAsset600.availableURL())
+                        NSLog("HUD602: native Metal planetarium ready — exact original 159-channel scene")
+                    } catch {
+                        NSLog("HUD602: native Metal planetarium unavailable: %@",
+                              String(describing:error))
+                    }
+                }
                 hudIconsAvailable600 = pickupPipeline586 != nil && pickupModels586.count==4
                 if hudIconsAvailable600 {
                     DispatchQueue.main.async { [weak gameSession] in
@@ -1609,6 +1623,26 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     }
                 }
                 encoder.endEncoding()
+                // The planetarium owns a NEW depth-isolated *HUD* pass over
+                // the already-rendered Metal drawable. World camera, actors,
+                // pickups and their 4 HUD icons are NOT moved or modified.
+                if let session=gameSession,
+                   let planetarium=hudPlanetariumMetal600 {
+                    let snapshot=session.currentHudRenderState600()
+                    let visual=session.currentHudVisual600()
+                    let screen=CombatHUDViewport568(
+                        width:Double(view.bounds.width),
+                        height:Double(view.bounds.height),
+                        safeLeft:snapshot.insets.left,
+                        safeRight:snapshot.insets.right,
+                        safeTop:snapshot.insets.top,
+                        safeBottom:snapshot.insets.bottom)
+                    planetarium.render(
+                        command:command,drawable:drawable,
+                        depthTexture:view.depthStencilTexture,
+                        layout:snapshot.layout,viewport:screen,
+                        seconds:visual.seconds,capsules:visual.capsules)
+                }
                 command.present(drawable)
                 if !proofScheduled &&
                     ProcessInfo.processInfo.environment["ASTEROIDY_W3_MENU_VERIFY"]=="1" {
