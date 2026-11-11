@@ -87,8 +87,10 @@ final class HudPlanetariumMetal600 {
         let pitch=simd_float4x4(simd_quatf(
             angle:Float(widget.pitch ?? -20)*Float.pi/180,
             axis:SIMD3<Float>(1,0,0)))
+        // Planetarium has its OWN original PC602 HUD motion weight.
+        // It is no longer tied to any of the three energy gauge widgets.
         let rollDegrees=Float(widget.roll ?? 0) +
-            HudPlanetariumPlasmaAnchor600.visualRoll(pose:pose)
+            pose.roll*pose.weight(widget.id)
         let roll=simd_float4x4(simd_quatf(
             angle:rollDegrees*Float.pi/180,
             axis:SIMD3<Float>(0,0,1)))
@@ -119,8 +121,6 @@ final class HudPlanetariumMetal600 {
                   placement:placement,viewport:viewport,
                   widget:widget,
                   modelRadius:HudPlanetariumAsset600.pc602ModelRadius),
-              let center=HudPlanetariumPlasmaAnchor600.screenCenter(
-                  widget:widget,layout:layout,pose:pose,viewport:viewport),
               let depthTexture,
               drawable.texture.width>1,drawable.texture.height>1
         else{return}
@@ -141,11 +141,16 @@ final class HudPlanetariumMetal600 {
         encoder.label="PC602_Original_Animated_HUD_Planetarium"
         encoder.setCullMode(.none)
         let frame=original.sample(at:seconds,capsules:capsules)
-        // The shared gauge group supplies only the on-screen pivot.
-        // Original F6 scale/pitch/yaw and the 159 glTF tracks stay intact.
+        // Original F6 widget position is independent of the plasma bars.
+        // Flight movement uses the planetarium's own PC602 HUD pose
+        // and never changes any stored x/y/scale.
+        let screenPose=HudMotionProject600.project(
+            x:widget.x+125,y:widget.y+67.5,pose:pose,widget:widget.id)
+        let centerX=viewport.x(screenPose.x,at:.bottomLeft)
+        let centerY=viewport.y(screenPose.y,at:.bottomLeft)
         let attached=HudPlanetariumProjection.Transform(
-            x:center.x-viewport.width*0.5,
-            y:viewport.height*0.5-center.y,
+            x:centerX-viewport.width*0.5,
+            y:viewport.height*0.5-centerY,
             pixelsPerModelUnit:projection.pixelsPerModelUnit,
             cameraHalfHeight:projection.cameraHalfHeight)
         let hud=Self.hudMatrix(attached,
