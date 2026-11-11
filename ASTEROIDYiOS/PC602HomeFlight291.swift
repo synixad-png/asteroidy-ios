@@ -133,6 +133,7 @@ struct PC602HomeFlight291 {
     }
 
     let home:PC602NewHome290
+    private(set) var dockPosition:SIMD3<Float>
     private(set) var equipment:Equipment
     private(set) var flight=SphereFlight67()
     private(set) var orbitPosition=SIMD3<Float>(repeating:0)
@@ -177,6 +178,10 @@ struct PC602HomeFlight291 {
     init(home:PC602NewHome290,equipment:Equipment,
          completedMask:Int=0) throws {
         self.home=home
+        guard let originalWreck=home.wreckPosition() else {
+            throw SourceError.missingSourceGeometry
+        }
+        dockPosition=originalWreck
         self.equipment=equipment
         self.completedMask=completedMask & ((1 << 26)-1)
         target=(1...26).first {
@@ -220,6 +225,7 @@ struct PC602HomeFlight291 {
         orbitBank=0
         thrusting=false;sideThrust=0;padHeadingLocked=false
         orbitDistance=home.distanceToSector(orbitPosition,level:target) ?? 0
+        dockDistance=Self.length(orbitPosition-dockPosition)
     }
 
     /// No fabricated mission successes. Only the real settlement updates
@@ -257,11 +263,9 @@ struct PC602HomeFlight291 {
     /// C# StepHomeFlight291: DirectFlight67 -> MoveShip67 ->
     /// UpdateSphereCamera67 -> world visual/docking state. Does not claim
     /// StepHomeWeaponTest292 or physical asteroid/dock collision is wired yet.
-    mutating func step(_ raw:Input,dt frame:Float,
-                       dockPosition:SIMD3<Float>) throws {
+    mutating func step(_ raw:Input,dt frame:Float) throws {
         guard frame.isFinite,frame>=0,Self.finite(raw.move),
-              Self.finite(raw.aim),dockPosition.x.isFinite,
-              dockPosition.y.isFinite,dockPosition.z.isFinite
+              Self.finite(raw.aim)
         else {throw SourceError.invalidInput}
         let dt=min(0.05,frame)
         orbitTime+=dt
@@ -360,6 +364,26 @@ struct PC602HomeFlight291 {
         orbitDistance=arc
         let delta=orbitPosition-dockPosition
         dockDistance=Self.length(delta)
+    }
+
+    /// Exact PC v602 Hub90.CanDock90 gate. H55 transition remains owned by
+    /// the existing hub controller; proximity alone never enters the hangar.
+    struct DockContext {
+        var planetHub:Bool
+        var orbitMode:Bool
+        var sceneBusy:Bool=false
+        var talentOpen:Bool=false
+    }
+    static func canDock90(distance:Float,miningDetached:Bool,
+                          context:DockContext)->Bool {
+        distance.isFinite && distance>=0 && !miningDetached &&
+        context.planetHub && context.orbitMode && !context.sceneBusy &&
+        distance<=PC602NewHome290.dockRadius295 && !context.talentOpen
+    }
+    func canDock90(context:DockContext)->Bool {
+        Self.canDock90(distance:dockDistance,
+                       miningDetached:equipment.miningDetached,
+                       context:context)
     }
 
     var entryMission:Int {
