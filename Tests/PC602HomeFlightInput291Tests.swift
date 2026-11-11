@@ -22,8 +22,7 @@ assert(!arrow.padAimActive)
 
 let externalKeyboard=PC602HomeFlightInput291.read(
     snapshot:.init(keys:[38]),profile:profile)
-same(externalKeyboard.move.y,-1,
-     "Fallback keyboard arrows preserve source vertical motion")
+same(externalKeyboard.move.y,-1)
 assert(externalKeyboard.keyboardMovement)
 
 let keyboardAim=PC602HomeFlightInput291.read(
@@ -76,7 +75,7 @@ assert(!fromTouch.padAimActive,
 assert(!fromTouch.keyboardMovement)
 
 let keyboardWinsLatch=PC602HomeFlightInput291.read(
-    snapshot:.init(keys:[84,76],axes:[0,0,0.55,0.35,0,0]),
+    snapshot:.init(keys:[84,76],axes:[0.55,0.35,0,0,0,0]),
     profile:profile)
 assert(keyboardWinsLatch.keyboardMovement)
 assert(!keyboardWinsLatch.padAimActive)
