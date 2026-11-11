@@ -103,11 +103,25 @@ struct HudPlasmaLayer600:View {
                 let maxima=[gauge.maxHull,gauge.maxArmor,100]
                 for i in 0..<3 {
                     let y=CGFloat(565+48*i)
-                    guard let bar=SourceCombatHUD331.widgetContext(
+                    // Full-screen dual endpoint: original glTF damage
+                    // socket at the left, active plasma terminal on the
+                    // saved F6 bar at the right. Both inherit one live pose.
+                    let fraction=HudEnergy600.fraction(
+                        values[i],maximum:maxima[i])
+                    if let bridge=HudPlasmaBridge600.segment(
+                        id:Self.names[i],layout:layout,pose:pose,
+                        viewport:screen,fill:fraction) {
+                        Self.draw(graphics,current:values[i],
+                                  maximum:maxima[i],x:191,y:0,
+                                  style:i,time:time,bridge:bridge)
+                    } else if let bar=SourceCombatHUD331.widgetContext(
                         bottom,layout,pose:pose,id:Self.names[i],
-                        baseX:191,baseY:y+19) else{continue}
-                    Self.draw(bar,current:values[i],maximum:maxima[i],
-                              x:191,y:y+19,style:i,time:time)
+                        baseX:191,baseY:y+19) {
+                        // Original source behavior remains the fallback
+                        // when the planetarium is hidden or not available.
+                        Self.draw(bar,current:values[i],maximum:maxima[i],
+                                  x:191,y:y+19,style:i,time:time)
+                    }
                 }
             }
             .allowsHitTesting(false)
@@ -122,7 +136,17 @@ struct HudPlasmaLayer600:View {
     /// The dark guide and both rails are in SourceCombatHUD331, so they
     /// are not redrawn at 60 Hz. No guessing at game resource values.
     private static func draw(_ c:GraphicsContext,current:Int?,maximum:Int,
-                             x:CGFloat,y:CGFloat,style:Int,time:Double) {
+                             x:CGFloat,y:CGFloat,style:Int,time:Double,
+                             bridge:HudPlasmaBridge600.Segment?=nil) {
+        func mapped(_ point:HudEnergy600.Point)->HudEnergy600.Point {
+            guard let bridge else{return point}
+            let value=bridge.project(point)
+            return HudEnergy600.Point(x:value.x,y:value.y)
+        }
+        func mapped(_ x:Double,_ y:Double)->CGPoint {
+            let pt=mapped(HudEnergy600.Point(x:x,y:y))
+            return CGPoint(x:pt.x,y:pt.y)
+        }
         let fraction=HudEnergy600.fraction(current,maximum:maximum)
         let width=148.0
         let left=Double(x)+1
@@ -134,7 +158,9 @@ struct HudPlasmaLayer600:View {
                 x:left,y:barY,width:width-2,length:length,
                 time:time,style:style,layer:layer)
             guard !vertices.isEmpty else{continue}
-            c.fill(ribbonTriangles(vertices),with:.color(tints[style][layer]))
+            c.fill(ribbonTriangles(bridge == nil ? vertices :
+                    vertices.map{mapped($0)}),
+                   with:.color(tints[style][layer]))
         }
         // Source has no regular particle grid; these independent flame
         // tongues have quasi-periodic, non-axial drift on both edges.
@@ -153,15 +179,18 @@ struct HudPlasmaLayer600:View {
             let edge=barY+(upper ? -0.3:9.3)
             let tip=edge+(upper ? -reach:reach)
             c.fill(shape([
-                CGPoint(x:xx-1.6,y:edge),
-                CGPoint(x:xx+0.8,y:tip),
-                CGPoint(x:xx+4.4,y:edge+(upper ? 0.4:-0.4))
+                mapped(xx-1.6,edge),
+                mapped(xx+0.8,tip),
+                mapped(xx+4.4,edge+(upper ? 0.4:-0.4))
             ]),with:.color(tints[style][2]))
         }
         // PC RendererHudEnergy.cs: 2.8 x 3.2 alpha-90 terminal.
         let end=left+length
-        c.fill(Path(ellipseIn:CGRect(x:end-1.65,y:barY+2.9,
-                                     width:2.8,height:3.2)),
+        let spot=mapped(end,barY+4.5)
+        let size=bridge?.thickness ?? 1
+        c.fill(Path(ellipseIn:CGRect(x:spot.x-1.4*size,
+                                     y:spot.y-1.6*size,
+                                     width:2.8*size,height:3.2*size)),
                with:.color(terminals[style]))
     }
 }
