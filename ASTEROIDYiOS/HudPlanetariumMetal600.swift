@@ -8,6 +8,10 @@ import QuartzCore
 /// the four working pickup HUD models; never a SceneKit view or world actor.
 /// Only the 159 authored glTF node tracks animate — F6 position stays fixed.
 final class HudPlanetariumMetal600 {
+    // The three plasma bars already use the same 0.78 HUD motion weight.
+    // Match that *visual transform only*: all four widgets keep their
+    // original, independently editable F6 x/y/scale. No endpoint tether.
+    private static let plasmaGroupMotionID="armor.bar"
     enum Failure:Error {case missingOriginal, missingShader, invalidPipeline}
     private struct Uniforms {
         var mvp:simd_float4x4
@@ -87,10 +91,10 @@ final class HudPlanetariumMetal600 {
         let pitch=simd_float4x4(simd_quatf(
             angle:Float(widget.pitch ?? -20)*Float.pi/180,
             axis:SIMD3<Float>(1,0,0)))
-        // Planetarium has its OWN original PC602 HUD motion weight.
-        // It is no longer tied to any of the three energy gauge widgets.
+        // Keep the approved F6 model orientation but inherit the same
+        // 0.78 live HUD bank as all three freely editable plasma bars.
         let rollDegrees=Float(widget.roll ?? 0) +
-            pose.roll*pose.weight(widget.id)
+            pose.roll*pose.weight(Self.plasmaGroupMotionID)
         let roll=simd_float4x4(simd_quatf(
             angle:rollDegrees*Float.pi/180,
             axis:SIMD3<Float>(0,0,1)))
@@ -141,11 +145,13 @@ final class HudPlanetariumMetal600 {
         encoder.label="PC602_Original_Animated_HUD_Planetarium"
         encoder.setCullMode(.none)
         let frame=original.sample(at:seconds,capsules:capsules)
-        // Original F6 widget position is independent of the plasma bars.
-        // Flight movement uses the planetarium's own PC602 HUD pose
-        // and never changes any stored x/y/scale.
+        // A single visual HUD transform (same as plasma bars) stops
+        // differential rotation/sway. Each child still has its OWN
+        // F6 coordinates: moving the planetarium or any gauge never
+        // changes the other widgets or requires a fixed plasma endpoint.
         let screenPose=HudMotionProject600.project(
-            x:widget.x+125,y:widget.y+67.5,pose:pose,widget:widget.id)
+            x:widget.x+125,y:widget.y+67.5,pose:pose,
+            widget:Self.plasmaGroupMotionID)
         let centerX=viewport.x(screenPose.x,at:.bottomLeft)
         let centerY=viewport.y(screenPose.y,at:.bottomLeft)
         let attached=HudPlanetariumProjection.Transform(
