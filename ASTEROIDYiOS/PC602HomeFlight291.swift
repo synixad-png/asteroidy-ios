@@ -204,7 +204,7 @@ struct PC602HomeFlight291 {
         orbitPosition=Self.world(spawnNormal)*(physicalHeight+12)
         flight=SphereFlight67()
         flight.position=Sphere67.coordinates(spawnNormal)
-        let projection=sourceForward-spawnNormal*
+        let projection=sourceForward - spawnNormal *
             SphereVector3.dot(sourceForward,spawnNormal)
         let tangentForward=Sphere67.components(flight.position,projection)
         flight.heading=tangentForward.lengthSquared>0.0001
