@@ -27,6 +27,7 @@ struct CarbonisVisualSettingsPanel568: View {
     @AppStorage("ASTEROIDY_H55_ENV_FILL_580") private var h55Fill=0.80
     @AppStorage("ASTEROIDY_H55_RED_GAIN_580") private var h55Red=0.10
     @AppStorage("ASTEROIDY_H55_SAFE_MATERIALS_580") private var h55SafeShaders=true
+    @State private var h55Eyes=Double(H55EyeHeight580.load())
 
     @State private var profile=CarbonisVisualSettings568.load()
     @State private var planetProfile=SourcePlanetGraphicsSettings568.load()
@@ -373,6 +374,34 @@ struct CarbonisVisualSettingsPanel568: View {
             Slider(value:$h55Red,in:0...0.30,step:0.02)
                 .tint(cyan)
                 .accessibilityIdentifier("h55-settings-red")
+            HStack {
+                Text("WYSOKOŚĆ OCZU / KAMERA CHODZENIA")
+                Spacer()
+                Text(String(format:"%.2f m",h55Eyes)).foregroundStyle(gold)
+            }
+            .font(.system(size:compact ? 10:12,design:.monospaced))
+            Slider(value:$h55Eyes,
+                   in:Double(H55EyeHeight580.minimum)...Double(H55EyeHeight580.maximum),
+                   step:0.05)
+                .tint(cyan)
+                .onChange(of:h55Eyes) {value in
+                    let eyes=H55EyeHeight580.valid(Float(value))
+                    H55EyeHeight580.save(eyes)
+                    fpsLoader?.setEyeHeight580(eyes)
+                }
+                .accessibilityIdentifier("h55-settings-eye-height")
+            Text("Oryginał PC: 1,80 m. Regulacja dotyczy tylko kamery. Kolizje, schody i skoki pozostają bez zmian; pod sufitem kamera nie przejdzie przez geometrię.")
+                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .foregroundStyle(muted)
+                .fixedSize(horizontal:false,vertical:true)
+            Button("PRZYWRÓĆ WYSOKOŚĆ OCZU 1,80 m") {
+                H55EyeHeight580.reset()
+                h55Eyes=Double(H55EyeHeight580.original)
+                fpsLoader?.setEyeHeight580(H55EyeHeight580.original)
+            }
+            .font(.system(size:compact ? 10:12,weight:.semibold,design:.monospaced))
+            .foregroundStyle(cyan)
+            .accessibilityIdentifier("h55-settings-eye-height-reset")
             HStack(spacing:12) {
                 Button("PRZYWRÓĆ KALIBRACJĘ iOS") {
                     h55Fill=Double(H55LightingProfile580.defaultFill)
