@@ -1641,6 +1641,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         command:command,drawable:drawable,
                         depthTexture:view.depthStencilTexture,
                         layout:snapshot.layout,viewport:screen,
+                        pose:snapshot.pose,
                         seconds:visual.seconds,capsules:visual.capsules)
                 }
                 command.present(drawable)
