@@ -16,7 +16,9 @@ for marker in ("private var hudLivePose600=HudMotion600.Pose()",
                "hudMotion600.update(motionSample,at:now,",
                "if now-lastHUD > 0.10 {"):
     assert marker in session,marker
-assert "hud.motion=active ? livePose() : HudMotion600.Pose()" in hud
+assert "hud.motion=live?.pose ?? HudMotion600.Pose()" in hud
+assert "let live:CarbonisSession568.RadarFrame600?=active ? liveRadar() : nil" in hud
+assert "guard tick.date.timeIntervalSinceReferenceDate.isFinite else{return}" in hud
 assert "TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active))" in hud
 assert "let hudRenderTime600=ProcessInfo.processInfo.systemUptime-started" in renderer
 assert "let screen=session.currentHudRenderState600()" in renderer
