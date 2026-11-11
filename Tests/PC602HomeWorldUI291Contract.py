@@ -20,6 +20,12 @@ ship=source("SourceHomeVanguard431.swift")
 plasma=source("PC602HomePlasma491.metal")
 flight=source("PC602HomeFlight291.swift")
 session=source("PC602HomeWorldSession291.swift")
+weapons=source("PC602HomeWeaponTest292.swift")
+shot_geometry=source("PC602HomeShotGeometry292.swift")
+shot_renderer=source("SourceHomeShots292.swift")
+shot_shader=source("PC602HomeShots292.metal")
+atlas=source("PC602OrbitHud330.swift")
+
 
 # Explicit real user action in W3 CAMPAIGN. All seven existing W3 pages stay.
 assert 'case newGame = "NOWA GRA"' in menu
@@ -82,6 +88,58 @@ assert "if result == .orbit" in driver
 assert "session?.finishPhysicalH55Visit()" in driver
 assert "session?.refreshCommittedCampaign(source.completedMask)" in driver
 assert "finishMission(" not in driver
+
+# Source Game.StepHomeWeaponTest292 is real, non-hostile and uses the
+# player's actual original saved C279 shop, never fabricated gun ownership.
+assert "PC602HomeWeaponTest292" in session
+assert "weapons.step(ship:flight.flight,dt:dt" in session
+assert "snapshot.held(6,profile:controls)" in session
+assert "Sector01Shop568.load()" in driver
+assert "shop.weapon.rawValue" in driver
+assert "shop.upgradeLevel" in driver and "shop.rapidLevel" in driver
+assert "touchFire:touchFire,dt:Float(dt)" in driver
+assert "func setFiring(_ firing:Bool)" in driver
+assert 'accessibilityIdentifier("pc602-orbit-fire")' in page
+assert "driver.setFiring(true)" in page and "driver.setFiring(false)" in page
+assert "touchFire=false" in driver
+assert "HomeShotPass292" in weapons or "StepHomeWeaponTest292" in weapons
+assert "Sphere67.advance(bullet.position," in weapons
+assert "Sphere67.transport(world,from:sourceNormal" in weapons
+assert "projectiles.count<=140" in weapons
+assert "case pulse=0,twin=1,scatter=2,rail=3,swarm=4" in weapons
+assert "PC602HomeShotGeometry292.build(" in shot_renderer
+assert "let ribbonVertices=PC602HomeShotGeometry292.build(" in shot_renderer
+assert "triply" in shot_renderer or "triple" in shot_renderer
+assert "DispatchSemaphore(value:3)" in shot_renderer
+assert "command.addCompletedHandler" in shot_renderer
+assert "ribbonSegments=6" in shot_geometry and "ribbonLayers=3" in shot_geometry
+assert "orbVerticesPerShot=(32+28+24)*6" in shot_geometry
+assert "sourceRGBBlendFactor = .sourceAlpha" in shot_renderer
+assert "discs.colorAttachments[0].sourceRGBBlendFactor = .one" in shot_renderer
+assert "PC602HomeShipPose291.originalWorldScale" in shot_geometry
+assert "let sideRaw=cross(b-a,camera-middle)" in shot_geometry
+assert "pc602HomeShotVertex292" in shot_shader
+assert "pc602HomeShotFragment292" in shot_shader
+assert "originalShots=try SourceHomeShots292(device:device)" in world
+assert "originalShots.draw(encoder:encoder,command:command," in world
+assert "onProjectiles:{driver.readProjectiles()}" in page
+
+# Source OrbitHud330 (not a made-up mini-map) and the same 26 real PC
+# campaign bits/unlocks have functional large touch targets.
+assert "enum PC602OrbitHud330" in atlas
+assert "let row=n.y>1/3 ? 1:n.y < -1/3 ? 2:0" in atlas
+assert "source.orbitDistance<12" in atlas
+assert "source.home.surface(p)" in atlas
+assert "PC602OrbitHud330.measure(flight)" in driver
+assert "selectedUnlocked:source330?.unlocked" in driver
+assert "completedMask:flight.completedMask" in driver
+assert "CampaignStore556.save(saved)" in driver
+assert "driver.selectMission(level)" in page
+assert "ForEach(1...26,id:\\.self)" in page
+assert 'accessibilityIdentifier("pc602-orbit-original-26-tile-atlas330")' in page
+assert "driver.hud.courseDegrees" in page
+assert "driver.hud.altitude" in page
+assert "driver.hud.zone" in page
 
 # Actual, source-socketed v491 plasma. No visual replacement for any of the
 # original six ship types. Engine effects are visibly rendered, not a stub.
