@@ -1,0 +1,95 @@
+import Foundation
+
+guard CommandLine.arguments.count==2 else {
+    fatalError("Use the SHA-verified original H290 height map")
+}
+let source=try Data(contentsOf:
+    URL(fileURLWithPath:CommandLine.arguments[1]))
+let home=try PC602NewHome290(heightMapBytes:source)
+let equipment=PC602HomeFlight291.Equipment(craft:.vanguard)!
+let flight=try PC602HomeFlight291(home:home,equipment:equipment)
+let ship=flight.flight
+
+func expect(_ actual:Float,_ expected:Float,
+            tolerance:Float=0.0002,_ why:String) {
+    assert(actual.isFinite && abs(actual-expected)<=tolerance,
+           "\(why): expected \(expected), found \(actual)")
+}
+for weapon in PC602HomeWeaponTest292.Weapon.allCases {
+    guard let setting=PC602HomeWeaponTest292.Settings(weapon:weapon)
+    else {fatalError("All original five guns must be constructible")}
+    var test=PC602HomeWeaponTest292(settings:setting)
+    test.step(ship:ship,dt:1/60,fire:true)
+    let expected=weapon == .twin ? 2:
+        weapon == .scatter || weapon == .swarm ? 3:1
+    assert(test.projectiles.count==expected)
+    assert(test.emissions==1)
+    expect(test.cooldown,setting.interval,tolerance:0.000001,
+           "Original source first Fire cooldown")
+    for bullet in test.projectiles {
+        assert(bullet.kind == weapon)
+        expect(bullet.life,weapon == .swarm ? 1.8-1/60:1.05-1/60,
+               tolerance:0.000001,"Original per-gun lifetime")
+        assert(bullet.position.x.isFinite && bullet.position.y.isFinite)
+        assert(bullet.velocity.x.isFinite && bullet.velocity.y.isFinite)
+        let n=Sphere67.normal(bullet.position)
+        assert(n.length>0.999)
+        let speed=sqrt(bullet.velocity.lengthSquared)
+        let wanted:Float=weapon == .rail ? 1050:610
+        expect(speed,wanted,tolerance:0.5,
+               "Sphere67 transported source shot speed")
+    }
+    for _ in 0..<8 {test.step(ship:ship,dt:1/60,fire:false)}
+    assert(test.emissions==1)
+    assert(test.projectiles.count==expected)
+    for _ in 0..<120 {test.step(ship:ship,dt:1/60,fire:false)}
+    assert(test.projectiles.isEmpty,"No phantom persistent shots after expiry")
+}
+let scatter=PC602HomeWeaponTest292.Settings(weapon:.scatter,upgrade:3)!
+var five=PC602HomeWeaponTest292(settings:scatter)
+five.step(ship:ship,dt:1/60,fire:true)
+assert(five.projectiles.count==5)
+assert(five.projectiles.filter {$0.pierce==2}.count==1)
+let twin=PC602HomeWeaponTest292.Settings(weapon:.twin)!
+var two=PC602HomeWeaponTest292(settings:twin)
+two.step(ship:ship,dt:1/60,fire:true)
+assert(two.projectiles.count==2)
+assert(Sphere67.delta(target:two.projectiles[0].position,
+                      origin:two.projectiles[1].position).lengthSquared>100)
+let heavy=PC602HomeWeaponTest292.Settings(weapon:.rail,upgrade:3)!
+var rail=PC602HomeWeaponTest292(settings:heavy)
+rail.step(ship:ship,dt:1/60,fire:true)
+assert(rail.projectiles[0].damage==4 && rail.projectiles[0].pierce==4)
+expect(rail.settings.interval,0.28,tolerance:0.00001,
+       "Original upgraded Gauss cooldown")
+let rapid=PC602HomeWeaponTest292.Settings(
+    weapon:.pulse,upgrade:1,rapid:2,cooling:2)!
+expect(rapid.interval,0.16/1.30*0.88,tolerance:0.0001,
+       "Original Modules97 CoolingRank + rapid purchased profile")
+assert(PC602HomeWeaponTest292.Settings(
+    weapon:.pulse,upgrade:5)==nil)
+
+guard let camera=PC602HomeWorldView291(
+    camera:ship.camera,aspect:16.0/9.0) else {
+    fatalError("Original PC602 400m sphere camera must project shots")
+}
+var visual=[Float]()
+let cameraEye=SIMD3<Float>(ship.camera.focus.x,
+                          ship.camera.focus.y,
+                          ship.camera.focus.z)*400
+PC602HomeShotGeometry292.build(home:home,bullets:five.projectiles,
+    camera:cameraEye,view:camera.view,into:&visual)
+assert(visual.count==5*PC602HomeShotGeometry292.verticesPerShot*7)
+assert(visual.allSatisfy{$0.isFinite})
+expect(visual[3],55/255,tolerance:0.0001,
+       "Original pulse RGB source shot tint red")
+expect(visual[6],27/255,tolerance:0.0001,
+       "Original source 27-alpha halo")
+let capacity=visual.capacity
+PC602HomeShotGeometry292.build(home:home,bullets:[],
+    camera:cameraEye,view:camera.view,into:&visual)
+assert(visual.isEmpty && visual.capacity>=capacity)
+print("PASS source PC602 HomeShotPass292: five genuine weapon patterns, " +
+      "1/3/5 shot spreads, source cooldowns, 67 geodesic speed, " +
+      "timed expiry, no fake score or hit; RGB/alpha/3-layer " +
+      "terrain-following original Combat69 ribbon vertices")
