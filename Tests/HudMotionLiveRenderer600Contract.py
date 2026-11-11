@@ -26,6 +26,9 @@ assert "seconds:visual.seconds,capsules:visual.capsules" in renderer
 assert "func currentHudVisual600()->(" in session
 assert "return (hudLivePose600,hudLiveCapsules600,hudLiveSeconds600)" in session
 assert "HudPickupTransform600.sample(" in renderer
+assert "pose:snapshot.pose" in renderer
+assert "HudPlanetariumPlasmaAnchor600.screenCenter(" in metal
+assert "HudPlanetariumPlasmaAnchor600.visualRoll(" in metal
 assert "HudPlanetariumMetal600(" in renderer
 assert "HudPlanetariumHost600(" not in scene
 assert "HudMotionProject600.project(" not in metal
