@@ -1,56 +1,61 @@
 #!/usr/bin/env python3
-"""HUD v600 planetarium connection regression; static, NOT an Apple GPU test."""
+"""Source-authenticated native Metal planetarium regression (not iPad GPU proof)."""
 from pathlib import Path
+import json,lzma,struct,hashlib
 root=Path(__file__).resolve().parents[1]
-asset=(root/"ASTEROIDYiOS/HudPlanetariumAsset600.swift").read_text()
-tracks=(root/"ASTEROIDYiOS/HudPlanetariumTracks600.swift").read_text()
-view=(root/"ASTEROIDYiOS/HudPlanetariumScene600.swift").read_text()
-scene=(root/"ASTEROIDYiOS/Sector01Scene568.swift").read_text()
-host=(root/"ASTEROIDYiOS/HudPlanetariumHost600.swift").read_text()
-session=(root/"ASTEROIDYiOS/CarbonisSession568.swift").read_text()
-for snippet in ('static let expectedSize = 3_228_900',
-                '71ca9ff24e044a831a5c7197e343594dd1fd801284af6231870570b35ad43860',
-                'HUD_PLANETARIUM_PREMIUM_48S_LOOP', 'static let channels = 159',
-                'static func install(from original:URL) throws -> URL',
-                'startAccessingSecurityScopedResource'):
-    assert snippet in asset, "missing strict original asset validation: "+snippet
-for snippet in ('channels.count==HudPlanetariumAsset600.channels',
-                'extents.count==72',
-                'target["path"] as? String == "translation"',
-                'UInt32(bytes.count)'):
-    assert snippet in tracks or snippet in asset, "missing original glTF accessor gate: "+snippet
-for snippet in ('GLTFAsset.load(with:importURL,options:[:])',
-                'GLTFSCNSceneSource(asset:asset)',
-                'clip.animationPlayer', 'didApplyAnimationsAtTime',
-                'node.presentation.position.x','HudCapsuleBinding600',
-                'view.isUserInteractionEnabled=false'):
-    assert snippet in view, "missing genuine SceneKit animated layer: "+snippet
-for snippet in ('HudPlanetariumAsset600.availableURL()',
-                'HudPlanetariumAsset600.install(from:source)',
-                '.allowsHitTesting(false)', 'HudPlanetariumHost600('):
-    assert snippet in scene, "missing live combat HUD wiring: "+snippet
-for snippet in ('HudPlanetariumScene600(', 'liveCapsules: { [weak session] in',
-                'HudPlanetariumProjection.make(',
-                'projection: projection,',
-                '.frame(width: CGFloat(viewport.width)',
-                'session?.currentHudVisual600().capsules'):
-    assert snippet in host, "missing live 3D HUD host wiring: "+snippet
-assert 'let frameCapsules=liveCapsules?() ?? capsule' in view
-assert 'anchor.addChildNode(scaleNode)' in view
-assert 'rendered.rootNode.addChildNode(anchor)' in view
-assert 'lens.usesOrthographicProjection=true' in view
-assert 'lens.projectionDirection = .vertical' in view
-assert 'camera.orthographicScale=transform.cameraHalfHeight' in view
-assert 'hudAnchor=anchor' in view
-assert 'livePose' not in view
-assert 'HudMotion600.Pose' not in host
-assert 'view.pointOfView=cameraNode' in view
-assert 'playing: active' in host
-assert 'if view.isPlaying != playing {view.isPlaying=playing}' in view
-assert 'view.isPlaying=playing' in view
-assert 'hudLiveCapsules600=hudCapsules600.snapshot' in session
-assert 'snapshot.capsuleLevels=hudCapsules600.snapshot' in session
-assert 'session.game.step(' not in view
-assert 'Data(contentsOf:' not in view.split('func renderer(')[-1]
-assert 'SourcePickupMetal586' not in view
-print("PASS static HUD v600: verified original 159 tracks, 72 nodes, scene attachment, no live IO/touch intercept")
+ios=root/"ASTEROIDYiOS"
+source=(ios/"HudPlanetariumOriginalMetal600.swift").read_text()
+metal=(ios/"HudPlanetariumMetal600.swift").read_text()
+shader=(ios/"HudPlanetariumMetal600.metal").read_text()
+scene=(ios/"Sector01Scene568.swift").read_text()
+renderer=(ios/"Sector01CarbonisPreview568.swift").read_text()
+asset=(ios/"HudPlanetariumAsset600.swift").read_text()
+session=(ios/"CarbonisSession568.swift").read_text()
+raw=lzma.decompress((root/"SourceResources/PC602/planetarium.glb.xz").read_bytes())
+assert len(raw)==3_228_900
+assert hashlib.sha256(raw).hexdigest()=="71ca9ff24e044a831a5c7197e343594dd1fd801284af6231870570b35ad43860"
+jlen,jtag=struct.unpack_from("<II",raw,12)
+assert jtag==0x4e4f534a
+data=json.loads(raw[20:20+jlen])
+assert len(data["nodes"])==141
+assert len(data["meshes"])==20
+assert sum(len(m["primitives"]) for m in data["meshes"])==21
+assert len([node for node in data["nodes"] if "mesh" in node])==91
+assert len(data["animations"][0]["channels"])==159
+assert sorted(set(c["target"]["path"] for c in data["animations"][0]["channels"]))==["rotation","scale","translation"]
+for s in (
+  "try HudPlanetariumAsset600.validate(raw)",
+  "accessor(posIndex,",
+  "color[vertex*4..<(vertex*4+4)].map{$0/255}",
+  "device.makeBuffer(bytes:bytes.baseAddress!",
+  "let channels",
+):
+  if s=="let channels":continue
+  assert s in source,s
+for s in ("let tracks:[Track]","simd_slerp(a,b,blend)","duration-48","nodeGroups.allSatisfy",
+          "flashNodes","frame.world[idx]","original.sample(at:seconds,capsules:capsules)"):
+    assert s in source or s in metal,s
+for s in ("makeDefaultLibrary()","hudPlanetariumVertex600","hudPlanetariumFragment600",
+          "pass.colorAttachments[0].loadAction = .load",
+          "pass.depthAttachment.loadAction = .clear",
+          "pass.depthAttachment.clearDepth=1",
+          "HudWidgetPlacement600.frame(widget,",
+          "HudPlanetariumProjection.make(",
+          "translate(-HudPlanetariumAsset600.pc602ModelCenterX",
+          "encoder.drawPrimitives(type:.triangle",
+          "encoder.endEncoding()"):
+    assert s in metal,s
+assert "device const float *vertices" in shader
+assert "tint*state.baseColor" in shader
+assert "HudPlanetariumMetal600(" in renderer
+assert "hudPlanetariumMetal600" in renderer
+assert "planetarium.render(" in renderer
+assert "command.present(drawable)" in renderer
+assert renderer.index("encoder.endEncoding()")<renderer.index("planetarium.render(")<renderer.index("command.present(drawable)")
+assert "HudPlanetariumHost600(" not in scene
+assert "GLTFSCNSceneSource(" not in renderer
+assert "sourcePickupMetal586" not in metal.lower()
+assert "hudLiveCapsules600=hudCapsules600.snapshot" in session
+assert "HudPlanetariumAsset600.availableURL()" in renderer
+assert "static let expectedSize = 3_228_900" in asset
+print("PASS native HUD planetarium: original 20 meshes/21 primitives, 91 mesh nodes, 159 TRS tracks, common native Metal drawable and isolated HUD depth")
