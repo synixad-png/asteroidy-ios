@@ -144,10 +144,18 @@ struct GameView: View {
         missionIntroInput568.gameplayPaused=true
         sourceSector01=nil
         sourceSector01Setup=nil
-        reopenAtlasAfterCarbonis=true
-        audio.returnToMenu()
         input.releaseHeldControls()
-        showMainMenu=true
+        if returnHomeWorldAfterCarbonis291 {
+            returnHomeWorldAfterCarbonis291=false
+            showingHomeWorld291=true
+            showMainMenu=false
+            homeWorld291.setSuspended(scenePhase != .active)
+            audio.stopForDiagnostic()
+        } else {
+            reopenAtlasAfterCarbonis=true
+            audio.returnToMenu()
+            showMainMenu=true
+        }
     }
 
 
@@ -233,11 +241,20 @@ struct GameView: View {
                     Sector01Scene568(entry:sourceEntry,returnToAtlas:{
                         sourceSector01 = nil
                         sourceSector01Setup = nil
-                        reopenAtlasAfterCarbonis = true
-                        audio.returnToMenu()
                         input.releaseHeldControls()
                         input.gameplayPaused = true
-                        showMainMenu = true
+                        if returnHomeWorldAfterCarbonis291 {
+                            returnHomeWorldAfterCarbonis291=false
+                            homeWorld291.refreshCampaign(campaign)
+                            showingHomeWorld291=true
+                            showMainMenu=false
+                            homeWorld291.setSuspended(scenePhase != .active)
+                            audio.stopForDiagnostic()
+                        } else {
+                            reopenAtlasAfterCarbonis = true
+                            audio.returnToMenu()
+                            showMainMenu = true
+                        }
                     },onMissionCompleted:{ report in
                         // Only the real Game.FinishLevel source outcome can
                         // persist completed sector 1 and its token reward.
@@ -281,6 +298,18 @@ struct GameView: View {
                         beginMissionIntro568(sector:sourceEntry.sector)
                     },preparedWave:preparedWave)
                     }
+                } else if showingHomeWorld291 {
+                    PC602HomeWorldPage291(
+                        driver:homeWorld291,
+                        onExitToW3:{
+                            homeWorld291.stop()
+                            showingHomeWorld291=false
+                            returnHomeWorldAfterCarbonis291=false
+                            showMainMenu=true
+                            audio.returnToMenu()
+                        },
+                        onEnterMission:enterOrbitMission291)
+                        .ignoresSafeArea()
                 } else if showMainMenu {
                     if !audio.startupComplete {
                         OriginalAudioLoadingView568(audio:audio)
@@ -300,6 +329,7 @@ struct GameView: View {
                         showMainMenu = false
                     },openCampaignOnEntry:reopenAtlasAfterCarbonis,
                     startNewGame:startNewGameFromW3,
+                    openOrbit:enterHomeWorld291,
                     restoreArchivedGame:{ archive in
                         // A restore is initiated only by a confirmed W3
                         // user action. Refresh the actual campaign state
@@ -536,6 +566,8 @@ struct GameView: View {
             input.gameplayPaused = phase != .active || showMainMenu
             missionIntroInput568.gameplayPaused =
                 phase != .active || !showingMissionIntro568
+            homeWorld291.setSuspended(
+                phase != .active || !showingHomeWorld291)
             if phase != .active {
                 input.releaseHeldControls()
                 missionIntroInput568.releaseHeldControls()
@@ -543,7 +575,10 @@ struct GameView: View {
         }
         .onChange(of: showMainMenu) { visible in
             input.gameplayPaused = visible || scenePhase != .active
-            if visible { input.releaseHeldControls() }
+            if visible {
+                input.releaseHeldControls()
+                homeWorld291.setSuspended(true)
+            }
             if visible && sourceSector01 == nil { audio.returnToMenu() }
         }
     }
@@ -558,6 +593,8 @@ struct CampaignAtlas556: View {
     let dismiss: () -> Void
     let onSelect: (Int) -> Void
     let onInspect: (Int) -> Void
+    let onEnterOrbit:()->String?
+    @State private var orbitLaunchIssue=""
     private let columns = [GridItem(.adaptive(minimum:52,maximum:90),spacing:8)]
 
     var body: some View {
@@ -643,6 +680,26 @@ struct CampaignAtlas556: View {
                             "\(finished ? "ukończony" : available ? "odblokowany" : "zablokowany")")
                         .accessibilityAddTraits(.isButton)
                     }
+                }
+                Button("WEJDŹ DO ORBITY 3D / PC v602") {
+                    orbitLaunchIssue=onEnterOrbit() ?? ""
+                }
+                .font(.system(size:12,weight:.bold,design:.monospaced))
+                .foregroundStyle(.black)
+                .frame(maxWidth:.infinity,minHeight:44)
+                .background(Color(red:0.39,green:0.75,blue:0.79))
+                .disabled(!PC602HomeWorldDriver291.resourcesInstalled)
+                .opacity(PC602HomeWorldDriver291.resourcesInstalled ? 1 : 0.45)
+                .accessibilityIdentifier("campaign-enter-original-orbit291")
+                if !orbitLaunchIssue.isEmpty {
+                    Text(orbitLaunchIssue)
+                        .foregroundStyle(.orange)
+                        .font(.system(size:11,design:.monospaced))
+                }
+                if !PC602HomeWorldDriver291.resourcesInstalled {
+                    Text("BRAK ZWERYFIKOWANYCH ZASOBÓW ORBITY PC602")
+                        .font(.system(size:10,design:.monospaced))
+                        .foregroundStyle(.orange)
                 }
                 Text("Dotknij odblokowanego sektora, aby go wybrać. Wybór jest zapisywany, ale nie zalicza misji.")
                     .font(.system(size:11,design:.monospaced))
