@@ -108,7 +108,8 @@ assert asset_center in asset and asset_radius in asset
 assert 'translate(-HudPlanetariumAsset600.pc602ModelCenterX' in metal
 assert 'let yaw=simd_float4x4(simd_quatf(' in metal
 assert 'let pitch=simd_float4x4(simd_quatf(' in metal
-assert 'let roll=simd_float4x4(simd_quatf(' in metal
+assert 'let authoredRoll=simd_float4x4(simd_quatf(' in metal
+assert 'let liveBank=simd_float4x4(simd_quatf(' in metal
 
 # PC GPU DrawEnergyRibbon emits TWO triangles per step, not a self-overlapping polygon.
 assert 'ribbonTriangles(_ points:[HudEnergy600.Point])->Path' in plasma
