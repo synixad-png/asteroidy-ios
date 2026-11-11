@@ -137,7 +137,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
         let now=ProcessInfo.processInfo.systemUptime
         let latest:PC602HomeFlight291? = withLock {
             guard var session else{return nil}
-            if !suspended && !presentingH55 && dt>0 {
+            if !suspended && session.route.location == .orbit && dt>0 {
                 let snapshot=SourceHardwareInput586.shared.snapshot()
                 do {
                     _=try session.advance(snapshot:snapshot,
