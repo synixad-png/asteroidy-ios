@@ -11,6 +11,7 @@ on:
       - Tests/PC602NewHome290Tests.swift
       - ASTEROIDYiOS/PC602HomeFlight291.swift
       - ASTEROIDYiOS/PC602HomeWorldView291.swift
+      - ASTEROIDYiOS/PC602HomeBeacons291.swift
       - ASTEROIDYiOS/FlightDynamics556.swift
       - Tests/PC602HomeFlight291Tests.swift
   pull_request:
@@ -21,6 +22,7 @@ on:
       - Tests/PC602NewHome290Tests.swift
       - ASTEROIDYiOS/PC602HomeFlight291.swift
       - ASTEROIDYiOS/PC602HomeWorldView291.swift
+      - ASTEROIDYiOS/PC602HomeBeacons291.swift
       - ASTEROIDYiOS/FlightDynamics556.swift
       - Tests/PC602HomeFlight291Tests.swift
   workflow_dispatch:
@@ -86,13 +88,14 @@ jobs:
               "import Foundation\n"+source[start:end]+"\n")
           PY
           cp Tests/PC602HomeFlight291Tests.swift /tmp/main.swift
-          xcrun swiftc -O \
+          xcrun swiftc -Onone \
             /tmp/PC602ActualGameVec2.swift \
             ASTEROIDYiOS/Sphere67.swift \
             ASTEROIDYiOS/FlightDynamics556.swift \
             ASTEROIDYiOS/PC602NewHome290.swift \
             ASTEROIDYiOS/PC602HomeFlight291.swift \
             ASTEROIDYiOS/PC602HomeWorldView291.swift \
+            ASTEROIDYiOS/PC602HomeBeacons291.swift \
             /tmp/main.swift -o /tmp/pc602-homeflight-tests
           /tmp/pc602-homeflight-tests ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
       - name: Document scope accurately (no fake gameplay acceptance)
@@ -101,5 +104,5 @@ jobs:
           set -euo pipefail
           test -f ASTEROIDYiOS/PC602NewHome290.swift
           test -f ASTEROIDYiOS/W3HomePlanetMetal568.swift
-          echo "PASS: PC602 planet geometry, height, atlas and source HomeFlight291 state verified."
+          echo "PASS: PC602 H290 source, flight, camera and 26 native 3D sector marker tests with assertions enabled."
           echo "NOT TESTED: active in-game HomeFlight291 integration, 820-asteroid belt, wreck mesh, interactive docking, Metal world rendering, iPhone/iPad."
