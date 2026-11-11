@@ -115,8 +115,7 @@ assert(PC602HomeFlight291.Equipment(craft:.vanguard,engineLevel:-1)==nil)
 var diagonal=try PC602HomeFlight291(
     home:home,equipment:equipment(.vanguard))
 try diagonal.step(.init(move:Vec2(x:1,y:1)),dt:1/60,dockPosition:dock)
-let diagonalPower=(0.48+0.52*sqrt(Float(2))) *
-    (1-exp(-Float(7)/60))
+let diagonalPower=(0.48+0.52*sqrt(Float(2))) * (1-exp(-Float(7)/60))
 close(diagonal.flight.flight.visualPower,diagonalPower,0.0001,
       "source diagonal thrust magnitude")
 close(diagonal.orbitSpeed,156*(1-exp(-3.0/60)),0.06,
