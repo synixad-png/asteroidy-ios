@@ -36,8 +36,7 @@ final class SourceNewHome290MetalAssets {
     private init(device:MTLDevice) throws {
         let mesh=try Self.checkedResource("W3HomePlanet290OriginalGPU","bin",
                                          Self.geometrySHA256)
-        guard mesh.count==(Self.terrainVertices+Self.armorVertices)*
-            Self.vertexStride
+        guard mesh.count == (Self.terrainVertices + Self.armorVertices) * Self.vertexStride
         else {throw SourceError.invalid}
         guard let buffer=mesh.withUnsafeBytes({ raw in
             raw.baseAddress.flatMap {
