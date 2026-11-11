@@ -5,8 +5,7 @@
 // direction use the full-world OrbitWorld50 camera, NOT W3's orthographic
 // globe viewer. Preserve the complete 2 material-group draw intervals.
 struct Home291Lighting {
-    float4 eyeWorld;                 // original sphereEye67 at 400 world units
-    float4 sourceKeyWorld;           // GpuShip.FighterLight(false) position w=0
+    float4 sourceKeyEye;             // FighterLight(false): eye-space w=0
     uint smooth65;                   // GpuToon60: default toon band shading
     float padding0;
     float padding1;
@@ -32,13 +31,16 @@ fragment float4 home291Fragment(
     float4 base=in.color;
     if(u.material==0u)base*=baseMap.sample(sourceSampler,in.uv);
     float3 n=normalize(in.normal);
-    float3 l=normalize(light.sourceKeyWorld.xyz);
+    // Original GpuToon60 uses gl_NormalMatrix and gl_LightSource[0]
+    // in EYE space. The shared vertex decoder's 'model' matrix is the
+    // actual model-view; not world-only normal positions.
+    float3 l=normalize(light.sourceKeyEye.xyz);
     float d=max(0.0f,dot(n,l));
     // Windows/src/GpuToon60.cs: actual non-smooth default uses hard bands.
     float band=0.25f+0.33f*smoothstep(0.30f,0.32f,d)
                        +0.40f*smoothstep(0.70f,0.72f,d);
     if(light.smooth65!=0u)band=0.25f+0.78f*d;
-    float3 view=normalize(light.eyeWorld.xyz-in.viewPosition);
+    float3 view=normalize(-in.viewPosition);
     float rim=0.10f*smoothstep(0.72f,0.86f,
          1.0f-max(0.0f,dot(n,view)))*smoothstep(0.10f,0.30f,d);
     float3 ink=base.rgb*(band+rim);
