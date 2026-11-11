@@ -270,17 +270,13 @@ import simd
         let bounce=sin(phase*2)*0.052*bobPower
         let cy=cos(movement.yaw),sy=sin(movement.yaw)
         let eyeFeet=movement.cameraFeet
-        let visualEyeY:Float
-        if let physical {
-            visualEyeY=H55EyeHeight580.safeY(
-                feet:eyeFeet,desired:eyeHeight580,
-                clear:{height in
-                    physical.cameraClear406(movement.x,height,movement.z,
-                                            radius:0.095)
-                })
-        } else {
-            visualEyeY=eyeFeet+H55Walk580.eyes
-        }
+        // 'physical' is already unwrapped by the active walking gate above.
+        let visualEyeY=H55EyeHeight580.safeY(
+            feet:eyeFeet,desired:eyeHeight580,
+            clear:{height in
+                physical.cameraClear406(movement.x,height,movement.z,
+                                        radius:0.095)
+            })
         camera?.position=SCNVector3(movement.x+cy*sway,
                 visualEyeY+bounce,
                 movement.z+sy*sway)
