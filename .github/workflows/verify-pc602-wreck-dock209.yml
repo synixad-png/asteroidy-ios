@@ -9,6 +9,9 @@ on:
       - ASTEROIDYiOS/ResearchWreckGeometry214.swift
       - ASTEROIDYiOS/SourceHomeWreck209.swift
       - Tests/PC602OrbitWreck211Tests.swift
+      - ASTEROIDYiOS/PC602HomeShipPose291.swift
+      - ASTEROIDYiOS/SourceHomeVanguard431.swift
+      - Tests/PC602HomeShipPose291Tests.swift
       - ASTEROIDYiOS/PC602HomeHubRoute90.swift
       - ASTEROIDYiOS/PC602HomeFlight291.swift
       - ASTEROIDYiOS/PC602NewHome290.swift
@@ -20,6 +23,9 @@ on:
       - ASTEROIDYiOS/ResearchWreckGeometry214.swift
       - ASTEROIDYiOS/SourceHomeWreck209.swift
       - Tests/PC602OrbitWreck211Tests.swift
+      - ASTEROIDYiOS/PC602HomeShipPose291.swift
+      - ASTEROIDYiOS/SourceHomeVanguard431.swift
+      - Tests/PC602HomeShipPose291Tests.swift
       - ASTEROIDYiOS/PC602HomeHubRoute90.swift
       - Tests/PC602WreckDock209Tests.swift
   workflow_dispatch:
@@ -76,6 +82,35 @@ jobs:
             /tmp/main.swift -o /tmp/pc602-wreck-dock-source-test
           /tmp/pc602-wreck-dock-source-test \
             ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+      - name: Test actual PC602 source Vanguard431 flight/orbit pose
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602HomeShipPose291Tests.swift /tmp/main.swift
+          swiftc -Onone \
+            /tmp/PC602ActualGameVec2.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602HomeFlight291.swift \
+            ASTEROIDYiOS/PC602HomeShipPose291.swift \
+            /tmp/main.swift -o /tmp/pc602-original-vanguard-pose
+          /tmp/pc602-original-vanguard-pose \
+            ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+          mesh=Path("ASTEROIDYiOS/Assets/Vanguard431Source.mesh")
+          skin=Path("ASTEROIDYiOS/Assets/Vanguard431Base.jpg")
+          expected={
+            mesh:"f5d6d0107437fa54c3e8505f9adfbf6143cc877cb970eef687603609e26f9f4a",
+            skin:"2945f711a6b559bfb5fdfb79750a2f2f77e2071aa5f3f4173eb450bce81b8b95",
+          }
+          for path,digest in expected.items():
+              assert path.is_file(),str(path)
+              assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,str(path)
+          print("PASS original PC602 Vanguard431 entire mesh and skin SHA256")
+          PY
       - name: Run actual original complete 3D wreck source golden Swift tests
         shell: bash
         run: |
