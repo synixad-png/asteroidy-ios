@@ -16,6 +16,10 @@ on:
       - ASTEROIDYiOS/W3HomePlanet290.metal
       - ASTEROIDYiOS/PC602HomeScene291.metal
       - ASTEROIDYiOS/PC602HomeScene291.swift
+      - ASTEROIDYiOS/SourceHomeWreck209.swift
+      - ASTEROIDYiOS/ResearchWreckGeometry214.swift
+      - Tests/PC602OrbitWreck211Tests.swift
+      - ASTEROIDYiOS/Sector01Carbonis568.metal
       - ASTEROIDYiOS/PC602WreckDebris209.swift
       - ASTEROIDYiOS/PC602HomeHubRoute90.swift
       - Tests/PC602WreckDock209Tests.swift
@@ -26,6 +30,10 @@ on:
       - .github/workflows/verify-pc602-home-metal291.yml
       - ASTEROIDYiOS/PC602HomeScene291.metal
       - ASTEROIDYiOS/PC602HomeScene291.swift
+      - ASTEROIDYiOS/SourceHomeWreck209.swift
+      - ASTEROIDYiOS/ResearchWreckGeometry214.swift
+      - Tests/PC602OrbitWreck211Tests.swift
+      - ASTEROIDYiOS/Sector01Carbonis568.metal
       - ASTEROIDYiOS/PC602WreckDebris209.swift
       - ASTEROIDYiOS/PC602HomeHubRoute90.swift
       - Tests/PC602WreckDock209Tests.swift
