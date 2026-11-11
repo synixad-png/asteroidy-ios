@@ -23,6 +23,11 @@ on:
       - ASTEROIDYiOS/HudPlanetariumAsset600.swift
       - ASTEROIDYiOS/Sector01Scene568.swift
       - ASTEROIDYiOS/H55FPSLighting580.swift
+      - ASTEROIDYiOS/H55EyeHeight580.swift
+      - ASTEROIDYiOS/H55ScenePage580.swift
+      - ASTEROIDYiOS/SourceShieldShell145.swift
+      - ASTEROIDYiOS/SourceShieldShell145.metal
+      - Tests/H55EyeHeightAndTarczaPlasmaContract.py
       - ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
       - ASTEROIDYiOS/HudEnergy600.swift
       - ASTEROIDYiOS/HudPlasmaLayer600.swift
@@ -91,6 +96,7 @@ jobs:
           python3 Tests/HudLayout600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudMotionEventCounters600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/H55FPSOriginalMaterial580Tests.py | tee -a reports/fps-source.txt
+          python3 Tests/H55EyeHeightAndTarczaPlasmaContract.py | tee -a reports/fps-source.txt
           # Validate final 352x198/16:9 preview and isolated depth source.
           swiftc -frontend -parse ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/HudEditorGeometry.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudControlLayout600.swift ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/Sector01Scene568.swift
@@ -98,6 +104,7 @@ jobs:
           swiftc -typecheck ASTEROIDYiOS/HudPlanetariumOriginalMetal600.swift ASTEROIDYiOS/HudPlanetariumMetal600.swift ASTEROIDYiOS/HudEnergy600.swift ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumProjection.swift ASTEROIDYiOS/HudCapsuleController600.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift ASTEROIDYiOS/CombatHUDViewport568.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudEnergy600.swift ASTEROIDYiOS/HudPlasmaLayer600.swift ASTEROIDYiOS/SourceCombatHUD331.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSSettingsSection580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55EyeHeight580.swift ASTEROIDYiOS/H55ScenePage580.swift ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift ASTEROIDYiOS/SourceShieldShell145.swift ASTEROIDYiOS/Sector01CarbonisPreview568.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSPreview580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSOverlayViewport580.swift
           swiftc -frontend -parse ASTEROIDYiOS/H55FPSLighting580.swift
