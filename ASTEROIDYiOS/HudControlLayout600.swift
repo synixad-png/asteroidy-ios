@@ -106,6 +106,16 @@ struct HudControlLayout600:Codable,Equatable {
             width:w,height:h)
     }
 
+    static func hit(x:Double,y:Double,layout:HudControlLayout600,
+                    viewport:CombatHUDViewport568,compact:Bool)->String? {
+        for control in layout.controls.reversed() {
+            let r=frame(control,viewport:viewport,compact:compact)
+            if abs(x-r.centerX)<=r.width/2 &&
+               abs(y-r.centerY)<=r.height/2 {return control.id}
+        }
+        return nil
+    }
+
     static func limits(_ id:String,viewport:CombatHUDViewport568,
                        compact:Bool,scale:Double)
         ->(x:ClosedRange<Double>,y:ClosedRange<Double>) {
