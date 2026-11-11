@@ -240,11 +240,35 @@ struct PC602HomeScene291: UIViewRepresentable {
                     length:MemoryLayout<BeltUniforms>.stride,index:1)
                 encoder.setFragmentBytes(&rockUniform,
                     length:MemoryLayout<BeltUniforms>.stride,index:1)
-                for stone in belt.stones where
-                    belt.visible(stone,view:frame.view,aspect:aspect) {
+                // Source DrawIntroBelt(true) uses glMultiDrawArrays.
+                // In Metal, consecutive visible source ranges are merged
+                // without copying a single vertex or allocating a list per
+                // frame. All-visible (820 stones) uses ONE GPU draw call;
+                // a partly occluded belt retains the exact original set.
+                var runStart=0
+                var runCount=0
+                for stone in belt.stones {
+                    if belt.visible(stone,view:frame.view,aspect:aspect) {
+                        if runCount==0 {
+                            runStart=stone.firstVertex
+                            runCount=stone.vertexCount
+                        } else if runStart+runCount==stone.firstVertex {
+                            runCount+=stone.vertexCount
+                        } else {
+                            encoder.drawPrimitives(type:.triangle,
+                                vertexStart:runStart,vertexCount:runCount)
+                            runStart=stone.firstVertex
+                            runCount=stone.vertexCount
+                        }
+                    } else if runCount>0 {
+                        encoder.drawPrimitives(type:.triangle,
+                            vertexStart:runStart,vertexCount:runCount)
+                        runCount=0
+                    }
+                }
+                if runCount>0 {
                     encoder.drawPrimitives(type:.triangle,
-                        vertexStart:stone.firstVertex,
-                        vertexCount:stone.vertexCount)
+                        vertexStart:runStart,vertexCount:runCount)
                 }
 
                 // CPU marker geometry changes ONLY when campaign progress or
