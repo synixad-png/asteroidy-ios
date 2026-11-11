@@ -319,7 +319,7 @@ enum ResearchWreckGeometry214 {
                 UInt32(truncatingIfNeeded:c &* 83492791)
             return Float(spaceHash207(input) & 0x00ffffff)/16777215
         }
-        func drawSourceWreck214(seed:Int) {
+        func drawSourceWreck214(seed:Int,debris:Int=112,trail:Float=118) {
             // Entire authored part list below is transcribed from the
             // original DrawDetailedResearchWreck211(..., orbit:false).
             bridge(-12,1,0)
@@ -383,13 +383,13 @@ enum ResearchWreckGeometry214 {
             warningLamp(-16,2.1,12.7,orange:true,phase:3.1)
             warningLamp(-10.4,1.6,-5.6,orange:false,phase:4.2)
             warningLamp(9,-4.1,8.4,orange:true,phase:4.9)
-            let debris=112 // orbit:false; original v568 exact count
+            // PC602 orbit:true = 146 source debris; combat = original 112.
             for i in 0..<debris {
                 let t=Float(i)/Float(debris-1)
                 let jx=Self.spaceRand207(seed,i,8)-0.5
                 let jy=Self.spaceRand207(seed,i,14)-0.5
                 let jz=Self.spaceRand207(seed,i,29)-0.5
-                let x=20+118*t+jx*(7+41*t)
+                let x=20+trail*t+jx*(7+41*t)
                 let y=14*t+jy*(6+28*t)+5.2*sin(t*7.2+Float(seed)*0.01)
                 let z=7+15*t+jz*(6+36*t)+2.6*cos(t*8)
                 let r=(0.88+Self.spaceRand207(seed,i,55)*3.8) *
@@ -412,6 +412,16 @@ enum ResearchWreckGeometry214 {
             }
         }
     }
+    /// Original PC v602 GpuIntro41.DrawDetailedResearchWreck211(211,true).
+    /// Identical 3D hull, weathering, scratch lines and 7 phased lamps.
+    /// Only source differences from orbit:false are the 146 debris boxes,
+    /// seed 211 and the extended 178 m debris trail; no duplicate builder.
+    static func makeOrbitHome602()->Mesh {
+        let builder=Builder()
+        builder.drawSourceWreck214(seed:211,debris:146,trail:178)
+        return builder.mesh
+    }
+
     static func make(sector:Int)->Mesh {
         let builder=Builder()
         builder.drawSourceWreck214(seed:sector+214)
