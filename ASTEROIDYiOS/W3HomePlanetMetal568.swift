@@ -81,49 +81,21 @@ struct W3HomePlanetMetal568: UIViewRepresentable {
             var pitch:Float=0
 
             static let sourceGPU_SHA256 =
-                "e93a0bbafc9bb50a25726a828ada81f36675bf88d802c5a8f985b89b6dc96c1b"
-            static let baseSHA256 =
-                "4987f35cd6f021fd98794f406c641f4853c538a82b10625e6b79e860c8a787c0"
-            static let glowSHA256 =
-                "6f1debd175f52b7ce1fbc687e9977597335ee432858d7d6d6e47cf66b5f9aa39"
-            static func digest(_ data:Data) -> String {
-                SHA256.hash(data:data).map {String(format:"%02x",$0)}.joined()
-            }
-            static func resource(_ name:String,_ ext:String,_ sha:String)
-                throws -> Data {
-                let url=Bundle.main.url(forResource:name,withExtension:ext)
-                    ?? Bundle.main.url(forResource:name,withExtension:ext,
-                                       subdirectory:"Assets")
-                guard let file=url,let data=try? Data(contentsOf:file)
-                else {throw SourceError.missing}
-                guard digest(data)==sha else {throw SourceError.invalid}
-                return data
-            }
+                SourceNewHome290MetalAssets.geometrySHA256
+            static let baseSHA256=SourceNewHome290MetalAssets.baseSHA256
+            static let glowSHA256=SourceNewHome290MetalAssets.glowSHA256
 
             init(device:MTLDevice) throws {
                 self.device=device
                 guard let q=device.makeCommandQueue() else {throw SourceError.metal}
                 queue=q
-                let bytes=try Self.resource(
-                    "W3HomePlanet290OriginalGPU","bin",Self.sourceGPU_SHA256)
-                guard bytes.count==516_624*48 else {throw SourceError.invalid}
-                guard let mesh=bytes.withUnsafeBytes({ raw in
-                    raw.baseAddress.flatMap {
-                        device.makeBuffer(bytes:$0,length:bytes.count,options:[])
-                    }
-                }) else {throw SourceError.metal}
-                vertices=mesh
-                let baseData=try Self.resource(
-                    "W3HomePlanet290Base","dat",Self.baseSHA256)
-                let glowData=try Self.resource(
-                    "W3HomePlanet293Glow","dat",Self.glowSHA256)
-                let loader=MTKTextureLoader(device:device)
-                baseTexture=try loader.newTexture(
-                    data:baseData,options:[.SRGB:false,.generateMipmaps:false,
-                                          .origin:MTKTextureLoader.Origin.topLeft])
-                glowTexture=try loader.newTexture(
-                    data:glowData,options:[.SRGB:false,.generateMipmaps:false,
-                                          .origin:MTKTextureLoader.Origin.topLeft])
+                // W3 menu and PC602 orbital world reuse one source H290
+                // GPU allocation; identical byte hashes and the same GLB
+                // material ranges remain enforced by the shared owner.
+                let source=try SourceNewHome290MetalAssets.shared(device:device)
+                vertices=source.vertices
+                baseTexture=source.base
+                glowTexture=source.glow
                 let library=try device.makeDefaultLibrary(bundle:.main)
                 guard let vertex=library.makeFunction(name:"w3Home290Vertex"),
                       let fragment=library.makeFunction(name:"w3Home290Fragment")
