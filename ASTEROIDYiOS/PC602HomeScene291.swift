@@ -87,8 +87,7 @@ struct PC602HomeScene291: UIViewRepresentable {
                 orbitVisualScale=SourceShipScale472.load().orbitFactor
                 let originalBelt=try PC602OrbitBelt51.load()
                 belt=originalBelt
-                let geometryLength=originalBelt.vertexCount *
-                    PC602OrbitBelt51.vertexStride
+                let geometryLength = originalBelt.vertexCount * PC602OrbitBelt51.vertexStride
                 guard let beltGPU=originalBelt.sourceBytes.withUnsafeBytes({
                     raw in raw.baseAddress.flatMap { base in
                         device.makeBuffer(
@@ -327,8 +326,7 @@ struct PC602HomeScene291: UIViewRepresentable {
                     encoder.setVertexBytes(&vp,
                         length:MemoryLayout<simd_float4x4>.stride,index:1)
                     encoder.drawPrimitives(type:.line,vertexStart:0,
-                        vertexCount:PC602HomeBeacons291.levels *
-                                    PC602HomeBeacons291.verticesPerLevel)
+                        vertexCount:PC602HomeBeacons291.levels * PC602HomeBeacons291.verticesPerLevel)
                 }
                 // Original HomeScene291 draws the source 4311 fighter AFTER
                 // beacons, with depth write and actual live DirectFlight298
