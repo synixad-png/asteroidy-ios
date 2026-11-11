@@ -1,0 +1,38 @@
+#ifndef SOURCE_HOME290_VERTEX_METALH
+#define SOURCE_HOME290_VERTEX_METALH
+#include <metal_stdlib>
+using namespace metal;
+
+// Source H290 vertex format is 12 little-endian float32 values per corner:
+// XYZ / normal XYZ / RGBA / UV. Both PC602 real orbit and W3 preview use it.
+struct W3Home290Uniforms {
+    float4x4 mvp;
+    float4x4 model;
+    uint material;
+    float glowPower;
+};
+struct W3Home290Output {
+    float4 position [[position]];
+    float3 normal;
+    float3 viewPosition;
+    float4 color;
+    float2 uv;
+};
+
+static inline W3Home290Output sourceHome290Vertex(
+    uint id,device const float *mesh,constant W3Home290Uniforms& u)
+{
+    const uint i=id*12u;
+    float3 position=float3(mesh[i],mesh[i+1u],mesh[i+2u]);
+    float3 normal=float3(mesh[i+3u],mesh[i+4u],mesh[i+5u]);
+    W3Home290Output o;
+    o.position=u.mvp*float4(position,1.0f);
+    o.viewPosition=(u.model*float4(position,1.0f)).xyz;
+    o.normal=normalize(float3x3(u.model[0].xyz,
+                                u.model[1].xyz,
+                                u.model[2].xyz)*normal);
+    o.color=float4(mesh[i+6u],mesh[i+7u],mesh[i+8u],mesh[i+9u]);
+    o.uv=float2(mesh[i+10u],mesh[i+11u]);
+    return o;
+}
+#endif
