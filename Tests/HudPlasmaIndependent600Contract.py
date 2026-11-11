@@ -31,6 +31,14 @@ assert 'HudLayoutEditor600' in scene
 assert '"hud.planetarium","x":64.7882' in layout
 assert not (ios/"HudPlasmaBridge600.swift").exists()
 assert not (ios/"HudPlanetariumPlasmaAnchor600.swift").exists()
+assert not (root/"Tests/HudPlasmaBridgeTests.swift").exists()
+assert not (root/"Tests/HudPlanetariumPlasmaAnchorTests.swift").exists()
+assert not (root/"Tests/HudPlasmaTwoEndedAndBubbleContract.py").exists()
+# Never reintroduce a hidden coupling via the Metal planet renderer or
+# the reactive plasma Canvas. F6 widget edits must remain independent.
+assert 'let center=HudPlanetariumPlasmaAnchor600' not in planet
+assert 'HudPlasmaBridge600.segment(' not in plasma
+assert 'Self.draw(graphics,current:values[i]' not in plasma
 widgets=json.loads((ios/"Assets/hud/default-layout.json").read_text())["widgets"]
 byid={w["id"]:w for w in widgets}
 assert byid["shield.bar"]["y"] < byid["armor.bar"]["y"] < byid["hull.bar"]["y"]
