@@ -19,6 +19,8 @@ on:
       - ASTEROIDYiOS/PC602HomeWeaponTest292.swift
       - ASTEROIDYiOS/PC602HomeShotGeometry292.swift
       - Tests/PC602HomeWeapons292Tests.swift
+      - ASTEROIDYiOS/PC602OrbitHud330.swift
+      - Tests/PC602OrbitHud330Tests.swift
       - Tests/PC602HomeWorldSession291Tests.swift
       - ASTEROIDYiOS/PC602HomeHubRoute90.swift
       - ASTEROIDYiOS/PC602HomeFlight291.swift
@@ -41,6 +43,8 @@ on:
       - ASTEROIDYiOS/PC602HomeWeaponTest292.swift
       - ASTEROIDYiOS/PC602HomeShotGeometry292.swift
       - Tests/PC602HomeWeapons292Tests.swift
+      - ASTEROIDYiOS/PC602OrbitHud330.swift
+      - Tests/PC602OrbitHud330Tests.swift
       - Tests/PC602HomeWorldSession291Tests.swift
       - ASTEROIDYiOS/PC602HomeHubRoute90.swift
       - Tests/PC602WreckDock209Tests.swift
@@ -178,6 +182,21 @@ jobs:
             ASTEROIDYiOS/PC602HomeShotGeometry292.swift \
             /tmp/main.swift -o /tmp/pc602-guns-geodesic-test
           /tmp/pc602-guns-geodesic-test \
+            ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+      - name: Compile and verify original source OrbitHud330 26-tile course zone
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602OrbitHud330Tests.swift /tmp/main.swift
+          swiftc -Onone \
+            /tmp/PC602ActualGameVec2.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602HomeFlight291.swift \
+            ASTEROIDYiOS/PC602OrbitHud330.swift \
+            /tmp/main.swift -o /tmp/pc602-original-orbit-hud330
+          /tmp/pc602-original-orbit-hud330 \
             ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
       - name: Run actual original complete 3D wreck source golden Swift tests
         shell: bash
