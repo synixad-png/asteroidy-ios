@@ -12,6 +12,12 @@ struct FlightDynamics556 {
         var cruiseSpeed: Float = 0.92
         var visualTurnRate: Float = 6.2
         var visualResponse: Float = 5.8
+        // Default values remain bit-for-bit the existing Vanguard path.
+        // PC602 FlightDynamics298: heavy craft alter inertia and hull response.
+        var coastRateMultiplier: Float = 1
+        var bankBuildRate: Float = 6.3
+        var bankRecoveryRate: Float = 3.8
+        var pitchResponse: Float = 4.8
     }
     var configuration = Configuration()
     var visualHeading: Float = 0
@@ -36,7 +42,7 @@ struct FlightDynamics556 {
         guard dt > 0 else { return .init(x:0,y:0) }
         let length = max(0, min(1, inputLength))
         let previous = velocity
-        let rate: Float = length > 0.01 ? 3 * configuration.control : 1.55 * (1 + configuration.stabilizerLevel * 0.16) * configuration.coastMassFactor
+        let rate: Float = length > 0.01 ? 3 * configuration.control : 1.55 * (1 + configuration.stabilizerLevel * 0.16) * configuration.coastMassFactor * configuration.coastRateMultiplier
         velocity = velocity + (desired - velocity) * Self.response(rate:rate,dt:dt)
         let powerTarget: Float = length > 0.01 ? 0.48 + 0.52 * length : min(0.38, sqrt(velocity.lengthSquared)/max(0.001,configuration.cruiseSpeed) * 0.38)
         visualPower += (powerTarget - visualPower) * (1 - exp(-dt * (length > 0.01 ? 7 : 3.5)))
@@ -59,10 +65,10 @@ struct FlightDynamics556 {
         let lateral = (acceleration.x*right.x+acceleration.y*right.y)/speed
         let slip = (velocity.x*right.x+velocity.y*right.y)/speed
         let targetBank = max(-39,min(39,-angularVelocity*6.3-lateral*27-slip*9))
-        let rollRate: Float = abs(targetBank)>abs(visualBank) ? 6.3 : 3.8
+        let rollRate: Float = abs(targetBank)>abs(visualBank) ? configuration.bankBuildRate : configuration.bankRecoveryRate
         visualBank += (targetBank-visualBank)*(1-exp(-dt*rollRate))
         let longitudinal = (acceleration.x*facing.x+acceleration.y*facing.y)/speed
         let targetPitch = max(-17,min(17,-longitudinal*32))
-        visualPitch += (targetPitch-visualPitch)*(1-exp(-dt*4.8))
+        visualPitch += (targetPitch-visualPitch)*(1-exp(-dt*configuration.pitchResponse))
     }
 }
