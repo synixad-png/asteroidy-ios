@@ -99,8 +99,8 @@ struct PC602OrbitBelt51 {
         let radius=stone.size*Self.sourceScale*1.9+1
         let x=view[0]*p.x+view[4]*p.y+view[8]*p.z+view[12]
         let y=view[1]*p.x+view[5]*p.y+view[9]*p.z+view[13]
-        let z=-(view[2]*p.x+view[6]*p.y+view[10]*p.z+view[14])
-        if z+radius<Self.sourceNear || z-radius>Self.sourceFar {return false}
+        let z = -(view[2] * p.x + view[6] * p.y + view[10] * p.z + view[14])
+        if z + radius < Self.sourceNear || z - radius > Self.sourceFar {return false}
         let limit=max(z,Self.sourceNear)+radius
         return abs(x)<=limit*(aspect*0.5)+radius &&
                abs(y)<=limit*0.5+radius
@@ -116,8 +116,7 @@ struct PC602OrbitBelt51 {
             guard r>1, let terrain=home.surface(world) else{return false}
             if r<terrain+18.8 {return false}
             let delta=world-wreck
-            let dockDistance=sqrt(delta.x*delta.x+delta.y*delta.y+
-                                  delta.z*delta.z)
+            let dockDistance = sqrt(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z)
             // PC source attempts up to 15 exclusion rotations. Do not reject
             // a source rock when the original loop reaches this limit;
             // expose the measured value separately in golden tests.
