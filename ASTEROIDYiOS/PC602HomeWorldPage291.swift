@@ -111,6 +111,7 @@ struct PC602HomeWorldPage291:View {
                                       design:.monospaced))
                         .foregroundStyle(driver.hud.canDock ? .green : .white)
                     panel("MISJE \(driver.hud.completed) / 26")
+                    panel("BROŃ \(driver.hud.weaponName) / POCISKI \(driver.hud.projectiles)")
                 }
             }
             .padding(.leading,leftInset)
@@ -139,6 +140,17 @@ struct PC602HomeWorldPage291:View {
                     Button("CEL +") {driver.cycleMission()}
                         .disabled(driver.paused)
                         .accessibilityIdentifier("pc602-orbit-next-sector")
+                    Text("OGIEŃ")
+                        .font(.system(size:12,weight:.bold,design:.monospaced))
+                        .foregroundStyle(.white)
+                        .frame(minWidth:86,minHeight:44)
+                        .background(Color(red:0.34,green:0.08,blue:0.08))
+                        .overlay(Rectangle().stroke(gold,lineWidth:1))
+                        .contentShape(Rectangle())
+                        .gesture(DragGesture(minimumDistance:0)
+                            .onChanged {_ in driver.setFiring(true)}
+                            .onEnded {_ in driver.setFiring(false)})
+                        .accessibilityIdentifier("pc602-orbit-fire")
                     Button("DOKUJ H55") {_=driver.requestH55()}
                         .disabled(!driver.hud.canDock || driver.paused)
                         .accessibilityIdentifier("pc602-orbit-dock")
