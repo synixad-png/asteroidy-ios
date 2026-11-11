@@ -170,13 +170,11 @@ enum PC602HomeShotGeometry292 {
             if length(right)<0.01 {right=SIMD3<Float>(1,0,0)}
             right=unit(right)
             let up=unit(cross(right,eye))
-            let eyeZ=view[2]*center.x+view[6]*center.y+
-                     view[10]*center.z+view[14]
+            let eyeZ = view[2]*center.x+view[6]*center.y+view[10]*center.z+view[14]
             let depth=max(1,-eyeZ)
             let corePixels:Float=bullet.kind == .rail ? 4.2:3.6
             let pixelsPerUnit=max(0.01,720/depth)
-            let radius=(corePixels/pixelsPerUnit) *
-                PC602HomeShipPose291.originalWorldScale
+            let radius = (corePixels/pixelsPerUnit) * PC602HomeShipPose291.originalWorldScale
             let hue=tint(bullet.kind)
             let opaqueWhite=SIMD3<Float>(249,253,255)/255
             let paleEdge=SIMD3<Float>(230,246,255)/255
