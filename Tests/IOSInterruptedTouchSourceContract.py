@@ -17,7 +17,12 @@ assert "input.releaseHeldControls()" in s.split(
     "if phase != .active {",1)[1].split("}",1)[0]
 assert "missionIntroInput568.releaseHeldControls()" in s.split(
     "if phase != .active {",1)[1].split("}",1)[0]
-assert "if visible { input.releaseHeldControls() }" in s
+# Verify actual input cancellation inside the menu visibility branch,
+# allowing proper multiline formatting and the new orbital cancel action.
+menu_visibility = re.search(r"if\\s+visible\\s*\\{(?P<body>[^}]+)\\}",s)
+assert menu_visibility, "Missing menu visibility interruption guard"
+assert "input.releaseHeldControls()" in menu_visibility.group("body")
+assert "homeWorld291.setSuspended(true)" in menu_visibility.group("body")
 assert ".onEnded { _ in input.shooting = false }" in s
 assert ".onEnded { _ in input.tarczaHeld = false }" in s
 assert "input.steer = 0; input.thrust = 0" in s

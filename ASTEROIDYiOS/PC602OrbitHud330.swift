@@ -60,8 +60,7 @@ enum PC602OrbitHud330 {
         let tangent=unit(route-n*dot(route,n))
         let forward=unit(source.orbitForward)
         let side=unit(cross(forward,n))
-        let course=atan2(dot(tangent,side),dot(tangent,forward))*
-                   180/Float.pi
+        let course=atan2(dot(tangent,side),dot(tangent,forward)) * (180/Float.pi)
         guard course.isFinite else {return nil}
         return Telemetry(zone:zone,altitude:norm-surface,
                          course:course,
