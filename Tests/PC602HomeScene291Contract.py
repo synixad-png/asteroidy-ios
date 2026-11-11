@@ -25,6 +25,10 @@ beacons=read("PC602HomeBeacons291.swift")
 belt=read("PC602OrbitBelt51.swift")
 belt_shader=read("PC602OrbitBelt51.metal")
 wreck=read("SourceHomeWreck209.swift")
+ship=read("SourceHomeVanguard431.swift")
+ship_pose=read("PC602HomeShipPose291.swift")
+ship_source=read("SourceVanguardMesh431.swift")
+ship_shader=read("Ship.metal")
 wreck_mesh=read("ResearchWreckGeometry214.swift")
 combat_wreck=read("SourceCombatWreck214.swift")
 combat_shader=read("Sector01Carbonis568.metal")
@@ -144,6 +148,30 @@ assert "dock:flight.dockPosition" in world
 assert world.index("for stone in belt.stones") < world.index("originalWreck.draw")
 assert world.index("originalWreck.draw") < world.index("PC602HomeBeacons291.vertices(")
 assert "PC602WreckDebris209.structuralBoxFaces" not in world
+
+# REAL PC602 4311 Vanguard (craft 1) rather than a generated/substitute
+# GLB; the original binary and skin hashes are checked by the runtime.
+assert "SourceVanguardMesh431.exactMeshSHA256" in ship
+assert "SourceVanguardMesh431.exactBaseJPEG_SHA256" in ship
+assert "SourceVanguardMesh431(data:originalMesh)" in ship
+assert 'name:"sourceVanguardVertex431"' in ship
+assert 'name:"sourceVanguardTexturedToonFragment431"' in ship
+assert "sourceVanguardTexturedToonFragment431" in ship_shader
+assert "sourceVanguardVertex431" in ship_shader
+assert "static let sourceHomeWorldOuterRadius:Float=144.19674" in ship_pose
+assert "sourceContactRadius*originalWorldScale*0.65*1.35" in ship_pose
+assert "flight.equipment.craft == .vanguard" in ship_pose
+assert "flight.flight.flight.visualBank" in ship_pose
+assert "flight.flight.flight.visualPitch" in ship_pose
+assert "flight.home.surface(" in ship_pose
+assert "altitude+12" in ship_pose
+assert "sourceShipScale*orbitScale" in ship_pose
+assert "originalShip=try SourceHomeVanguard431(device:device)" in world
+assert "originalShip.draw(encoder:encoder,flight:flight," in world
+assert world.index("PC602HomeBeacons291.vertices(") < world.index("originalShip.draw")
+assert "SourceShipScale472.load().orbitFactor" in world
+assert "sourceVanguardTexturedToonFragment431" in ship_shader
+assert "PC602HomeShipPose291" not in app
 
 # This is a source renderer, NOT a complete orbit gameplay/menu substitution.
 assert "PC602HomeScene291(" not in app
