@@ -65,6 +65,7 @@ struct PC602HomeScene291: UIViewRepresentable {
             let beltBuffer:MTLBuffer
             let originalWreck:SourceHomeWreck209
             let originalShip:SourceHomeVanguard431
+            let originalSky:SourceCombatSky568
             let originalShots:SourceHomeShots292
             let orbitVisualScale:Float
             let depth:MTLDepthStencilState
@@ -89,6 +90,11 @@ struct PC602HomeScene291: UIViewRepresentable {
                 // never invent a second partial GLB or duplicate debris.
                 originalWreck=try SourceHomeWreck209(device:device)
                 originalShip=try SourceHomeVanguard431(device:device)
+                // Reuse GpuIntro41.IntroSky for BOTH original CARBONIS
+                // and H290: clouds, 3 planets, black hole, stars and sun.
+                // This cache is only created for the actual 3D world,
+                // never duplicated inside W3's transparent globe preview.
+                originalSky=try SourceCombatSky568(device:device)
                 originalShots=try SourceHomeShots292(device:device)
                 orbitVisualScale=SourceShipScale472.load().orbitFactor
                 let originalBelt=try PC602OrbitBelt51.load()
@@ -228,6 +234,13 @@ struct PC602HomeScene291: UIViewRepresentable {
                     MTLClearColor(red:0.012,green:0.021,blue:0.04,alpha:1)
                 guard let encoder=command.makeRenderCommandEncoder(
                     descriptor:renderPass) else{return}
+                // PC v602 HomeScene291 calls IntroSky(glow,nebula,rays,true)
+                // BEFORE planet/asteroids. Use the already source-tested
+                // shared GPU sky, not a flat clearColor placeholder.
+                originalSky.draw(encoder:encoder,
+                    camera:flight.flight.camera,
+                    vp:projection*viewMatrix,time:flight.orbitTime,
+                    aspect:aspect,drawableHeight:Float(size.height))
                 encoder.setRenderPipelineState(pipeline)
                 encoder.setDepthStencilState(depth)
                 // HomeScene291 disables GL_CULL_FACE; preserve every
