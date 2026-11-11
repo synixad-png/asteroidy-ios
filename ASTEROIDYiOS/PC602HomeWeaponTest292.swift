@@ -34,22 +34,18 @@ struct PC602HomeWeaponTest292 {
             let rate:Float
             switch weapon {
             case .rail:
-                rate=(0.32-0.02*Float(upgrade-1)) /
-                     (1+Float(rapid)*0.15)
+                rate=(0.32-0.02*Float(upgrade-1))/(1+Float(rapid)*0.15)
             case .swarm:
-                rate=(0.29-0.015*Float(upgrade-1)) /
-                     (1+Float(rapid)*0.15)
+                rate=(0.29-0.015*Float(upgrade-1))/(1+Float(rapid)*0.15)
             case .pulse,.twin,.scatter:
                 let base:Float=weapon == .scatter ? 0.31 :
                                weapon == .twin ? 0.20 : 0.16
                 let perLevel:Float=weapon == .scatter ? 0.03:0.02
                 let raw=base-perLevel*Float(upgrade-1)
-                rate=max(0.075,raw*fireRateScale*fireRateTalent/
-                         (1+Float(rapid)*0.15))
+                rate=max(0.075,raw*fireRateScale*fireRateTalent/(1+Float(rapid)*0.15))
                 return max(0.065,rate*(1-0.06*Float(cooling)))
             }
-            return max(0.065,rate*fireRateScale*fireRateTalent*
-                       (1-0.06*Float(cooling)))
+            return max(0.065,rate*fireRateScale*fireRateTalent*(1-0.06*Float(cooling)))
         }
     }
 
@@ -126,9 +122,8 @@ struct PC602HomeWeaponTest292 {
             // Source's Velocity67 is tangent at the pilot position;
             // each new bullet velocity is parallel-transported to its
             // actual Sphere67 origin BEFORE its first movement tick.
-            let initial=Self.direction(ship.heading+
-                           (kind == .rail ? 0:offset)) *
-                        (kind == .rail ? 1050:boost)+ship.velocity
+            let angle=ship.heading+(kind == .rail ? 0:offset)
+            let initial=Self.direction(angle)*(kind == .rail ? 1050:boost)+ship.velocity
             let world=Sphere67.vector(ship.position,initial)
             let moved=Sphere67.transport(world,from:sourceNormal,
                                          to:Sphere67.normal(origin))
