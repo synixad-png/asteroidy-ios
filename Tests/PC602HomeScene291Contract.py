@@ -26,6 +26,12 @@ app=read("App.swift")
 
 # Exactly ONE immutable Metal resource cache for these TWO consumers.
 assert "private static var cached:[ObjectIdentifier:SourceNewHome290MetalAssets]" in shared
+assert "static let defaultDevice:MTLDevice? = MTLCreateSystemDefaultDevice()" in shared
+assert "MTKView(frame:.zero,device:SourceNewHome290MetalAssets.defaultDevice)" in preview
+assert "MTKView(frame:.zero,device:SourceNewHome290MetalAssets.defaultDevice)" in world
+assert "MTLCreateSystemDefaultDevice()" not in preview
+assert "MTLCreateSystemDefaultDevice()" not in world
+
 assert "SourceNewHome290MetalAssets.shared(device:device)" in preview
 assert "SourceNewHome290MetalAssets.shared(device:device)" in world
 assert "device.makeBuffer(bytes:$0,length:mesh.count,options:[])" in shared
