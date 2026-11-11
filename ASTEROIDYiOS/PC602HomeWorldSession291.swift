@@ -11,6 +11,8 @@ import Foundation
 struct PC602HomeWorldSession291 {
     enum SourceError:Error {case invalidFrame}
     private(set) var flight:PC602HomeFlight291
+    private(set) var weapons=PC602HomeWeaponTest292(
+        settings:PC602HomeWeaponTest292.Settings(weapon:.pulse)!)
     private(set) var route=PC602HomeHubRoute90()
     private(set) var controls:SourceControls586.Profile
     private(set) var paused=false
@@ -31,6 +33,13 @@ struct PC602HomeWorldSession291 {
     mutating func adoptControls(_ next:SourceControls586.Profile) {
         controls=next
     }
+
+    /// The authentic existing C279 shop owns purchased weapons and upgrade
+    /// levels. Orbital test firing only borrows its immutable values; it
+    /// NEVER changes money, ion ammo, score, hits or mission progression.
+    mutating func setWeaponSettings(_ settings:PC602HomeWeaponTest292.Settings) {
+        weapons.settings=settings
+    }
     mutating func setPaused(_ value:Bool) {paused=value}
 
     /// Exact World -> HardwareInput586 -> Controls586 -> HomeFlight291
@@ -40,13 +49,17 @@ struct PC602HomeWorldSession291 {
     mutating func advance(snapshot:SourceControls586.Snapshot,
                           touchMove:Vec2=Vec2(x:0,y:0),
                           touchAim:Vec2=Vec2(x:0,y:0),
-                          dt:Float) throws -> Bool {
+                          touchFire:Bool=false,dt:Float) throws -> Bool {
         guard dt.isFinite,dt>=0 else {throw SourceError.invalidFrame}
         guard !paused,route.location == .orbit,dt>0 else{return false}
         let input=PC602HomeFlightInput291.read(
             snapshot:snapshot,profile:controls,
             touchMove:touchMove,touchAim:touchAim)
         try flight.step(input,dt:dt)
+        // Windows StepHomeWeaponTest292 happens AFTER flight movement,
+        // using the live ship's heading/velocity. No enemies, rewards.
+        weapons.step(ship:flight.flight,dt:dt,
+                     fire:touchFire || snapshot.held(6,profile:controls))
         steppedFrames+=1
         return true
     }
