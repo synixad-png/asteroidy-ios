@@ -1572,6 +1572,10 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                                                vertexCount:values.count/12)
                     }
                 }
+                // PC v602 HudGlbAssets animated models and the four
+                // native icon GLBs sample ONE monotonic render clock.
+                // The separate plasma ribbon retains Game.Elapsed.
+                let hudRenderTime600=ProcessInfo.processInfo.systemUptime-started
                 // 4 HUD GLBs reuse existing resident world-pickup geometry,
                 // textures and pipeline. No second GPU upload or drawables.
                 if let session=gameSession,
@@ -1592,7 +1596,6 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         encoder.setDepthStencilState(hudIconDepth600)
                         encoder.setRenderPipelineState(pickupPipeline)
                         encoder.setCullMode(.none)
-                        let hudRenderTime600=ProcessInfo.processInfo.systemUptime-started
                         for (index,kind) in HudPickupTransform600.order.enumerated() {
                             let id=HudPickupTransform600.widgetIDs[index]
                             guard let widget=hudLayout600.widget(id),
@@ -1642,7 +1645,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                         depthTexture:view.depthStencilTexture,
                         layout:snapshot.layout,viewport:screen,
                         pose:snapshot.pose,
-                        seconds:visual.seconds,capsules:visual.capsules)
+                        seconds:hudRenderTime600,capsules:visual.capsules)
                 }
                 command.present(drawable)
                 if !proofScheduled &&
