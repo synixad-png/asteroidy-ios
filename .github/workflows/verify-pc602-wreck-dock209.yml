@@ -1,0 +1,93 @@
+name: PC602 original wreck source / H55 docking routing tests
+
+on:
+  push:
+    branches: [feature/ios-pc602-newhome-world-source]
+    paths:
+      - .github/workflows/verify-pc602-wreck-dock209.yml
+      - ASTEROIDYiOS/PC602WreckDebris209.swift
+      - ASTEROIDYiOS/PC602HomeHubRoute90.swift
+      - ASTEROIDYiOS/PC602HomeFlight291.swift
+      - ASTEROIDYiOS/PC602NewHome290.swift
+      - Tests/PC602WreckDock209Tests.swift
+  pull_request:
+    paths:
+      - .github/workflows/verify-pc602-wreck-dock209.yml
+      - ASTEROIDYiOS/PC602WreckDebris209.swift
+      - ASTEROIDYiOS/PC602HomeHubRoute90.swift
+      - Tests/PC602WreckDock209Tests.swift
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original-wreck-and-dock:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage SHA-verified ORIGINAL PC602 H290 terrain
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Extract original Vec2 from active iOS game (no fake test Vec2)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          source=Path("ASTEROIDYiOS/GameCore.swift").read_text()
+          start=source.index("struct Vec2: Equatable {")
+          brace=source.index("{",start)
+          level=0
+          for i in range(brace,len(source)):
+              if source[i]=="{":level+=1
+              elif source[i]=="}":
+                  level-=1
+                  if level==0:
+                      end=i+1
+                      break
+          else:
+              raise RuntimeError("Original source Vec2 braces not closed")
+          Path("/tmp/PC602ActualGameVec2.swift").write_text(
+              "import Foundation\n"+source[start:end]+"\n")
+          PY
+      - name: Compile and execute original PC602 debris + Hub90 against live Swift physics
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602WreckDock209Tests.swift /tmp/main.swift
+          swiftc -Onone \
+            /tmp/PC602ActualGameVec2.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602HomeFlight291.swift \
+            ASTEROIDYiOS/PC602HomeHubRoute90.swift \
+            ASTEROIDYiOS/PC602WreckDebris209.swift \
+            /tmp/main.swift -o /tmp/pc602-wreck-dock-source-test
+          /tmp/pc602-wreck-dock-source-test \
+            ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+      - name: Assert routing does not change active W3 and H55 scene
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          router=Path("ASTEROIDYiOS/PC602HomeHubRoute90.swift").read_text()
+          debris=Path("ASTEROIDYiOS/PC602WreckDebris209.swift").read_text()
+          assert "flight.canDock90(context:context)" not in router or "PC602HomeFlight291.canDock90" in router
+          assert "location == .orbit" in router
+          assert "location == .menu" in router
+          assert "PC602NewHome290.wreckDebrisCount295" in debris
+          assert "PC602NewHome290.wreckTrailLength295" in debris
+          assert "spaceHash207" in debris and "spaceRand207" in debris
+          assert "scale=PC602NewHome290.wreckScale295" in debris
+          app=Path("ASTEROIDYiOS/App.swift").read_text()
+          assert "PC602WreckDebris209" not in app
+          assert "PC602HomeHubRoute90" not in app
+          print("PASS: authenticated PC602 source dock and 146 debris; live W3/H55 unchanged")
+          PY
+          python3 Tools/code_quality_audit.py --root . --gate
