@@ -17,6 +17,11 @@ on:
       - ASTEROIDYiOS/PC602HomeScene291.metal
       - ASTEROIDYiOS/PC602HomeScene291.swift
       - ASTEROIDYiOS/SourceHomeWreck209.swift
+      - ASTEROIDYiOS/SourceHomeVanguard431.swift
+      - ASTEROIDYiOS/PC602HomeShipPose291.swift
+      - Tests/PC602HomeShipPose291Tests.swift
+      - ASTEROIDYiOS/SourceVanguardMesh431.swift
+      - ASTEROIDYiOS/Ship.metal
       - ASTEROIDYiOS/ResearchWreckGeometry214.swift
       - Tests/PC602OrbitWreck211Tests.swift
       - ASTEROIDYiOS/Sector01Carbonis568.metal
@@ -31,6 +36,11 @@ on:
       - ASTEROIDYiOS/PC602HomeScene291.metal
       - ASTEROIDYiOS/PC602HomeScene291.swift
       - ASTEROIDYiOS/SourceHomeWreck209.swift
+      - ASTEROIDYiOS/SourceHomeVanguard431.swift
+      - ASTEROIDYiOS/PC602HomeShipPose291.swift
+      - Tests/PC602HomeShipPose291Tests.swift
+      - ASTEROIDYiOS/SourceVanguardMesh431.swift
+      - ASTEROIDYiOS/Ship.metal
       - ASTEROIDYiOS/ResearchWreckGeometry214.swift
       - Tests/PC602OrbitWreck211Tests.swift
       - ASTEROIDYiOS/Sector01Carbonis568.metal
@@ -104,6 +114,8 @@ jobs:
           assert (app/"W3HomePlanet290OriginalGPU.bin").is_file()
           assert (app/"PC602Home290HeightMap.bin").is_file()
           assert (app/"PC602OrbitBelt51.bin").is_file()
+          assert (app/"Vanguard431Source.mesh").is_file()
+          assert (app/"Vanguard431Base.jpg").is_file()
           assert (app/"W3HomePlanet290Base.dat").is_file()
           assert (app/"W3HomePlanet293Glow.dat").is_file()
           print("PASS: real iPhone/iPad ARM64 Swift and Metal, source H290 bundle")
