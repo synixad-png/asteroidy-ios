@@ -10,6 +10,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
     struct HUD {
         var target:Int=1
         var completed:Int=0
+        var completedMask:Int=0
         var speed:Float=0
         var sectorDistance:Float=0
         var dockDistance:Float=0
@@ -171,7 +172,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
         }
         let source330=PC602OrbitHud330.measure(flight)
         return HUD(target:flight.target,completed:flight.completedMask.nonzeroBitCount,
-            speed:flight.orbitSpeed,sectorDistance:flight.orbitDistance,
+            completedMask:flight.completedMask,speed:flight.orbitSpeed,sectorDistance:flight.orbitDistance,
             dockDistance:flight.dockDistance,orbitTime:flight.orbitTime,
             canDock:flight.canDock90(context:.init(
                 planetHub:true,orbitMode:true)),
