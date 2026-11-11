@@ -30,11 +30,13 @@ assert "func currentHudVisual600()->(" in session
 assert "return (hudLivePose600,hudLiveCapsules600,hudLiveSeconds600)" in session
 assert "HudPickupTransform600.sample(" in renderer
 assert "pose:snapshot.pose" in renderer
-assert "HudPlanetariumPlasmaAnchor600.screenCenter(" in metal
-assert "HudPlanetariumPlasmaAnchor600.visualRoll(" in metal
+assert "HudPlanetariumPlasmaAnchor600" not in metal
+assert "HudMotionProject600.project(" in metal
+assert "widget:widget.id" in metal
+assert "pose.roll*pose.weight(widget.id)" in metal
 assert "HudPlanetariumMetal600(" in renderer
 assert "HudPlanetariumHost600(" not in scene
-assert "HudMotionProject600.project(" not in metal
+assert "HudMotionProject600.project(" in metal
 assert "livePose" not in metal
 assert "gameSession?.game.tokenPickups" not in metal
 assert "simd_slerp(a,b,blend)" in source
