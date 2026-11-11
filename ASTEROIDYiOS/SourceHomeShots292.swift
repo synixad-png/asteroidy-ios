@@ -10,8 +10,8 @@ import simd
 final class SourceHomeShots292 {
     enum SourceError:Error {case pipeline,buffer}
     private static let maxBullets=145
-    private static let maxVertices = Self.maxBullets * PC602HomeShotGeometry292.verticesPerShot
-    private static let byteCount = Self.maxVertices * PC602HomeShotGeometry292.floatsPerVertex * MemoryLayout<Float>.size
+    private static let maxVertices = SourceHomeShots292.maxBullets * PC602HomeShotGeometry292.verticesPerShot
+    private static let byteCount = SourceHomeShots292.maxVertices * PC602HomeShotGeometry292.floatsPerVertex * MemoryLayout<Float>.size
     private let pipeline:MTLRenderPipelineState
     private let discPipeline:MTLRenderPipelineState
     private let depth:MTLDepthStencilState
@@ -97,7 +97,7 @@ final class SourceHomeShots292 {
                 buffer.contents().copyMemory(from:source,byteCount:bytes)
             }
         }
-        command.addCompletedHandler { [slots] _ in slots.signal() }
+        command.addCompletedHandler { [slots = self.slots] _ in slots.signal() }
         var matrix=mvp
         encoder.setRenderPipelineState(pipeline)
         encoder.setDepthStencilState(depth)
