@@ -87,9 +87,10 @@ final class HudPlanetariumMetal600 {
         let pitch=simd_float4x4(simd_quatf(
             angle:Float(widget.pitch ?? -20)*Float.pi/180,
             axis:SIMD3<Float>(1,0,0)))
+        let rollDegrees=Float(widget.roll ?? 0) +
+            HudPlanetariumPlasmaAnchor600.visualRoll(pose:pose)
         let roll=simd_float4x4(simd_quatf(
-            angle:(Float(widget.roll ?? 0)+
-                    HudPlanetariumPlasmaAnchor600.visualRoll(pose:pose))*Float.pi/180,
+            angle:rollDegrees*Float.pi/180,
             axis:SIMD3<Float>(0,0,1)))
         let pixels=Float(projection.pixelsPerModelUnit)
         return ortho *
