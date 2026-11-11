@@ -28,6 +28,7 @@ struct PC602HomeWorldPage291:View {
                     PC602HomeScene291(
                         flight:flight,
                         onFrame:{dt in driver.frame(dt:dt)},
+                        onProjectiles:{driver.readProjectiles()},
                         onRendererError:{error in
                             driver.reportRendererError(error)
                         })
