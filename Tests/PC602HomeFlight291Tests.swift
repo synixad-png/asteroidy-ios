@@ -172,4 +172,57 @@ assert(!PC602HomeWorldView291.visible(
     "back-side beacons cannot bleed through original planet")
 assert(PC602HomeWorldView291(camera:flight.flight.camera,aspect:0)==nil)
 
+// PC602 HomeScene291: 26 source world markers, each with one vertical
+// segment and exactly 40 separate ring segments, all in source H290 space.
+guard let markers=PC602HomeBeacons291.vertices(
+    home:home,selected:1,completedMask:0) else {
+    fatalError("Original PC602 world beacons missing")
+}
+assert(markers.count==26*82)
+guard let firstBeacon=home.beacon(1),let secondBeacon=home.beacon(2)
+else {fatalError("Source PC602 atlas missing levels 1 and 2")}
+let first=SIMD3(markers[0].position.x,markers[0].position.y,
+                markers[0].position.z)
+let firstEnd=SIMD3(markers[1].position.x,markers[1].position.y,
+                   markers[1].position.z)
+let firstRing=SIMD3(markers[2].position.x,markers[2].position.y,
+                    markers[2].position.z)
+close(length(firstEnd-firstBeacon),0,0.001,
+      "source H290 first beacon vertical line reaches actual marker")
+close(length(firstRing-firstBeacon),8,0.002,
+      "selected PC602 sector ring radius is 8m")
+close(length(firstEnd-first),3.5,0.03,
+      "PC602 source ring base H290 +0.5 to beacon H290+4")
+close(markers[0].tint.x,82.0/255,0.00001,
+      "unlocked source cyan R")
+close(markers[0].tint.y,217.0/255,0.00001,
+      "unlocked source cyan G")
+close(markers[0].tint.w,1,0.00001,"selected beacon alpha")
+let secondOffset=PC602HomeBeacons291.verticesPerLevel
+let secondRing=SIMD3(markers[secondOffset+2].position.x,
+                     markers[secondOffset+2].position.y,
+                     markers[secondOffset+2].position.z)
+close(length(secondRing-secondBeacon),3.4,0.002,
+      "inactive PC602 sector ring radius is 3.4m")
+close(markers[secondOffset].tint.x,110.0/255,0.00001,
+      "locked source dim gray R")
+close(markers[secondOffset].tint.w,0.66,0.00001,
+      "nonselected beacon alpha")
+guard let progressed=PC602HomeBeacons291.vertices(
+    home:home,selected:2,completedMask:1)
+else {fatalError("Original completed beacon colors not generated")}
+close(progressed[0].tint.x,95.0/255,0.00001,
+      "completed source green R")
+close(progressed[secondOffset].tint.x,82.0/255,0.00001,
+      "source unlocked next mission cyan")
+close(progressed[secondOffset].tint.w,1,0.00001,
+      "source selected next mission alpha")
+assert(PC602HomeBeacons291.vertices(
+    home:home,selected:0,completedMask:0)==nil)
+assert(PC602HomeBeacons291.vertices(
+    home:home,selected:27,completedMask:0)==nil)
+assert(markers.allSatisfy { v in
+    v.position.x.isFinite && v.position.y.isFinite &&
+    v.position.z.isFinite && v.tint.x.isFinite && v.tint.w.isFinite
+})
 print("PASS PC602 HomeFlight291: 6 source craft, physical movement, camera/frustum, exact terrain occlusion, drift, aim latch, dock distance and 26 mission unlocks")
