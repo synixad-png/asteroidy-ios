@@ -98,9 +98,13 @@ assert 'hud-v602-always-visible-widget-selector' in editor
 assert 'Button("▶") {selectNeighbor600(1)}' in editor
 # PC FramePose is assigned EVERY render; numeric HUD still snapshots at 10Hz.
 assert 'TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active))' in hud
-assert 'hud.motion=active ? livePose() : HudMotion600.Pose()' in hud
+assert 'hud.motion=live?.pose ?? HudMotion600.Pose()' in hud
+assert 'guard tick.date.timeIntervalSinceReferenceDate.isFinite else{return}' in hud
+assert 'Self.radar(radarContext,live?.contacts ?? hud.radarContacts)' in hud
 assert 'if now-lastHUD > 0.10 {' in session
-assert 'livePose:{ [weak session] in' in scene
+assert 'liveRadar:{ [weak session] in' in scene
+assert 'session?.currentHudRadarFrame600()' in scene
+assert 'livePose:{ [weak session] in' in scene  # plasma keeps independent live pose
 # GLB positions/model rotations must be PC Y/X/Z, never a rotated camera.
 asset_center='static let pc602ModelCenterX:Float = 2.74528861'
 asset_radius='static let pc602ModelRadius:Double = 5.112107576242468'
