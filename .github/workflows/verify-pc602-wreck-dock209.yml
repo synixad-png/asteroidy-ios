@@ -50,6 +50,10 @@ on:
       - Tests/PC602WreckDock209Tests.swift
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

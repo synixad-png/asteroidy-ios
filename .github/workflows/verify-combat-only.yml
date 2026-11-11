@@ -260,6 +260,10 @@ on:
       - 'Tests/SpherePhysicsAndMissionGate556Tests.swift'
       - 'Tests/RockCombat556Tests.swift'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   publish-combat-verify-run:
     if: github.event_name != 'pull_request'

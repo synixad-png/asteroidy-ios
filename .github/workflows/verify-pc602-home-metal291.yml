@@ -96,6 +96,10 @@ on:
       - Tests/PC602HomeScene291Contract.py
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
