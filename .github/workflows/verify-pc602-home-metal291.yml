@@ -16,6 +16,13 @@ on:
       - ASTEROIDYiOS/W3HomePlanet290.metal
       - ASTEROIDYiOS/PC602HomeScene291.metal
       - ASTEROIDYiOS/PC602HomeScene291.swift
+      - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
+      - ASTEROIDYiOS/PC602HomeWorldPage291.swift
+      - ASTEROIDYiOS/PC602HomePlasma491.metal
+      - ASTEROIDYiOS/App.swift
+      - ASTEROIDYiOS/W3MainMenu568.swift
+      - ASTEROIDYiOS/H55ScenePage580.swift
+      - Tests/PC602HomeWorldUI291Contract.py
       - ASTEROIDYiOS/SourceHomeWreck209.swift
       - ASTEROIDYiOS/SourceHomeVanguard431.swift
       - ASTEROIDYiOS/PC602HomeShipPose291.swift
@@ -40,6 +47,13 @@ on:
       - .github/workflows/verify-pc602-home-metal291.yml
       - ASTEROIDYiOS/PC602HomeScene291.metal
       - ASTEROIDYiOS/PC602HomeScene291.swift
+      - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
+      - ASTEROIDYiOS/PC602HomeWorldPage291.swift
+      - ASTEROIDYiOS/PC602HomePlasma491.metal
+      - ASTEROIDYiOS/App.swift
+      - ASTEROIDYiOS/W3MainMenu568.swift
+      - ASTEROIDYiOS/H55ScenePage580.swift
+      - Tests/PC602HomeWorldUI291Contract.py
       - ASTEROIDYiOS/SourceHomeWreck209.swift
       - ASTEROIDYiOS/SourceHomeVanguard431.swift
       - ASTEROIDYiOS/PC602HomeShipPose291.swift
@@ -91,6 +105,7 @@ jobs:
           python3 Tests/V568W3PlanetTransparentSourceContract.py
           python3 Tests/SourceLavaLight287SourceContract.py
           python3 Tests/PC602HomeScene291Contract.py
+          python3 Tests/PC602HomeWorldUI291Contract.py
           python3 Tools/code_quality_audit.py --root . --gate
       - name: Build actual Swift and Metal for physical iPhone and iPad (no IPA)
         shell: bash
