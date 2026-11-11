@@ -41,14 +41,35 @@ import Foundation
         var flight=HudMotion600.Pose()
         flight.parallax=true;flight.roll=1.3;flight.x=10;flight.y = -2
         let planet=baseline.widget("hud.planetarium")!
+        // The globe and all three plasma bars share ONE visual matrix
+        // (0.78 weighting), but preserve completely separate saved F6
+        // coordinates. This prevents the angle between them changing
+        // during a bank without pinning either end of any plasma ribbon.
+        let groupID="armor.bar"
         let p=HudMotionProject600.project(x:planet.x+125,y:planet.y+67.5,
-                                          pose:flight,widget:planet.id)
-        let m=HudMotionProject600.project(x:planet.x+125,y:planet.y+67.5,
-                                          pose:flight,widget:"armor.bar")
-        check(!close(p.x,m.x) || !close(p.y,m.y),
-              "planetarium keeps its own original HUD motion, not a gauge tether")
+                                          pose:flight,widget:groupID)
+        let gauge=baseline.widget("shield.bar")!
+        let g=HudMotionProject600.project(
+            x:gauge.x+74,y:gauge.y+4.5,pose:flight,widget:groupID)
+        let rest=HudMotion600.Pose()
+        let stationaryPlanet=HudMotionProject600.project(
+            x:planet.x+125,y:planet.y+67.5,pose:rest,widget:groupID)
+        let stationaryGauge=HudMotionProject600.project(
+            x:gauge.x+74,y:gauge.y+4.5,pose:rest,widget:groupID)
+        check(close(hypot(p.x-g.x,p.y-g.y),
+                    hypot(stationaryPlanet.x-stationaryGauge.x,
+                          stationaryPlanet.y-stationaryGauge.y)),
+              "one shared flight matrix preserves relative gauge/globe spacing")
+        let globeEdit=globeOnly.widget("hud.planetarium")!
+        let relocated=HudMotionProject600.project(
+            x:globeEdit.x+125,y:globeEdit.y+67.5,
+            pose:flight,widget:groupID)
+        check(!close(relocated.x,p.x) || !close(relocated.y,p.y),
+              "individual planetarium movement remains adjustable")
+        check(close(Double(flight.weight(groupID)),0.78),
+              "planetarium uses the same 0.78 HUD motion weight as plasma bars")
         let pt=screen.x(p.x,at:.bottomLeft)
         check(pt.isFinite,"independent screen projection stays finite")
-        print("PASS PC602 independent plasma: top red/middle amber/bottom green, free F6 drag, planetarium no longer tethered")
+        print("PASS PC602 independent plasma: top red/middle amber/bottom green, free F6 drag, planetarium no longer tethered, shared flight matrix")
     }
 }
