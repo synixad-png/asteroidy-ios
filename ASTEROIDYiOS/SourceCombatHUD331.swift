@@ -9,7 +9,7 @@ struct SourceCombatHUD331: View {
     let render3DIcons:Bool
     let layout600:HudLayout600
     let active:Bool
-    let livePose:()->HudMotion600.Pose
+    let liveRadar:()->CarbonisSession568.RadarFrame600
 
     private static let white = color(234, 228, 232, 231)
     private static let dim = color(196, 155, 180, 190)
@@ -23,15 +23,17 @@ struct SourceCombatHUD331: View {
     }
     private static func clamp(_ v:CGFloat)->CGFloat { max(0,min(1,v)) }
 
-    // PC v602 RendererW3Combat331.DrawCombatHud331 assigns Hud.FramePose
-    // on EVERY rendered frame; telemetry remains the last authoritative
-    // 10 Hz snapshot. Do not apply the stale snapshot.motion for screen poses.
+    // The original radar projection and the HUD motion share the latest
+    // Metal gameplay frame; score/weapon/labels stay in the 10 Hz snapshot.
+    // Timeline changes are consumed INSIDE Canvas so SwiftUI cannot cache
+    // a stale bitmap between the semantic @Published updates.
     var body: some View {
         TimelineView(.animation(minimumInterval:1.0/60.0,paused:!active)) { tick in
-        let _ = tick.date
         Canvas(opaque:false, rendersAsynchronously:false) { context, size in
+            guard tick.date.timeIntervalSinceReferenceDate.isFinite else{return}
+            let live:CarbonisSession568.RadarFrame600?=active ? liveRadar() : nil
             var hud=self.hud
-            hud.motion=active ? livePose() : HudMotion600.Pose()
+            hud.motion=live?.pose ?? HudMotion600.Pose()
             let layout=CombatHUDViewport568(
                 width:Double(size.width),height:Double(size.height),
                 safeLeft:insets.left,safeRight:insets.right,
@@ -77,7 +79,7 @@ struct SourceCombatHUD331: View {
             }
             if let radarContext=Self.widgetContext(bottomLeft,layout600,pose:hud.motion,
                                       id:"radar",baseX:2,baseY:516) {
-                Self.radar(radarContext,hud)
+                Self.radar(radarContext,live?.contacts ?? hud.radarContacts)
             }
             let names=["hull","armor","shield"]
             let values:[Int?]=[hud.hull,hud.armor,hud.tarczaEnergy]
@@ -278,7 +280,8 @@ struct SourceCombatHUD331: View {
         circle(c,x,y,dot+1,color(150,3,11,17))
         circle(c,x,y,dot,tint)
     }
-    private static func radar(_ c:GraphicsContext,_ hud:CarbonisSession568.HUD) {
+    private static func radar(_ c:GraphicsContext,
+                              _ contacts:[CarbonisSession568.HUD.RadarContact]) {
         let cx:CGFloat=91,cy:CGFloat=612,r:CGFloat=69
         arc(c,cx,cy+1.8,r+4,0,360,color(130,3,12,19),3.2)
         arc(c,cx,cy,r+3,128,234,color(148,134,162,171),1.7)
@@ -297,7 +300,7 @@ struct SourceCombatHUD331: View {
         line(c,cx-(r-8),cy,cx+(r-8),cy,color(30,28,104,116),0.7)
         line(c,cx,cy-(r-8),cx,cy+(r-8),color(30,28,104,116),0.7)
         let center=CGPoint(x:cx,y:cy)
-        for contact in hud.radarContacts {radarDot(c,center,contact)}
+        for contact in contacts {radarDot(c,center,contact)}
         c.fill(polygon([CGPoint(x:cx,y:cy-14),CGPoint(x:cx-11,y:cy+10),
                         CGPoint(x:cx,y:cy+5),CGPoint(x:cx+11,y:cy+10)]),
                with:.color(color(170,1,15,21)))
