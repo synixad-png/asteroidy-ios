@@ -126,4 +126,38 @@ assert(abs(FlightDynamics556.wrapAngle(
     aimed.flight.heading-lockedHeading))>0.1,
     "actual keyboard movement cancels pad heading lock")
 
-print("PASS PC602 HomeFlight291: 6 source craft, upgrades, 400m camera, surface height, geodesic flight, drift, aim latch, dock distance and 26 mission unlocks")
+// Original OrbitWorld50.View + GpuIntro41 frustum on native Metal.
+// Verified for both 16:9 (PC/iPhone) and 4:3 iPad aspect.
+guard let sourceView=PC602HomeWorldView291(
+    camera:flight.flight.camera,aspect:16.0/9.0),
+    let ipadView=PC602HomeWorldView291(
+    camera:flight.flight.camera,aspect:4.0/3.0)
+else {fatalError("Source orbital camera must have a valid frustum")}
+close(sourceView.projection[0],1.125,0.00001,"PC 16:9 horizontal focal")
+close(sourceView.projection[5],2,0.00001,"PC original 53-degree vertical focal")
+close(ipadView.projection[0],1.5,0.00001,"iPad 4:3 horizontal focal")
+close(ipadView.projection[5],2,0.00001,"iPad retains source vertical FOV")
+close(sourceView.projection[10],-1600/1599.6,0.00001,
+      "Metal hardware depth conversion")
+close(sourceView.projection[14],-640/1599.6,0.00001,
+      "PC source near/far clipping")
+close(sourceView.view[14],-400,0.2,"OrbitWorld50 camera origin translation")
+let frontNormal=normal(sourceView.eye)
+guard let frontHeight=home.surface(frontNormal) else {
+    fatalError("Actual front terrain unavailable")
+}
+let front=frontNormal*(frontHeight+4)
+assert(PC602HomeWorldView291.visible(
+    from:sourceView.eye,to:front,on:home),
+    "source-beacon on near side must be geometrically visible")
+let behindNormal=frontNormal * (-1.0)
+guard let behindHeight=home.surface(behindNormal) else {
+    fatalError("Actual back terrain unavailable")
+}
+let behind=behindNormal*(behindHeight+4)
+assert(!PC602HomeWorldView291.visible(
+    from:sourceView.eye,to:behind,on:home),
+    "back-side beacons cannot bleed through original planet")
+assert(PC602HomeWorldView291(camera:flight.flight.camera,aspect:0)==nil)
+
+print("PASS PC602 HomeFlight291: 6 source craft, physical movement, camera/frustum, exact terrain occlusion, drift, aim latch, dock distance and 26 mission unlocks")
