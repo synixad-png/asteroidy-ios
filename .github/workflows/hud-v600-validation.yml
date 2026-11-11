@@ -20,6 +20,11 @@ on:
       - "ASTEROIDYiOS/HudEditorGeometry.swift"
       - "ASTEROIDYiOS/HudWidgetGeometry600.swift"
       - "ASTEROIDYiOS/CarbonisCombat568.swift"
+      - "ASTEROIDYiOS/H55EyeHeight580.swift"
+      - "ASTEROIDYiOS/H55ScenePage580.swift"
+      - "ASTEROIDYiOS/SourceShieldShell145.swift"
+      - "ASTEROIDYiOS/SourceShieldShell145.metal"
+      - "Tests/H55EyeHeightAndTarczaPlasmaContract.py"
       - "ASTEROIDYiOS/CarbonisSession568.swift"
       - "Tests/HudMotionEventCounters600Contract.py"
       - "ASTEROIDYiOS/HudMissionGate600.swift"
@@ -85,6 +90,7 @@ jobs:
           python3 Tests/HudMotionLiveRenderer600Contract.py
           python3 Tests/HudControlLayout600Contract.py
           python3 Tests/HudSmoothRadar600Contract.py
+          python3 Tests/H55EyeHeightAndTarczaPlasmaContract.py
           python3 Tests/HudMissionGate600Contract.py
           python3 Tests/HudPickupMetal600Contract.py
       - name: Compile and execute Swift motion and plasma reference contracts
@@ -120,6 +126,7 @@ jobs:
         run: |
           swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift ASTEROIDYiOS/HudPlasmaLayer600.swift ASTEROIDYiOS/HudPlanetariumHost600.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudControlLayout600.swift ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/Sector01Scene568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55EyeHeight580.swift ASTEROIDYiOS/H55ScenePage580.swift ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift ASTEROIDYiOS/SourceShieldShell145.swift ASTEROIDYiOS/Sector01CarbonisPreview568.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudIconMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift
           swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumTracks600.swift ASTEROIDYiOS/HudPlanetariumProjection.swift ASTEROIDYiOS/HudPlanetariumScene600.swift
