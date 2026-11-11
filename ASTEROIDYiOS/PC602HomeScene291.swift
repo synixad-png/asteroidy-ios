@@ -10,6 +10,10 @@ import SwiftUI
 /// animation. No app/menu route is changed until the entire game mode exists.
 struct PC602HomeScene291: UIViewRepresentable {
     var flight:PC602HomeFlight291
+    // An actual gameplay host supplies exactly one physics step from
+    // this MTKView render clock. Nil preserves source-only test previews.
+    var onFrame:((TimeInterval)->PC602HomeFlight291?)? = nil
+    var onRendererError:((String)->Void)? = nil
 
     func makeCoordinator()->Coordinator {Coordinator()}
 
@@ -25,11 +29,15 @@ struct PC602HomeScene291: UIViewRepresentable {
             do {
                 let renderer=try Coordinator.Renderer(device:device)
                 renderer.flight=flight
+                renderer.onFrame=onFrame
                 context.coordinator.renderer=renderer
                 view.delegate=renderer
             } catch {
-                NSLog("PC602 HomeScene291 rejected original GPU source: %@",
-                      String(describing:error))
+                let failure="PC602 HomeScene291: "+String(describing:error)
+                NSLog("%@",failure)
+                DispatchQueue.main.async {
+                    onRendererError?(failure)
+                }
             }
         }
         return view
@@ -37,6 +45,7 @@ struct PC602HomeScene291: UIViewRepresentable {
 
     func updateUIView(_ view:MTKView,context:Context) {
         context.coordinator.renderer?.flight=flight
+        context.coordinator.renderer?.onFrame=onFrame
     }
 
     final class Coordinator {
@@ -61,6 +70,8 @@ struct PC602HomeScene291: UIViewRepresentable {
             private var beaconCacheKey:(Int,Int)?
             let lava287=SourceLavaLightSettings287.load()
             var flight:PC602HomeFlight291?
+            var onFrame:((TimeInterval)->PC602HomeFlight291?)?
+            private var lastFrameTime:TimeInterval?
 
             init(device:MTLDevice) throws {
                 guard let queue=device.makeCommandQueue() else {
@@ -173,7 +184,13 @@ struct PC602HomeScene291: UIViewRepresentable {
             func mtkView(_ view:MTKView,drawableSizeWillChange size:CGSize) {}
 
             func draw(in view:MTKView) {
-                guard let flight,
+                let now=ProcessInfo.processInfo.systemUptime
+                let elapsed=lastFrameTime.map { max(0,now-$0) } ?? 0
+                lastFrameTime=now
+                // Resume after background sleep must NOT teleport the ship.
+                let step=elapsed<=0.15 ? min(elapsed,0.05) : 0
+                let activeFlight=onFrame?(step) ?? flight
+                guard let flight=activeFlight,
                       let drawable=view.currentDrawable,
                       let renderPass=view.currentRenderPassDescriptor,
                       let command=queue.makeCommandBuffer()
