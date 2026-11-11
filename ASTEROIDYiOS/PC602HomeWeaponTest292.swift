@@ -19,7 +19,7 @@ struct PC602HomeWeaponTest292 {
         init?(weapon:Weapon,upgrade:Int=1,rapid:Int=0,cooling:Int=0,
               fireRateScale:Float=1,fireRateTalent:Float=1) {
             guard (1...3).contains(upgrade),(0...2).contains(rapid),
-                  (0...3).contains(cooling),
+                  (0...2).contains(cooling),
                   fireRateScale.isFinite,fireRateTalent.isFinite,
                   fireRateScale>0,fireRateTalent>0 else{return nil}
             self.weapon=weapon
