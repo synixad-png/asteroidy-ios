@@ -26,7 +26,10 @@ assert "for k in 0..<7" in p
 assert "Double(k)*0.61803398875" in p
 assert "let reach=2.5+5.3*turbulence" in p
 assert "length-local<3.5" in p
-assert "end-1.65" in p and "width:2.8,height:3.2" in p
+assert "mapped(end,barY+4.5)" in p
+assert "width:2.8*size,height:3.2*size" in p
+assert "HudPlasmaBridge600.segment(" in p
+assert "Self.draw(graphics,current:values[i]" in p
 assert "ink(90,255,205,150)" in p and "ink(90,255,237,166)" in p
 assert "ink(90,228,255,187)" in p
 # Exact 5/5/5 ARGB from PC source; never substitute uniform regular strips.
