@@ -46,6 +46,7 @@ def check(root,asset):
         return 100*((a+(b-a)*tx)*(1-ty)+(c+(d-c)*tx)*ty)
 
     detailed=0
+    sourceShortNormals=0
     preceding=0
     first_seen=set()
     for i in range(COUNT):
@@ -69,16 +70,26 @@ def check(root,asset):
             distance=math.sqrt(sum((floats[k]-(x,y,z)[k])**2 for k in range(3)))
             assert distance<=size*2.0
             normal=math.sqrt(sum(floats[j]**2 for j in range(3,6)))
-            assert abs(normal-1)<.02
+            # IntroScene41.P.Unit divides by max(.00001f, length).
+            # StoneNormal56's two tangent differences are 0.001 apart,
+            # making the cross frequently <.00001. The authored source
+            # therefore deliberately stores SHORT, not unit, normals.
+            # Re-normalizing the buffer would change PC602 original data.
+            assert math.isfinite(normal) and 0<=normal<=1.0001,(
+                "source cross-clamp normal",i,vertex,normal)
+            sourceShortNormals+=int(normal<.98)
             assert floats[9]==1
         first_seen.add((round(x,3),round(y,3),round(z,3)))
     assert preceding==total
     assert len(first_seen)==COUNT
     assert 0<detailed<COUNT
+    assert sourceShortNormals>0,(
+        "PC source P.Unit must preserve clamped short normals (not normalized substitutes)")
     digest=hashlib.sha256(blob).hexdigest()
     print(f"PASS PC602 exact C# source: {COUNT} distinct rocks, "
           f"{detailed} detailed crater meshes, {COUNT-detailed} basic, "
-          f"{total//3} real triangles, {len(blob)} bytes SHA256 {digest}")
+          f"{total//3} real triangles, {sourceShortNormals} short source normals sampled, "
+          f"{len(blob)} bytes SHA256 {digest}")
     print("LIMIT: native iOS framebuffer, FPS and exact PC GPU pixels NOT tested")
 
 def main():
