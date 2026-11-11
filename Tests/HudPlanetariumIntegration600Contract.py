@@ -50,6 +50,9 @@ assert "tint*state.baseColor" in shader
 assert 'HudPlanetariumPlasmaAnchor600' not in metal
 assert 'HudMotionProject600.project(' in metal
 assert 'pose.roll*pose.weight(Self.plasmaGroupMotionID)' in metal
+assert 'liveBank*yaw*pitch*authoredRoll *' in metal
+assert 'angle:-pose.roll*pose.weight(Self.plasmaGroupMotionID)' in metal
+assert 'yaw*pitch*roll *' not in metal
 assert 'widget:Self.plasmaGroupMotionID' in metal
 assert not (ios/"HudPlanetariumPlasmaAnchor600.swift").exists()
 assert 'pose:snapshot.pose' in renderer
