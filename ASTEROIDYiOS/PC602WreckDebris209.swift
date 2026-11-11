@@ -79,6 +79,57 @@ enum PC602WreckDebris209 {
         return result
     }
 
+    struct BoxVertex {
+        let position:SIMD3<Float>
+        let normal:SIMD3<Float>
+        let tint:SIMD4<Float>
+    }
+
+    /// Exact first 36 WreckBox209 vertices, face normals, winding order,
+    /// and side color coefficients from GpuIntro41.cs:251–260. Only the
+    /// structural faces: WreckSketchBox215 scratches, grime overlays and
+    /// contour lines are an independent, NOT YET PORTED render pass.
+    static func structuralBoxFaces() -> [BoxVertex] {
+        let source=fragments()
+        var vertices=[BoxVertex]()
+        vertices.reserveCapacity(source.count*36)
+        for fragment in source {
+            let p=fragment.localCenter
+            let d=fragment.localSize*0.5
+            let xa=p.x-d.x,xb=p.x+d.x
+            let ya=p.y-d.y,yb=p.y+d.y
+            let za=p.z-d.z,zb=p.z+d.z
+            let c=fragment.color
+            func face(_ normal:SIMD3<Float>,_ scale:SIMD3<Float>,
+                      _ v:[SIMD3<Float>]) {
+                let tint=SIMD4<Float>(c.x*scale.x,c.y*scale.y,c.z*scale.z,1)
+                for point in v {
+                    vertices.append(BoxVertex(position:point,normal:normal,
+                                               tint:tint))
+                }
+            }
+            face(SIMD3(0,0,1),SIMD3(1,1,1),[
+                SIMD3(xa,ya,zb),SIMD3(xb,ya,zb),SIMD3(xb,yb,zb),
+                SIMD3(xa,ya,zb),SIMD3(xb,yb,zb),SIMD3(xa,yb,zb)])
+            face(SIMD3(0,0,-1),SIMD3(0.86,0.86,0.88),[
+                SIMD3(xa,ya,za),SIMD3(xb,yb,za),SIMD3(xb,ya,za),
+                SIMD3(xa,ya,za),SIMD3(xa,yb,za),SIMD3(xb,yb,za)])
+            face(SIMD3(0,-1,0),SIMD3(0.92,0.94,0.97),[
+                SIMD3(xa,ya,za),SIMD3(xb,ya,za),SIMD3(xb,ya,zb),
+                SIMD3(xa,ya,za),SIMD3(xb,ya,zb),SIMD3(xa,ya,zb)])
+            face(SIMD3(0,1,0),SIMD3(0.93,0.94,0.96),[
+                SIMD3(xa,yb,za),SIMD3(xb,yb,zb),SIMD3(xb,yb,za),
+                SIMD3(xa,yb,za),SIMD3(xa,yb,zb),SIMD3(xb,yb,zb)])
+            face(SIMD3(-1,0,0),SIMD3(0.87,0.89,0.93),[
+                SIMD3(xa,ya,za),SIMD3(xa,ya,zb),SIMD3(xa,yb,zb),
+                SIMD3(xa,ya,za),SIMD3(xa,yb,zb),SIMD3(xa,yb,za)])
+            face(SIMD3(1,0,0),SIMD3(0.94,0.95,0.98),[
+                SIMD3(xb,ya,za),SIMD3(xb,yb,zb),SIMD3(xb,ya,zb),
+                SIMD3(xb,ya,za),SIMD3(xb,yb,za),SIMD3(xb,yb,zb)])
+        }
+        return vertices
+    }
+
     /// GpuIntro41.DrawOrbitResearchWreck209: glTranslate(WreckPosition),
     /// glRotate(31,Y), glRotate(-9,Z), glScale(.6048). GL postmultiplies
     /// the matrices in this exact order; using an arbitrary point as origin
