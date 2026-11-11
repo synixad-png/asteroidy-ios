@@ -91,7 +91,8 @@ assert 'original.sample(at:seconds,capsules:capsules)' in metal
 assert 'simd_slerp(a,b,blend)' in planetarium
 assert 'pass.depthAttachment.loadAction = .clear' in metal
 assert 'pass.colorAttachments[0].loadAction = .load' in metal
-assert 'HudMotionProject600.project(' not in metal
+assert 'HudMotionProject600.project(' in metal
+assert 'HudPlanetariumPlasmaAnchor600' not in metal
 
 assert 'hud-v602-always-visible-widget-selector' in editor
 assert 'Button("▶") {selectNeighbor600(1)}' in editor
@@ -113,9 +114,10 @@ assert 'let roll=simd_float4x4(simd_quatf(' in metal
 assert 'ribbonTriangles(_ points:[HudEnergy600.Point])->Path' in plasma
 assert 'triangle(points[i],points[i+1],points[last-i])' in plasma
 assert 'triangle(points[i+1],points[last-i-1],points[last-i])' in plasma
-assert 'c.fill(ribbonTriangles(bridge == nil ? vertices :' in plasma
-assert 'HudPlasmaBridge600.segment(' in plasma
-assert 'Self.draw(graphics,current:values[i]' in plasma
+assert 'c.fill(ribbonTriangles(vertices)' in plasma
+assert 'HudPlasmaBridge600' not in plasma
+assert 'private static let displayBars=["shield.bar","armor.bar","hull.bar"]' in plasma
+assert 'Self.draw(bar,current:values[i]' in plasma
 assert 'return top+Array(bottom.reversed())' not in energy
 # F6 editor must leave BOTH touch zones inactive on a paused real-world canvas.
 assert '.allowsHitTesting(!showingHudEditor600)' in scene
