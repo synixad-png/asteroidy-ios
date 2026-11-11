@@ -35,7 +35,7 @@ expect_all(hud,(
     "originX(for:.bottomRight)",
     "originY(for:.bottomRight)",
     "Self.top(topLeft,topRight,hud,layout600)",
-    "Self.radar(radarContext,hud)",
+    "Self.radar(radarContext,live?.contacts ?? hud.radarContacts)",
     "Self.ability(",
     "safeLeft:insets.left,safeRight:insets.right",
     "let values:[Int?]=[hud.hull,hud.armor,hud.tarczaEnergy]",
