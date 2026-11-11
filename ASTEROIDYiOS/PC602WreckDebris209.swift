@@ -147,6 +147,23 @@ enum PC602WreckDebris209 {
         return dock + SIMD3(xx,yr,zz)*scale
     }
 
+    /// The actual original WreckBox209 world-space TRIANGLES, including
+    /// parent yaw+roll on EACH vertex and on its surface normal. For Metal,
+    /// use these vertices; merely transforming the center of an axis-aligned
+    /// box would lose the source's rotated geometry and be incorrect.
+    static func worldStructuralFaces(home:PC602NewHome290)->[BoxVertex]? {
+        guard let dock=home.wreckPosition() else {return nil}
+        let zero=SIMD3<Float>(repeating:0)
+        return structuralBoxFaces().map { v in
+            let orientation=worldPosition(v.normal,dock:zero)/scale
+            return BoxVertex(position:worldPosition(v.position,dock:dock),
+                             normal:orientation,tint:v.tint)
+        }
+    }
+
+    /// Center/size metadata ONLY, not axis-aligned world-space cuboids.
+    /// The size remains along the wreck's ROTATED local axes; use the
+    /// worldStructuralFaces function for any actual 3D rendering.
     static func worldFragments(home:PC602NewHome290)->[Fragment]? {
         guard let dock=home.wreckPosition() else{return nil}
         return fragments().map {
