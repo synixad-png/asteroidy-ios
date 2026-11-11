@@ -8,6 +8,8 @@ on:
       - Tools/PC602OrbitBelt51.cs
       - Tools/stage_pc602_orbit_belt51.py
       - Tests/PC602OrbitBelt51Tests.py
+      - Tests/PC602OrbitBelt51Tests.swift
+      - ASTEROIDYiOS/PC602OrbitBelt51.swift
       - Tools/stage_pc602_newhome290.py
   pull_request:
     paths:
@@ -15,6 +17,8 @@ on:
       - Tools/PC602OrbitBelt51.cs
       - Tools/stage_pc602_orbit_belt51.py
       - Tests/PC602OrbitBelt51Tests.py
+      - Tests/PC602OrbitBelt51Tests.swift
+      - ASTEROIDYiOS/PC602OrbitBelt51.swift
   workflow_dispatch:
 
 permissions:
@@ -41,6 +45,18 @@ jobs:
           python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin
           sha256sum ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin
+      - name: Compile source-native Swift 820-stone loader and reject corrupt data
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v swiftc
+          cp Tests/PC602OrbitBelt51Tests.swift /tmp/main.swift
+          swiftc -Onone ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602OrbitBelt51.swift \
+            /tmp/main.swift -o /tmp/pc602-original-belt-swift-tests
+          /tmp/pc602-original-belt-swift-tests \
+            ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin \
+            ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin
       - name: Audit no synthetic asteroid fallback
         shell: bash
         run: |
