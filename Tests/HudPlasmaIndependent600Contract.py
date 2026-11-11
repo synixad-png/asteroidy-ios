@@ -27,6 +27,9 @@ assert 'HudMotionProject600.project(' in planet
 assert 'private static let plasmaGroupMotionID="armor.bar"' in planet
 assert 'widget:Self.plasmaGroupMotionID' in planet
 assert 'pose.roll*pose.weight(Self.plasmaGroupMotionID)' in planet
+assert 'liveBank*yaw*pitch*authoredRoll *' in planet
+assert 'angle:-pose.roll*pose.weight(Self.plasmaGroupMotionID)' in planet
+assert 'yaw*pitch*roll *' not in planet
 assert 'original.sample(at:seconds,capsules:capsules)' in planet
 assert 'HudLayoutEditor600' in scene
 assert '"hud.planetarium","x":64.7882' in layout
