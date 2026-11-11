@@ -29,6 +29,7 @@ on:
       - Tests/HudV602TouchRuntimeContract.py
       - Tests/HudLayout600Contract.py
       - Tests/HudMotionLiveRenderer600Contract.py
+      - Tests/HudSmoothRadar600Contract.py
       - Tests/HudPlanetariumIntegration600Contract.py
       - Tests/HudPickupMetal600Contract.py
       - Tests/HudPlasmaLive600Contract.py
@@ -78,6 +79,7 @@ jobs:
           python3 Tests/HudPlasmaIndependent600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/IOSOriginalCombatHUD331Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudMotionLiveRenderer600Contract.py | tee -a reports/hud-v600-source.txt
+          python3 Tests/HudSmoothRadar600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudPlanetariumIntegration600Contract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudPlanetariumGLTFImportContract.py | tee -a reports/hud-v600-source.txt
           python3 Tests/HudPickupMetal600Contract.py | tee -a reports/hud-v600-source.txt
