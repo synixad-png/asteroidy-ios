@@ -43,6 +43,12 @@ assert "completedMask:progress.completedMask" in driver
 assert "SourceControls586.Profile.load()" in driver
 assert "PC602HomeWorldPage291(" in app
 assert "PC602HomeScene291(" in page
+# No duplicate sky layers: actual HomeScene291 uses the existing source
+# IntroSky GpuIntro41 pipeline already exercised by Carbonis 01.
+assert "let originalSky:SourceCombatSky568" in world
+assert "originalSky=try SourceCombatSky568(device:device)" in world
+assert "originalSky.draw(encoder:encoder," in world
+assert world.index("originalSky.draw") < world.index("encoder.drawPrimitives(type:.triangle,vertexStart:0,")
 assert "PC602HomeWorldSession291" in driver
 assert "PC602HomeFlightInput291.read(" in session
 assert "SourceHardwareInput586.shared.snapshot()" in driver
