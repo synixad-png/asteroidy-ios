@@ -1,43 +1,13 @@
-#include <metal_stdlib>
-using namespace metal;
+#include "SourceHome290Vertex.metalh"
 
-// Source: Windows/src/NewHome290.cs and GpuW3HomeReal333.cs,
-// GpuNewHome290.cs + GpuToon60.cs, v568.
-// Exact source H290 vertex data uses 12 floats: XYZ, NXYZ, RGBA, UV.
-// Original GLB geometry and both texture sources are UNMODIFIED.
-// Light model is a partial port and is not yet pixel parity to Windows.
-struct W3Home290Uniforms {
-    float4x4 mvp;
-    float4x4 model;
-    uint material;
-    float glowPower;
-};
-
-struct W3Home290Output {
-    float4 position [[position]];
-    float3 normal;
-    float3 viewPosition;
-    float4 color;
-    float2 uv;
-};
-
+// The original W3 preview vertex entry point is kept unchanged. The shared
+// H290 source decoder is also used by the real PC602 orbital world renderer.
 vertex W3Home290Output w3Home290Vertex(
     uint id [[vertex_id]],
     device const float *mesh [[buffer(0)]],
     constant W3Home290Uniforms& u [[buffer(1)]])
 {
-    uint i=id*12u;
-    float3 position=float3(mesh[i],mesh[i+1],mesh[i+2]);
-    float3 normal=float3(mesh[i+3],mesh[i+4],mesh[i+5]);
-    W3Home290Output o;
-    o.position=u.mvp*float4(position,1.0f);
-    o.viewPosition=(u.model*float4(position,1.0f)).xyz;
-    o.normal=normalize(float3x3(u.model[0].xyz,
-                                      u.model[1].xyz,
-                                      u.model[2].xyz)*normal);
-    o.color=float4(mesh[i+6],mesh[i+7],mesh[i+8],mesh[i+9]);
-    o.uv=float2(mesh[i+10],mesh[i+11]);
-    return o;
+    return sourceHome290Vertex(id,mesh,u);
 }
 
 fragment float4 w3Home290Fragment(
