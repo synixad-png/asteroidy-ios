@@ -13,6 +13,7 @@ struct PC602HomeScene291: UIViewRepresentable {
     // An actual gameplay host supplies exactly one physics step from
     // this MTKView render clock. Nil preserves source-only test previews.
     var onFrame:((TimeInterval)->PC602HomeFlight291?)? = nil
+    var onProjectiles:(()->[PC602HomeWeaponTest292.Bullet])? = nil
     var onRendererError:((String)->Void)? = nil
 
     func makeCoordinator()->Coordinator {Coordinator()}
@@ -30,6 +31,7 @@ struct PC602HomeScene291: UIViewRepresentable {
                 let renderer=try Coordinator.Renderer(device:device)
                 renderer.flight=flight
                 renderer.onFrame=onFrame
+                renderer.onProjectiles=onProjectiles
                 context.coordinator.renderer=renderer
                 view.delegate=renderer
             } catch {
@@ -46,6 +48,7 @@ struct PC602HomeScene291: UIViewRepresentable {
     func updateUIView(_ view:MTKView,context:Context) {
         context.coordinator.renderer?.flight=flight
         context.coordinator.renderer?.onFrame=onFrame
+        context.coordinator.renderer?.onProjectiles=onProjectiles
     }
 
     final class Coordinator {
@@ -62,6 +65,7 @@ struct PC602HomeScene291: UIViewRepresentable {
             let beltBuffer:MTLBuffer
             let originalWreck:SourceHomeWreck209
             let originalShip:SourceHomeVanguard431
+            let originalShots:SourceHomeShots292
             let orbitVisualScale:Float
             let depth:MTLDepthStencilState
             let beaconDepth:MTLDepthStencilState
@@ -71,6 +75,7 @@ struct PC602HomeScene291: UIViewRepresentable {
             let lava287=SourceLavaLightSettings287.load()
             var flight:PC602HomeFlight291?
             var onFrame:((TimeInterval)->PC602HomeFlight291?)?
+            var onProjectiles:(()->[PC602HomeWeaponTest292.Bullet])?
             private var lastFrameTime:TimeInterval?
 
             init(device:MTLDevice) throws {
@@ -84,6 +89,7 @@ struct PC602HomeScene291: UIViewRepresentable {
                 // never invent a second partial GLB or duplicate debris.
                 originalWreck=try SourceHomeWreck209(device:device)
                 originalShip=try SourceHomeVanguard431(device:device)
+                originalShots=try SourceHomeShots292(device:device)
                 orbitVisualScale=SourceShipScale472.load().orbitFactor
                 let originalBelt=try PC602OrbitBelt51.load()
                 belt=originalBelt
@@ -334,6 +340,15 @@ struct PC602HomeScene291: UIViewRepresentable {
                 originalShip.draw(encoder:encoder,flight:flight,
                     projection:projection,view:viewMatrix,
                     orbitScale:orbitVisualScale)
+
+                // Original PC602 HomeShotPass292: after ship/world opaque
+                // geometry, draw source 6-segment geodesic weapon ribbons
+                // using current true 67 physics. H290 terrain used for
+                // +13m+3.3m height; no false target collision/rewards.
+                originalShots.draw(encoder:encoder,command:command,
+                    home:flight.home,bullets:onProjectiles?() ?? [],
+                    camera:flight.orbitCamera,view:frame.view,
+                    mvp:projection*viewMatrix)
                 encoder.endEncoding()
                 command.present(drawable)
                 command.commit()
