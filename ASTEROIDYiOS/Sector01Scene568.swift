@@ -226,21 +226,10 @@ struct Sector01Scene568: View {
                     })
                     .allowsHitTesting(false)
 
-                // One original 3D asset, rendered by GLTFKit2 + SceneKit.
-                // No procedural replacement if the signed-off GLB is absent.
-                if let planetariumURL600,
-                   let planetarium=hudLayout600.widget("hud.planetarium"),
-                   planetarium.visible,
-                   let placement=HudWidgetPlacement600.frame(
-                       planetarium,sourceWidth:250,sourceHeight:135,
-                       anchor:.bottomLeft,viewport:combatHUDLayout) {
-                    HudPlanetariumHost600(
-                        original:planetariumURL600,
-                        widget:planetarium,placement:placement,
-                        viewport:combatHUDLayout,session:session,
-                        active:session.hud.phase == .playing)
-                        .allowsHitTesting(false)
-                }
+                // The genuine PC602 planetarium is now drawn by the SAME
+                // native Metal HUD renderer as the four 3D item icons.
+                // No independent SceneKit overlay / miniature camera.
+                // The working 46-widget editor remains in SwiftUI.
 
                 // The touch-only pause affordance is separate from the PC HUD.
                 // Keep the real source Game.Paused action and preserve
