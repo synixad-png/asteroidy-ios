@@ -80,6 +80,21 @@ assert(boxFaces.allSatisfy{ v in
     v.position.z.isFinite && v.tint.w==1
 })
 
+guard let worldFaces=PC602WreckDebris209.worldStructuralFaces(home:home)
+else {fatalError("Original source world triangles cannot be emitted")}
+assert(worldFaces.count==boxFaces.count)
+for index in [0,6,12,18,24,30,35,boxFaces.count-1] {
+    close(distance(worldFaces[index].position -
+        PC602WreckDebris209.worldPosition(boxFaces[index].position,
+                                           dock:dock)),
+        0,0.0003,"every source wreck face must share dock center + rotations")
+    close(distance(worldFaces[index].normal),1,0.00001,
+          "GL modelview-rotated wreck face normal")
+}
+assert(worldFaces.allSatisfy { v in
+    v.position.x.isFinite && v.position.y.isFinite &&
+    v.position.z.isFinite && v.normal.x.isFinite && v.normal.z.isFinite
+})
 let accent=fragments.first(where:{$0.isAccent && $0.originalIndex==0})!
 close(accent.localCenter.x,first.localCenter.x+first.localSize.x*0.9,
       0.00002,"source accent x")
