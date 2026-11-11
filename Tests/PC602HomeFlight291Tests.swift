@@ -70,9 +70,42 @@ var flight=try PC602HomeFlight291(
 guard let dock=home.wreckPosition() else {
     fatalError("NewHome source docking wreck is absent")
 }
+close(length(flight.dockPosition-dock),0,0.001,
+      "physical dock point must always come from original NewHome290")
+close(flight.dockDistance,length(flight.orbitPosition-dock),0.02,
+      "dock distance must be initialized before the first flight tick")
+let eligible=PC602HomeFlight291.DockContext(
+    planetHub:true,orbitMode:true)
+assert(PC602HomeFlight291.canDock90(
+    distance:43.1,miningDetached:false,context:eligible))
+assert(PC602HomeFlight291.canDock90(
+    distance:43.2,miningDetached:false,context:eligible))
+assert(!PC602HomeFlight291.canDock90(
+    distance:43.3,miningDetached:false,context:eligible))
+assert(!PC602HomeFlight291.canDock90(
+    distance:0,miningDetached:true,context:eligible))
+assert(!PC602HomeFlight291.canDock90(
+    distance:0,miningDetached:false,
+    context:.init(planetHub:false,orbitMode:true)))
+assert(!PC602HomeFlight291.canDock90(
+    distance:0,miningDetached:false,
+    context:.init(planetHub:true,orbitMode:false)))
+assert(!PC602HomeFlight291.canDock90(
+    distance:0,miningDetached:false,
+    context:.init(planetHub:true,orbitMode:true,sceneBusy:true)))
+assert(!PC602HomeFlight291.canDock90(
+    distance:0,miningDetached:false,
+    context:.init(planetHub:true,orbitMode:true,talentOpen:true)))
+assert(!PC602HomeFlight291.canDock90(
+    distance:Float.nan,miningDetached:false,context:eligible))
+assert(!PC602HomeFlight291.canDock90(
+    distance:-1,miningDetached:false,context:eligible))
+assert(flight.canDock90(context:eligible) ==
+    PC602HomeFlight291.canDock90(
+        distance:flight.dockDistance,miningDetached:false,context:eligible))
 try flight.step(.init(move:Vec2(x:0,y:-1),
                       aim:Vec2(x:0,y:0)),
-                dt:1.0/60.0,dockPosition:dock)
+                dt:1.0/60.0)
 close(flight.orbitSpeed,156*(1-exp(-3.0/60)),0.06,
       "source 298 first-step velocity")
 assert(flight.thrusting)
@@ -90,7 +123,7 @@ close(flight.dockDistance,length(flight.orbitPosition-dock),0.02,
       "dock distance uses live source point")
 
 let prior=flight.orbitSpeed
-try flight.step(.init(),dt:1.0/60.0,dockPosition:dock)
+try flight.step(.init(),dt:1.0/60.0)
 assert(flight.orbitSpeed<prior,
        "original unpowered DirectMotion298 must coast rather than accelerate")
 assert(!flight.thrusting)
@@ -114,7 +147,7 @@ assert(PC602HomeFlight291.Equipment(craft:.vanguard,engineLevel:-1)==nil)
 // translation, but explicitly preserves sqrt(2) for exhaust-power output.
 var diagonal=try PC602HomeFlight291(
     home:home,equipment:equipment(.vanguard))
-try diagonal.step(.init(move:Vec2(x:1,y:1)),dt:1/60,dockPosition:dock)
+try diagonal.step(.init(move:Vec2(x:1,y:1)),dt:1/60)
 let diagonalPower=(0.48+0.52*sqrt(Float(2))) * (1-exp(-Float(7)/60))
 close(diagonal.flight.flight.visualPower,diagonalPower,0.0001,
       "source diagonal thrust magnitude")
@@ -126,14 +159,14 @@ close(diagonal.orbitSpeed,156*(1-exp(-3.0/60)),0.06,
 var aimed=try PC602HomeFlight291(home:home,equipment:equipment(.vanguard))
 try aimed.step(.init(move:Vec2(x:0,y:0),
                      aim:Vec2(x:1,y:0),padAimActive:true),
-               dt:1/60,dockPosition:dock)
+               dt:1/60)
 let lockedHeading=aimed.flight.heading
-try aimed.step(.init(move:Vec2(x:0,y:-1)),dt:1/60,dockPosition:dock)
+try aimed.step(.init(move:Vec2(x:0,y:-1)),dt:1/60)
 close(FlightDynamics556.wrapAngle(aimed.flight.heading-lockedHeading),
       0,0.005,"released right stick holds heading")
 try aimed.step(.init(move:Vec2(x:0,y:-1),
                      keyboardMovement:true),
-               dt:1/60,dockPosition:dock)
+               dt:1/60)
 assert(abs(FlightDynamics556.wrapAngle(
     aimed.flight.heading-lockedHeading))>0.1,
     "actual keyboard movement cancels pad heading lock")
