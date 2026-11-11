@@ -80,8 +80,9 @@ let face=SIMD3(moving.basis[4],moving.basis[5],moving.basis[6])
 let expected=Sphere67.vector(flight.flight.position,
     Vec2(x:cos(flight.flight.flight.visualHeading),
          y:sin(flight.flight.flight.visualHeading))).normalized
-close(length(face-PC602HomeShipPose291.sourceShipScale *
-    SIMD3(expected.x,expected.y,expected.z)),0,0.0002,
+let expectedWorld=SIMD3(expected.x,expected.y,expected.z) *
+    PC602HomeShipPose291.sourceShipScale
+close(length(face-expectedWorld),0,0.0002,
     "source fighter direction tracks visual heading rather than raw aim")
 print("PASS PC602 original Vanguard431 source orbital pose: original " +
       "11.2m contact radius, 144.19674 shell, Sphere67 tangent basis, " +
