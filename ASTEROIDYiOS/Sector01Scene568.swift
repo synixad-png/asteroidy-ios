@@ -165,14 +165,10 @@ struct Sector01Scene568: View {
                 safeRight:missionSafeInsets568.right,
                 safeTop:missionSafeInsets568.top,
                 safeBottom:missionSafeInsets568.bottom)
-            let pauseControl=hudControlLayout600.control("control.pause") ??
-                HudControlLayout600.defaults().control("control.pause")!
-            let bombControl=hudControlLayout600.control("control.bomb") ??
-                HudControlLayout600.defaults().control("control.bomb")!
-            let shieldControl=hudControlLayout600.control("control.shield") ??
-                HudControlLayout600.defaults().control("control.shield")!
-            let boostControl=hudControlLayout600.control("control.boost") ??
-                HudControlLayout600.defaults().control("control.boost")!
+            let pauseControl=hudControlLayout600.resolved("control.pause")
+            let bombControl=hudControlLayout600.resolved("control.bomb")
+            let shieldControl=hudControlLayout600.resolved("control.shield")
+            let boostControl=hudControlLayout600.resolved("control.boost")
             let pauseFrame=HudControlLayout600.frame(pauseControl,viewport:combatHUDLayout,compact:compact)
             let bombFrame=HudControlLayout600.frame(bombControl,viewport:combatHUDLayout,compact:compact)
             let shieldFrame=HudControlLayout600.frame(shieldControl,viewport:combatHUDLayout,compact:compact)
@@ -447,8 +443,7 @@ struct Sector01Scene568: View {
                             showingMissionSettings568=true
                         }
                         .frame(maxWidth:.infinity)
-                        .padding(CGFloat((compact ? 9.0:13.0) *
-                            (hudControlLayout600.control("control.options")?.scale ?? 1)))
+                        .padding(compact ? 9:13)
                         .background(Color(red:0.05,green:0.15,blue:0.22),
                                     in:RoundedRectangle(cornerRadius:5))
                         .foregroundStyle(.cyan)
