@@ -125,7 +125,7 @@ enum PC602HomeShotGeometry292 {
                     color=SIMD4(hue.x,hue.y,hue.z,165/255)
                 default:
                     width=baseWidth*0.70
-                    color=SIMD4(240/255,242/255,251/255,240/255)
+                    color=SIMD4(242/255,251/255,255/255,240/255)
                 }
                 for i in 0..<ribbonSegments {
                     let u0=Float(i)/Float(ribbonSegments)
