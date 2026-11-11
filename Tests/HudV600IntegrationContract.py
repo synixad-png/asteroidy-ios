@@ -28,7 +28,9 @@ assert "let maxima=[gauge.maxHull,gauge.maxArmor,100]" in plasma
 assert "let gauge=liveGauges()" in plasma
 assert "for layer in 0..<5" in plasma and "for k in 0..<7" in plasma
 assert "SourceCombatHUD331.widgetContext(" in plasma
-assert 'id:Self.names[i]' in plasma
+assert 'id:Self.displayBars[i]' in plasma
+assert 'private static let displayBars=["shield.bar","armor.bar","hull.bar"]' in plasma
+assert 'HudPlasmaBridge600' not in plasma
 for label, style in (("KADŁUB",0),("PANCERZ",1),("TARCZA",2)):
     assert f'"{label}"' in hud
     assert "titles[i],values[i],191,y)" in hud
