@@ -19,6 +19,9 @@ on:
       - ASTEROIDYiOS/SourceHomeWreck209.swift
       - ASTEROIDYiOS/SourceHomeVanguard431.swift
       - ASTEROIDYiOS/PC602HomeShipPose291.swift
+      - ASTEROIDYiOS/PC602HomeFlightInput291.swift
+      - ASTEROIDYiOS/SourceControls586.swift
+      - Tests/PC602HomeFlightInput291Tests.swift
       - Tests/PC602HomeShipPose291Tests.swift
       - ASTEROIDYiOS/SourceVanguardMesh431.swift
       - ASTEROIDYiOS/Ship.metal
@@ -38,6 +41,9 @@ on:
       - ASTEROIDYiOS/SourceHomeWreck209.swift
       - ASTEROIDYiOS/SourceHomeVanguard431.swift
       - ASTEROIDYiOS/PC602HomeShipPose291.swift
+      - ASTEROIDYiOS/PC602HomeFlightInput291.swift
+      - ASTEROIDYiOS/SourceControls586.swift
+      - Tests/PC602HomeFlightInput291Tests.swift
       - Tests/PC602HomeShipPose291Tests.swift
       - ASTEROIDYiOS/SourceVanguardMesh431.swift
       - ASTEROIDYiOS/Ship.metal
