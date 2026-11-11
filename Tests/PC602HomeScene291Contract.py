@@ -22,6 +22,8 @@ header=read("SourceHome290Vertex.metalh")
 world=read("PC602HomeScene291.swift")
 world_shader=read("PC602HomeScene291.metal")
 beacons=read("PC602HomeBeacons291.swift")
+belt=read("PC602OrbitBelt51.swift")
+belt_shader=read("PC602OrbitBelt51.metal")
 app=read("App.swift")
 
 # Exactly ONE immutable Metal resource cache for these TWO consumers.
@@ -87,6 +89,31 @@ assert "encoder.drawPrimitives(type:.line" in world
 assert "beaconDescriptor.isDepthWriteEnabled=false" in world
 assert "markers.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha" in world
 assert "markers.colorAttachments[0].destinationRGBBlendFactor = .one" in world
+
+# PC602 source belt must be the actual 820 authored crater meshes.
+# Do not reintroduce lower-poly spheres, bespoke Swift randomness or frame
+# allocations. Original GpuIntro41's individual visibility is preserved,
+# while consecutive visible ranges may be coalesced to one Metal draw.
+assert "static let asteroidCount=820" in belt
+assert "static let vertexStride=40" in belt
+assert "let sourceBytes:Data" in belt
+assert "func visible(_ stone:Stone,view:[Float],aspect:Float)" in belt
+assert "stone.size*Self.sourceScale*1.9+1" in belt
+assert "PC602OrbitBelt51.load()" in world
+assert "sourceBytes.withUnsafeBytes" in world
+assert "encoder.setVertexBuffer(beltBuffer,offset:0,index:0)" in world
+assert "let rockModel=simd_float4x4(" in world
+assert "diagonal:SIMD4(3.2,3.2,3.2,1)" in world
+assert "for stone in belt.stones" in world
+assert "runStart+runCount==stone.firstVertex" in world
+assert "vertexStart:runStart,vertexCount:runCount" in world
+assert 'name:"pc602Belt51Vertex"' in world
+assert 'name:"pc602Belt51Fragment"' in world
+assert "const uint" not in belt_shader or "id*10u" in belt_shader
+assert "uint offset=id*10u;" in belt_shader
+assert "float band=0.25f+0.33f*smoothstep(0.30f,0.32f,d)" in belt_shader
+assert "float3 view=normalize(-in.eyePosition);" in belt_shader
+assert "device const float *geometry" in belt_shader
 
 # This is a source renderer, NOT a complete orbit gameplay/menu substitution.
 assert "PC602HomeScene291(" not in app
