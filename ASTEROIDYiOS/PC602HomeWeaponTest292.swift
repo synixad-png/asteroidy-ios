@@ -16,6 +16,17 @@ struct PC602HomeWeaponTest292 {
         let cooling:Int
         let fireRateScale:Float
         let fireRateTalent:Float
+        // The actual new-game PC default is weapon Pulse, upgrade 1,
+        // Rapid 0 and Cooling 0. Verified constants need no force-unwrap.
+        init() {
+            weapon = .pulse
+            upgrade = 1
+            rapid = 0
+            cooling = 0
+            fireRateScale = 1
+            fireRateTalent = 1
+        }
+        static let defaultPulse=Settings()
         init?(weapon:Weapon,upgrade:Int=1,rapid:Int=0,cooling:Int=0,
               fireRateScale:Float=1,fireRateTalent:Float=1) {
             guard (1...3).contains(upgrade),(0...2).contains(rapid),
