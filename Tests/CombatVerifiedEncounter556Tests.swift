@@ -106,7 +106,9 @@ import Foundation
         precondition(defended.firstVitals!.armor==25 &&
                      defended.firstVitals!.hull==60)
         defended.encounter.rocks=[]
-        _=defended.step(dt:1.1)
+        // PC Guardian37 protection is 1.2s, longer than the removed
+        // purchased shield's 1.0s; do not test a hit during immunity.
+        _=defended.step(dt:1.3)
         defended.encounter.first=body(640)
         defended.encounter.rocks=[rock()]
         let guardianHit=defended.step(dt:1/120,firstDomeHeld:true)
