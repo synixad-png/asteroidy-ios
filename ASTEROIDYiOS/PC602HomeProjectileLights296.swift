@@ -19,7 +19,7 @@ final class PC602HomeProjectileLights296 {
     private var ringIndex=0
     private var staging=[PC602HomeBeacons291.Vertex]()
     private static let circle:[SIMD2<Float>]=(0...24).map { i in
-        let a=Float(i)*Float.pi*2/24
+        let a=Float(i) * Float.pi * 2 / 24
         return SIMD2<Float>(cos(a),sin(a))
     }
 

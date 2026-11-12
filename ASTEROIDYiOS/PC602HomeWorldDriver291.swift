@@ -123,7 +123,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
             error=nil
             return true
         } catch {
-            error="NIE UDAŁO SIĘ ZAPISAĆ SLOTU"
+            self.error="NIE UDAŁO SIĘ ZAPISAĆ SLOTU"
             return false
         }
     }
@@ -171,7 +171,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
             SourceHardwareInput586.shared.clearKeyboard()
             return true
         } catch {
-            error="NIEPOPRAWNY ZAPIS PC602: "+String(describing:error)
+            self.error="NIEPOPRAWNY ZAPIS PC602: "+String(describing:error)
             return false
         }
     }

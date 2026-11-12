@@ -79,7 +79,20 @@ assert "float band=0.25f+0.33f*smoothstep(0.30f,0.32f,d)" in world_shader
 assert "smoothstep(0.24f,0.58f,heat)" in world_shader
 assert "float3(1.0f,0.30f,0.07f)*core*0.68f" in world_shader
 assert "if(u.material==0u)" in world_shader
-assert "sourceKeyEye:SIMD4(-0.6,0.8,1.4,0)" in world
+assert "let sunAngle:Float=0.62+max(0,flight.orbitTime)*0.047" in world
+assert "sourceKeyEye:sunEye" in world
+assert "sourceLightEye:sunEye" in world
+atmosphere=read("PC602HomeAtmosphere47.swift")
+signal=read("PC602HomeMissionSignal58.swift")
+shot_lights=read("PC602HomeProjectileLights296.swift")
+assert "SourcePlanetAtmosphere568.atmosphere(" in atmosphere
+assert "originalAtmosphere.draw(encoder:encoder," in world
+assert "PC602HomeMissionSignal58" in signal
+assert "originalSignal.draw(encoder:encoder," in world
+assert "PC602HomeProjectileLights296" in shot_lights
+assert "projectileLights.draw(encoder:encoder,command:command," in world
+assert world.count("onProjectiles?() ?? []")==1
+assert "HudPlanetariumMetal600(" not in world
 assert "float3 l=normalize(light.sourceKeyEye.xyz);" in world_shader
 assert "float3 view=normalize(-in.viewPosition);" in world_shader
 assert "encoder.setCullMode(.none)" in world
