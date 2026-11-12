@@ -163,12 +163,14 @@ struct PC602HomeWorldPage291:View {
                         .accessibilityIdentifier("pc602-orbit-options-settings")
                     Button("ZAPISZ LOT") {
                         showingOrbitOptions291=false
-                        openSaves61(load:false)
+                        openSaves61(load:false,
+                                    restorePaused:previouslyPausedOptions291)
                     }
                     .accessibilityIdentifier("pc602-orbit-save61")
                     Button("WCZYTAJ LOT") {
                         showingOrbitOptions291=false
-                        openSaves61(load:true)
+                        openSaves61(load:true,
+                                    restorePaused:previouslyPausedOptions291)
                     }
                     .accessibilityIdentifier("pc602-orbit-load61")
                     Button("POWRÓT DO MENU GŁÓWNEGO") {
@@ -195,8 +197,10 @@ struct PC602HomeWorldPage291:View {
         .accessibilityIdentifier("pc602-orbit-options291")
     }
 
-    private func openSaves61(load:Bool) {
-        previouslyPaused61=driver.paused
+    private func openSaves61(load:Bool,restorePaused:Bool?=nil) {
+        // When opened from OPCJE, inherit the flight's state BEFORE
+        // the menu paused it. Dismissing the slots must restore flight.
+        previouslyPaused61=restorePaused ?? driver.paused
         loadingSave61=load
         saveMessage61=""
         driver.setPaused(true)
