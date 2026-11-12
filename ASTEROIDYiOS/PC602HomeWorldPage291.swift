@@ -48,14 +48,18 @@ struct PC602HomeWorldPage291:View {
             .offset(x:CGFloat(item.x)*screen.size.width/1280,
                     y:CGFloat(item.y)*screen.size.height/720)
             .background {
-                GeometryReader { marker in
-                    Color.clear.preference(
-                        key:OrbitHUDFramePreference291.self,
-                        value:id.hasPrefix("hud.navigation") ? [:] : [
-                            id:marker.frame(in:.named("orbitHUD291"))
-                        ])
+                // Mission HudEditorGeometry computes frames only when F6
+                // is open. Do the same here: do not drive 27 changing
+                // GeometryReader preferences every live H290 Metal frame.
+                if showingOrbitHUD291 && !id.hasPrefix("hud.navigation") {
+                    GeometryReader { marker in
+                        Color.clear.preference(
+                            key:OrbitHUDFramePreference291.self,
+                            value:[id:marker.frame(in:.named("orbitHUD291"))]
+                        )
+                    }
+                    .allowsHitTesting(false)
                 }
-                .allowsHitTesting(false)
             }
             .opacity(item.visible ? 1 : 0)
             .allowsHitTesting(!showingOrbitHUD291 && item.visible)
