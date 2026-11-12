@@ -213,7 +213,8 @@ final class PC602HomeWorldDriver291:ObservableObject {
             guard SourceNewGame568.restoreOrbitProfile61(
                 runID:state.runID,completedMask:state.completedMask,
                 target:state.target,shop:state.shop,vitals:state.vitals,
-                mechanics:state.mechanics,difficultyRaw:state.difficultyRaw)
+                mechanics:state.mechanics,difficultyRaw:state.difficultyRaw,
+                 archiveExisting:slot != nil)
             else{error="NIE MOŻNA ZARCHIWIZOWAĆ PROFILU";return false}
             let flight=replacement.flight
             withLock {

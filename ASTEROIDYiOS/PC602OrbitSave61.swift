@@ -118,6 +118,19 @@ enum PC602OrbitSave61 {
         return state
     }
     static func exists(slot:Int?=nil)->Bool {(try? read(slot:slot)) != nil}
+    // Source ReadSlot61 and DeleteSlot61: corrupt slots are not empty.
+    static func slotFileExists(_ slot:Int)->Bool {
+        guard let url=file(slot) else{return false}
+        return FileManager.default.fileExists(atPath:url.path)
+    }
+    @discardableResult static func deleteSlot(_ slot:Int)->Bool {
+        guard let url=file(slot),
+              FileManager.default.fileExists(atPath:url.path)
+        else{return false}
+        do {try FileManager.default.removeItem(at:url);return true}
+        catch{return false}
+    }
+    static var hasManualSave:Bool {(0..<3).contains {exists(slot:$0)}}
     static func clearResume() {
         guard let file=file(nil) else{return}
         try? FileManager.default.removeItem(at:file)

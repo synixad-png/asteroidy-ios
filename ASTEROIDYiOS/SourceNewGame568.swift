@@ -157,6 +157,7 @@ enum SourceNewGame568 {
         runID:String,completedMask:Int,target:Int,
         shop:Sector01Shop568.State,vitals:H55Workshop580.Vitals,
         mechanics:H55SourceMechanics580.State,difficultyRaw:Int,
+        archiveExisting:Bool=true,
         defaults:UserDefaults = .standard)->Bool {
         guard UUID(uuidString:runID) != nil,
               (1...26).contains(target),
@@ -164,9 +165,10 @@ enum SourceNewGame568 {
               Sector01Shop568.validate(shop),vitals.valid,mechanics.valid,
               mechanics.selectedShip==1,
               CombatBalance556.Difficulty(rawValue:difficultyRaw) != nil,
-              let support=archiveDirectory(nil),
-              archiveActive(defaults:defaults,directory:support),
-              let shopBytes=try? JSONEncoder().encode(shop),
+              (!archiveExisting || archiveDirectory(nil).map {
+                   archiveActive(defaults:defaults,directory:$0)
+               } == true),
+               let shopBytes=try? JSONEncoder().encode(shop),
               let vitalsBytes=try? JSONEncoder().encode(vitals),
               let mechanicsBytes=try? JSONEncoder().encode(mechanics)
         else{return false}
