@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
 """HUD v600 vs H290: real UIKit taps and one consistent pause/settings/save UI."""
 from pathlib import Path
+import hashlib
+# Explicit source lock requested by the user: changing the working mission
+# F6 editor or its game integration requires a SEPARATE authorization.
+# Git blob OIDs are captured from the untouched PR #29 source.
+MISSION_HUD_LOCK = {
+    "ASTEROIDYiOS/HudLayoutEditor600.swift": "249503729d8b9930a22e5cec86fa2119b37f98e5",
+    "ASTEROIDYiOS/HudControlLayout600.swift": "5088242f4cde496fa73aea37d5fcef71c80f1273",
+    "ASTEROIDYiOS/HudLayout600.swift": "ee92971cda95f6c93e3dd24aad72a996c6afc7e0",
+    "ASTEROIDYiOS/HudEditorGeometry.swift": "12bcc2a8216c7e9559f22a198359b519222de388",
+    "ASTEROIDYiOS/Sector01Scene568.swift": "7ad47ea68e002c84fbcbc30a72215920d5e73588",
+}
+for filename, git_oid in MISSION_HUD_LOCK.items():
+    data=(Path(__file__).resolve().parents[1]/filename).read_bytes()
+    actual=hashlib.sha1(b"blob "+str(len(data)).encode()+b"\0"+data).hexdigest()
+    assert actual==git_oid, "MISSION EDITOR READ-ONLY LOCK: "+filename
 root=Path(__file__).resolve().parents[1]
 read=lambda p:(root/"ASTEROIDYiOS"/p).read_text()
 orbit=read("PC602HomeWorldPage291.swift")
@@ -67,4 +82,18 @@ assert 'PC602OrbitHUDLayout291.constrainedDrag(' in editor
 assert 'safeInsets:geo.safeAreaInsets' in editor
 assert 'start.frame)' in editor
 assert 'static func constrainedDrag(' in layout
-print("PASS unified PC602: PAUZA and 3 slots, H290 touch select/drag/pinch, real layout measurements, JSON migration, larger controls")
+# Frame tracking has to travel THROUGH the same view transform as the
+# actual button, not remain in the original SwiftUI layout slot.
+item_section=orbit.split("private func orbitItem291",1)[1].split(
+    "private func navigationHitRects291",1)[0]
+assert item_section.index(".background {") < item_section.index(".scaleEffect(item.scale)") < item_section.index(".offset(")
+assert "guard orbitDraft291.save()," in orbit
+assert "PC602OrbitHUDLayout291.load()==orbitDraft291" in orbit
+assert "return true" in orbit.split("onSave:{",1)[1].split("onCancel:{",1)[0]
+for id in ("control.options","control.atlas","control.next","control.pause","control.enter"):
+    assert f'orbitItem291("{id}",screen:screen)' in orbit,id
+    assert id in layout,id
+assert "range:-1280...1280" in editor and "range:-720...720" in editor
+assert "(-1280...1280).contains($0.x)" in layout
+assert "(-720...720).contains($0.y)" in layout
+print("PASS H290: 5 editable controls, post-transform hit frames, full-screen moves, verified save; mission editor source frozen")
