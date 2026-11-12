@@ -56,11 +56,11 @@ struct PC602OrbitHUDEditor291:View {
         else {parent=nil}
         let inherited=parent.map{layout.item($0).scale} ?? 1
         let base=max(0.001,inherited)
+        let nextX=original.x+Double(clamped.x)*1280/(width*base)
+        let nextY=original.y+Double(clamped.y)*720/(height*base)
         change(id){e in
-            e.x=max(-600,min(600,original.x+
-                Double(clamped.x)*1280/(width*base)))
-            e.y=max(-360,min(360,original.y+
-                Double(clamped.y)*720/(height*base)))
+            e.x=max(-600,min(600,nextX))
+            e.y=max(-360,min(360,nextY))
         }
     }
     private func scale(_ id:String,original:Double,factor:Double) {
