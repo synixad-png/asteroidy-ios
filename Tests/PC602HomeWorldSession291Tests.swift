@@ -113,8 +113,18 @@ assert(session.flight.equipment.stabilizerLevel==1)
 assert(session.flight.orbitPosition==oldOrbitPosition)
 assert(session.flight.orbitSpeed==oldOrbitSpeed)
 assert(session.flight.flight.heading==oldOrbitHeading)
+// Bastion PC609 has its own SHA-verified 6061 model and source mass/speed.
+// Switching VANGUARD<->BASTION must retain the same orbit, camera and HUD.
+let sourceBastion=PC602HomeFlight291.Equipment(craft:.bastion)!
+assert(session.adoptVanguardEquipment(sourceBastion))
+assert(session.flight.equipment.craft == .bastion)
+assert(session.flight.orbitPosition == oldOrbitPosition)
+assert(session.flight.orbitSpeed == oldOrbitSpeed)
+assert(session.flight.flight.heading == oldOrbitHeading)
+assert(session.adoptVanguardEquipment(purchased))
+assert(session.flight.equipment.craft == .vanguard)
 assert(!session.adoptVanguardEquipment(
-    PC602HomeFlight291.Equipment(craft:.bastion)!))
+    PC602HomeFlight291.Equipment(craft:.titan)!))
 print("PASS original PC602 HomeWorld session: single 67 flight, saved " +
       "remapped controls, atomic pause, no double tick, 26 authored " +
       "sector unlocks and real 43.2m-gated H55 without fake mission/IPA")
