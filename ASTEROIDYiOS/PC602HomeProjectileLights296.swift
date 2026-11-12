@@ -111,7 +111,7 @@ final class PC602HomeProjectileLights296 {
             settings=CarbonisVisualSettings568.load()
             settingsRevision=revision
         }
-        guard !bullets.isEmpty,settings.projectileBrightness>0 else{return
+        guard !bullets.isEmpty,settings.projectileBrightness>0 else{return}
         let power=min(2.8,max(0,settings.projectileBrightnessFactor))
         staging.removeAll(keepingCapacity:true)
         for bullet in bullets.prefix(Self.maxBullets) {

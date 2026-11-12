@@ -23,7 +23,7 @@ struct PC602HomeWorldPage291:View {
     @State private var showingOrbitOptions291=false
     @State private var showingOrbitSettings291=false
     @State private var previouslyPausedOptions291=false
-    @State private var showingOrbitPause317=false
+    // One canonical PAUZA panel is used by both touch and iPad suspend.
     // Independent from the approved CARBONIS v600 HUD and its five controls.
     @State private var orbitLayout291=PC602OrbitHUDLayout291.load()
     @State private var orbitDraft291=PC602OrbitHUDLayout291.load()
@@ -73,7 +73,6 @@ struct PC602HomeWorldPage291:View {
                         onFire:{driver.setFiring($0)})
                     overlay(screen:screen,flight:flight)
                     navigationCue50(screen:screen,flight:flight)
-                    if showingOrbitPause317 {orbitPausePanel317(screen:screen)}
                     if showingAtlas330 {atlasPanel(screen:screen)}
                     if showingSaves61 {
                         PC602SaveSlots61View(
@@ -142,9 +141,20 @@ struct PC602HomeWorldPage291:View {
             // Disk I/O is on this lifecycle event, never inside draw(in:).
             if phase != .active {
                 _=driver.captureResume61()
-                // PC602 Program.cs Deactivate: the active orbit pauses on focus loss.
-                if !driver.paused && !driver.presentingH55 {
-                    openOrbitPause317()
+                // Deactivation uses the EXACT same interactive PAUZA/OPCJE
+                // panel as the on-screen button. Never show a second
+                // RendererW3Pause317 menu with nonfunctional actions.
+                if !driver.presentingH55 && !showingOrbitOptions291 {
+                    showingAtlas330=false
+                    showingSaves61=false
+                    showingOrbitSettings291=false
+                    showingOrbitHUD291=false
+                    orbitDraft291=orbitLayout291
+                    openOrbitOptions291()
+                    // If an editor/atlas was already paused when iOS locked,
+                    // continuing returns to playable flight, not a hidden
+                    // paused state with no controls.
+                    previouslyPausedOptions291=false
                 }
             }
             driver.setSuspended(phase != .active)
@@ -167,12 +177,11 @@ struct PC602HomeWorldPage291:View {
             guard !showingSaves61,!showingAtlas330,!showingOrbitOptions291,
                   !showingOrbitHUD291
             else{return}
-            if showingOrbitPause317 {resumeOrbitPause317()}
-            else if driver.paused {driver.setPaused(false)}
-            else {openOrbitPause317()}
+            if showingOrbitOptions291 {closeOrbitOptions291()}
+            else {openOrbitOptions291()}
         }
         .onChange(of:driver.optionsPadPresses) { _,_ in
-            // PC602 action 27: options are independent of pause selection.
+            // Both hardware actions route to the SAME PAUZA menu.
             guard !showingSaves61,!showingAtlas330,!showingOrbitHUD291
             else{return}
             if showingOrbitOptions291 {closeOrbitOptions291()}
@@ -199,22 +208,7 @@ struct PC602HomeWorldPage291:View {
     }
 
     // PC602 BossTunnelGame.cs:48-50 + Program.cs:197-201.
-    // One existing session pause flag; no second clock or flight state.
-    private func openOrbitPause317() {
-        guard !showingAtlas330,!showingSaves61,!showingOrbitOptions291
-        else{return}
-        driver.setPaused(true)
-        showingOrbitPause317=true
-    }
-
-    private func resumeOrbitPause317() {
-        showingOrbitPause317=false
-        driver.setPaused(false)
-    }
-
-    // Physical ESC and the user's configured PAUZA/USTAWIENIA keys use
-    // SourceControls586 actions 9/27, as in PC602 Program.Action.
-    // Edge-triggering avoids repeated UIKit presses toggling every frame.
+    // Physical ESC and assigned PAUZA/OPCJE use the same real panel.
     private func routeOrbitCommand291(key:Int,held:Bool) {
         let keys=SourceControls586.Profile.load().keys
         let isPause=key==27 || key==keys[9]
@@ -222,103 +216,15 @@ struct PC602HomeWorldPage291:View {
         guard isPause || isOptions else{return}
         if !held {pressedOrbitCommands291.remove(key);return}
         guard pressedOrbitCommands291.insert(key).inserted else{return}
-        if isPause {
-            if showingSaves61 {dismissSaves61()}
-            else if showingAtlas330 {dismissAtlas330()}
-            else if showingOrbitSettings291 {showingOrbitSettings291=false}
-            else if showingOrbitOptions291 {closeOrbitOptions291()}
-            else if showingOrbitPause317 {resumeOrbitPause317()}
-            else if driver.paused {driver.setPaused(false)}
-            else {openOrbitPause317()}
-        } else if !showingAtlas330 && !showingSaves61 {
-            if showingOrbitOptions291 {closeOrbitOptions291()}
-            else {openOrbitOptions291()}
-        }
+        if showingSaves61 {dismissSaves61()}
+        else if showingAtlas330 {dismissAtlas330()}
+        else if showingOrbitSettings291 {showingOrbitSettings291=false}
+        else if showingOrbitOptions291 {closeOrbitOptions291()}
+        else if !showingOrbitHUD291 {openOrbitOptions291()}
     }
 
-    /// Original PC602 RendererW3Pause317.DrawW3Pause317:
-    /// two columns, three actions each; Program.PauseAction dispatches.
-    /// iOS cannot terminate itself; results are not yet ported, so neither
-    /// action is advertised as functioning. All other actions are real.
-    private func orbitPausePanel317(screen:GeometryProxy)->some View {
-        let compact=screen.size.height<450
-        let labels=["KONTYNUUJ","WYJDŹ DO MENU","ZAMKNIJ GRĘ",
-                    "ZAPISZ","WCZYTAJ","WYNIKI"]
-        return ZStack {
-            Color(red:1/255,green:8/255,blue:16/255)
-                .opacity(163/255).ignoresSafeArea()
-            VStack(spacing:compact ? 10:18) {
-                Text("SYNIXAD // SYSTEM ROZGRYWKI")
-                    .font(.system(size:compact ? 10:12,design:.monospaced))
-                    .foregroundStyle(gold)
-                Text("GRA WSTRZYMANA")
-                    .font(.system(size:compact ? 20:26,
-                                  weight:.bold,design:.monospaced))
-                    .foregroundStyle(.white)
-                Text("SYTUACJA ZACHOWANA / CZAS ROZGRYWKI ZATRZYMANY")
-                    .font(.system(size:compact ? 9:11,design:.monospaced))
-                    .foregroundStyle(cyan)
-                    .multilineTextAlignment(.center)
-                HStack(spacing:compact ? 7:12) {
-                    ForEach(0..<2,id:\.self) { column in
-                        VStack(spacing:compact ? 7:12) {
-                            ForEach(0..<3,id:\.self) { row in
-                                let index=column*3+row
-                                Button {
-                                    pauseAction317(index)
-                                } label: {
-                                    Text(labels[index])
-                                        .font(.system(size:compact ? 11:14,
-                                                      weight:.bold,design:.monospaced))
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.75)
-                                        .frame(maxWidth:.infinity,minHeight:compact ? 36:52)
-                                        .foregroundStyle(index==2 || index==5
-                                            ? .gray : .white)
-                                        .background(Color(red:5/255,
-                                            green:20/255,blue:31/255))
-                                        .overlay(Rectangle().stroke(
-                                            gold.opacity(index==2 || index==5
-                                                ? 0.15:0.65),lineWidth:1))
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(index==2 || index==5)
-                                .accessibilityIdentifier(
-                                    "pc602-orbit-pause-choice-\(index)")
-                            }
-                        }
-                    }
-                }
-            }
-            .padding(compact ? 13:22)
-            .frame(maxWidth:790)
-            .background(Color(red:0.008,green:0.028,blue:0.048))
-            .overlay(Rectangle().stroke(gold.opacity(0.7),lineWidth:1))
-            .padding(12)
-        }
-        .zIndex(10)
-        .accessibilityIdentifier("pc602-orbit-pause-panel317")
-    }
-
-    private func pauseAction317(_ index:Int) {
-        switch index {
-        case 0:
-            resumeOrbitPause317()
-        case 1:
-            showingOrbitPause317=false
-            onExitToW3()
-        case 3:
-            openSaves61(load:false,restorePaused:true)
-        case 4:
-            openSaves61(load:true,restorePaused:true)
-        default:
-            // PC close-game and results menu are unavailable on iOS today.
-            return
-        }
-    }
-
-    /// The original PC602 option/pause action. The same orbital session
-    /// stays paused: no competing menu renderer or duplicated state.
+    /// The one PAUZA/OPCJE panel, shared by touch, keyboard, pad and
+    /// iPad scene deactivation. No second pause overlay or flight state.
     private func openOrbitOptions291() {
         guard !showingOrbitHUD291 else{return}
         previouslyPausedOptions291=driver.paused
@@ -349,8 +255,8 @@ struct PC602HomeWorldPage291:View {
             VStack(spacing:compact ? 8:14) {
                 HStack {
                     Text(showingOrbitSettings291
-                        ? "OPCJE / USTAWIENIA"
-                        : "OPCJE / PLANETA GŁÓWNA")
+                        ? "PAUZA / USTAWIENIA"
+                        : "PAUZA / PLANETA GŁÓWNA")
                         .font(.system(size:compact ? 14:19,
                                       weight:.bold,design:.monospaced))
                         .foregroundStyle(gold)
@@ -680,7 +586,7 @@ struct PC602HomeWorldPage291:View {
                         }
                     }
                     orbitItem291("control.options",screen:screen) {
-                    Button("OPCJE") {openOrbitOptions291()}
+                    Button("PAUZA") {openOrbitOptions291()}
                         .font(.system(size:compact ? 14:17,
                                       weight:.bold,design:.monospaced))
                         .frame(minWidth:100,minHeight:44)
@@ -704,11 +610,7 @@ struct PC602HomeWorldPage291:View {
                             .accessibilityIdentifier("pc602-orbit-next-sector")
                         }
                         orbitItem291("control.pause",screen:screen) {
-                        Button(driver.paused ? "WZNÓW":"PAUZA") {
-                            if showingOrbitPause317 {resumeOrbitPause317()}
-                            else if driver.paused {driver.setPaused(false)}
-                            else {openOrbitPause317()}
-                        }
+                        Button("PAUZA") {openOrbitOptions291()}
                         .accessibilityIdentifier("pc602-orbit-pause")
                         }
                     }

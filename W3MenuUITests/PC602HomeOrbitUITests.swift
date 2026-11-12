@@ -77,10 +77,10 @@ final class PC602HomeOrbitUITests: XCTestCase {
         add(capture)
 
         pause.tap()
-        let pausePanel = byID(app, "pc602-orbit-pause-panel317")
-        require(pausePanel, "PC602 W3 game-pause overlay did not open")
-        let resume = app.buttons["pc602-orbit-pause-choice-0"]
-        require(resume, "Original KONTYNUUJ action missing from pause")
+        let pausePanel = byID(app, "pc602-orbit-options291")
+        require(pausePanel, "Shared H290 PAUZA panel did not open")
+        let resume = app.buttons["pc602-orbit-options-back"]
+        require(resume, "KONTYNUUJ missing from the only H290 pause panel")
         resume.tap()
         require(pause, "Game did not resume to live H290 HUD")
         XCTAssertEqual(pause.label, "PAUZA", "H290 remains paused")
@@ -95,11 +95,10 @@ final class PC602HomeOrbitUITests: XCTestCase {
         close.tap()
         require(atlas, "Closing source atlas did not restore orbital HUD")
 
-        // O09: the REAL H290 pause opens the shared PC602 3-slot model.
-        // Selection is not interpreted as loading or deleting a save.
+        // O09: the SAME PAUZA panel opens the actual three-slot model.
         pause.tap()
-        let saveFromPause = app.buttons["pc602-orbit-pause-choice-3"]
-        require(saveFromPause, "Original PAUZA -> ZAPISZ missing")
+        let saveFromPause = app.buttons["pc602-orbit-save61"]
+        require(saveFromPause, "PAUZA -> ZAPISZ LOT missing")
         saveFromPause.tap()
         require(app.buttons["pc602-save61-action-0"],
                 "Original SaveManager61 ZAPISZ missing")
@@ -110,12 +109,11 @@ final class PC602HomeOrbitUITests: XCTestCase {
         let saveBack = app.buttons["pc602-save61-back"]
         require(saveBack, "No return from original save slots")
         saveBack.tap()
-        let continueFromPause = app.buttons["pc602-orbit-pause-choice-0"]
-        require(continueFromPause, "Pause state not restored after slot browser")
-        continueFromPause.tap()
+        // Returning from slots restores flight; no second modal remains.
+        require(pause, "Pause state not restored after slot browser")
 
         let options = app.buttons["pc602-orbit-open-options291"]
-        require(options, "Original OPCJE button missing from live orbit")
+        require(options, "Single PAUZA button missing from live orbit")
         options.tap()
         let back = app.buttons["pc602-orbit-return-w3"]
         require(back, "OPCJE cannot return to original W3")

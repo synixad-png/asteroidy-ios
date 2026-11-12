@@ -77,21 +77,21 @@ assert 'source-combat-left-touch-zone' in source("SourceCombatTouchZones568.swif
 assert 'accessibilityIdentifier("pc602-orbit-live-touch-hud")' in page
 assert "driver.setPaused(true)" in page
 assert "driver.setPaused(previouslyPausedOptions291)" in page
-# PC602 Game.Pause/Resume and RendererW3Pause317 six source commands.
-# This is a genuine touch/hardware pause, not an inaccessible HUD label.
-assert 'Button(driver.paused ? "WZNÓW":"PAUZA")' in page
+# One fully interactive PAUZA panel for touch/keyboard/pad and iPad screen lock.
+assert 'Button("PAUZA") {openOrbitOptions291()}' in page
 assert 'accessibilityIdentifier("pc602-orbit-pause")' in page
-assert 'accessibilityIdentifier("pc602-orbit-pause-panel317")' in page
-assert 'let labels=["KONTYNUUJ","WYJDŹ DO MENU","ZAMKNIJ GRĘ",' in page
-assert '"ZAPISZ","WCZYTAJ","WYNIKI"]' in page
-assert "pauseAction317(index)" in page
-assert "case 0:" in page and "resumeOrbitPause317()" in page
-assert "case 1:" in page and "onExitToW3()" in page
-assert "openSaves61(load:false,restorePaused:true)" in page
-assert "openSaves61(load:true,restorePaused:true)" in page
-assert ".disabled(index==2 || index==5)" in page
+assert 'accessibilityIdentifier("pc602-orbit-options291")' in page
+assert 'Button("POWRÓT DO MENU GŁÓWNEGO")' in page
+assert 'Button("EDYTUJ HUD / PRZYCISKI H290")' in page
+assert 'openSaves61(load:false,' in page
+assert 'openSaves61(load:true,' in page
 assert "driver.setSuspended(phase != .active)" in page
-assert "if !driver.paused && !driver.presentingH55" in page
+assert "if !driver.presentingH55 && !showingOrbitOptions291" in page
+assert "previouslyPausedOptions291=false" in page
+assert "showingOrbitPause317" not in page
+assert "orbitPausePanel317" not in page
+assert "pauseAction317" not in page
+assert "driver.setPaused(previouslyPausedOptions291)" in page
 assert "key==keys[9]" in page and "key==keys[27]" in page
 assert "pressedOrbitCommands291.insert(key).inserted" in page
 assert "padOnly.held(9,profile:session.controls)" in driver
@@ -101,7 +101,7 @@ assert "triggerPausePad=pauseDown && !pausePadHeld" in driver
 assert "triggerOptionsPad=optionsDown && !optionsPadHeld" in driver
 assert ".onChange(of:driver.pausePadPresses)" in page
 assert ".onChange(of:driver.optionsPadPresses)" in page
-assert 'Button("OPCJE") {openOrbitOptions291()}' in page
+assert 'Button("PAUZA") {openOrbitOptions291()}' in page
 assert 'Button("POWRÓT DO MENU GŁÓWNEGO")' in page
 assert 'accessibilityIdentifier("pc602-orbit-return-w3")' in page
 assert "onExitToW3()" in page
