@@ -41,13 +41,9 @@ enum CombatVerifiedHit556 {
               !survival.bossArrival && !survival.currentDown &&
               survival.invincible<=0 && survival.lives>0
         else {return .ignored}
-        // Exact PC v609: HitByBoss first handles developer protection,
-        // then Game.Damage() checks Guardian37 BEFORE active Tarcza145.
-        // Shield reserves never passively intercept an incoming hit.
-        if developerInfinite {
-            survival.invincible=0.8
-            return .developerProtected
-        }
+        // Windows Game.Damage v609 guards in source order:
+        // TryGuardian, developer infinite, active Tarcza145, armor/hull.
+        // Spare OSŁONY bars cannot intercept individual hits.
         if let guardianState {
             if guardianState.absorb(invincible:&survival.invincible) {
                 return .guardianAbsorbed
@@ -58,6 +54,10 @@ enum CombatVerifiedHit556 {
             case .absorbed:return .guardianAbsorbed
             case .clear:break
             }
+        }
+        if developerInfinite {
+            survival.invincible=0.8
+            return .developerProtected
         }
         if dome.absorb(invincible:&survival.invincible,
                        reserve:&survival.shieldCharges) {
