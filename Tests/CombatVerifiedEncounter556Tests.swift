@@ -583,8 +583,10 @@ import Foundation
         precondition(twoImpacts.hitOutcomes == [
             V.TeamOutcome(player:.first,outcome:.activeTarczaAbsorbed),
             V.TeamOutcome(player:.second,outcome:.activeTarczaAbsorbed)])
-        precondition(simultaneous.encounter.firstSurvival.shieldCharges==1 &&
-                     simultaneous.encounter.secondSurvival.shieldCharges==1)
+        precondition(simultaneous.encounter.firstSurvival.shieldCharges==0 &&
+                     simultaneous.encounter.secondSurvival.shieldCharges==0)
+        precondition(simultaneous.domeFirst.energy==100 &&
+                     simultaneous.domeSecond.energy==100)
         precondition(simultaneous.firstGuardian!.charges==1)
         precondition(simultaneous.firstVitals!.armor==25 &&
                      simultaneous.firstVitals!.hull==60)
