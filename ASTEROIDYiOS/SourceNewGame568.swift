@@ -146,6 +146,34 @@ enum SourceNewGame568 {
         return true
     }
 
+    static func currentRunID(defaults:UserDefaults = .standard)->String? {
+        defaults.string(forKey:activeIDKey)
+    }
+
+    /// SaveManager61.LoadSlot61 restores only a VERIFIED game-state
+    /// snapshot after archiving the previous active profile.
+    /// Do not modify preferences, touch layout or independent manual slots.
+    @discardableResult static func restoreOrbitProfile61(
+        _ saved:PC602OrbitSave61.Snapshot,
+        defaults:UserDefaults = .standard)->Bool {
+        guard saved.valid,
+              let support=archiveDirectory(nil),
+              archiveActive(defaults:defaults,directory:support),
+              let shop=try? JSONEncoder().encode(saved.shop),
+              let vitals=try? JSONEncoder().encode(saved.vitals),
+              let mechanics=try? JSONEncoder().encode(saved.mechanics)
+        else{return false}
+        CampaignStore556.save(CampaignProgress556(
+            mask:saved.completedMask,selectedSector:saved.target),defaults:defaults)
+        defaults.set(shop,forKey:shopKey)
+        defaults.set(vitals,forKey:vitalsKey)
+        defaults.set(mechanics,forKey:mechanicsKey)
+        defaults.set(saved.difficultyRaw,forKey:difficultyKey)
+        defaults.set(1,forKey:playersKey)
+        defaults.set(saved.runID,forKey:activeIDKey)
+        return true
+    }
+
     static func selection(defaults:UserDefaults = .standard)->SourceNewGameSelection568 {
         let difficulty=CombatBalance556.Difficulty(rawValue:
             defaults.object(forKey:difficultyKey) as? Int ?? 1) ?? .normal

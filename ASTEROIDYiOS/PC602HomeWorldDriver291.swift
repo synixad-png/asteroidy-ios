@@ -84,7 +84,9 @@ final class PC602HomeWorldDriver291:ObservableObject {
         if let gun=PC602HomeWeaponTest292.Weapon(rawValue:shop.weapon.rawValue),
            let settings=PC602HomeWeaponTest292.Settings(
                 weapon:gun,upgrade:shop.upgradeLevel,
-                rapid:shop.rapidLevel) {
+                rapid:shop.rapidLevel,
+                cooling:H55SourceMechanics580.load().cooling,
+                fireRateTalent:1/(1+Float(H55SourceMechanics580.load().rateRank)*0.06)) {
             initial.setWeaponSettings(settings)
         }
         let copy=initial.flight
@@ -101,6 +103,63 @@ final class PC602HomeWorldDriver291:ObservableObject {
         presentingH55=false
         error=nil
         SourceHardwareInput586.shared.clearKeyboard()
+    }
+
+    /// PC602 SaveManager61.CaptureResume61 and its three source slot IDs.
+    /// Never perform file I/O on the Metal render queue while holding lock.
+    @discardableResult func captureResume61()->Bool {
+        let flight=withLock{session?.route.location == .orbit ? session?.flight : nil}
+        guard let flight,let state=PC602OrbitSave61.capture(flight)
+        else{return false}
+        do {try PC602OrbitSave61.store(state);return true}
+        catch {return false}
+    }
+    @discardableResult func saveOrbitSlot61(_ slot:Int)->Bool {
+        let flight=withLock{session?.route.location == .orbit ? session?.flight : nil}
+        guard let flight,let state=PC602OrbitSave61.capture(flight)
+        else {error="NIE MOŻNA ZAPISAĆ ORBITY";return false}
+        do {
+            try PC602OrbitSave61.store(state,slot:slot)
+            error=nil
+            return true
+        } catch {
+            error="NIE UDAŁO SIĘ ZAPISAĆ SLOTU"
+            return false
+        }
+    }
+    @discardableResult func loadOrbitSlot61(_ slot:Int?)->Bool {
+        guard !presentingH55,
+              let state=try? PC602OrbitSave61.read(slot:slot)
+        else {error="BRAK PRAWIDŁOWEGO ZAPISU";return false}
+        do {
+            let home=try PC602NewHome290.load()
+            let equipment=PC602HomeFlight291.Equipment(craft:.vanguard)!
+            var replacement=try PC602HomeWorldSession291(
+                home:home,equipment:equipment,
+                completedMask:state.completedMask,
+                controls:SourceControls586.Profile.load())
+            try replacement.restoreOrbit61(state)
+            guard SourceNewGame568.restoreOrbitProfile61(state)
+            else{error="NIE MOŻNA ZARCHIWIZOWAĆ PROFILU";return false}
+            let flight=replacement.flight
+            withLock {
+                session=replacement
+                suspended=false
+                touchMove=Vec2(x:0,y:0)
+                touchAim=Vec2(x:0,y:0)
+                touchFire=false
+                lastUIUpdate=0
+            }
+            hud=Self.measure(flight,frames:0,weapons:replacement.weapons)
+            paused=true
+            presentingH55=false
+            error=nil
+            SourceHardwareInput586.shared.clearKeyboard()
+            return true
+        } catch {
+            error="NIEPOPRAWNY ZAPIS PC602: "+String(describing:error)
+            return false
+        }
     }
 
     func stop() {

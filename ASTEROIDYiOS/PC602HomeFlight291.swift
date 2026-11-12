@@ -228,6 +228,48 @@ struct PC602HomeFlight291 {
         dockDistance=Self.length(orbitPosition-dockPosition)
     }
 
+    /// SaveManager61.LoadSlot61: accept only its previously verified
+    /// orbit vector, rebind the same Sphere67 pilot and reset velocity,
+    /// camera inertia and nonpersistent projectiles. The PC source calls
+    /// InitializeHomeFlight291 after assigning the saved world vectors.
+    mutating func restoreOrbit61(_ saved:PC602OrbitSave61.Snapshot) throws {
+        guard saved.valid else{throw SourceError.invalidInput}
+        let p=SIMD3<Float>(saved.position[0],saved.position[1],saved.position[2])
+        let storedForward=Self.source(SIMD3<Float>(
+            saved.forward[0],saved.forward[1],saved.forward[2]))
+        let n=Self.source(p).normalized
+        guard let surface=home.surface(Self.world(n)) else {
+            throw SourceError.missingSourceGeometry
+        }
+        completedMask=saved.completedMask
+        target=saved.target
+        orbitPosition=Self.world(n)*(surface+12)
+        flight=SphereFlight67()
+        flight.position=Sphere67.coordinates(n)
+        let plane=storedForward-n*SphereVector3.dot(storedForward,n)
+        let tangent=Sphere67.components(flight.position,plane)
+        guard tangent.lengthSquared>0.01 else{throw SourceError.invalidInput}
+        flight.heading=atan2(tangent.y,tangent.x)
+        flight.flight.configuration=equipment.flightConfiguration
+        flight.camera=SphereCamera67(at:flight.position)
+        let f=Sphere67.vector(flight.position,Vec2(
+            x:cos(flight.heading),y:sin(flight.heading))).normalized
+        orbitForward=Self.world(f)
+        orbitRight=Self.world(SphereVector3.cross(f,n).normalized)
+        orbitCamera=Self.world(flight.camera.focus*400)
+        orbitVelocity=SIMD3<Float>(repeating:0)
+        orbitSpeed=0
+        orbitBank=0
+        orbitTime=0
+        thrusting=false
+        sideThrust=0
+        padHeadingLocked=false
+        guard let arc=home.distanceToSector(orbitPosition,level:target)
+        else{throw SourceError.missingSourceGeometry}
+        orbitDistance=arc
+        dockDistance=Self.length(orbitPosition-dockPosition)
+    }
+
     /// No fabricated mission successes. Only the real settlement updates
     /// this saved-mask snapshot and the source's next-target selection.
     mutating func applyCompletedMask(_ mask:Int) {
