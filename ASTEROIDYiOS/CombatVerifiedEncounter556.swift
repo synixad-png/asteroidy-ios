@@ -229,7 +229,7 @@ struct CombatVerifiedEncounter556 {
                        reserve:&encounter.firstSurvival.shieldCharges)
         if sourceSharedCoopResources && encounter.second != nil {
             // Source WithSecond62 shares the whole Tarcza and reserve pool.
-            encounter.secondSurvival.shieldCharges=
+            encounter.secondSurvival.shieldCharges =
                 encounter.firstSurvival.shieldCharges
             domeSecond=domeFirst
         } else {
