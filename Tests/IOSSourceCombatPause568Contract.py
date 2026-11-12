@@ -49,9 +49,15 @@ for token in ("session.release()","userPaused=false",
     assert token in resume,token
 assert "onMissionPause:(Bool)->Void" in scene
 assert "Button(\"PAUZA\") {pauseMission568()}" in scene
-assert "Button(\"KONTYNUUJ\") {resumeMission568()}" in scene
-assert "Button(\"WYJDŹ DO MENU\") {exitMission568()}" in scene
-assert "sector01-pause-touch-blocker" in scene
+# Both gameplay locations share the identical active pause component;
+# the original callbacks remain connected to the real session.
+pauseView=(root/"ASTEROIDYiOS/SourcePauseMenu568.swift").read_text()
+assert "SourcePauseMenu568(" in scene
+assert "onContinue:{resumeMission568()}" in scene
+assert "onExit:{exitMission568()}" in scene
+assert 'action("KONTYNUUJ"' in pauseView
+assert 'action("WYJDŹ DO MENU"' in pauseView
+assert "Color.black.opacity(0.80).ignoresSafeArea()" in pauseView
 assert "sector01-source-pause-overlay" in scene
 assert "session.paused=userPaused" in scene # iOS unlock must not unpause user pause
 assert "session.game.phase == .playing && !userPaused" in scene
