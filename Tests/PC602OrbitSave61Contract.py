@@ -143,7 +143,8 @@ assert 'guard level==1,sourceSector01==nil' in app
 # The only authorized craft remains Vanguard; the PC602 original
 # Campaign37/Modules97 ranks now come from the canonical H55 source state.
 assert 'private static func vanguardEquipment291(' in driver
-assert 'craft:.vanguard,' in driver
+assert 'craft:state.selectedShip==2 ? .bastion : .vanguard,' in driver
+assert 'registeredModelName(' in driver
 assert 'engineLevel:state.engine' in driver
 assert 'thrusterRank:state.thruster' in driver
 assert 'stabilizerLevel:state.stabilizer' in driver
