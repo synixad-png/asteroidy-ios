@@ -19,7 +19,6 @@ struct PC602HomeWorldPage291:View {
     @State private var showingSaves61=false
     @State private var previouslyPaused61=false
     @State private var loadingSave61=false
-    @State private var saveMessage61=""
     @State private var showingOrbitOptions291=false
     @State private var showingOrbitSettings291=false
     @State private var previouslyPausedOptions291=false
@@ -55,7 +54,18 @@ struct PC602HomeWorldPage291:View {
                     navigationCue50(screen:screen,flight:flight)
                     if showingOrbitPause317 {orbitPausePanel317(screen:screen)}
                     if showingAtlas330 {atlasPanel(screen:screen)}
-                    if showingSaves61 {savesPanel61(screen:screen)}
+                    if showingSaves61 {
+                        PC602SaveSlots61View(
+                            allowSave:true,initialAction:loadingSave61 ? 1:0,
+                            onSave:{driver.saveOrbitSlot61($0)},
+                            onLoad:{ slot in
+                                let ok=driver.loadOrbitSlot61(slot)
+                                if ok {onProfileRestored()}
+                                return ok
+                            },
+                            onClose:{dismissSaves61()})
+                            .accessibilityIdentifier("pc602-orbit-three-slot-saves61")
+                    }
                     if showingOrbitOptions291 {orbitOptionsPanel291(screen:screen)}
                 } else {
                     VStack(spacing:12) {
@@ -344,7 +354,6 @@ struct PC602HomeWorldPage291:View {
         // the menu paused it. Dismissing the slots must restore flight.
         previouslyPaused61=restorePaused ?? driver.paused
         loadingSave61=load
-        saveMessage61=""
         driver.setPaused(true)
         showingSaves61=true
     }
@@ -352,77 +361,6 @@ struct PC602HomeWorldPage291:View {
     private func dismissSaves61() {
         showingSaves61=false
         driver.setPaused(previouslyPaused61)
-    }
-
-    /// SaveManager61 presents three native slots; the original H290 session
-    /// and canonical profile records are persisted together, never a
-    /// duplicate ship, mission completion or separate graphics renderer.
-    private func savesPanel61(screen:GeometryProxy)->some View {
-        let compact=screen.size.height<450
-        return ZStack {
-            Color.black.opacity(0.76).ignoresSafeArea()
-            VStack(alignment:.leading,spacing:9) {
-                HStack {
-                    Text(loadingSave61 ? "WCZYTAJ ZAPIS / 3 SLOTY" :
-                         "ZAPISZ ORBITĘ / 3 SLOTY")
-                        .font(.system(size:compact ? 13:16,weight:.bold,
-                                      design:.monospaced))
-                        .foregroundStyle(gold)
-                    Spacer()
-                    Button("WRÓĆ") {dismissSaves61()}
-                        .foregroundStyle(cyan)
-                }
-                ForEach(0..<3,id:\.self) { slot in
-                    let record=try? PC602OrbitSave61.read(slot:slot)
-                    let text=record.map { state in
-                        "MISJA \(String(format:"%02d",state.target)) · " +
-                        Date(timeIntervalSince1970:state.savedAt).formatted(
-                            date:.numeric,time:.shortened)
-                    } ?? "PUSTY SLOT"
-                    Button {
-                        if loadingSave61 {
-                            if driver.loadOrbitSlot61(slot) {
-                                onProfileRestored()
-                                dismissSaves61()
-                            } else {saveMessage61="WCZYTANIE NIEUDANE"}
-                        } else {
-                            if driver.saveOrbitSlot61(slot) {
-                                saveMessage61="ZAPISANO SLOT \(slot+1)"
-                            } else {saveMessage61="ZAPIS NIEUDANY"}
-                        }
-                    } label: {
-                        HStack {
-                            Text("SLOT \(slot+1)")
-                                .font(.system(size:compact ? 12:15,
-                                              weight:.bold,design:.monospaced))
-                            Spacer(minLength:6)
-                            Text(text)
-                                .font(.system(size:compact ? 10:12,
-                                              design:.monospaced))
-                                .lineLimit(1)
-                        }
-                        .foregroundStyle(.white)
-                        .padding(12)
-                        .background(Color(red:0.035,green:0.08,blue:0.12))
-                        .overlay(Rectangle().stroke(cyan.opacity(0.6)))
-                    }
-                    .disabled(loadingSave61 && record == nil)
-                    .accessibilityIdentifier("pc602-orbit-save61-slot-\(slot)")
-                }
-                if !saveMessage61.isEmpty {
-                    Text(saveMessage61)
-                        .font(.system(size:12,design:.monospaced))
-                        .foregroundStyle(gold)
-                }
-            }
-            .padding(14)
-            .frame(maxWidth:580)
-            .background(Color(red:0.008,green:0.028,blue:0.048))
-            .overlay(Rectangle().stroke(gold.opacity(0.7)))
-            .padding(12)
-        }
-        .zIndex(16)
-        .accessibilityIdentifier("pc602-orbit-three-slot-saves61")
     }
 
     private func dismissAtlas330() {
