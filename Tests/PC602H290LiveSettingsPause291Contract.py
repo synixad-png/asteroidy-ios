@@ -31,11 +31,12 @@ assert "visualSettings=CarbonisVisualSettings568.load()" in mission
 assert 'Button("PAUZA") {openOrbitOptions291()}' in page
 assert page.count('Button("PAUZA") {openOrbitOptions291()}')==2
 assert 'orbitPausePanel317' not in page and 'showingOrbitPause317' not in page
-assert 'if !driver.presentingH55 && !showingOrbitOptions291' in page
+assert 'if !driver.presentingH55 {' in page
 assert 'openOrbitOptions291()' in page
 assert 'driver.setPaused(previouslyPausedOptions291)' in page
-assert '"PAUZA / PLANETA GŁÓWNA"' in page
-assert 'Button("POWRÓT DO MENU GŁÓWNEGO")' in page
-assert 'openSaves61(load:false,' in page and 'openSaves61(load:true,' in page
+assert 'SourcePauseMenu568(' in page
+assert 'exitID:"pc602-orbit-return-w3"' in page
+assert 'onEditOrbitHud:{openOrbitHUDEditor291()}' in page
+assert 'openSaves61(load:false,' in page
 assert 'orbitDraft291=orbitLayout291' in page
 print("PASS source-regression: live ship scale, live projectile lights/colors, one unified interactive H290 PAUZA on touch/lock/pad")
