@@ -21,9 +21,10 @@ import Foundation
             guardian:.clear,talent:.unverified) ==
             .requiresTalentVerification)
         precondition(survival.lives==3)
-        // Active Tarcza145 protects BEFORE passive shield and guardian.
-        dome.tick(dt:1/120,held:true,playing:true,shipDown:false)
+        // PC608 active Tarcza145 protects; spare bars never passively guard hits.
         survival.shieldCharges=2
+        dome.tick(dt:1/120,held:true,playing:true,shipDown:false,
+                  reserve:&survival.shieldCharges)
         precondition(V.hit(cause:"ASTEROIDA",level:9,difficulty:.normal,
             player:.first,survival:&survival,body:&ship,dome:&dome,
             rescue:&rescue,cooperative:false,developerInfinite:false,
@@ -31,13 +32,14 @@ import Foundation
         precondition(survival.shieldCharges==2)
         precondition(survival.lives==3 && survival.invincible>=0.28)
         survival.invincible=0
-        dome.tick(dt:1,held:false,playing:true,shipDown:false)
+        dome.tick(dt:1,held:false,playing:true,shipDown:false,
+                  reserve:&survival.shieldCharges)
         precondition(V.hit(cause:"ASTEROIDA",level:9,difficulty:.normal,
             player:.first,survival:&survival,body:&ship,dome:&dome,
             rescue:&rescue,cooperative:false,developerInfinite:false,
             guardian:.unverified,talent:.unverified) ==
-            .applied(.shieldAbsorbed(remaining:1,cause:"ASTEROIDA")))
-        precondition(survival.shieldCharges==1 && survival.invincible==1)
+            .requiresGuardianVerification)
+        precondition(survival.shieldCharges==2 && survival.invincible==0)
         survival.invincible=0
         survival.shieldCharges=0
         precondition(V.hit(cause:"ASTEROIDA",level:9,difficulty:.normal,
@@ -132,6 +134,6 @@ import Foundation
         precondition(nextContact == .talentAbsorbed)
         precondition(burstVitals.hull==21 &&
                      burstSurvival.lives==3)
-        print("PASS: v556 hit ordering active Tarcza -> legacy shield -> guardian -> talents -> rescue -> lives; co-op/game guards")
+        print("PASS PC608: active Tarcza -> guardian -> talents -> rescue -> lives; no passive reserve interception")
     }
 }
