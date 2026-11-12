@@ -13,7 +13,6 @@ enum CombatFlatShield556 {
     enum Outcome:Equatable {
         case defenseUnverified
         case tarczaAbsorbed(RockResponse)
-        case purchasedShieldAbsorbed(RockResponse)
         case applyDamage
     }
     static func collide(ship:Vec2,angle:Float,
@@ -34,13 +33,9 @@ enum CombatFlatShield556 {
                 remainingCharges:max(0,purchasedShieldCharges),
                 invincibility:0))
         }
-        if purchasedShieldCharges>0 {
-            return .purchasedShieldAbsorbed(RockResponse(
-                position:ship+direction*(rockRadius+32),
-                velocity:direction*max(55,speed),
-                remainingCharges:purchasedShieldCharges-1,
-                invincibility:0.8))
-        }
+        // PC v608 removes the one-hit purchased shield rock shove.
+        // Spare charges are carried forward unchanged; without an
+        // actively held Tarcza, physics proceeds to real damage.
         return .applyDamage
     }
 }
