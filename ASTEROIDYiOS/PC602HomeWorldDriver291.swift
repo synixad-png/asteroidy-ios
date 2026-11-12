@@ -58,9 +58,11 @@ final class PC602HomeWorldDriver291:ObservableObject {
     private static func vanguardEquipment291(
         _ state:H55SourceMechanics580.State)
         ->PC602HomeFlight291.Equipment? {
-        guard state.valid,state.selectedShip==1 else{return nil}
+        guard state.valid,(1...2).contains(state.selectedShip),
+              H55SourceMechanics580.registeredModelName(
+                forShip:state.selectedShip) != nil else{return nil}
         return PC602HomeFlight291.Equipment(
-            craft:.vanguard,
+            craft:state.selectedShip==2 ? .bastion : .vanguard,
             engineLevel:state.engine,
             thrusterRank:state.thruster,
             stabilizerLevel:state.stabilizer)
@@ -74,12 +76,13 @@ final class PC602HomeWorldDriver291:ObservableObject {
         mechanics:H55SourceMechanics580.State)
         ->PC602HomeWeaponTest292.Settings? {
         guard Sector01Shop568.validate(shop),mechanics.valid,
-              mechanics.selectedShip==1,
+              (1...2).contains(mechanics.selectedShip),
               let gun=PC602HomeWeaponTest292.Weapon(rawValue:shop.weapon.rawValue)
         else{return nil}
         return PC602HomeWeaponTest292.Settings(
             weapon:gun,upgrade:shop.upgradeLevel,
             rapid:shop.rapidLevel,cooling:mechanics.cooling,
+            fireRateScale:mechanics.selectedShip==2 ? 0.96:1,
             fireRateTalent:1/(1+0.06*Float(mechanics.rateRank)),
             ionAmmo:shop.ionAmmo)
     }
@@ -94,7 +97,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
             shop:shop,mechanics:mechanics),
             let equipment=Self.vanguardEquipment291(mechanics)
         else {
-            error="H290 OBSŁUGUJE WYŁĄCZNIE WYPOSAŻONY VANGUARD"
+            error="H290: BRAK ZWERYFIKOWANEGO MODELU WYBRANEGO STATKU"
             return
         }
         let controls=SourceControls586.Profile.load()
@@ -118,10 +121,14 @@ final class PC602HomeWorldDriver291:ObservableObject {
             b.url(forResource:name,withExtension:ext,
                   subdirectory:"Assets") != nil
         }
+        let ship=H55SourceMechanics580.load().selectedShip
+        let playerModelReady=ship==1
+            ? exists("Vanguard431Source","mesh") &&
+              exists("Vanguard431Base","jpg")
+            : ship==2 && SourceBastion606.load() != nil
         return exists("PC602Home290HeightMap","bin") &&
                exists("PC602OrbitBelt51","bin") &&
-               exists("Vanguard431Source","mesh") &&
-               exists("Vanguard431Base","jpg") &&
+               playerModelReady &&
                exists("W3HomePlanet290OriginalGPU","bin") &&
                exists("W3HomePlanet290Base","dat") &&
                exists("W3HomePlanet293Glow","dat")
