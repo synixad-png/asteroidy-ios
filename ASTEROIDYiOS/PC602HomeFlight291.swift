@@ -238,8 +238,9 @@ struct PC602HomeFlight291 {
     /// state unchanged; replace only the source FlightDynamics298 settings.
     @discardableResult
     mutating func adoptVanguardEquipment(_ next:Equipment)->Bool {
-        guard equipment.craft == .vanguard,
-              next.craft == .vanguard,
+        guard (equipment.craft == .vanguard ||
+               equipment.craft == .bastion),
+              (next.craft == .vanguard || next.craft == .bastion),
               !next.miningDetached,
               (0...2).contains(next.engineLevel),
               (0...2).contains(next.thrusterRank),
