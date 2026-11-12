@@ -77,6 +77,9 @@ assert 'private func loadIntroCheckpoint61(' in app
 assert 'sourceSector01Setup=prepared' in app
 assert 'beginMissionIntro568(sector:1)' in app
 assert 'loadManualSave61(slot)' in app
+assert 'onLoadIntro61:{slot in loadManualSave61(slot)}' in app
+assert 'snapshot.isMissionIntro61' in page
+assert 'return onLoadIntro61(slot)' in page
 assert 'onSaveCheckpoint61:{ slot in' in app
 assert 'PC602OrbitSave61.store(checkpoint,slot:slot)' in app
 assert 'onSave:onSaveCheckpoint61' in read("Sector01Scene568.swift")
