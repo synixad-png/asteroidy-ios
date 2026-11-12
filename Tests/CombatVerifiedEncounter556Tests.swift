@@ -203,7 +203,7 @@ import Foundation
         var fatal=setup()
         fatal.firstGuardian=CombatGuardian37(owned:false)
         fatal.firstVitals=CombatTalentVitals78()
-        for impact in 1...3 {
+        for impact in 1...4 {
             if impact>1 {
                 fatal.encounter.rocks=[]
                 _=fatal.step(dt:3.2)
@@ -212,11 +212,14 @@ import Foundation
             }
             let frame=fatal.step(dt:1/120)
             precondition(frame.contacts == [.shipRock(0)])
-            if impact<3 {
+            if impact<4 {
                 precondition(frame.hitOutcomes == [
                     V.TeamOutcome(player:.first,outcome:.talentAbsorbed)])
                 precondition(frame.damageTransitions.isEmpty)
-                let expectedHull=impact==1 ? 53 : 21
+                // PC609 regenerates 6 armor points between 3.2s contacts.
+                // Thus hull takes 7, then 26, then 26, and the fourth
+                // collision finally causes the genuine life loss.
+                let expectedHull=impact==1 ? 53 : impact==2 ? 27 : 1
                 precondition(fatal.firstVitals!.hull==expectedHull)
                 precondition(fatal.firstVitals!.armor==0)
                 precondition(fatal.encounter.firstSurvival.lives==3)
@@ -235,14 +238,15 @@ import Foundation
         }
 
         // Three consecutive source lives in the *real* Physics68 encounter
-        // are lost only after three armor/hull impacts each. Fatal contacts
+        // are lost only after FOUR hits each, since v609 regenerates 6 armor
+        // points during every 3.2s gap. Fatal contacts
         // reset vitals and the final contact transitions to GameOver, not a
         // fourth respawn. Unknown defenses remain explicitly opt-in.
         var campaignDeaths=setup()
         campaignDeaths.firstGuardian=CombatGuardian37(owned:false)
         campaignDeaths.firstVitals=CombatTalentVitals78()
         for life in 1...3 {
-            for hitNo in 1...3 {
+            for hitNo in 1...4 {
                 if life>1 || hitNo>1 {
                     campaignDeaths.encounter.rocks=[]
                     _=campaignDeaths.step(dt:3.2)
@@ -251,7 +255,7 @@ import Foundation
                 }
                 let frame=campaignDeaths.step(dt:1/120)
                 precondition(frame.contacts == [.shipRock(0)])
-                if hitNo<3 {
+                if hitNo<4 {
                     precondition(frame.hitOutcomes == [
                         V.TeamOutcome(player:.first,outcome:.talentAbsorbed)])
                     precondition(frame.damageTransitions.isEmpty)
