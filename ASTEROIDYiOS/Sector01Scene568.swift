@@ -90,9 +90,6 @@ struct Sector01Scene568: View {
     private func persistConsumables580() {
         Sector01Shop568.persistConsumables(
             ionAmmo:session.game.ionAmmo,bombs:session.game.bombs)
-        // PC v609 checkpoints preserve the actual current Tarcza bar.
-        // Never write on the Metal frame/render thread.
-        _=SourceTarcza145.savePersistentEnergy(session.game.tarcza145.energy)
     }
     private func exitMission568() {
         session.release()
