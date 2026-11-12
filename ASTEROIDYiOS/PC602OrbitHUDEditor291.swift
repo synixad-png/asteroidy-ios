@@ -244,7 +244,7 @@ struct PC602OrbitHUDDocument291:FileDocument {
         guard layout.valid else {throw PC602OrbitHUDLayout291.LayoutError.invalid}
         let encoder=JSONEncoder()
         encoder.outputFormatting=[.prettyPrinted,.sortedKeys]
-        return FileWrapper(regularFileContents:try encoder.encode(layout))
+        return FileWrapper(regularFileWithContents:try encoder.encode(layout))
     }
 }
 
