@@ -9,15 +9,18 @@ import SwiftUI
 /// This is not a second mesh or a generated lookalike. It uses the very same
 /// .mesh and JPEG already used for native Vanguard431 gameplay/intro.
 struct W3HomeShipPreview568: UIViewRepresentable {
-    static let isAvailable: Bool = {
+    static var isAvailable: Bool {
         func file(_ name: String,_ ext: String) -> URL? {
             Bundle.main.url(forResource:name,withExtension:ext)
                 ?? Bundle.main.url(forResource:name,withExtension:ext,
                                    subdirectory:"Assets")
         }
+        if H55SourceMechanics580.load().selectedShip==2 {
+            return SourceBastion606.load() != nil
+        }
         return file("Vanguard431Source","mesh") != nil
             && file("Vanguard431Base","jpg") != nil
-    }()
+    }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
@@ -54,6 +57,7 @@ struct W3HomeShipPreview568: UIViewRepresentable {
             private let buffer: MTLBuffer
             private let count: Int
             private let base: MTLTexture
+            private let selectedShip:Int
             private let started = ProcessInfo.processInfo.systemUptime
             private var proofScheduled=false
 
@@ -79,13 +83,29 @@ struct W3HomeShipPreview568: UIViewRepresentable {
                 guard let queue=device.makeCommandQueue()
                 else {throw SourceError.metal}
                 commandQueue=queue
-                let (source,_)=try Self.verified(
-                    "Vanguard431Source","mesh",
-                    SourceVanguardMesh431.exactMeshSHA256)
-                let (textureBytes,textureURL)=try Self.verified(
-                    "Vanguard431Base","jpg",
-                    SourceVanguardMesh431.exactBaseJPEG_SHA256)
-                let original=try SourceVanguardMesh431(data:source)
+                selectedShip=H55SourceMechanics580.load().selectedShip
+                let original:SourceBakedShipMesh
+                let textureBytes:Data
+                let textureURL:URL?
+                if selectedShip==2 {
+                    guard let bastion=SourceBastion606.load() else {
+                        throw SourceError.missing
+                    }
+                    original=bastion.mesh
+                    textureBytes=bastion.jpeg
+                    textureURL=nil
+                } else {
+                    guard selectedShip==1 else{throw SourceError.missing}
+                    let (source,_)=try Self.verified(
+                        "Vanguard431Source","mesh",
+                        SourceVanguardMesh431.exactMeshSHA256)
+                    let (sourceJPEG,sourceURL)=try Self.verified(
+                        "Vanguard431Base","jpg",
+                        SourceVanguardMesh431.exactBaseJPEG_SHA256)
+                    original=try SourceBakedShipMesh(data:source)
+                    textureBytes=sourceJPEG
+                    textureURL=sourceURL
+                }
                 guard let vb=original.vertices.withUnsafeBytes({
                     $0.baseAddress.flatMap {
                         device.makeBuffer(bytes:$0,
@@ -96,11 +116,17 @@ struct W3HomeShipPreview568: UIViewRepresentable {
                 buffer=vb
                 count=original.vertexCount
                 let textureLoader=MTKTextureLoader(device:device)
-                base=try textureLoader.newTexture(
-                    URL:textureURL, options:[
-                        .SRGB:false,.generateMipmaps:false,
-                        .origin:MTKTextureLoader.Origin.topLeft
-                    ])
+                let options:[MTKTextureLoader.Option:Any]=[
+                    .SRGB:false,.generateMipmaps:false,
+                    .origin:MTKTextureLoader.Origin.topLeft
+                ]
+                if let textureURL {
+                    base=try textureLoader.newTexture(
+                        URL:textureURL,options:options)
+                } else {
+                    base=try textureLoader.newTexture(
+                        data:textureBytes,options:options)
+                }
                 guard !textureBytes.isEmpty else {throw SourceError.missing}
                 let library=try device.makeDefaultLibrary(bundle:.main)
                 guard let vertex=library.makeFunction(name:"sourceVanguardVertex431"),
@@ -195,18 +221,23 @@ struct W3HomeShipPreview568: UIViewRepresentable {
                         "ASTEROIDY_W3_MENU_VERIFY"]=="1" {
                     proofScheduled=true
                     let originalCount=count
+                    let id=selectedShip
                     command.addCompletedHandler { result in
                         let obj:[String:Any]=[
-                            "source":"Vanguard431-default-ShipType1-v568",
+                            "source":id==2 ? "Bastion-PC609-ShipType2" :
+                                "Vanguard431-default-ShipType1-v568",
                             "gpuCommandBufferCompleted":result.status == .completed,
                             "vertexCount":originalCount,
-                            "meshSHA256":SourceVanguardMesh431.exactMeshSHA256,
-                            "skinSHA256":SourceVanguardMesh431.exactBaseJPEG_SHA256,
+                            "meshSHA256":id==2 ? SourceBastion606.meshSHA256 :
+                                SourceVanguardMesh431.exactMeshSHA256,
+                            "skinSHA256":id==2 ? SourceBastion606.jpegSHA256 :
+                                SourceVanguardMesh431.exactBaseJPEG_SHA256,
                             "originalW3PreviewScale":0.34,
                             "simulatorOnly":true
                         ]
                         OriginalRenderProofWriter568.save(
-                            obj,filename:"ASTEROIDY_W3_Vanguard431_GPUProof.json")
+                            obj,filename:id==2 ? "ASTEROIDY_W3_Bastion606_GPUProof.json" :
+                                        "ASTEROIDY_W3_Vanguard431_GPUProof.json")
                     }
                 }
                 command.commit()
