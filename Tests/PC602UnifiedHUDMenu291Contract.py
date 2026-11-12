@@ -19,12 +19,13 @@ for source in (editor,combat_editor):
 for anchor in ("OrbitEditorTouchCanvas291(","onSelect?(id)",
                "onMove?(start.element.id","onScale?(start.id",
                "private func hit(_ point:CGPoint)","id.hasPrefix(\"control.\")",
-               "max(44,r.width)","PC602OrbitHUDLayout291.decodeJSON",
+               "PC602OrbitHUDLayout291.hit(point:point,frames:frames,",
+               "PC602OrbitHUDLayout291.decodeJSON",
                ".fileImporter(", ".fileExporter(","WIDOCZNY",
                "PRZYWRÓĆ TEN ELEMENT","PRZYWRÓĆ CAŁY UKŁAD PC v602"):
     assert anchor in editor,anchor
 for anchor in ("measuredFrames:orbitFrames291",
-               "navigationFrame:navigationHitRect291(",
+               "navigationFrames:navigationHitRects291(",
                'marker.frame(in:.named("orbitHUD291"))',
                'key:OrbitHUDFramePreference291.self',
                '.onPreferenceChange(OrbitHUDFramePreference291.self)',
@@ -47,4 +48,16 @@ assert 'missionSettingsScreen568(compact:compact)' in mission
 assert 'sector01-settings-planetarium-import' in mission
 assert 'minHeight:compact ? 50 : 54' in settings
 assert 'visible=try data.decodeIfPresent(Bool.self,forKey:.visible) ?? true' in layout
+assert 'static let ids=legacyIDs+[' in layout
+assert 'Set(Self.legacyIDs)' in layout
+assert 'static func hit(point:CGPoint,frames:[String:CGRect],layout:Self)->String?' in layout
+assert 'Self.scaleRange(for:$0.id).contains($0.scale)' in layout
+for key in ("hud.mission.heading","hud.mission.distance","hud.telemetry.speed",
+            "hud.dock.status","hud.navigation.label","hud.warning","hud.error"):
+    assert key in layout and f'orbitItem291("{key}",screen:screen)' in orbit,key
+assert "onMove?(start.element.id" in editor
+assert "pinchStart=(selection,layout.item(selection).scale)" in editor
+assert "let ordered=PC602OrbitHUDLayout291.ids.filter{$0 != selection}" in editor
+assert 'value:id.hasPrefix("hud.navigation") ? [:]' in orbit
+assert 'navigationFrames:navigationHitRects291(' in orbit
 print("PASS unified PC602: PAUZA and 3 slots, H290 touch select/drag/pinch, real layout measurements, JSON migration, larger controls")
