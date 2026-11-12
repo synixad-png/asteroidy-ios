@@ -114,8 +114,8 @@ import Foundation
                            shooting:false,dt:1/120)
         check(expiredPickup.tokenPickups.isEmpty && expiredPickup.ionAmmo==0,
               "expired 26-second PC586 consumable cannot be collected")
-        // PC v586 shield & boost models are REAL collectible abilities.
-        // Do not silently replace Tarcza145 with purchased passive shields.
+        // PC v608 GLB shield pickup restores a full reserve bar and
+        // must never silently add 20 units to the active energy gauge.
         var legacy=CarbonisCombat568(prepared)
         legacy.tarcza145.energy=80
         legacy.tokenPickups=[
@@ -131,9 +131,9 @@ import Foundation
         legacy.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
                     shooting:false,dt:1/120)
         check(legacy.tokenPickups.isEmpty &&
-              legacy.tarcza145.energy==100 &&
-              legacy.boost71.charges==1,
-              "two original GLB pickups update genuine Tarcza145/Boost71 inventory")
+              legacy.tarcza145.energy==80 &&
+              legacy.shieldCharges==1 && legacy.boost71.charges==1,
+              "PC608 shield GLB adds one reserve, not 20 active energy")
         check(legacy.drainOriginalAudioEvents568().filter{$0==30}.count==2,
               "shield/boost pickups share source audio event path")
 
@@ -154,7 +154,7 @@ import Foundation
               activeShield.shieldCharges==1 &&
               activeShield.armor==25 && activeShield.hull==60 &&
               activeShield.invincible>=0.28,
-              "active Tarcza145 intercepts one hit before passive shop shield")
+              "held Tarcza145 absorbs 35 energy without spending reserves")
         activeShield.setShieldHeld(false)
         check(!activeShield.tarcza145.active,
               "releasing touch shield stops drain/absorption immediately")
@@ -510,9 +510,9 @@ import Foundation
         upgraded.suffer(18)
         check(upgraded.drainOriginalAudioEvents568().isEmpty,
               "source shield intercept makes no fatal explosion sound")
-        check(upgraded.shieldCharges==0 && upgraded.armor==25 &&
-              upgraded.hull==60 && upgraded.invincible==1,
-              "real source shop shield intercepts first hit")
+        check(upgraded.shieldCharges==1 && upgraded.armor==7 &&
+              upgraded.hull==60 && upgraded.invincible==0.8,
+              "PC608: unshielded hit damages armor but does not spend 1/3 reserves")
         var rockProfile=Sector01Shop568.State()
         rockProfile.shieldCharges=1
         var equipped=prepared
@@ -526,14 +526,10 @@ import Foundation
             size:3,tier:0,health:4)]
         shieldedRock.step(move:Vec2(x:0,y:0),
             aim:Vec2(x:0,y:0),shooting:false,dt:1/120)
-        check(shieldedRock.shieldCharges==0 &&
+        check(shieldedRock.shieldCharges==1 &&
               abs(shieldedRock.invincible-0.8)<0.01 &&
-              shieldedRock.armor==25,
-              "source bought shield absorbs rock collision for 0.8 seconds")
-        check(CarbonisCombat568.distance(
-            shieldedRock.flight.position,
-            shieldedRock.rocks[0].position)>40,
-            "source shield pushes rock to radius+32, not overlapping the ship")
+              shieldedRock.armor==7,
+              "PC608: unshielded rock contact hits armor, reserves remain 1/3")
 
         upgraded.invincible=0
         upgraded.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:1),
