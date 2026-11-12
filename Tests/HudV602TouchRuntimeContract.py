@@ -142,7 +142,14 @@ assert 'Button("▶") {selectNeighbor600(1)}' in editor
 w3=read("W3MainMenu568.swift")
 hangar=read("H55ScenePage580.swift")
 assert w3.index('Button("WSTECZ")') > w3.index('if item == .settings {')
-assert scene.index('Button("‹ WRÓĆ DO PAUZY")') < scene.index('private var movement')
+assert scene.index('Button("‹ WRÓĆ DO PAUZY")') < scene.index('SourceCombatTouchZones568(')
+assert 'onMove:{session.input(move:$0)}' in scene
+assert 'onAim:{session.input(aim:$0)}' in scene
+assert 'onFire:{session.input(shooting:$0)}' in scene
+controls=read("SourceCombatTouchZones568.swift")
+assert 'Float(value.translation.width)/110' in controls
+assert 'Float(value.translation.width)/100' in controls
+assert 'onFire(true)' in controls and 'onFire(false)' in controls
 assert hangar.index('Button("‹ WRÓĆ DO PAUZY")') < hangar.index('private func renderedHangar')
 # Real glove brightness is persisted, visible and applied to both original
 # hand-material copies, without ever tinting the EXP-01 weapon.

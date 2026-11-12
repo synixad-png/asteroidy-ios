@@ -38,6 +38,8 @@ jobs:
           python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets | tee reports/player-ship.txt
           python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required | tee reports/w3-menu.txt
           python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets | tee reports/carbonis.txt
+          python3 Tools/stage_pc602_planetarium.py | tee reports/planetarium-source.txt
+          python3 Tests/HudPlanetariumIntegration600Contract.py | tee reports/planetarium-isolation.txt
           python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets | tee reports/home-source.txt
           python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets | tee reports/820-asteroids.txt
           python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin | tee reports/belt-tests.txt
@@ -80,13 +82,17 @@ jobs:
             'W3HomePlanet293Glow.dat','Vanguard431Source.mesh',
             'Vanguard431Base.jpg','Sector01CarbonisHeightMap.dat',
             'W3Background568Original.dat','W3Logo568Original.dat',
-            'default.metallib']
+            'default.metallib','planetarium.glb']
           missing=[x for x in required if not (app/x).is_file()]
           assert not missing, 'Missing ORIGINAL H290/PC602 files in app: '+str(missing)
           assert (app/'PC602Home290HeightMap.bin').stat().st_size == 512*256*4
           assert (app/'PC602OrbitBelt51.bin').stat().st_size == 50403776
           assert hashlib.sha256((app/'PC602Home290HeightMap.bin').read_bytes()).hexdigest() == '12d56a99634e4fc28ded9e03bcac34de05020750cc18e86d1086db8542b2d18d'
           assert hashlib.sha256((app/'PC602OrbitBelt51.bin').read_bytes()).hexdigest() == '553336e3f071bbb09cf6ba4b1b7cbc36b6bc346537cf8fb06343b90f807f4f63'
+          original=app/'planetarium.glb'
+          assert original.stat().st_size==3228900
+          assert hashlib.sha256(original.read_bytes()).hexdigest()=='71ca9ff24e044a831a5c7197e343594dd1fd801284af6231870570b35ad43860'
+          print('PASS original 159-channel HUD planetarium in actual iPhone/iPad bundle')
           print('PASS H290+820 originals, actual app bundles iPhone/iPad+Metal')
           PY
           mkdir -p distribution/Payload
@@ -96,6 +102,7 @@ jobs:
           (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa Payload)
           python3 Tools/verify_ipa.py ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-structure.txt
           python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa | tee reports/ipa-pc586-complete.txt
+          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa | tee reports/ipa-planetarium-verified.txt
           python3 - <<'PY' | tee reports/final-archive-check.txt
           import zipfile,hashlib
           p='ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa'
@@ -121,6 +128,9 @@ jobs:
             reports/source-commit.txt
             reports/app-bundle-audit.txt
             reports/ipa-structure.txt
+            reports/ipa-planetarium-verified.txt
+            reports/planetarium-source.txt
+            reports/planetarium-isolation.txt
             reports/final-archive-check.txt
             reports/size.txt
           if-no-files-found: error

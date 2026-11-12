@@ -66,5 +66,22 @@ assert "GLTFSCNSceneSource(" not in renderer
 assert "sourcePickupMetal586" not in metal.lower()
 assert "hudLiveCapsules600=hudCapsules600.snapshot" in session
 assert "HudPlanetariumAsset600.availableURL()" in renderer
+# Release guard: separate Metal HUD pass cannot be silently omitted from IPA.
+release=(root/".github/workflows/build-ios-pc602-h290-user-test-ipa-20261112.yml").read_text()
+native=(root/".github/workflows/verify-pc602-home-metal291.yml").read_text()
+sim=(root/".github/workflows/verify-pc602-home-simulator291.yml").read_text()
+stage=(root/"Tools/stage_pc602_planetarium.py").read_text()
+gate=(root/"Tools/verify_pc602_planetarium_ipa.py").read_text()
+for workflow in (release,native,sim):
+    assert "python3 Tools/stage_pc602_planetarium.py" in workflow
+    assert "python3 Tests/HudPlanetariumIntegration600Contract.py" in workflow
+assert "python3 Tools/verify_pc602_planetarium_ipa.py" in release
+assert "'default.metallib','planetarium.glb'" in release
+assert 'original=app/"planetarium.glb"' in native
+assert "hashlib.sha256(data)" in stage
+assert "HUD_PLANETARIUM_PREMIUM_48S_LOOP" in stage
+assert "archive.read(expected)" in gate
+assert "bundled != source" in gate
+assert "HudPlanetariumMetal600(" not in (ios/"PC602HomeScene291.swift").read_text()
 assert "static let expectedSize = 3_228_900" in asset
 print("PASS native HUD planetarium: original 20 meshes/21 primitives, 91 mesh nodes, 159 TRS tracks, common native Metal drawable and isolated HUD depth")

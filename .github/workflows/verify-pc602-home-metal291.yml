@@ -18,6 +18,9 @@ on:
       - ASTEROIDYiOS/PC602HomeScene291.swift
       - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
+      - Tools/stage_pc602_planetarium.py
+      - SourceResources/PC602/planetarium.glb.xz
+      - Tests/HudPlanetariumIntegration600Contract.py
       - ASTEROIDYiOS/PC602HomeWeaponTest292.swift
       - ASTEROIDYiOS/PC602HomeShotGeometry292.swift
       - ASTEROIDYiOS/PC602OrbitHud330.swift
@@ -56,6 +59,9 @@ on:
       - ASTEROIDYiOS/PC602HomeScene291.swift
       - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
+      - Tools/stage_pc602_planetarium.py
+      - SourceResources/PC602/planetarium.glb.xz
+      - Tests/HudPlanetariumIntegration600Contract.py
       - ASTEROIDYiOS/PC602HomeWeaponTest292.swift
       - ASTEROIDYiOS/PC602HomeShotGeometry292.swift
       - ASTEROIDYiOS/PC602OrbitHud330.swift
@@ -116,6 +122,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 Tools/stage_pc602_planetarium.py
+          python3 Tests/HudPlanetariumIntegration600Contract.py
           python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin
@@ -154,6 +162,11 @@ jobs:
           info=plistlib.loads((app/"Info.plist").read_bytes())
           assert set(info["UIDeviceFamily"])=={1,2}
           assert (app/"default.metallib").is_file()
+          import hashlib
+          original=app/"planetarium.glb"
+          assert original.is_file(), "Original PC602 HUD planetarium missing from iOS app"
+          assert original.stat().st_size==3228900
+          assert hashlib.sha256(original.read_bytes()).hexdigest()=="71ca9ff24e044a831a5c7197e343594dd1fd801284af6231870570b35ad43860"
           assert (app/"W3HomePlanet290OriginalGPU.bin").is_file()
           assert (app/"PC602Home290HeightMap.bin").is_file()
           assert (app/"PC602OrbitBelt51.bin").is_file()

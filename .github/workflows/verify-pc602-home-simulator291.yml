@@ -32,6 +32,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p diagnostics
+          python3 Tools/stage_pc602_planetarium.py
+          python3 Tests/HudPlanetariumIntegration600Contract.py
           python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required
           python3 Tools/prepare_v568_w3_home_planet290.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
