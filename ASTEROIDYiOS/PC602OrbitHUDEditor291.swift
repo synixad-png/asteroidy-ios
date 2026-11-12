@@ -184,8 +184,9 @@ struct PC602OrbitHUDEditor291:View {
         .accessibilityIdentifier("pc602-orbit-hud-inspector")
     }
     private var toolbar:some View {
+        // A content-sized tool strip: never cover the actual bottom-left
+        // dock info or bottom-right WEJDŹ button with a full-screen spacer.
         VStack(spacing:0) {
-            Spacer(minLength:0)
             HStack(spacing:8) {
                 Button("◀") {selectNeighbor(-1)}
                     .accessibilityIdentifier("pc602-orbit-hud-previous")
@@ -245,7 +246,15 @@ struct PC602OrbitHUDEditor291:View {
                     })
                     .frame(width:geo.size.width,height:geo.size.height)
                     .accessibilityIdentifier("pc602-orbit-hud-touch-canvas")
+                // H290's source WEJDŹ sits in the bottom-right corner.
+                // The previous full-width bottom toolbar blocked its touch
+                // target. Keep all controls while docking the strip only
+                // in the free center-bottom region of the viewport.
                 toolbar
+                    .frame(width:min(660,max(360,geo.size.width*0.62)))
+                    .frame(maxWidth:.infinity,maxHeight:.infinity,
+                           alignment:.bottom)
+                    .zIndex(10)
                 if inspectorOpen {
                     inspector
                         .frame(width:min(340,max(265,geo.size.width*0.38)),
