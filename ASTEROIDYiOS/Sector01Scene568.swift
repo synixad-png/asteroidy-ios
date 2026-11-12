@@ -479,7 +479,8 @@ struct Sector01Scene568: View {
                 if showingSaveSlots61 && userPaused &&
                     session.hud.phase == .playing {
                     PC602SaveSlots61View(
-                        allowSave:true,initialAction:0,
+                        allowSave:true,confirmActiveLoad:true,
+                        initialAction:0,
                         onSave:onSaveCheckpoint61,
                         onLoad:onLoadSave61,
                         onClose:{showingSaveSlots61=false})
