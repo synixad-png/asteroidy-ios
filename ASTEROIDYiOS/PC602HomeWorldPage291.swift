@@ -43,10 +43,10 @@ struct PC602HomeWorldPage291:View {
         _ id:String,screen:GeometryProxy,@ViewBuilder content:()->V
     )->some View {
         let item=displayedOrbitLayout291.item(id)
+        // Measure the SAME transformed view the player sees.  A background
+        // attached AFTER offset/scale measures the original layout slot,
+        // so after dragging the hit rectangle stayed behind the button.
         return content()
-            .scaleEffect(item.scale)
-            .offset(x:CGFloat(item.x)*screen.size.width/1280,
-                    y:CGFloat(item.y)*screen.size.height/720)
             .background {
                 // Mission HudEditorGeometry computes frames only when F6
                 // is open. Do the same here: do not drive 27 changing
@@ -61,6 +61,9 @@ struct PC602HomeWorldPage291:View {
                     .allowsHitTesting(false)
                 }
             }
+            .scaleEffect(item.scale)
+            .offset(x:CGFloat(item.x)*screen.size.width/1280,
+                    y:CGFloat(item.y)*screen.size.height/720)
             .opacity(item.visible ? 1 : 0)
             .allowsHitTesting(!showingOrbitHUD291 && item.visible)
     }
@@ -161,11 +164,16 @@ struct PC602HomeWorldPage291:View {
                             navigationFrames:navigationHitRects291(
                                 screen:screen,flight:flight),
                             onSave:{
-                                guard orbitDraft291.save() else{return}
+                                // Do not exit the editor or report success
+                                // unless the entire layout round-trips from
+                                // actual persistent storage.
+                                guard orbitDraft291.save(),
+                                      PC602OrbitHUDLayout291.load()==orbitDraft291
+                                else{return false}
                                 orbitLayout291=orbitDraft291
                                 showingOrbitHUD291=false
-                                // Same as the mission editor: return into
-                                // USTAWIENIA / INTERFEJS, not gameplay.
+                                // Return to USTAWIENIA / INTERFEJS.
+                                return true
                             },
                             onCancel:{
                                 orbitDraft291=orbitLayout291
