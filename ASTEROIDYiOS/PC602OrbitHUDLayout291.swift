@@ -84,7 +84,7 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
         Set(elements.map(\.id))==Set(Self.ids) &&
         elements.allSatisfy {
             $0.x.isFinite && $0.y.isFinite && $0.scale.isFinite &&
-            (-600...600).contains($0.x) && (-360...360).contains($0.y) &&
+            (-1280...1280).contains($0.x) && (-720...720).contains($0.y) &&
             Self.scaleRange(for:$0.id).contains($0.scale) &&
             (!$0.id.hasPrefix("control.") || $0.visible)
         }
