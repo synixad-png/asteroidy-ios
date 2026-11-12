@@ -24,7 +24,9 @@ permissions:
 jobs:
   genuine-orbit-ui:
     name: Real iPad simulator - W3, H290 HUD direct tap/drag and back
-    runs-on: macos-15-intel
+    # Apple Silicon simulator runner avoids the CoreSimulator 60s timeout
+    # observed on saturated macos-15-intel before XCUITest even launched.
+    runs-on: macos-15
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -51,9 +53,18 @@ jobs:
           if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
           xcodegen generate --spec project.yml
           python3 - <<'PY'
-          import sys
+          import sys, subprocess
           sys.path.insert(0, 'Tools')
           from run_original_ios_simulator_capture import available_devices
+          # CoreSimulator service can take time to start on a fresh runner;
+          # do not misreport startup infrastructure as an editor failure.
+          for attempt in range(2):
+              try:
+                  subprocess.run(["xcrun","simctl","list","-j","devices","available"],
+                                 check=True,capture_output=True,timeout=120)
+                  break
+              except (subprocess.SubprocessError,TimeoutError) as error:
+                  print("CoreSimulator warmup",attempt+1,str(error))
           _, name, udid, state = available_devices(('IPAD',))['IPAD']
           with open('diagnostics/device-udid.txt', 'w') as f:
               f.write(udid+'\n')
