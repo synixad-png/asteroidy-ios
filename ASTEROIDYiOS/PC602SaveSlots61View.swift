@@ -88,10 +88,13 @@ struct PC602SaveSlots61View:View {
                             .fontWeight(.bold)
                         Spacer(minLength:8)
                         Button("WSTECZ") {onClose()}
+                            .frame(minWidth:100,minHeight:52)
+                            .background(Color(red:0.05,green:0.15,blue:0.22),
+                                        in:RoundedRectangle(cornerRadius:5))
                             .accessibilityIdentifier("pc602-save61-back")
                     }
                     Text("TRZY SLOTY / DANE Z PRAWIDŁOWYCH ZAPISÓW")
-                        .font(.system(size:compact ? 9:12,design:.monospaced))
+                        .font(.system(size:compact ? 14:16,design:.monospaced))
                     ForEach(0..<3,id:\.self) { slot in
                         Button {
                             selected=slot
@@ -102,15 +105,16 @@ struct PC602SaveSlots61View:View {
                                     .fontWeight(.bold)
                                 Text(caption(slot))
                                     .lineLimit(1)
-                                    .minimumScaleFactor(0.55)
+                                    .minimumScaleFactor(0.90)
                                 Spacer(minLength:0)
                             }
                             .frame(maxWidth:.infinity,
-                                   minHeight:compact ? 35:54,alignment:.leading)
+                                   minHeight:compact ? 52:64,alignment:.leading)
                             .padding(.horizontal,12)
                             .background(selected==slot
                                 ? Color(red:34/255,green:35/255,blue:36/255)
-                                : Color(red:4/255,green:18/255,blue:29/255))
+                                : Color(red:4/255,green:18/255,blue:29/255),
+                                in:RoundedRectangle(cornerRadius:5))
                             .overlay(Rectangle().stroke(
                                 selected==slot ? .yellow : .gray.opacity(0.35),
                                 lineWidth:selected==slot ? 2:1))
@@ -125,22 +129,23 @@ struct PC602SaveSlots61View:View {
                             }
                             .disabled(action==0 && !allowSave)
                             .frame(maxWidth:.infinity,
-                                   minHeight:compact ? 35:45)
-                            .background(Color(red:5/255,green:19/255,blue:30/255))
-                            .overlay(Rectangle().stroke(.yellow.opacity(0.6),
-                                                       lineWidth:1))
+                                   minHeight:compact ? 52:60)
+                            .background(Color(red:5/255,green:19/255,blue:30/255),
+                                        in:RoundedRectangle(cornerRadius:5))
+                            .overlay(RoundedRectangle(cornerRadius:5)
+                                .stroke(.yellow.opacity(0.6),lineWidth:1))
                             .accessibilityIdentifier("pc602-save61-action-\(action)")
                         }
                     }
                     Text(status.isEmpty ? "WYBIERZ SLOT I OPERACJĘ" : status)
-                        .font(.system(size:compact ? 9:11,design:.monospaced))
+                        .font(.system(size:compact ? 14:16,design:.monospaced))
                         .foregroundStyle(.yellow).lineLimit(2)
                 }
-                .font(.system(size:compact ? 11:14,
+                .font(.system(size:compact ? 15:18,
                               weight:.semibold,design:.monospaced))
                 .foregroundStyle(.white)
                 .buttonStyle(.plain)
-                .padding(compact ? 12:20)
+                .padding(compact ? 14:22)
                 .frame(maxWidth:790)
                 .background(Color(red:5/255,green:17/255,blue:28/255))
                 .overlay(Rectangle().stroke(.yellow.opacity(0.6)))
@@ -156,9 +161,10 @@ struct PC602SaveSlots61View:View {
                                 .accessibilityIdentifier("pc602-save61-confirm")
                         }
                     }
-                    .font(.system(size:compact ? 12:16,design:.monospaced))
+                    .font(.system(size:compact ? 15:18,design:.monospaced))
                     .foregroundStyle(.white)
                     .buttonStyle(.bordered)
+                    .controlSize(.large)
                     .padding(18)
                     .frame(maxWidth:600)
                     .background(Color(red:5/255,green:17/255,blue:28/255))
