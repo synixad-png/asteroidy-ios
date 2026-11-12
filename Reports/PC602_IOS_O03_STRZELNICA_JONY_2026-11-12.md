@@ -19,3 +19,7 @@
 Test §PC602HomeWeapons292Tests.swift§ rozszerzono o 5 rodzajów broni × 3 stopnie × 3 stany amunicji (0, 1, 300), weryfikację obrażeń, przebijania, kolejnych trzech salw i nieubywania jonów; źródłowe kolory, fizyka i render pocisków pozostają bez zmian. Rzeczywiste wykonanie testu i kompilacji iOS wymaga potwierdzenia w CI — **nie deklarować PASS przed wynikiem**. Pełne deterministyczne porównanie geodezyjnych pocisków z uruchomionym oryginalnym C# nadal jest wymagane do formalnego odbioru O03.
 
 **Stan O03: W TOKU, kod częściowo poprawiony, brak pełnego odbioru.**
+
+## Dodatkowa weryfikacja O03 — test 810 kombinacji
+
+Rozbudowano `Tests/PC602HomeWeapons292Tests.swift` o niezależne oczekiwane wartości z dokładnych równań oryginalnego `Game.cs:123–133`, `HomeFlight291.cs:55–62`, `Modules97.cs:15` oraz `Talents78.cs:23` PC v602 (zweryfikowane oryginalne źródła). Test obejmuje 5 rodzajów broni × 3 stopnie mocy × 3 poziomy szybkostrzelności × 3 chłodzenia × 3 talenty tempa × stany jonów 0/1, razem 810 przypadków. Sprawdza interwał, liczbę pocisków, obrażenia i przebijanie, czas życia, prędkość oraz zachowanie liczby jonów. **Uwaga:** to źródłowy numeryczny test równań zaimplementowany w Swift, a nie osobne wykonanie kodu C# oryginału. Do pełnego odbioru O03 pozostają niezależne porównanie C# ↔ Swift oraz testy interaktywne na urządzeniu. 
