@@ -52,8 +52,8 @@ struct W3MainMenu568: View {
     let openCampaignOnEntry: Bool
     let startNewGame: (SourceNewGameSelection568)->Bool
     let openOrbit:()->String?
-    let continueOrbit:()->String?
     let loadManualOrbit:(Int)->Bool
+    let continueOrbit:()->String?
     let restoreArchivedGame:(URL)->Bool
     @State private var restoreCandidate568:URL?
     @State private var confirmRestore568=false
