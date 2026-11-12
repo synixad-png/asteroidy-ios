@@ -41,24 +41,18 @@ enum CombatVerifiedHit556 {
               !survival.bossArrival && !survival.currentDown &&
               survival.invincible<=0 && survival.lives>0
         else {return .ignored}
-        // HitByBoss first handles developer invulnerability, then active
-        // energy dome, then purchased one-hit shields.
+        // PC v608 HitByBoss: developer guard, then the held energy dome.
+        // Spare OSŁONY bars cannot intercept individual hits.
         if developerInfinite {
             survival.invincible=0.8
             return .developerProtected
         }
-        if dome.absorb(invincible:&survival.invincible) {
+        if dome.absorb(invincible:&survival.invincible,
+                       reserve:&survival.shieldCharges) {
             return .activeTarczaAbsorbed
         }
         let damage=CombatSurvival96.collisionDamage(level:level,
                                                      difficulty:difficulty)
-        // BossTunnelGame.HitByBoss absorbs any ApplyHit96 collision with
-        // a purchased shield before entering Game.Damage(). Invulnerability
-        // lasts 1s and lives stay unchanged; Game.Damage only clears charges
-        // when no shield intercepted the hit.
-        if let absorbed=survival.absorbPurchasedHitByBoss(cause:cause) {
-            return .applied(absorbed)
-        }
         // Game.Damage checks guardian, then talents, then TryDown65.
         // Tarcza145 has just been checked by HitByBoss, so with no state
         // mutation between the calls its second check cannot succeed.
@@ -139,7 +133,8 @@ enum CombatVerifiedHit556 {
             survival.invincible=0.8
             return .developerProtected
         }
-        if dome.absorb(invincible:&survival.invincible) {
+        if dome.absorb(invincible:&survival.invincible,
+                       reserve:&survival.shieldCharges) {
             return .activeTarczaAbsorbed
         }
         if let vitals {
