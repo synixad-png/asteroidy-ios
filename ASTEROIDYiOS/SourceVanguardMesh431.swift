@@ -34,7 +34,10 @@ struct SourceVanguardMesh431 {
     let vertexCount: Int
     let cpuFaceCount: Int
 
-    init(data: Data) throws {
+    /// The PC baked-GLB stream has one shared wire format. Existing
+    /// Vanguard call sites retain 4311; Bastion v606 uses 6061 and the
+    /// same XYZ/normal/RGBA/UV layout without remapping the geometry.
+    init(data: Data, expectedMagic: Int = 4311) throws {
         var offset=0
         func word() throws -> UInt32 {
             guard offset <= data.count-4 else { throw FormatError.truncated }
@@ -50,7 +53,7 @@ struct SourceVanguardMesh431 {
             guard f.isFinite else { throw FormatError.nonFinite }
             return f
         }
-        guard Int(try word()) == Self.magic else { throw FormatError.badMagic }
+        guard Int(try word()) == expectedMagic else { throw FormatError.badMagic }
         guard Int(try word()) == 2 else { throw FormatError.badEngines }
         var sockets:[Socket]=[]
         for _ in 0..<2 {
@@ -79,3 +82,7 @@ struct SourceVanguardMesh431 {
         cpuFaceCount=count
     }
 }
+
+/// One canonical decoder for PC baked-GLB playable ships (4311 / 6061).
+/// Keep SourceVanguardMesh431 as the stable public compatibility name.
+typealias SourceBakedShipMesh = SourceVanguardMesh431
