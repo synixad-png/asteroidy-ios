@@ -20,7 +20,10 @@ assert "tryDropLegacyPickup586" in combat and "tryDropCombatSupply586" in combat
 assert flight.count("hud=Self.measure(current.0,frames:current.2,weapons:current.1)")>=3
 assert 'for _ in old..<next' in page
 assert 'PC602OrbitHUDEditor291(' in page
-assert 'guard orbitDraft291.save() else{return}' in page
+# Saving H290 must not close the editor on failed storage or stale readback.
+assert 'guard orbitDraft291.save(),' in page
+assert 'PC602OrbitHUDLayout291.load()==orbitDraft291' in page
+assert 'else{return false}' in page
 assert 'orbitLayout291=orbitDraft291' in page
 assert 'orbitDraft291=orbitLayout291' in page
 assert 'guard showingOrbitOptions291 && showingOrbitSettings291 else{return}' in page
