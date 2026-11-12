@@ -48,6 +48,20 @@ final class PC602HomeWorldDriver291:ObservableObject {
         return body()
     }
 
+    /// PC602 Windows/src/Campaign37.cs:11–13, Physics68.cs:9 and
+    /// FlightDynamics298.cs:14–20. The actual purchased levels are kept
+    /// in the existing canonical H55 profile, not a second flight save.
+    private static func vanguardEquipment291(
+        _ state:H55SourceMechanics580.State)
+        ->PC602HomeFlight291.Equipment? {
+        guard state.valid,state.selectedShip==1 else{return nil}
+        return PC602HomeFlight291.Equipment(
+            craft:.vanguard,
+            engineLevel:state.engine,
+            thrusterRank:state.thruster,
+            stabilizerLevel:state.stabilizer)
+    }
+
     /// PC602 Game.ShotIntervalBase97 / Modules97 for the only permitted
     /// native H290 craft. This one canonical read serves W3 start,
     /// H55 service return, Carbonis01 settlement and manual slot load.
@@ -56,6 +70,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
         mechanics:H55SourceMechanics580.State)
         ->PC602HomeWeaponTest292.Settings? {
         guard Sector01Shop568.validate(shop),mechanics.valid,
+              mechanics.selectedShip==1,
               let gun=PC602HomeWeaponTest292.Weapon(rawValue:shop.weapon.rawValue)
         else{return nil}
         return PC602HomeWeaponTest292.Settings(
@@ -71,13 +86,16 @@ final class PC602HomeWorldDriver291:ObservableObject {
         let shop=Sector01Shop568.load()
         let mechanics=H55SourceMechanics580.load()
         guard let settings=Self.vanguardShotSettings291(
-            shop:shop,mechanics:mechanics) else {
-            error="NIEPRAWIDŁOWY PROFIL UZBROJENIA PC602"
+            shop:shop,mechanics:mechanics),
+            let equipment=Self.vanguardEquipment291(mechanics)
+        else {
+            error="H290 OBSŁUGUJE WYŁĄCZNIE WYPOSAŻONY VANGUARD"
             return
         }
         let controls=SourceControls586.Profile.load()
         let current=withLock{()->(PC602HomeFlight291,PC602HomeWeaponTest292,Int)? in
-            guard var state=session else{return nil}
+            guard var state=session,
+                  state.adoptVanguardEquipment(equipment) else{return nil}
             state.setWeaponSettings(settings)
             state.adoptControls(controls)
             session=state
@@ -110,9 +128,11 @@ final class PC602HomeWorldDriver291:ObservableObject {
     func start(progress:CampaignProgress556) throws {
         let home=try PC602NewHome290.load()
         _=try PC602OrbitBelt51.load()
-        guard Self.resourcesInstalled,
-              let equipment=PC602HomeFlight291.Equipment(craft:.vanguard)
+        guard Self.resourcesInstalled
         else {throw PC602NewHome290.SourceError.missing}
+        let mechanics=H55SourceMechanics580.load()
+        guard let equipment=Self.vanguardEquipment291(mechanics)
+        else {throw PC602HomeFlight291.SourceError.invalidEquipment}
         var initial=try PC602HomeWorldSession291(
             home:home,equipment:equipment,
             completedMask:progress.completedMask,
@@ -122,7 +142,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
         }
         if let settings=Self.vanguardShotSettings291(
             shop:Sector01Shop568.load(),
-            mechanics:H55SourceMechanics580.load()) {
+            mechanics:mechanics) {
             initial.setWeaponSettings(settings)
         }
         let copy=initial.flight
@@ -169,7 +189,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
         else {error="BRAK PRAWIDŁOWEGO ZAPISU";return false}
         do {
             let home=try PC602NewHome290.load()
-            guard let equipment=PC602HomeFlight291.Equipment(craft:.vanguard)
+            guard let equipment=Self.vanguardEquipment291(state.mechanics)
             else{throw PC602HomeFlight291.SourceError.invalidEquipment}
             var replacement=try PC602HomeWorldSession291(
                 home:home,equipment:equipment,

@@ -228,6 +228,28 @@ struct PC602HomeFlight291 {
         dockDistance=Self.length(orbitPosition-dockPosition)
     }
 
+    /// Game.Campaign37.EngineLevel/StabilizerLevel/ThrusterRank97 are live
+    /// properties on PC602; when a player purchases a level in H55, the
+    /// source DirectMotion298 reads the new values on the next flight tick.
+    /// Only Vanguard is currently usable in the iOS world, never silently
+    /// substitute Vanguard for another selected ship.
+    ///
+    /// Keep position, velocity, heading, camera, elapsed time and projectile
+    /// state unchanged; replace only the source FlightDynamics298 settings.
+    @discardableResult
+    mutating func adoptVanguardEquipment(_ next:Equipment)->Bool {
+        guard equipment.craft == .vanguard,
+              next.craft == .vanguard,
+              !next.miningDetached,
+              (0...2).contains(next.engineLevel),
+              (0...2).contains(next.thrusterRank),
+              (0...2).contains(next.stabilizerLevel)
+        else{return false}
+        equipment=next
+        flight.flight.configuration=next.flightConfiguration
+        return true
+    }
+
     /// SaveManager61.LoadSlot61: accept only its previously verified
     /// orbit vector, rebind the same Sphere67 pilot and reset velocity,
     /// camera inertia and nonpersistent projectiles. The PC source calls

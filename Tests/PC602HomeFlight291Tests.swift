@@ -54,6 +54,63 @@ for (craft,speed,mass) in expected {
     close(dot(normal(start.orbitPosition),start.orbitRight),
           0,0.03,"source tangent ship right")
 }
+// O02: all purchased levels 0..2 are those of PC602 Campaign37.cs
+// (Acceleration / TopSpeed / TurnSpeed), Physics68.SurfaceSpeed68 and
+// FlightDynamics298.DirectMotion298. Do not create additional craft.
+for engine in 0...2 {
+    for thruster in 0...2 {
+        for stabilizer in 0...2 {
+            guard let eq=PC602HomeFlight291.Equipment(
+                craft:.vanguard,engineLevel:engine,
+                thrusterRank:thruster,stabilizerLevel:stabilizer)
+            else {fatalError("Valid PC602 Vanguard upgrades rejected")}
+            let acceleration:Float=245*(1+Float(engine)*0.06)*
+                (1+Float(thruster)*0.045)
+            let topSpeed:Float=390*(1+Float(engine)*0.035)*
+                (1+Float(thruster)*0.025)
+            let turnSpeed:Float=3.8*(1+Float(stabilizer)*0.04)
+            let massFactor:Float=sqrt(3.4/3.4)
+            let control=(1+Float(stabilizer)*0.12)*
+                max(0.55,min(1.6,acceleration/245))*massFactor
+            close(eq.acceleration,acceleration,0.0002,"O02 original PC acceleration")
+            close(eq.topSpeed,topSpeed,0.0002,"O02 original PC top speed")
+            close(eq.surfaceSpeed,topSpeed*0.40,0.0002,"O02 source 40% speed")
+            close(eq.turnSpeed,turnSpeed,0.00002,"O02 PC stabilizer turn")
+            close(eq.flightConfiguration.control,control,0.0002,
+                  "O02 DirectMotion298 live control")
+            var tick=try PC602HomeFlight291(home:home,equipment:eq)
+            try tick.step(.init(move:Vec2(x:0,y:-1)),dt:1/60)
+            let expectedSpeed=eq.surfaceSpeed*
+                (1-exp(-Float(3)*control/60))
+            close(tick.orbitSpeed,expectedSpeed,0.08,
+                  "O02 source first tick with purchased upgrades")
+        }
+    }
+}
+// PC engine reads upgraded source properties immediately after H55,
+// without restarting the orbit or resetting momentum/camera/time.
+var baseline=try PC602HomeFlight291(home:home,equipment:equipment(.vanguard))
+var live=baseline
+try baseline.step(.init(move:Vec2(x:0,y:-1)),dt:1/60)
+try live.step(.init(move:Vec2(x:0,y:-1)),dt:1/60)
+let preservedPosition=live.orbitPosition
+let preservedSpeed=live.orbitSpeed
+let preservedHeading=live.flight.heading
+let preservedTime=live.orbitTime
+let high=PC602HomeFlight291.Equipment(
+    craft:.vanguard,engineLevel:2,thrusterRank:2,stabilizerLevel:2)!
+assert(live.adoptVanguardEquipment(high))
+assert(live.equipment.engineLevel==2)
+assert(live.orbitPosition==preservedPosition)
+assert(live.orbitSpeed==preservedSpeed)
+assert(live.flight.heading==preservedHeading)
+assert(live.orbitTime==preservedTime)
+assert(!live.adoptVanguardEquipment(equipment(.kestrel)))
+try baseline.step(.init(move:Vec2(x:0,y:-1)),dt:1/60)
+try live.step(.init(move:Vec2(x:0,y:-1)),dt:1/60)
+assert(live.orbitSpeed>baseline.orbitSpeed,
+       "O02 upgrades must affect the immediately following live orbit tick")
+
 let detached=equipment(.mammoth,detached:true)
 close(detached.surfaceSpeed,180.96,0.005,"MAMMOTH shuttle speed")
 close(detached.mass,1.5,0.0001,"MAMMOTH shuttle mass")

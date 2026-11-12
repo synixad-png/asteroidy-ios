@@ -54,6 +54,13 @@ struct PC602HomeWorldSession291 {
     mutating func setWeaponSettings(_ settings:PC602HomeWeaponTest292.Settings) {
         weapons.settings=settings
     }
+    /// PC Campaign37 values change live after a legitimate H55 purchase.
+    /// Never restart the ship or fabricate an unsupported craft.
+    @discardableResult
+    mutating func adoptVanguardEquipment(
+        _ next:PC602HomeFlight291.Equipment)->Bool {
+        flight.adoptVanguardEquipment(next)
+    }
     mutating func setPaused(_ value:Bool) {paused=value}
 
     /// Exact World -> HardwareInput586 -> Controls586 -> HomeFlight291

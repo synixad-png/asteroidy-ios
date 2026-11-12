@@ -99,6 +99,22 @@ assert(resumedAfterRestore)
 assert(session.steppedFrames==1)
 assert(session.flight.orbitSpeed>0)
 
+// O02: bought H55 engine/thruster/stabilizer ranks apply to the LIVE
+// Vanguard, preserving current position, movement and acquired heading.
+let oldOrbitPosition=session.flight.orbitPosition
+let oldOrbitSpeed=session.flight.orbitSpeed
+let oldOrbitHeading=session.flight.flight.heading
+let purchased=PC602HomeFlight291.Equipment(
+    craft:.vanguard,engineLevel:1,thrusterRank:2,stabilizerLevel:1)!
+assert(session.adoptVanguardEquipment(purchased))
+assert(session.flight.equipment.engineLevel==1)
+assert(session.flight.equipment.thrusterRank==2)
+assert(session.flight.equipment.stabilizerLevel==1)
+assert(session.flight.orbitPosition==oldOrbitPosition)
+assert(session.flight.orbitSpeed==oldOrbitSpeed)
+assert(session.flight.flight.heading==oldOrbitHeading)
+assert(!session.adoptVanguardEquipment(
+    PC602HomeFlight291.Equipment(craft:.bastion)!))
 print("PASS original PC602 HomeWorld session: single 67 flight, saved " +
       "remapped controls, atomic pause, no double tick, 26 authored " +
       "sector unlocks and real 43.2m-gated H55 without fake mission/IPA")
