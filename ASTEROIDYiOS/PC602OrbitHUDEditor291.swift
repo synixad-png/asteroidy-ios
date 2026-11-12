@@ -6,12 +6,10 @@ import UniformTypeIdentifiers
 /// H290 uses its OWN validated document; combat HUD v600 is never changed.
 struct PC602OrbitHUDEditor291:View {
     @Binding var layout:PC602OrbitHUDLayout291
-    let measuredFrames:[String:CGRect]
-    let navigationFrames:[String:CGRect]
+    @Binding var selected:String
     let onSave:()->Bool
     let onCancel:()->Void
 
-    @State private var selected="hud.mission.heading"
     @State private var inspectorOpen=false
     @State private var importingJSON=false
     @State private var exportingJSON=false
@@ -19,12 +17,6 @@ struct PC602OrbitHUDEditor291:View {
     @State private var errorMessage:String?
 
     private var item:PC602OrbitHUDLayout291.Element {layout.item(selected)}
-    private var frames:[String:CGRect] {
-        // Both the UIKit hit detector and the drawn outlines use these
-        // same physical CGRects. Navigation Path/Text each occupy a
-        // FULL-SCREEN SwiftUI container, so use the true source arrow rects.
-        measuredFrames.merging(navigationFrames){_,authored in authored}
-    }
     private var selectionIDs:[String] {
         // Like the mission F6 selector, put the actual individual HUD
         // widgets before the five controls, and legacy whole-group
@@ -49,53 +41,6 @@ struct PC602OrbitHUDEditor291:View {
     }
     private func change(_ id:String,_ mutation:(inout PC602OrbitHUDLayout291.Element)->Void) {
         layout.change(id,mutation)
-    }
-    private func move(_ id:String,original:PC602OrbitHUDLayout291.Element,
-                      dx:Double,dy:Double,frame:CGRect,
-                      viewport:CGSize,safeInsets:EdgeInsets) {
-        guard dx.isFinite,dy.isFinite else{return}
-        let rect=PC602OrbitHUDLayout291.Rect(
-            x:Double(frame.origin.x),y:Double(frame.origin.y),
-            width:Double(frame.size.width),height:Double(frame.size.height))
-        let clamped=PC602OrbitHUDLayout291.constrainedDrag(
-            id,deltaX:dx,deltaY:dy,frame:rect,
-            viewportWidth:Double(viewport.width),
-            viewportHeight:Double(viewport.height),
-            safeInsets:(left:Double(safeInsets.leading),
-                        right:Double(safeInsets.trailing),
-                        top:Double(safeInsets.top),
-                        bottom:Double(safeInsets.bottom)))
-        let width=max(1,Double(viewport.width))
-        let height=max(1,Double(viewport.height))
-        // Legacy H290 group transforms still enclose every individual
-        // text. Convert gesture deltas through the parent group scale,
-        // precisely as mission HudEditorGeometry.move converts the
-        // physical delta using the active viewport transform.
-        let parent:String?
-        if id.hasPrefix("hud.mission.") {parent="hud.mission"}
-        else if id.hasPrefix("hud.telemetry.") {parent="hud.telemetry"}
-        else if id.hasPrefix("hud.dock.") {parent="hud.dock"}
-        else if id=="hud.navigation.label" {parent="hud.navigation"}
-        else {parent=nil}
-        let inherited=parent.map{layout.item($0).scale} ?? 1
-        let base=max(0.001,inherited)
-        let nextX=original.x+clamped.x*1280/(width*base)
-        let nextY=original.y+clamped.y*720/(height*base)
-        change(id){e in
-            // The on-screen safe-area clamp is authoritative. The older
-            // ±600/±360 extra clamp prevented moving WEJDŹ and PAUZA
-            // across a landscape iPad/phone and caused visible snapping.
-            e.x=max(-1280,min(1280,nextX))
-            e.y=max(-720,min(720,nextY))
-        }
-    }
-    private func scale(_ id:String,original:Double,factor:Double) {
-        guard original.isFinite,original>0,factor.isFinite,factor>0 else{return}
-        let range=PC602OrbitHUDLayout291.scaleRange(for:id)
-        change(id){item in
-            item.scale=max(range.lowerBound,
-                           min(range.upperBound,original*factor))
-        }
     }
     private func slider(_ label:String,
                         key:WritableKeyPath<PC602OrbitHUDLayout291.Element,Double>,
@@ -233,19 +178,13 @@ struct PC602OrbitHUDEditor291:View {
     var body:some View {
         GeometryReader { geo in
             ZStack(alignment:.topLeading) {
-                OrbitEditorTouchCanvas291(
-                    layout:layout,selection:selected,frames:frames,
-                    onSelect:{selected=$0},
-                    onMove:{id,origin,dx,dy,frame in
-                        move(id,original:origin,dx:dx,dy:dy,
-                             frame:frame,viewport:geo.size,
-                             safeInsets:geo.safeAreaInsets)
-                    },
-                    onScale:{id,original,factor in
-                        scale(id,original:original,factor:factor)
-                    })
+                // The real H290 widgets now own their touch surfaces,
+                // exactly like the working mission UIKit recognizers.
+                // This editor ONLY renders the toolbar/inspector: a
+                // full-screen transparent canvas must never swallow WEJDŹ.
+                Color.clear
                     .frame(width:geo.size.width,height:geo.size.height)
-                    .accessibilityIdentifier("pc602-orbit-hud-touch-canvas")
+                    .allowsHitTesting(false)
                 // H290's source WEJDŹ sits in the bottom-right corner.
                 // The previous full-width bottom toolbar blocked its touch
                 // target. Keep all controls while docking the strip only
@@ -297,19 +236,6 @@ struct PC602OrbitHUDEditor291:View {
     }
 }
 
-/// Actual H290 SwiftUI item bounds in the SAME coordinates as the touch canvas.
-/// Never invent static rectangles that drift when iPad scaling or safe area changes.
-struct OrbitHUDFramePreference291:PreferenceKey {
-    static var defaultValue:[String:CGRect]=[:]
-    static func reduce(value:inout [String:CGRect],
-                       nextValue:()->[String:CGRect]) {
-        for (id,rect) in nextValue() {
-            if let prior=value[id] {value[id]=prior.union(rect)}
-            else {value[id]=rect}
-        }
-    }
-}
-
 struct PC602OrbitHUDDocument291:FileDocument {
     static var readableContentTypes:[UTType] { [.json] }
     var layout:PC602OrbitHUDLayout291
@@ -326,38 +252,36 @@ struct PC602OrbitHUDDocument291:FileDocument {
     }
 }
 
-/// Same UIKit touch routing as the original mission HudEditorTouchCanvas:
-/// hit an element directly, drag that element, pinch its scale, and draw a
-/// marker on the actual active hit rectangle. No SwiftUI background gesture.
-private struct OrbitEditorTouchCanvas291:UIViewRepresentable {
-    let layout:PC602OrbitHUDLayout291
-    let selection:String
-    let frames:[String:CGRect]
+/// One native UIKit recognizer mounted DIRECTLY on each actual rendered
+/// H290 widget/control. Unlike a remote whole-screen canvas, its UIKit bounds
+/// inherit the same SwiftUI scale and offset as the displayed object.
+/// The mission F6 editor uses this same UIKit touchesBegan/Moved and pinch
+/// pattern. Its implementation is deliberately left unchanged.
+struct OrbitHUDItemTouchSurface291:UIViewRepresentable {
+    let id:String
+    let element:PC602OrbitHUDLayout291.Element
     let onSelect:(String)->Void
-    let onMove:(String,PC602OrbitHUDLayout291.Element,Double,Double,CGRect)->Void
-    let onScale:(String,Double,Double)->Void
+    let onMove:(PC602OrbitHUDLayout291.Element,Double,Double,CGRect)->Void
+    let onScale:(Double,Double)->Void
 
-    func makeUIView(context:Context)->TouchSurface {TouchSurface(frame:.zero)}
+    func makeUIView(context:Context)->TouchSurface {
+        TouchSurface(frame:.zero)
+    }
     func updateUIView(_ view:TouchSurface,context:Context) {
-        view.layout=layout
-        view.selection=selection
-        view.frames=frames
+        view.element=element
         view.onSelect=onSelect
         view.onMove=onMove
         view.onScale=onScale
-        view.setNeedsDisplay()
+        view.accessibilityIdentifier="pc602-orbit-edit-target-"+id
     }
-
     final class TouchSurface:UIView {
-        var layout=PC602OrbitHUDLayout291.defaults()
-        var selection=""
-        var frames:[String:CGRect]=[:]
+        var element=PC602OrbitHUDLayout291.Element(id:"")
         var onSelect:((String)->Void)?
-        var onMove:((String,PC602OrbitHUDLayout291.Element,Double,Double,CGRect)->Void)?
-        var onScale:((String,Double,Double)->Void)?
-        private var dragStart:(element:PC602OrbitHUDLayout291.Element,
-                              point:CGPoint,frame:CGRect)?
-        private var pinchStart:(id:String,scale:Double)?
+        var onMove:((PC602OrbitHUDLayout291.Element,Double,Double,CGRect)->Void)?
+        var onScale:((Double,Double)->Void)?
+        private var drag:(origin:PC602OrbitHUDLayout291.Element,
+                          start:CGPoint,frame:CGRect)?
+        private var pinchScale:Double?
         override init(frame:CGRect) {
             super.init(frame:frame)
             configure()
@@ -369,108 +293,58 @@ private struct OrbitEditorTouchCanvas291:UIViewRepresentable {
         private func configure() {
             isOpaque=false
             backgroundColor = .clear
+            isUserInteractionEnabled=true
             isMultipleTouchEnabled=true
-            contentMode = .redraw
+            // A touch target is not an accessibility button, so the
+            // original game buttons remain discoverable by XCUITest.
+            isAccessibilityElement=false
             let pinch=UIPinchGestureRecognizer(
                 target:self,action:#selector(handlePinch(_:)))
             pinch.cancelsTouchesInView=false
             addGestureRecognizer(pinch)
         }
-        private func modelRect(_ f:CGRect)->PC602OrbitHUDLayout291.Rect {
-            PC602OrbitHUDLayout291.Rect(
-                x:Double(f.origin.x),y:Double(f.origin.y),
-                width:Double(f.size.width),height:Double(f.size.height))
-        }
-        private func hit(_ point:CGPoint)->String? {
-            // Identical source-space hit algorithm to HudEditorGeometry.hit;
-            // convert actual SwiftUI CGRects only at the UIKit boundary.
-            let converted=frames.mapValues{modelRect($0)}
-            return PC602OrbitHUDLayout291.hit(
-                x:Double(point.x),y:Double(point.y),
-                frames:converted,layout:layout)
+        private func worldFrame()->CGRect {
+            guard let window else{return bounds}
+            return convert(bounds,to:window)
         }
         override func touchesBegan(_ touches:Set<UITouch>,with event:UIEvent?) {
             super.touchesBegan(touches,with:event)
-            guard event?.allTouches?.count==1,let touch=touches.first else {
-                dragStart=nil;return
+            guard event?.allTouches?.count==1,
+                  let touch=touches.first,let window else {
+                drag=nil;return
             }
-            let point=touch.location(in:self)
-            if let id=hit(point),let frame=frames[id] {
-                onSelect?(id)
-                dragStart=(layout.item(id),point,frame)
-            } else {
-                onSelect?("")
-                dragStart=nil
-            }
+            onSelect?(element.id)
+            drag=(element,touch.location(in:window),worldFrame())
         }
         override func touchesMoved(_ touches:Set<UITouch>,with event:UIEvent?) {
             super.touchesMoved(touches,with:event)
-            guard event?.allTouches?.count==1,pinchStart==nil,
-                  let touch=touches.first,let start=dragStart else{return}
-            let point=touch.location(in:self)
-            onMove?(start.element.id,start.element,
-                    Double(point.x-start.point.x),
-                    Double(point.y-start.point.y),start.frame)
+            guard event?.allTouches?.count==1,pinchScale==nil,
+                  let touch=touches.first,let start=drag,let window else{return}
+            let position=touch.location(in:window)
+            onMove?(start.origin,
+                    Double(position.x-start.start.x),
+                    Double(position.y-start.start.y),start.frame)
         }
         override func touchesEnded(_ touches:Set<UITouch>,with event:UIEvent?) {
             super.touchesEnded(touches,with:event)
-            dragStart=nil
+            drag=nil
         }
         override func touchesCancelled(_ touches:Set<UITouch>,with event:UIEvent?) {
             super.touchesCancelled(touches,with:event)
-            dragStart=nil
+            drag=nil
         }
         @objc private func handlePinch(_ gesture:UIPinchGestureRecognizer) {
             switch gesture.state {
             case .began:
-                dragStart=nil
-                // Match working HudLayoutEditor600: a pinch always
-                // transforms the CURRENTLY SELECTED widget/control.
-                // Picking a different item mid-pinch changed selection and
-                // made scale feel unreliable on the iPad.
-                guard PC602OrbitHUDLayout291.ids.contains(selection) else {
-                    pinchStart=nil;return
-                }
-                pinchStart=(selection,layout.item(selection).scale)
+                drag=nil
+                onSelect?(element.id)
+                pinchScale=element.scale
             case .changed:
-                if let start=pinchStart {
-                    onScale?(start.id,start.scale,Double(gesture.scale))
+                if let initial=pinchScale {
+                    onScale?(initial,Double(gesture.scale))
                 }
-            case .ended,.cancelled,.failed:pinchStart=nil
+            case .ended,.cancelled,.failed:pinchScale=nil
             default:break
-            }
-        }
-        override func draw(_ rect:CGRect) {
-            guard let ctx=UIGraphicsGetCurrentContext() else{return}
-            // Selected child is drawn AFTER groups, for a visible yellow
-            // outline even when a nested legacy group overlaps it.
-            let ordered=PC602OrbitHUDLayout291.ids.filter{$0 != selection} +
-                        (PC602OrbitHUDLayout291.ids.contains(selection)
-                         ? [selection] : [])
-            for id in ordered {
-                guard let raw=frames[id] else{continue}
-                guard let source=PC602OrbitHUDLayout291.touchFrame(
-                    modelRect(raw)) else{continue}
-                let border=CGRect(x:source.x,y:source.y,
-                                  width:source.width,height:source.height)
-                let current=id==selection
-                let isControl=id.hasPrefix("control.")
-                let color:UIColor=current ? .systemYellow :
-                    (isControl ? .systemOrange.withAlphaComponent(0.86) :
-                     .cyan.withAlphaComponent(0.55))
-                ctx.setStrokeColor(color.cgColor)
-                ctx.setLineWidth(current ? 2:1.1)
-                ctx.stroke(border)
-                if current {
-                    (PC602OrbitHUDLayout291.title(id) as NSString).draw(
-                        at:CGPoint(x:max(2,border.minX+3),
-                                   y:max(2,border.minY-19)),
-                        withAttributes:[
-                            .font:UIFont.monospacedSystemFont(ofSize:13,
-                                                             weight:.semibold),
-                            .foregroundColor:UIColor.systemYellow
-                        ])
-                }
             }
         }
     }
