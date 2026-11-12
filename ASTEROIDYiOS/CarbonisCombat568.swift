@@ -72,12 +72,14 @@ struct CarbonisCombat568 {
     var maxHull:Int=60,maxArmor:Int=25
     var lives:Int=3
     var shieldCharges:Int=0
+    /// PC v609 StepArmorRegen78: one simulation clock for real mission armor.
+    private var armorRegen609=ArmorRegeneration609()
     // Source PC580 BossTunnelGame.cs: IonAmmo and Bombs share ShopProfile56.
     var ionAmmo:Int=0
     var bombs:Int=0
     var bombCooldown:Float=0
-    /// Tarcza145 and Boost71 are genuine independent active abilities,
-    /// NOT aliases for the passive purchased shield charges or ion ammo.
+    /// PC608 active energy bar and full-bar reserves form ONE shield system.
+    /// Boost71 and ion ammo remain completely independent.
     var tarcza145=SourceTarcza145()
     var boost71=SourceBoost71()
     var shieldHeld=false
@@ -213,24 +215,21 @@ struct CarbonisCombat568 {
             invincible=1.2
             return
         }
-        // BossTunnelGame.HitByBoss original purchased shield intercept:
-        // 1 charge, one second immunity, no armor/hull damage.
-        // PC Tarcza145.cs: an active held dome absorbs 35 energy
-        // BEFORE spending a passive shop shield charge.
-        if tarcza145.absorb(invincible:&invincible) {return}
-        if shieldCharges>0 {
-            shieldCharges-=1
-            invincible=1
-            return
-        }
+        // PC v608: only an actively held dome can absorb this hit.
+        // The ONLY reserve consumption occurs in SourceTarcza145 on
+        // depletion of its current energy bar, never on a passive hit.
+        if tarcza145.absorb(invincible:&invincible,
+                            reserve:&shieldCharges) {return}
         // Modules97.DampenerRank97 only applies to hostile projectile,
         // never asteroid/body contacts. Preserve source minimum damage 1.
         let received=hostileProjectile
             ? H55SourceMechanics580.hostileShotDamage(
                 damage,dampener:sourceMechanics.dampener)
             : damage
+        let wasFull=armor>=maxArmor
         let blocked=min(armor,received)
         armor-=blocked
+        armorRegen609.tookDamage(wasFull:wasFull,now:armor,maximum:maxArmor)
         hull-=received-blocked
         invincible=0.8
         if hull>0 {return}
@@ -242,6 +241,7 @@ struct CarbonisCombat568 {
         shieldCharges=0
         if lives<=0 {phase = .defeat; hull=0;return}
         hull=maxHull;armor=maxArmor;invincible=4.5
+        armorRegen609.reset()
         // Game.Damage: respawn keeps the original Vanguard and restores
         // its heading, movement damping, bank and aiming state.
         flight.position=Vec2(x:640,y:360)
@@ -284,7 +284,10 @@ struct CarbonisCombat568 {
         bombCooldown=max(0,bombCooldown-dt)
         destruction.tick(dt:dt)
         invincible=max(0,invincible-dt)
-        tarcza145.step(dt:dt,held:shieldHeld,playing:true)
+        armorRegen609.advance(dt:dt,armor:&armor,maximum:maxArmor,
+                              playing:true,shipDown:false)
+        tarcza145.step(dt:dt,held:shieldHeld,playing:true,
+                       reserve:&shieldCharges)
         let boosting=boost71.advance(dt:dt)
         if boosting {invincible=max(invincible,0.15)}
         let previousShip=flight.position
@@ -396,7 +399,8 @@ struct CarbonisCombat568 {
             if distance<26 {
                 if let kind=item.sourceKind {
                     if kind == .shield {
-                        let collected=tarcza145.collectCell()
+                        let collected=tarcza145.collectCell(
+                            reserve:&shieldCharges)
                         if collected {emitOriginalAudio568(30)}
                         tokenPickups.remove(at:i)
                         continue
@@ -540,29 +544,10 @@ struct CarbonisCombat568 {
                 flight.velocity=player.velocity
                 rocks[i].position=rock.position
                 rocks[i].velocity=rock.velocity
-                // Game.Step rock collision / Shop ShieldCharges:
-                // purchased armor reflects the rock (radius+32) and
-                // grants .8 s, not generic one-second shot immunity.
-                if shieldCharges>0 && invincible<=0 &&
-                    guardianCharges==0 && !tarcza145.active {
-                    shieldCharges-=1
-                    invincible=0.8
-                    let delta=Sphere67.delta(
-                        target:rocks[i].position,origin:flight.position)
-                    let dist=sqrt(delta.lengthSquared)
-                    let away=dist>0.1
-                        ? delta*(1/dist)
-                        : Vec2(x:cos(flight.heading+Float.pi),
-                               y:sin(flight.heading+Float.pi))
-                    let point=Sphere67.offset(flight.position,
-                        by:away*(rocks[i].radius+32))
-                    let rebound=max(55,sqrt(rocks[i].velocity.lengthSquared))
-                    rocks[i].position=point
-                    rocks[i].velocity=CarbonisBodyContact68.transported(
-                        away*rebound,from:flight.position,to:point)
-                } else {
-                    suffer(18)
-                }
+                // v608: no passive 3/3 shield collision branch.
+                // Normal physical contact still resolves; suffer()
+                // checks the active Tarcza145 and real armor/hull.
+                suffer(18)
                 if phase != .playing {return}
             }
         }
