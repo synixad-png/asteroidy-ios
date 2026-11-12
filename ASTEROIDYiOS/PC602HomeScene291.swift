@@ -70,7 +70,12 @@ struct PC602HomeScene291: UIViewRepresentable {
             let projectileLights:PC602HomeProjectileLights296
             let originalAtmosphere:PC602HomeAtmosphere47
             let originalSignal:PC602HomeMissionSignal58
-            let glowEnabled:Bool
+            /// Renderer.cs GlowEnabled, NebulaEnabled, SolarRaysEnabled
+            /// are independent source options, live-updated without
+            /// recreating the 24.8 MB original H290 Metal world.
+            private var graphicsSettings=SourcePlanetGraphicsSettings568.load()
+            private var graphicsRevision=UserDefaults.standard.integer(
+                forKey:SourcePlanetGraphicsSettings568.revisionKey)
             let orbitVisualScale:Float
             let depth:MTLDepthStencilState
             let beaconDepth:MTLDepthStencilState
@@ -103,7 +108,6 @@ struct PC602HomeScene291: UIViewRepresentable {
                 projectileLights=try PC602HomeProjectileLights296(device:device)
                 originalAtmosphere=try PC602HomeAtmosphere47(device:device)
                 originalSignal=try PC602HomeMissionSignal58(device:device)
-                glowEnabled=SourcePlanetGraphicsSettings568.load().glowEnabled
                 orbitVisualScale=SourceShipScale472.load().orbitFactor
                 let originalBelt=try PC602OrbitBelt51.load()
                 belt=originalBelt
@@ -225,6 +229,18 @@ struct PC602HomeScene291: UIViewRepresentable {
                     return
                 }
 
+                // Windows Renderer.DrawOrbit50 passes the live
+                // GlowEnabled/NebulaEnabled/SolarRaysEnabled into
+                // HomeScene291() on every draw. No JSON decoding on
+                // unchanged frames; saving an option increments revision.
+                let revision=UserDefaults.standard.integer(
+                    forKey:SourcePlanetGraphicsSettings568.revisionKey)
+                if revision != graphicsRevision {
+                    graphicsSettings=SourcePlanetGraphicsSettings568.load()
+                    graphicsRevision=revision
+                }
+                let effects=graphicsSettings
+
                 // Windows GpuNewHome290: planetPush();shipScale(100,100,100).
                 // The 24.8 MB original triangle stream is NEVER rebuilt.
                 let shots=onProjectiles?() ?? []
@@ -259,6 +275,9 @@ struct PC602HomeScene291: UIViewRepresentable {
                     camera:flight.flight.camera,
                     vp:projection*viewMatrix,time:flight.orbitTime,
                     aspect:aspect,drawableHeight:Float(size.height),
+                    glow:effects.glowEnabled,
+                    nebula:effects.nebulaEnabled,
+                    rays:effects.solarRaysEnabled,
                     worldEye:frame.eye,
                     worldScale:SphereCameraView556.originalPlanetOuterRadius)
                 encoder.setRenderPipelineState(pipeline)
@@ -294,7 +313,7 @@ struct PC602HomeScene291: UIViewRepresentable {
 
                 // PC HomeFlight291 DrawAtmosphere47 warm #FF7441,
                 // original radius 130. No independent render loop/camera.
-                if glowEnabled {
+                if effects.glowEnabled {
                     originalAtmosphere.draw(encoder:encoder,
                         projection:projection,view:viewMatrix,
                         camera:frame.eye)
@@ -383,7 +402,7 @@ struct PC602HomeScene291: UIViewRepresentable {
                 }
                 // Original VisualStyle58.MissionSignal58 (glow option only),
                 // a distinct source signal before the player's fighter.
-                if glowEnabled {
+                if effects.glowEnabled {
                     originalSignal.draw(encoder:encoder,
                         projection:projection,view:viewMatrix,
                         flight:flight)

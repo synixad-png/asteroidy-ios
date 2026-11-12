@@ -70,10 +70,42 @@ enum SourcePlanetAtmosphere568 {
 /// #55/#56/#57 (PLANETY: sunlight, speed, night brightness).
 struct SourcePlanetGraphicsSettings568:Codable,Equatable {
     static let key="ASTEROIDY.v568.PlanetAtmosphere47.Glow256.Light436.Night437"
+    /// Live settings revision: the Metal renderer reads an integer every
+    /// frame and decodes the profile only when the original options change.
+    static let revisionKey=key+".orbit-options-revision"
     var glowEnabled=true
     var planetLightEnabled=true
     var planetLightSpeed=100
     var planetNightBrightness=160
+    /// Renderer.cs options 12/13, both enabled by default in original PC602.
+    var nebulaEnabled=true
+    var solarRaysEnabled=true
+
+    init() {}
+
+    /// Existing iOS profiles predate source options #12/#13.
+    /// Restore those profiles without losing #2 / #55–57 values.
+    private enum CodingKeys:String,CodingKey {
+        case glowEnabled,planetLightEnabled,planetLightSpeed,
+             planetNightBrightness,nebulaEnabled,solarRaysEnabled
+    }
+    init(from decoder:Decoder) throws {
+        let data=try decoder.container(keyedBy:CodingKeys.self)
+        glowEnabled=try data.decodeIfPresent(Bool.self,
+                                             forKey:.glowEnabled) ?? true
+        planetLightEnabled=try data.decodeIfPresent(Bool.self,
+                                                    forKey:.planetLightEnabled) ?? true
+        planetLightSpeed=try data.decodeIfPresent(Int.self,
+                                                  forKey:.planetLightSpeed) ?? 100
+        planetNightBrightness=try data.decodeIfPresent(Int.self,
+                                                       forKey:.planetNightBrightness) ?? 160
+        nebulaEnabled=try data.decodeIfPresent(Bool.self,
+                                               forKey:.nebulaEnabled) ?? true
+        solarRaysEnabled=try data.decodeIfPresent(Bool.self,
+                                                  forKey:.solarRaysEnabled) ?? true
+        clampAll()
+    }
+
     mutating func clampAll() {
         planetLightSpeed=max(0,min(400,Int((Double(planetLightSpeed)/5).rounded())*5))
         planetNightBrightness=max(0,min(400,Int((Double(planetNightBrightness)/5).rounded())*5))
@@ -82,6 +114,8 @@ struct SourcePlanetGraphicsSettings568:Codable,Equatable {
         var value=self;value.clampAll()
         if let data=try? JSONEncoder().encode(value) {
             defaults.set(data,forKey:Self.key)
+            defaults.set(defaults.integer(forKey:Self.revisionKey) &+ 1,
+                         forKey:Self.revisionKey)
         }
     }
     static func load(_ defaults:UserDefaults = .standard)->Self {

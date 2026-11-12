@@ -755,6 +755,21 @@ struct CarbonisVisualSettingsPanel568: View {
                 .tint(cyan)
                 .foregroundStyle(.white)
                 .accessibilityIdentifier("w3-source-planet-glow-256")
+            Toggle("MGŁAWICA KOSMICZNA",isOn:Binding(
+                get:{planetProfile.nebulaEnabled},
+                set:{v in savePlanet{$0.nebulaEnabled=v}}))
+                .tint(cyan)
+                .foregroundStyle(.white)
+                .accessibilityIdentifier("w3-source-nebula-option-12")
+            Toggle("PROMIENIE SŁONECZNE",isOn:Binding(
+                get:{planetProfile.solarRaysEnabled},
+                set:{v in savePlanet{$0.solarRaysEnabled=v}}))
+                .tint(cyan)
+                .foregroundStyle(.white)
+                .accessibilityIdentifier("w3-source-solar-rays-option-13")
+            Text("PRZEŁĄCZNIKI ORYGINAŁU PC v602: GLOW / POŚWIATA (#2), MGŁAWICA KOSMICZNA (#12), PROMIENIE SŁONECZNE (#13). MODEL 3D, TEKSTURY I FIZYKA POZOSTAJĄ NIEZMIENIONE.")
+                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .foregroundStyle(muted)
             Text("PRZEŁĄCZNIK ORYGINAŁU: WŁĄCZA / WYŁĄCZA POŚWIATĘ I ATMOSFERĘ PLANETY. SAM MODEL 3D, EMISJA TEKSTURY ORAZ ŚWIATŁO POCISKÓW POZOSTAJĄ NIENARUSZONE.")
                 .font(.system(size:compact ? 10:12,design:.monospaced))
                 .foregroundStyle(muted)
