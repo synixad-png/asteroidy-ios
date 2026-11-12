@@ -259,6 +259,10 @@ final class CarbonisSession568: ObservableObject {
         // A paused/backgrounded app cannot retain a stuck V-equivalent.
         touchShieldHeld586=false
         game.setShieldHeld(false)
+        // Existing pause/exit/retry checkpoint: write the current PC608
+        // 100-point active bar; independent reserve inventory stays in
+        // Sector01Shop568. No storage work in 120Hz physics or Metal.
+        _=SourceTarcza145.savePersistentEnergy(game.tarcza145.energy)
     }
     func holdShield145(_ pressed:Bool) {
         touchShieldHeld586=pressed && !paused && game.phase == .playing
