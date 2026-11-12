@@ -354,7 +354,20 @@ struct GameView: View {
                     },openCampaignOnEntry:reopenAtlasAfterCarbonis,
                     startNewGame:startNewGameFromW3,
                     openOrbit:enterHomeWorld291,
-                    continueOrbit:{
+                    loadManualOrbit:{ slot in
+                         guard PC602OrbitSave61.exists(slot:slot),
+                               homeWorld291.loadOrbitSlot61(slot)
+                         else{return false}
+                         campaign=CampaignStore556.load()
+                         input.releaseHeldControls()
+                         input.gameplayPaused=true
+                         homeWorld291.setPaused(false)
+                         showingHomeWorld291=true
+                         showMainMenu=false
+                         audio.enterOrbit602()
+                         return true
+                     },
+                     continueOrbit:{
                         guard PC602OrbitSave61.exists(),
                               homeWorld291.loadOrbitSlot61(nil)
                         else{return "BRAK PRAWIDŁOWEGO ZAPISU ORBITY"}
