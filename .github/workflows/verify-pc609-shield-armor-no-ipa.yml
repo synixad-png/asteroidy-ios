@@ -22,6 +22,8 @@ on:
       - 'Tests/CombatContactRouter96Tests.swift'
       - 'ASTEROIDYiOS/CombatFlatShield556.swift'
       - 'Tests/CombatFlatShield556Tests.swift'
+      - 'Tests/PlanetDamageLab556Tests.swift'
+      - 'Tests/Sector01FullMission568Tests.swift'
       - 'Tests/CombatVerifiedHit556Tests.swift'
       - 'Tests/SourceNewGame568Tests.swift'
   workflow_dispatch:
