@@ -9,7 +9,7 @@ enum H55Workshop580 {
     static let ships=["KESTREL","VANGUARD","BASTION","VANGUARD X","TITAN H-01","MAMMOTH T-06"]
     static let weapons=["DZIAŁKO PULSOWE","PODWÓJNE DZIAŁKO",
                         "WACHLARZ PLAZMY","DZIAŁO SZYNOWE","POCISKI NAMIERZAJĄCE"]
-    static let services=["KADŁUB","PANCERZ","PASYWNA OSŁONA","PROTOTYP VANGUARD X"]
+    static let services=["KADŁUB","PANCERZ","ZAPASOWA OSŁONA","PROTOTYP VANGUARD X"]
     static let modules=["CHŁODZENIE UZBROJENIA","DOPALACZ MANEWROWY",
                         "TŁUMIK TRAFIEŃ","DRON — RDZEŃ BOJOWY",
                         "DRON — NAPROWADZANIE LASEROWE"]
@@ -112,7 +112,7 @@ enum H55Workshop580 {
         guard shop.buy(.shield) else {
             return .unavailable("ŁADUNEK NIEDOSTĘPNY")
         }
-        return .changed("PASYWNA OSŁONA UZUPEŁNIONA")
+        return .changed("ZAPASOWA OSŁONA +1 · PEŁNY PASEK TARCZY")
     }
     /// PC HubWeaponOwned90, HubEquip90, Game.Price/Buy at sector >=13.
     static func weaponOwned(_ id:Int,_ shop:Sector01Shop568.State)->Bool {
