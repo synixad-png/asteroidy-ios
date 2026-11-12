@@ -9,10 +9,11 @@ import Foundation
         defer{prefs.removePersistentDomain(forName:domain)}
         precondition(PC602OrbitHUDLayout291.load(defaults:prefs)==original)
         // Backward-compatible old JSON has no visibility key.
-        let oldJSON=Data(("{\"schema\":1,\"elements\":["+
-          PC602OrbitHUDLayout291.ids.map {
-              "{\"id\":\"\($0)\",\"x\":0,\"y\":0,\"scale\":1}"
-          }.joined(separator:",")+"]}").utf8)
+        let records=PC602OrbitHUDLayout291.ids.map { id in
+            "{\"id\":\"\(id)\",\"x\":0,\"y\":0,\"scale\":1}"
+        }
+        let json="{\"schema\":1,\"elements\":[" + records.joined(separator:",") + "]}"
+        let oldJSON=Data(json.utf8)
         let migrated=try! PC602OrbitHUDLayout291.decodeJSON(oldJSON)
         precondition(migrated.valid && migrated.elements.allSatisfy{$0.visible})
         var hidden=migrated
