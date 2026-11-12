@@ -109,8 +109,10 @@ final class PC602HomeOrbitUITests: XCTestCase {
         let saveBack = app.buttons["pc602-save61-back"]
         require(saveBack, "No return from original save slots")
         saveBack.tap()
-        // Returning from slots restores flight; no second modal remains.
-        require(pause, "Pause state not restored after slot browser")
+        // Same as CARBONIS 01: dismissing slots returns to PAUZA.
+        let resumeAfterSlots = app.buttons["pc602-orbit-options-back"]
+        require(resumeAfterSlots, "No PAUZA after returning from slots")
+        resumeAfterSlots.tap()
 
         let options = app.buttons["pc602-orbit-open-options291"]
         require(options, "Single PAUZA button missing from live orbit")
