@@ -67,6 +67,7 @@ struct PC602HomeScene291: UIViewRepresentable {
             let originalShip:SourceHomeVanguard431
             let originalSky:SourceCombatSky568
             let originalShots:SourceHomeShots292
+            let projectileLights:PC602HomeProjectileLights296
             let originalAtmosphere:PC602HomeAtmosphere47
             let originalSignal:PC602HomeMissionSignal58
             let glowEnabled:Bool
@@ -99,6 +100,7 @@ struct PC602HomeScene291: UIViewRepresentable {
                 // never duplicated inside W3's transparent globe preview.
                 originalSky=try SourceCombatSky568(device:device)
                 originalShots=try SourceHomeShots292(device:device)
+                projectileLights=try PC602HomeProjectileLights296(device:device)
                 originalAtmosphere=try PC602HomeAtmosphere47(device:device)
                 originalSignal=try PC602HomeMissionSignal58(device:device)
                 glowEnabled=SourcePlanetGraphicsSettings568.load().glowEnabled
@@ -225,6 +227,7 @@ struct PC602HomeScene291: UIViewRepresentable {
 
                 // Windows GpuNewHome290: planetPush();shipScale(100,100,100).
                 // The 24.8 MB original triangle stream is NEVER rebuilt.
+                let shots=onProjectiles?() ?? []
                 let model=simd_float4x4(diagonal:SIMD4(100,100,100,1))
                 // OpenGL gl_NormalMatrix and the specular view vector use
                 // MODEL-VIEW coordinates (not untransformed world space).
@@ -280,6 +283,12 @@ struct PC602HomeScene291: UIViewRepresentable {
                 encoder.drawPrimitives(type:.triangle,
                     vertexStart:SourceNewHome290MetalAssets.terrainVertices,
                     vertexCount:SourceNewHome290MetalAssets.armorVertices)
+
+                // PC602 HomeProjectileLights296: 2 terrain-following
+                // additive fans per bullet, drawn immediately after terrain.
+                projectileLights.draw(encoder:encoder,command:command,
+                    home:flight.home,bullets:shots,
+                    projection:projection,view:viewMatrix)
 
                 // PC HomeFlight291 DrawAtmosphere47 warm #FF7441,
                 // original radius 130. No independent render loop/camera.
@@ -390,7 +399,7 @@ struct PC602HomeScene291: UIViewRepresentable {
                 // using current true 67 physics. H290 terrain used for
                 // +13m+3.3m height; no false target collision/rewards.
                 originalShots.draw(encoder:encoder,command:command,
-                    home:flight.home,bullets:onProjectiles?() ?? [],
+                    home:flight.home,bullets:shots,
                     camera:flight.orbitCamera,view:frame.view,
                     mvp:projection*viewMatrix)
                 encoder.endEncoding()
