@@ -71,10 +71,10 @@ struct PC602HomeWorldPage291:View {
         let item=displayedOrbitLayout291.item("hud.navigation")
         let midX=Double(screen.size.width)*0.5
         let midY=Double(screen.size.height)*0.5
-        let cx=(Double(arrow.x)-midX)*item.scale+midX+
-               item.x*Double(screen.size.width)/1280
-        let cy=(Double(arrow.y)-midY)*item.scale+midY+
-               item.y*Double(screen.size.height)/720
+        let offsetX=item.x*Double(screen.size.width)/1280
+        let offsetY=item.y*Double(screen.size.height)/720
+        let cx=(Double(arrow.x)-midX)*item.scale + midX + offsetX
+        let cy=(Double(arrow.y)-midY)*item.scale + midY + offsetY
         return CGRect(x:cx-34,y:cy-32,width:68,height:75)
     }
 
