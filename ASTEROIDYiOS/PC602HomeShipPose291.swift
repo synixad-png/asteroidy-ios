@@ -28,9 +28,25 @@ enum PC602HomeShipPose291 {
     /// normal, terrain altitude, bank and pitch. Not the raw combat angle.
     static func vanguard(_ flight:PC602HomeFlight291,
                          orbitScale:Float=1)->Pose? {
-        guard (flight.equipment.craft == .vanguard ||
-               flight.equipment.craft == .bastion),
-              orbitScale.isFinite,orbitScale>0,
+        guard flight.equipment.craft == .vanguard else{return nil}
+        return sourcePose(flight,orbitScale:orbitScale)
+    }
+    static func bastion(_ flight:PC602HomeFlight291,
+                        orbitScale:Float=1)->Pose? {
+        guard flight.equipment.craft == .bastion else{return nil}
+        return sourcePose(flight,orbitScale:orbitScale)
+    }
+    static func active(_ flight:PC602HomeFlight291,
+                       orbitScale:Float=1)->Pose? {
+        switch flight.equipment.craft {
+        case .vanguard:return vanguard(flight,orbitScale:orbitScale)
+        case .bastion:return bastion(flight,orbitScale:orbitScale)
+        default:return nil
+        }
+    }
+    private static func sourcePose(_ flight:PC602HomeFlight291,
+                                    orbitScale:Float)->Pose? {
+        guard orbitScale.isFinite,orbitScale>0,
               flight.flight.flight.visualBank.isFinite,
               flight.flight.flight.visualPitch.isFinite
         else {return nil}
