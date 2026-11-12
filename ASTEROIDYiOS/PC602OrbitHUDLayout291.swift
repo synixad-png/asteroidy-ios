@@ -127,28 +127,46 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
         if id.hasPrefix("control.") {return 0.65...3.5}
         return 0.25...3
     }
-    static func touchFrame(_ rect:CGRect)->CGRect? {
-        guard rect.minX.isFinite,rect.minY.isFinite,
+    /// Exactly like HudEditorGeometry.Rect: source geometry uses Double
+    /// rather than UIKit/CoreGraphics, so the model is testable on
+    /// macOS and Linux while the game renders with native UIKit.
+    struct Rect:Equatable {
+        let x:Double
+        let y:Double
+        let width:Double
+        let height:Double
+        var minX:Double{x}
+        var maxX:Double{x+width}
+        var minY:Double{y}
+        var maxY:Double{y+height}
+        var midX:Double{x+width/2}
+        var midY:Double{y+height/2}
+        func contains(_ px:Double,_ py:Double)->Bool {
+            px>=minX && px<=maxX && py>=minY && py<=maxY
+        }
+    }
+    static func touchFrame(_ rect:Rect)->Rect? {
+        guard rect.x.isFinite,rect.y.isFinite,
               rect.width.isFinite,rect.height.isFinite,
               rect.width>0,rect.height>0 else{return nil}
-        let w=max(CGFloat(44),rect.width)
-        let h=max(CGFloat(44),rect.height)
-        return CGRect(x:rect.midX-w/2,y:rect.midY-h/2,width:w,height:h)
+        let w=max(44.0,rect.width)
+        let h=max(44.0,rect.height)
+        return Rect(x:rect.midX-w/2,y:rect.midY-h/2,width:w,height:h)
     }
-    static func hit(point:CGPoint,frames:[String:CGRect],layout:Self)->String? {
+    static func hit(x:Double,y:Double,
+                    frames:[String:Rect],layout:Self)->String? {
         for id in Self.ids.reversed() where id.hasPrefix("control.") {
             guard let box=frames[id].flatMap(touchFrame),
-                  box.contains(point) else{continue}
+                  box.contains(x,y) else{continue}
             return id
         }
         var chosen:String?
         var smallest=Double.infinity
         for id in Self.ids.reversed() where id.hasPrefix("hud.") {
             guard layout.item(id).visible,
-                  let raw=frames[id],
-                  let box=touchFrame(raw),
-                  box.contains(point) else{continue}
-            let area=Double(raw.width*raw.height)
+                  let raw=frames[id],let box=touchFrame(raw),
+                  box.contains(x,y) else{continue}
+            let area=raw.width*raw.height
             if area<smallest {
                 smallest=area
                 chosen=id
@@ -157,35 +175,33 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
         return chosen
     }
 
-    /// Match HudEditorGeometry.move and HudControlLayout600.limits:
-    /// passive text keeps >=12 physical points visible, functional
-    /// controls remain fully reachable in the real safe screen.
-    /// Input rectangle comes from the SAME coordinate system as hit().
-    static func constrainedDrag(_ id:String,delta:CGPoint,frame:CGRect,
-                                viewport:CGSize,
-                                safeInsets:(left:CGFloat,right:CGFloat,
-                                            top:CGFloat,bottom:CGFloat) =
-                                (0,0,0,0))->CGPoint {
-        guard delta.x.isFinite,delta.y.isFinite,
-              let hitbox=touchFrame(frame),
-              viewport.width.isFinite,viewport.height.isFinite,
-              viewport.width>0,viewport.height>0 else{return .zero}
+    /// The same source constraints as HudEditorGeometry.move and
+    /// HudControlLayout600.limits. Functional buttons stay fully reachable;
+    /// HUD text keeps at least 12 points on screen.
+    static func constrainedDrag(_ id:String,deltaX:Double,deltaY:Double,
+                                frame:Rect,viewportWidth:Double,
+                                viewportHeight:Double,
+                                safeInsets:(left:Double,right:Double,
+                                            top:Double,bottom:Double) =
+                                (0,0,0,0))->(x:Double,y:Double) {
+        guard deltaX.isFinite,deltaY.isFinite,
+              let box=touchFrame(frame),
+              viewportWidth.isFinite,viewportHeight.isFinite,
+              viewportWidth>0,viewportHeight>0 else{return (0,0)}
         let control=id.hasPrefix("control.")
-        let minVisible:CGFloat=control ? 0:12
-        let left=safeInsets.left+minVisible
-        let right=viewport.width-safeInsets.right-minVisible
-        let top=safeInsets.top+minVisible
-        let bottom=viewport.height-safeInsets.bottom-minVisible
-        let minX=left-(control ? hitbox.minX : hitbox.maxX)
-        let maxX=right-(control ? hitbox.maxX : hitbox.minX)
-        let minY=top-(control ? hitbox.minY : hitbox.maxY)
-        let maxY=bottom-(control ? hitbox.maxY : hitbox.minY)
-        func clamp(_ x:CGFloat,_ lo:CGFloat,_ hi:CGFloat)->CGFloat {
-            if lo>hi {return (lo+hi)*0.5}
-            return min(hi,max(lo,x))
+        let visible=control ? 0.0:12.0
+        let left=safeInsets.left+visible
+        let right=viewportWidth-safeInsets.right-visible
+        let top=safeInsets.top+visible
+        let bottom=viewportHeight-safeInsets.bottom-visible
+        let minX=left-(control ? box.minX:box.maxX)
+        let maxX=right-(control ? box.maxX:box.minX)
+        let minY=top-(control ? box.minY:box.maxY)
+        let maxY=bottom-(control ? box.maxY:box.minY)
+        func clamp(_ value:Double,_ lower:Double,_ upper:Double)->Double {
+            lower>upper ? (lower+upper)*0.5 : min(upper,max(lower,value))
         }
-        return CGPoint(x:clamp(delta.x,minX,maxX),
-                       y:clamp(delta.y,minY,maxY))
+        return (clamp(deltaX,minX,maxX),clamp(deltaY,minY,maxY))
     }
 
     static func title(_ id:String)->String {
