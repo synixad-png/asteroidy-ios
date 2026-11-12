@@ -28,7 +28,7 @@ struct PC602HomeWorldPage291:View {
     @State private var orbitLayout291=PC602OrbitHUDLayout291.load()
     @State private var orbitDraft291=PC602OrbitHUDLayout291.load()
     @State private var showingOrbitHUD291=false
-    @State private var previouslyPausedEditor291=false
+    @State private var orbitFrames291:[String:CGRect]=[:]
     @State private var pressedOrbitCommands291:Set<Int>=[]
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.39,green:0.75,blue:0.79)
@@ -46,6 +46,35 @@ struct PC602HomeWorldPage291:View {
             .scaleEffect(item.scale)
             .offset(x:CGFloat(item.x)*screen.size.width/1280,
                     y:CGFloat(item.y)*screen.size.height/720)
+            .background {
+                GeometryReader { marker in
+                    Color.clear.preference(
+                        key:OrbitHUDFramePreference291.self,
+                        value:id=="hud.navigation" ? [:] : [
+                            id:marker.frame(in:.named("orbitHUD291"))
+                        ])
+                }
+                .allowsHitTesting(false)
+            }
+            .opacity(item.visible ? 1 : 0)
+            .allowsHitTesting(!showingOrbitHUD291 && item.visible)
+    }
+
+    /// The arrow is drawn in full-screen Path coordinates, so only its
+    /// visible tip is a touch target, not the whole 3D viewport.
+    private func navigationHitRect291(
+        screen:GeometryProxy,flight:PC602HomeFlight291)->CGRect? {
+        guard let arrow=PC602OrbitNavigation50.arrow(
+            flight:flight,width:Float(screen.size.width),
+            height:Float(screen.size.height)) else{return nil}
+        let item=displayedOrbitLayout291.item("hud.navigation")
+        let midX=Double(screen.size.width)*0.5
+        let midY=Double(screen.size.height)*0.5
+        let cx=(Double(arrow.x)-midX)*item.scale+midX+
+               item.x*Double(screen.size.width)/1280
+        let cy=(Double(arrow.y)-midY)*item.scale+midY+
+               item.y*Double(screen.size.height)/720
+        return CGRect(x:cx-34,y:cy-32,width:68,height:75)
     }
 
     var body:some View {
@@ -93,20 +122,29 @@ struct PC602HomeWorldPage291:View {
                             onClose:{dismissSaves61()})
                             .accessibilityIdentifier("pc602-orbit-three-slot-saves61")
                     }
-                    if showingOrbitOptions291 {orbitOptionsPanel291(screen:screen)}
+                    if showingOrbitOptions291 && !showingOrbitHUD291 {
+                        if showingOrbitSettings291 {
+                            orbitSettingsScreen291(screen:screen)
+                        } else {
+                            orbitOptionsPanel291(screen:screen)
+                        }
+                    }
                     if showingOrbitHUD291 {
                         PC602OrbitHUDEditor291(
                             layout:$orbitDraft291,
+                            measuredFrames:orbitFrames291,
+                            navigationFrame:navigationHitRect291(
+                                screen:screen,flight:flight),
                             onSave:{
                                 guard orbitDraft291.save() else{return}
                                 orbitLayout291=orbitDraft291
                                 showingOrbitHUD291=false
-                                driver.setPaused(previouslyPausedEditor291)
+                                // Same as the mission editor: return into
+                                // USTAWIENIA / INTERFEJS, not gameplay.
                             },
                             onCancel:{
                                 orbitDraft291=orbitLayout291
                                 showingOrbitHUD291=false
-                                driver.setPaused(previouslyPausedEditor291)
                             })
                             .zIndex(70)
                     }
@@ -127,6 +165,10 @@ struct PC602HomeWorldPage291:View {
                 }
             }
             .frame(width:screen.size.width,height:screen.size.height)
+            .coordinateSpace(name:"orbitHUD291")
+        }
+        .onPreferenceChange(OrbitHUDFramePreference291.self) { value in
+            if orbitFrames291 != value {orbitFrames291=value}
         }
         .onAppear {
             driver.setSuspended(scenePhase != .active)
@@ -240,10 +282,9 @@ struct PC602HomeWorldPage291:View {
     }
 
     private func openOrbitHUDEditor291() {
-        previouslyPausedEditor291=previouslyPausedOptions291
+        // Called ONLY from the existing USTAWIENIA / INTERFEJS owner.
+        guard showingOrbitOptions291 && showingOrbitSettings291 else{return}
         orbitDraft291=orbitLayout291
-        showingOrbitSettings291=false
-        showingOrbitOptions291=false
         driver.setPaused(true)
         showingOrbitHUD291=true
     }
