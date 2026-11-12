@@ -75,7 +75,15 @@ assert "SourceCombatTouchZones568(" in source("Sector01Scene568.swift")
 assert "private var movement:some Gesture" not in source("Sector01Scene568.swift")
 assert 'source-combat-left-touch-zone' in source("SourceCombatTouchZones568.swift")
 assert 'accessibilityIdentifier("pc602-orbit-live-touch-hud")' in page
-assert "driver.setPaused(!driver.paused)" in page
+assert "driver.setPaused(true)" in page
+assert "driver.setPaused(previouslyPausedOptions291)" in page
+assert 'Button("OPCJE") {openOrbitOptions291()}' in page
+assert 'Button("POWRÓT DO MENU GŁÓWNEGO")' in page
+assert 'accessibilityIdentifier("pc602-orbit-return-w3")' in page
+assert "onExitToW3()" in page
+assert "let onExitToMainMenu:()->Void" in source("Sector01Scene568.swift")
+assert "onExitToMainMenu()" in source("Sector01Scene568.swift")
+assert "},onExitToMainMenu:{" in app
 assert "driver.setSuspended(phase != .active)" in page
 
 # Real H55 only after source geometry-derived <= 43.2 m, SAME SceneKit.

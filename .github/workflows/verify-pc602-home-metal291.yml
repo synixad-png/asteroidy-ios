@@ -38,6 +38,7 @@ on:
       - ASTEROIDYiOS/W3MainMenu568.swift
       - ASTEROIDYiOS/H55ScenePage580.swift
       - Tests/PC602HomeWorldUI291Contract.py
+      - Tests/PC602H290MenuSkyRegression291.py
       - ASTEROIDYiOS/SourceHomeWreck209.swift
       - ASTEROIDYiOS/SourceHomeVanguard431.swift
       - ASTEROIDYiOS/PC602HomeShipPose291.swift
@@ -79,6 +80,7 @@ on:
       - ASTEROIDYiOS/W3MainMenu568.swift
       - ASTEROIDYiOS/H55ScenePage580.swift
       - Tests/PC602HomeWorldUI291Contract.py
+      - Tests/PC602H290MenuSkyRegression291.py
       - ASTEROIDYiOS/SourceHomeWreck209.swift
       - ASTEROIDYiOS/SourceHomeVanguard431.swift
       - ASTEROIDYiOS/PC602HomeShipPose291.swift
@@ -137,6 +139,7 @@ jobs:
           python3 Tests/SourceLavaLight287SourceContract.py
           python3 Tests/PC602HomeScene291Contract.py
           python3 Tests/PC602HomeWorldUI291Contract.py
+          python3 Tests/PC602H290MenuSkyRegression291.py
           python3 Tests/PC602OrbitSave61Contract.py
           python3 Tools/code_quality_audit.py --root . --gate
       - name: Build actual Swift and Metal for physical iPhone and iPad (no IPA)

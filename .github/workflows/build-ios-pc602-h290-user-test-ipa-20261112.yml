@@ -54,6 +54,7 @@ jobs:
           python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin | tee reports/belt-tests.txt
           python3 Tests/PC602HomeScene291Contract.py | tee reports/scene-contract.txt
           python3 Tests/PC602HomeWorldUI291Contract.py | tee reports/world-contract.txt
+          python3 Tests/PC602H290MenuSkyRegression291.py | tee reports/menu-sky-regression.txt
           python3 Tests/PC602OrbitSave61Contract.py | tee reports/orbit-save-contract.txt
           python3 Tools/verify_original_audio568_assets.py | tee reports/audio-assets.txt
           python3 Tools/materialize_pc586_original_resources.py --report reports/pc586-source.json
@@ -141,6 +142,7 @@ jobs:
             reports/ipa-planetarium-verified.txt
             reports/planetarium-source.txt
             reports/planetarium-isolation.txt
+            reports/menu-sky-regression.txt
             reports/orbit-save-contract.txt
             reports/final-archive-check.txt
             reports/size.txt
