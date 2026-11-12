@@ -8,7 +8,7 @@ struct PC602OrbitHUDEditor291:View {
     @Binding var layout:PC602OrbitHUDLayout291
     let measuredFrames:[String:CGRect]
     let navigationFrames:[String:CGRect]
-    let onSave:()->Void
+    let onSave:()->Bool
     let onCancel:()->Void
 
     @State private var selected="hud.mission.heading"
@@ -82,8 +82,11 @@ struct PC602OrbitHUDEditor291:View {
         let nextX=original.x+clamped.x*1280/(width*base)
         let nextY=original.y+clamped.y*720/(height*base)
         change(id){e in
-            e.x=max(-600,min(600,nextX))
-            e.y=max(-360,min(360,nextY))
+            // The on-screen safe-area clamp is authoritative. The older
+            // ±600/±360 extra clamp prevented moving WEJDŹ and PAUZA
+            // across a landscape iPad/phone and caused visible snapping.
+            e.x=max(-1280,min(1280,nextX))
+            e.y=max(-720,min(720,nextY))
         }
     }
     private func scale(_ id:String,original:Double,factor:Double) {
@@ -142,8 +145,8 @@ struct PC602OrbitHUDEditor291:View {
                         .foregroundStyle(.cyan)
                 }
                 if !selected.isEmpty {
-                    slider("PRZESUNIĘCIE X",key:\.x,range:-600...600,step:1)
-                    slider("PRZESUNIĘCIE Y",key:\.y,range:-360...360,step:1)
+                    slider("PRZESUNIĘCIE X",key:\.x,range:-1280...1280,step:1)
+                    slider("PRZESUNIĘCIE Y",key:\.y,range:-720...720,step:1)
                     slider("WIELKOŚĆ / SKALA",key:\.scale,
                            range:PC602OrbitHUDLayout291.scaleRange(for:selected),
                            step:0.01)
@@ -202,7 +205,11 @@ struct PC602OrbitHUDEditor291:View {
                     inspectorOpen.toggle()
                 }
                 .accessibilityIdentifier("pc602-orbit-hud-inspector-toggle")
-                Button("ZAPISZ") {onSave()}
+                Button("ZAPISZ") {
+                    if !onSave() {
+                        errorMessage="Nie zapisano układu HUD. Sprawdź ustawienia i spróbuj ponownie."
+                    }
+                }
                     .accessibilityIdentifier("pc602-orbit-hud-editor-save")
                 Button("ANULUJ") {onCancel()}
             }
