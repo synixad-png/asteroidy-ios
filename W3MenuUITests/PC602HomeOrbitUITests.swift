@@ -67,6 +67,8 @@ final class PC602HomeOrbitUITests: XCTestCase {
                 timeout: 90)
         require(byID(app, "pc602-orbit-live-touch-hud"),
                 "Source H290 active touch HUD missing")
+        require(app.buttons["pc602-orbit-enter-context"],
+                "PC602 universal WEJDŹ control missing")
         require(app.buttons["pc602-orbit-return-w3"],
                 "Orbital W3 return control missing")
 

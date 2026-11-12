@@ -10,6 +10,7 @@ import UIKit
 struct PC602HomeWorldPage291:View {
     @Environment(\.scenePhase) private var scenePhase
     @ObservedObject var driver:PC602HomeWorldDriver291
+    @ObservedObject var audio:OriginalAudioAV568
     let onExitToW3:()->Void
     let onEnterMission:(Int)->Void
     @State private var showingAtlas330=false
@@ -36,7 +37,12 @@ struct PC602HomeWorldPage291:View {
                         })
                         .ignoresSafeArea()
                         .accessibilityIdentifier("pc602-orbit-live-metal")
-                    overlay(screen:screen)
+                    SourceCombatTouchZones568(
+                        onMove:{driver.setTouch(move:$0)},
+                        onAim:{driver.setTouch(aim:$0)},
+                        onFire:{driver.setFiring($0)})
+                    overlay(screen:screen,flight:flight)
+                    navigationCue50(screen:screen,flight:flight)
                     if showingAtlas330 {atlasPanel(screen:screen)}
                 } else {
                     VStack(spacing:12) {
@@ -65,6 +71,24 @@ struct PC602HomeWorldPage291:View {
         }
         .onChange(of:scenePhase) { phase in
             driver.setSuspended(phase != .active)
+        }
+        // Original PC602 MusicAudio.TrackFor(Orbit)=0; engine/shot sound
+        // never allocate AVAudioPlayer inside the Metal render callback.
+        .onChange(of:driver.hud.enginePower) { _,power in
+            audio.sourceEnginePower(power)
+        }
+        .onChange(of:driver.hud.shotEmissions) { old,next in
+            if next>old {
+                for _ in old..<next {
+                    audio.sourceEffect(driver.hud.weaponSoundCode)
+                }
+            }
+        }
+        .onChange(of:driver.paused) { _,state in
+            audio.orbitPause602(state)
+        }
+        .onChange(of:driver.presentingH55) { _,state in
+            audio.orbitPause602(state)
         }
         .background(alignment:.topLeading) {
             if !driver.presentingH55 {
@@ -166,61 +190,128 @@ struct PC602HomeWorldPage291:View {
         .accessibilityIdentifier("pc602-orbit-original-26-tile-atlas330")
     }
 
-    private func panel(_ label:String)->some View {
-        Text(label)
-            .font(.system(size:11,weight:.semibold,design:.monospaced))
+    // PC602 Orbit50.DrawOrbit50: unfilled navigation readouts over the
+    // live world and a single contextual right-hand interaction key.
+    private func statusText(_ value:String,_ compact:Bool)->some View {
+        Text(value)
+            .font(.system(size:compact ? 10:12,weight:.semibold,
+                          design:.monospaced))
             .foregroundStyle(.white)
-            .padding(.horizontal,10)
-            .frame(minHeight:38)
-            .background(Color.black.opacity(0.72))
-            .overlay(Rectangle().stroke(cyan.opacity(0.40),lineWidth:1))
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
     }
 
-    @ViewBuilder private func overlay(screen:GeometryProxy)->some View {
+    private func enterAvailable()->Bool {
+        !driver.paused && (driver.hud.canDock ||
+                          driver.hud.missionEntrance==1)
+    }
+
+    private func enterSourceLocation() {
+        // Original Program.cs Enter: dock takes precedence over a beacon.
+        if driver.hud.canDock {
+            _=driver.requestH55()
+        } else {
+            let sector=driver.requestAuthoredMission()
+            if sector==1 {onEnterMission(sector)}
+            // No fabricated mission 2...26 before its actual PC port.
+        }
+    }
+
+    @ViewBuilder private func navigationCue50(
+        screen:GeometryProxy,flight:PC602HomeFlight291)->some View {
+        if let arrow=PC602OrbitNavigation50.arrow(
+            flight:flight,width:Float(screen.size.width),
+            height:Float(screen.size.height)) {
+            let x=CGFloat(arrow.x), y=CGFloat(arrow.y)
+            let dx=CGFloat(arrow.dx),dy=CGFloat(arrow.dy)
+            Path { path in
+                let tip=CGPoint(x:x+dx*14,y:y+dy*14)
+                let left=CGPoint(x:x-dx*9-dy*9,y:y-dy*9+dx*9)
+                let right=CGPoint(x:x-dx*9+dy*9,y:y-dy*9-dx*9)
+                path.move(to:left)
+                path.addLine(to:tip)
+                path.addLine(to:right)
+                path.addLine(to:left)
+            }
+            .stroke(cyan,lineWidth:2.4)
+            .allowsHitTesting(false)
+            Text("CEL \(String(format:"%02d",driver.hud.target))")
+                .font(.system(size:11,weight:.bold,design:.monospaced))
+                .foregroundStyle(cyan)
+                .position(x:x,y:y+26)
+                .allowsHitTesting(false)
+        }
+    }
+
+    @ViewBuilder private func overlay(
+        screen:GeometryProxy,flight:PC602HomeFlight291)->some View {
         let compact=screen.size.height<450
-        let leftInset=screen.safeAreaInsets.leading+12
-        let rightInset=screen.safeAreaInsets.trailing+12
-        let topInset=screen.safeAreaInsets.top+8
-        let bottomInset=screen.safeAreaInsets.bottom+10
+        let leading=screen.safeAreaInsets.leading+12
+        let trailing=screen.safeAreaInsets.trailing+12
+        let top=screen.safeAreaInsets.top+8
+        let bottom=screen.safeAreaInsets.bottom+9
         VStack(spacing:0) {
             HStack(alignment:.top,spacing:8) {
-                VStack(alignment:.leading,spacing:5) {
-                    Text("ASTEROIDY / PC v602 / ORBITA")
-                        .font(.system(size:compact ? 10:12,weight:.bold,
+                VStack(alignment:.leading,spacing:3) {
+                    Text("ATLAS \(String(format:"%02d",driver.hud.target)) · VANGUARD")
+                        .font(.system(size:compact ? 12:15,weight:.bold,
                                       design:.monospaced))
                         .foregroundStyle(gold)
-                    HStack(spacing:6) {
-                        panel("PRĘDKOŚĆ \(Int(driver.hud.speed))")
-                        panel("SEKTOR \(String(format:"%02d",driver.hud.target))")
-                        panel("DYST. \(Int(driver.hud.sectorDistance)) m")
+                    statusText("CEL: \(MissionCatalog568.title(for:driver.hud.target) ?? "")",compact)
+                    Text("ODL: \(Int(driver.hud.sectorDistance)) m")
+                        .foregroundStyle(cyan)
+                    Text("KURS: \(Int(abs(driver.hud.courseDegrees)))° " +
+                         (driver.hud.courseDegrees<0 ? "W LEWO" : "W PRAWO"))
+                        .foregroundStyle(.white)
+                    if driver.hud.selectedCompleted {
+                        Text("UKOŃCZONA · MOŻNA POWTÓRZYĆ")
+                            .foregroundStyle(.green)
                     }
                 }
-                Spacer(minLength:0)
-                VStack(alignment:.trailing,spacing:5) {
-                    Text("WRAK H55: \(Int(driver.hud.dockDistance)) m")
-                        .font(.system(size:compact ? 10:12,weight:.bold,
-                                      design:.monospaced))
-                        .foregroundStyle(driver.hud.canDock ? .green : .white)
-                    panel("MISJE \(driver.hud.completed) / 26")
-                    panel("BROŃ \(driver.hud.weaponName) / POCISKI \(driver.hud.projectiles)")
+                .font(.system(size:compact ? 10:12,weight:.semibold,
+                              design:.monospaced))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                Spacer(minLength:4)
+                VStack(alignment:.trailing,spacing:4) {
+                    Text("POSTĘP \(driver.hud.completed) / 26")
+                        .foregroundStyle(cyan)
+                    statusText("STREFA \(driver.hud.zone)",compact)
+                    statusText("PUŁAP \(Int(driver.hud.altitude)) m",compact)
+                    statusText("PRĘDKOŚĆ \(Int(driver.hud.speed))",compact)
+                    HStack(spacing:9) {
+                        Button("ATLAS") {
+                            previouslyPaused330=driver.paused
+                            showingAtlas330=true
+                            driver.setPaused(true)
+                        }
+                        .accessibilityIdentifier("pc602-orbit-open-atlas330")
+                        Button("CEL +") {driver.cycleMission()}
+                            .disabled(driver.paused)
+                            .accessibilityIdentifier("pc602-orbit-next-sector")
+                        Button(driver.paused ? "WZNÓW":"PAUZA") {
+                            driver.setPaused(!driver.paused)
+                        }
+                        .accessibilityIdentifier("pc602-orbit-pause")
+                        Button("MENU W3") {
+                            driver.stop()
+                            onExitToW3()
+                        }
+                        .accessibilityIdentifier("pc602-orbit-return-w3")
+                    }
+                    .font(.system(size:compact ? 10:12,weight:.bold,
+                                  design:.monospaced))
+                    .foregroundStyle(gold)
+                    .buttonStyle(.plain)
+                    .padding(.top,3)
                 }
+                .font(.system(size:compact ? 10:12,weight:.semibold,
+                              design:.monospaced))
             }
-            .padding(.leading,leftInset)
-            .padding(.trailing,rightInset)
-            .padding(.top,topInset)
-            HStack(spacing:12) {
-                Text("STREFA \(driver.hud.zone)")
-                Text("PUŁAP \(Int(driver.hud.altitude)) m")
-                Text("KURS \(Int(abs(driver.hud.courseDegrees)))° " +
-                     (driver.hud.courseDegrees<0 ? "W LEWO":"W PRAWO"))
-                Spacer(minLength:0)
-            }
-            .font(.system(size:compact ? 9:11,
-                          weight:.semibold,design:.monospaced))
-            .foregroundStyle(cyan)
-            .padding(.leading,leftInset)
-            .padding(.trailing,rightInset)
-            .padding(.top,4)
+            .padding(.leading,leading)
+            .padding(.trailing,trailing)
+            .padding(.top,top)
+
             Spacer(minLength:0)
             if let error=driver.error {
                 Text(error)
@@ -228,123 +319,60 @@ struct PC602HomeWorldPage291:View {
                                   design:.monospaced))
                     .foregroundStyle(.orange)
                     .padding(10)
-                    .background(Color.black.opacity(0.88))
-                    .frame(maxWidth:screen.size.width*0.72)
+                    .background(Color.black.opacity(0.86))
+                    .allowsHitTesting(false)
             }
             HStack(alignment:.bottom) {
-                OrbitTouchStick291(title:"LOT / RUCH",diameter:compact ? 116:148) {
-                    driver.setTouch(move:$0)
+                VStack(alignment:.leading,spacing:4) {
+                    Text("JEDYNY HANGAR · \(Int(driver.hud.dockDistance)) m")
+                    Text(driver.hud.canDock ? "MOŻNA DOKOWAĆ" :
+                         "POZA STREFĄ DOKOWANIA")
+                        .foregroundStyle(driver.hud.canDock ? .green : cyan)
+                    Text("LEWA STRONA: LOT · PRAWA: KIERUNEK I OGIEŃ")
+                        .font(.system(size:compact ? 8:10))
+                        .padding(.top,3)
                 }
-                Spacer(minLength:4)
-                VStack(spacing:6) {
-                    Button(driver.paused ? "WZNÓW":"PAUZA") {
-                        driver.setPaused(!driver.paused)
-                    }
-                    .accessibilityIdentifier("pc602-orbit-pause")
-                    Button("ATLAS 26") {
-                        previouslyPaused330=driver.paused
-                        showingAtlas330=true
-                        driver.setPaused(true)
-                    }
-                    .accessibilityIdentifier("pc602-orbit-open-atlas330")
-                    Button("CEL +") {driver.cycleMission()}
-                        .disabled(driver.paused)
-                        .accessibilityIdentifier("pc602-orbit-next-sector")
-                    Text("OGIEŃ")
-                        .font(.system(size:12,weight:.bold,design:.monospaced))
-                        .foregroundStyle(.white)
-                        .frame(minWidth:86,minHeight:44)
-                        .background(Color(red:0.34,green:0.08,blue:0.08))
-                        .overlay(Rectangle().stroke(gold,lineWidth:1))
-                        .contentShape(Rectangle())
-                        .gesture(DragGesture(minimumDistance:0)
-                            .onChanged {_ in driver.setFiring(true)}
-                            .onEnded {_ in driver.setFiring(false)})
-                        .accessibilityIdentifier("pc602-orbit-fire")
-                    Button("DOKUJ H55") {_=driver.requestH55()}
-                        .disabled(!driver.hud.canDock || driver.paused)
-                        .accessibilityIdentifier("pc602-orbit-dock")
-                    Button("WEJDŹ W MISJĘ 01") {
-                        let available=driver.requestAuthoredMission()
-                        if available==1 {onEnterMission(available)}
-                    }
-                    .disabled(driver.hud.missionEntrance != 1 || driver.paused)
-                    .accessibilityIdentifier("pc602-orbit-enter-carbonis01")
-                    Button("MENU W3") {
-                        driver.stop()
-                        onExitToW3()
-                    }
-                    .accessibilityIdentifier("pc602-orbit-return-w3")
-                }
-                .font(.system(size:compact ? 10:12,weight:.bold,
+                .font(.system(size:compact ? 9:11,weight:.semibold,
                               design:.monospaced))
-                .foregroundStyle(gold)
-                .buttonStyle(.plain)
-                .padding(.horizontal,9)
-                .padding(.vertical,5)
-                .background(Color.black.opacity(0.76))
-                .overlay(Rectangle().stroke(gold.opacity(0.55),lineWidth:1))
-                Spacer(minLength:4)
-                OrbitTouchStick291(title:"CELOWANIE",
-                                   diameter:compact ? 116:148) {
-                    driver.setTouch(aim:$0)
-                }
-            }
-            .padding(.leading,leftInset)
-            .padding(.trailing,rightInset)
-            .padding(.bottom,bottomInset)
-        }
-        .allowsHitTesting(true)
-        .accessibilityIdentifier("pc602-orbit-live-touch-hud")
-    }
-}
-
-/// One clamp-to-unit touch stick. The same native vector feeds the
-/// unchanged PC602HomeFlightInput291; touch never overrides a hardware
-/// binding until the player actually drags this control.
-private struct OrbitTouchStick291:View {
-    let title:String
-    let diameter:CGFloat
-    let onMove:(Vec2)->Void
-    @State private var movement=CGSize.zero
-    private let ring=Color(red:0.39,green:0.75,blue:0.79)
-
-    var body:some View {
-        VStack(spacing:4) {
-            Text(title)
-                .font(.system(size:10,weight:.bold,design:.monospaced))
-                .foregroundStyle(ring)
-            GeometryReader { surface in
-                let r=min(surface.size.width,surface.size.height)/2
-                ZStack {
-                    Circle()
-                        .fill(Color.black.opacity(0.55))
-                        .overlay(Circle().stroke(ring.opacity(0.60),lineWidth:2))
-                    Circle()
-                        .fill(ring.opacity(0.65))
-                        .frame(width:r*0.40,height:r*0.40)
-                        .offset(movement)
-                }
-                .contentShape(Rectangle())
-                .gesture(DragGesture(minimumDistance:0)
-                    .onChanged { drag in
-                        let dx=drag.location.x-r
-                        let dy=drag.location.y-r
-                        let distance=max(0.0001,hypot(dx,dy))
-                        let fraction=min(1,r*0.85/distance)
-                        movement=CGSize(width:dx*fraction,height:dy*fraction)
-                        onMove(Vec2(x:Float(dx*fraction/(r*0.85)),
-                                    y:Float(dy*fraction/(r*0.85))))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.55)
+                .allowsHitTesting(false)
+                Spacer(minLength:5)
+                VStack(alignment:.trailing,spacing:4) {
+                    if driver.hud.canDock {
+                        Text("HANGAR H55").foregroundStyle(.green)
+                    } else if driver.hud.missionEntrance>0 {
+                        Text("MISJA \(String(format:"%02d",driver.hud.missionEntrance))")
+                            .foregroundStyle(cyan)
                     }
-                    .onEnded {_ in
-                        movement = .zero
-                        onMove(Vec2(x:0,y:0))
-                    })
+                    Button("WEJDŹ") {enterSourceLocation()}
+                        .font(.system(size:compact ? 15:20,weight:.bold,
+                                      design:.monospaced))
+                        .foregroundStyle(enterAvailable() ? .white : .gray)
+                        .frame(width:compact ? 110:142,
+                               height:compact ? 52:62)
+                        .background(enterAvailable()
+                            ? Color(red:0.05,green:0.43,blue:0.28)
+                            : Color.black.opacity(0.35))
+                        .overlay(Rectangle().stroke(
+                            enterAvailable() ? Color.green : cyan.opacity(0.4),
+                            lineWidth:enterAvailable() ? 2:1))
+                        .disabled(!enterAvailable())
+                        .accessibilityIdentifier("pc602-orbit-enter-context")
+                    if driver.hud.missionEntrance>1 && !driver.hud.canDock {
+                        Text("SEKTOR NIEPRZENIESIONY")
+                            .font(.system(size:9))
+                            .foregroundStyle(.orange)
+                    }
+                }
+                .font(.system(size:compact ? 10:12,weight:.semibold,
+                              design:.monospaced))
             }
-            .frame(width:diameter,height:diameter)
+            .padding(.leading,leading)
+            .padding(.trailing,trailing)
+            .padding(.bottom,bottom)
         }
-        .frame(width:diameter)
-        .accessibilityIdentifier(title=="CELOWANIE"
-           ? "pc602-touch-aim":"pc602-touch-move")
+        .accessibilityIdentifier("pc602-orbit-live-touch-hud")
     }
 }

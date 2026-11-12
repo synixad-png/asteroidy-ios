@@ -69,8 +69,11 @@ for name in ("CADisplayLink","Timer.scheduledTimer","TimelineView",
              "DispatchQueue.main.asyncAfter","Task.detached"):
     assert name not in executable_driver, name
 assert "SourceKeyboardCapture586" in page
-assert "OrbitTouchStick291(title:\"LOT / RUCH\"" in page
-assert 'title:"CELOWANIE"' in page
+assert "SourceCombatTouchZones568(" in page
+assert "OrbitTouchStick291" not in page
+assert "SourceCombatTouchZones568(" in source("Sector01Scene568.swift")
+assert "private var movement:some Gesture" not in source("Sector01Scene568.swift")
+assert 'source-combat-left-touch-zone' in source("SourceCombatTouchZones568.swift")
 assert 'accessibilityIdentifier("pc602-orbit-live-touch-hud")' in page
 assert "driver.setPaused(!driver.paused)" in page
 assert "driver.setSuspended(phase != .active)" in page
@@ -93,7 +96,8 @@ assert "Sector01MissionSettlement568.commit(" in app
 assert "homeWorld291.refreshCampaign(campaign)" in app
 assert "returnHomeWorldAfterCarbonis291" in app
 assert "onEnterMission:enterOrbitMission291" in app
-assert 'accessibilityIdentifier("pc602-orbit-enter-carbonis01")' in page
+assert 'accessibilityIdentifier("pc602-orbit-enter-context")' in page
+assert "driver.hud.canDock" in page and "driver.requestAuthoredMission()" in page
 assert "if result == .orbit" in driver
 assert "session?.finishPhysicalH55Visit()" in driver
 assert "session?.refreshCommittedCampaign(source.completedMask)" in driver
@@ -109,8 +113,9 @@ assert "shop.weapon.rawValue" in driver
 assert "shop.upgradeLevel" in driver and "shop.rapidLevel" in driver
 assert "touchFire:touchFire,dt:Float(dt)" in driver
 assert "func setFiring(_ firing:Bool)" in driver
-assert 'accessibilityIdentifier("pc602-orbit-fire")' in page
-assert "driver.setFiring(true)" in page and "driver.setFiring(false)" in page
+assert "onFire:{driver.setFiring($0)}" in page
+assert "onAim:{driver.setTouch(aim:$0)}" in page
+assert "onMove:{driver.setTouch(move:$0)}" in page
 assert "touchFire=false" in driver
 assert "HomeShotPass292" in weapons or "StepHomeWeaponTest292" in weapons
 assert "Sphere67.advance(bullet.position," in weapons
@@ -148,6 +153,14 @@ assert "driver.selectMission(level)" in page
 assert "ForEach(1...26,id:\\.self)" in page
 assert 'accessibilityIdentifier("pc602-orbit-original-26-tile-atlas330")' in page
 assert "driver.hud.courseDegrees" in page
+assert "PC602OrbitNavigation50.arrow(" in page
+assert "routeDirection(_ source:PC602HomeFlight291)" in atlas
+assert "func enterOrbit602()" in source("OriginalAudioAV568.swift")
+assert "audio.enterOrbit602()" in app
+assert "Audio" not in source("SourceCombatTouchZones568.swift")
+assert "guard SourceNewGame568.create(choice)" in app
+assert "showingHomeWorld291=true" in app
+assert 'Button("WEJDŹ")' in page
 assert "driver.hud.altitude" in page
 assert "driver.hud.zone" in page
 
