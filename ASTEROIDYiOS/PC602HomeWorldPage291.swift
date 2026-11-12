@@ -51,7 +51,7 @@ struct PC602HomeWorldPage291:View {
                 GeometryReader { marker in
                     Color.clear.preference(
                         key:OrbitHUDFramePreference291.self,
-                        value:id=="hud.navigation" ? [:] : [
+                        value:id.hasPrefix("hud.navigation") ? [:] : [
                             id:marker.frame(in:.named("orbitHUD291"))
                         ])
                 }
@@ -63,19 +63,34 @@ struct PC602HomeWorldPage291:View {
 
     /// The arrow is drawn in full-screen Path coordinates, so only its
     /// visible tip is a touch target, not the whole 3D viewport.
-    private func navigationHitRect291(
-        screen:GeometryProxy,flight:PC602HomeFlight291)->CGRect? {
+    private func navigationHitRects291(
+        screen:GeometryProxy,flight:PC602HomeFlight291
+    )->[String:CGRect] {
         guard let arrow=PC602OrbitNavigation50.arrow(
             flight:flight,width:Float(screen.size.width),
-            height:Float(screen.size.height)) else{return nil}
-        let item=displayedOrbitLayout291.item("hud.navigation")
-        let midX=Double(screen.size.width)*0.5
-        let midY=Double(screen.size.height)*0.5
-        let offsetX=item.x*Double(screen.size.width)/1280
-        let offsetY=item.y*Double(screen.size.height)/720
-        let cx=(Double(arrow.x)-midX)*item.scale + midX + offsetX
-        let cy=(Double(arrow.y)-midY)*item.scale + midY + offsetY
-        return CGRect(x:cx-34,y:cy-32,width:68,height:75)
+            height:Float(screen.size.height)) else{return [:]}
+        let group=displayedOrbitLayout291.item("hud.navigation")
+        let label=displayedOrbitLayout291.item("hud.navigation.label")
+        let mx=Double(screen.size.width)*0.5
+        let my=Double(screen.size.height)*0.5
+        let dx=Double(screen.size.width)/1280
+        let dy=Double(screen.size.height)/720
+        func groupTransform(_ x:Double,_ y:Double)->CGPoint {
+            CGPoint(x:(x-mx)*group.scale+mx+group.x*dx,
+                    y:(y-my)*group.scale+my+group.y*dy)
+        }
+        // Both source shapes use .position over a full-screen Path/Text.
+        // Measuring them with GeometryReader would report the ENTIRE screen:
+        // resolve their true visible geometry from the original arrow cue.
+        let tip=groupTransform(Double(arrow.x),Double(arrow.y))
+        let labelX=(Double(arrow.x)-mx)*label.scale+mx+label.x*dx
+        let labelY=(Double(arrow.y)+26-my)*label.scale+my+label.y*dy
+        let labelPoint=groupTransform(labelX,labelY)
+        let arrowFrame=CGRect(x:tip.x-24,y:tip.y-22,width:48,height:48)
+        let titleFrame=CGRect(x:labelPoint.x-45,y:labelPoint.y-22,
+                              width:90,height:44)
+        return ["hud.navigation":arrowFrame,
+                "hud.navigation.label":titleFrame]
     }
 
     var body:some View {
@@ -134,7 +149,7 @@ struct PC602HomeWorldPage291:View {
                         PC602OrbitHUDEditor291(
                             layout:$orbitDraft291,
                             measuredFrames:orbitFrames291,
-                            navigationFrame:navigationHitRect291(
+                            navigationFrames:navigationHitRects291(
                                 screen:screen,flight:flight),
                             onSave:{
                                 guard orbitDraft291.save() else{return}
@@ -569,11 +584,13 @@ struct PC602HomeWorldPage291:View {
             .allowsHitTesting(false)
             }
             orbitItem291("hud.navigation",screen:screen) {
-            Text("CEL \(String(format:"%02d",driver.hud.target))")
-                .font(.system(size:11,weight:.bold,design:.monospaced))
-                .foregroundStyle(cyan)
-                .position(x:x,y:y+26)
-                .allowsHitTesting(false)
+                orbitItem291("hud.navigation.label",screen:screen) {
+                    Text("CEL \(String(format:"%02d",driver.hud.target))")
+                        .font(.system(size:11,weight:.bold,design:.monospaced))
+                        .foregroundStyle(cyan)
+                        .position(x:x,y:y+26)
+                        .allowsHitTesting(false)
+                }
             }
         }
     }
@@ -589,23 +606,35 @@ struct PC602HomeWorldPage291:View {
             HStack(alignment:.top,spacing:8) {
                 orbitItem291("hud.mission",screen:screen) {
                 VStack(alignment:.leading,spacing:3) {
-                    Text("ATLAS \(String(format:"%02d",driver.hud.target)) · VANGUARD")
-                        .font(.system(size:compact ? 12:15,weight:.bold,
-                                      design:.monospaced))
-                        .foregroundStyle(gold)
-                    statusText("CEL: \(MissionCatalog568.title(for:driver.hud.target) ?? "")",compact)
-                    Text("ODL: \(Int(driver.hud.sectorDistance)) m")
-                        .foregroundStyle(cyan)
-                    Text(PC602OrbitHud330.courseLabel(
-                        driver.hud.courseDegrees,
-                        unlocked:driver.hud.selectedUnlocked))
-                        .foregroundStyle(.white)
+                    orbitItem291("hud.mission.heading",screen:screen) {
+                        Text("ATLAS \(String(format:"%02d",driver.hud.target)) · VANGUARD")
+                            .font(.system(size:compact ? 12:15,weight:.bold,
+                                          design:.monospaced))
+                            .foregroundStyle(gold)
+                    }
+                    orbitItem291("hud.mission.target",screen:screen) {
+                        statusText("CEL: \(MissionCatalog568.title(for:driver.hud.target) ?? "")",compact)
+                    }
+                    orbitItem291("hud.mission.distance",screen:screen) {
+                        Text("ODL: \(Int(driver.hud.sectorDistance)) m")
+                            .foregroundStyle(cyan)
+                    }
+                    orbitItem291("hud.mission.course",screen:screen) {
+                        Text(PC602OrbitHud330.courseLabel(
+                            driver.hud.courseDegrees,
+                            unlocked:driver.hud.selectedUnlocked))
+                            .foregroundStyle(.white)
+                    }
                     if driver.hud.selectedCompleted {
-                        Text("UKOŃCZONA · MOŻNA POWTÓRZYĆ")
-                            .foregroundStyle(.green)
+                        orbitItem291("hud.mission.completed",screen:screen) {
+                            Text("UKOŃCZONA · MOŻNA POWTÓRZYĆ")
+                                .foregroundStyle(.green)
+                        }
                     } else if !driver.hud.selectedUnlocked {
-                        Text("ODBLOCKUJ POPRZEDNIĄ MISJĘ")
-                            .foregroundStyle(.gray)
+                        orbitItem291("hud.mission.locked",screen:screen) {
+                            Text("ODBLOCKUJ POPRZEDNIĄ MISJĘ")
+                                .foregroundStyle(.gray)
+                        }
                     }
                 }
                 .font(.system(size:compact ? 10:12,weight:.semibold,
@@ -617,11 +646,19 @@ struct PC602HomeWorldPage291:View {
                 VStack(alignment:.trailing,spacing:4) {
                     orbitItem291("hud.telemetry",screen:screen) {
                     VStack(alignment:.trailing,spacing:4) {
-                    Text(PC602OrbitHud330.progressLabel(driver.hud.completed))
-                        .foregroundStyle(cyan)
-                    statusText(PC602OrbitHud330.zoneLabel(driver.hud.zone),compact)
-                    statusText("PUŁAP \(Int(driver.hud.altitude)) m",compact)
-                    statusText("PRĘDKOŚĆ \(Int(driver.hud.speed))",compact)
+                    orbitItem291("hud.telemetry.progress",screen:screen) {
+                        Text(PC602OrbitHud330.progressLabel(driver.hud.completed))
+                            .foregroundStyle(cyan)
+                    }
+                    orbitItem291("hud.telemetry.zone",screen:screen) {
+                        statusText(PC602OrbitHud330.zoneLabel(driver.hud.zone),compact)
+                    }
+                    orbitItem291("hud.telemetry.altitude",screen:screen) {
+                        statusText("PUŁAP \(Int(driver.hud.altitude)) m",compact)
+                    }
+                    orbitItem291("hud.telemetry.speed",screen:screen) {
+                        statusText("PRĘDKOŚĆ \(Int(driver.hud.speed))",compact)
+                    }
                     }
                     }
                     // PC602 OrbitHud330: 8 columns x 4 rows, 29x22
@@ -677,24 +714,32 @@ struct PC602HomeWorldPage291:View {
 
             Spacer(minLength:0)
             if let error=driver.error {
-                Text(error)
-                    .font(.system(size:11,weight:.semibold,
-                                  design:.monospaced))
-                    .foregroundStyle(.orange)
-                    .padding(10)
-                    .background(Color.black.opacity(0.86))
-                    .allowsHitTesting(false)
+                orbitItem291("hud.error",screen:screen) {
+                    Text(error)
+                        .font(.system(size:11,weight:.semibold,
+                                      design:.monospaced))
+                        .foregroundStyle(.orange)
+                        .padding(10)
+                        .background(Color.black.opacity(0.86))
+                        .allowsHitTesting(false)
+                }
             }
             HStack(alignment:.bottom) {
                 orbitItem291("hud.dock",screen:screen) {
                 VStack(alignment:.leading,spacing:4) {
-                    Text("JEDYNY HANGAR · \(Int(driver.hud.dockDistance)) m")
-                    Text(driver.hud.canDock ? "MOŻNA DOKOWAĆ" :
-                         "POZA STREFĄ DOKOWANIA")
-                        .foregroundStyle(driver.hud.canDock ? .green : cyan)
-                    Text("LEWA STRONA: LOT · PRAWA: KIERUNEK I OGIEŃ")
-                        .font(.system(size:compact ? 8:10))
-                        .padding(.top,3)
+                    orbitItem291("hud.dock.distance",screen:screen) {
+                        Text("JEDYNY HANGAR · \(Int(driver.hud.dockDistance)) m")
+                    }
+                    orbitItem291("hud.dock.status",screen:screen) {
+                        Text(driver.hud.canDock ? "MOŻNA DOKOWAĆ" :
+                             "POZA STREFĄ DOKOWANIA")
+                            .foregroundStyle(driver.hud.canDock ? .green : cyan)
+                    }
+                    orbitItem291("hud.dock.hint",screen:screen) {
+                        Text("LEWA STRONA: LOT · PRAWA: KIERUNEK I OGIEŃ")
+                            .font(.system(size:compact ? 8:10))
+                            .padding(.top,3)
+                    }
                 }
                 .font(.system(size:compact ? 9:11,weight:.semibold,
                               design:.monospaced))
@@ -730,9 +775,11 @@ struct PC602HomeWorldPage291:View {
                         .accessibilityIdentifier("pc602-orbit-enter-context")
                     }
                     if driver.hud.missionEntrance>1 && !driver.hud.canDock {
-                        Text("SEKTOR NIEPRZENIESIONY")
-                            .font(.system(size:9))
-                            .foregroundStyle(.orange)
+                        orbitItem291("hud.warning",screen:screen) {
+                            Text("SEKTOR NIEPRZENIESIONY")
+                                .font(.system(size:9))
+                                .foregroundStyle(.orange)
+                        }
                     }
                 }
                 .font(.system(size:compact ? 10:12,weight:.semibold,
