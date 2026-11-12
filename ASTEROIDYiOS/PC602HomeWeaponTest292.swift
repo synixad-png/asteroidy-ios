@@ -16,6 +16,11 @@ struct PC602HomeWeaponTest292 {
         let cooling:Int
         let fireRateScale:Float
         let fireRateTalent:Float
+        // Game.Fire() calls ConsumeIon() once per SALVO, giving each bullet
+        // +1 damage. HomeFlight291.StepHomeWeaponTest292 restores IonAmmo
+        // immediately after Fire(): H290 has the boosted shot but its
+        // canonical ammunition is NEVER consumed by this test range.
+        let ionAmmo:Int
         // The actual new-game PC default is weapon Pulse, upgrade 1,
         // Rapid 0 and Cooling 0. Verified constants need no force-unwrap.
         init() {
@@ -25,12 +30,14 @@ struct PC602HomeWeaponTest292 {
             cooling = 0
             fireRateScale = 1
             fireRateTalent = 1
+            ionAmmo = 0
         }
         static let defaultPulse=Settings()
         init?(weapon:Weapon,upgrade:Int=1,rapid:Int=0,cooling:Int=0,
-              fireRateScale:Float=1,fireRateTalent:Float=1) {
+              fireRateScale:Float=1,fireRateTalent:Float=1,
+              ionAmmo:Int=0) {
             guard (1...3).contains(upgrade),(0...2).contains(rapid),
-                  (0...2).contains(cooling),
+                  (0...2).contains(cooling),(0...300).contains(ionAmmo),
                   fireRateScale.isFinite,fireRateTalent.isFinite,
                   fireRateScale>0,fireRateTalent>0 else{return nil}
             self.weapon=weapon
@@ -39,6 +46,7 @@ struct PC602HomeWeaponTest292 {
             self.cooling=cooling
             self.fireRateScale=fireRateScale
             self.fireRateTalent=fireRateTalent
+            self.ionAmmo=ionAmmo
         }
         // PC602 Game.ShotIntervalBase97 and Modules97.ShotInterval.
         var interval:Float {
@@ -112,6 +120,10 @@ struct PC602HomeWeaponTest292 {
         cooldown=settings.interval
         emissions+=1
         let kind=settings.weapon
+        // Game.Fire: int ion=ConsumeIon(). StepHomeWeaponTest292 saves
+        // and restores IonAmmo, so the same charge boosts every H290
+        // practice salvo while the canonical shop balance stays unchanged.
+        let ion=settings.ionAmmo > 0 ? 1 : 0
         let count=kind == .swarm ? 3 :
                   kind == .twin ? 2 :
                   kind == .scatter ? (settings.upgrade==3 ? 5:3):1
@@ -144,8 +156,8 @@ struct PC602HomeWeaponTest292 {
             projectiles.append(Bullet(
                 position:origin,velocity:velocity,
                 life:kind == .swarm ? 1.8:1.05,kind:kind,
-                damage:kind == .rail ? 4 :
-                    kind == .pulse && settings.upgrade==3 ? 2:1,
+                damage:(kind == .rail ? 4 :
+                    kind == .pulse && settings.upgrade==3 ? 2:1) + ion,
                 pierce:kind == .rail ? 4:(piercing ? 2:1)))
         }
     }

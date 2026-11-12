@@ -73,6 +73,51 @@ assert(PC602HomeWeaponTest292.Settings(
 assert(PC602HomeWeaponTest292.Settings(
     weapon:.pulse,cooling:2) != nil)
 
+// O03: the original PC602 Game.Fire() uses ConsumeIon() ONCE PER
+// volley and adds +1 to the damage of EACH created Bullet.  However,
+// HomeFlight291.StepHomeWeaponTest292 saves/restores IonAmmo around
+// Game.Fire(), so testing on H290 does NOT spend ion ammo.
+// Check 0 vs 1 vs 300 charges, ALL FIVE guns, including scatter 5-shot.
+for kind in PC602HomeWeaponTest292.Weapon.allCases {
+    for upgrade in 1...3 {
+        let without=PC602HomeWeaponTest292.Settings(
+            weapon:kind,upgrade:upgrade,ionAmmo:0)!
+        let one=PC602HomeWeaponTest292.Settings(
+            weapon:kind,upgrade:upgrade,ionAmmo:1)!
+        let full=PC602HomeWeaponTest292.Settings(
+            weapon:kind,upgrade:upgrade,ionAmmo:300)!
+        var normal=PC602HomeWeaponTest292(settings:without)
+        var ion=PC602HomeWeaponTest292(settings:one)
+        var charged=PC602HomeWeaponTest292(settings:full)
+        for _ in 0..<3 {
+            // 2 seconds guarantees the original cooldown has expired
+            // and any prior bullet lifetime on the empty test range.
+            normal.step(ship:ship,dt:0.05,fire:true)
+            ion.step(ship:ship,dt:0.05,fire:true)
+            charged.step(ship:ship,dt:0.05,fire:true)
+            assert(normal.projectiles.count==ion.projectiles.count)
+            assert(normal.projectiles.count==charged.projectiles.count)
+            for i in normal.projectiles.indices {
+                assert(ion.projectiles[i].damage == normal.projectiles[i].damage+1)
+                assert(charged.projectiles[i].damage == normal.projectiles[i].damage+1)
+                assert(ion.projectiles[i].pierce == normal.projectiles[i].pierce)
+                assert(charged.projectiles[i].pierce == normal.projectiles[i].pierce)
+            }
+            // Practice salvos preserve exactly their original charge count.
+            assert(ion.settings.ionAmmo==1)
+            assert(charged.settings.ionAmmo==300)
+            for _ in 0..<45 {
+                normal.step(ship:ship,dt:0.05,fire:false)
+                ion.step(ship:ship,dt:0.05,fire:false)
+                charged.step(ship:ship,dt:0.05,fire:false)
+            }
+        }
+        assert(normal.emissions==3 && ion.emissions==3 && charged.emissions==3)
+    }
+}
+assert(PC602HomeWeaponTest292.Settings(weapon:.pulse,ionAmmo:-1)==nil)
+assert(PC602HomeWeaponTest292.Settings(weapon:.pulse,ionAmmo:301)==nil)
+
 guard let camera=PC602HomeWorldView291(
     camera:ship.camera,aspect:16.0/9.0) else {
     fatalError("Original PC602 400m sphere camera must project shots")

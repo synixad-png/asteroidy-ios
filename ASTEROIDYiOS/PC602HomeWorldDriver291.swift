@@ -76,7 +76,8 @@ final class PC602HomeWorldDriver291:ObservableObject {
         return PC602HomeWeaponTest292.Settings(
             weapon:gun,upgrade:shop.upgradeLevel,
             rapid:shop.rapidLevel,cooling:mechanics.cooling,
-            fireRateTalent:1/(1+0.06*Float(mechanics.rateRank)))
+            fireRateTalent:1/(1+0.06*Float(mechanics.rateRank)),
+            ionAmmo:shop.ionAmmo)
     }
 
     /// Preserve chosen Vanguard and actual H290 flight coordinates.
