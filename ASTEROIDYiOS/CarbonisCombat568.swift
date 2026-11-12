@@ -90,6 +90,10 @@ struct CarbonisCombat568 {
     let rapidLevel:Int
     // PC580 Modules97/Talents78 independent of future ship GLB assets.
     let sourceMechanics:H55SourceMechanics580.State
+    // Physics68 ShipMass68 / Campaign37.ContactRadius: same existing
+    // authoritative source stats, captured once at mission start.
+    let shipCollisionMass:Float
+    let shipContactRadius:Float
     var guardianCharges:Int=0
     // Independent source drone: orbit, acquisition and plasma, not a fake HUD.
     var guardianDrone=CombatGuardianDrone298()
@@ -157,6 +161,11 @@ struct CarbonisCombat568 {
         difficulty=prepared.difficulty
         let profile=prepared.shopProfile
         sourceMechanics=upgrades
+        let originalShipStats=H55SourceMechanics580.shipStats(
+            type:upgrades.selectedShip,engine:upgrades.engine,
+            stabilizer:upgrades.stabilizer,thruster:upgrades.thruster)
+        shipCollisionMass=originalShipStats?.mass ?? 3.4
+        shipContactRadius=originalShipStats?.contactRadius ?? 11.2
         guardianCharges=upgrades.guardianOwned ? 1 : 0
         startingTokens=profile.tokens
         selectedWeapon=profile.weapon
@@ -536,7 +545,7 @@ struct CarbonisCombat568 {
         for i in rocks.indices {
             var player=CarbonisBodyContact68.Body(
                 position:flight.position,velocity:flight.velocity,
-                mass:3.4,radius:11.2)
+                mass:shipCollisionMass,radius:shipContactRadius)
             var rock=CarbonisBodyContact68.Body(
                 position:rocks[i].position,velocity:rocks[i].velocity,
                 mass:rocks[i].mass,radius:rocks[i].radius)
@@ -555,7 +564,7 @@ struct CarbonisCombat568 {
         for i in shooters.indices {
             var player=CarbonisBodyContact68.Body(
                 position:flight.position,velocity:flight.velocity,
-                mass:3.4,radius:11.2)
+                mass:shipCollisionMass,radius:shipContactRadius)
             var enemy=CarbonisBodyContact68.Body(
                 position:shooters[i].core.position,
                 velocity:shooters[i].velocity,mass:2,radius:16)
@@ -641,7 +650,7 @@ struct CarbonisCombat568 {
             let rock=rocks[i]
             let delta=Sphere67.delta(target:rock.position,origin:previous)
             let t=CombatCollision556.segmentHit(
-                delta:delta,travel:travel,radius:rock.radius+11.2)
+                delta:delta,travel:travel,radius:rock.radius+shipContactRadius)
             guard t<=1,boost71.firstRockContact(rock.shapeSeed) else{continue}
             rocks[i].health-=8
             let shove=CarbonisBodyContact68.transported(
@@ -658,7 +667,7 @@ struct CarbonisCombat568 {
             let delta=Sphere67.delta(
                 target:fighter.core.position,origin:previous)
             let t=CombatCollision556.segmentHit(
-                delta:delta,travel:travel,radius:16+11.2)
+                delta:delta,travel:travel,radius:16+shipContactRadius)
             guard t<=1,boost71.firstShooterContact(fighter.id) else{continue}
             shooters[i].core.hp-=6
             let dead=shooters[i].core.hp<=0
@@ -1241,8 +1250,8 @@ struct CarbonisCombat568 {
         for i in hostileShots.indices.reversed() {
             let shot=hostileShots[i]
             let gate=ShotSweepGate568(shot:shot,dt:dt)
-            if gate.mayReach(flight.position,radius:11.2+4.5) &&
-               Self.hit(shot,flight.position,radius:11.2+4.5,dt:dt) {
+            if gate.mayReach(flight.position,radius:shipContactRadius+4.5) &&
+               Self.hit(shot,flight.position,radius:shipContactRadius+4.5,dt:dt) {
                 hostileShots.remove(at:i);suffer(shot.damage,hostileProjectile:true);continue
             }
             var moved=shot
