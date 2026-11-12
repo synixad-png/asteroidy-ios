@@ -180,6 +180,13 @@ import simd
     func closeWorkshop() {
         showingWorkshop=false
         setMove(forward:0,right:0)
+        // HubEquipShip369: reflect a newly equipped 6061 Bastion immediately
+        // in the actual existing hangar. Do not replace on unsupported IDs.
+        if let current=playerShip,let replacement=H55PlayerShip580.make() {
+            current.removeFromParentNode()
+            scene?.rootNode.addChildNode(replacement)
+            playerShip=replacement
+        }
     }
     func skipArrival() {arrival.skip()}
 
@@ -754,7 +761,9 @@ import simd
         if let craft=H55PlayerShip580.make() {
             realScene.rootNode.addChildNode(craft)
             playerShip=craft
-            h13MaterialReport += "\nSTATEK: ORYGINALNY VANGUARD431 / MESH I JPEG SHA256 OK"
+            h13MaterialReport += craft.name==H55PlayerShip580.bastionNodeName
+                ? "\nSTATEK: ORYGINALNY BASTION606 / MESH I JPEG SHA256 OK"
+                : "\nSTATEK: ORYGINALNY VANGUARD431 / MESH I JPEG SHA256 OK"
         } else {
             h13MaterialReport += "\nSTATEK: BRAK ZWERYFIKOWANEGO ORYGINALNEGO VANGUARD431 (BEZ ZAMIENNIKA)"
         }
