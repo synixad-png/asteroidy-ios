@@ -25,8 +25,25 @@ struct PC602OrbitHUDEditor291:View {
         // FULL-SCREEN SwiftUI container, so use the true source arrow rects.
         measuredFrames.merging(navigationFrames){_,authored in authored}
     }
+    private var selectionIDs:[String] {
+        // Like the mission F6 selector, put the actual individual HUD
+        // widgets before the five controls, and legacy whole-group
+        // transforms last. This avoids hiding the useful widgets at the
+        // bottom of a long picker list.
+        let leaves=PC602OrbitHUDLayout291.ids.filter {
+            $0.hasPrefix("hud.") &&
+            !PC602OrbitHUDLayout291.legacyIDs.contains($0)
+        }
+        let controls=PC602OrbitHUDLayout291.ids.filter {
+            $0.hasPrefix("control.")
+        }
+        let groups=PC602OrbitHUDLayout291.legacyIDs.filter {
+            $0.hasPrefix("hud.")
+        }
+        return leaves+controls+groups
+    }
     private func selectNeighbor(_ delta:Int) {
-        let ids=PC602OrbitHUDLayout291.ids
+        let ids=selectionIDs
         guard let idx=ids.firstIndex(of:selected) else{selected=ids[0];return}
         selected=ids[(idx+delta+ids.count)%ids.count]
     }
@@ -97,7 +114,7 @@ struct PC602OrbitHUDEditor291:View {
                     .foregroundStyle(.yellow)
                 Picker("ELEMENT",selection:$selected) {
                     Text("BRAK").tag("")
-                    ForEach(PC602OrbitHUDLayout291.ids,id:\.self){id in
+                    ForEach(selectionIDs,id:\.self){id in
                         Text(PC602OrbitHUDLayout291.title(id)).tag(id)
                     }
                 }
@@ -165,7 +182,7 @@ struct PC602OrbitHUDEditor291:View {
                     .accessibilityIdentifier("pc602-orbit-hud-previous")
                 Picker("ELEMENT HUD",selection:$selected) {
                     Text("BRAK").tag("")
-                    ForEach(PC602OrbitHUDLayout291.ids,id:\.self){id in
+                    ForEach(selectionIDs,id:\.self){id in
                         Text(PC602OrbitHUDLayout291.title(id)).tag(id)
                     }
                 }
@@ -190,7 +207,7 @@ struct PC602OrbitHUDEditor291:View {
             .frame(minHeight:54)
             .padding(.horizontal,9)
             .background(Color(red:0.01,green:0.02,blue:0.04).opacity(0.97))
-            Text("11 ELEMENTÓW / DOTKNIJ • PRZESUŃ • SZCZYPIJ • OPCJE")
+            Text("\(PC602OrbitHUDLayout291.ids.count) ELEMENTÓW / DOTKNIJ • PRZESUŃ • SZCZYPIJ • OPCJE")
                 .font(.system(size:12,design:.monospaced))
                 .foregroundStyle(.white)
                 .frame(minHeight:24)
