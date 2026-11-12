@@ -29,7 +29,7 @@ struct PC602HomeWorldPage291:View {
     @State private var orbitLayout291=PC602OrbitHUDLayout291.load()
     @State private var orbitDraft291=PC602OrbitHUDLayout291.load()
     @State private var showingOrbitHUD291=false
-    @State private var orbitFrames291:[String:CGRect]=[:]
+    @State private var orbitSelected291="hud.mission.heading"
     @State private var pressedOrbitCommands291:Set<Int>=[]
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.39,green:0.75,blue:0.79)
@@ -37,35 +37,100 @@ struct PC602HomeWorldPage291:View {
     private var displayedOrbitLayout291:PC602OrbitHUDLayout291 {
         showingOrbitHUD291 ? orbitDraft291 : orbitLayout291
     }
-    // Identical source layout when offsets=0 and scale=1.0. These modifiers
-    // transform the REAL rendered HUD/buttons, including their touch regions.
+    /// Same native UIKit begin/move/pinch pattern as the verified
+    /// mission HUD editor, but attached to the REAL visible H290 item.
     private func orbitItem291<V:View>(
         _ id:String,screen:GeometryProxy,@ViewBuilder content:()->V
     )->some View {
         let item=displayedOrbitLayout291.item(id)
-        // Measure the SAME transformed view the player sees.  A background
-        // attached AFTER offset/scale measures the original layout slot,
-        // so after dragging the hit rectangle stayed behind the button.
+        let groups:Set<String>=["hud.mission","hud.telemetry","hud.atlas-grid",
+                                "hud.dock","hud.entry-label"]
+        let isGroup=groups.contains(id)
+        let directTouch = !id.hasPrefix("hud.navigation") &&
+            (isGroup || id.hasPrefix("control.") ||
+             !PC602OrbitHUDLayout291.legacyIDs.contains(id))
         return content()
+            // Group touch regions are BEHIND their children, so a finger
+            // always selects the individual label/button first.
             .background {
-                // Mission HudEditorGeometry computes frames only when F6
-                // is open. Do the same here: do not drive 27 changing
-                // GeometryReader preferences every live H290 Metal frame.
-                if showingOrbitHUD291 && !id.hasPrefix("hud.navigation") {
-                    GeometryReader { marker in
-                        Color.clear.preference(
-                            key:OrbitHUDFramePreference291.self,
-                            value:[id:marker.frame(in:.named("orbitHUD291"))]
-                        )
-                    }
-                    .allowsHitTesting(false)
+                if showingOrbitHUD291 && isGroup {
+                    orbitTouch291(id,screen:screen)
+                }
+            }
+            .overlay {
+                if showingOrbitHUD291 && directTouch && !isGroup {
+                    orbitTouch291(id,screen:screen)
+                }
+            }
+            .overlay {
+                if showingOrbitHUD291 && orbitSelected291==id {
+                    Rectangle().stroke(Color.yellow,lineWidth:2)
+                        .allowsHitTesting(false)
                 }
             }
             .scaleEffect(item.scale)
             .offset(x:CGFloat(item.x)*screen.size.width/1280,
                     y:CGFloat(item.y)*screen.size.height/720)
             .opacity(item.visible ? 1 : 0)
-            .allowsHitTesting(!showingOrbitHUD291 && item.visible)
+            .allowsHitTesting(
+                showingOrbitHUD291 ? directTouch : item.visible)
+    }
+
+    private func orbitTouch291(_ id:String,
+                               screen:GeometryProxy)->some View {
+        let element=orbitDraft291.item(id)
+        return OrbitHUDItemTouchSurface291(
+            id:id,element:element,
+            onSelect:{orbitSelected291=$0},
+            onMove:{original,dx,dy,frame in
+                dragOrbit291(id,original:original,dx:dx,dy:dy,
+                             frame:frame,screen:screen)
+            },
+            onScale:{initial,factor in
+                guard initial.isFinite,initial>0,
+                      factor.isFinite,factor>0 else{return}
+                let range=PC602OrbitHUDLayout291.scaleRange(for:id)
+                orbitDraft291.change(id){ item in
+                    item.scale=max(range.lowerBound,
+                                   min(range.upperBound,initial*factor))
+                }
+            })
+            .frame(minWidth:CGFloat(44/max(0.25,element.scale)),
+                   minHeight:CGFloat(44/max(0.25,element.scale)))
+    }
+
+    private func dragOrbit291(
+        _ id:String,original:PC602OrbitHUDLayout291.Element,
+        dx:Double,dy:Double,frame:CGRect,screen:GeometryProxy
+    ) {
+        guard dx.isFinite,dy.isFinite else{return}
+        let screenFrame=screen.frame(in:.global)
+        let physical=PC602OrbitHUDLayout291.Rect(
+            x:Double(frame.minX-screenFrame.minX),
+            y:Double(frame.minY-screenFrame.minY),
+            width:Double(frame.width),height:Double(frame.height))
+        let clamped=PC602OrbitHUDLayout291.constrainedDrag(
+            id,deltaX:dx,deltaY:dy,frame:physical,
+            viewportWidth:Double(screen.size.width),
+            viewportHeight:Double(screen.size.height),
+            safeInsets:(left:Double(screen.safeAreaInsets.leading),
+                        right:Double(screen.safeAreaInsets.trailing),
+                        top:Double(screen.safeAreaInsets.top),
+                        bottom:Double(screen.safeAreaInsets.bottom)))
+        let parent:String?
+        if id.hasPrefix("hud.mission.") {parent="hud.mission"}
+        else if id.hasPrefix("hud.telemetry.") {parent="hud.telemetry"}
+        else if id.hasPrefix("hud.dock.") {parent="hud.dock"}
+        else if id=="hud.navigation.label" {parent="hud.navigation"}
+        else {parent=nil}
+        let inherited=parent.map{orbitDraft291.item($0).scale} ?? 1
+        let base=max(0.001,inherited)
+        let nextX=original.x+clamped.x*1280/(max(1,Double(screen.size.width))*base)
+        let nextY=original.y+clamped.y*720/(max(1,Double(screen.size.height))*base)
+        orbitDraft291.change(id){item in
+            item.x=max(-1280,min(1280,nextX))
+            item.y=max(-720,min(720,nextY))
+        }
     }
 
     /// The arrow is drawn in full-screen Path coordinates, so only its
@@ -160,9 +225,7 @@ struct PC602HomeWorldPage291:View {
                     if showingOrbitHUD291 {
                         PC602OrbitHUDEditor291(
                             layout:$orbitDraft291,
-                            measuredFrames:orbitFrames291,
-                            navigationFrames:navigationHitRects291(
-                                screen:screen,flight:flight),
+                            selected:$orbitSelected291,
                             onSave:{
                                 // Do not exit the editor or report success
                                 // unless the entire layout round-trips from
@@ -199,9 +262,6 @@ struct PC602HomeWorldPage291:View {
             }
             .frame(width:screen.size.width,height:screen.size.height)
             .coordinateSpace(name:"orbitHUD291")
-        }
-        .onPreferenceChange(OrbitHUDFramePreference291.self) { value in
-            if orbitFrames291 != value {orbitFrames291=value}
         }
         .onAppear {
             driver.setSuspended(scenePhase != .active)
@@ -319,6 +379,7 @@ struct PC602HomeWorldPage291:View {
         // Called ONLY from the existing USTAWIENIA / INTERFEJS owner.
         guard showingOrbitOptions291 && showingOrbitSettings291 else{return}
         orbitDraft291=orbitLayout291
+        orbitSelected291="hud.mission.heading"
         driver.setPaused(true)
         showingOrbitHUD291=true
     }
@@ -764,7 +825,7 @@ struct PC602HomeWorldPage291:View {
                 .foregroundStyle(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.55)
-                .allowsHitTesting(false)
+                .allowsHitTesting(showingOrbitHUD291)
                 }
                 Spacer(minLength:5)
                 VStack(alignment:.trailing,spacing:4) {
