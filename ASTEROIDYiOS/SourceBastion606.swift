@@ -51,7 +51,7 @@ enum SourceBastion606 {
         do {
             // Lossless standard zlib transfer; the original PC GPU float32
             // normals, coordinates, color/alpha and UV are NOT requantized.
-            meshBytes=try (compressed as NSData).decompressed(using:.zlib)
+            meshBytes=try ((compressed as NSData).decompressed(using:.zlib) as Data)
         } catch {throw ImportError.invalidGeometry}
         guard meshBytes.count==expectedMeshBytes,
               sha256(meshBytes)==meshSHA256,
