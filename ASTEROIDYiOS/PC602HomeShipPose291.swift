@@ -28,7 +28,8 @@ enum PC602HomeShipPose291 {
     /// normal, terrain altitude, bank and pitch. Not the raw combat angle.
     static func vanguard(_ flight:PC602HomeFlight291,
                          orbitScale:Float=1)->Pose? {
-        guard flight.equipment.craft == .vanguard,
+        guard (flight.equipment.craft == .vanguard ||
+               flight.equipment.craft == .bastion),
               orbitScale.isFinite,orbitScale>0,
               flight.flight.flight.visualBank.isFinite,
               flight.flight.flight.visualPitch.isFinite
