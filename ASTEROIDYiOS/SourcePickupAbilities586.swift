@@ -1,11 +1,14 @@
 import Foundation
 
-/// PC Tarcza145.cs: rechargeable, *held* active energy shield.
-/// Separate from the purchased, passive shieldCharges inventory.
+/// PC v609 Windows/src/Tarcza145.cs: one active 100-point bar and
+/// three *full-bar* reserves. The reserve is consumed ONLY here, when
+/// the active bar is exhausted by held drain, impact or legacy save state.
+/// Both the real first-sector game and verified multi-player path delegate
+/// to this reducer; no parallel purchased passive-hit shield exists.
 struct SourceTarcza145 {
     static let maximum:Float = 100
     static let initial:Float = 60
-    static let refill:Float = 20
+    static let reserveMaximum:Int = 3
     static let drainPerSecond:Float = 12
     static let impactCost:Float = 35
 
@@ -13,30 +16,72 @@ struct SourceTarcza145 {
     var active=false
     var flash:Float=0
 
-    mutating func step(dt:Float,held:Bool,playing:Bool) {
-        guard dt>0 else{return}
-        active=held && energy>0 && playing
-        if active {
-            energy=max(0,energy-Self.drainPerSecond*dt)
-            if energy<=0 {active=false}
-        }
-        flash=max(0,flash-dt)
+    mutating func reset() {
+        energy=Self.initial
+        active=false
+        flash=0
     }
 
-    /// The caller applies this AFTER guardian interception and BEFORE the
-    /// separately purchased passive shield; an actual hit costs 35 energy.
-    mutating func absorb(invincible:inout Float)->Bool {
+    /// Hub90's free current-bar refill never spends a reserve.
+    mutating func refill() {
+        energy=Self.maximum
+        active=false
+        flash=0
+    }
+
+    /// Exact RestoreTarczaFromReserve145() from PC v608.
+    @discardableResult
+    mutating func restoreFromReserve(_ reserve:inout Int)->Bool {
+        guard energy<=0 && reserve>0 else{return false}
+        reserve-=1
+        energy=Self.maximum
+        flash=max(flash,0.24)
+        return true
+    }
+
+    mutating func step(dt:Float,held:Bool,playing:Bool,
+                       shipDown:Bool=false,reserve:inout Int) {
+        guard playing && !shipDown else {
+            active=false
+            return
+        }
+        // Old saved states may have zero energy with stored charges.
+        if energy<=0 {_=restoreFromReserve(&reserve)}
+        active=held && energy>0
+        if active {
+            energy=max(0,energy-Self.drainPerSecond*max(0,dt))
+            if energy<=0 {
+                active=restoreFromReserve(&reserve)
+            }
+        }
+        flash=max(0,flash-max(0,dt))
+    }
+
+    /// A hit consumes 35 current energy only when the user holds TARCZA.
+    /// The intercept itself remains successful even if the last few energy
+    /// points are exhausted and no reserve is left.
+    mutating func absorb(invincible:inout Float,reserve:inout Int)->Bool {
         guard active && energy>0 else{return false}
         energy=max(0,energy-Self.impactCost)
+        if energy<=0 {_=restoreFromReserve(&reserve)}
         active=energy>0
         flash=0.37
         invincible=max(invincible,0.28)
         return true
     }
 
-    mutating func collectCell()->Bool {
+    /// PC CollectTarcza145: +1 reserve, never +20 energy; at 3/3 refill
+    /// the incomplete current bar, and if picked up at zero energy use
+    /// that fresh reserve immediately to restore 100/100.
+    @discardableResult
+    mutating func collectCell(reserve:inout Int)->Bool {
+        if reserve<Self.reserveMaximum {
+            reserve+=1
+            if energy<=0 {_=restoreFromReserve(&reserve)}
+            return true
+        }
         guard energy<Self.maximum else{return false}
-        energy=min(Self.maximum,energy+Self.refill)
+        energy=Self.maximum
         return true
     }
 }
