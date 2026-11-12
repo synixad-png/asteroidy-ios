@@ -75,7 +75,7 @@ final class SourceHomeVanguard431 {
             let (originalSkin,originalSkinURL)=try Self.verified(
                 "Vanguard431Base","jpg",
                 SourceVanguardMesh431.exactBaseJPEG_SHA256)
-            baked=try SourceBakedShipMesh(data:originalMesh)
+            baked=try SourceVanguardMesh431(data:originalMesh)
             skinData=originalSkin
             skinURL=originalSkinURL
         }
