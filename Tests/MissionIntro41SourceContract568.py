@@ -44,7 +44,13 @@ assert '236.0/255.0' in renderer and '78.0/255.0' in renderer
 assert '25.0/255.0' in renderer
 assert 'missionIntroInput568.missionIntroSector=sector' in app
 assert 'beginMissionIntro568(sector:sector)' in app
-assert 'beginMissionIntro568(sector:1)' in app
+# In PC602 the original NEW GAME leads to H290, then sector 01
+# is launched after the actual orbital mission-entry gate.
+assert 'beginMissionIntro568(sector:1)' not in app
+assert 'inspectSourceSector(1)' in app
+assert 'guard level==1,sourceSector01==nil' in app
+assert 'SourceNewGame568.create(choice)' in app
+assert 'audio.enterOrbit602()' in app
 assert 'showingMissionIntro568=true' in app
 assert 'if showingMissionIntro568 {' in app
 assert app.index('MissionCinematic568(sector:sourceEntry.sector,') < app.index(

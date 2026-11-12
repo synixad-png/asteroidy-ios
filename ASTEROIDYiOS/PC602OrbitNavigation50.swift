@@ -33,7 +33,7 @@ enum PC602OrbitNavigation50 {
         func project(_ p:SIMD3<Float>)->(x:Float,y:Float,depth:Float) {
             let x=m[0]*p.x+m[4]*p.y+m[8]*p.z+m[12]
             let y=m[1]*p.x+m[5]*p.y+m[9]*p.z+m[13]
-            let z=-(m[2]*p.x+m[6]*p.y+m[10]*p.z+m[14])
+            let z = -(m[2]*p.x+m[6]*p.y+m[10]*p.z+m[14])
             // IntroProject: 640+x*720/depth, 360-y*720/depth
             // Preserve the original source vertical FOV for any iOS aspect.
             return (width*0.5+x*height/max(0.01,z),
