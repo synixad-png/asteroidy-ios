@@ -1,7 +1,9 @@
 # Explicit user-requested H290 iPhone+iPad IPA snapshot, 2026-11-12.
 # This is a TEST unsigned IPA, not an end-to-end certified release.
-# Source-only update: native H290 SaveManager61 slots, genuine sun, atmosphere,
-# mission signal, projectile terrain lights and original 26-cell atlas.
+# Source-only update: verified PC602 H290 sky, original 26-cell HUD/atlas,
+# mission signal, projectile lights, and correct OPCJE -> W3 navigation.
+# Push-trigger includes actual O04/O05 implementation and tests so that
+# test IPA never silently lags behind the pilot's corrected HUD source.
 # No iOS gameplay source is changed, no fake assets, no other IPA job.
 name: ASTEROIDY PC602 H290 - user test unsigned IPA 20261112
 
@@ -13,6 +15,11 @@ on:
       - ASTEROIDYiOS/PC602OrbitSave61.swift
       - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
+      - ASTEROIDYiOS/PC602OrbitHud330.swift
+      - ASTEROIDYiOS/SourceSkyAssetFactory568.swift
+      - ASTEROIDYiOS/SourceCombatSky568.swift
+      - Tests/PC602HomeWorldUI291Contract.py
+      - Tests/PC602OrbitHud330Tests.swift
       - ASTEROIDYiOS/PC602HomeAtmosphere47.swift
       - ASTEROIDYiOS/PC602HomeMissionSignal58.swift
       - ASTEROIDYiOS/PC602HomeProjectileLights296.swift
