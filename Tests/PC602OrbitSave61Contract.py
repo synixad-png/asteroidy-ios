@@ -64,6 +64,25 @@ assert 'PC602SaveSlots61View(' in w3
 assert 'archiveExisting:slot != nil' in driver
 assert 'archiveExisting:Bool=true' in source
 assert 'static func deleteSlot(_ slot:Int)->Bool' in save
+# PC602 Mode.Intro is a pre-battle checkpoint; reject live-frame saves.
+assert 'static func captureMissionStart61(' in save
+assert 'result.sourceMode61="intro"' in save
+assert 'result.missionLevel61=level' in save
+assert 'var isMissionIntro61:Bool' in save
+assert '(!isOrbit61 || (100...1000).contains(length(position)))' in save
+assert 'verify.sourceMode61==snapshot.sourceMode61' in save
+assert 'state.isOrbit61' in driver
+assert 'missionCheckpoint61=PC602OrbitSave61.captureMissionStart61(' in app
+assert 'private func loadIntroCheckpoint61(' in app
+assert 'sourceSector01Setup=prepared' in app
+assert 'beginMissionIntro568(sector:1)' in app
+assert 'loadManualSave61(slot)' in app
+assert 'onSaveCheckpoint61:{ slot in' in app
+assert 'PC602OrbitSave61.store(checkpoint,slot:slot)' in app
+assert 'onSave:onSaveCheckpoint61' in read("Sector01Scene568.swift")
+assert 'onLoad:onLoadSave61' in read("Sector01Scene568.swift")
+assert 'showingSaveSlots61=true' in read("Sector01Scene568.swift")
+assert '"POCZĄTEK MISJI' in slots
 assert 'static func slotFileExists(_ slot:Int)->Bool' in save
 assert 'static var hasManualSave:Bool' in save
 assert 'pending=action' in slots
