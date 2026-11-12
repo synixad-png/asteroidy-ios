@@ -37,3 +37,11 @@
 - Status testu ARM64 i symulatora należy każdorazowo odczytać z **aktualnego SHA**, nie dziedziczyć PASS ze starszej kompilacji. Nie uznawać ukończonej kompilacji za test sprzętowy. Bez podpisanej IPA nie ma potwierdzonej instalacji na fizycznym urządzeniu.
 
 **Status harmonogramu:** O09 = W TOKU, KOD ROZSZERZONY, PEŁNY ODBIÓR NIEOSIĄGNIĘTY. O01–O08 oraz O10–O12 pozostają bez modyfikacji ich definicji i statusu wynikającego ze stałego harmonogramu.
+
+## O09 — korekta odbioru automatycznego profilu (kolejny commit)
+
+**Zidentyfikowany błąd:** `SourceNewGame568.create` czyści klucze `vitalsKey` i `mechanicsKey` przez istniejące `resetVitals/reset`. Natomiast pierwotna implementacja `canContinueActive358` z O09 wymagała obecności obu kluczy, więc blokowała poprawną świeżą kampanię po restarcie. W PC602 `SaveManager61.ContinueActive358` profil automatyczny nie wymaga ręcznego slotu, a początkowy stan H55 jest prawidłowy.
+
+**Poprawka:** `canContinueActive358` nadal wymaga rzeczywistego identyfikatora kampanii i poprawnie zdekodowanego profilu sklepu. Brak rekordu H55 traktuje jako prawidłowy stan domyślny, zgodnie z `SourceNewGame568.create`; obecny rekord H55 jest rygorystycznie dekodowany i walidowany, a nieprawidłowy `Data`, typ lub niedostępny w porcie iOS model statku skutkują odmową kontynuacji. Dodano regresje do `SourceNewGame568Tests.swift` dla świeżej kampanii, uszkodzenia obecnych rekordów oraz odrzucenia wybranego nieobsługiwanego statku.
+
+**Wersja IPA sprzed tego commita:** artefakt unsigned test z commita `1a813af3bddc9d7dcb22bd981ef2dc641e8967cc` (przekazany użytkownikowi w tej rozmowie) nie zawiera powyższej późniejszej poprawki. Dalszy odbiór O09 wymaga jej kompilacji i testów; stara IPA nie może być przedstawiana jako nowsza.

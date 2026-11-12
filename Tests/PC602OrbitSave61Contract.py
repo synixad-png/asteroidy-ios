@@ -81,6 +81,10 @@ assert 'mechanics.valid,mechanics.selectedShip==1' in source
 assert 'SourceNewGame568.canContinueActive358()' in app
 assert 'try homeWorld291.start(progress:CampaignStore556.load())' in app
 assert 'SourceNewGame568.canContinueActive358()' in w3
+assert 'if let rawVitals=defaults.object(forKey:vitalsKey)' in source
+assert 'if let rawMechanics=defaults.object(forKey:mechanicsKey)' in source
+assert 'rawVitals as? Data' in source
+assert 'state.valid,state.selectedShip==1' in source
 assert '"pc602-orbit-compact-26-atlas330"' in page
 assert 'ForEach(0..<4,id:\.self)' in page
 assert 'ForEach(0..<8,id:\.self)' in page

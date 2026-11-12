@@ -17,6 +17,8 @@ import Foundation
               "source normal difficulty and 1 player defaults")
         check(!SourceNewGame568.hasActiveProfile(defaults:defaults),
               "initial profile absent")
+        check(!SourceNewGame568.canContinueActive358(defaults:defaults),
+              "missing active campaign cannot be resumed")
         check(SourceNewGame568.startingLives(difficulty:.easy)==5 &&
               SourceNewGame568.startingLives(difficulty:.normal)==3 &&
               SourceNewGame568.startingLives(difficulty:.hard)==3,
@@ -40,6 +42,24 @@ import Foundation
               "easy persists across app restart")
         check(Sector01Shop568.load(defaults:defaults).lives==5,
               "easy Vanguard has 5 lives")
+        // PC602 ContinueActive358: a freshly started campaign is resumable,
+        // even though original H55 default records are stored implicitly.
+        let vitalsRecord="asteroidy.ios.h11.pc580.c279.vitals"
+        let mechanicsRecord="asteroidy.ios.pc580.h11.source-mechanics"
+        check(defaults.object(forKey:vitalsRecord)==nil &&
+              defaults.object(forKey:mechanicsRecord)==nil &&
+              SourceNewGame568.canContinueActive358(defaults:defaults),
+              "fresh source campaign resumes with implicit H55 defaults")
+        defaults.set(Data([0xFF,0x00]),forKey:vitalsRecord)
+        check(!SourceNewGame568.canContinueActive358(defaults:defaults),
+              "corrupt explicit H55 vitals must not be silently defaulted")
+        defaults.removeObject(forKey:vitalsRecord)
+        defaults.set("INVALID",forKey:mechanicsRecord)
+        check(!SourceNewGame568.canContinueActive358(defaults:defaults),
+              "wrong type for explicit H55 mechanics must block continuation")
+        defaults.removeObject(forKey:mechanicsRecord)
+        check(SourceNewGame568.canContinueActive358(defaults:defaults),
+              "valid fresh campaign continues after invalid records removed")
         var old=CampaignStore556.load(defaults:defaults)
         check(old.finishMission(1),"old first-sector clear")
         CampaignStore556.save(old,defaults:defaults)
@@ -68,6 +88,8 @@ import Foundation
         oldH11.timeTrophies=1
         check(H55SourceMechanics580.save(oldH11,defaults:defaults),
               "source H11 owned ships/modules/talents/trophies valid")
+        check(!SourceNewGame568.canContinueActive358(defaults:defaults),
+              "unsupported ship in genuine H55 profile is not an iOS Vanguard")
         let originalVitals=defaults.data(forKey:
             "asteroidy.ios.h11.pc580.c279.vitals")!
         let originalH11=defaults.data(forKey:

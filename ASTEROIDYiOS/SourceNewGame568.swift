@@ -196,8 +196,9 @@ enum SourceNewGame568 {
     }
     /// PC602 SaveManager61.ContinueActive358 requires a valid ACTIVE
     /// campaign profile; it does not require a manual or flight checkpoint.
-    /// Validate the actual stored JSON rather than loading default states
-    /// that could hide truncated/corrupted profile data.
+    /// Shop data must actually exist and be verified. Missing H55 keys
+    /// are valid after new-game reset and resolve to source defaults;
+    /// corrupted PRESENT H55 data cannot silently fall back to defaults.
     static func canContinueActive358(
         defaults:UserDefaults = .standard)->Bool {
         guard let run=currentRunID(defaults:defaults),
@@ -205,16 +206,23 @@ enum SourceNewGame568 {
               let shopBytes=defaults.data(forKey:shopKey),
               let shop=try? JSONDecoder().decode(
                   Sector01Shop568.State.self,from:shopBytes),
-              Sector01Shop568.validate(shop),
-              let vitalsBytes=defaults.data(forKey:vitalsKey),
-              let vitals=try? JSONDecoder().decode(
-                  H55Workshop580.Vitals.self,from:vitalsBytes),
-              vitals.valid,
-              let mechanicsBytes=defaults.data(forKey:mechanicsKey),
-              let mechanics=try? JSONDecoder().decode(
-                  H55SourceMechanics580.State.self,from:mechanicsBytes),
-              mechanics.valid,mechanics.selectedShip==1
+              Sector01Shop568.validate(shop)
         else{return false}
+        // SourceNewGame568.create resets H55 entries by deleting them;
+        // absent entries are the authentic initial H55 defaults. Explicit
+        // but invalid values must still block ContinueActive358.
+        if let rawVitals=defaults.object(forKey:vitalsKey) {
+            guard let bytes=rawVitals as? Data,
+                  let state=try? JSONDecoder().decode(
+                      H55Workshop580.Vitals.self,from:bytes),
+                  state.valid else{return false}
+        }
+        if let rawMechanics=defaults.object(forKey:mechanicsKey) {
+            guard let bytes=rawMechanics as? Data,
+                  let state=try? JSONDecoder().decode(
+                      H55SourceMechanics580.State.self,from:bytes),
+                  state.valid,state.selectedShip==1 else{return false}
+        }
         return true
     }
 
