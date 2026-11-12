@@ -49,6 +49,7 @@ final class PC602HomeOrbitUITests: XCTestCase {
         // Existing W3 verification launch switch bypasses only the intro
         // gate. It does not replace H290, its resources or real flight.
         app.launchEnvironment["ASTEROIDY_W3_MENU_VERIFY"] = "1"
+        app.launchEnvironment["ASTEROIDY_H290_SIMULATOR_UI_VERIFY"] = "1"
         app.launch()
 
         waitForActualW3Menu(app)
@@ -145,6 +146,7 @@ final class PC602HomeOrbitUITests: XCTestCase {
     func testH290EditorDirectTouchSelectDragAndCancel() {
         let app=XCUIApplication()
         app.launchEnvironment["ASTEROIDY_W3_MENU_VERIFY"]="1"
+        app.launchEnvironment["ASTEROIDY_H290_SIMULATOR_UI_VERIFY"]="1"
         app.launch()
         waitForActualW3Menu(app)
         app.buttons["w3-home-2"].tap()
@@ -200,6 +202,7 @@ final class PC602HomeOrbitUITests: XCTestCase {
     func testH290AllFiveControlButtonsTouchDragSaveReopen() {
         let app=XCUIApplication()
         app.launchEnvironment["ASTEROIDY_W3_MENU_VERIFY"]="1"
+        app.launchEnvironment["ASTEROIDY_H290_SIMULATOR_UI_VERIFY"]="1"
         app.launch()
         waitForActualW3Menu(app)
         app.buttons["w3-home-2"].tap()
