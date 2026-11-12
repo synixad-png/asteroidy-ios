@@ -45,32 +45,9 @@ struct CombatSurvival96 {
         invincible=max(0,invincible-max(0,dt))
     }
 
-    /// Game.Step, flat rock collision: the purchased shield is checked
-    /// BEFORE Damage(), only for asteroid contacts. Other unblocked
-    /// damage bypasses this branch and resets shield charges on death.
-    mutating func absorbPurchasedRockContact(cause:String) -> Hit? {
-        guard lives>0 && playing && !sceneBusy && !bossArrival &&
-              !currentDown && invincible<=0 && shieldCharges>0
-        else { return nil }
-        shieldCharges -= 1
-        invincible=0.8
-        latestCause=cause
-        return .shieldAbsorbed(remaining:shieldCharges,cause:cause)
-    }
-
-    /// BossTunnelGame.HitByBoss(): when an incoming ApplyHit96 event
-    /// reaches this branch, ANY damage cause may consume a purchased shield.
-    /// This grants 1s immunity. It is different from the flat-only asteroid
-    /// contact interception (.8s and different physical knockback).
-    mutating func absorbPurchasedHitByBoss(cause:String) -> Hit? {
-        guard lives>0 && playing && !sceneBusy && !bossArrival &&
-              !currentDown && invincible<=0 && shieldCharges>0
-        else { return nil }
-        shieldCharges -= 1
-        invincible=1
-        latestCause=cause
-        return .shieldAbsorbed(remaining:shieldCharges,cause:cause)
-    }
+    // PC v608: ShieldCharges are full Tarcza145 bars, not passive impact
+    // protection. Their only consumption is SourceTarcza145 depletion.
+    // Unblocked fatal damage still clears stored charges as in Game.Damage.
 
     /// Only for collisions not caught by guardian/Tarcza/talent/co-op guards.
     /// This function cannot silently assume those unported systems are absent.
