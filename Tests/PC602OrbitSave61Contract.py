@@ -75,6 +75,11 @@ assert 'verify.sourceMode61==snapshot.sourceMode61' in save
 assert 'state.isOrbit61' in driver
 assert 'missionCheckpoint61=PC602OrbitSave61.captureMissionStart61(' in app
 assert 'private func loadIntroCheckpoint61(' in app
+assert 'let current=CampaignStore556.load()' in app
+assert 'selectedSector:sector,campaign:current' in app
+assert 'campaign=current' in app
+assert 'hud=Self.measure(current.0,frames:current.2,weapons:current.1)' in driver
+assert driver.count('hud=Self.measure(current.0,frames:current.2,weapons:current.1)')>=3
 assert 'sourceSector01Setup=prepared' in app
 assert 'beginMissionIntro568(sector:1)' in app
 assert 'loadManualSave61(slot)' in app

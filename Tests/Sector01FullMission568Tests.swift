@@ -96,6 +96,11 @@ import Foundation
             shopProfile:Sector01Shop568.load(defaults:defaults))
         else {fatalError("real first mission replay preparation missing")}
         verify(preparedReplay.isReplay,"replay flag from real saved completion")
+        // PC602 Game.DropLoot is reward-gated, but Tarcza145/Boost71
+        // and TryDropCombatSupply do not require MissionRewards57.
+        // Ensure the non-monetary spawn routes are still reachable on replay.
+        verify(CampaignStore556.load(defaults:defaults).completed(1),
+               "completed first sector remains accessible to replay")
         var repeatGame=CarbonisCombat568(preparedReplay)
         repeatGame.rocks=[];repeatGame.shooters=[]
         for _ in 0..<28 {

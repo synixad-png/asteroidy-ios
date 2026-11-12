@@ -389,30 +389,35 @@ final class PC602HomeWorldDriver291:ObservableObject {
 
     @discardableResult
     func selectMission(_ level:Int)->Bool {
-        let copy=withLock{()->PC602HomeFlight291? in
-            guard session?.selectMission(level)==true else{return nil}
-            return session?.flight
+        let current=withLock{()->(PC602HomeFlight291,PC602HomeWeaponTest292,Int)? in
+            guard session?.selectMission(level)==true,
+                  let session else{return nil}
+            return (session.flight,session.weapons,session.steppedFrames)
         }
-        guard let copy else{return false}
+        guard let current else{return false}
         // PC OrbitClick51 selects only unlocked stages and preserves the
         // real completion mask. Write only the existing W3 selection key.
         var saved=CampaignStore556.load()
         if saved.selectUnlocked(level) {CampaignStore556.save(saved)}
-        hud=Self.measure(copy,frames:hud.physicalFrames)
+        // Preserve the actual cumulative shot count when changing the
+        // selected beacon. Rebuilding HUD without weapons reset emissions
+        // to zero and the next MTKView frame replayed old gun SFX in bulk.
+        hud=Self.measure(current.0,frames:current.2,weapons:current.1)
         return true
     }
 
     func cycleMission() {
-        let result=withLock{()->PC602HomeFlight291? in
+        let current=withLock{()->(PC602HomeFlight291,PC602HomeWeaponTest292,Int)? in
             session?.cycleMission()
-            return session?.flight
+            guard let session else{return nil}
+            return (session.flight,session.weapons,session.steppedFrames)
         }
-        if let result {
+        if let current {
             var saved=CampaignStore556.load()
-            if saved.selectUnlocked(result.target) {
+            if saved.selectUnlocked(current.0.target) {
                 CampaignStore556.save(saved)
             }
-            hud=Self.measure(result,frames:hud.physicalFrames)
+            hud=Self.measure(current.0,frames:current.2,weapons:current.1)
         }
     }
 
@@ -459,11 +464,14 @@ final class PC602HomeWorldDriver291:ObservableObject {
     }
 
     func refreshCampaign(_ source:CampaignProgress556) {
-        let copy=withLock{()->PC602HomeFlight291? in
+        let current=withLock{()->(PC602HomeFlight291,PC602HomeWeaponTest292,Int)? in
             session?.refreshCommittedCampaign(source.completedMask)
-            return session?.flight
+            guard let session else{return nil}
+            return (session.flight,session.weapons,session.steppedFrames)
         }
-        if let copy {hud=Self.measure(copy,frames:hud.physicalFrames)}
+        if let current {
+            hud=Self.measure(current.0,frames:current.2,weapons:current.1)
+        }
         refreshVanguardShotSettings291()
     }
 

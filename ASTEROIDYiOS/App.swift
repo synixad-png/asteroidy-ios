@@ -252,14 +252,19 @@ struct GameView: View {
     }
 
     private func inspectSourceSector(_ sector: Int) {
+        // OrbitClick51 writes the canonical CampaignStore556 immediately.
+        // SwiftUI's @State campaign can still hold the PREVIOUS target after
+        // choosing a completed stage on the orbit atlas; source game uses
+        // live OrbitTarget50, never an outdated W3 selection snapshot.
+        let current=CampaignStore556.load()
         guard let entry=Sector01Entry568.open(
-            selectedSector:sector,campaign:campaign,
+            selectedSector:sector,campaign:current,
             hasOriginalC279Assets:Sector01CarbonisPreview568.isAvailable)
         else { return }
         // Original Game.Wave plus replay-safe real service profile.
         let sourceShop=Sector01Shop568.load()
         guard let preparedWave=Sector01PreparedWave568.prepare(
-            entry:entry,campaign:campaign,
+            entry:entry,campaign:current,
             hasOriginalC279Assets:Sector01CarbonisPreview568.isAvailable,
             difficulty:SourceNewGame568.selection().difficulty,
             seed:Int32.random(in:0...Int32.max),
@@ -268,6 +273,7 @@ struct GameView: View {
                 difficulty:SourceNewGame568.selection().difficulty),
             shopProfile:sourceShop)
         else { return }
+        campaign=current
         input.releaseHeldControls()
         input.gameplayPaused = true
         reopenAtlasAfterCarbonis = false

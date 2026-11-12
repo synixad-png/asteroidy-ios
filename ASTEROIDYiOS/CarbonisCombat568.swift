@@ -623,12 +623,13 @@ struct CarbonisCombat568 {
         tryDropCombatSupply586(at:destroyed.core.position,enemy:true)
     }
 
-    /// Classic PC Tarcza145 and Boost71 drop rules on REAL actor death.
-    /// One canonical pickup array, no second collectible physics or GLB
-    /// renderer. RNG is separate to protect prior iOS mission sequences.
+    /// PC602 Tarcza145.TryDropTarcza145 and Boost71.DropBoost71
+    /// depend on LootEnabled and pickup-cap, NOT MissionRewards57.
+    /// Replays continue to drop usable items; only tokens are suppressed.
+    /// One canonical pickup array; RNG stays independent of combat.
     private mutating func tryDropLegacyPickup586(
         at point:Vec2,enemy:Bool,rockSize:Int) {
-        let eligible=phase == .playing && !isReplay && lootYieldScale>0
+        let eligible=phase == .playing
         if let item=legacyDrops586.shield(
             enemy:enemy,rockSize:rockSize,eligible:eligible,
             pickups:tokenPickups.count) {
@@ -683,11 +684,12 @@ struct CarbonisCombat568 {
         }
     }
 
-    /// PC v584 single-bonus roll, seeded independently from mission RNG.
-    /// Uses the same tokenPickups list and the same lifetime/collision rules.
+    /// PC602 CombatSupplyDrops.TryDropCombatSupply does not test
+    /// MissionRewards57: replay can collect Energy and Bomb pickups.
+    /// Uses existing seeded source RNG and the one canonical pickup array.
     private mutating func tryDropCombatSupply586(
         at point:Vec2,enemy:Bool,asteroidSize:Int=0) {
-        let eligible=phase == .playing && !isReplay && lootYieldScale>0
+        let eligible=phase == .playing
         guard let kind=combatSupply586.decide(
             enemy:enemy,asteroidSize:asteroidSize,
             currentBombs:bombs,currentIonAmmo:ionAmmo,
