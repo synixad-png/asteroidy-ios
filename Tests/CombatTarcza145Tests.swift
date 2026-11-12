@@ -23,7 +23,7 @@ import Foundation
 
         // PC608 exact chain: 3/3 -> 2/3 -> 1/3 -> 0/3.
         for expected in [2,1,0] {
-            t.tick(dt:2,held:true,playing:true,shipDown:false,reserve:&reserve)
+            t.tick(dt:10,held:true,playing:true,shipDown:false,reserve:&reserve)
             near(t.energy,100,"automatic active bar replacement")
             precondition(reserve==expected && t.active)
         }
