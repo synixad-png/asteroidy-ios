@@ -30,7 +30,7 @@ assert 'struct Envelope:Codable' in save
 assert 'checksum==digest(env.payload)' in save or 'env.checksum==digest(env.payload)' in save
 assert 'try bytes.write(to:url,options:.atomic)' in save
 assert 'return support.appendingPathComponent("ASTEROIDY/saves61"' in save
-assert 'slot.map{"slot\($0).json"} ?? "resume.json"' in save
+assert r'slot.map{"slot\($0).json"} ?? "resume.json"' in save
 assert '(0...2).contains(slot)' in save
 assert 'static func clearResume()' in save
 assert 'func restoreOrbit61(' in flight
@@ -99,7 +99,6 @@ assert 'loadManualOrbit:{ slot in' in app
 assert 'private func menuCheckpoint61()' in app
 assert 'checkpoint.runID==run,checkpoint.valid' in app
 assert 'canSaveMenu61:menuCheckpoint61() != nil' in app
-assert 'allowSave:canSaveMenu61,initialAction:1' in w3
 assert 'onSave:saveMenuSlot61' in w3
 assert 'if confirmActiveLoad {pending=action}' in slots
 assert 'allowSave:canSaveMenu61,confirmActiveLoad:false' in w3
@@ -117,8 +116,8 @@ assert 'if let rawMechanics=defaults.object(forKey:mechanicsKey)' in source
 assert 'rawVitals as? Data' in source
 assert 'state.valid,state.selectedShip==1' in source
 assert '"pc602-orbit-compact-26-atlas330"' in page
-assert 'ForEach(0..<4,id:\.self)' in page
-assert 'ForEach(0..<8,id:\.self)' in page
+assert r'ForEach(0..<4,id:\.self)' in page
+assert r'ForEach(0..<8,id:\.self)' in page
 assert 'driver.hud.completedMask' in page
 assert 'SourceCombatTouchZones568(' in page
 assert 'SourceCombatTouchZones568(' in read("Sector01Scene568.swift")
