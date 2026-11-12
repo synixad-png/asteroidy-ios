@@ -212,22 +212,31 @@ struct CombatVerifiedEncounter556 {
                           requiresRescueDamageResolution:pendingRescueFailure != nil,
                           pickupsTrackingSecond:0)
         }
-        firstVitals?.advance(dt:dt)
-        if !sourceSharedCoopResources || encounter.second == nil {
-            secondVitals?.advance(dt:dt)
-        }
         let firstDown=rescue.down(.first),secondDown=rescue.down(.second)
+        // PC v609 StepArmorRegen78: only active, non-downed game steps.
+        firstVitals?.advance(dt:dt,playing:encounter.firstSurvival.playing,
+                             shipDown:firstDown)
+        if !sourceSharedCoopResources || encounter.second == nil {
+            secondVitals?.advance(dt:dt,
+                                  playing:encounter.secondSurvival.playing,
+                                  shipDown:secondDown)
+        }
+        // PC v608: only the source reducer may spend a reserve, and only
+        // after the held shield's current 100-point bar is depleted.
         domeFirst.tick(dt:dt,held:firstDomeHeld,
-                       playing:encounter.firstSurvival.playing,shipDown:firstDown)
+                       playing:encounter.firstSurvival.playing,
+                       shipDown:firstDown,
+                       reserve:&encounter.firstSurvival.shieldCharges)
         if sourceSharedCoopResources && encounter.second != nil {
-            // Game.Step invokes StepTarcza145 only for P1. Coop62.WithSecond62
-            // does not swap TarczaEnergy145 or TarczaActive145; the entire
-            // energy pool is shared. The second input cannot charge it twice.
+            // Source WithSecond62 shares the whole Tarcza and reserve pool.
+            encounter.secondSurvival.shieldCharges=
+                encounter.firstSurvival.shieldCharges
             domeSecond=domeFirst
         } else {
             domeSecond.tick(dt:dt,held:secondDomeHeld,
                             playing:encounter.secondSurvival.playing,
-                            shipDown:secondDown)
+                            shipDown:secondDown,
+                            reserve:&encounter.secondSurvival.shieldCharges)
         }
 
         // Use the SAME tested Physics68 contact phase. Its unverified
