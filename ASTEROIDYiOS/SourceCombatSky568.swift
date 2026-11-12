@@ -98,7 +98,9 @@ final class SourceCombatSky568 {
     func draw(encoder:MTLRenderCommandEncoder,camera:SphereCamera67,
               vp:simd_float4x4,time:Float,aspect:Float,
               drawableHeight:Float,glow:Bool=true,
-              nebula:Bool=true,rays:Bool=true) {
+              nebula:Bool=true,rays:Bool=true,
+              worldEye:SIMD3<Float>?=nil,
+              worldScale:Float=1) {
         let basis=SphereCameraView556(camera:camera)
         encoder.setCullMode(.none)
         encoder.setDepthStencilState(skyDepthState)
@@ -209,8 +211,12 @@ final class SourceCombatSky568 {
         // Source GpuIntro41.IntroSky uses a sky centred on the eye.
         // Render 1500 alpha-blended screen-size points in one GPU call;
         // none writes depth or changes the scene PBR pipeline.
-        let skyEye=SIMD3<Float>(basis.eye.x,basis.eye.y,basis.eye.z)
-        let skyMVP=vp*Self.translation(skyEye.x,skyEye.y,skyEye.z)
+        // PC602 H290: camera radius 400, original star sphere radius 900.
+        // Combat's normalized camera and star scale remain unchanged.
+        let skyEye=worldEye ?? SIMD3<Float>(basis.eye.x,basis.eye.y,basis.eye.z)
+        let skyScale=simd_float4x4(diagonal:SIMD4<Float>(
+            worldScale,worldScale,worldScale,1))
+        let skyMVP=vp*Self.translation(skyEye.x,skyEye.y,skyEye.z)*skyScale
         var skyUniform=SceneUniforms(
             mvp:skyMVP,model:matrix_identity_float4x4,
             lighting:SIMD4<Float>(SphereSky207.drawableScale(

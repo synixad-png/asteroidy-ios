@@ -258,7 +258,9 @@ struct PC602HomeScene291: UIViewRepresentable {
                 originalSky.draw(encoder:encoder,
                     camera:flight.flight.camera,
                     vp:projection*viewMatrix,time:flight.orbitTime,
-                    aspect:aspect,drawableHeight:Float(size.height))
+                    aspect:aspect,drawableHeight:Float(size.height),
+                    worldEye:frame.eye,
+                    worldScale:SphereCameraView556.originalPlanetOuterRadius)
                 encoder.setRenderPipelineState(pipeline)
                 encoder.setDepthStencilState(depth)
                 // HomeScene291 disables GL_CULL_FACE; preserve every

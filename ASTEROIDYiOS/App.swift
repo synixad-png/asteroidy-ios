@@ -258,6 +258,22 @@ struct GameView: View {
                             audio.returnToMenu()
                             showMainMenu = true
                         }
+                    },onExitToMainMenu:{
+                        // A deliberate pause-menu exit is not the source
+                        // mission completion/service return to orbit.
+                        sourceSector01=nil
+                        sourceSector01Setup=nil
+                        showingMissionIntro568=false
+                        returnHomeWorldAfterCarbonis291=false
+                        showingHomeWorld291=false
+                        reopenAtlasAfterCarbonis=false
+                        input.releaseHeldControls()
+                        input.gameplayPaused=true
+                        missionIntroInput568.releaseHeldControls()
+                        missionIntroInput568.gameplayPaused=true
+                        homeWorld291.stop()
+                        audio.returnToMenu()
+                        showMainMenu=true
                     },onMissionCompleted:{ report in
                         // Only the real Game.FinishLevel source outcome can
                         // persist completed sector 1 and its token reward.

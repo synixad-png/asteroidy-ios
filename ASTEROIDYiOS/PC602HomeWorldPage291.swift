@@ -20,6 +20,9 @@ struct PC602HomeWorldPage291:View {
     @State private var previouslyPaused61=false
     @State private var loadingSave61=false
     @State private var saveMessage61=""
+    @State private var showingOrbitOptions291=false
+    @State private var showingOrbitSettings291=false
+    @State private var previouslyPausedOptions291=false
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.39,green:0.75,blue:0.79)
 
@@ -50,6 +53,7 @@ struct PC602HomeWorldPage291:View {
                     navigationCue50(screen:screen,flight:flight)
                     if showingAtlas330 {atlasPanel(screen:screen)}
                     if showingSaves61 {savesPanel61(screen:screen)}
+                    if showingOrbitOptions291 {orbitOptionsPanel291(screen:screen)}
                 } else {
                     VStack(spacing:12) {
                         Text("PC602 / ORBITA NIEGOTOWA")
@@ -113,6 +117,82 @@ struct PC602HomeWorldPage291:View {
             }
         }
         .accessibilityIdentifier("pc602-orbit-real-gameplay-page")
+    }
+
+    /// The original PC602 option/pause action. The same orbital session
+    /// stays paused: no competing menu renderer or duplicated state.
+    private func openOrbitOptions291() {
+        previouslyPausedOptions291=driver.paused
+        showingOrbitSettings291=false
+        driver.setPaused(true)
+        showingOrbitOptions291=true
+    }
+
+    private func closeOrbitOptions291() {
+        showingOrbitSettings291=false
+        showingOrbitOptions291=false
+        driver.setPaused(previouslyPausedOptions291)
+    }
+
+    private func orbitOptionsPanel291(screen:GeometryProxy)->some View {
+        let compact=screen.size.height<450
+        return ZStack {
+            Color.black.opacity(0.84).ignoresSafeArea()
+            VStack(spacing:compact ? 8:14) {
+                HStack {
+                    Text(showingOrbitSettings291
+                        ? "OPCJE / USTAWIENIA"
+                        : "OPCJE / PLANETA GŁÓWNA")
+                        .font(.system(size:compact ? 14:19,
+                                      weight:.bold,design:.monospaced))
+                        .foregroundStyle(gold)
+                    Spacer(minLength:8)
+                    Button(showingOrbitSettings291 ? "WRÓĆ DO OPCJI":"KONTYNUUJ") {
+                        if showingOrbitSettings291 {showingOrbitSettings291=false}
+                        else {closeOrbitOptions291()}
+                    }
+                    .accessibilityIdentifier("pc602-orbit-options-back")
+                }
+                if showingOrbitSettings291 {
+                    // Reuse the authoritative W3 game settings.
+                    CarbonisVisualSettingsPanel568(
+                        compact:compact,initialTab:4)
+                        .frame(maxWidth:.infinity,maxHeight:.infinity)
+                } else {
+                    Button("USTAWIENIA") {showingOrbitSettings291=true}
+                        .accessibilityIdentifier("pc602-orbit-options-settings")
+                    Button("ZAPISZ LOT") {
+                        showingOrbitOptions291=false
+                        openSaves61(load:false)
+                    }
+                    .accessibilityIdentifier("pc602-orbit-save61")
+                    Button("WCZYTAJ LOT") {
+                        showingOrbitOptions291=false
+                        openSaves61(load:true)
+                    }
+                    .accessibilityIdentifier("pc602-orbit-load61")
+                    Button("POWRÓT DO MENU GŁÓWNEGO") {
+                        showingOrbitSettings291=false
+                        showingOrbitOptions291=false
+                        onExitToW3()
+                    }
+                    .foregroundStyle(.orange)
+                    .accessibilityIdentifier("pc602-orbit-return-w3")
+                }
+            }
+            .font(.system(size:compact ? 13:16,weight:.bold,
+                          design:.monospaced))
+            .foregroundStyle(cyan)
+            .buttonStyle(.plain)
+            .padding(compact ? 14:22)
+            .frame(maxWidth:720,
+                   maxHeight:showingOrbitSettings291 ? .infinity:nil)
+            .background(Color(red:0.008,green:0.028,blue:0.048))
+            .overlay(Rectangle().stroke(gold.opacity(0.8),lineWidth:1))
+            .padding(12)
+        }
+        .zIndex(40)
+        .accessibilityIdentifier("pc602-orbit-options291")
     }
 
     private func openSaves61(load:Bool) {
@@ -429,6 +509,14 @@ struct PC602HomeWorldPage291:View {
                     if screen.size.width >= 680 && screen.size.height >= 320 {
                         compactAtlas330(scale:min(1,Float(screen.size.width/1280)))
                     }
+                    Button("OPCJE") {openOrbitOptions291()}
+                        .font(.system(size:compact ? 14:17,
+                                      weight:.bold,design:.monospaced))
+                        .frame(minWidth:100,minHeight:44)
+                        .foregroundStyle(.white)
+                        .background(Color(red:0.05,green:0.15,blue:0.22))
+                        .overlay(Rectangle().stroke(gold,lineWidth:1))
+                        .accessibilityIdentifier("pc602-orbit-open-options291")
                     HStack(spacing:9) {
                         Button("ATLAS") {
                             previouslyPaused330=driver.paused
@@ -436,21 +524,9 @@ struct PC602HomeWorldPage291:View {
                             driver.setPaused(true)
                         }
                         .accessibilityIdentifier("pc602-orbit-open-atlas330")
-                        Button("ZAPISZ") {openSaves61(load:false)}
-                            .accessibilityIdentifier("pc602-orbit-save61")
-                        Button("WCZYTAJ") {openSaves61(load:true)}
-                            .accessibilityIdentifier("pc602-orbit-load61")
                         Button("CEL +") {driver.cycleMission()}
                             .disabled(driver.paused)
                             .accessibilityIdentifier("pc602-orbit-next-sector")
-                        Button(driver.paused ? "WZNÓW":"PAUZA") {
-                            driver.setPaused(!driver.paused)
-                        }
-                        .accessibilityIdentifier("pc602-orbit-pause")
-                        Button("MENU W3") {
-                            onExitToW3()
-                        }
-                        .accessibilityIdentifier("pc602-orbit-return-w3")
                     }
                     .font(.system(size:compact ? 10:12,weight:.bold,
                                   design:.monospaced))

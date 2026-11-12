@@ -8,6 +8,7 @@ import UniformTypeIdentifiers
 struct Sector01Scene568: View {
     let entry:Sector01Entry568
     let returnToAtlas:()->Void
+    let onExitToMainMenu:()->Void
     let onMissionCompleted:(Sector01MissionSummary568)->Void
     let onSurvivalChanged:(Int,Int,Int,Int)->Void
     let onAudioEvent:(Int)->Void
@@ -36,6 +37,7 @@ struct Sector01Scene568: View {
     @State private var missionSafeInsets568=W3ScreenInsets568()
 
     init(entry:Sector01Entry568,returnToAtlas:@escaping ()->Void,
+         onExitToMainMenu:@escaping ()->Void,
          onMissionCompleted:@escaping (Sector01MissionSummary568)->Void,
          onSurvivalChanged:@escaping (Int,Int,Int,Int)->Void,
          onAudioEvent:@escaping (Int)->Void = {_ in},
@@ -46,6 +48,7 @@ struct Sector01Scene568: View {
          preparedWave:Sector01PreparedWave568) {
         self.entry=entry
         self.returnToAtlas=returnToAtlas
+        self.onExitToMainMenu=onExitToMainMenu
         self.onMissionCompleted=onMissionCompleted
         self.onSurvivalChanged=onSurvivalChanged
         self.onAudioEvent=onAudioEvent
@@ -86,13 +89,13 @@ struct Sector01Scene568: View {
         userPaused=false
         showingMissionSettings568=false
         session.paused=true
-        // returnToAtlas -> OriginalAudioAV568.returnToMenu() changes
-        // the context atomically. Do not briefly restart combat sound.
+        // Explicit paused WYJDŹ DO MENU routes to W3, not orbit.
+        // Normal mission completion and service keep returnToAtlas.
         onEnginePower(0)
         persistConsumables580()
         onSurvivalChanged(session.game.lives,session.game.shieldCharges,
                            session.game.hull,session.game.armor)
-        returnToAtlas()
+        onExitToMainMenu()
     }
     /// The authoritative W3 settings panel, opened FROM the paused mission.
     /// Same navigation as W3MainMenu568, never a duplicated settings system.
