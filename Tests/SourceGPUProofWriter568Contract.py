@@ -16,14 +16,18 @@ paths={
     ],
     "W3HomePlanetMetal568.swift":["ASTEROIDY_W3_NewHome290_GPUProof.json"],
     "Sector01CarbonisPreview568.swift":["ASTEROIDY_CARBONIS_L1_GPUProof.json"],
-    "W3HomeShipPreview568.swift":["ASTEROIDY_W3_Vanguard431_GPUProof.json"],
+    "W3HomeShipPreview568.swift":["ASTEROIDY_W3_Vanguard431_GPUProof.json",
+                                   "ASTEROIDY_W3_Bastion606_GPUProof.json"],
 }
 for name,filenames in paths.items():
     source=(gpu/name).read_text()
     assert source.count("OriginalRenderProofWriter568.save(")==len(filenames),name
     for filename in filenames:
         assert f'filename:"{filename}"' in source, (name,filename)
-    assert source.count("command.addCompletedHandler")>=len(filenames),name
+    # W3 Vanguard and Bastion are exclusive alternatives from ONE frame.
+    # A single completed-command callback dispatches both proof names.
+    callback_min=1 if name=="W3HomeShipPreview568.swift" else len(filenames)
+    assert source.count("command.addCompletedHandler")>=callback_min,name
     assert "JSONSerialization.data(" not in source, f"Duplicate GPU proof serializer in {name}"
     assert "try? bytes.write" not in source and "try? data.write" not in source
 
@@ -50,4 +54,4 @@ for contract in ("JSONSerialization.data(", "withJSONObject: payload",
                  "ASTEROIDY render proof write failed"):
     assert contract in writer,contract
 
-print("PASS 5 original GPU completion proofs: one fail-visible atomic writer, unchanged opt-in gates, filenames and source payloads")
+print("PASS original GPU proofs plus exclusive W3 Bastion proof: one atomic writer, no duplicate callback")
