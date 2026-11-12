@@ -4,6 +4,8 @@ on:
     paths:
       - '.github/workflows/verify-combat-only.yml'
       - 'Tests/PC608609MechanicsTests.swift'
+      - 'Tests/SourceNewGame568Tests.swift'
+      - 'ASTEROIDYiOS/SourceNewGame568.swift'
       - 'Tests/IOSInterruptedTouchSourceContract.py'
       - 'ASTEROIDYiOS/App.swift'
       - 'ASTEROIDYiOS/PC602HomeWorldPage291.swift'
@@ -499,6 +501,10 @@ jobs:
         run: |
           swiftc ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift Tests/PC608609MechanicsTests.swift -o /tmp/pc608609-shield-armor
           /tmp/pc608609-shield-armor
+      - name: PC v608 shield energy checkpoint, profile archive, restore, legacy migration (NO IPA)
+        run: |
+          swiftc -O ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/pc608-profile-archive
+          /tmp/pc608-profile-archive
       - name: Compile and run source-verified Gameplay65 rescue and Physics68 regressions
         run: |
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/CombatVerifiedEncounter556.swift Tests/CombatVerifiedEncounter556Tests.swift -o /tmp/verified-encounter-556
