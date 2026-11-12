@@ -67,13 +67,16 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
         let names=incoming.map(\.id)
         guard names.count==Set(names).count else{throw LayoutError.invalid}
         let present=Set(names)
-        if present==Set(Self.legacyIDs) {
-            elements=incoming+Self.ids.filter{!present.contains($0)}.map{
-                Element(id:$0)
-            }
-        } else {
-            elements=incoming
+        // Do not discard saved button positions when a newer H290 editor
+        // adds more individual HUD labels. Earlier v1 layouts may contain
+        // the 11 original IDs plus SOME of the later leaf IDs.
+        // Unknown IDs or missing original controls are still rejected.
+        guard present.isSubset(of:Set(Self.ids)),
+              Set(Self.legacyIDs).isSubset(of:present) else {
+            throw LayoutError.invalid
         }
+        let stored=Dictionary(uniqueKeysWithValues:incoming.map{($0.id,$0)})
+        elements=Self.ids.map{stored[$0] ?? Element(id:$0)}
     }
 
     static func defaults()->Self {
