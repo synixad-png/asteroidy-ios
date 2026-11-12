@@ -19,7 +19,7 @@ for source in (editor,combat_editor):
 for anchor in ("OrbitEditorTouchCanvas291(","onSelect?(id)",
                "onMove?(start.element.id","onScale?(start.id",
                "private func hit(_ point:CGPoint)","id.hasPrefix(\"control.\")",
-               "PC602OrbitHUDLayout291.hit(point:point,frames:frames,",
+               "PC602OrbitHUDLayout291.hit(",
                "PC602OrbitHUDLayout291.decodeJSON",
                ".fileImporter(", ".fileExporter(","WIDOCZNY",
                "PRZYWRÓĆ TEN ELEMENT","PRZYWRÓĆ CAŁY UKŁAD PC v602"):
