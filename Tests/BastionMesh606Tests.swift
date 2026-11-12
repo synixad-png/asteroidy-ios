@@ -13,12 +13,12 @@ import Foundation
         }
         func f32(_ f:Float) {u32(f.bitPattern)}
         u32(6061);u32(2)
-        for f:Float in [(-0.26),(-1.48),(-0.02),0.28,(-1.48),(-0.02)] {
+        for f in [Float(-0.26),(-1.48),(-0.02),0.28,(-1.48),(-0.02)] {
             f32(f)
         }
         u32(36) // Three corners, 12 Float32 each.
         for _ in 0..<3 {
-            for f:Float in [1,2,3,0,0,1,0.8,0.8,0.8,1,0.2,0.3] {
+            for f in [Float(1),2,3,0,0,1,0.8,0.8,0.8,1,0.2,0.3] {
                 f32(f)
             }
         }
