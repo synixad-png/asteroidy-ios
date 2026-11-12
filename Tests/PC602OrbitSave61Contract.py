@@ -18,7 +18,7 @@ atmosphere=read("PC602HomeAtmosphere47.swift")
 signal=read("PC602HomeMissionSignal58.swift")
 lights=read("PC602HomeProjectileLights296.swift")
 world=read("PC602HomeScene291.swift")
-assert 'case invalid' in save
+assert 'case unavailable,invalid,unsupported,io' in save
 assert 'static let validMask=(1<<26)-1' in save
 assert 'shipType==1' in save
 assert 'mechanics.selectedShip==1' in save
