@@ -165,7 +165,7 @@ enum SourceNewGame568 {
         else{return false}
         guard UUID(uuidString:runID) != nil,
               (1...26).contains(target),
-              PC602HomeFlight291.unlocked(target,mask:completedMask),
+              CampaignProgress556(mask:completedMask).unlocked(target),
               Sector01Shop568.validate(shop),vitals.valid,mechanics.valid,
               mechanics.selectedShip==1,
               CombatBalance556.Difficulty(rawValue:difficultyRaw) != nil,
