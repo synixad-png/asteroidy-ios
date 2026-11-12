@@ -56,8 +56,9 @@ assert 'PC602OrbitSave61.clearResume()' in app
 assert 'continueOrbit:{' in app
 assert '"KONTYNUUJ OSTATNI LOT"' in w3
 assert 'accessibilityIdentifier("pc602-orbit-three-slot-saves61")' in page
-assert 'accessibilityIdentifier("pc602-orbit-save61")' in page
-assert 'accessibilityIdentifier("pc602-orbit-load61")' in page
+assert 'slotsID:"pc602-orbit-save61"' in page
+assert 'PC602SaveSlots61View(' in page
+assert 'slotsReturnToPause291=true' in page
 assert r'ForEach(0..<3,id:\.self)' in slots
 assert 'PC602SaveSlots61View(' in page
 assert 'PC602SaveSlots61View(' in w3
