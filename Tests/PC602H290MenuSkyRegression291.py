@@ -15,9 +15,9 @@ view=read("PC602HomeWorldView291.swift")
 for required in (
     'Button("PAUZA") {openOrbitOptions291()}',
     '.frame(minWidth:100,minHeight:44)',
-    'Button("POWRÓT DO MENU GŁÓWNEGO")',
-    'accessibilityIdentifier("pc602-orbit-return-w3")',
-    'if showingOrbitOptions291 {orbitOptionsPanel291(screen:screen)}',
+    'exitID:"pc602-orbit-return-w3"',
+    'orbitOptionsPanel291(screen:screen)',
+    'SourcePauseMenu568(',
     'CarbonisVisualSettingsPanel568(',
     'driver.setPaused(previouslyPausedOptions291)',
     'onExitToW3()',
@@ -26,7 +26,7 @@ for required in (
 # Entering save/load from OPCJE must not leave the pilot frozen.
 # The single interactive pause must also be used after iPad locks.
 assert 'orbitPausePanel317' not in page
-assert 'if !driver.presentingH55 && !showingOrbitOptions291' in page
+assert 'if !driver.presentingH55 {' in page
 assert 'openOrbitOptions291()' in page
 assert 'previouslyPausedOptions291=false' in page
 assert 'restorePaused:previouslyPausedOptions291' in page
@@ -40,7 +40,8 @@ for required in ('persistConsumables580()','onSurvivalChanged(',
                  'onExitToMainMenu()'):
     assert required in exit_body, required
 assert 'returnToAtlas()' not in exit_body
-assert 'Button("WYJDŹ DO MENU") {exitMission568()}' in mission
+assert 'onExit:{exitMission568()}' in mission
+assert 'SourcePauseMenu568(' in mission
 assert 'Sector01ShopPanel568(onReturnAtlas:returnToAtlas)' in mission
 menu_body=app.split('},onExitToMainMenu:{',1)[1].split(
     '},onMissionCompleted:',1)[0]
