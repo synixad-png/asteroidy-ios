@@ -44,9 +44,16 @@ assert '236.0/255.0' in renderer and '78.0/255.0' in renderer
 assert '25.0/255.0' in renderer
 assert 'missionIntroInput568.missionIntroSector=sector' in app
 assert 'beginMissionIntro568(sector:sector)' in app
-# In PC602 the original NEW GAME leads to H290, then sector 01
-# is launched after the actual orbital mission-entry gate.
-assert 'beginMissionIntro568(sector:1)' not in app
+# PC602 NEW GAME leads to H290; entering a fresh mission uses the
+# orbital gate. The separately validated O09 LoadSlot61(Mode.Intro)
+# legitimately invokes BeginLevelIntro AFTER preparing the real Wave.
+checkpoint_loader=app.split('private func loadIntroCheckpoint61(')[1].split(
+    'private func loadManualSave61(')[0]
+assert app.count('beginMissionIntro568(sector:1)')==1
+assert checkpoint_loader.index('Sector01PreparedWave568.prepare(') < checkpoint_loader.index(
+    'beginMissionIntro568(sector:1)')
+assert checkpoint_loader.index('SourceNewGame568.restoreOrbitProfile61(') < checkpoint_loader.index(
+    'beginMissionIntro568(sector:1)')
 assert 'inspectSourceSector(1)' in app
 assert 'guard level==1,sourceSector01==nil' in app
 assert 'SourceNewGame568.create(choice)' in app
