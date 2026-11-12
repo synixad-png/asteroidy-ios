@@ -96,7 +96,14 @@ IOS_ANCHORS = {
     ),
     "PC602HomeWorldPage291.swift": (
         'Button("PAUZA") {openOrbitOptions291()}',
-        'Button("POWRÓT DO MENU GŁÓWNEGO")',
+        'SourcePauseMenu568(',
+        'onExitToW3()',
+    ),
+    "SourcePauseMenu568.swift": (
+        'action("USTAWIENIA"',
+        'action("ZAPISY / 3 SLOTY"',
+        'action("KONTYNUUJ"',
+        'action("WYJDŹ DO MENU"',
     ),
 }
 
