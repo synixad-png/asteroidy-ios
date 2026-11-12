@@ -192,8 +192,9 @@ final class PC602HomeWorldDriver291:ObservableObject {
     }
     @discardableResult func loadOrbitSlot61(_ slot:Int?)->Bool {
         guard !presentingH55,
-              let state=try? PC602OrbitSave61.read(slot:slot)
-        else {error="BRAK PRAWIDŁOWEGO ZAPISU";return false}
+              let state=try? PC602OrbitSave61.read(slot:slot),
+              state.isOrbit61
+        else {error="BRAK PRAWIDŁOWEGO ZAPISU ORBITY";return false}
         do {
             let home=try PC602NewHome290.load()
             guard let equipment=Self.vanguardEquipment291(state.mechanics)
