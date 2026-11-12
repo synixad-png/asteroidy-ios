@@ -45,8 +45,8 @@ final class PC602HomeProjectileLights296 {
         guard let stencil=device.makeDepthStencilState(descriptor:d)
         else{throw SourceError.metal}
         depth=stencil
-        let capacity=Self.maxBullets*Self.verticesPerBullet*
-                     MemoryLayout<PC602HomeBeacons291.Vertex>.stride
+        let capacity=Self.maxBullets * Self.verticesPerBullet *
+            MemoryLayout<PC602HomeBeacons291.Vertex>.stride
         var storage=[MTLBuffer]()
         for _ in 0..<3 {
             guard let buffer=device.makeBuffer(length:capacity,

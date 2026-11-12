@@ -420,7 +420,7 @@ struct PC602HomeWorldPage291:View {
                     // source tiles at x=1001,y=55 in virtual 1280x720.
                     // On small landscape displays the old touch-sized
                     // panel remains available via ATLAS instead.
-                    if screen.size.width >= 700 && screen.size.height >= 470 {
+                    if screen.size.width >= 680 && screen.size.height >= 320 {
                         compactAtlas330(scale:min(1,Float(screen.size.width/1280)))
                     }
                     HStack(spacing:9) {
