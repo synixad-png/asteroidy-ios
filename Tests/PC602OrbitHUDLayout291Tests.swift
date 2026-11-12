@@ -30,6 +30,28 @@ import Foundation
         check(PC602OrbitHUDLayout291.load(defaults:prefs)==original,
               "old layout must also be upgraded when loaded from disk")
 
+        // Regression: a previously saved H290 file may include a subset of
+        // newly added labels. It must not silently reset earlier WEJDŹ/PAUZA
+        // coordinates when another leaf ID is introduced.
+        var intermediate=original
+        intermediate.change("control.enter"){$0.x = -510;$0.y = 180}
+        intermediate.change("control.pause"){$0.x = 230;$0.y = -125}
+        let partialIDs=Set(PC602OrbitHUDLayout291.legacyIDs+[
+            "hud.mission.heading","hud.mission.distance"])
+        let subset=PC602OrbitHUDLayout291(
+            elements:intermediate.elements.filter{partialIDs.contains($0.id)})
+        let earlierBytes=try! JSONEncoder().encode(subset)
+        let migratedPartial=try! PC602OrbitHUDLayout291.decodeJSON(earlierBytes)
+        check(migratedPartial.valid,"intermediate partial HUD migrates")
+        check(migratedPartial.item("control.enter")==intermediate.item("control.enter"),
+              "previously relocated WEJDŹ is not reset")
+        check(migratedPartial.item("control.pause")==intermediate.item("control.pause"),
+              "previously relocated PAUZA is not reset")
+        prefs.set(earlierBytes,
+                  forKey:"asteroidy.ios.pc602.orbit-hud-layout291.v1")
+        check(PC602OrbitHUDLayout291.load(defaults:prefs)==migratedPartial,
+              "partial saved H290 profile auto-upgrades on load")
+
         var hidden=migrated
         hidden.change("hud.mission.heading"){$0.visible=false}
         check(hidden.valid && !hidden.item("hud.mission.heading").visible,
