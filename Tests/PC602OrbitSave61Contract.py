@@ -101,6 +101,10 @@ assert 'checkpoint.runID==run,checkpoint.valid' in app
 assert 'canSaveMenu61:menuCheckpoint61() != nil' in app
 assert 'allowSave:canSaveMenu61,initialAction:1' in w3
 assert 'onSave:saveMenuSlot61' in w3
+assert 'if confirmActiveLoad {pending=action}' in slots
+assert 'allowSave:canSaveMenu61,confirmActiveLoad:false' in w3
+assert 'allowSave:true,confirmActiveLoad:true' in page
+assert 'allowSave:true,confirmActiveLoad:true' in read("Sector01Scene568.swift")
 assert 'PC602OrbitSave61.hasManualSave' in w3
 assert 'static func canContinueActive358(' in source
 assert 'Sector01Shop568.validate(shop)' in source
