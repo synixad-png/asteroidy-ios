@@ -56,21 +56,8 @@ enum CombatContactRouter96 {
         case .guardianAbsorbed, .tarczaAbsorbed, .talentAbsorbed, .coopDown:
             return .externalDefenseAbsorbed
         case .noneAbsorbed:
-            // The flat arena intercepts asteroid contacts first (.8s).
-            // Sphere contacts, bugs and bosses instead pass through
-            // HitByBoss(), whose shield branch provides 1s protection.
-            if !spherical {
-                switch event {
-                case .shipRock, .partnerRock:
-                    if let absorbed=survival.absorbPurchasedRockContact(cause:source) {
-                        return .applied(absorbed)
-                    }
-                default: break
-                }
-            }
-            if let absorbed=survival.absorbPurchasedHitByBoss(cause:source) {
-                return .applied(absorbed)
-            }
+            // PC608: the caller already verified Guardian, active
+            // Tarcza145 and Talents78. No purchased-reserve passive hit.
             let damage=CombatSurvival96.collisionDamage(level:level,
                                                          difficulty:difficulty)
             return .applied(survival.applyUnblockedCollision(
@@ -136,17 +123,8 @@ enum CombatContactRouter96 {
                 // do not consume lives/shields again.
                 outcomes.append(.externalDefenseAbsorbed)
             case .noneAbsorbed:
-                if !spherical {
-                    if case .shipRock = event,
-                       let absorbed=survival.absorbPurchasedRockContact(cause:source) {
-                        outcomes.append(.applied(absorbed))
-                        continue
-                    }
-                }
-                if let absorbed=survival.absorbPurchasedHitByBoss(cause:source) {
-                    outcomes.append(.applied(absorbed))
-                    continue
-                }
+                // v608: spare bars are never spent here. Only active
+                // dome depletion spends reserves in SourceTarcza145.
                 let damage=CombatSurvival96.collisionDamage(
                     level:level,difficulty:difficulty)
                 let hit=survival.applyUnblockedCollision(
