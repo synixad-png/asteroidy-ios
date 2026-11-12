@@ -25,6 +25,10 @@ on:
       - Reports/PC602_IOS_O01_MACIERZ_ZGODNOSCI_2026-11-12.md
       - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
+      - ASTEROIDYiOS/PC602OrbitHUDLayout291.swift
+      - ASTEROIDYiOS/PC602OrbitHUDEditor291.swift
+      - Tests/PC602OrbitHUDLayout291Tests.swift
+      - Tests/PC602ReplayHUDRegression291.py
       - Tools/stage_pc602_planetarium.py
       - SourceResources/PC602/planetarium.glb.xz
       - Tests/HudPlanetariumIntegration600Contract.py
@@ -67,6 +71,10 @@ on:
       - ASTEROIDYiOS/PC602HomeScene291.swift
       - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
+      - ASTEROIDYiOS/PC602OrbitHUDLayout291.swift
+      - ASTEROIDYiOS/PC602OrbitHUDEditor291.swift
+      - Tests/PC602OrbitHUDLayout291Tests.swift
+      - Tests/PC602ReplayHUDRegression291.py
       - Tools/stage_pc602_planetarium.py
       - SourceResources/PC602/planetarium.glb.xz
       - Tests/HudPlanetariumIntegration600Contract.py
@@ -143,6 +151,9 @@ jobs:
           python3 Tests/PC602HomeWorldUI291Contract.py
           python3 Tests/PC602H290MenuSkyRegression291.py
           python3 Tests/PC602OrbitSave61Contract.py
+          python3 Tests/PC602ReplayHUDRegression291.py
+          swiftc -O ASTEROIDYiOS/PC602OrbitHUDLayout291.swift Tests/PC602OrbitHUDLayout291Tests.swift -o /tmp/pc602-orbit-hud-tests
+          /tmp/pc602-orbit-hud-tests
           python3 Tests/PC602O01SourceBaseline.py --ios-root .
           python3 Tools/code_quality_audit.py --root . --gate
       - name: Build actual Swift and Metal for physical iPhone and iPad (no IPA)

@@ -96,6 +96,37 @@ import Foundation
             shopProfile:Sector01Shop568.load(defaults:defaults))
         else {fatalError("real first mission replay preparation missing")}
         verify(preparedReplay.isReplay,"replay flag from real saved completion")
+        // Source PC602 MissionRewards57 disables currency, not Tarcza145,
+        // Boost71, Energy or Bomb drops. Exercise the REAL replay combat
+        // death/pickup logic with the same deterministic authored wave.
+        var replayGameplay=CarbonisCombat568(preparedReplay)
+        var sawConsumable=false
+        var sawCoin=false
+        var replayTicks=0
+        while replayGameplay.phase == .playing && replayTicks<1440 {
+            replayGameplay.bullets.removeAll(keepingCapacity:true)
+            for enemy in replayGameplay.shooters {
+                replayGameplay.bullets.append(CarbonisCombat568.Projectile(
+                    point:enemy.core.position,velocity:zero,
+                    life:0.4,hostile:false,damage:1))
+            }
+            for rock in replayGameplay.rocks where rock.shardLife<=0 {
+                replayGameplay.bullets.append(CarbonisCombat568.Projectile(
+                    point:rock.position,velocity:zero,
+                    life:0.4,hostile:false,damage:1))
+            }
+            replayGameplay.step(move:zero,aim:zero,shooting:false,dt:1/120)
+            sawConsumable = sawConsumable ||
+                replayGameplay.tokenPickups.contains(where:{$0.sourceKind != nil})
+            sawCoin = sawCoin ||
+                replayGameplay.tokenPickups.contains(where:{$0.sourceKind == nil})
+            replayTicks+=1
+        }
+        verify(sawConsumable,"replay spawns real usable non-money items")
+        verify(!sawCoin,"completed mission replay cannot spawn money coins")
+        verify(replayGameplay.phase == .victory &&
+               replayGameplay.missionSummary?.earnedTokens==0,
+               "replay completes without second money reward")
         // PC602 Game.DropLoot is reward-gated, but Tarcza145/Boost71
         // and TryDropCombatSupply do not require MissionRewards57.
         // Ensure the non-monetary spawn routes are still reachable on replay.
