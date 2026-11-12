@@ -13,6 +13,7 @@ struct PC602HomeWorldPage291:View {
     @ObservedObject var audio:OriginalAudioAV568
     let onExitToW3:()->Void
     let onEnterMission:(Int)->Void
+    let onLoadIntro61:(Int)->Bool
     let onProfileRestored:()->Void
     @State private var showingAtlas330=false
     @State private var previouslyPaused330=false
@@ -59,6 +60,12 @@ struct PC602HomeWorldPage291:View {
                             allowSave:true,initialAction:loadingSave61 ? 1:0,
                             onSave:{driver.saveOrbitSlot61($0)},
                             onLoad:{ slot in
+                                // Source LoadSlot61 selects the saved game
+                                // mode; do not treat an Intro as orbit data.
+                                if let snapshot=try? PC602OrbitSave61.read(slot:slot),
+                                   snapshot.isMissionIntro61 {
+                                    return onLoadIntro61(slot)
+                                }
                                 let ok=driver.loadOrbitSlot61(slot)
                                 if ok {onProfileRestored()}
                                 return ok
