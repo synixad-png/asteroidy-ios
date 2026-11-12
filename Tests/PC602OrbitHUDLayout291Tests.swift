@@ -44,6 +44,37 @@ import Foundation
               "individual button + telemetry editing")
         check(edited.save(defaults:prefs),"save")
         check(PC602OrbitHUDLayout291.load(defaults:prefs)==edited,"load")
+
+        // Every real H290 touch control must remain separately selectable,
+        // movable and persisted. Mission v600 editor remains untouched.
+        let buttons=["control.options","control.atlas","control.next",
+                     "control.pause","control.enter"]
+        check(buttons.allSatisfy{PC602OrbitHUDLayout291.ids.contains($0)},
+              "all five original H290 touch buttons represented")
+        var allButtons=original
+        for (index,id) in buttons.enumerated() {
+            let signed=Double(index)*130-260
+            allButtons.change(id) {element in
+                element.x=signed
+                element.y=Double(index)*95-190
+                element.scale=1.0+Double(index)*0.1
+            }
+        }
+        check(allButtons.valid,"all button edits must validate")
+        check(allButtons.save(defaults:prefs),"persist all buttons at once")
+        check(PC602OrbitHUDLayout291.load(defaults:prefs)==allButtons,
+              "all five button positions must round-trip without snapping")
+        for id in buttons {
+            let saved=PC602OrbitHUDLayout291.load(defaults:prefs).item(id)
+            check(saved==allButtons.item(id),"persisted transform: "+id)
+        }
+        var farMove=original
+        farMove.change("control.enter"){$0.x = -1100;$0.y = -610}
+        farMove.change("control.pause"){$0.x = 1050;$0.y = 510}
+        check(farMove.valid,"full 1280x720 landscape movement cannot truncate")
+        check(farMove.save(defaults:prefs),"save full-range moves")
+        check(PC602OrbitHUDLayout291.load(defaults:prefs)==farMove,
+              "far-moved WEJDŹ and PAUZA must remain where the user saved them")
         let before=edited
         edited.change("control.pause"){$0.scale=999}
         edited.change("control.enter"){$0.visible=false}
@@ -82,6 +113,23 @@ import Foundation
               "moving text changes physical hit location")
         check(hit(95,30)=="hud.mission.heading",
               "new physical location becomes selectable")
+        // Each button has a real, independent hit region even when all
+        // controls are visible simultaneously on an iPhone or iPad.
+        frames=[:]
+        for (index,id) in buttons.enumerated() {
+            frames[id]=PC602OrbitHUDLayout291.Rect(
+                x:Double(30+index*110),y:210,width:85,height:52)
+        }
+        for (index,id) in buttons.enumerated() {
+            check(hit(Double(60+index*110),230)==id,
+                  "touch target must select exact control: "+id)
+        }
+        frames["control.enter"]=PC602OrbitHUDLayout291.Rect(
+            x:220,y:375,width:85,height:52)
+        check(hit(250,400)=="control.enter",
+              "moving WEJDŹ must change its hit rectangle")
+        check(hit(500,235)==nil,
+              "old WEJDŹ hit rectangle must not remain active after move")
         frames=["hud.dock.hint":PC602OrbitHUDLayout291.Rect(x:100,y:100,width:8,height:8)]
         check(hit(119,119)=="hud.dock.hint","44-pt minimum touch size")
         check(hit(143,143)==nil,"don't silently treat the full viewport as HUD")
