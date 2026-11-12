@@ -47,7 +47,8 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
         elements.allSatisfy {
             $0.x.isFinite && $0.y.isFinite && $0.scale.isFinite &&
             (-600...600).contains($0.x) && (-360...360).contains($0.y) &&
-            (0.55...2.5).contains($0.scale)
+            (0.55...2.5).contains($0.scale) &&
+            (!$0.id.hasPrefix("control.") || $0.visible)
         }
     }
     static func load(defaults:UserDefaults = .standard)->Self {
