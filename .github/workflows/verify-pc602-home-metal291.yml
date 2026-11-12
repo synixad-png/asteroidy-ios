@@ -21,6 +21,8 @@ on:
       - ASTEROIDYiOS/PC602HomeMissionSignal58.swift
       - ASTEROIDYiOS/PC602HomeProjectileLights296.swift
       - Tests/PC602OrbitSave61Contract.py
+      - Tests/PC602O01SourceBaseline.py
+      - Reports/PC602_IOS_O01_MACIERZ_ZGODNOSCI_2026-11-12.md
       - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
       - Tools/stage_pc602_planetarium.py
@@ -141,6 +143,7 @@ jobs:
           python3 Tests/PC602HomeWorldUI291Contract.py
           python3 Tests/PC602H290MenuSkyRegression291.py
           python3 Tests/PC602OrbitSave61Contract.py
+          python3 Tests/PC602O01SourceBaseline.py --ios-root .
           python3 Tools/code_quality_audit.py --root . --gate
       - name: Build actual Swift and Metal for physical iPhone and iPad (no IPA)
         shell: bash
