@@ -34,8 +34,14 @@ struct PC602OrbitHUDEditor291:View {
         layout.change(id,mutation)
     }
     private func move(_ id:String,original:PC602OrbitHUDLayout291.Element,
-                      dx:Double,dy:Double,viewport:CGSize) {
+                      dx:Double,dy:Double,frame:CGRect,
+                      viewport:CGSize,safeInsets:EdgeInsets) {
         guard dx.isFinite,dy.isFinite else{return}
+        let clamped=PC602OrbitHUDLayout291.constrainedDrag(
+            id,delta:CGPoint(x:dx,y:dy),frame:frame,
+            viewport:viewport,
+            safeInsets:(left:safeInsets.leading,right:safeInsets.trailing,
+                        top:safeInsets.top,bottom:safeInsets.bottom))
         let width=max(1,Double(viewport.width))
         let height=max(1,Double(viewport.height))
         // Legacy H290 group transforms still enclose every individual
@@ -51,8 +57,10 @@ struct PC602OrbitHUDEditor291:View {
         let inherited=parent.map{layout.item($0).scale} ?? 1
         let base=max(0.001,inherited)
         change(id){e in
-            e.x=max(-600,min(600,original.x+dx*1280/(width*base)))
-            e.y=max(-360,min(360,original.y+dy*720/(height*base)))
+            e.x=max(-600,min(600,original.x+
+                Double(clamped.x)*1280/(width*base)))
+            e.y=max(-360,min(360,original.y+
+                Double(clamped.y)*720/(height*base)))
         }
     }
     private func scale(_ id:String,original:Double,factor:Double) {
@@ -197,9 +205,10 @@ struct PC602OrbitHUDEditor291:View {
                 OrbitEditorTouchCanvas291(
                     layout:layout,selection:selected,frames:frames,
                     onSelect:{selected=$0},
-                    onMove:{id,origin,dx,dy in
+                    onMove:{id,origin,dx,dy,frame in
                         move(id,original:origin,dx:dx,dy:dy,
-                             viewport:geo.size)
+                             frame:frame,viewport:geo.size,
+                             safeInsets:geo.safeAreaInsets)
                     },
                     onScale:{id,original,factor in
                         scale(id,original:original,factor:factor)
@@ -286,7 +295,7 @@ private struct OrbitEditorTouchCanvas291:UIViewRepresentable {
     let selection:String
     let frames:[String:CGRect]
     let onSelect:(String)->Void
-    let onMove:(String,PC602OrbitHUDLayout291.Element,Double,Double)->Void
+    let onMove:(String,PC602OrbitHUDLayout291.Element,Double,Double,CGRect)->Void
     let onScale:(String,Double,Double)->Void
 
     func makeUIView(context:Context)->TouchSurface {TouchSurface(frame:.zero)}
@@ -305,9 +314,10 @@ private struct OrbitEditorTouchCanvas291:UIViewRepresentable {
         var selection=""
         var frames:[String:CGRect]=[:]
         var onSelect:((String)->Void)?
-        var onMove:((String,PC602OrbitHUDLayout291.Element,Double,Double)->Void)?
+        var onMove:((String,PC602OrbitHUDLayout291.Element,Double,Double,CGRect)->Void)?
         var onScale:((String,Double,Double)->Void)?
-        private var dragStart:(element:PC602OrbitHUDLayout291.Element,point:CGPoint)?
+        private var dragStart:(element:PC602OrbitHUDLayout291.Element,
+                              point:CGPoint,frame:CGRect)?
         private var pinchStart:(id:String,scale:Double)?
         override init(frame:CGRect) {
             super.init(frame:frame)
@@ -339,9 +349,9 @@ private struct OrbitEditorTouchCanvas291:UIViewRepresentable {
                 dragStart=nil;return
             }
             let point=touch.location(in:self)
-            if let id=hit(point) {
+            if let id=hit(point),let frame=frames[id] {
                 onSelect?(id)
-                dragStart=(layout.item(id),point)
+                dragStart=(layout.item(id),point,frame)
             } else {
                 onSelect?("")
                 dragStart=nil
@@ -354,7 +364,7 @@ private struct OrbitEditorTouchCanvas291:UIViewRepresentable {
             let point=touch.location(in:self)
             onMove?(start.element.id,start.element,
                     Double(point.x-start.point.x),
-                    Double(point.y-start.point.y))
+                    Double(point.y-start.point.y),start.frame)
         }
         override func touchesEnded(_ touches:Set<UITouch>,with event:UIEvent?) {
             super.touchesEnded(touches,with:event)
