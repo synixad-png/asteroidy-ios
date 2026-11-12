@@ -230,7 +230,13 @@ assert "flight.flight.flight.visualPitch" in ship_pose
 assert "flight.home.surface(" in ship_pose
 assert "altitude+12" in ship_pose
 assert "sourceShipScale*orbitScale" in ship_pose
-assert "originalShip=try SourceHomeVanguard431(device:device)" in world
+assert "originalShip=try SourceHomeVanguard431(device:device," in world
+assert "shipType:H55SourceMechanics580.load().selectedShip" in world
+assert "if originalShip.shipType != equipped" in world
+# VANGUARD remains a real 4311 ship; an equip change selects the 6061
+# Bastion source rather than replacing the physical ship with a placeholder.
+assert "if shipType==2" in ship
+assert "SourceBastion606.load()" in ship
 assert "originalShip.draw(encoder:encoder,flight:flight," in world
 assert world.index("PC602HomeBeacons291.vertices(") < world.index("originalShip.draw")
 assert "SourceShipScale472.load().orbitFactor" in world
