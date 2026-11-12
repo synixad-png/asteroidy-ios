@@ -45,3 +45,20 @@
 **Poprawka:** `canContinueActive358` nadal wymaga rzeczywistego identyfikatora kampanii i poprawnie zdekodowanego profilu sklepu. Brak rekordu H55 traktuje jako prawidłowy stan domyślny, zgodnie z `SourceNewGame568.create`; obecny rekord H55 jest rygorystycznie dekodowany i walidowany, a nieprawidłowy `Data`, typ lub niedostępny w porcie iOS model statku skutkują odmową kontynuacji. Dodano regresje do `SourceNewGame568Tests.swift` dla świeżej kampanii, uszkodzenia obecnych rekordów oraz odrzucenia wybranego nieobsługiwanego statku.
 
 **Wersja IPA sprzed tego commita:** artefakt unsigned test z commita `1a813af3bddc9d7dcb22bd981ef2dc641e8967cc` (przekazany użytkownikowi w tej rozmowie) nie zawiera powyższej późniejszej poprawki. Dalszy odbiór O09 wymaga jej kompilacji i testów; stara IPA nie może być przedstawiana jako nowsza.
+
+## Korekta audytu zależności O09 — źródła PC v602
+
+**Poprzednie twierdzenie, że pełną mechanikę zapisów O09 trzeba odłożyć do ukończenia O07/O08, było nieprawidłowe.** Te etapy są potrzebne do testów integracyjnych scen, ale oryginalna mechanika zapisu punktu kontrolnego jest określona w PC v602 i może być wdrażana niezależnie. Kwestie wizualne weryfikuje użytkownik; nie wolno używać ich jako blokady prac programistycznych.
+
+Zweryfikowano bezpośrednio w archiwum użytkownika, gałąź `Windows/src/`:
+
+1. `SaveManager61.cs:42–43` (`ShopLines61`, `Snapshot61`): 17 wartości `meta`, profil sklepu, 11 wartości `orbit` (pozycja, kierunek, prawa oś, yaw, pitch), `TalentState78`, `ModuleState97`, `TarczaEnergy145`, suma SHA-256.
+2. `SaveManager61.cs:44–46` (`CaptureResume61`, `RefreshCheckpoint61`, `SaveSlot61`): tryby `Orbit/Shop/Intro` zapisują aktualny zweryfikowany snapshot; podczas `Playing/Tunnel/Menu` zapisuje się **ostatni `checkpoint61`**, nie stan każdej klatki walki. Bez checkpointu zapis jest odrzucany.
+3. `Intro41.cs:28` (`BeginLevelIntro`): ustawia `Mode.Intro`, następnie `RefreshCheckpoint61`. Rozpoczęcie misji odświeża stan kontrolny przed walką.
+4. `SaveManager61.cs:48–85` (`ReadSlot61`): dekoduje i waliduje dane zapisu; zapisany tryb to `Orbit`, `Shop` albo `Intro`, nawet jeśli zapis wywołano podczas walki.
+5. `SaveManager61.cs:86` (`LoadSlot61`): przywraca stan kampanii i w zależności od trybu odbudowuje `Orbit`, `Shop` lub sekwencję `Wave(); BeginLevelIntro()`. Nie odtwarza aktualnej klatki bitwy.
+6. `SaveManager61.cs:94–104`: interfejs slotów wywołuje tę samą logikę zapisu/wczytania/usunięcia, niezależnie od renderera.
+
+**Konsekwencje:** w O09 implementować pozostałe pola `Snapshot61`, rejestrowanie punktów kontrolnych i odtwarzanie ich trybów według źródeł bez oczekiwania na pełne O08. Dalsze, jeszcze nieobsługiwane przejścia należy oznaczać jako nieprzetestowane i sprawdzić później integracyjnie. Nie wymyślać stanów walki ani nagród. Bez zmian w wyglądzie gry.
+
+Definicja i numeracja stałego harmonogramu O01–O12 pozostają niezmienione.
