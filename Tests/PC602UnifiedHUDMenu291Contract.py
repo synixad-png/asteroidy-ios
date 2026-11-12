@@ -58,7 +58,7 @@ for key in ("hud.mission.heading","hud.mission.distance","hud.telemetry.speed",
 assert "onMove?(start.element.id" in editor
 assert "pinchStart=(selection,layout.item(selection).scale)" in editor
 assert "let ordered=PC602OrbitHUDLayout291.ids.filter{$0 != selection}" in editor
-assert 'value:id.hasPrefix("hud.navigation") ? [:]' in orbit
+assert 'if showingOrbitHUD291 && !id.hasPrefix("hud.navigation")' in orbit
 assert 'navigationFrames:navigationHitRects291(' in orbit
 assert 'if showingOrbitHUD291 && !id.hasPrefix("hud.navigation")' in orbit
 assert 'PC602OrbitHUDLayout291.constrainedDrag(' in editor
