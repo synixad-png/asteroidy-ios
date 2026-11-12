@@ -36,11 +36,11 @@ struct PC602OrbitHUDEditor291:View {
                         .onChanged { gesture in
                             if dragStart==nil {dragStart=current}
                             guard let origin=dragStart else{return}
+                            let dx=Double(gesture.translation.width)*1280/width
+                            let dy=Double(gesture.translation.height)*720/height
                             layout.change(origin.id) {item in
-                                item.x=max(-600,min(600,origin.x+
-                                    Double(gesture.translation.width)*1280/width))
-                                item.y=max(-360,min(360,origin.y+
-                                    Double(gesture.translation.height)*720/height))
+                                item.x=max(-600,min(600,origin.x+dx))
+                                item.y=max(-360,min(360,origin.y+dy))
                             }
                         }
                         .onEnded {_ in dragStart=nil})
