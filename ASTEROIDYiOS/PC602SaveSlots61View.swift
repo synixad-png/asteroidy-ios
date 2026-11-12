@@ -6,6 +6,8 @@ import SwiftUI
 /// overwrite/load/delete confirmation. The iOS snapshot is JSON, not PC .sav.
 struct PC602SaveSlots61View:View {
     let allowSave:Bool
+    // Source SaveKey61: only replacing an ACTIVE session requires confirmation.
+    let confirmActiveLoad:Bool
     let initialAction:Int
     let onSave:(Int)->Bool
     let onLoad:(Int)->Bool
@@ -41,7 +43,7 @@ struct PC602SaveSlots61View:View {
                 status="Zapis pusty lub uszkodzony.";return
             }
             // In the original source, replacing an active session prompts.
-            if allowSave {pending=action}
+            if confirmActiveLoad {pending=action}
             else {perform(action)}
         case 2:pending=action
         default:break
