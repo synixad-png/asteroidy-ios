@@ -23,6 +23,8 @@ struct PC602HomeWorldPage291:View {
     @State private var showingOrbitOptions291=false
     @State private var showingOrbitSettings291=false
     @State private var previouslyPausedOptions291=false
+    @State private var showingOrbitPause317=false
+    @State private var pressedOrbitCommands291:Set<Int>=[]
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.39,green:0.75,blue:0.79)
 
@@ -51,6 +53,7 @@ struct PC602HomeWorldPage291:View {
                         onFire:{driver.setFiring($0)})
                     overlay(screen:screen,flight:flight)
                     navigationCue50(screen:screen,flight:flight)
+                    if showingOrbitPause317 {orbitPausePanel317(screen:screen)}
                     if showingAtlas330 {atlasPanel(screen:screen)}
                     if showingSaves61 {savesPanel61(screen:screen)}
                     if showingOrbitOptions291 {orbitOptionsPanel291(screen:screen)}
@@ -85,6 +88,10 @@ struct PC602HomeWorldPage291:View {
             // Disk I/O is on this lifecycle event, never inside draw(in:).
             if phase != .active {
                 _=driver.captureResume61()
+                // PC602 Program.cs Deactivate: the active orbit pauses on focus loss.
+                if !driver.paused && !driver.presentingH55 {
+                    openOrbitPause317()
+                }
             }
             driver.setSuspended(phase != .active)
         }
@@ -110,6 +117,7 @@ struct PC602HomeWorldPage291:View {
             if !driver.presentingH55 {
                 SourceKeyboardCapture586 { key,held in
                     SourceHardwareInput586.shared.changeKey(key,pressed:held)
+                    routeOrbitCommand291(key:key,held:held)
                 }
                 .frame(width:1,height:1)
                 .opacity(0.01)
@@ -117,6 +125,125 @@ struct PC602HomeWorldPage291:View {
             }
         }
         .accessibilityIdentifier("pc602-orbit-real-gameplay-page")
+    }
+
+    // PC602 BossTunnelGame.cs:48-50 + Program.cs:197-201.
+    // One existing session pause flag; no second clock or flight state.
+    private func openOrbitPause317() {
+        guard !showingAtlas330,!showingSaves61,!showingOrbitOptions291
+        else{return}
+        driver.setPaused(true)
+        showingOrbitPause317=true
+    }
+
+    private func resumeOrbitPause317() {
+        showingOrbitPause317=false
+        driver.setPaused(false)
+    }
+
+    // Physical ESC and the user's configured PAUZA/USTAWIENIA keys use
+    // SourceControls586 actions 9/27, as in PC602 Program.Action.
+    // Edge-triggering avoids repeated UIKit presses toggling every frame.
+    private func routeOrbitCommand291(key:Int,held:Bool) {
+        let keys=SourceControls586.Profile.load().keys
+        let isPause=key==27 || key==keys[9]
+        let isOptions=key==keys[27]
+        guard isPause || isOptions else{return}
+        if !held {pressedOrbitCommands291.remove(key);return}
+        guard pressedOrbitCommands291.insert(key).inserted else{return}
+        if isPause {
+            if showingSaves61 {dismissSaves61()}
+            else if showingAtlas330 {dismissAtlas330()}
+            else if showingOrbitSettings291 {showingOrbitSettings291=false}
+            else if showingOrbitOptions291 {closeOrbitOptions291()}
+            else if showingOrbitPause317 {resumeOrbitPause317()}
+            else if driver.paused {driver.setPaused(false)}
+            else {openOrbitPause317()}
+        } else if !showingAtlas330 && !showingSaves61 {
+            if showingOrbitOptions291 {closeOrbitOptions291()}
+            else {openOrbitOptions291()}
+        }
+    }
+
+    /// Original PC602 RendererW3Pause317.DrawW3Pause317:
+    /// two columns, three actions each; Program.PauseAction dispatches.
+    /// iOS cannot terminate itself; results are not yet ported, so neither
+    /// action is advertised as functioning. All other actions are real.
+    private func orbitPausePanel317(screen:GeometryProxy)->some View {
+        let compact=screen.size.height<450
+        let labels=["KONTYNUUJ","WYJDŹ DO MENU","ZAMKNIJ GRĘ",
+                    "ZAPISZ","WCZYTAJ","WYNIKI"]
+        return ZStack {
+            Color(red:1/255,green:8/255,blue:16/255)
+                .opacity(163/255).ignoresSafeArea()
+            VStack(spacing:compact ? 10:18) {
+                Text("SYNIXAD // SYSTEM ROZGRYWKI")
+                    .font(.system(size:compact ? 10:12,design:.monospaced))
+                    .foregroundStyle(gold)
+                Text("GRA WSTRZYMANA")
+                    .font(.system(size:compact ? 20:26,
+                                  weight:.bold,design:.monospaced))
+                    .foregroundStyle(.white)
+                Text("SYTUACJA ZACHOWANA / CZAS ROZGRYWKI ZATRZYMANY")
+                    .font(.system(size:compact ? 9:11,design:.monospaced))
+                    .foregroundStyle(cyan)
+                    .multilineTextAlignment(.center)
+                HStack(spacing:compact ? 7:12) {
+                    ForEach(0..<2,id:\.self) { column in
+                        VStack(spacing:compact ? 7:12) {
+                            ForEach(0..<3,id:\.self) { row in
+                                let index=column*3+row
+                                Button {
+                                    pauseAction317(index)
+                                } label: {
+                                    Text(labels[index])
+                                        .font(.system(size:compact ? 11:14,
+                                                      weight:.bold,design:.monospaced))
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.75)
+                                        .frame(maxWidth:.infinity,minHeight:compact ? 36:52)
+                                        .foregroundStyle(index==2 || index==5
+                                            ? .gray : .white)
+                                        .background(Color(red:5/255,
+                                            green:20/255,blue:31/255))
+                                        .overlay(Rectangle().stroke(
+                                            gold.opacity(index==2 || index==5
+                                                ? 0.15:0.65),lineWidth:1))
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(index==2 || index==5)
+                                .accessibilityIdentifier(
+                                    "pc602-orbit-pause-choice-\(index)")
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(compact ? 13:22)
+            .frame(maxWidth:790)
+            .background(Color(red:0.008,green:0.028,blue:0.048))
+            .overlay(Rectangle().stroke(gold.opacity(0.7),lineWidth:1))
+            .padding(12)
+        }
+        .zIndex(10)
+        .accessibilityIdentifier("pc602-orbit-pause-panel317")
+    }
+
+    private func pauseAction317(_ index:Int) {
+        switch index {
+        case 0:
+            resumeOrbitPause317()
+        case 1:
+            showingOrbitPause317=false
+            onExitToW3()
+        case 3:
+            openSaves61(load:false,restorePaused:true)
+        case 4:
+            openSaves61(load:true,restorePaused:true)
+        default:
+            // PC close-game and results menu are unavailable on iOS today.
+            return
+        }
     }
 
     /// The original PC602 option/pause action. The same orbital session
@@ -545,6 +672,12 @@ struct PC602HomeWorldPage291:View {
                         Button("CEL +") {driver.cycleMission()}
                             .disabled(driver.paused)
                             .accessibilityIdentifier("pc602-orbit-next-sector")
+                        Button(driver.paused ? "WZNÓW":"PAUZA") {
+                            if showingOrbitPause317 {resumeOrbitPause317()}
+                            else if driver.paused {driver.setPaused(false)}
+                            else {openOrbitPause317()}
+                        }
+                        .accessibilityIdentifier("pc602-orbit-pause")
                     }
                     .font(.system(size:compact ? 10:12,weight:.bold,
                                   design:.monospaced))

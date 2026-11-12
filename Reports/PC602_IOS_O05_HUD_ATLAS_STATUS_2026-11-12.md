@@ -27,3 +27,17 @@ Test Swift dotyczący formatu HUD uruchamiany jest w istniejącym workflow `veri
 ## 12.11.2026 — Klawisze kompaktowego atlasu zgodne z OrbitClick51
 
 Oryginalny `Windows/src/Orbit50.cs:92` `OrbitClick51` obsługuje kliknięcie w dowolny z 26 małych kafelków `OrbitHud330.Hit(x,y)` pod warunkiem `Mode==Orbit` i `MissionUnlocked50(n)`, **bez uruchamiania misji**. W iOS kompaktowa siatka w HUD pokazywała właściwe sektory, ale była nieinteraktywna (`.allowsHitTesting(false)`), w przeciwieństwie do PC. Poprawiono to bez zmiany szerokości kafelków, kolorów i siatki: każdy istniejący kafelek jest teraz przyciskiem wyłącznie do wyboru odblokowanego sektora podczas lotu. Nie dotyczy uruchamiania misji — do tego nadal służy oryginalny warunek wejścia. Duży atlas dotykowy pozostaje dostępny. Dodano kontrakt źródłowy sprawdzający zachowanie obu siatek i brak przełącznika blokującego obsługę dotyku. Test na rzeczywistym iPhonie/iPadzie należy przeprowadzić po utworzeniu IPA; O05 pozostaje W TOKU.
+
+## 12.11.2026 — O05 pauza: porównanie rzeczywistych procedur PC602
+
+Odczytane bezpośrednio z archiwum użytkownika SHA256 `359abd889544c846faa9426fd291df8528951ed2253fe67c47dbb9e9d9f2103b`:
+
+- `Windows/src/BossTunnelGame.cs:48-50`: `Pause()` zatrzymuje żywą orbitę przez `PausedFrom=Mode.Orbit` i `Mode.Paused`; `Resume()` przywraca `Mode.Orbit`.
+- `Windows/src/RendererW3Pause317.cs:7-53`: rzeczywista nakładka wstrzymanej gry ma układ 2×3 oraz nazwy `KONTYNUUJ`, `WYJDŹ DO MENU`, `ZAMKNIJ GRĘ`, `ZAPISZ`, `WCZYTAJ`, `WYNIKI`.
+- `Windows/src/Program.cs:197-201`: pauza klawiszem akcji 9/ESC, Resume oraz powrót do oryginalnego menu; `Program.cs:110-122`: niezależny widok OPCJI zatrzymuje lot i przy powrocie przywraca poprzedni stan; `Program.cs:36`: utrata aktywności okna zatrzymuje grę.
+
+**Potwierdzona różnica:** aktywny `PC602HomeWorldPage291.swift` miał `OPCJE` i zapisy, lecz nie miał przycisku `PAUZA`, samodzielnej nakładki wstrzymania ani obsługi źródłowego klawisza pauzy w H290. Istniejący XCUITest wymagał przycisku, którego nie było.
+
+**Minimalny port O05:** przycisk PAUZA obok istniejących przycisków atlasu, nakładka oryginalnych sześciu poleceń nad żywą sceną Metal, bez drugiego zegara i drugiego stanu fizyki; dotykowe KONTYNUUJ i WYJDŹ DO MENU, ZAPISZ/WCZYTAJ z powrotem do pauzy; ESC, skonfigurowane klawisze akcji 9 i 27, blokada powtórzonych zdarzeń klawiatury, zatrzymanie po przejściu aplikacji w tło. Powrót do W3 nadal wykonuje istniejący, prawdziwy `App.swift` callback (CaptureResume61/stop/W3), bez atrap.
+
+**Ograniczenia:** `ZAMKNIJ GRĘ` nie jest uruchamiane na iOS (aplikacja nie powinna programowo kończyć procesu), a `WYNIKI` czeka na port źródłowego ekranu wyników: oba przyciski wyświetlane jako niedostępne, nie jako działające atrapy. Pełna obsługa klawiszy na fizycznej klawiaturze/iPhonie oraz rzeczywisty obraz pauzy pozostają do testów urządzeniowych. O05 nadal W TOKU; testy i status kompilacji należy oceniać na nowym SHA, nie dziedziczyć wyniku wcześniejszej IPA.

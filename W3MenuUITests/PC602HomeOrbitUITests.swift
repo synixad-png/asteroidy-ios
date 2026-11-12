@@ -80,9 +80,13 @@ final class PC602HomeOrbitUITests: XCTestCase {
         add(capture)
 
         pause.tap()
-        XCTAssertEqual(pause.label, "WZNÓW", "Pause did not freeze the game")
-        pause.tap()
-        XCTAssertEqual(pause.label, "PAUZA", "Game did not resume")
+        let pausePanel = byID(app, "pc602-orbit-pause-panel317")
+        require(pausePanel, "PC602 W3 game-pause overlay did not open")
+        let resume = app.buttons["pc602-orbit-pause-choice-0"]
+        require(resume, "Original KONTYNUUJ action missing from pause")
+        resume.tap()
+        require(pause, "Game did not resume to live H290 HUD")
+        XCTAssertEqual(pause.label, "PAUZA", "H290 remains paused")
 
         let atlas = app.buttons["pc602-orbit-open-atlas330"]
         require(atlas, "Original 26-sector atlas action missing")
@@ -94,8 +98,11 @@ final class PC602HomeOrbitUITests: XCTestCase {
         close.tap()
         require(atlas, "Closing source atlas did not restore orbital HUD")
 
+        let options = app.buttons["pc602-orbit-open-options291"]
+        require(options, "Original OPCJE button missing from live orbit")
+        options.tap()
         let back = app.buttons["pc602-orbit-return-w3"]
-        require(back, "Orbit cannot return to original W3")
+        require(back, "OPCJE cannot return to original W3")
         back.tap()
         require(app.buttons["w3-home-2"],
                 "Returning from H290 did not restore actual W3 menu")
