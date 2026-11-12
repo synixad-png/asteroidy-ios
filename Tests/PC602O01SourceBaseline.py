@@ -70,7 +70,11 @@ IOS_ANCHORS = {
         "static func canDock90",
     ),
     "PC602HomeWorldDriver291.swift": (
-        "Equipment(craft:.vanguard)",
+        "vanguardEquipment291(",
+        "craft:.vanguard,",
+        "engineLevel:state.engine",
+        "thrusterRank:state.thruster",
+        "stabilizerLevel:state.stabilizer",
         "func exitH55()",
         "func refreshCampaign(",
     ),
