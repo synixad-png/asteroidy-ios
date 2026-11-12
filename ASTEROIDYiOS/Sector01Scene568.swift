@@ -117,6 +117,32 @@ struct Sector01Scene568: View {
             .padding(.horizontal,compact ? 10:24)
             .padding(.vertical,7)
             .background(Color(red:0.008,green:0.028,blue:0.048))
+            // Asset import is a SETTINGS action, not a second pause button.
+            if planetariumURL600 == nil {
+                Button("WCZYTAJ PLANETARIUM GLB v600") {
+                    showingPlanetariumImport600=true
+                }
+                .fileImporter(
+                    isPresented:$showingPlanetariumImport600,
+                    allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data]
+                ) {result in
+                    do {
+                        let source=try result.get()
+                        planetariumURL600=try HudPlanetariumAsset600.install(from:source)
+                        planetariumIssue600=nil
+                    } catch {planetariumIssue600=error.localizedDescription}
+                }
+                .font(.system(size:compact ? 14:16,weight:.bold,design:.monospaced))
+                .frame(maxWidth:.infinity,minHeight:48)
+                .foregroundStyle(.cyan)
+                .background(Color(red:0.05,green:0.15,blue:0.22))
+                .accessibilityIdentifier("sector01-settings-planetarium-import")
+            }
+            if let planetariumIssue600 {
+                Text(planetariumIssue600)
+                    .font(.system(size:14))
+                    .foregroundStyle(.orange)
+            }
             CarbonisVisualSettingsPanel568(
                 compact:compact,initialTab:4,
                 onEditHud:{
@@ -376,104 +402,22 @@ struct Sector01Scene568: View {
                     }
                     .frame(maxWidth:650,maxHeight:compact ? 400:550)
                 }
-                // Source Windows/src/RendererW3Pause317.cs: translucent
-                // full-screen modal over the FROZEN real 3D mission.
-                // Save/Load/Highscores remain absent until their source
-                // behaviour is genuinely ported; do not display dead keys.
-                if userPaused && session.hud.phase == .playing && !showingService && !showingHudEditor600 && !showingMissionSettings568 {
-                    Color.black.opacity(0.80).ignoresSafeArea()
-                        .accessibilityIdentifier("sector01-pause-touch-blocker")
-                    VStack(alignment:.leading,spacing:compact ? 11:18) {
-                        Text("SYNIXAD // SYSTEM ROZGRYWKI")
-                            .font(.system(size:compact ? 10:12,weight:.bold,
-                                          design:.monospaced))
-                            .foregroundStyle(Color(red:0.55,green:0.77,blue:0.80))
-                        Text("GRA WSTRZYMANA")
-                            .font(.system(size:compact ? 23:35,weight:.heavy,
-                                          design:.monospaced))
-                            .foregroundStyle(.white)
-                        Text("SYTUACJA ZACHOWANA / CZAS ROZGRYWKI ZATRZYMANY")
-                            .font(.system(size:compact ? 10:13,
-                                          design:.monospaced))
-                            .foregroundStyle(.gray)
-                        Divider().overlay(Color(red:0.88,green:0.67,blue:0.31))
-                        if planetariumURL600 == nil {
-                            Button("WCZYTAJ PLANETARIUM GLB v600") {
-                                showingPlanetariumImport600=true
-                            }
-                            .fileImporter(
-                                isPresented:$showingPlanetariumImport600,
-                                allowedContentTypes:[UTType(filenameExtension:"glb") ?? .data]
-                            ) { result in
-                                do {
-                                    let source=try result.get()
-                                    planetariumURL600=try HudPlanetariumAsset600.install(from:source)
-                                    planetariumIssue600=nil
-                                } catch {
-                                    planetariumIssue600=error.localizedDescription
-                                }
-                            }
-                            .frame(maxWidth:.infinity)
-                            .padding(compact ? 7:10)
-                            .background(Color(red:0.05,green:0.15,blue:0.22),
-                                        in:RoundedRectangle(cornerRadius:5))
-                            .foregroundStyle(.cyan)
-                        }
-                        if let planetariumIssue600 {
-                            Text(planetariumIssue600)
-                                .font(.system(size:10))
-                                .foregroundStyle(.orange)
-                        }
-                        // The existing PAUSE-MENU action is still the
-                        // single real Options button. F6 controls only its
-                        // visual size/position; no duplicate settings UI.
-                        Button("OPCJE / USTAWIENIA") {
-                            showingMissionSettings568=true
-                        }
-                        .frame(maxWidth:.infinity)
-                        .padding(compact ? 9:13)
-                        .background(Color(red:0.05,green:0.15,blue:0.22),
-                                    in:RoundedRectangle(cornerRadius:5))
-                        .foregroundStyle(.cyan)
-                        .scaleEffect(hudControlLayout600.control("control.options")?.scale ?? 1)
-                        .offset(
-                            x:CGFloat((hudControlLayout600.control("control.options")?.x ?? 0)*combatHUDLayout.scale),
-                            y:CGFloat((hudControlLayout600.control("control.options")?.y ?? 0)*combatHUDLayout.scale))
-                        .accessibilityIdentifier("sector01-open-mission-settings")
-                        // SaveManager61.SaveSlot61 in Playing stores the
-                        // verified Mode.Intro checkpoint, not a battle frame.
-                        Button("ZAPISY / 3 SLOTY") {
-                            showingSaveSlots61=true
-                        }
-                        .accessibilityIdentifier("sector01-source-saves61")
-                        .frame(maxWidth:.infinity)
-                        .padding(compact ? 9:13)
-                        Button("KONTYNUUJ") {resumeMission568()}
-                            .frame(maxWidth:.infinity)
-                            .padding(compact ? 9:13)
-                            .background(Color(red:0.88,green:0.67,blue:0.31),
-                                        in:RoundedRectangle(cornerRadius:5))
-                            .foregroundStyle(Color(red:0.07,green:0.13,blue:0.17))
-                            .accessibilityIdentifier("sector01-resume-button")
-                        Button("WYJDŹ DO MENU") {exitMission568()}
-                            .accessibilityIdentifier("sector01-back-to-atlas")
-                            .frame(maxWidth:.infinity)
-                            .padding(compact ? 9:13)
-                            .background(Color(red:0.05,green:0.15,blue:0.22),
-                                        in:RoundedRectangle(cornerRadius:5))
-                            .foregroundStyle(.white)
-                            .accessibilityIdentifier("sector01-pause-exit-button")
-                        Text("SEKTOR 01    PUNKTY \(session.hud.score)    ŻYCIA \(session.hud.lives)")
-                            .font(.system(size:compact ? 10:12,design:.monospaced))
-                            .foregroundStyle(.gray)
-                    }
-                    .font(.system(size:compact ? 13:16,weight:.bold,design:.monospaced))
-                    .padding(compact ? 16:28)
-                    .frame(maxWidth:min(geo.size.width-32,650))
-                    .background(Color(red:0.02,green:0.05,blue:0.09),
-                                in:RoundedRectangle(cornerRadius:12))
-                    .overlay(RoundedRectangle(cornerRadius:12)
-                        .stroke(Color(red:0.24,green:0.38,blue:0.44),lineWidth:1))
+                // Identical PAUZA visual, text size and button hit boxes in
+                // H290 and the original CARBONIS 01 mission.
+                if userPaused && session.hud.phase == .playing &&
+                   !showingService && !showingHudEditor600 &&
+                   !showingMissionSettings568 && !showingSaveSlots61 {
+                    SourcePauseMenu568(
+                        compact:compact,subtitle:"SEKTOR 01",
+                        details:"PUNKTY \(session.hud.score) · ŻYCIA \(session.hud.lives)",
+                        settingsID:"sector01-open-mission-settings",
+                        slotsID:"sector01-source-saves61",
+                        continueID:"sector01-resume-button",
+                        exitID:"sector01-pause-exit-button",
+                        onSettings:{showingMissionSettings568=true},
+                        onSlots:{showingSaveSlots61=true},
+                        onContinue:{resumeMission568()},
+                        onExit:{exitMission568()})
                     .accessibilityIdentifier("sector01-source-pause-overlay")
                 }
                 if showingSaveSlots61 && userPaused &&
