@@ -26,6 +26,9 @@ enum PC602OrbitSave61 {
         let vitals:H55Workshop580.Vitals
         let mechanics:H55SourceMechanics580.State
         let difficultyRaw:Int
+        // PC v609 SaveManager61 appends the current shield energy after
+        // talents/modules. Optional: old iOS slots decode unchanged as 60.
+        var tarczaEnergy145:Float? = nil
         // PC602 Snapshot61 meta[0]/meta[3]. A legacy JSON record without
         // these fields is an orbital snapshot, never a guessed mission save.
         var sourceMode61:String? = nil
@@ -65,6 +68,9 @@ enum PC602OrbitSave61 {
                   (!isOrbit61 || abs(dot(forward,right))<=0.2),
                   mechanics.valid && mechanics.selectedShip==1,
                   vitals.valid,
+                  (tarczaEnergy145.map {
+                      $0.isFinite && (0...SourceTarcza145.maximum).contains($0)
+                  } ?? true),
                   Sector01Shop568.validate(shop),
                   CombatBalance556.Difficulty(rawValue:difficultyRaw) != nil
             else{return false}
@@ -88,7 +94,7 @@ enum PC602OrbitSave61 {
         let position=flight.orbitPosition
         let forward=flight.orbitForward
         let right=flight.orbitRight
-        let snapshot=Snapshot(schema:schema,savedAt:Date().timeIntervalSince1970,
+        var snapshot=Snapshot(schema:schema,savedAt:Date().timeIntervalSince1970,
             runID:id,shipType:flight.equipment.craft.rawValue,
             position:[position.x,position.y,position.z],
             forward:[forward.x,forward.y,forward.z],
@@ -98,6 +104,7 @@ enum PC602OrbitSave61 {
             vitals:H55Workshop580.loadVitals(defaults:defaults),
             mechanics:H55SourceMechanics580.load(defaults:defaults),
             difficultyRaw:SourceNewGame568.selection(defaults:defaults).difficulty.rawValue)
+        snapshot.tarczaEnergy145=SourceTarcza145.loadPersistentEnergy(defaults:defaults)
         return snapshot.valid ? snapshot : nil
     }
 
@@ -127,6 +134,7 @@ enum PC602OrbitSave61 {
             vitals:H55Workshop580.loadVitals(defaults:defaults),
             mechanics:H55SourceMechanics580.load(defaults:defaults),
             difficultyRaw:SourceNewGame568.selection(defaults:defaults).difficulty.rawValue)
+        result.tarczaEnergy145=SourceTarcza145.loadPersistentEnergy(defaults:defaults)
         result.sourceMode61="intro"
         result.missionLevel61=level
         result.returnHome61=returnHome
@@ -158,7 +166,8 @@ enum PC602OrbitSave61 {
                   verify.position==snapshot.position,
                   verify.completedMask==snapshot.completedMask,
                   verify.sourceMode61==snapshot.sourceMode61,
-                  verify.missionLevel61==snapshot.missionLevel61
+                  verify.missionLevel61==snapshot.missionLevel61,
+                  verify.tarczaEnergy145==snapshot.tarczaEnergy145
             else{throw Failure.invalid}
         } catch {throw Failure.io}
     }
