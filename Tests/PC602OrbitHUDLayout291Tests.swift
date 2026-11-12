@@ -53,18 +53,18 @@ import Foundation
 
         // Like HudEditorGeometry.hit: controls first, smallest visible
         // text rectangle first, minimum 44-pt touch region for tiny text.
-        let group=CGRect(x:0,y:0,width:320,height:200)
-        let heading=CGRect(x:30,y:20,width:180,height:18)
-        let target=CGRect(x:30,y:110,width:145,height:18)
-        let control=CGRect(x:30,y:20,width:20,height:18)
-        var frames:[String:CGRect]=[
+        let group=PC602OrbitHUDLayout291.Rect(x:0,y:0,width:320,height:200)
+        let heading=PC602OrbitHUDLayout291.Rect(x:30,y:20,width:180,height:18)
+        let target=PC602OrbitHUDLayout291.Rect(x:30,y:110,width:145,height:18)
+        let control=PC602OrbitHUDLayout291.Rect(x:30,y:20,width:20,height:18)
+        var frames:[String:PC602OrbitHUDLayout291.Rect]=[
             "hud.mission":group,
             "hud.mission.heading":heading,
             "hud.mission.target":target,
             "control.atlas":control
         ]
         func hit(_ x:Double,_ y:Double,_ data:PC602OrbitHUDLayout291=original)->String? {
-            PC602OrbitHUDLayout291.hit(point:CGPoint(x:x,y:y),
+            PC602OrbitHUDLayout291.hit(x:x,y:y,
                                        frames:frames,layout:data)
         }
         check(hit(40,30)=="control.atlas","button wins overlap with HUD labels")
@@ -77,32 +77,32 @@ import Foundation
         hideHeading.change("hud.mission.heading"){$0.visible=false}
         check(hit(40,30,hideHeading)=="hud.mission",
               "invisible text cannot intercept touches")
-        frames["hud.mission.heading"]=CGRect(x:70,y:20,width:180,height:18)
+        frames["hud.mission.heading"]=PC602OrbitHUDLayout291.Rect(x:70,y:20,width:180,height:18)
         check(hit(40,30)=="hud.mission",
               "moving text changes physical hit location")
         check(hit(95,30)=="hud.mission.heading",
               "new physical location becomes selectable")
-        frames=["hud.dock.hint":CGRect(x:100,y:100,width:8,height:8)]
+        frames=["hud.dock.hint":PC602OrbitHUDLayout291.Rect(x:100,y:100,width:8,height:8)]
         check(hit(119,119)=="hud.dock.hint","44-pt minimum touch size")
         check(hit(143,143)==nil,"don't silently treat the full viewport as HUD")
         check(PC602OrbitHUDLayout291.touchFrame(
-            CGRect(x:0,y:0,width:0,height:100))==nil,"discard empty frames")
+            PC602OrbitHUDLayout291.Rect(x:0,y:0,width:0,height:100))==nil,"discard empty frames")
         check(PC602OrbitHUDLayout291.touchFrame(
-            CGRect(x:Double.nan,y:0,width:100,height:100))==nil,
+            PC602OrbitHUDLayout291.Rect(x:Double.nan,y:0,width:100,height:100))==nil,
               "discard invalid source geometry")
         // Source mission editor keeps function buttons within the real
         // viewport and leaves at least 12pt of passive HUD selectable.
         let safeControl=PC602OrbitHUDLayout291.constrainedDrag(
-            "control.enter",delta:CGPoint(x:100,y:1000),
-            frame:CGRect(x:310,y:30,width:60,height:48),
-            viewport:CGSize(width:400,height:300),
+            "control.enter",deltaX:100,deltaY:1000,
+            frame:PC602OrbitHUDLayout291.Rect(x:310,y:30,width:60,height:48),
+            viewportWidth:400,viewportHeight:300,
             safeInsets:(left:20,right:20,top:20,bottom:20))
         check(safeControl.x==10 && safeControl.y==202,
               "control stays fully reachable inside the safe area")
         let passive=PC602OrbitHUDLayout291.constrainedDrag(
-            "hud.mission",delta:CGPoint(x:-500,y:-500),
-            frame:CGRect(x:0,y:0,width:300,height:150),
-            viewport:CGSize(width:400,height:300))
+            "hud.mission",deltaX:-500,deltaY:-500,
+            frame:PC602OrbitHUDLayout291.Rect(x:0,y:0,width:300,height:150),
+            viewportWidth:400,viewportHeight:300)
         check(passive.x == -288 && passive.y == -138,
               "text preserves the source 12pt visible drag margin")
         prefs.set(Data("corrupt json".utf8),
