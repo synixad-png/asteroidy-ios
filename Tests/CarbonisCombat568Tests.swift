@@ -613,6 +613,28 @@ import Foundation
         check(cooling.bullets.count==1 &&
               abs(cooling.cooldown-expectedInterval)<0.0002,
               "actual C279 firing uses source rate talent and cooling")
+        // PC v609 Campaign37 / Physics68 Bastion ShipType=2:
+        // source mass, collision radius, engine/thruster and firing rate
+        // affect the ACTUAL C279 game, not only the hangar inventory.
+        var bastionState=bonuses
+        bastionState.selectedShip=2
+        check(H55SourceMechanics580.save(bastionState),
+              "PC609 Bastion is a legitimate source-owned craft")
+        let bastionSim=CarbonisCombat568(prepared)
+        let bastionStats=H55SourceMechanics580.shipStats(
+            type:2,engine:1,stabilizer:1,thruster:1)!
+        check(bastionSim.sourceMechanics.selectedShip==2 &&
+              abs(bastionSim.shipCollisionMass-5)<0.0001 &&
+              abs(bastionSim.shipContactRadius-12.096)<0.001,
+              "PC609 Bastion 5.0 mass and 1.08x physical impact radius")
+        check(abs(bastionSim.flight.flight.configuration.cruiseSpeed-
+                  bastionStats.topSpeed*0.40)<0.0002,
+              "Bastion source physical speed and engine upgrades")
+        check(abs(bastionStats.fireRateScale-0.96)<0.0002,
+              "Bastion source 0.96 shot interval multiplier")
+        check(abs(bonusSim.shipCollisionMass-3.4)<0.0001 &&
+              abs(bonusSim.shipContactRadius-11.2)<0.0001,
+              "no Vanguard physics regression when Bastion is installed")
         print("PASS H11 actual C279: source ship dynamics, talents, guardian shield, hostile dampener, collector and cooling")
         print("PASS \(checks) live Carbonis C279 flight, shot, hit, victory and defeat checks")
     }
