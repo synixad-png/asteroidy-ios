@@ -282,6 +282,53 @@ struct PC602HomeWorldPage291:View {
 
     // PC602 Orbit50.DrawOrbit50: unfilled navigation readouts over the
     // live world and a single contextual right-hand interaction key.
+    /// Read-only source OrbitHud330 persistent atlas at its original
+    /// upper-right virtual 1280x720 position; the actual selectable
+    /// touch atlas remains the existing accessible overlay.
+    private func compactAtlas330(scale:Float)->some View {
+        let width:CGFloat=29*CGFloat(scale)
+        let height:CGFloat=22*CGFloat(scale)
+        let gapX:CGFloat=3*CGFloat(scale)
+        let gapY:CGFloat=4*CGFloat(scale)
+        return VStack(alignment:.trailing,spacing:2) {
+            ForEach(0..<4,id:\.self) { row in
+                HStack(spacing:gapX) {
+                    ForEach(0..<8,id:\.self) { column in
+                        let sector=row*8+column+1
+                        if sector<=26 {
+                            let cleared=PC602HomeFlight291.completed(
+                                sector,mask:driver.hud.completedMask)
+                            let available=PC602HomeFlight291.unlocked(
+                                sector,mask:driver.hud.completedMask)
+                            Text(String(format:"%02d",sector))
+                                .font(.system(size:max(8,10*CGFloat(scale)),
+                                              weight:.bold,design:.monospaced))
+                                .foregroundStyle(sector==driver.hud.target
+                                    ? gold:cleared ? .green:available ? cyan : .gray)
+                                .frame(width:width,height:height)
+                                .background(cleared
+                                    ? Color(red:65/255,green:168/255,blue:139/255)
+                                        .opacity(174/255)
+                                    : available
+                                    ? Color(red:28/255,green:75/255,blue:98/255)
+                                        .opacity(170/255)
+                                    : Color(red:17/255,green:30/255,blue:43/255)
+                                        .opacity(165/255))
+                                .overlay(Rectangle().stroke(
+                                    sector==driver.hud.target ? cyan :
+                                    Color.clear,lineWidth:1))
+                        } else {
+                            Color.clear.frame(width:width,height:height)
+                        }
+                    }
+                }
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .accessibilityIdentifier("pc602-orbit-compact-26-atlas330")
+    }
+
     private func statusText(_ value:String,_ compact:Bool)->some View {
         Text(value)
             .font(.system(size:compact ? 10:12,weight:.semibold,
@@ -369,6 +416,13 @@ struct PC602HomeWorldPage291:View {
                     statusText("STREFA \(driver.hud.zone)",compact)
                     statusText("PUŁAP \(Int(driver.hud.altitude)) m",compact)
                     statusText("PRĘDKOŚĆ \(Int(driver.hud.speed))",compact)
+                    // PC602 OrbitHud330: 8 columns x 4 rows, 29x22
+                    // source tiles at x=1001,y=55 in virtual 1280x720.
+                    // On small landscape displays the old touch-sized
+                    // panel remains available via ATLAS instead.
+                    if screen.size.width >= 700 && screen.size.height >= 470 {
+                        compactAtlas330(scale:min(1,Float(screen.size.width/1280)))
+                    }
                     HStack(spacing:9) {
                         Button("ATLAS") {
                             previouslyPaused330=driver.paused
