@@ -22,13 +22,16 @@ for token in (
     'static let bytesPerVertex: Int = 48',
     'let vertices: Data',
     'let vertexCount: Int',
-    'guard Int(try word()) == Self.magic',
+    'init(data: Data, expectedMagic: Int = 4311)',
+    'guard Int(try word()) == expectedMagic',
     'guard Int(try word()) == 2',
     'floatCount%Self.floatsPerVertex==0',
     'let packed=Data(data[offset..<(offset+byteCount)])',
     'guard offset <= data.count-remaining &&',
 ):
     check(token in reader,'Actual PC Vanguard431 packet parser changed: '+token)
+check('typealias SourceBakedShipMesh = SourceVanguardMesh431' in reader,
+      'Bastion must reuse the source decoder, never duplicate GLB parser')
 check('constexpr sampler sourceUV(address::clamp_to_edge,filter::linear);' in shader,
       'Actual GpuRenderer.cs GL_CLAMP_TO_EDGE/GL_LINEAR sampler changed')
 check('address::repeat' not in shader.split(
