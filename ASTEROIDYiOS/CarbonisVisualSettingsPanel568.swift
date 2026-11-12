@@ -10,16 +10,19 @@ struct CarbonisVisualSettingsPanel568: View {
     let fpsLoader:H55SceneModel580?
     /// Optional live mission actions; W3 and hangar reuse this same panel.
     let onEditHud:(()->Void)?
+    let onEditOrbitHud:(()->Void)?
     let onHudMotionChange:((HudMotion600.Settings)->Void)?
     // W3 Windows Menu139.cs OptionTabs139[9] is HANGAR. Returning from
     // full-screen H55 opens directly on the original category.
     init(compact:Bool,initialTab:Int=11,
          fpsLoader:H55SceneModel580?=nil,
          onEditHud:(()->Void)?=nil,
+         onEditOrbitHud:(()->Void)?=nil,
          onHudMotionChange:((HudMotion600.Settings)->Void)?=nil) {
         self.compact=compact
         self.fpsLoader=fpsLoader
         self.onEditHud=onEditHud
+        self.onEditOrbitHud=onEditOrbitHud
         self.onHudMotionChange=onHudMotionChange
         _tab=State(initialValue:initialTab)
     }
@@ -86,7 +89,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 Spacer()
                 Text("\(pickupVisual586[keyPath:key])%").foregroundStyle(gold)
             }
-            .font(.system(size:compact ? 10:12,design:.monospaced))
+            .font(.system(size:compact ? 14 : 16,design:.monospaced))
             Slider(value:Binding(
                 get:{Double(pickupVisual586[keyPath:key])},
                 set:{n in savePickupVisual586{
@@ -152,7 +155,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 ScrollView(.vertical) {
                     VStack(alignment:.leading,spacing:2) {
                         Text("KATEGORIE / W3")
-                            .font(.system(size:compact ? 9 : 11,
+                            .font(.system(size:compact ? 14 : 16,
                                 weight:.bold,design:.monospaced))
                             .foregroundStyle(gold)
                             .padding(.horizontal,7)
@@ -173,19 +176,19 @@ struct CarbonisVisualSettingsPanel568: View {
                     }
                 }
             }
-            .frame(width:compact ? 126 : 174)
+            .frame(width:compact ? 166 : 198)
             .background(Color(red:0.006,green:0.025,blue:0.045).opacity(0.94))
             .overlay(Rectangle().stroke(cyan.opacity(0.28),lineWidth:1))
             ScrollView {
                 VStack(alignment:.leading,spacing:compact ? 8 : 13) {
                     HStack {
                         Text(sourceTabs139[tab]+" / PARAMETRY")
-                            .font(.system(size:compact ? 11 : 14,
+                            .font(.system(size:compact ? 14 : 16,
                                           weight:.bold,design:.monospaced))
                             .foregroundStyle(gold)
                         Spacer()
                         Text("W3 / #\(tab)")
-                            .font(.system(size:compact ? 8 : 10,
+                            .font(.system(size:compact ? 14 : 16,
                                           design:.monospaced))
                             .foregroundStyle(muted)
                     }
@@ -215,6 +218,7 @@ struct CarbonisVisualSettingsPanel568: View {
             .accessibilityIdentifier("w3-effects-scroll")
         }
         .frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.topLeading)
+        .controlSize(.large)
         .accessibilityIdentifier("w3-original-explosion-projectile-settings")
     }
     private func tabButton(_ title:String,index:Int)->some View {
@@ -224,17 +228,17 @@ struct CarbonisVisualSettingsPanel568: View {
             HStack(spacing:6) {
                 Rectangle()
                     .fill(index==tab ? gold : cyan.opacity(0.2))
-                    .frame(width:3,height:22)
+                    .frame(width:3,height:31)
                 Text(title)
-                    .font(.system(size:compact ? 9 : 10,
+                    .font(.system(size:compact ? 14 : 16,
                                   weight:.semibold,design:.monospaced))
                     .foregroundStyle(index==tab ? gold : muted)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    .minimumScaleFactor(0.90)
                 Spacer(minLength:0)
             }
             .padding(.horizontal,compact ? 5 : 9)
-            .frame(maxWidth:.infinity,minHeight:compact ? 33 : 37,
+            .frame(maxWidth:.infinity,minHeight:compact ? 50 : 54,
                    alignment:.leading)
             .background(index==tab
                 ? Color(red:0.10,green:0.085,blue:0.060)
@@ -259,16 +263,16 @@ struct CarbonisVisualSettingsPanel568: View {
                 get:{performance.enabled},
                 set:{value in performance.setEnabled(value)}))
                 .tint(cyan)
-                .font(.system(size:compact ? 10 : 13,
+                .font(.system(size:compact ? 14 : 16,
                               weight:.semibold,design:.monospaced))
                 .foregroundStyle(.white)
                 .accessibilityIdentifier("w3-source-show-performance-006")
             Text(performance.enabled ? "WŁĄCZONY" : "WYŁĄCZONY")
-                .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(gold)
                 .accessibilityIdentifier("w3-source-fps-enabled-value")
             Text("ŹRÓDŁO: WINDOWS v568 / MENU139 ID 6 · GPU RENDERER / 0,5 s. ZAPIS AUTOMATYCZNY. LICZNIK POJAWIA SIĘ WYŁĄCZNIE W GRZE, NIE W MENU.")
-                .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
                 .fixedSize(horizontal:false,vertical:true)
             Spacer(minLength:0)
@@ -285,7 +289,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 Spacer()
                 Text("\(missionSize580.enemyPercent)%").foregroundStyle(gold)
             }
-            .font(.system(size:compact ? 10:12,design:.monospaced))
+            .font(.system(size:compact ? 14 : 16,design:.monospaced))
             Slider(value:Binding(
                 get:{Double(missionSize580.enemyPercent)},
                 set:{n in saveMissionSize580{$0.setEnemy(Int(n.rounded()))}}),
@@ -297,7 +301,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 Spacer()
                 Text("\(missionSize580.rockPercent)%").foregroundStyle(gold)
             }
-            .font(.system(size:compact ? 10:12,design:.monospaced))
+            .font(.system(size:compact ? 14 : 16,design:.monospaced))
             Slider(value:Binding(
                 get:{Double(missionSize580.rockPercent)},
                 set:{n in saveMissionSize580{$0.setRock(Int(n.rounded()))}}),
@@ -305,7 +309,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 .tint(cyan)
                 .accessibilityIdentifier("w3-v580-asteroid-size-slider")
             Text("Wyłącznie rozmiar wizualny modeli w misji. Liczba obiektów, obrażenia, fizyka i promienie kolizji nie zmieniają się. Wartości źródłowe: 77% / 78%.")
-                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
                 .fixedSize(horizontal:false,vertical:true)
             Rectangle().fill(cyan.opacity(0.28)).frame(height:1)
@@ -329,7 +333,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 \.moneyPercent,bounds:40...150,
                 identifier:"pc586-pickup-money-size")
             Text("Jasność 0% wyłącza tylko dodatkowe doświetlanie GLB. Rozmiar nie zmienia promienia zbierania ani obrażeń.")
-                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
                 .fixedSize(horizontal:false,vertical:true)
             Spacer(minLength:0)
@@ -344,16 +348,16 @@ struct CarbonisVisualSettingsPanel568: View {
         VStack(alignment:.leading,spacing:compact ? 9:14) {
             header("HANGAR H55 / WINDOWS PC v580")
             Text("Oryginalne ustawienia PC obejmują wygląd H72, ekspozycję i kinematykę, wysokość kamery, kontrast oraz ruch. Poniższe dwie regulacje są tymczasową kalibracją SceneKit iOS, a nie udawanymi wartościami shadera PC.")
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
                 .fixedSize(horizontal:false,vertical:true)
             Toggle("BEZPIECZNE ŁADOWANIE MATERIAŁÓW (ZALECANE)",isOn:$h55SafeShaders)
                 .tint(cyan)
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(.white)
                 .accessibilityIdentifier("h55-settings-safe-shaders")
             Text("Włączone: bez dodatkowego kodu shadera emisji SceneKit. Wyłączone: testowa korekta emissive_strength. Po zmianie ponownie otwórz hangar. Nowa mapa IBL jest wyłączona w obu trybach.")
-                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
                 .fixedSize(horizontal:false,vertical:true)
             HStack {
@@ -361,7 +365,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 Spacer()
                 Text("\(Int((h55Fill*100).rounded()))%").foregroundStyle(gold)
             }
-            .font(.system(size:compact ? 10:12,design:.monospaced))
+            .font(.system(size:compact ? 14 : 16,design:.monospaced))
             Slider(value:$h55Fill,in:0.25...1,step:0.05)
                 .tint(cyan)
                 .accessibilityIdentifier("h55-settings-fill")
@@ -370,7 +374,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 Spacer()
                 Text("\(Int((h55Red*100).rounded()))%").foregroundStyle(gold)
             }
-            .font(.system(size:compact ? 10:12,design:.monospaced))
+            .font(.system(size:compact ? 14 : 16,design:.monospaced))
             Slider(value:$h55Red,in:0...0.30,step:0.02)
                 .tint(cyan)
                 .accessibilityIdentifier("h55-settings-red")
@@ -379,7 +383,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 Spacer()
                 Text(String(format:"%.2f m",h55Eyes)).foregroundStyle(gold)
             }
-            .font(.system(size:compact ? 10:12,design:.monospaced))
+            .font(.system(size:compact ? 14 : 16,design:.monospaced))
             Slider(value:$h55Eyes,
                    in:Double(H55EyeHeight580.minimum)...Double(H55EyeHeight580.maximum),
                    step:0.05)
@@ -391,7 +395,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 }
                 .accessibilityIdentifier("h55-settings-eye-height")
             Text("Oryginał PC: 1,80 m. Regulacja dotyczy tylko kamery. Kolizje, schody i skoki pozostają bez zmian; pod sufitem kamera nie przejdzie przez geometrię.")
-                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
                 .fixedSize(horizontal:false,vertical:true)
             Button("PRZYWRÓĆ WYSOKOŚĆ OCZU 1,80 m") {
@@ -399,7 +403,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 h55Eyes=Double(H55EyeHeight580.original)
                 fpsLoader?.setEyeHeight580(H55EyeHeight580.original)
             }
-            .font(.system(size:compact ? 10:12,weight:.semibold,design:.monospaced))
+            .font(.system(size:compact ? 14 : 16,weight:.semibold,design:.monospaced))
             .foregroundStyle(cyan)
             .accessibilityIdentifier("h55-settings-eye-height-reset")
             HStack(spacing:12) {
@@ -414,15 +418,15 @@ struct CarbonisVisualSettingsPanel568: View {
                 }
                 .accessibilityIdentifier("h55-settings-share-load-report")
             }
-            .font(.system(size:compact ? 9:11,weight:.semibold,design:.monospaced))
+            .font(.system(size:compact ? 14 : 16,weight:.semibold,design:.monospaced))
             .foregroundStyle(cyan)
             Text(H55LoadDiagnostics580.report())
-                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(.white)
                 .textSelection(.enabled)
                 .accessibilityIdentifier("h55-settings-last-load-stage")
             Text("Raport pozostaje w pamięci urządzenia także po nieoczekiwanym zamknięciu aplikacji. Otwórz USTAWIENIA → HANGAR przed ponownym uruchomieniem sceny, aby go skopiować.")
-                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
                 .fixedSize(horizontal:false,vertical:true)
             Spacer(minLength:0)
@@ -437,6 +441,15 @@ struct CarbonisVisualSettingsPanel568: View {
             Text("INTERFEJS / HUD")
                 .font(.system(size:14,weight:.bold,design:.monospaced))
                 .foregroundStyle(gold)
+            if let edit=onEditOrbitHud {
+                Button("EDYTUJ HUD PLANETY GŁÓWNEJ (11 ELEMENTÓW)") {edit()}
+                    .frame(maxWidth:.infinity,minHeight:52,alignment:.leading)
+                    .padding(.horizontal,14)
+                    .foregroundStyle(cyan)
+                    .background(Color(red:0.04,green:0.12,blue:0.19))
+                    .overlay(Rectangle().stroke(cyan.opacity(0.4),lineWidth:1))
+                    .accessibilityIdentifier("w3-interface-edit-orbit-hud291")
+            }
             if let edit=onEditHud {
                 Button("EDYTUJ UKŁAD HUD (46 ELEMENTÓW)") {edit()}
                     .frame(maxWidth:.infinity,alignment:.leading)
@@ -445,9 +458,9 @@ struct CarbonisVisualSettingsPanel568: View {
                     .background(Color(red:0.04,green:0.12,blue:0.19))
                     .overlay(Rectangle().stroke(cyan.opacity(0.4),lineWidth:1))
                     .accessibilityIdentifier("w3-interface-edit-hud")
-            } else {
+            } else if onEditOrbitHud==nil {
                 Text("EDYTOR UKŁADU HUD JEST DOSTĘPNY PODCZAS PAUZY MISJI.")
-                    .font(.system(size:11,design:.monospaced))
+                    .font(.system(size:14,design:.monospaced))
                     .foregroundStyle(muted)
             }
             Button("HUD DYNAMICZNY / USTAWIENIA") {
@@ -460,7 +473,7 @@ struct CarbonisVisualSettingsPanel568: View {
             .overlay(Rectangle().stroke(cyan.opacity(0.4),lineWidth:1))
             .accessibilityIdentifier("w3-interface-hud-motion")
             Text("Zmiany dotyczą wyłącznie rozmieszczenia i animacji HUD-u. Sterowanie, kolizje oraz nagrody misji pozostają bez zmian.")
-                .font(.system(size:11,design:.monospaced))
+                .font(.system(size:14,design:.monospaced))
                 .foregroundStyle(muted)
         }
         .sheet(isPresented:$showingHudMotionSheet600) {
@@ -474,11 +487,11 @@ struct CarbonisVisualSettingsPanel568: View {
     private var unavailableSourceCategory:some View {
         VStack(alignment:.leading,spacing:12) {
             Text("ORYGINALNA KATEGORIA / "+sourceTabs139[tab])
-                .font(.system(size:compact ? 11 : 14,
+                .font(.system(size:compact ? 14 : 16,
                               weight:.bold,design:.monospaced))
                 .foregroundStyle(gold)
             Text("Ta kategoria występuje w oryginalnym Windows v568. Jej parametry nie są jeszcze podłączone do właściwego silnika iOS. Nie wyświetlam pozornych przełączników, które nie zmieniają działania gry.")
-                .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
                 .fixedSize(horizontal:false,vertical:true)
             Spacer(minLength:0)
@@ -488,7 +501,7 @@ struct CarbonisVisualSettingsPanel568: View {
     }
     private func header(_ title:String)->some View {
         Text(title)
-            .font(.system(size:compact ? 11:13,
+            .font(.system(size:compact ? 14 : 16,
                           weight:.bold,design:.monospaced))
             .foregroundStyle(gold)
     }
@@ -502,7 +515,7 @@ struct CarbonisVisualSettingsPanel568: View {
                         save{$0.selectPreset(index)}
                         previewRevision+=1
                     }
-                    .font(.system(size:compact ? 10:12,
+                    .font(.system(size:compact ? 14 : 16,
                                   weight:.bold,design:.monospaced))
                     .foregroundStyle(profile.type==index ? .black:cyan)
                     .padding(.horizontal,compact ? 5:9)
@@ -523,7 +536,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     Button(CarbonisVisualSettings568.qualityNames[index]) {
                         save{$0.quality=index}
                     }
-                    .font(.system(size:compact ? 9:11,design:.monospaced))
+                    .font(.system(size:compact ? 14 : 16,design:.monospaced))
                     .foregroundStyle(profile.quality==index ? .black:cyan)
                     .padding(.horizontal,compact ? 5:10)
                     .padding(.vertical,compact ? 6:9)
@@ -541,14 +554,14 @@ struct CarbonisVisualSettingsPanel568: View {
                     iosFX.save()
                     previewRevision+=1
                 }))
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(.white)
                 .tint(cyan)
                 .accessibilityIdentifier("ios-explosions-reduced")
             Text(iosFX.explosionsReduced
                 ? "iOS OSZCZĘDNY · MNIEJ WOLUMENÓW, PRÓBEK I ODŁAMKÓW"
                 : "ORYGINALNA PEŁNA JAKOŚĆ WYBUCHÓW")
-                .font(.system(size:compact ? 9:10,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
                 .accessibilityIdentifier("ios-explosions-reduced-status")
             ForEach(0..<8,id:\.self) { i in
@@ -560,7 +573,7 @@ struct CarbonisVisualSettingsPanel568: View {
                             .foregroundStyle(gold)
                             .accessibilityIdentifier("w3-explosion-value-\(i)")
                     }
-                    .font(.system(size:compact ? 10:12,
+                    .font(.system(size:compact ? 14 : 16,
                                   weight:.medium,design:.monospaced))
                     .foregroundStyle(.white)
                     Slider(value:doubleValue(i),in:sliderRange(i),
@@ -575,13 +588,13 @@ struct CarbonisVisualSettingsPanel568: View {
                     set:{n in save{$0.autoRotate=n}}))
                     .toggleStyle(.switch)
                     .tint(cyan)
-                    .font(.system(size:compact ? 10:12,
+                    .font(.system(size:compact ? 14 : 16,
                                   weight:.medium,design:.monospaced))
                 Spacer(minLength:5)
                 Button("NOWY WYBUCH (PODGLĄD)") {
                     previewRevision+=1
                 }
-                .font(.system(size:compact ? 9:11,
+                .font(.system(size:compact ? 14 : 16,
                               weight:.bold,design:.monospaced))
                 .foregroundStyle(gold)
                 .padding(8)
@@ -597,7 +610,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 .background(Color.black.opacity(0.6))
                 .accessibilityIdentifier("w3-explosion-metal-preview")
             Text("ŹRÓDŁO: WINDOWS v568 / WYBUCHY 3D · ZMIANY ZAPISYWANE AUTOMATYCZNIE")
-                .font(.system(size:9,design:.monospaced))
+                .font(.system(size:14,design:.monospaced))
                 .foregroundStyle(muted)
         }
     }
@@ -618,14 +631,14 @@ struct CarbonisVisualSettingsPanel568: View {
                     iosFX.projectilesReduced=enabled
                     iosFX.save()
                 }))
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(.white)
                 .tint(cyan)
                 .accessibilityIdentifier("ios-projectiles-reduced")
             Text(iosFX.projectilesReduced
                 ? "iOS OSZCZĘDNY · 1 WARSTWA ŚWIATŁA, BEZ ZEWNĘTRZNEJ POŚWIATY"
                 : "ORYGINALNE 4 WARSTWY ŚWIATŁA I PEŁNA POŚWIATA")
-                .font(.system(size:compact ? 9:10,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
                 .accessibilityIdentifier("ios-projectiles-reduced-status")
             VStack(alignment:.leading,spacing:4) {
@@ -637,7 +650,7 @@ struct CarbonisVisualSettingsPanel568: View {
                         .accessibilityIdentifier("w3-projectile-brightness-value")
                 }
                 .foregroundStyle(.white)
-                .font(.system(size:compact ? 10:12,
+                .font(.system(size:compact ? 14 : 16,
                               weight:.medium,design:.monospaced))
                 Slider(value:brightness,in:0...400,step:5)
                     .tint(cyan)
@@ -645,7 +658,7 @@ struct CarbonisVisualSettingsPanel568: View {
             }
             HStack(spacing:8) {
                 Text("KOLOR OŚWIETLENIA POCISKÓW")
-                    .font(.system(size:compact ? 10:12,design:.monospaced))
+                    .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 Spacer()
                 Picker("BARWA",selection:colorChoice) {
                     ForEach(0..<CarbonisVisualSettings568.shotColorNames.count,
@@ -660,15 +673,15 @@ struct CarbonisVisualSettingsPanel568: View {
             }
             .foregroundStyle(.white)
             Toggle("MIESZANE KOLORY OŚWIETLENIA",isOn:mixed)
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(.white)
                 .tint(cyan)
                 .accessibilityIdentifier("w3-projectile-light-mixed")
             Text("WYBRANA BARWA DOTYCZY ŚWIATŁA PADAJĄCEGO NA PLANETĘ. NATURALNY KOLOR POCISKU ZALEŻY OD BRONI LUB WROGA, JAK W ORYGINALE.")
-                .font(.system(size:10,design:.monospaced))
+                .font(.system(size:14,design:.monospaced))
                 .foregroundStyle(muted)
             Text("ŹRÓDŁO: COMBAT69 / SHOTAPPEARANCE151 / GPUSPHERE67")
-                .font(.system(size:10,design:.monospaced))
+                .font(.system(size:14,design:.monospaced))
                 .foregroundStyle(gold)
             Spacer(minLength:0)
         }
@@ -692,7 +705,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     Text("\(planetProfile.planetLightSpeed)%")
                         .foregroundStyle(gold)
                 }
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(.white)
                 Slider(value:Binding(
                     get:{Double(planetProfile.planetLightSpeed)},
@@ -708,7 +721,7 @@ struct CarbonisVisualSettingsPanel568: View {
                     Text("\(planetProfile.planetNightBrightness)%")
                         .foregroundStyle(gold)
                 }
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(.white)
                 Slider(value:Binding(
                     get:{Double(planetProfile.planetNightBrightness)},
@@ -725,7 +738,7 @@ struct CarbonisVisualSettingsPanel568: View {
                         .foregroundStyle(gold)
                         .accessibilityIdentifier("w3-planet-lava-brightness-value-287")
                 }
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(.white)
                 Slider(value:Binding(
                     get:{Double(lava287.brightnessPercent)},
@@ -735,12 +748,12 @@ struct CarbonisVisualSettingsPanel568: View {
                     .accessibilityIdentifier("w3-planet-lava-brightness-287")
             }
             Text("ORYGINALNE MENU: PLANETY / #45 — EMISJA LAWY CARBONIS, POŚWIATA LAWY NEWHOME ORAZ MATERIAŁY LAWOWE INNYCH PLANET, GDY ICH RENDERERY ZOSTANĄ PRZENIESIONE.")
-                .font(.system(size:compact ? 9:11,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
             Text("ORIGINAL: WINDOWS/src/Menu139.cs #45, #55–57. LAWĘ REGULUJE SKALA 0–400%, KROK 5%, DOMYŚLNIE 180%.")
-                .font(.system(size:9,design:.monospaced))
+                .font(.system(size:14,design:.monospaced))
                 .foregroundStyle(muted)
-                .font(.system(size:9,design:.monospaced))
+                .font(.system(size:14,design:.monospaced))
                 .foregroundStyle(muted)
             Spacer(minLength:0)
         }
@@ -768,13 +781,13 @@ struct CarbonisVisualSettingsPanel568: View {
                 .foregroundStyle(.white)
                 .accessibilityIdentifier("w3-source-solar-rays-option-13")
             Text("PRZEŁĄCZNIKI ORYGINAŁU PC v602: GLOW / POŚWIATA (#2), MGŁAWICA KOSMICZNA (#12), PROMIENIE SŁONECZNE (#13). MODEL 3D, TEKSTURY I FIZYKA POZOSTAJĄ NIEZMIENIONE.")
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
             Text("PRZEŁĄCZNIK ORYGINAŁU: WŁĄCZA / WYŁĄCZA POŚWIATĘ I ATMOSFERĘ PLANETY. SAM MODEL 3D, EMISJA TEKSTURY ORAZ ŚWIATŁO POCISKÓW POZOSTAJĄ NIENARUSZONE.")
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
             Text("ŹRÓDŁO: WINDOWS/src/Renderer.cs OPTION #2; GpuPlanet.cs Atmosphere47; GpuPlanetAnimation.cs GlowVertex.")
-                .font(.system(size:9,design:.monospaced))
+                .font(.system(size:14,design:.monospaced))
                 .foregroundStyle(gold)
             Spacer(minLength:0)
         }
@@ -794,7 +807,7 @@ struct CarbonisVisualSettingsPanel568: View {
                         .foregroundStyle(gold)
                         .accessibilityIdentifier("w3-ship-mission-scale-value-472")
                 }
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(.white)
                 Slider(value:Binding(
                     get:{Double(shipScale472.missionPercent)},
@@ -811,7 +824,7 @@ struct CarbonisVisualSettingsPanel568: View {
                         .foregroundStyle(gold)
                         .accessibilityIdentifier("w3-ship-orbit-scale-value-472")
                 }
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(.white)
                 Slider(value:Binding(
                     get:{Double(shipScale472.orbitPercent)},
@@ -821,10 +834,10 @@ struct CarbonisVisualSettingsPanel568: View {
                     .accessibilityIdentifier("w3-ship-orbit-scale-slider-472")
             }
             Text("ZAKRES ORYGINAŁU: 70–150%, KROK 5%, DOMYŚLNIE 100%. ZMIANA DOTYCZY WYŁĄCZNIE WIDOCZNEJ GEOMETRII I DYSZ; NIE ZMIENIA KOLIZJI, PRĘDKOŚCI ANI OBRAŻEŃ.")
-                .font(.system(size:compact ? 10:12,design:.monospaced))
+                .font(.system(size:compact ? 14 : 16,design:.monospaced))
                 .foregroundStyle(muted)
             Text("ŹRÓDŁO: Menu139.cs #100/#101; Renderer.cs; GpuSphere67.CraftSphere67; Orbit50.cs:318.")
-                .font(.system(size:9,design:.monospaced))
+                .font(.system(size:14,design:.monospaced))
                 .foregroundStyle(gold)
             Spacer(minLength:0)
         }
