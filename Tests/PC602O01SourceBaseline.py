@@ -95,7 +95,7 @@ IOS_ANCHORS = {
         "sourceSector01=nil",
     ),
     "PC602HomeWorldPage291.swift": (
-        'Button("OPCJE") {openOrbitOptions291()}',
+        'Button("PAUZA") {openOrbitOptions291()}',
         'Button("POWRÓT DO MENU GŁÓWNEGO")',
     ),
 }
