@@ -88,7 +88,7 @@ enum SourceBastion606 {
         try FileManager.default.createDirectory(
             at:support,withIntermediateDirectories:true)
         let target=support.appendingPathComponent(
-            H55SourceMechanics580.bastionAssetName+"."+
+            H55SourceMechanics580.bastionAssetName + "." +
             H55SourceMechanics580.bastionAssetExtension)
         try bytes.write(to:target,options:.atomic)
     }
