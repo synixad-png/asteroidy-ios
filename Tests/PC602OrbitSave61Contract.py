@@ -96,6 +96,11 @@ assert 'onSave(selected)' in slots
 assert 'PC602OrbitSave61.deleteSlot(selected)' in slots
 assert 'let loadManualOrbit:(Int)->Bool' in w3
 assert 'loadManualOrbit:{ slot in' in app
+assert 'private func menuCheckpoint61()' in app
+assert 'checkpoint.runID==run,checkpoint.valid' in app
+assert 'canSaveMenu61:menuCheckpoint61() != nil' in app
+assert 'allowSave:canSaveMenu61,initialAction:1' in w3
+assert 'onSave:saveMenuSlot61' in w3
 assert 'PC602OrbitSave61.hasManualSave' in w3
 assert 'static func canContinueActive358(' in source
 assert 'Sector01Shop568.validate(shop)' in source
