@@ -1,6 +1,6 @@
 # Runs a REAL installed iOS app in Apple Simulator, unlike the Swift/Metal
 # compile-only gate. One branch-scoped run avoids a new Actions job backlog.
-name: PC602 NewHome291 - real iPhone Simulator orbit UI smoke (NO IPA)
+name: PC602 H290 - real iPad Simulator editor direct-touch regression (NO IPA)
 
 on:
   push:
@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   genuine-orbit-ui:
-    name: Real iPhone Simulator W3 to original H290 and back
+    name: Real iPad simulator - W3, H290 HUD direct tap/drag and back
     runs-on: macos-15-intel
     timeout-minutes: 45
     steps:
@@ -50,7 +50,7 @@ jobs:
           import sys
           sys.path.insert(0, 'Tools')
           from run_original_ios_simulator_capture import available_devices
-          _, name, udid, state = available_devices(('IPHONE',))['IPHONE']
+          _, name, udid, state = available_devices(('IPAD',))['IPAD']
           with open('diagnostics/device-udid.txt', 'w') as f:
               f.write(udid+'\n')
           print('Real Apple Simulator:', name, udid, state)
@@ -99,7 +99,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: PC602-H290-Real-iPhone-Simulator-XCTest-NO-IPA
+          name: PC602-H290-Real-iPad-HUD-DirectTouch-XCTest-NO-IPA
           path: diagnostics/
           if-no-files-found: ignore
           retention-days: 7
