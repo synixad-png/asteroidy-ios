@@ -33,6 +33,8 @@ final class PC602HomeWorldDriver291:ObservableObject {
     @Published private(set) var hud=HUD()
     @Published private(set) var presentingH55=false
     @Published private(set) var paused=false
+    @Published private(set) var pausePadPresses=0
+    @Published private(set) var optionsPadPresses=0
     @Published private(set) var error:String?
     private let lock=NSLock()
     private var session:PC602HomeWorldSession291?
@@ -41,6 +43,8 @@ final class PC602HomeWorldDriver291:ObservableObject {
     private var touchFire=false
     private var suspended=true
     private var lastUIUpdate:TimeInterval=0
+    private var pausePadHeld=false
+    private var optionsPadHeld=false
 
     private func withLock<R>(_ body:()->R)->R {
         lock.lock()
@@ -154,6 +158,8 @@ final class PC602HomeWorldDriver291:ObservableObject {
             touchAim=Vec2(x:0,y:0)
             touchFire=false
             lastUIUpdate=0
+            pausePadHeld=false
+            optionsPadHeld=false
         }
         hud=Self.measure(copy,frames:0,weapons:initial.weapons)
         paused=false
@@ -324,11 +330,25 @@ final class PC602HomeWorldDriver291:ObservableObject {
     func frame(dt:TimeInterval)->PC602HomeFlight291? {
         var newHud:HUD?
         var sourceError:Error?
+        var triggerPausePad=false
+        var triggerOptionsPad=false
         let now=ProcessInfo.processInfo.systemUptime
         let latest:PC602HomeFlight291? = withLock {
             guard var session else{return nil}
             if !suspended && session.route.location == .orbit && dt>0 {
                 let snapshot=SourceHardwareInput586.shared.snapshot()
+                // Program.cs PollController: PC602 source action 9 pauses,
+                // action 27 opens settings. Ignore keyboard keys here:
+                // physical ESC/remapped key events are already edge-gated
+                // by SourceKeyboardCapture586 on the UIKit main thread.
+                let padOnly=SourceControls586.Snapshot(
+                    buttons:snapshot.buttons,axes:snapshot.axes)
+                let pauseDown=padOnly.held(9,profile:session.controls)
+                let optionsDown=padOnly.held(27,profile:session.controls)
+                triggerPausePad=pauseDown && !pausePadHeld
+                triggerOptionsPad=optionsDown && !optionsPadHeld
+                pausePadHeld=pauseDown
+                optionsPadHeld=optionsDown
                 do {
                     _=try session.advance(snapshot:snapshot,
                                           touchMove:touchMove,touchAim:touchAim,
@@ -343,6 +363,14 @@ final class PC602HomeWorldDriver291:ObservableObject {
                                     weapons:session.weapons)
             }
             return session.flight
+        }
+        if triggerPausePad || triggerOptionsPad {
+            let pausePress=triggerPausePad
+            let optionsPress=triggerOptionsPad
+            DispatchQueue.main.async { [weak self] in
+                if pausePress {self?.pausePadPresses += 1}
+                if optionsPress {self?.optionsPadPresses += 1}
+            }
         }
         if let update=newHud {
             DispatchQueue.main.async { [weak self] in

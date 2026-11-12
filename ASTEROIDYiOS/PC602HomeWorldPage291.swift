@@ -107,6 +107,21 @@ struct PC602HomeWorldPage291:View {
                 }
             }
         }
+        .onChange(of:driver.pausePadPresses) { _,_ in
+            // PC602 action 9: pause/resume the SAME live orbit, including
+            // while the original pause overlay is already visible.
+            guard !showingSaves61,!showingAtlas330,!showingOrbitOptions291
+            else{return}
+            if showingOrbitPause317 {resumeOrbitPause317()}
+            else if driver.paused {driver.setPaused(false)}
+            else {openOrbitPause317()}
+        }
+        .onChange(of:driver.optionsPadPresses) { _,_ in
+            // PC602 action 27: options are independent of pause selection.
+            guard !showingSaves61,!showingAtlas330 else{return}
+            if showingOrbitOptions291 {closeOrbitOptions291()}
+            else {openOrbitOptions291()}
+        }
         .onChange(of:driver.paused) { _,state in
             audio.orbitPause602(state)
         }

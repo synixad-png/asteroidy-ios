@@ -94,6 +94,13 @@ assert "driver.setSuspended(phase != .active)" in page
 assert "if !driver.paused && !driver.presentingH55" in page
 assert "key==keys[9]" in page and "key==keys[27]" in page
 assert "pressedOrbitCommands291.insert(key).inserted" in page
+assert "padOnly.held(9,profile:session.controls)" in driver
+assert "padOnly.held(27,profile:session.controls)" in driver
+assert "buttons:snapshot.buttons,axes:snapshot.axes" in driver
+assert "triggerPausePad=pauseDown && !pausePadHeld" in driver
+assert "triggerOptionsPad=optionsDown && !optionsPadHeld" in driver
+assert ".onChange(of:driver.pausePadPresses)" in page
+assert ".onChange(of:driver.optionsPadPresses)" in page
 assert 'Button("OPCJE") {openOrbitOptions291()}' in page
 assert 'Button("POWRÓT DO MENU GŁÓWNEGO")' in page
 assert 'accessibilityIdentifier("pc602-orbit-return-w3")' in page
