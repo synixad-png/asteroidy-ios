@@ -1,7 +1,7 @@
 name: H11 PC580 full profile archive restore and W3 regression
 on:
   push:
-    branches: [feature/ios-h55-v580-native-entry]
+    branches: [feature/ios-h55-v580-native-entry, feature/ios-pc602-newhome-world-source]
     paths:
       - 'ASTEROIDYiOS/SourceNewGame568.swift'
       - 'ASTEROIDYiOS/Sector01Shop568.swift'
