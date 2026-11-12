@@ -317,9 +317,29 @@ enum H55SourceMechanics580 {
         value>Int.max-cost ? Int.max : value+cost
     }
 
-    /// Asset registration is intentionally data, never a fallback mesh.
+    /// PC v606 Bastion is not interchangeable with Vanguard. The user
+    /// imports the authentic PC609 pack once, under the app's own sandbox;
+    /// the model is never falsely registered before that file exists.
+    static let bastionAssetName="BASTION_PC609"
+    static let bastionAssetExtension="bastion"
+    static var bastionAssetURL:URL? {
+        if let bundle=Bundle.main.url(forResource:bastionAssetName,
+                                      withExtension:bastionAssetExtension) {
+            return bundle
+        }
+        guard let support=FileManager.default.urls(
+            for:.applicationSupportDirectory,in:.userDomainMask).first
+        else{return nil}
+        let url=support.appendingPathComponent(
+            bastionAssetName+"."+bastionAssetExtension)
+        return FileManager.default.fileExists(atPath:url.path) ? url : nil
+    }
+
     static func registeredModelName(forShip id:Int)->String? {
-        guard id==1 else{return nil}
-        return "SOURCE-C279-VANGUARD" // the only presently verified iOS 3D model
+        switch id {
+        case 1:return "SOURCE-C279-VANGUARD"
+        case 2:return bastionAssetURL == nil ? nil : "SOURCE-PC606-BASTION"
+        default:return nil
+        }
     }
 }
