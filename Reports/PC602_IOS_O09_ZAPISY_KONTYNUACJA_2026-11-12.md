@@ -94,3 +94,10 @@ Definicja i numeracja stałego harmonogramu O01–O12 pozostają niezmienione.
 | Format Windows `ASTEROIDY-SAVE-369` | **Nieczytany przez natywne iOS JSON**, bez twierdzenia o zgodności bajtowej |
 
 **Dowody i granice:** najnowsze testy CI należy odczytywać z bieżącego SHA gałęzi, nie przypisywać PASS z wcześniejszych commitów. Test źródłowy, kompilacja ARM64 i rzeczywisty test na iPhonie to trzy różne poziomy weryfikacji. O09 nadal jest `W TOKU`; ocena wizualna pozostaje po stronie użytkownika, a harmonogram O01–O12 nie ulega zmianie.
+
+
+### Potwierdzenie integracji O09 po ostatniej korekcie
+
+- **Źródła funkcji:** commit `29523d0b136093ec36377fb0cfea754c8717df37` jest bazą z poprawionym `canContinueActive358` w `capture/captureMissionStart61`; brak lub uszkodzenie aktywnego profilu blokuje nowy zapis, analogicznie do strażnika `ProfileSession56` w PC `SaveManager61.SaveSlot61`.
+- **Kompilacja i źródłowe kontrakty:** GitHub Actions [PC602 NewHome291 — real Swift/Metal ARM64](https://github.com/synixad-png/asteroidy-ios/actions/runs/43222083863) **PASS** dla dokładnego SHA `29523d0b...`. Test uruchamia testy kontraktowe, sprawdza oryginalne zasoby, kompiluje realne źródła Swift/Metal dla iPhone/iPad i kontroluje pakiet.
+- **Nieprzetestowane:** realny iPhone, interaktywny roundtrip CARBONIS 01, utrata zasilania/przerwanie w trakcie zapisu, zgodność liczbowych pól PC `ShopLines61` oraz `Mode.Shop`. Nie wolno uznawać tych elementów za PASS. Wersja IPA musi być powiązana z dokładnym SHA kompilacji, a unsigned IPA nie oznacza podpisanej paczki do instalacji.
