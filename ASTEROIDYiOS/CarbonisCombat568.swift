@@ -163,6 +163,7 @@ struct CarbonisCombat568 {
         upgradeLevel=profile.upgradeLevel
         rapidLevel=profile.rapidLevel
         shieldCharges=profile.shieldCharges
+        tarcza145.energy=SourceTarcza145.loadPersistentEnergy()
         ionAmmo=profile.ionAmmo
         bombs=profile.bombs
         // H11 reads the same actual saved hull/armor repaired in H55.
