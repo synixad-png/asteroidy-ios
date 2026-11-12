@@ -77,7 +77,7 @@ assert 'loadManualOrbit:{ slot in' in app
 assert 'PC602OrbitSave61.hasManualSave' in w3
 assert 'static func canContinueActive358(' in source
 assert 'Sector01Shop568.validate(shop)' in source
-assert 'mechanics.valid,mechanics.selectedShip==1' in source
+assert 'state.valid,state.selectedShip==1' in source
 assert 'SourceNewGame568.canContinueActive358()' in app
 assert 'try homeWorld291.start(progress:CampaignStore556.load())' in app
 assert 'SourceNewGame568.canContinueActive358()' in w3
