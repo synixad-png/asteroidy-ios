@@ -95,6 +95,25 @@ final class PC602HomeOrbitUITests: XCTestCase {
         close.tap()
         require(atlas, "Closing source atlas did not restore orbital HUD")
 
+        // O09: the REAL H290 pause opens the shared PC602 3-slot model.
+        // Selection is not interpreted as loading or deleting a save.
+        pause.tap()
+        let saveFromPause = app.buttons["pc602-orbit-pause-choice-3"]
+        require(saveFromPause, "Original PAUZA -> ZAPISZ missing")
+        saveFromPause.tap()
+        require(app.buttons["pc602-save61-action-0"],
+                "Original SaveManager61 ZAPISZ missing")
+        require(app.buttons["pc602-save61-action-1"],
+                "Original SaveManager61 WCZYTAJ missing")
+        require(app.buttons["pc602-save61-action-2"],
+                "Original SaveManager61 USUŃ missing")
+        let saveBack = app.buttons["pc602-save61-back"]
+        require(saveBack, "No return from original save slots")
+        saveBack.tap()
+        let continueFromPause = app.buttons["pc602-orbit-pause-choice-0"]
+        require(continueFromPause, "Pause state not restored after slot browser")
+        continueFromPause.tap()
+
         let options = app.buttons["pc602-orbit-open-options291"]
         require(options, "Original OPCJE button missing from live orbit")
         options.tap()
@@ -103,5 +122,20 @@ final class PC602HomeOrbitUITests: XCTestCase {
         back.tap()
         require(app.buttons["w3-home-2"],
                 "Returning from H290 did not restore actual W3 menu")
+
+        // O09: manual W3 slots are real even without an existing saved run.
+        let continuePage = app.buttons["w3-home-1"]
+        require(continuePage, "W3 KONTYNUJ action missing")
+        continuePage.tap()
+        let manualSlots = app.buttons["w3-manual-slots61"]
+        require(manualSlots, "W3 manual 3-slot selector missing")
+        manualSlots.tap()
+        let delete = app.buttons["pc602-save61-action-2"]
+        require(delete, "Original delete slot action missing")
+        let disabledSave = app.buttons["pc602-save61-action-0"]
+        require(disabledSave, "Source menu slot action missing")
+        XCTAssertFalse(disabledSave.isEnabled,
+                       "PC602 SaveManager61 must not save without an active game")
+        app.buttons["pc602-save61-back"].tap()
     }
 }
