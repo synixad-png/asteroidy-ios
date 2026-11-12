@@ -102,7 +102,7 @@ struct W3HomeShipPreview568: UIViewRepresentable {
                     let (sourceJPEG,sourceURL)=try Self.verified(
                         "Vanguard431Base","jpg",
                         SourceVanguardMesh431.exactBaseJPEG_SHA256)
-                    original=try SourceBakedShipMesh(data:source)
+                    original=try SourceVanguardMesh431(data:source)
                     textureBytes=sourceJPEG
                     textureURL=sourceURL
                 }
@@ -235,9 +235,13 @@ struct W3HomeShipPreview568: UIViewRepresentable {
                             "originalW3PreviewScale":0.34,
                             "simulatorOnly":true
                         ]
-                        OriginalRenderProofWriter568.save(
-                            obj,filename:id==2 ? "ASTEROIDY_W3_Bastion606_GPUProof.json" :
-                                        "ASTEROIDY_W3_Vanguard431_GPUProof.json")
+                        if id==2 {
+                            OriginalRenderProofWriter568.save(
+                                obj,filename:"ASTEROIDY_W3_Bastion606_GPUProof.json")
+                        } else {
+                            OriginalRenderProofWriter568.save(
+                                obj,filename:"ASTEROIDY_W3_Vanguard431_GPUProof.json")
+                        }
                     }
                 }
                 command.commit()
