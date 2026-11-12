@@ -81,12 +81,14 @@ assert "driver.setPaused(previouslyPausedOptions291)" in page
 assert 'Button("PAUZA") {openOrbitOptions291()}' in page
 assert 'accessibilityIdentifier("pc602-orbit-pause")' in page
 assert 'accessibilityIdentifier("pc602-orbit-options291")' in page
-assert 'Button("POWRÓT DO MENU GŁÓWNEGO")' in page
-assert 'Button("EDYTUJ HUD / PRZYCISKI H290")' in page
+assert 'SourcePauseMenu568(' in page
+assert 'SourcePauseMenu568(' in source("Sector01Scene568.swift")
+assert 'exitID:"pc602-orbit-return-w3"' in page
+assert 'slotsID:"pc602-orbit-save61"' in page
+assert 'onEditOrbitHud:{openOrbitHUDEditor291()}' in page
 assert 'openSaves61(load:false,' in page
-assert 'openSaves61(load:true,' in page
 assert "driver.setSuspended(phase != .active)" in page
-assert "if !driver.presentingH55 && !showingOrbitOptions291" in page
+assert "if !driver.presentingH55 {" in page
 assert "previouslyPausedOptions291=false" in page
 assert "showingOrbitPause317" not in page
 assert "orbitPausePanel317" not in page
@@ -102,8 +104,8 @@ assert "triggerOptionsPad=optionsDown && !optionsPadHeld" in driver
 assert ".onChange(of:driver.pausePadPresses)" in page
 assert ".onChange(of:driver.optionsPadPresses)" in page
 assert 'Button("PAUZA") {openOrbitOptions291()}' in page
-assert 'Button("POWRÓT DO MENU GŁÓWNEGO")' in page
-assert 'accessibilityIdentifier("pc602-orbit-return-w3")' in page
+assert 'exitID:"pc602-orbit-return-w3"' in page
+assert "onExitToW3()" in page
 assert "onExitToW3()" in page
 assert "let onExitToMainMenu:()->Void" in source("Sector01Scene568.swift")
 assert "onExitToMainMenu()" in source("Sector01Scene568.swift")
