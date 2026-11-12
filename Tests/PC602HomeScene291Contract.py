@@ -87,6 +87,28 @@ signal=read("PC602HomeMissionSignal58.swift")
 shot_lights=read("PC602HomeProjectileLights296.swift")
 assert "SourcePlanetAtmosphere568.atmosphere(" in atmosphere
 assert "originalAtmosphere.draw(encoder:encoder," in world
+# PC602 Renderer.cs:139 and HomeFlight291.cs:106,113,123
+# independently feed glow/nebula/rays at runtime. Old iOS profiles
+# may omit option #12/#13 and must restore original enabled defaults.
+settings=read("SourcePlanetAtmosphere568.swift")
+panel=read("CarbonisVisualSettingsPanel568.swift")
+assert "var nebulaEnabled=true" in settings
+assert "var solarRaysEnabled=true" in settings
+assert "init(from decoder:Decoder) throws" in settings
+assert "decodeIfPresent(Bool.self" in settings
+assert "static let revisionKey=key+" in settings
+assert "defaults.integer(forKey:Self.revisionKey) &+ 1" in settings
+assert 'Toggle("MGŁAWICA KOSMICZNA"' in panel
+assert 'Toggle("PROMIENIE SŁONECZNE"' in panel
+assert 'accessibilityIdentifier("w3-source-nebula-option-12")' in panel
+assert 'accessibilityIdentifier("w3-source-solar-rays-option-13")' in panel
+assert "if revision != graphicsRevision" in world
+assert "glow:effects.glowEnabled" in world
+assert "nebula:effects.nebulaEnabled" in world
+assert "rays:effects.solarRaysEnabled" in world
+assert world.count("if effects.glowEnabled {")==2
+assert "let glowEnabled:Bool" not in world
+
 assert "PC602HomeMissionSignal58" in signal
 assert "originalSignal.draw(encoder:encoder," in world
 assert "PC602HomeProjectileLights296" in shot_lights

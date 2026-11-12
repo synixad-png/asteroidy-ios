@@ -19,6 +19,8 @@ on:
       - ASTEROIDYiOS/PC602HomeWeaponTest292.swift
       - ASTEROIDYiOS/PC602HomeShotGeometry292.swift
       - Tests/PC602HomeWeapons292Tests.swift
+      - ASTEROIDYiOS/SourcePlanetAtmosphere568.swift
+      - Tests/PC602O04GraphicsSettings291Tests.swift
       - ASTEROIDYiOS/PC602OrbitHud330.swift
       - Tests/PC602OrbitHud330Tests.swift
       - Tests/PC602HomeWorldSession291Tests.swift
@@ -43,6 +45,8 @@ on:
       - ASTEROIDYiOS/PC602HomeWeaponTest292.swift
       - ASTEROIDYiOS/PC602HomeShotGeometry292.swift
       - Tests/PC602HomeWeapons292Tests.swift
+      - ASTEROIDYiOS/SourcePlanetAtmosphere568.swift
+      - Tests/PC602O04GraphicsSettings291Tests.swift
       - ASTEROIDYiOS/PC602OrbitHud330.swift
       - Tests/PC602OrbitHud330Tests.swift
       - Tests/PC602HomeWorldSession291Tests.swift
@@ -187,6 +191,13 @@ jobs:
             /tmp/main.swift -o /tmp/pc602-guns-geodesic-test
           /tmp/pc602-guns-geodesic-test \
             ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+      - name: O04 source PC602 sky settings defaults, migration and hot reload revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602O04GraphicsSettings291Tests.swift /tmp/main.swift
+          swiftc -Onone ASTEROIDYiOS/SourcePlanetAtmosphere568.swift             /tmp/main.swift -o /tmp/pc602-o04-graphics-settings
+          /tmp/pc602-o04-graphics-settings
       - name: Compile and verify original source OrbitHud330 26-tile course zone
         shell: bash
         run: |

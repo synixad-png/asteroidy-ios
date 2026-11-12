@@ -66,8 +66,8 @@ enum SourcePlanetAtmosphere568 {
     }
 }
 
-/// Windows/src/Menu139.cs, source menu ids #2 (Glow / POSTPROCES),
-/// #55/#56/#57 (PLANETY: sunlight, speed, night brightness).
+/// Windows/src/Renderer.cs original source option #2 Glow, #12 Nebula,
+/// #13 SolarRays; Menu139.cs #55/#56/#57 planet lighting.
 struct SourcePlanetGraphicsSettings568:Codable,Equatable {
     static let key="ASTEROIDY.v568.PlanetAtmosphere47.Glow256.Light436.Night437"
     /// Live settings revision: the Metal renderer reads an integer every
