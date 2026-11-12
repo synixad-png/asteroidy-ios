@@ -64,14 +64,14 @@ for engine in 0...2 {
                 craft:.vanguard,engineLevel:engine,
                 thrusterRank:thruster,stabilizerLevel:stabilizer)
             else {fatalError("Valid PC602 Vanguard upgrades rejected")}
-            let acceleration:Float=245*(1+Float(engine)*0.06)*
-                (1+Float(thruster)*0.045)
-            let topSpeed:Float=390*(1+Float(engine)*0.035)*
-                (1+Float(thruster)*0.025)
-            let turnSpeed:Float=3.8*(1+Float(stabilizer)*0.04)
+            let acceleration:Float=245 * (1 + Float(engine) * 0.06) *
+                (1 + Float(thruster) * 0.045)
+            let topSpeed:Float=390 * (1 + Float(engine) * 0.035) *
+                (1 + Float(thruster) * 0.025)
+            let turnSpeed:Float=3.8 * (1 + Float(stabilizer) * 0.04)
             let massFactor:Float=sqrt(3.4/3.4)
-            let control=(1+Float(stabilizer)*0.12)*
-                max(0.55,min(1.6,acceleration/245))*massFactor
+            let control=(1 + Float(stabilizer) * 0.12) *
+                max(0.55,min(1.6,acceleration/245)) * massFactor
             close(eq.acceleration,acceleration,0.0002,"O02 original PC acceleration")
             close(eq.topSpeed,topSpeed,0.0002,"O02 original PC top speed")
             close(eq.surfaceSpeed,topSpeed*0.40,0.0002,"O02 source 40% speed")
@@ -80,8 +80,8 @@ for engine in 0...2 {
                   "O02 DirectMotion298 live control")
             var tick=try PC602HomeFlight291(home:home,equipment:eq)
             try tick.step(.init(move:Vec2(x:0,y:-1)),dt:1/60)
-            let expectedSpeed=eq.surfaceSpeed*
-                (1-exp(-Float(3)*control/60))
+            let expectedSpeed=eq.surfaceSpeed *
+                (1 - exp(-Float(3) * control/60))
             close(tick.orbitSpeed,expectedSpeed,0.08,
                   "O02 source first tick with purchased upgrades")
         }
