@@ -89,7 +89,7 @@ import Foundation
         precondition(V.hit(cause:"ASTEROIDA",level:3,difficulty:.hard,
             player:.first,survival:&dev,body:&devShip,dome:&devT,
             rescue:&devR,cooperative:false,developerInfinite:true,
-            guardian:.unverified,talent:.unverified) == .developerProtected)
+            guardian:.clear,talent:.unverified) == .developerProtected)
         precondition(dev.lives==3 && dev.invincible==0.8)
         // Simultaneous collision events in one Physics68 contact frame:
         // only the first impact may spend armor/hull; the second is
@@ -134,6 +134,6 @@ import Foundation
         precondition(nextContact == .talentAbsorbed)
         precondition(burstVitals.hull==21 &&
                      burstSurvival.lives==3)
-        print("PASS PC608: active Tarcza -> guardian -> talents -> rescue -> lives; no passive reserve interception")
+        print("PASS PC609: guardian -> developer -> active Tarcza -> talents -> rescue -> lives; no passive reserve interception")
     }
 }
