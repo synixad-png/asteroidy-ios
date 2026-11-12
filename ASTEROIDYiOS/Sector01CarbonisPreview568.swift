@@ -151,6 +151,8 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var craftBuffer:MTLBuffer?
             private var craftTexture:MTLTexture?
             private var craftVertexCount=0
+            // Both original PC playable ships keep their own aft sockets.
+            private var craftEngineSockets491:[SourceBakedShipMesh.Socket]=[]
             private var craftPipeline:MTLRenderPipelineState?
             private var craftEnginePipeline491:MTLRenderPipelineState?
             private var shieldShell145:SourceShieldShell145?
@@ -427,10 +429,24 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 // Original playable Vanguard, not W3 lookalike geometry.
                 // W3 and combat use the same SHA-locked source mesh and JPEG.
                 if gameSession != nil {
-                    let parsed=try SourceVanguardMesh431(
-                        data:Self.verified("Vanguard431Source.mesh"))
+                    let equipped=gameSession?.game.sourceMechanics.selectedShip ?? 1
+                    let parsed:SourceBakedShipMesh
+                    let craftJPEG:Data
+                    if equipped==2 {
+                        guard let bastion=SourceBastion606.load() else {
+                            throw SourceError.invalid
+                        }
+                        parsed=bastion.mesh
+                        craftJPEG=bastion.jpeg
+                    } else {
+                        guard equipped==1 else{throw SourceError.invalid}
+                        parsed=try SourceBakedShipMesh(
+                            data:Self.verified("Vanguard431Source.mesh"))
+                        craftJPEG=try Self.verified("Vanguard431Base.jpg")
+                    }
                     craftBuffer=try Self.makeBuffer(parsed.vertices,device:device)
                     craftVertexCount=parsed.vertexCount
+                    craftEngineSockets491=parsed.engines
                     // One precompiled shell, size taken directly from the
                     // SHA-verified source Vanguard mesh (never a second ship).
                     // A missing visual pipeline must not prevent playing.
@@ -443,7 +459,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                               String(describing:error))
                     }
                     craftTexture=try texLoader.newTexture(
-                        data:Self.verified("Vanguard431Base.jpg"),options:opts)
+                        data:craftJPEG,options:opts)
                     guard let fighterFragment=library.makeFunction(
                         name:"sector01SourceCraftFragment568") else {
                         throw SourceError.metal
@@ -1422,7 +1438,7 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     // GpuSphere67.CraftSphere67 draws v491 exhaust at the
                     // exact craft transform, with max(.12, VisualPower298).
                     if let enginePipeline=craftEnginePipeline491 {
-                        let engines=IntroEnginePlasma491.engineCenters
+                        let engines=craftEngineSockets491
                         var exhaust=EngineUniforms491(
                             mvp:worldView*shipMatrix,
                             engine0:SIMD4<Float>(engines[0].x,
