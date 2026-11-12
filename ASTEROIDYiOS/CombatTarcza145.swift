@@ -1,54 +1,35 @@
 import Foundation
 
-/// Windows/src/Tarcza145.cs, v556: rechargeable manually held energy dome.
-/// Distinct from the legacy purchased ShieldCharges passive impact shield.
-/// This standalone state is owned by its future ship equipment controller.
+/// Compatibility adapter for the verified Physics68/Coop62 encounter.
+/// PC v608 has ONE active shield + reserve mechanic, implemented by
+/// SourceTarcza145. This adapter does not own different protection rules.
 struct CombatTarcza145 {
-    static let maximum:Float = 100
-    static let cell:Float = 20
-    static let drainPerSecond:Float = 12
-    static let impactCost:Float = 35
+    static let maximum:Float=SourceTarcza145.maximum
+    static let drainPerSecond:Float=SourceTarcza145.drainPerSecond
+    static let impactCost:Float=SourceTarcza145.impactCost
+    static let reserveMaximum:Int=SourceTarcza145.reserveMaximum
 
-    private(set) var energy:Float = 60
-    private(set) var active = false
-    private(set) var flash:Float = 0
+    private var source=SourceTarcza145()
+    var energy:Float {source.energy}
+    var active:Bool {source.active}
+    var flash:Float {source.flash}
 
-    mutating func reset() {
-        energy=60
-        active=false
-        flash=0
+    mutating func reset() {source.reset()}
+    mutating func refill() {source.refill()}
+
+    mutating func tick(dt:Float,held:Bool,playing:Bool,shipDown:Bool,
+                       reserve:inout Int) {
+        source.step(dt:dt,held:held,playing:playing,
+                    shipDown:shipDown,reserve:&reserve)
     }
-    mutating func refill() {
-        energy=Self.maximum
-        active=false
-        flash=0
-    }
-    mutating func tick(dt:Float,held:Bool,playing:Bool,shipDown:Bool) {
-        guard dt>0 else {
-            active=held && energy>0 && playing && !shipDown
-            return
-        }
-        active=held && energy>0 && playing && !shipDown
-        if active {
-            energy=max(0,energy-Self.drainPerSecond*dt)
-            if energy<=0 {active=false}
-        }
-        flash=max(0,flash-dt)
-    }
-    /// Returns true only if an active shield intercepted the incoming hit.
-    /// The next ApplyHit96 call must see at least 0.28s invulnerability.
-    mutating func absorb(invincible:inout Float) -> Bool {
-        guard active && energy>0 else {return false}
-        energy=max(0,energy-Self.impactCost)
-        active=energy>0
-        flash=0.37
-        invincible=max(invincible,0.28)
-        return true
-    }
+
     @discardableResult
-    mutating func collectCell() -> Bool {
-        guard energy<Self.maximum else {return false}
-        energy=min(Self.maximum,energy+Self.cell)
-        return true
+    mutating func absorb(invincible:inout Float,reserve:inout Int)->Bool {
+        source.absorb(invincible:&invincible,reserve:&reserve)
+    }
+
+    @discardableResult
+    mutating func collectCell(reserve:inout Int)->Bool {
+        source.collectCell(reserve:&reserve)
     }
 }
