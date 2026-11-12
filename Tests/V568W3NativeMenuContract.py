@@ -106,14 +106,16 @@ assert "gameSession:session" in source_scene
 # Two independent invisible half-screen controls remain in place:
 # left flight stays unchanged; the right gesture aims AND fires on first touch.
 # The old fire button must not intercept the aiming region.
-assert "private var movement:some Gesture {" in source_scene
-assert "session.input(move:Vec2(x:clamp(Float(v.translation.width)/110)" in source_scene
-assert "private var aiming:some Gesture {" in source_scene
-assert "DragGesture(minimumDistance:0).onChanged { v in" in source_scene
-assert "session.input(aim:Vec2(x:clamp(Float(v.translation.width)/100)" in source_scene
-assert "shooting:true)" in source_scene
-assert "session.input(aim:Vec2(x:0,y:0),shooting:false)" in source_scene
-assert 'accessibilityIdentifier("sector01-right-steer-auto-fire")' in source_scene
+assert "SourceCombatTouchZones568(" in source_scene
+assert 'onMove:{session.input(move:$0)}' in source_scene
+assert 'onAim:{session.input(aim:$0)}' in source_scene
+assert 'onFire:{session.input(shooting:$0)}' in source_scene
+touch=(root/"ASTEROIDYiOS/SourceCombatTouchZones568.swift").read_text()
+assert 'HStack(spacing:0)' in touch
+assert 'Float(value.translation.width)/110' in touch
+assert 'Float(value.translation.width)/100' in touch
+assert 'onFire(true)' in touch and 'onFire(false)' in touch
+assert 'accessibilityIdentifier("sector01-right-steer-auto-fire")' in touch
 assert 'accessibilityIdentifier("sector01-fire-pulse")' not in source_scene
 assert "private var fireGesture" not in source_scene
 assert 'Text("OGIEŃ")' not in source_scene

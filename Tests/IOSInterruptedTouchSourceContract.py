@@ -43,11 +43,16 @@ print("LIMIT: source contract only; requires native iOS touch interruption test"
 # Interrupted right-side aiming must never leave the ship firing indefinitely.
 sector = Path("ASTEROIDYiOS/Sector01Scene568.swift").read_text(encoding="utf-8")
 session = Path("ASTEROIDYiOS/CarbonisSession568.swift").read_text(encoding="utf-8")
-assert "private var movement:some Gesture" in sector
-assert "session.input(move:Vec2(" in sector
-assert "private var aiming:some Gesture" in sector
-assert "shooting:true)" in sector
-assert "session.input(aim:Vec2(x:0,y:0),shooting:false)" in sector
+assert "SourceCombatTouchZones568(" in sector
+assert 'onMove:{session.input(move:$0)}' in sector
+assert 'onAim:{session.input(aim:$0)}' in sector
+assert 'onFire:{session.input(shooting:$0)}' in sector
+touch=Path("ASTEROIDYiOS/SourceCombatTouchZones568.swift").read_text(encoding="utf-8")
+assert 'Float(value.translation.width)/110' in touch
+assert 'Float(value.translation.width)/100' in touch
+assert 'onFire(true)' in touch and 'onFire(false)' in touch
+assert 'onMove(Vec2(x:0,y:0))' in touch
+assert 'onAim(Vec2(x:0,y:0))' in touch
 assert "private var fireGesture" not in sector
 assert 'Text("OGIEŃ")' not in sector
 assert ".onChange(of:scenePhase)" in sector
