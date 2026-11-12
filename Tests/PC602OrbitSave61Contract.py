@@ -50,14 +50,15 @@ assert '_=driver.captureResume61()' in page
 assert 'driver.setSuspended(phase != .active)' in page
 assert 'return try?' not in save
 assert 'func currentRunID' in source
-assert 'archiveActive(defaults:defaults,directory:support)' in source
+assert 'archiveActive(defaults:defaults,directory:$0)' in source
+assert '(!archiveExisting || archiveDirectory(nil).map' in source
 assert 'PC602OrbitSave61.clearResume()' in app
 assert 'continueOrbit:{' in app
 assert '"KONTYNUUJ OSTATNI LOT"' in w3
 assert 'accessibilityIdentifier("pc602-orbit-three-slot-saves61")' in page
 assert 'accessibilityIdentifier("pc602-orbit-save61")' in page
 assert 'accessibilityIdentifier("pc602-orbit-load61")' in page
-assert 'ForEach(0..<3,id:\.self)' in slots
+assert r'ForEach(0..<3,id:\.self)' in slots
 assert 'PC602SaveSlots61View(' in page
 assert 'PC602SaveSlots61View(' in w3
 assert 'archiveExisting:slot != nil' in driver
