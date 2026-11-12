@@ -34,14 +34,20 @@ for id in ("hud.mission","hud.telemetry","hud.atlas-grid","hud.dock",
     assert id in layout
     assert f'orbitItem291("{id}",screen:screen)' in page,id
 assert 'Slider(value:Binding(' in editor
-assert 'OrbitEditorTouchCanvas291(' in editor
+# Source HUD has its own native recognizer per VISIBLE widget, so the
+# bottom-right WEJDŹ never depends on a cached, remote frame preference.
+assert 'OrbitHUDItemTouchSurface291(' in page
+assert 'OrbitEditorTouchCanvas291' not in editor
+assert 'OrbitHUDFramePreference291' not in editor
+assert '@Binding var selected:String' in editor
+assert 'selected:$orbitSelected291' in page
+assert 'onSelect?(element.id)' in editor
+assert 'onMove?(start.origin,' in editor
 assert 'UIPinchGestureRecognizer(' in editor
 assert 'override func touchesBegan(' in editor
 assert 'override func touchesMoved(' in editor
-assert 'OrbitHUDFramePreference291' in editor
-assert 'measuredFrames:orbitFrames291' in page
 assert 'PC602OrbitHUDLayout291.decodeJSON' in editor
-assert 'PC602OrbitHUDLayout291.hit(' in editor
+assert 'PC602OrbitHUDLayout291.constrainedDrag(' in page
 assert 'struct Rect:Equatable' in layout
 assert 'Self.scaleRange(for:$0.id).contains($0.scale)' in layout
 assert 'static let ids=legacyIDs+[' in layout
