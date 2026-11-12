@@ -18,12 +18,12 @@ on:
       - ASTEROIDYiOS/W3MainMenu568.swift
       - ASTEROIDYiOS/App.swift
       - Tests/PC602OrbitSave61Contract.py
+      - Tests/PC602O01SourceBaseline.py
       - W3MenuUITests/PC602HomeOrbitUITests.swift
       - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
       - ASTEROIDYiOS/SourcePauseMenu568.swift
       - ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
-      - ASTEROIDYiOS/PC602SaveSlots61View.swift
       - ASTEROIDYiOS/Sector01Scene568.swift
       - ASTEROIDYiOS/HudLayoutEditor600.swift
       - Tests/PC602UnifiedHUDMenu291Contract.py
@@ -97,6 +97,7 @@ jobs:
           python3 Tests/PC602OrbitSave61Contract.py | tee reports/orbit-save-contract.txt
           python3 Tests/PC602ReplayHUDRegression291.py | tee reports/replay-hud-regression.txt
           python3 Tests/PC602UnifiedHUDMenu291Contract.py | tee reports/unified-interface-hud-291.txt
+          python3 Tests/PC602O01SourceBaseline.py --ios-root . | tee reports/o01-menu-source-map.txt
           swiftc -O ASTEROIDYiOS/PC602OrbitHUDLayout291.swift Tests/PC602OrbitHUDLayout291Tests.swift -o /tmp/pc602-h290-hud-model-tests
           /tmp/pc602-h290-hud-model-tests | tee reports/h290-hud-editor-tests.txt
           python3 Tools/verify_original_audio568_assets.py | tee reports/audio-assets.txt
@@ -188,6 +189,7 @@ jobs:
             reports/menu-sky-regression.txt
             reports/orbit-save-contract.txt
             reports/unified-interface-hud-291.txt
+            reports/o01-menu-source-map.txt
             reports/final-archive-check.txt
             reports/size.txt
           if-no-files-found: error
