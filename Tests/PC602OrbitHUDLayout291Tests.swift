@@ -22,8 +22,8 @@ import Foundation
         let oldRecords=PC602OrbitHUDLayout291.legacyIDs.map { id in
             "{\"id\":\"\(id)\",\"x\":0,\"y\":0,\"scale\":1}"
         }
-        let oldJSON=Data(("{\"schema\":1,\"elements\":["+
-                          oldRecords.joined(separator:",")+"]}").utf8)
+        let legacyJSON="{\"schema\":1,\"elements\":[" + oldRecords.joined(separator:",") + "]}"
+        let oldJSON=Data(legacyJSON.utf8)
         let migrated=try! PC602OrbitHUDLayout291.decodeJSON(oldJSON)
         check(migrated==original,"legacy 11-element JSON must expand losslessly")
         prefs.set(oldJSON,forKey:"asteroidy.ios.pc602.orbit-hud-layout291.v1")
