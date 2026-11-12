@@ -38,4 +38,7 @@ assert 'override func touchesMoved(' in editor
 assert 'OrbitHUDFramePreference291' in editor
 assert 'measuredFrames:orbitFrames291' in page
 assert 'PC602OrbitHUDLayout291.decodeJSON' in editor
+assert 'PC602OrbitHUDLayout291.hit(point:point,frames:frames,' in editor
+assert 'Self.scaleRange(for:$0.id).contains($0.scale)' in layout
+assert 'static let ids=legacyIDs+[' in layout
 print("PASS PC602 replay enabled, only money suppressed, shot counter stable and orbit HUD editor state")
