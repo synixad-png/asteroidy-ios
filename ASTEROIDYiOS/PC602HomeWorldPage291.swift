@@ -620,6 +620,7 @@ struct PC602HomeWorldPage291:View {
                             .font(.system(size:compact ? 12:15,weight:.bold,
                                           design:.monospaced))
                             .foregroundStyle(gold)
+                            .accessibilityIdentifier("pc602-h290-hud-atlas-title")
                     }
                     orbitItem291("hud.mission.target",screen:screen) {
                         statusText("CEL: \(MissionCatalog568.title(for:driver.hud.target) ?? "")",compact)
