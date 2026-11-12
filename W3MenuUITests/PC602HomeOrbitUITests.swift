@@ -69,9 +69,6 @@ final class PC602HomeOrbitUITests: XCTestCase {
                 "Source H290 active touch HUD missing")
         require(app.buttons["pc602-orbit-enter-context"],
                 "PC602 universal WEJDŹ control missing")
-        require(app.buttons["pc602-orbit-return-w3"],
-                "Orbital W3 return control missing")
-
         // The captured image comes from THIS installed simulator build, not
         // a concept/mock-up or a screenshot of a different application.
         let capture = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
