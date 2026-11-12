@@ -533,7 +533,8 @@ struct W3MainMenu568: View {
                                 } else {resumeMessage61=""}
                             }
                             .disabled(!PC602OrbitSave61.exists() &&
-                                      !PC602OrbitSave61.hasManualSave)
+                                      !PC602OrbitSave61.hasManualSave &&
+                                      !SourceNewGame568.canContinueActive358())
                             .foregroundStyle(gold)
                             .accessibilityIdentifier("w3-continue-orbit61")
                             Button("ZAPISY RĘCZNE / 3 SLOTY") {

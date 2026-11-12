@@ -194,6 +194,30 @@ enum SourceNewGame568 {
         // load a stale two-player choice as if the port had two ships.
         return SourceNewGameSelection568(players:1,difficulty:difficulty)
     }
+    /// PC602 SaveManager61.ContinueActive358 requires a valid ACTIVE
+    /// campaign profile; it does not require a manual or flight checkpoint.
+    /// Validate the actual stored JSON rather than loading default states
+    /// that could hide truncated/corrupted profile data.
+    static func canContinueActive358(
+        defaults:UserDefaults = .standard)->Bool {
+        guard let run=currentRunID(defaults:defaults),
+              UUID(uuidString:run) != nil,
+              let shopBytes=defaults.data(forKey:shopKey),
+              let shop=try? JSONDecoder().decode(
+                  Sector01Shop568.State.self,from:shopBytes),
+              Sector01Shop568.validate(shop),
+              let vitalsBytes=defaults.data(forKey:vitalsKey),
+              let vitals=try? JSONDecoder().decode(
+                  H55Workshop580.Vitals.self,from:vitalsBytes),
+              vitals.valid,
+              let mechanicsBytes=defaults.data(forKey:mechanicsKey),
+              let mechanics=try? JSONDecoder().decode(
+                  H55SourceMechanics580.State.self,from:mechanicsBytes),
+              mechanics.valid,mechanics.selectedShip==1
+        else{return false}
+        return true
+    }
+
     static func hasActiveProfile(defaults:UserDefaults = .standard)->Bool {
         profileKeys.contains { defaults.object(forKey:$0) != nil }
     }

@@ -368,9 +368,20 @@ struct GameView: View {
                          return true
                      },
                      continueOrbit:{
-                        guard PC602OrbitSave61.exists(),
-                              homeWorld291.loadOrbitSlot61(nil)
-                        else{return "BRAK PRAWIDŁOWEGO ZAPISU ORBITY"}
+                        // PC602 ContinueActive358: use a valid flight checkpoint
+                        // when available; otherwise restart H290 from the
+                        // independently validated active61 campaign profile.
+                        if !PC602OrbitSave61.exists() ||
+                           !homeWorld291.loadOrbitSlot61(nil) {
+                            guard SourceNewGame568.canContinueActive358()
+                            else{return "BRAK PRAWIDŁOWEGO PROFILU AUTOMATYCZNEGO"}
+                            do {
+                                try homeWorld291.start(progress:CampaignStore556.load())
+                            } catch {
+                                return "NIE MOŻNA PRZYWRÓCIĆ KAMPANII: " +
+                                    String(describing:error)
+                            }
+                        }
                         campaign=CampaignStore556.load()
                         input.releaseHeldControls()
                         input.gameplayPaused=true

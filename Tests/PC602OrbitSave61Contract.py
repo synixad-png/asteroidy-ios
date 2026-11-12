@@ -75,6 +75,12 @@ assert 'PC602OrbitSave61.deleteSlot(selected)' in slots
 assert 'let loadManualOrbit:(Int)->Bool' in w3
 assert 'loadManualOrbit:{ slot in' in app
 assert 'PC602OrbitSave61.hasManualSave' in w3
+assert 'static func canContinueActive358(' in source
+assert 'Sector01Shop568.validate(shop)' in source
+assert 'mechanics.valid,mechanics.selectedShip==1' in source
+assert 'SourceNewGame568.canContinueActive358()' in app
+assert 'try homeWorld291.start(progress:CampaignStore556.load())' in app
+assert 'SourceNewGame568.canContinueActive358()' in w3
 assert '"pc602-orbit-compact-26-atlas330"' in page
 assert 'ForEach(0..<4,id:\.self)' in page
 assert 'ForEach(0..<8,id:\.self)' in page
