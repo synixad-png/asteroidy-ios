@@ -24,9 +24,29 @@ struct PC602HomeWorldPage291:View {
     @State private var showingOrbitSettings291=false
     @State private var previouslyPausedOptions291=false
     @State private var showingOrbitPause317=false
+    // Independent from the approved CARBONIS v600 HUD and its five controls.
+    @State private var orbitLayout291=PC602OrbitHUDLayout291.load()
+    @State private var orbitDraft291=PC602OrbitHUDLayout291.load()
+    @State private var showingOrbitHUD291=false
+    @State private var previouslyPausedEditor291=false
     @State private var pressedOrbitCommands291:Set<Int>=[]
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.39,green:0.75,blue:0.79)
+
+    private var displayedOrbitLayout291:PC602OrbitHUDLayout291 {
+        showingOrbitHUD291 ? orbitDraft291 : orbitLayout291
+    }
+    // Identical source layout when offsets=0 and scale=1.0. These modifiers
+    // transform the REAL rendered HUD/buttons, including their touch regions.
+    private func orbitItem291<V:View>(
+        _ id:String,screen:GeometryProxy,@ViewBuilder content:()->V
+    )->some View {
+        let item=displayedOrbitLayout291.item(id)
+        return content()
+            .scaleEffect(item.scale)
+            .offset(x:CGFloat(item.x)*screen.size.width/1280,
+                    y:CGFloat(item.y)*screen.size.height/720)
+    }
 
     var body:some View {
         GeometryReader { screen in
@@ -75,6 +95,22 @@ struct PC602HomeWorldPage291:View {
                             .accessibilityIdentifier("pc602-orbit-three-slot-saves61")
                     }
                     if showingOrbitOptions291 {orbitOptionsPanel291(screen:screen)}
+                    if showingOrbitHUD291 {
+                        PC602OrbitHUDEditor291(
+                            layout:$orbitDraft291,
+                            onSave:{
+                                guard orbitDraft291.save() else{return}
+                                orbitLayout291=orbitDraft291
+                                showingOrbitHUD291=false
+                                driver.setPaused(previouslyPausedEditor291)
+                            },
+                            onCancel:{
+                                orbitDraft291=orbitLayout291
+                                showingOrbitHUD291=false
+                                driver.setPaused(previouslyPausedEditor291)
+                            })
+                            .zIndex(70)
+                    }
                 } else {
                     VStack(spacing:12) {
                         Text("PC602 / ORBITA NIEGOTOWA")
@@ -128,7 +164,8 @@ struct PC602HomeWorldPage291:View {
         .onChange(of:driver.pausePadPresses) { _,_ in
             // PC602 action 9: pause/resume the SAME live orbit, including
             // while the original pause overlay is already visible.
-            guard !showingSaves61,!showingAtlas330,!showingOrbitOptions291
+            guard !showingSaves61,!showingAtlas330,!showingOrbitOptions291,
+                  !showingOrbitHUD291
             else{return}
             if showingOrbitPause317 {resumeOrbitPause317()}
             else if driver.paused {driver.setPaused(false)}
@@ -136,7 +173,8 @@ struct PC602HomeWorldPage291:View {
         }
         .onChange(of:driver.optionsPadPresses) { _,_ in
             // PC602 action 27: options are independent of pause selection.
-            guard !showingSaves61,!showingAtlas330 else{return}
+            guard !showingSaves61,!showingAtlas330,!showingOrbitHUD291
+            else{return}
             if showingOrbitOptions291 {closeOrbitOptions291()}
             else {openOrbitOptions291()}
         }
@@ -282,6 +320,7 @@ struct PC602HomeWorldPage291:View {
     /// The original PC602 option/pause action. The same orbital session
     /// stays paused: no competing menu renderer or duplicated state.
     private func openOrbitOptions291() {
+        guard !showingOrbitHUD291 else{return}
         previouslyPausedOptions291=driver.paused
         showingOrbitSettings291=false
         driver.setPaused(true)
@@ -292,6 +331,15 @@ struct PC602HomeWorldPage291:View {
         showingOrbitSettings291=false
         showingOrbitOptions291=false
         driver.setPaused(previouslyPausedOptions291)
+    }
+
+    private func openOrbitHUDEditor291() {
+        previouslyPausedEditor291=previouslyPausedOptions291
+        orbitDraft291=orbitLayout291
+        showingOrbitSettings291=false
+        showingOrbitOptions291=false
+        driver.setPaused(true)
+        showingOrbitHUD291=true
     }
 
     private func orbitOptionsPanel291(screen:GeometryProxy)->some View {
@@ -321,6 +369,10 @@ struct PC602HomeWorldPage291:View {
                 } else {
                     Button("USTAWIENIA") {showingOrbitSettings291=true}
                         .accessibilityIdentifier("pc602-orbit-options-settings")
+                    Button("EDYTUJ HUD / PRZYCISKI H290") {
+                        openOrbitHUDEditor291()
+                    }
+                    .accessibilityIdentifier("pc602-orbit-hud-edit291")
                     Button("ZAPISZ LOT") {
                         showingOrbitOptions291=false
                         openSaves61(load:false,
@@ -549,6 +601,7 @@ struct PC602HomeWorldPage291:View {
             height:Float(screen.size.height)) {
             let x=CGFloat(arrow.x), y=CGFloat(arrow.y)
             let dx=CGFloat(arrow.dx),dy=CGFloat(arrow.dy)
+            orbitItem291("hud.navigation",screen:screen) {
             Path { path in
                 let tip=CGPoint(x:x+dx*14,y:y+dy*14)
                 let left=CGPoint(x:x-dx*9-dy*9,y:y-dy*9+dx*9)
@@ -560,11 +613,14 @@ struct PC602HomeWorldPage291:View {
             }
             .stroke(cyan,lineWidth:2.4)
             .allowsHitTesting(false)
+            }
+            orbitItem291("hud.navigation",screen:screen) {
             Text("CEL \(String(format:"%02d",driver.hud.target))")
                 .font(.system(size:11,weight:.bold,design:.monospaced))
                 .foregroundStyle(cyan)
                 .position(x:x,y:y+26)
                 .allowsHitTesting(false)
+            }
         }
     }
 
@@ -577,6 +633,7 @@ struct PC602HomeWorldPage291:View {
         let bottom=screen.safeAreaInsets.bottom+9
         VStack(spacing:0) {
             HStack(alignment:.top,spacing:8) {
+                orbitItem291("hud.mission",screen:screen) {
                 VStack(alignment:.leading,spacing:3) {
                     Text("ATLAS \(String(format:"%02d",driver.hud.target)) · VANGUARD")
                         .font(.system(size:compact ? 12:15,weight:.bold,
@@ -601,20 +658,28 @@ struct PC602HomeWorldPage291:View {
                               design:.monospaced))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
+                }
                 Spacer(minLength:4)
                 VStack(alignment:.trailing,spacing:4) {
+                    orbitItem291("hud.telemetry",screen:screen) {
+                    VStack(alignment:.trailing,spacing:4) {
                     Text(PC602OrbitHud330.progressLabel(driver.hud.completed))
                         .foregroundStyle(cyan)
                     statusText(PC602OrbitHud330.zoneLabel(driver.hud.zone),compact)
                     statusText("PUŁAP \(Int(driver.hud.altitude)) m",compact)
                     statusText("PRĘDKOŚĆ \(Int(driver.hud.speed))",compact)
+                    }
+                    }
                     // PC602 OrbitHud330: 8 columns x 4 rows, 29x22
                     // source tiles at x=1001,y=55 in virtual 1280x720.
                     // On small landscape displays the old touch-sized
                     // panel remains available via ATLAS instead.
                     if screen.size.width >= 680 && screen.size.height >= 320 {
-                        compactAtlas330(scale:min(1,Float(screen.size.width/1280)))
+                        orbitItem291("hud.atlas-grid",screen:screen) {
+                            compactAtlas330(scale:min(1,Float(screen.size.width/1280)))
+                        }
                     }
+                    orbitItem291("control.options",screen:screen) {
                     Button("OPCJE") {openOrbitOptions291()}
                         .font(.system(size:compact ? 14:17,
                                       weight:.bold,design:.monospaced))
@@ -623,22 +688,29 @@ struct PC602HomeWorldPage291:View {
                         .background(Color(red:0.05,green:0.15,blue:0.22))
                         .overlay(Rectangle().stroke(gold,lineWidth:1))
                         .accessibilityIdentifier("pc602-orbit-open-options291")
+                    }
                     HStack(spacing:9) {
+                        orbitItem291("control.atlas",screen:screen) {
                         Button("ATLAS") {
                             previouslyPaused330=driver.paused
                             showingAtlas330=true
                             driver.setPaused(true)
                         }
                         .accessibilityIdentifier("pc602-orbit-open-atlas330")
+                        }
+                        orbitItem291("control.next",screen:screen) {
                         Button("CEL +") {driver.cycleMission()}
                             .disabled(driver.paused)
                             .accessibilityIdentifier("pc602-orbit-next-sector")
+                        }
+                        orbitItem291("control.pause",screen:screen) {
                         Button(driver.paused ? "WZNÓW":"PAUZA") {
                             if showingOrbitPause317 {resumeOrbitPause317()}
                             else if driver.paused {driver.setPaused(false)}
                             else {openOrbitPause317()}
                         }
                         .accessibilityIdentifier("pc602-orbit-pause")
+                        }
                     }
                     .font(.system(size:compact ? 10:12,weight:.bold,
                                   design:.monospaced))
@@ -664,6 +736,7 @@ struct PC602HomeWorldPage291:View {
                     .allowsHitTesting(false)
             }
             HStack(alignment:.bottom) {
+                orbitItem291("hud.dock",screen:screen) {
                 VStack(alignment:.leading,spacing:4) {
                     Text("JEDYNY HANGAR · \(Int(driver.hud.dockDistance)) m")
                     Text(driver.hud.canDock ? "MOŻNA DOKOWAĆ" :
@@ -679,14 +752,18 @@ struct PC602HomeWorldPage291:View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.55)
                 .allowsHitTesting(false)
+                }
                 Spacer(minLength:5)
                 VStack(alignment:.trailing,spacing:4) {
+                    orbitItem291("hud.entry-label",screen:screen) {
                     if driver.hud.canDock {
                         Text("HANGAR H55").foregroundStyle(.green)
                     } else if driver.hud.missionEntrance>0 {
                         Text("MISJA \(String(format:"%02d",driver.hud.missionEntrance))")
                             .foregroundStyle(cyan)
                     }
+                    }
+                    orbitItem291("control.enter",screen:screen) {
                     Button("WEJDŹ") {enterSourceLocation()}
                         .font(.system(size:compact ? 15:20,weight:.bold,
                                       design:.monospaced))
@@ -701,6 +778,7 @@ struct PC602HomeWorldPage291:View {
                             lineWidth:enterAvailable() ? 2:1))
                         .disabled(!enterAvailable())
                         .accessibilityIdentifier("pc602-orbit-enter-context")
+                    }
                     if driver.hud.missionEntrance>1 && !driver.hud.canDock {
                         Text("SEKTOR NIEPRZENIESIONY")
                             .font(.system(size:9))
