@@ -591,7 +591,7 @@ import Foundation
                      simultaneous.encounter.secondSurvival.shieldCharges==1)
         precondition(simultaneous.domeFirst.energy>24 &&
                      simultaneous.domeFirst.energy<25)
-        precondition(simultaneous.domeFirst.energy==
+        precondition(simultaneous.domeFirst.energy ==
                      simultaneous.domeSecond.energy)
         precondition(simultaneous.firstGuardian!.charges==0)
         precondition(simultaneous.firstVitals!.armor==25 &&
