@@ -175,7 +175,7 @@ final class SourceHomeVanguard431 {
               view:simd_float4x4,
               orbitScale:Float) {
         guard flight.equipment.craft.rawValue==shipType,
-              let pose=PC602HomeShipPose291.vanguard(
+              let pose=PC602HomeShipPose291.active(
                   flight,orbitScale:orbitScale),
               let basis=Self.matrix(pose.basis) else{return}
         let bank=pose.bankDegrees*Float.pi/180
