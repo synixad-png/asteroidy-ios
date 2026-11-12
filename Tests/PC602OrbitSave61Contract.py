@@ -12,6 +12,7 @@ session=read("PC602HomeWorldSession291.swift")
 driver=read("PC602HomeWorldDriver291.swift")
 app=read("App.swift")
 page=read("PC602HomeWorldPage291.swift")
+slots=read("PC602SaveSlots61View.swift")
 w3=read("W3MainMenu568.swift")
 source=read("SourceNewGame568.swift")
 atmosphere=read("PC602HomeAtmosphere47.swift")
@@ -56,7 +57,23 @@ assert '"KONTYNUUJ OSTATNI LOT"' in w3
 assert 'accessibilityIdentifier("pc602-orbit-three-slot-saves61")' in page
 assert 'accessibilityIdentifier("pc602-orbit-save61")' in page
 assert 'accessibilityIdentifier("pc602-orbit-load61")' in page
-assert 'ForEach(0..<3,id:\.self)' in page
+assert 'ForEach(0..<3,id:\.self)' in slots
+assert 'PC602SaveSlots61View(' in page
+assert 'PC602SaveSlots61View(' in w3
+assert 'archiveExisting:slot != nil' in driver
+assert 'archiveExisting:Bool=true' in source
+assert 'static func deleteSlot(_ slot:Int)->Bool' in save
+assert 'static func slotFileExists(_ slot:Int)->Bool' in save
+assert 'static var hasManualSave:Bool' in save
+assert 'pending=action' in slots
+assert 'confirmText(action)' in slots
+assert '"USZKODZONY ZAPIS"' in slots
+assert 'onLoad(selected)' in slots
+assert 'onSave(selected)' in slots
+assert 'PC602OrbitSave61.deleteSlot(selected)' in slots
+assert 'let loadManualOrbit:(Int)->Bool' in w3
+assert 'loadManualOrbit:{ slot in' in app
+assert 'PC602OrbitSave61.hasManualSave' in w3
 assert '"pc602-orbit-compact-26-atlas330"' in page
 assert 'ForEach(0..<4,id:\.self)' in page
 assert 'ForEach(0..<8,id:\.self)' in page
@@ -86,4 +103,4 @@ assert 'let equipment=Self.vanguardEquipment291(state.mechanics)' in driver
 assert 'state.adoptVanguardEquipment(equipment)' in driver
 assert 'func enterOrbit602()' in read("OriginalAudioAV568.swift")
 assert "planetarium.glb" in (root/".github/workflows/build-ios-pc602-h290-user-test-ipa-20261112.yml").read_text()
-print("PASS H290: source-locked 3 slots, resume, pulse-gun timing, atlas, light/atmosphere and invariant Carbonis01/Vanguard/planetarium")
+print("PASS O09 PC602: shared 3-slot UI, manual W3 load, overwrite/delete confirmation, corrupt-slot distinction and resume safety")
