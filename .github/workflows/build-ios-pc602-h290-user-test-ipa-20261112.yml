@@ -6,7 +6,14 @@ name: ASTEROIDY PC602 H290 - user test unsigned IPA 20261112
 on:
   push:
     branches: [feature/ios-pc602-newhome-world-source]
-    paths: [.github/workflows/build-ios-pc602-h290-user-test-ipa-20261112.yml]
+    paths:
+      - .github/workflows/build-ios-pc602-h290-user-test-ipa-20261112.yml
+      - ASTEROIDYiOS/PC602OrbitSave61.swift
+      - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
+      - ASTEROIDYiOS/PC602HomeWorldPage291.swift
+      - ASTEROIDYiOS/PC602HomeAtmosphere47.swift
+      - ASTEROIDYiOS/PC602HomeMissionSignal58.swift
+      - ASTEROIDYiOS/PC602HomeProjectileLights296.swift
   workflow_dispatch:
 
 concurrency:
@@ -45,6 +52,7 @@ jobs:
           python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin | tee reports/belt-tests.txt
           python3 Tests/PC602HomeScene291Contract.py | tee reports/scene-contract.txt
           python3 Tests/PC602HomeWorldUI291Contract.py | tee reports/world-contract.txt
+          python3 Tests/PC602OrbitSave61Contract.py | tee reports/orbit-save-contract.txt
           python3 Tools/verify_original_audio568_assets.py | tee reports/audio-assets.txt
           python3 Tools/materialize_pc586_original_resources.py --report reports/pc586-source.json
       - name: Compile actual iPhone+iPad Release application, Apple ARM64 + Metal
@@ -131,6 +139,7 @@ jobs:
             reports/ipa-planetarium-verified.txt
             reports/planetarium-source.txt
             reports/planetarium-isolation.txt
+            reports/orbit-save-contract.txt
             reports/final-archive-check.txt
             reports/size.txt
           if-no-files-found: error

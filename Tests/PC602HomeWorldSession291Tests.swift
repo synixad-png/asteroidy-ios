@@ -77,6 +77,27 @@ assert(session.route.location == .orbit)
 assert(session.finishPhysicalH55Visit()==nil)
 assert(session.steppedFrames==3)
 
+// SaveManager61.LoadSlot61 on the actual Sphere67 state: genuine saved
+// position/heading, zero speed and zero transient bullets; no new sector.
+let beforeRestore=session.flight.orbitPosition
+let beforeForward=session.flight.orbitForward
+try session.restoreOrbit61(position:beforeRestore,forward:beforeForward,
+    target:1,completedMask:0,weapon:.defaultPulse)
+assert(session.flight.target==1)
+assert(session.flight.completedMask==0)
+assert(session.flight.orbitSpeed==0)
+assert(session.flight.orbitVelocity==SIMD3<Float>(repeating:0))
+assert(session.steppedFrames==0)
+assert(session.weapons.projectiles.isEmpty)
+assert(session.paused)
+assert(!session.canEnterAuthoredMissionArea)
+assert(session.flight.orbitPosition.x.isFinite)
+assert(session.flight.orbitForward.x.isFinite)
+session.setPaused(false)
+assert(try session.advance(snapshot:.init(keys:[87]),dt:1/60))
+assert(session.steppedFrames==1)
+assert(session.flight.orbitSpeed>0)
+
 print("PASS original PC602 HomeWorld session: single 67 flight, saved " +
       "remapped controls, atomic pause, no double tick, 26 authored " +
       "sector unlocks and real 43.2m-gated H55 without fake mission/IPA")
