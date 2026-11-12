@@ -90,6 +90,21 @@ import Foundation
         check(PC602OrbitHUDLayout291.touchFrame(
             CGRect(x:Double.nan,y:0,width:100,height:100))==nil,
               "discard invalid source geometry")
+        // Source mission editor keeps function buttons within the real
+        // viewport and leaves at least 12pt of passive HUD selectable.
+        let safeControl=PC602OrbitHUDLayout291.constrainedDrag(
+            "control.enter",delta:CGPoint(x:100,y:1000),
+            frame:CGRect(x:310,y:30,width:60,height:48),
+            viewport:CGSize(width:400,height:300),
+            safeInsets:(left:20,right:20,top:20,bottom:20))
+        check(safeControl.x==10 && safeControl.y==202,
+              "control stays fully reachable inside the safe area")
+        let passive=PC602OrbitHUDLayout291.constrainedDrag(
+            "hud.mission",delta:CGPoint(x:-500,y:-500),
+            frame:CGRect(x:0,y:0,width:300,height:150),
+            viewport:CGSize(width:400,height:300))
+        check(passive.x == -288 && passive.y == -138,
+              "text preserves the source 12pt visible drag margin")
         prefs.set(Data("corrupt json".utf8),
                   forKey:"asteroidy.ios.pc602.orbit-hud-layout291.v1")
         check(PC602OrbitHUDLayout291.load(defaults:prefs)==original,
