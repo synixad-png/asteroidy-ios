@@ -138,4 +138,59 @@ final class PC602HomeOrbitUITests: XCTestCase {
                        "PC602 SaveManager61 must not save without an active game")
         app.buttons["pc602-save61-back"].tap()
     }
+    /// Real Apple iPad/iPhone simulator touch-to-drag regression.
+    /// Exercises the same USTAWIENIA -> INTERFEJS path the user reported.
+    /// Selecting by a touch MUST replace a previously different selection,
+    /// so a default preselected heading cannot produce a false PASS.
+    func testH290EditorDirectTouchSelectDragAndCancel() {
+        let app=XCUIApplication()
+        app.launchEnvironment["ASTEROIDY_W3_MENU_VERIFY"]="1"
+        app.launch()
+        waitForActualW3Menu(app)
+        app.buttons["w3-home-2"].tap()
+        let enter=app.buttons["campaign-enter-original-orbit291"]
+        require(enter,"Original H290 campaign is unavailable")
+        enter.tap()
+        let pause=app.buttons["pc602-orbit-pause"]
+        require(pause,"H290 live HUD did not render",timeout:90)
+        pause.tap()
+        let settings=app.buttons["pc602-orbit-options-settings"]
+        require(settings,"Unified source PAUZA lacks USTAWIENIA")
+        settings.tap()
+        let edit=app.buttons["w3-interface-edit-orbit-hud291"]
+        require(edit,"HUD editor must be under USTAWIENIA / INTERFEJS")
+        edit.tap()
+        let save=app.buttons["pc602-orbit-hud-editor-save"]
+        require(save,"Native H290 HUD editing screen did not open")
+        let heading=byID(app,"pc602-h290-hud-atlas-title")
+        require(heading,"Actual on-screen H290 atlas heading is not exposed")
+        let next=app.buttons["pc602-orbit-hud-next"]
+        require(next,"HUD element navigation missing")
+        next.tap()
+        let inspector=app.buttons["pc602-orbit-hud-inspector-toggle"]
+        require(inspector,"HUD inspector missing")
+        inspector.tap()
+        require(app.staticTexts["HUD / NAZWA CELU"],
+                "Next element should be the independent mission target label")
+        let original=heading.frame
+        XCTAssertGreaterThan(original.width,0,"Actual heading has zero width")
+        let origin=app.coordinate(withNormalizedOffset:CGVector(dx:0,dy:0))
+            .withOffset(CGVector(dx:original.midX,dy:original.midY))
+        origin.tap()
+        require(app.staticTexts["HUD / TYTUŁ ATLASU"],
+                "Touch must SELECT the actual atlas heading, not keep menu selection")
+        // Source HudEditorTouchCanvas drag: begin from actual displayed
+        // text, then move 38 physical points; the rendered text must follow.
+        origin.press(forDuration:0.2,
+                     thenDragTo:origin.withOffset(CGVector(dx:38,dy:0)))
+        let changed=heading.frame
+        XCTAssertGreaterThan(changed.minX,original.minX+9,
+            "Finger drag failed to move the real H290 HUD widget")
+        let cancel=app.buttons["ANULUJ"]
+        require(cancel,"HUD editor cannot return to USTAWIENIA")
+        cancel.tap()
+        require(byID(app,"pc602-orbit-settings-fullscreen"),
+                "Cancel must restore the settings screen, not a second pause")
+    }
+
 }
