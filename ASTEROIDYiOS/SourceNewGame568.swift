@@ -23,7 +23,7 @@ enum SourceNewGame568 {
     private static let profileKeys=[
         "asteroidy.ios.v556.campaign.completedMask",
         "asteroidy.ios.v568.campaign.selectedSector",
-        shopKey,vitalsKey,mechanicsKey,
+        shopKey,vitalsKey,mechanicsKey,SourceTarcza145.persistentKey,
         difficultyKey,playersKey,activeIDKey
     ]
     private static let archiveFormat="Windows-v568-profile358"
@@ -119,6 +119,11 @@ enum SourceNewGame568 {
                       let state=try? JSONDecoder().decode(
                         Sector01Shop568.State.self,from:data),
                       Sector01Shop568.validate(state) else{return false}
+            case SourceTarcza145.persistentKey:
+                guard let energy=value as? NSNumber,
+                      energy.floatValue.isFinite,
+                      (0...SourceTarcza145.maximum).contains(energy.floatValue)
+                else{return false}
             case vitalsKey:
                 guard let data=value as? Data,
                       let state=try? JSONDecoder().decode(
@@ -157,13 +162,17 @@ enum SourceNewGame568 {
         runID:String,completedMask:Int,target:Int,
         shop:Sector01Shop568.State,vitals:H55Workshop580.Vitals,
         mechanics:H55SourceMechanics580.State,difficultyRaw:Int,
+        tarczaEnergy145:Float?=nil,
         archiveExisting:Bool=true,
         defaults:UserDefaults = .standard)->Bool {
         // PC602 ContinueActive358 always resumes the current active61
         // profile. Never let an old auto-resume overwrite a new campaign.
         guard archiveExisting || currentRunID(defaults:defaults)==runID
         else{return false}
-        guard UUID(uuidString:runID) != nil,
+        let shieldEnergy=tarczaEnergy145 ?? SourceTarcza145.initial
+        guard shieldEnergy.isFinite,
+              (0...SourceTarcza145.maximum).contains(shieldEnergy),
+              UUID(uuidString:runID) != nil,
               (1...26).contains(target),
               CampaignProgress556(mask:completedMask).unlocked(target),
               Sector01Shop568.validate(shop),vitals.valid,mechanics.valid,
@@ -184,6 +193,7 @@ enum SourceNewGame568 {
         defaults.set(difficultyRaw,forKey:difficultyKey)
         defaults.set(1,forKey:playersKey)
         defaults.set(runID,forKey:activeIDKey)
+        _=SourceTarcza145.savePersistentEnergy(shieldEnergy,defaults:defaults)
         return true
     }
 
@@ -256,6 +266,7 @@ enum SourceNewGame568 {
         // menu: do not leave prior-game H11 ships, trophies or hull behind.
         H55Workshop580.resetVitals(defaults:defaults)
         H55SourceMechanics580.reset(defaults:defaults)
+        SourceTarcza145.resetPersistentEnergy(defaults:defaults)
         defaults.set(request.difficulty.rawValue,forKey:difficultyKey)
         defaults.set(1,forKey:playersKey)
         defaults.set(UUID().uuidString,forKey:activeIDKey)
