@@ -193,4 +193,86 @@ final class PC602HomeOrbitUITests: XCTestCase {
                 "Cancel must restore the settings screen, not a second pause")
     }
 
+
+    /// Checks ALL native H290 control buttons rather than only a text
+    /// widget. The real H290 editor must intercept these physical touches
+    /// before the paused/disabled game buttons receive them.
+    func testH290AllFiveControlButtonsTouchDragSaveReopen() {
+        let app=XCUIApplication()
+        app.launchEnvironment["ASTEROIDY_W3_MENU_VERIFY"]="1"
+        app.launch()
+        waitForActualW3Menu(app)
+        app.buttons["w3-home-2"].tap()
+        let enterOrbit=app.buttons["campaign-enter-original-orbit291"]
+        require(enterOrbit,"Original PC602 world not available")
+        enterOrbit.tap()
+        let pause=app.buttons["pc602-orbit-pause"]
+        require(pause,"Live H290 HUD missing",timeout:90)
+
+        let controls:[(String,String)]=[
+            ("pc602-orbit-open-options291","PRZYCISK / PAUZA (GÓRA)"),
+            ("pc602-orbit-open-atlas330","PRZYCISK / ATLAS"),
+            ("pc602-orbit-next-sector","PRZYCISK / CEL +"),
+            ("pc602-orbit-pause","PRZYCISK / PAUZA"),
+            ("pc602-orbit-enter-context","PRZYCISK / WEJDŹ")
+        ]
+        var positions:[String:CGRect]=[:]
+        for (identifier,_) in controls {
+            let button=byID(app,identifier)
+            require(button,"Actual H290 control missing: "+identifier)
+            XCTAssertGreaterThan(button.frame.width,0)
+            positions[identifier]=button.frame
+        }
+        pause.tap()
+        let settings=app.buttons["pc602-orbit-options-settings"]
+        require(settings,"Original H290 settings not available")
+        settings.tap()
+        let edit=app.buttons["w3-interface-edit-orbit-hud291"]
+        require(edit,"H290 HUD editor is not in USTAWIENIA / INTERFEJS")
+        edit.tap()
+        require(app.buttons["pc602-orbit-hud-editor-save"],
+                "H290 editor did not open")
+        let inspector=app.buttons["pc602-orbit-hud-inspector-toggle"]
+        require(inspector,"H290 inspector missing")
+
+        func physicalCenter(_ frame:CGRect)->XCUICoordinate {
+            app.coordinate(withNormalizedOffset:CGVector(dx:0,dy:0))
+               .withOffset(CGVector(dx:frame.midX,dy:frame.midY))
+        }
+        for (identifier,title) in controls {
+            guard let rect=positions[identifier] else {
+                XCTFail("Missing physical frame: "+identifier)
+                return
+            }
+            physicalCenter(rect).tap()
+            inspector.tap()
+            require(app.staticTexts[title],
+                    "Touch must select the actual rendered control: "+identifier)
+            inspector.tap()
+        }
+
+        let enterButton=byID(app,"pc602-orbit-enter-context")
+        let old=enterButton.frame
+        let touch=physicalCenter(old)
+        touch.press(forDuration:0.20,
+                    thenDragTo:touch.withOffset(CGVector(dx:-42,dy:-27)))
+        let moved=enterButton.frame
+        XCTAssertLessThan(moved.midX,old.midX-8,
+            "WEJDŹ must move directly under touch, clear of the editor toolbar")
+        let save=app.buttons["pc602-orbit-hud-editor-save"]
+        save.tap()
+        require(byID(app,"pc602-orbit-settings-fullscreen"),
+                "Save should return to settings only after persisting the layout")
+        let saved=enterButton.frame
+        edit.tap()
+        require(app.buttons["pc602-orbit-hud-editor-save"],
+                "Reopened editor missing after save")
+        let reopened=byID(app,"pc602-orbit-enter-context").frame
+        XCTAssertEqual(reopened.midX,saved.midX,accuracy:3,
+            "WEJDŹ position must survive closing and reopening the editor")
+        XCTAssertEqual(reopened.midY,saved.midY,accuracy:3,
+            "Saved WEJDŹ Y offset must not snap back")
+        app.buttons["ANULUJ"].tap()
+    }
+
 }
