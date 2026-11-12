@@ -91,7 +91,7 @@ final class SourceCombatSky568 {
         let stars=SourceSkyAssetFactory568.sphereSky207()
         starBuffer=try Self.buffer(device,stars.0)
         starCount=stars.1.count
-        let cores=SourceSkyAssetFactory568.sphereSky207(glow:false)
+        let cores=SourceSkyAssetFactory568.sphereSky207WithGlow(false)
         starCoreBuffer=try Self.buffer(device,cores.0)
         starCoreCount=cores.1.count
         assert(starCoreCount==SphereSky207.count)

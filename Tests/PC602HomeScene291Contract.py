@@ -112,12 +112,14 @@ assert world.count("if effects.glowEnabled {")==2
 # Glow disabled MUST retain all 1500 ordinary star cores.
 factory=read("SourceSkyAssetFactory568.swift")
 sky=read("SourceCombatSky568.swift")
-assert "static func sphereSky207(glow:Bool)" in factory
+assert "static func sphereSky207WithGlow(_ glow:Bool)" in factory
 assert "if SphereSky207.hasBrightHalo(star)" in factory
 assert "if glow {" in factory.split("if SphereSky207.hasBrightHalo(star)",1)[1].split("}",1)[0]
+assert factory.count("static func sphereSky207(")==1
+assert factory.count("static func sphereSky207WithGlow(")==1
 assert factory.index("appendHalo(SphereSky207.brightHaloDiameterPixels") < factory.index("appendHalo(SphereSky207.baseDiameterPixels")
 assert "starCoreCount==SphereSky207.count" in sky
-assert "let cores=SourceSkyAssetFactory568.sphereSky207(glow:false)" in sky
+assert "let cores=SourceSkyAssetFactory568.sphereSky207WithGlow(false)" in sky
 assert "glow ? starBuffer : starCoreBuffer" in sky
 assert "vertexCount:glow ? starCount : starCoreCount" in sky
 assert "worldScale:SphereCameraView556.originalPlanetOuterRadius" in world
