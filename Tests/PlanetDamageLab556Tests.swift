@@ -44,35 +44,48 @@ import Foundation
         precondition(lab.lives==3 && lab.hull==60 && lab.armor==7)
         precondition(lab.deathCount==0)
         precondition(sector.hull==3,"Legacy three-hit counter stays isolated")
-        for n in 2...15 {
+        // PC v609 regenerates armor while these real contact rounds are
+        // spaced five seconds apart. The original fixed five-hit fatal
+        // schedule is no longer correct; validate every actual transition,
+        // exact life count, original respawn location and rock relocation
+        // until the third genuine fatal hit causes GameOver.
+        var fatalTrans=0
+        var contactsMade=1
+        boreasCombat: for _ in 2...80 {
             _=lab.advance(dt:5,contacts:0,sector:&sector,flight:&flight)
+            let beforeLives=lab.lives
             let result=freshImpact(&sector,&flight,&lab)
-            let damageTier=(n-1)%5
-            if damageTier==4 {
-                let remaining=3-n/5
-                if remaining>0 {
-                    precondition(result == .applied(.lifeLost(
-                        remaining:remaining,respawnProtection:4.5,
-                        cause:"ASTEROIDA")))
-                    precondition(lab.lives==remaining)
-                    precondition(lab.armor==25 && lab.hull==60)
-                    precondition(sector.bolts.isEmpty)
-                    precondition(flight.position==Vec2(x:640,y:360))
-                    precondition(flight.velocity.lengthSquared==0)
-                    precondition(abs(flight.heading+Float.pi/2)<0.001)
-                    let distance=sqrt(Sphere67.delta(
-                        target:sector.asteroids[0].position,
-                        origin:flight.position).lengthSquared)
-                    precondition(abs(distance-220)<0.6)
-                } else {
-                    precondition(result == .applied(.gameOver(cause:"ASTEROIDA")))
-                    precondition(lab.gameOver && lab.lives==0)
-                }
-            } else {
-                precondition(result == .talentAbsorbed)
-                precondition(lab.lives==3-(n-1)/5)
+            contactsMade+=1
+            switch result {
+            case .talentAbsorbed:
+                precondition(lab.lives==beforeLives &&
+                             lab.hull>0 && lab.armor>=0 && lab.armor<=25)
+            case .applied(.lifeLost(let remaining,
+                                    let protection,let cause)):
+                fatalTrans+=1
+                precondition(fatalTrans<=2 && cause=="ASTEROIDA" &&
+                             remaining==3-fatalTrans &&
+                             protection==4.5 && lab.lives==remaining)
+                precondition(lab.armor==25 && lab.hull==60)
+                precondition(sector.bolts.isEmpty)
+                precondition(flight.position==Vec2(x:640,y:360))
+                precondition(flight.velocity.lengthSquared==0)
+                precondition(abs(flight.heading+Float.pi/2)<0.001)
+                let distance=sqrt(Sphere67.delta(
+                    target:sector.asteroids[0].position,
+                    origin:flight.position).lengthSquared)
+                precondition(abs(distance-220)<0.6)
+            case .applied(.gameOver(let cause)):
+                precondition(fatalTrans==2 && cause=="ASTEROIDA" &&
+                             lab.gameOver && lab.lives==0)
+                break boreasCombat
+            default:
+                preconditionFailure("Unexpected transition during Boreas real contact")
             }
         }
+        precondition(contactsMade>15 &&
+                     lab.gameOver && lab.lives==0 && fatalTrans==2,
+                     "PC609 periodically restored armor extends real combat life")
         precondition(lab.deathCount==2)
         _=lab.advance(dt:6,contacts:1,sector:&sector,flight:&flight)
         precondition(lab.lives==0)
