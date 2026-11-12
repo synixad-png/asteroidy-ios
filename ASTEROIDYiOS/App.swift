@@ -210,7 +210,8 @@ struct GameView: View {
         guard SourceNewGame568.restoreOrbitProfile61(
             runID:state.runID,completedMask:state.completedMask,
             target:1,shop:state.shop,vitals:state.vitals,
-            mechanics:state.mechanics,difficultyRaw:state.difficultyRaw)
+            mechanics:state.mechanics,difficultyRaw:state.difficultyRaw,
+            tarczaEnergy145:state.tarczaEnergy145)
         else{return false}
         campaign=CampaignStore556.load()
         if state.returnHome61 == true {
