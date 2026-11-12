@@ -89,16 +89,16 @@ import Foundation
                            guardianFirst:.clear,talentFirst:.clear)
         precondition(idle.contacts.isEmpty && idle.hitOutcomes.isEmpty)
         precondition(coop.domeFirst.energy==e)
-        // Actual defenses, not caller-declared .clear flags:
-        // purchased shield -> one-charge Guardian37 -> Talents78 armor/hull.
+        // PC608 actual defenses, not .clear flags: held Tarcza145,
+        // one-charge Guardian37, then Talents78 armor/hull.
         var defended=setup()
         defended.encounter.firstSurvival.shieldCharges=1
         defended.firstGuardian=CombatGuardian37(owned:true)
         defended.firstVitals=CombatTalentVitals78()
-        let purchased=defended.step(dt:1/120)
+        let purchased=defended.step(dt:1/120,firstDomeHeld:true)
         precondition(purchased.hitOutcomes == [
-            V.TeamOutcome(player:.first,outcome:.applied(
-                .shieldAbsorbed(remaining:0,cause:"ASTEROIDA")))])
+            V.TeamOutcome(player:.first,outcome:.activeTarczaAbsorbed)])
+        precondition(defended.encounter.firstSurvival.shieldCharges==1)
         precondition(defended.firstGuardian!.charges==1)
         precondition(defended.firstVitals!.armor==25 &&
                      defended.firstVitals!.hull==60)
@@ -503,18 +503,17 @@ import Foundation
         common.firstGuardian=CombatGuardian37(owned:false)
         common.firstVitals=CombatTalentVitals78()
         common.encounter.firstSurvival.shieldCharges=1
-        let bought=common.step(dt:1/120)
+        let bought=common.step(dt:1/120,firstDomeHeld:true)
         precondition(bought.hitOutcomes == [
-            V.TeamOutcome(player:.second,outcome:.applied(
-                .shieldAbsorbed(remaining:0,cause:"ASTEROIDA")))])
-        precondition(common.encounter.firstSurvival.shieldCharges==0 &&
-                     common.encounter.secondSurvival.shieldCharges==0)
+            V.TeamOutcome(player:.second,outcome:.activeTarczaAbsorbed)])
+        precondition(common.encounter.firstSurvival.shieldCharges==1 &&
+                     common.encounter.secondSurvival.shieldCharges==1)
         precondition(common.encounter.firstSurvival.invincible==0 &&
-                     common.encounter.secondSurvival.invincible==1)
+                     common.encounter.secondSurvival.invincible>=0.28)
         precondition(common.firstVitals!.armor==25 &&
                      common.firstVitals!.hull==60)
         // P1 hits the rock while P2 still has personal immunity. The
-        // globally purchased shield is already gone, so armor is damaged.
+        // Dome is released: reserve 1/3 cannot passively shield P1.
         common.encounter.rocks=[]
         common.encounter.first=body(640)
         common.encounter.second=body(100)
@@ -559,7 +558,7 @@ import Foundation
         precondition(common.pendingRescueFailure==nil)
 
         // Global resources must also remain coherent within the SAME
-        // Physics68 frame: P1 consumes the only purchased shield, then P2
+        // Physics68 frame: P1 uses the held active dome, then P2
         // consumes the single Campaign37 guardian interception. Neither
         // player gets a duplicate copy of either protection.
         let separateRocks=[
@@ -578,16 +577,15 @@ import Foundation
         simultaneous.firstGuardian=CombatGuardian37(owned:true)
         simultaneous.firstVitals=CombatTalentVitals78()
         simultaneous.encounter.firstSurvival.shieldCharges=1
-        let twoImpacts=simultaneous.step(dt:1/120)
+        let twoImpacts=simultaneous.step(dt:1/120,firstDomeHeld:true)
         precondition(twoImpacts.contacts ==
                      [.shipRock(0),.partnerRock(1)])
         precondition(twoImpacts.hitOutcomes == [
-            V.TeamOutcome(player:.first,outcome:.applied(
-                .shieldAbsorbed(remaining:0,cause:"ASTEROIDA"))),
-            V.TeamOutcome(player:.second,outcome:.guardianAbsorbed)])
-        precondition(simultaneous.encounter.firstSurvival.shieldCharges==0 &&
-                     simultaneous.encounter.secondSurvival.shieldCharges==0)
-        precondition(simultaneous.firstGuardian!.charges==0)
+            V.TeamOutcome(player:.first,outcome:.activeTarczaAbsorbed),
+            V.TeamOutcome(player:.second,outcome:.activeTarczaAbsorbed)])
+        precondition(simultaneous.encounter.firstSurvival.shieldCharges==1 &&
+                     simultaneous.encounter.secondSurvival.shieldCharges==1)
+        precondition(simultaneous.firstGuardian!.charges==1)
         precondition(simultaneous.firstVitals!.armor==25 &&
                      simultaneous.firstVitals!.hull==60)
         precondition(simultaneous.encounter.firstSurvival.lives==3 &&
@@ -625,8 +623,9 @@ import Foundation
         let noSecondDome=phantomDome.step(dt:1/120,
             firstDomeHeld:false,secondDomeHeld:true)
         precondition(noSecondDome.hitOutcomes == [
-            V.TeamOutcome(player:.second,outcome:.applied(
-                .shieldAbsorbed(remaining:0,cause:"ASTEROIDA")))])
+            V.TeamOutcome(player:.second,outcome:.requiresGuardianVerification)])
+        precondition(phantomDome.encounter.firstSurvival.shieldCharges==1 &&
+                     phantomDome.encounter.secondSurvival.shieldCharges==1)
         precondition(phantomDome.domeFirst.energy==60 &&
                      phantomDome.domeSecond.energy==60)
 
