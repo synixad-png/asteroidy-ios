@@ -81,11 +81,11 @@ import Foundation
         let shieldContact=contact(&shieldSector,&shieldFlight)
         precondition(shieldContact==1)
         let shieldHit=shieldLab.advance(dt:1/120,contacts:shieldContact,
-            sector:&shieldSector,flight:&shieldFlight)
-        precondition(shieldHit == .applied(
-            .shieldAbsorbed(remaining:0,cause:"ASTEROIDA")))
+            sector:&shieldSector,flight:&shieldFlight,tarczaHeld:true)
+        precondition(shieldHit == .activeTarczaAbsorbed)
         precondition(shieldLab.lives==3 && shieldLab.deathCount==0)
-        precondition(shieldLab.survival.invincible==1)
+        precondition(shieldLab.survival.shieldCharges==1 &&
+                     shieldLab.survival.invincible>=0.28)
         precondition(shieldLab.armor==25 && shieldLab.hull==60)
         var (guardSector,guardFlight)=create()
         var guardLab=PlanetDamageLab556(guardianOwned:true)
@@ -133,6 +133,6 @@ import Foundation
         precondition(domeLab.armor==7 && domeLab.hull==60 &&
                      domeLab.lives==3)
 
-        print("PASS: Boreas live Physics68 collision -> source 25 armor/60 hull -> 3 lives -> 4.5s respawn -> game over; purchased shield")
+        print("PASS PC608/609: Boreas damage, 3 lives, active held shield with untouched reserve, respawn, game over")
     }
 }
