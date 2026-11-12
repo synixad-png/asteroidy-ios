@@ -23,3 +23,7 @@ Oryginalny użytkownika ZIP, `Windows/src/Orbit50.cs`, SHA256 `8154038327fd78129
 ## Stan testów i ograniczenia
 
 Test Swift dotyczący formatu HUD uruchamiany jest w istniejącym workflow `verify-pc602-wreck-dock209.yml`. Kompilacja Swift/Metal i pozostałe kontrakty są nadal odrębne. **O05 W TOKU**: warunki pauzy, menu OPCJE i interaktywny atlas na urządzeniu nie zostały jeszcze odebrane. Nie ogłaszać zgodności 100% bez porównania rzeczywistego ekranu PC↔iOS.
+
+## 12.11.2026 — Klawisze kompaktowego atlasu zgodne z OrbitClick51
+
+Oryginalny `Windows/src/Orbit50.cs:92` `OrbitClick51` obsługuje kliknięcie w dowolny z 26 małych kafelków `OrbitHud330.Hit(x,y)` pod warunkiem `Mode==Orbit` i `MissionUnlocked50(n)`, **bez uruchamiania misji**. W iOS kompaktowa siatka w HUD pokazywała właściwe sektory, ale była nieinteraktywna (`.allowsHitTesting(false)`), w przeciwieństwie do PC. Poprawiono to bez zmiany szerokości kafelków, kolorów i siatki: każdy istniejący kafelek jest teraz przyciskiem wyłącznie do wyboru odblokowanego sektora podczas lotu. Nie dotyczy uruchamiania misji — do tego nadal służy oryginalny warunek wejścia. Duży atlas dotykowy pozostaje dostępny. Dodano kontrakt źródłowy sprawdzający zachowanie obu siatek i brak przełącznika blokującego obsługę dotyku. Test na rzeczywistym iPhonie/iPadzie należy przeprowadzić po utworzeniu IPA; O05 pozostaje W TOKU.

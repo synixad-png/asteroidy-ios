@@ -372,9 +372,9 @@ struct PC602HomeWorldPage291:View {
 
     // PC602 Orbit50.DrawOrbit50: unfilled navigation readouts over the
     // live world and a single contextual right-hand interaction key.
-    /// Read-only source OrbitHud330 persistent atlas at its original
-    /// upper-right virtual 1280x720 position; the actual selectable
-    /// touch atlas remains the existing accessible overlay.
+    /// Source OrbitHud330 compact tile display and OrbitClick51 hit-test:
+    /// each rendered, unlocked tile can directly select its SAME sector.
+    /// The large existing touch atlas remains available on small screens.
     private func compactAtlas330(scale:Float)->some View {
         let width:CGFloat=29*CGFloat(scale)
         let height:CGFloat=22*CGFloat(scale)
@@ -390,23 +390,35 @@ struct PC602HomeWorldPage291:View {
                                 sector,mask:driver.hud.completedMask)
                             let available=PC602HomeFlight291.unlocked(
                                 sector,mask:driver.hud.completedMask)
-                            Text(String(format:"%02d",sector))
-                                .font(.system(size:max(8,10*CGFloat(scale)),
-                                              weight:.bold,design:.monospaced))
-                                .foregroundStyle(sector==driver.hud.target
-                                    ? gold:cleared ? .green:available ? cyan : .gray)
-                                .frame(width:width,height:height)
-                                .background(cleared
-                                    ? Color(red:65/255,green:168/255,blue:139/255)
-                                        .opacity(174/255)
-                                    : available
-                                    ? Color(red:28/255,green:75/255,blue:98/255)
-                                        .opacity(170/255)
-                                    : Color(red:17/255,green:30/255,blue:43/255)
-                                        .opacity(165/255))
-                                .overlay(Rectangle().stroke(
-                                    sector==driver.hud.target ? cyan :
-                                    Color.clear,lineWidth:1))
+                            Button {
+                                // PC602 OrbitClick51: click selects ONLY
+                                // an unlocked tile while in Orbit mode.
+                                if !driver.paused && available {
+                                    _=driver.selectMission(sector)
+                                }
+                            } label: {
+                                Text(String(format:"%02d",sector))
+                                    .font(.system(size:max(8,10*CGFloat(scale)),
+                                                  weight:.bold,design:.monospaced))
+                                    .foregroundStyle(sector==driver.hud.target
+                                        ? gold:cleared ? .green:available ? cyan : .gray)
+                                    .frame(width:width,height:height)
+                                    .background(cleared
+                                        ? Color(red:65/255,green:168/255,blue:139/255)
+                                            .opacity(174/255)
+                                        : available
+                                        ? Color(red:28/255,green:75/255,blue:98/255)
+                                            .opacity(170/255)
+                                        : Color(red:17/255,green:30/255,blue:43/255)
+                                            .opacity(165/255))
+                                    .overlay(Rectangle().stroke(
+                                        sector==driver.hud.target ? cyan :
+                                        Color.clear,lineWidth:1))
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(!available || driver.paused)
+                            .accessibilityIdentifier(
+                                "pc602-orbit-compact-sector-\(sector)")
                         } else {
                             Color.clear.frame(width:width,height:height)
                         }
@@ -414,8 +426,6 @@ struct PC602HomeWorldPage291:View {
                 }
             }
         }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
         .accessibilityIdentifier("pc602-orbit-compact-26-atlas330")
     }
 

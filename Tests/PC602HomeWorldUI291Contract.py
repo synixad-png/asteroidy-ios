@@ -158,6 +158,22 @@ assert "selectedUnlocked:source330?.unlocked" in driver
 assert "completedMask:flight.completedMask" in driver
 assert "CampaignStore556.save(saved)" in driver
 assert "driver.selectMission(level)" in page
+# PC602 Windows/src/Orbit50.cs:92 OrbitClick51: compact atlas tiles
+# are clickable, select only available missions, never complete them.
+# The large modal remains the accessible alternative on phone.
+compact = page.split("private func compactAtlas330(",1)[1].split(
+    "private func statusText(",1)[0]
+assert "ForEach(0..<4,id:\\.self)" in compact
+assert "ForEach(0..<8,id:\\.self)" in compact
+assert "let sector=row*8+column+1" in compact
+assert "if sector<=26 {" in compact
+assert "driver.selectMission(sector)" in compact
+assert ".disabled(!available || driver.paused)" in compact
+assert 'pc602-orbit-compact-sector-' in compact
+assert ".allowsHitTesting(false)" not in compact
+assert ".accessibilityHidden(true)" not in compact
+assert "driver.selectMission(level)" in page
+
 assert "ForEach(1...26,id:\\.self)" in page
 assert 'accessibilityIdentifier("pc602-orbit-original-26-tile-atlas330")' in page
 assert "driver.hud.courseDegrees" in page
