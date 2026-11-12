@@ -22,8 +22,8 @@ enum PC602OrbitHud330 {
     }
     static func courseLabel(_ course:Float,unlocked:Bool)->String {
         guard unlocked else{return "KURS: NIEDOSTĘPNA"}
-        return "KURS: "+String(Int(abs(course)))+"° "+
-            (course<0 ? "W LEWO" : "W PRAWO")
+        let direction=course<0 ? "W LEWO" : "W PRAWO"
+        return "KURS: "+String(Int(abs(course)))+"° "+direction
     }
     private static func length(_ p:SIMD3<Float>)->Float {
         sqrt(p.x*p.x+p.y*p.y+p.z*p.z)
