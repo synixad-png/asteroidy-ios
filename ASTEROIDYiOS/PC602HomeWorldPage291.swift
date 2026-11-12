@@ -57,7 +57,8 @@ struct PC602HomeWorldPage291:View {
                     if showingAtlas330 {atlasPanel(screen:screen)}
                     if showingSaves61 {
                         PC602SaveSlots61View(
-                            allowSave:true,initialAction:loadingSave61 ? 1:0,
+                            allowSave:true,confirmActiveLoad:true,
+                            initialAction:loadingSave61 ? 1:0,
                             onSave:{driver.saveOrbitSlot61($0)},
                             onLoad:{ slot in
                                 // Source LoadSlot61 selects the saved game
