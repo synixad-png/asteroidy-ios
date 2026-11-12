@@ -67,6 +67,9 @@ struct PC602HomeScene291: UIViewRepresentable {
             let originalShip:SourceHomeVanguard431
             let originalSky:SourceCombatSky568
             let originalShots:SourceHomeShots292
+            let originalAtmosphere:PC602HomeAtmosphere47
+            let originalSignal:PC602HomeMissionSignal58
+            let glowEnabled:Bool
             let orbitVisualScale:Float
             let depth:MTLDepthStencilState
             let beaconDepth:MTLDepthStencilState
@@ -96,6 +99,9 @@ struct PC602HomeScene291: UIViewRepresentable {
                 // never duplicated inside W3's transparent globe preview.
                 originalSky=try SourceCombatSky568(device:device)
                 originalShots=try SourceHomeShots292(device:device)
+                originalAtmosphere=try PC602HomeAtmosphere47(device:device)
+                originalSignal=try PC602HomeMissionSignal58(device:device)
+                glowEnabled=SourcePlanetGraphicsSettings568.load().glowEnabled
                 orbitVisualScale=SourceShipScale472.load().orbitFactor
                 let originalBelt=try PC602OrbitBelt51.load()
                 belt=originalBelt
@@ -228,7 +234,16 @@ struct PC602HomeScene291: UIViewRepresentable {
                     glowPower:lava287.intensity)
                 // GpuShip.FighterLight(false) runs with OrbitWorld50.View
                 // active; GL_LIGHT0 is therefore EYE-space, as in PC602.
-                var light=Lighting(sourceKeyEye:SIMD4(-0.6,0.8,1.4,0))
+                // OrbitWorld50.SunDirection111 / LifeLighting52:
+                // one moving WORLD sun, transformed once to eye space as
+                // OpenGL glLight(GL_POSITION) did under OrbitWorld50.View.
+                let sunAngle:Float=0.62+max(0,flight.orbitTime)*0.047
+                let sourceSun=simd_normalize(SIMD3<Float>(
+                    cos(sunAngle),
+                    0.25+sin(sunAngle*0.33)*0.13,
+                    sin(sunAngle)))
+                let sunEye=viewMatrix*SIMD4<Float>(sourceSun,0)
+                var light=Lighting(sourceKeyEye:sunEye)
                 renderPass.colorAttachments[0].loadAction = .clear
                 renderPass.colorAttachments[0].clearColor =
                     MTLClearColor(red:0.012,green:0.021,blue:0.04,alpha:1)
@@ -266,6 +281,14 @@ struct PC602HomeScene291: UIViewRepresentable {
                     vertexStart:SourceNewHome290MetalAssets.terrainVertices,
                     vertexCount:SourceNewHome290MetalAssets.armorVertices)
 
+                // PC HomeFlight291 DrawAtmosphere47 warm #FF7441,
+                // original radius 130. No independent render loop/camera.
+                if glowEnabled {
+                    originalAtmosphere.draw(encoder:encoder,
+                        projection:projection,view:viewMatrix,
+                        camera:frame.eye)
+                }
+
                 // Exact PC602 GpuIntro41.DrawIntroBelt(orbital135:true):
                 // one immutable buffer, original 820 source-defined meshes,
                 // original conservative camera-frustum culling, true 3.2x
@@ -275,7 +298,7 @@ struct PC602HomeScene291: UIViewRepresentable {
                 let rockMV=viewMatrix*rockModel
                 var rockUniform=BeltUniforms(
                     mvp:projection*rockMV,modelView:rockMV,
-                    sourceLightEye:SIMD4(-0.6,0.8,1.4,0))
+                    sourceLightEye:sunEye)
                 encoder.setRenderPipelineState(beltPipeline)
                 encoder.setDepthStencilState(depth)
                 encoder.setVertexBuffer(beltBuffer,offset:0,index:0)
@@ -347,6 +370,14 @@ struct PC602HomeScene291: UIViewRepresentable {
                     encoder.drawPrimitives(type:.line,vertexStart:0,
                         vertexCount:PC602HomeBeacons291.levels * PC602HomeBeacons291.verticesPerLevel)
                 }
+                // Original VisualStyle58.MissionSignal58 (glow option only),
+                // a distinct source signal before the player's fighter.
+                if glowEnabled {
+                    originalSignal.draw(encoder:encoder,
+                        projection:projection,view:viewMatrix,
+                        flight:flight)
+                }
+
                 // Original HomeScene291 draws the source 4311 fighter AFTER
                 // beacons, with depth write and actual live DirectFlight298
                 // visual heading/roll/pitch (no ship-shaped impostor).
