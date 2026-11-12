@@ -1,0 +1,57 @@
+name: ASTEROIDY iOS - Bastion606 Apple arm64 compiler and source assets (NO IPA)
+on:
+  push:
+    branches: [feature/ios-bastion-pc609]
+    paths:
+      - '.github/workflows/verify-bastion606-apple-no-ipa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-source-bastion-iphone-ipad:
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage unchanged authentic PC602 game and HUD resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/verify_ios_inputs.py
+          python3 Tools/prepare_vanguard431_assets.py
+          python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/stage_pc602_planetarium.py
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Compile Apple iOS arm64 native Swift Metal SceneKit without IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          { echo "$GITHUB_SHA"; xcodebuild -version; xcrun --sdk iphoneos --show-sdk-version; } >reports/environment.txt
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/Bastion606Native" \
+            build >reports/xcodebuild-bastion606.log 2>&1 || {
+              grep -n -A 8 -B 2 -E 'error:|BUILD FAILED|failed' reports/xcodebuild-bastion606.log | tail -n 110 || true
+              tail -n 70 reports/xcodebuild-bastion606.log
+              exit 1
+            }
+          echo 'PASS Bastion606 original source iOS native arm64 Swift + Metal + SceneKit compilation (NO IPA)'
+      - name: Publish build evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-BASTION606-APPLE-COMPILE-NO-IPA
+          path: |
+            reports/environment.txt
+            reports/xcodebuild-bastion606.log
+          retention-days: 10
+          if-no-files-found: ignore
