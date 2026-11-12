@@ -23,7 +23,8 @@ import Foundation
         typealias V=CombatVerifiedHit556
         var shielded=setup()
         shielded.encounter.firstSurvival.shieldCharges=2
-        let active=shielded.step(dt:1/120,firstDomeHeld:true)
+        let active=shielded.step(dt:1/120,firstDomeHeld:true,
+                                 guardianFirst:.clear)
         precondition(active.contacts==[.shipRock(0)])
         precondition(active.hitOutcomes == [
             V.TeamOutcome(player:.first,outcome:.activeTarczaAbsorbed)])
@@ -89,27 +90,30 @@ import Foundation
                            guardianFirst:.clear,talentFirst:.clear)
         precondition(idle.contacts.isEmpty && idle.hitOutcomes.isEmpty)
         precondition(coop.domeFirst.energy==e)
-        // PC608 actual defenses, not .clear flags: held Tarcza145,
-        // one-charge Guardian37, then Talents78 armor/hull.
+        // Exact PC609 Game.Damage: Guardian37 first, then held
+        // Tarcza145, then Talents78 armor/hull (no passive reserves).
         var defended=setup()
         defended.encounter.firstSurvival.shieldCharges=1
         defended.firstGuardian=CombatGuardian37(owned:true)
         defended.firstVitals=CombatTalentVitals78()
         let purchased=defended.step(dt:1/120,firstDomeHeld:true)
         precondition(purchased.hitOutcomes == [
-            V.TeamOutcome(player:.first,outcome:.activeTarczaAbsorbed)])
+            V.TeamOutcome(player:.first,outcome:.guardianAbsorbed)])
         precondition(defended.encounter.firstSurvival.shieldCharges==1)
-        precondition(defended.firstGuardian!.charges==1)
+        precondition(defended.firstGuardian!.charges==0)
+        precondition(defended.domeFirst.energy>59 &&
+                     defended.domeFirst.energy<60)
         precondition(defended.firstVitals!.armor==25 &&
                      defended.firstVitals!.hull==60)
         defended.encounter.rocks=[]
         _=defended.step(dt:1.1)
         defended.encounter.first=body(640)
         defended.encounter.rocks=[rock()]
-        let guardianHit=defended.step(dt:1/120)
+        let guardianHit=defended.step(dt:1/120,firstDomeHeld:true)
         precondition(guardianHit.hitOutcomes == [
-            V.TeamOutcome(player:.first,outcome:.guardianAbsorbed)])
+            V.TeamOutcome(player:.first,outcome:.activeTarczaAbsorbed)])
         precondition(defended.firstGuardian!.charges==0)
+        precondition(defended.encounter.firstSurvival.shieldCharges==1)
         precondition(defended.firstVitals!.armor==25 &&
                      defended.firstVitals!.hull==60)
         defended.encounter.rocks=[]
@@ -581,13 +585,15 @@ import Foundation
         precondition(twoImpacts.contacts ==
                      [.shipRock(0),.partnerRock(1)])
         precondition(twoImpacts.hitOutcomes == [
-            V.TeamOutcome(player:.first,outcome:.activeTarczaAbsorbed),
+            V.TeamOutcome(player:.first,outcome:.guardianAbsorbed),
             V.TeamOutcome(player:.second,outcome:.activeTarczaAbsorbed)])
-        precondition(simultaneous.encounter.firstSurvival.shieldCharges==0 &&
-                     simultaneous.encounter.secondSurvival.shieldCharges==0)
-        precondition(simultaneous.domeFirst.energy==100 &&
-                     simultaneous.domeSecond.energy==100)
-        precondition(simultaneous.firstGuardian!.charges==1)
+        precondition(simultaneous.encounter.firstSurvival.shieldCharges==1 &&
+                     simultaneous.encounter.secondSurvival.shieldCharges==1)
+        precondition(simultaneous.domeFirst.energy>24 &&
+                     simultaneous.domeFirst.energy<25)
+        precondition(simultaneous.domeFirst.energy==
+                     simultaneous.domeSecond.energy)
+        precondition(simultaneous.firstGuardian!.charges==0)
         precondition(simultaneous.firstVitals!.armor==25 &&
                      simultaneous.firstVitals!.hull==60)
         precondition(simultaneous.encounter.firstSurvival.lives==3 &&
@@ -609,7 +615,8 @@ import Foundation
         // Windows Game.Step calls StepTarcza145 only ONCE for primary
         // input; Coop62.WithSecond62 does not swap its active/energy state.
         // Therefore the second ship's asteroid hits the SAME energy dome.
-        let activePartner=liveCoop.step(dt:1/120,firstDomeHeld:true)
+        let activePartner=liveCoop.step(dt:1/120,firstDomeHeld:true,
+                                            guardianSecond:.clear)
         precondition(activePartner.contacts == [.partnerRock(0)])
         precondition(activePartner.hitOutcomes == [
             V.TeamOutcome(player:.second,outcome:.activeTarczaAbsorbed)])
@@ -635,7 +642,9 @@ import Foundation
         // one global 60-point dome pool: first spends 35, second spends
         // remaining 25, both are intercepted without extra charges.
         var twoDomes=CombatVerifiedEncounter556(encounter:sharedFrameScene)
-        let bothActive=twoDomes.step(dt:1/120,firstDomeHeld:true)
+        let bothActive=twoDomes.step(dt:1/120,firstDomeHeld:true,
+                                        guardianFirst:.clear,
+                                        guardianSecond:.clear)
         precondition(bothActive.contacts ==
                      [.shipRock(0),.partnerRock(1)])
         precondition(bothActive.hitOutcomes == [
