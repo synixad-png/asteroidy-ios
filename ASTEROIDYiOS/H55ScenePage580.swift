@@ -182,8 +182,12 @@ import simd
         setMove(forward:0,right:0)
         // HubEquipShip369: reflect a newly equipped 6061 Bastion immediately
         // in the actual existing hangar. Do not replace on unsupported IDs.
-        if let current=playerShip,let replacement=H55PlayerShip580.make() {
-            current.removeFromParentNode()
+        let equipped=H55SourceMechanics580.load().selectedShip
+        let expected=equipped==2 ? H55PlayerShip580.bastionNodeName :
+                     equipped==1 ? H55PlayerShip580.nodeName : nil
+        if let expected,playerShip?.name != expected,
+           let replacement=H55PlayerShip580.make() {
+            playerShip?.removeFromParentNode()
             scene?.rootNode.addChildNode(replacement)
             playerShip=replacement
         }
