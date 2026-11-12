@@ -83,6 +83,8 @@ struct GameView: View {
     @State private var sourceSector01: Sector01Entry568?
     @State private var sourceSector01Setup: Sector01PreparedWave568?
     @State private var showingMissionIntro568 = false
+    // PC602 SaveManager61 checkpoint61: BeginLevelIntro before live combat.
+    @State private var missionCheckpoint61:PC602OrbitSave61.Snapshot?
     @State private var reopenAtlasAfterCarbonis = false
 
     // The player starts physical orbit from the actual W3 campaign page.
@@ -119,6 +121,14 @@ struct GameView: View {
     }
 
     private func beginMissionIntro568(sector:Int) {
+        // Source Intro41.BeginLevelIntro -> SaveManager61.RefreshCheckpoint61:
+        // capture BEFORE combat modifies lives, tokens or transient shots.
+        let sourceOrbit=homeWorld291.readFlight().flatMap {
+            PC602OrbitSave61.capture($0)
+        }
+        missionCheckpoint61=PC602OrbitSave61.captureMissionStart61(
+            level:sector,returnHome:returnHomeWorldAfterCarbonis291,
+            baseOrbit:sourceOrbit)
         // Only launch after original mission assets, shop and Wave()
         // preparation succeeded. Intro does not advance Physics68.
         missionIntroInput568.releaseHeldControls()
@@ -159,6 +169,72 @@ struct GameView: View {
         }
     }
 
+
+    /// PC602 SaveManager61.LoadSlot61 for Mode.Intro: restore campaign,
+    /// construct the source Wave(), then start BeginLevelIntro() from zero.
+    /// Never replay mutable battle frames or grant a completed-mission reward.
+    private func loadIntroCheckpoint61(_ state:PC602OrbitSave61.Snapshot)->Bool {
+        guard state.isMissionIntro61,
+              let difficulty=CombatBalance556.Difficulty(rawValue:state.difficultyRaw),
+              Sector01CarbonisPreview568.isAvailable else{return false}
+        let restored=CampaignProgress556(mask:state.completedMask,selectedSector:1)
+        guard let entry=Sector01Entry568.open(
+                  selectedSector:1,campaign:restored,hasOriginalC279Assets:true),
+              let prepared=Sector01PreparedWave568.prepare(
+                  entry:entry,campaign:restored,hasOriginalC279Assets:true,
+                  difficulty:difficulty,seed:Int32.random(in:0...Int32.max),
+                  currentLives:state.shop.lives,
+                  startingLives:SourceNewGame568.startingLives(difficulty:difficulty),
+                  shopProfile:state.shop)
+        else{return false}
+        if state.returnHome61 == true {
+            guard PC602HomeWorldDriver291.resourcesInstalled,
+                  (try? PC602NewHome290.load()) != nil,
+                  (try? PC602OrbitBelt51.load()) != nil else{return false}
+        }
+        guard SourceNewGame568.restoreOrbitProfile61(
+            runID:state.runID,completedMask:state.completedMask,
+            target:1,shop:state.shop,vitals:state.vitals,
+            mechanics:state.mechanics,difficultyRaw:state.difficultyRaw)
+        else{return false}
+        campaign=CampaignStore556.load()
+        if state.returnHome61 == true {
+            // A loaded Intro is not an orbital position checkpoint.
+            // Start real H290 solely for its later return after service.
+            guard (try? homeWorld291.start(progress:campaign)) != nil
+            else{return false}
+            homeWorld291.setSuspended(true)
+        }
+        sourceSector01=entry
+        sourceSector01Setup=prepared
+        returnHomeWorldAfterCarbonis291=state.returnHome61 == true
+        showingHomeWorld291=false
+        input.releaseHeldControls()
+        input.gameplayPaused=true
+        beginMissionIntro568(sector:1)
+        showMainMenu=true
+        return true
+    }
+
+    /// Shared W3/paused mission slot dispatcher.
+    private func loadManualSave61(_ slot:Int)->Bool {
+        guard let state=try? PC602OrbitSave61.read(slot:slot) else{return false}
+        if state.isMissionIntro61 {return loadIntroCheckpoint61(state)}
+        guard state.isOrbit61,homeWorld291.loadOrbitSlot61(slot) else{return false}
+        campaign=CampaignStore556.load()
+        sourceSector01=nil
+        sourceSector01Setup=nil
+        showingMissionIntro568=false
+        missionCheckpoint61=nil
+        returnHomeWorldAfterCarbonis291=false
+        input.releaseHeldControls()
+        input.gameplayPaused=true
+        homeWorld291.setPaused(false)
+        showingHomeWorld291=true
+        showMainMenu=false
+        audio.enterOrbit602()
+        return true
+    }
 
     private func inspectSourceSector(_ sector: Int) {
         guard let entry=Sector01Entry568.open(
@@ -210,6 +286,7 @@ struct GameView: View {
         sourceSector01Setup=nil
         returnHomeWorldAfterCarbonis291=false
         showingMissionIntro568=false
+        missionCheckpoint61=nil
         input.releaseHeldControls()
         input.gameplayPaused=true
         reopenAtlasAfterCarbonis=false
@@ -315,6 +392,15 @@ struct GameView: View {
                             || preparedWave.isReplay
                         sourceSector01Setup=retry
                         beginMissionIntro568(sector:sourceEntry.sector)
+                    },onSaveCheckpoint61:{ slot in
+                        guard let checkpoint=missionCheckpoint61,
+                              checkpoint.isMissionIntro61 else{return false}
+                        do {
+                            try PC602OrbitSave61.store(checkpoint,slot:slot)
+                            return true
+                        } catch {return false}
+                    },onLoadSave61:{slot in
+                        loadManualSave61(slot)
                     },preparedWave:preparedWave)
                     }
                 } else if showingHomeWorld291 {
@@ -355,18 +441,8 @@ struct GameView: View {
                     startNewGame:startNewGameFromW3,
                     openOrbit:enterHomeWorld291,
                     loadManualOrbit:{ slot in
-                         guard PC602OrbitSave61.exists(slot:slot),
-                               homeWorld291.loadOrbitSlot61(slot)
-                         else{return false}
-                         campaign=CampaignStore556.load()
-                         input.releaseHeldControls()
-                         input.gameplayPaused=true
-                         homeWorld291.setPaused(false)
-                         showingHomeWorld291=true
-                         showMainMenu=false
-                         audio.enterOrbit602()
-                         return true
-                     },
+                        loadManualSave61(slot)
+                    },
                      continueOrbit:{
                         // PC602 ContinueActive358: use a valid flight checkpoint
                         // when available; otherwise restart H290 from the
