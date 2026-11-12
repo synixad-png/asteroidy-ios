@@ -53,6 +53,8 @@ struct W3MainMenu568: View {
     let startNewGame: (SourceNewGameSelection568)->Bool
     let openOrbit:()->String?
     let loadManualOrbit:(Int)->Bool
+    let canSaveMenu61:Bool
+    let saveMenuSlot61:(Int)->Bool
     let continueOrbit:()->String?
     let restoreArchivedGame:(URL)->Bool
     @State private var restoreCandidate568:URL?
@@ -149,8 +151,8 @@ struct W3MainMenu568: View {
                 }
                 if showingManualSlots61 {
                     PC602SaveSlots61View(
-                        allowSave:false,initialAction:1,
-                        onSave:{_ in false},
+                        allowSave:canSaveMenu61,initialAction:1,
+                        onSave:saveMenuSlot61,
                         onLoad:loadManualOrbit,
                         onClose:{showingManualSlots61=false})
                         .zIndex(4)
