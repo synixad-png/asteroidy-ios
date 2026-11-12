@@ -48,6 +48,46 @@ final class PC602HomeWorldDriver291:ObservableObject {
         return body()
     }
 
+    /// PC602 Game.ShotIntervalBase97 / Modules97 for the only permitted
+    /// native H290 craft. This one canonical read serves W3 start,
+    /// H55 service return, Carbonis01 settlement and manual slot load.
+    private static func vanguardShotSettings291(
+        shop:Sector01Shop568.State,
+        mechanics:H55SourceMechanics580.State)
+        ->PC602HomeWeaponTest292.Settings? {
+        guard Sector01Shop568.validate(shop),mechanics.valid,
+              let gun=PC602HomeWeaponTest292.Weapon(rawValue:shop.weapon.rawValue)
+        else{return nil}
+        return PC602HomeWeaponTest292.Settings(
+            weapon:gun,upgrade:shop.upgradeLevel,
+            rapid:shop.rapidLevel,cooling:mechanics.cooling,
+            fireRateTalent:1/(1+0.06*Float(mechanics.rateRank)))
+    }
+
+    /// Preserve chosen Vanguard and actual H290 flight coordinates.
+    /// The canonical shop remains owner of bought weapon and modules;
+    /// no second simulated ship profile or recreated scene is introduced.
+    private func refreshVanguardShotSettings291() {
+        let shop=Sector01Shop568.load()
+        let mechanics=H55SourceMechanics580.load()
+        guard let settings=Self.vanguardShotSettings291(
+            shop:shop,mechanics:mechanics) else {
+            error="NIEPRAWIDŁOWY PROFIL UZBROJENIA PC602"
+            return
+        }
+        let controls=SourceControls586.Profile.load()
+        let current=withLock{()->(PC602HomeFlight291,PC602HomeWeaponTest292,Int)? in
+            guard var state=session else{return nil}
+            state.setWeaponSettings(settings)
+            state.adoptControls(controls)
+            session=state
+            return (state.flight,state.weapons,state.steppedFrames)
+        }
+        if let current {
+            hud=Self.measure(current.0,frames:current.2,weapons:current.1)
+        }
+    }
+
     static var resourcesInstalled:Bool {
         let b=Bundle.main
         func exists(_ name:String,_ ext:String)->Bool {
@@ -80,13 +120,9 @@ final class PC602HomeWorldDriver291:ObservableObject {
         if progress.unlocked(progress.selectedSector) {
             _=initial.selectMission(progress.selectedSector)
         }
-        let shop=Sector01Shop568.load()
-        if let gun=PC602HomeWeaponTest292.Weapon(rawValue:shop.weapon.rawValue),
-           let settings=PC602HomeWeaponTest292.Settings(
-                weapon:gun,upgrade:shop.upgradeLevel,
-                rapid:shop.rapidLevel,
-                cooling:H55SourceMechanics580.load().cooling,
-                fireRateTalent:1/(1+Float(H55SourceMechanics580.load().rateRank)*0.06)) {
+        if let settings=Self.vanguardShotSettings291(
+            shop:Sector01Shop568.load(),
+            mechanics:H55SourceMechanics580.load()) {
             initial.setWeaponSettings(settings)
         }
         let copy=initial.flight
@@ -139,11 +175,8 @@ final class PC602HomeWorldDriver291:ObservableObject {
                 home:home,equipment:equipment,
                 completedMask:state.completedMask,
                 controls:SourceControls586.Profile.load())
-            guard let gun=PC602HomeWeaponTest292.Weapon(rawValue:state.shop.weapon.rawValue),
-                  let gunSettings=PC602HomeWeaponTest292.Settings(
-                    weapon:gun,upgrade:state.shop.upgradeLevel,
-                    rapid:state.shop.rapidLevel,cooling:state.mechanics.cooling,
-                    fireRateTalent:1/(1+Float(state.mechanics.rateRank)*0.06))
+            guard let gunSettings=Self.vanguardShotSettings291(
+                shop:state.shop,mechanics:state.mechanics)
             else{error="NIEPOPRAWNE UZBROJENIE ZAPISU";return false}
             try replacement.restoreOrbit61(
                 position:SIMD3<Float>(state.position[0],state.position[1],state.position[2]),
@@ -356,6 +389,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
         }
         if result == .orbit {
             presentingH55=false
+            refreshVanguardShotSettings291()
             SourceHardwareInput586.shared.clearKeyboard()
         } else {
             error="Odrzucono nieprawidłowe wyjście H55"
@@ -379,6 +413,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
             return session?.flight
         }
         if let copy {hud=Self.measure(copy,frames:hud.physicalFrames)}
+        refreshVanguardShotSettings291()
     }
 
     func reportRendererError(_ message:String) {
