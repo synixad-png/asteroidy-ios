@@ -35,6 +35,7 @@ jobs:
             ASTEROIDYiOS/Sector01Shop568.swift \
             ASTEROIDYiOS/H55Workshop580.swift \
             ASTEROIDYiOS/H55SourceMechanics580.swift \
+            ASTEROIDYiOS/CombatTarcza145.swift \
             ASTEROIDYiOS/SourceNewGame568.swift \
             Tests/SourceNewGame568Tests.swift \
             -o /tmp/h11-profile-archive
