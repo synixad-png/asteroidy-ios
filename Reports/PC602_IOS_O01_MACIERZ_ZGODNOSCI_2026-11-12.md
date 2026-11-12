@@ -56,12 +56,12 @@ Kolumna „wniosek” rozróżnia: **ZGODNE STATYCZNIE** (zidentyfikowany orygin
 
 ## Stan O01 i warunki dalszego przejścia
 
-**O01: porównanie źródeł i mapowanie aktywnych ścieżek — WYKONANE; brak porównawczego testu liczbowego PC↔iOS oznacza, że nie wolno ogłosić zgodności mechaniki ani zamknąć etapów O02–O10.** Skontrolowano dokładny ZIP v602 i odciski plików C# oraz odpowiadające aktywne moduły Swift/Metal z przypisaniem konkretnych procedur. Macierz odróżnia rozbieżności od rzeczy niezweryfikowanych. Test regresyjny tożsamości źródeł: `Tests/PC602O01SourceBaseline.py`; w CI przy braku oryginalnego ZIP wymaga jawnego oznaczenia, że potwierdzono tylko iOS, nie pełną zgodność.
+**O01: ODEBRANE W ZAKRESIE AUDYTU ŹRÓDŁOWEGO; brak porównawczego testu liczbowego PC↔iOS oznacza, że nie wolno ogłosić zgodności mechaniki ani zamknąć etapów O02–O10.** Skontrolowano dokładny ZIP v602 i odciski plików C# oraz odpowiadające aktywne moduły Swift/Metal z przypisaniem konkretnych procedur. Macierz odróżnia rozbieżności od rzeczy niezweryfikowanych. Test regresyjny tożsamości źródeł: `Tests/PC602O01SourceBaseline.py`; w CI przy braku oryginalnego ZIP wymaga jawnego oznaczenia, że potwierdzono tylko iOS, nie pełną zgodność.
 
 **Status harmonogramu O01–O12 pozostaje w tej samej kolejności i zakresie**:
 | ID | Zadanie | Stan | Co faktycznie zmieniono | Dowód testu / blokada |
 |---|---|---|---|---|
-| O01 | Audyt bazowy PC v602 ↔ obecny port | **W TOKU DO ODBIORU** | Ta macierz i odciski źródeł; bez zmian mechaniki | ZIP i źródła skontrolowane; test narzędzia/CI do odnotowania |
+| O01 | Audyt bazowy PC v602 ↔ obecny port | **ODEBRANE — AUDYT ŹRÓDŁOWY** | Macierz i odciski źródeł; bez zmian mechaniki | Oryginalny ZIP SHA + 19 oryginalnych kotwic w 6 plikach PASS (lokalnie); źródłowy etap GitHub CI 43188906340 PASS; pełna kompilacja w osobnym statusie |
 | O02 | Lot i sterowanie VANGUARDA na H290 | W TOKU (stary kod) | Bez zmian w O01 | brak pomiarów PC↔iOS |
 | O03 | Strzelnica H290 i uzbrojenie VANGUARDA | W TOKU (stary kod) | Bez zmian w O01 | rozbieżność jonów |
 | O04 | Oryginalny świat H290 | W TOKU (stary kod) | Bez zmian w O01 | niepełne opcje nieba; brak testu GPU |
@@ -74,4 +74,4 @@ Kolumna „wniosek” rozróżnia: **ZGODNE STATYCZNIE** (zidentyfikowany orygin
 | O11 | Regresja integracyjna i ochrona zatwierdzonych systemów | NIE ROZPOCZĘTE W ZAKRESIE O11 | Bez zmian | końcowe E2E |
 | O12 | Odbiór wydania iOS / IPA | NIE ROZPOCZĘTE W ZAKRESIE O12 | Bez zmian | odbiór na urządzeniu |
 
-Następna dozwolona praca: zakończyć odbiór źródłowego O01; po jego zamknięciu przejść do O02 w niezmienionej kolejności.
+Następna dozwolona praca: **O02 — Lot i sterowanie VANGUARDA na H290** w niezmienionej kolejności. O01 nie dowodzi jeszcze pełnej zgodności runtime ani obrazu.
