@@ -28,7 +28,7 @@ import Foundation
         precondition(V.hit(cause:"ASTEROIDA",level:9,difficulty:.normal,
             player:.first,survival:&survival,body:&ship,dome:&dome,
             rescue:&rescue,cooperative:false,developerInfinite:false,
-            guardian:.unverified,talent:.unverified) == .activeTarczaAbsorbed)
+            guardian:.clear,talent:.unverified) == .activeTarczaAbsorbed)
         precondition(survival.shieldCharges==2)
         precondition(survival.lives==3 && survival.invincible>=0.28)
         survival.invincible=0
