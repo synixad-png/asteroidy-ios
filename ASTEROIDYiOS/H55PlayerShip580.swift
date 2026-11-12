@@ -79,7 +79,7 @@ import simd
               let image=UIImage(data:asset.jpeg)
         else{throw Error.missing}
         guard let result=geometry(asset.mesh,image:image,
-             name:"Bastion606_PC609_GLTF_BaseColor",baseFactor:0.8)
+             name:"Bastion606_PC609_GLTF_BaseColor",baseFactor:1)
         else{throw Error.notTriangles}
         return result
     }
