@@ -12,6 +12,29 @@ struct SourceTarcza145 {
     static let drainPerSecond:Float = 12
     static let impactCost:Float = 35
 
+    /// Persistent active-bar charge is a checkpoint value, not a second
+    /// live shield. Saved separately from the unchanged 3/3 shop inventory.
+    static let persistentKey="asteroidy.ios.pc608.tarcza-energy145"
+
+    static func loadPersistentEnergy(defaults:UserDefaults = .standard)->Float {
+        guard let value=defaults.object(forKey:persistentKey) as? NSNumber,
+              value.floatValue.isFinite,
+              (0...maximum).contains(value.floatValue)
+        else{return initial}
+        return value.floatValue
+    }
+
+    @discardableResult
+    static func savePersistentEnergy(_ value:Float,
+                                      defaults:UserDefaults = .standard)->Bool {
+        guard value.isFinite,(0...maximum).contains(value) else{return false}
+        defaults.set(Double(value),forKey:persistentKey)
+        return true
+    }
+    static func resetPersistentEnergy(defaults:UserDefaults = .standard) {
+        defaults.removeObject(forKey:persistentKey)
+    }
+
     var energy:Float = initial
     var active=false
     var flash:Float=0
