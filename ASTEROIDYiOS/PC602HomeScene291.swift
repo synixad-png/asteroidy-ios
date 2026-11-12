@@ -64,7 +64,7 @@ struct PC602HomeScene291: UIViewRepresentable {
             let belt:PC602OrbitBelt51
             let beltBuffer:MTLBuffer
             let originalWreck:SourceHomeWreck209
-            let originalShip:SourceHomeVanguard431
+            private var originalShip:SourceHomeVanguard431
             let originalSky:SourceCombatSky568
             let originalShots:SourceHomeShots292
             let projectileLights:PC602HomeProjectileLights296
@@ -100,7 +100,8 @@ struct PC602HomeScene291: UIViewRepresentable {
                 // Shares the existing source-verified full hull generator;
                 // never invent a second partial GLB or duplicate debris.
                 originalWreck=try SourceHomeWreck209(device:device)
-                originalShip=try SourceHomeVanguard431(device:device)
+                originalShip=try SourceHomeVanguard431(device:device,
+                     shipType:H55SourceMechanics580.load().selectedShip)
                 // Reuse GpuIntro41.IntroSky for BOTH original CARBONIS
                 // and H290: clouds, 3 planets, black hole, stars and sun.
                 // This cache is only created for the actual 3D world,
@@ -419,6 +420,16 @@ struct PC602HomeScene291: UIViewRepresentable {
                 // Original HomeScene291 draws the source 4311 fighter AFTER
                 // beacons, with depth write and actual live DirectFlight298
                 // visual heading/roll/pitch (no ship-shaped impostor).
+                // HubEquipShip369 can change VANGUARD <-> BASTION on
+                // return from H55. Swap only the immutable source mesh/
+                // texture, preserving flight, orbit camera and HUD state.
+                // Never silently draw Vanguard when Bastion is selected.
+                let equipped=flight.equipment.craft.rawValue
+                if originalShip.shipType != equipped,
+                   let replacement=try? SourceHomeVanguard431(
+                       device:device,shipType:equipped) {
+                    originalShip=replacement
+                }
                 originalShip.draw(encoder:encoder,flight:flight,
                     projection:projection,view:viewMatrix,
                     orbitScale:orbitVisualScale)
