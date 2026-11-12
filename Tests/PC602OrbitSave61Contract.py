@@ -75,7 +75,15 @@ assert 'sourceKeyEye:sunEye' in world
 assert world.count('onProjectiles?() ?? []')==1
 assert 'if sector==1 {onEnterMission(sector)}' in page
 assert 'guard level==1,sourceSector01==nil' in app
-assert 'let equipment=PC602HomeFlight291.Equipment(craft:.vanguard)' in driver
+# The only authorized craft remains Vanguard; the PC602 original
+# Campaign37/Modules97 ranks now come from the canonical H55 source state.
+assert 'private static func vanguardEquipment291(' in driver
+assert 'craft:.vanguard,' in driver
+assert 'engineLevel:state.engine' in driver
+assert 'thrusterRank:state.thruster' in driver
+assert 'stabilizerLevel:state.stabilizer' in driver
+assert 'let equipment=Self.vanguardEquipment291(state.mechanics)' in driver
+assert 'state.adoptVanguardEquipment(equipment)' in driver
 assert 'func enterOrbit602()' in read("OriginalAudioAV568.swift")
 assert "planetarium.glb" in (root/".github/workflows/build-ios-pc602-h290-user-test-ipa-20261112.yml").read_text()
 print("PASS H290: source-locked 3 slots, resume, pulse-gun timing, atlas, light/atmosphere and invariant Carbonis01/Vanguard/planetarium")
