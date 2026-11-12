@@ -23,6 +23,10 @@ for required in (
     'onExitToW3()',
 ):
     assert required in page, required
+# Entering save/load from OPCJE must not leave the pilot frozen.
+assert 'restorePaused:previouslyPausedOptions291' in page
+assert 'previouslyPaused61=restorePaused ?? driver.paused' in page
+assert 'driver.setPaused(previouslyPaused61)' in page
 assert 'let onExitToMainMenu:()->Void' in mission
 assert 'self.onExitToMainMenu=onExitToMainMenu' in mission
 exit_body=mission.split('private func exitMission568() {',1)[1].split(
