@@ -50,7 +50,9 @@ assert 'minHeight:compact ? 50 : 54' in settings
 assert 'visible=try data.decodeIfPresent(Bool.self,forKey:.visible) ?? true' in layout
 assert 'static let ids=legacyIDs+[' in layout
 assert 'Set(Self.legacyIDs)' in layout
-assert 'static func hit(point:CGPoint,frames:[String:CGRect],layout:Self)->String?' in layout
+assert 'static func hit(x:Double,y:Double,' in layout
+assert 'struct Rect:Equatable' in layout
+assert 'PC602OrbitHUDLayout291.hit(' in editor
 assert 'Self.scaleRange(for:$0.id).contains($0.scale)' in layout
 for key in ("hud.mission.heading","hud.mission.distance","hud.telemetry.speed",
             "hud.dock.status","hud.navigation.label","hud.warning","hud.error"):
