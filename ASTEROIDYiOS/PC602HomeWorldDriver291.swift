@@ -215,7 +215,8 @@ final class PC602HomeWorldDriver291:ObservableObject {
                 runID:state.runID,completedMask:state.completedMask,
                 target:state.target,shop:state.shop,vitals:state.vitals,
                 mechanics:state.mechanics,difficultyRaw:state.difficultyRaw,
-                 archiveExisting:slot != nil)
+                tarczaEnergy145:state.tarczaEnergy145,
+                archiveExisting:slot != nil)
             else{error="NIE MOŻNA ZARCHIWIZOWAĆ PROFILU";return false}
             let flight=replacement.flight
             withLock {
@@ -433,6 +434,9 @@ final class PC602HomeWorldDriver291:ObservableObject {
                 touchAim=Vec2(x:0,y:0)
                 touchFire=false
             }
+            // PC v608 EnterHub90 restores the ACTIVE bar to 100 for
+            // free, preserving the bought 0...3 full reserve bars.
+            _=SourceTarcza145.savePersistentEnergy(100)
             presentingH55=true
             SourceHardwareInput586.shared.clearKeyboard()
         }
