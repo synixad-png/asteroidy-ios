@@ -8,6 +8,25 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
         var x:Double
         var y:Double
         var scale:Double
+        var visible:Bool
+
+        init(id:String,x:Double=0,y:Double=0,scale:Double=1,
+             visible:Bool=true) {
+            self.id=id;self.x=x;self.y=y;self.scale=scale
+            self.visible=visible
+        }
+        private enum CodingKeys:String,CodingKey {
+            case id,x,y,scale,visible
+        }
+        // Existing H290 layouts predating visibility remain readable.
+        init(from decoder:Decoder)throws {
+            let data=try decoder.container(keyedBy:CodingKeys.self)
+            id=try data.decode(String.self,forKey:.id)
+            x=try data.decode(Double.self,forKey:.x)
+            y=try data.decode(Double.self,forKey:.y)
+            scale=try data.decode(Double.self,forKey:.scale)
+            visible=try data.decodeIfPresent(Bool.self,forKey:.visible) ?? true
+        }
     }
     static let ids=[
         "hud.mission","hud.telemetry","hud.atlas-grid","hud.dock",
@@ -20,7 +39,7 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
     var elements:[Element]
 
     static func defaults()->Self {
-        Self(elements:ids.map{Element(id:$0,x:0,y:0,scale:1)})
+        Self(elements:ids.map{Element(id:$0)})
     }
     var valid:Bool {
         schema==1 && elements.count==Self.ids.count &&
@@ -37,13 +56,20 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
               data.valid else {return .defaults()}
         return data
     }
+    static func decodeJSON(_ bytes:Data)throws->Self {
+        let value=try JSONDecoder().decode(Self.self,from:bytes)
+        guard value.valid else {throw LayoutError.invalid}
+        return value
+    }
+    enum LayoutError:Error {case invalid}
+
     @discardableResult func save(defaults:UserDefaults = .standard)->Bool {
         guard valid,let data=try? JSONEncoder().encode(self) else{return false}
         defaults.set(data,forKey:Self.key)
         return true
     }
     func item(_ id:String)->Element {
-        elements.first{$0.id==id} ?? Element(id:id,x:0,y:0,scale:1)
+        elements.first{$0.id==id} ?? Element(id:id)
     }
     mutating func change(_ id:String,_ edit:(inout Element)->Void) {
         guard let index=elements.firstIndex(where:{$0.id==id}) else{return}
@@ -59,7 +85,7 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
         case "hud.dock":return "HUD / INFORMACJE HANGARU"
         case "hud.entry-label":return "HUD / OPIS WEJŚCIA"
         case "hud.navigation":return "HUD / STRZAŁKA NAWIGACYJNA"
-        case "control.options":return "PRZYCISK / OPCJE"
+        case "control.options":return "PRZYCISK / PAUZA (GÓRA)"
         case "control.atlas":return "PRZYCISK / ATLAS"
         case "control.next":return "PRZYCISK / CEL +"
         case "control.pause":return "PRZYCISK / PAUZA"
