@@ -16,6 +16,8 @@ struct Sector01Scene568: View {
     let onMissionPause:(Bool)->Void
     let onMissionPhase:(CarbonisCombat568.Phase)->Void
     let onReplay:()->Void
+    let onSaveCheckpoint61:(Int)->Bool
+    let onLoadSave61:(Int)->Bool
     let preparedWave:Sector01PreparedWave568
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var session:CarbonisSession568
@@ -24,6 +26,7 @@ struct Sector01Scene568: View {
     // Windows v568 Game.Mode.Paused / PausedFrom=Playing:
     // user pause is independent from an iOS lock-screen suspension.
     @State private var userPaused=false
+    @State private var showingSaveSlots61=false
     @State private var showingMissionSettings568=false
     @State private var showingHudEditor600=false
     @State private var hudEditorOriginal600:HudLayout600?
@@ -45,6 +48,8 @@ struct Sector01Scene568: View {
          onMissionPause:@escaping (Bool)->Void = {_ in},
          onMissionPhase:@escaping (CarbonisCombat568.Phase)->Void = {_ in},
          onReplay:@escaping ()->Void = {},
+         onSaveCheckpoint61:@escaping (Int)->Bool = {_ in false},
+         onLoadSave61:@escaping (Int)->Bool = {_ in false},
          preparedWave:Sector01PreparedWave568) {
         self.entry=entry
         self.returnToAtlas=returnToAtlas
@@ -56,6 +61,8 @@ struct Sector01Scene568: View {
         self.onMissionPause=onMissionPause
         self.onMissionPhase=onMissionPhase
         self.onReplay=onReplay
+        self.onSaveCheckpoint61=onSaveCheckpoint61
+        self.onLoadSave61=onLoadSave61
         self.preparedWave=preparedWave
         _session=StateObject(wrappedValue:CarbonisSession568(prepared:preparedWave))
     }
@@ -433,6 +440,14 @@ struct Sector01Scene568: View {
                             x:CGFloat((hudControlLayout600.control("control.options")?.x ?? 0)*combatHUDLayout.scale),
                             y:CGFloat((hudControlLayout600.control("control.options")?.y ?? 0)*combatHUDLayout.scale))
                         .accessibilityIdentifier("sector01-open-mission-settings")
+                        // SaveManager61.SaveSlot61 in Playing stores the
+                        // verified Mode.Intro checkpoint, not a battle frame.
+                        Button("ZAPISY / 3 SLOTY") {
+                            showingSaveSlots61=true
+                        }
+                        .accessibilityIdentifier("sector01-source-saves61")
+                        .frame(maxWidth:.infinity)
+                        .padding(compact ? 9:13)
                         Button("KONTYNUUJ") {resumeMission568()}
                             .frame(maxWidth:.infinity)
                             .padding(compact ? 9:13)
@@ -460,6 +475,16 @@ struct Sector01Scene568: View {
                     .overlay(RoundedRectangle(cornerRadius:12)
                         .stroke(Color(red:0.24,green:0.38,blue:0.44),lineWidth:1))
                     .accessibilityIdentifier("sector01-source-pause-overlay")
+                }
+                if showingSaveSlots61 && userPaused &&
+                    session.hud.phase == .playing {
+                    PC602SaveSlots61View(
+                        allowSave:true,initialAction:0,
+                        onSave:onSaveCheckpoint61,
+                        onLoad:onLoadSave61,
+                        onClose:{showingSaveSlots61=false})
+                        .zIndex(42)
+                        .accessibilityIdentifier("sector01-source-checkpoint-save61")
                 }
                 // W3 settings use the same 17-category panel as the main menu.
                 // Opening the Interface editor never unpauses the mission.
