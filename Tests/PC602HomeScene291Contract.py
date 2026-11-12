@@ -123,6 +123,18 @@ assert "let cores=SourceSkyAssetFactory568.sphereSky207WithGlow(false)" in sky
 assert "glow ? starBuffer : starCoreBuffer" in sky
 assert "vertexCount:glow ? starCount : starCoreCount" in sky
 assert "worldScale:SphereCameraView556.originalPlanetOuterRadius" in world
+# GpuIntro41.cs:454 optional TWO solar halos, mandatory core + 5 rays.
+# The immutable source solar VBO is unchanged: a draw offset skips just
+# 12 vertices when glow=false (not all 18 halo vertices or five rays).
+sphere=read("Sphere67.swift")
+assert "appendHalo(&out,radius:130" in sphere
+assert "appendHalo(&out,radius:55" in sphere
+assert "appendHalo(&out,radius:15" in sphere
+assert "static let rayCount = 5" in sphere
+assert "let solarFirst=glow ? 0 : 2*6" in sky
+assert "vertexStart:solarFirst" in sky
+assert "vertexCount:solarCount-solarFirst" in sky
+
 
 assert "let glowEnabled:Bool" not in world
 

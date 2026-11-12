@@ -256,9 +256,15 @@ final class SourceCombatSky568 {
                 &solarUniform,
                 length:MemoryLayout<SIMD4<Float>>.stride,index:1)
             encoder.setFragmentTexture(sphereHaloTexture,index:0)
+            // GpuIntro41.cs:454: if(glow) TWO IntroHalo layers
+            // (130px and 55px = 6 vertices each), followed by the
+            // ALWAYS visible 15px core and five SoftRay passes.
+            // Omitting ONLY the first 12 vertices preserves the same
+            // immutable source GPU buffer and original painter order.
+            let solarFirst=glow ? 0 : 2*6
             encoder.drawPrimitives(
-                type:.triangle,vertexStart:0,
-                vertexCount:solarCount)
+                type:.triangle,vertexStart:solarFirst,
+                vertexCount:solarCount-solarFirst)
         }
 
     }

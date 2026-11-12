@@ -24,3 +24,9 @@ Oryginalny PC v602 `Windows/src/GpuIntro41.cs:452`: wszystkie gwiazdy otrzymują
 Poprawka: zachowano niezmienioną funkcję wyjściową i wszystkie współrzędne `SpaceRand207`, a obok dodano raz konstruowany wariant `sphereSky207(glow:false)` obejmujący wyłącznie 1500 podstawowych gwiazd. `SourceCombatSky568` wybiera bufor zgodnie z aktualną opcją GLOW, bez dodatkowego przeliczania co klatkę, bez zmiany shaderów ani istniejącego renderera Carbonis01. GLOW włączony zachowuje dotychczasowe bajty i kolejność punktów.
 
 Test `PC602HomeScene291Contract.py` sprawdza ten warunek w kodzie. **To poprawka warunku z oryginału, nie potwierdzenie widoczności gwiazd na fizycznym GPU iPhone.** Zgodność 2D `SkyProject55`/Metal oraz oddzielne obrazy na urządzeniu nadal należą do O04.
+
+## 12.11.2026 — Oryginalny warunek GLOW dla słońca
+
+W PC v602 `Windows/src/GpuIntro41.cs:454` warunek `if(glow)` obejmuje dokładnie dwie duże aureole słoneczne o promieniach 130 i 55 (po jednym oryginalnym `IntroHalo`, 6 wierzchołków). Jasny rdzeń o promieniu 15 oraz pięć `SoftRay` są wykonywane nawet przy GLOW=false. Port H290 dotąd zawsze rysował pełny `SphereSolarOverlay556.vertices()`, łącznie z dwiema warunkowymi aureolami.
+
+Poprawka dotyczy **wyłącznie** wywołania istniejącego renderera nieba `SourceCombatSky568.draw`: `vertexStart = glow ? 0 : 12`, `vertexCount = solarCount - vertexStart`. Zasoby, słońce, 5 źródłowych promieni, tekstura StarTexture, shader i wydajny statyczny bufor pozostają niezmienione. Włączony GLOW zachowuje wcześniejszy rendering. Dodano statyczny kontrakt w `PC602HomeScene291Contract.py`; wymagana jest ponowna kompilacja Swift/Metal, bez deklaracji testu GPU urządzenia.
