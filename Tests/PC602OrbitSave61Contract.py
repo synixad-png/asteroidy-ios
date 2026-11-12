@@ -74,5 +74,5 @@ assert 'if sector==1 {onEnterMission(sector)}' in page
 assert 'guard level==1,sourceSector01==nil' in app
 assert 'let equipment=PC602HomeFlight291.Equipment(craft:.vanguard)' in driver
 assert 'func enterOrbit602()' in read("OriginalAudioAV568.swift")
-assert '"planetarium.glb"' in (root/".github/workflows/build-ios-pc602-h290-user-test-ipa-20261112.yml").read_text()
+assert "planetarium.glb" in (root/".github/workflows/build-ios-pc602-h290-user-test-ipa-20261112.yml").read_text()
 print("PASS H290: source-locked 3 slots, resume, pulse-gun timing, atlas, light/atmosphere and invariant Carbonis01/Vanguard/planetarium")
