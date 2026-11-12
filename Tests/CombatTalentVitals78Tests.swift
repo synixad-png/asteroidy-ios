@@ -40,14 +40,16 @@ import Foundation
         upgraded.reset()
         precondition(upgraded.hull==90 && upgraded.armor==40)
 
-        // End-to-end source flow: purchased shield -> vitals armor ->
-        // vitals hull -> Game.Damage life and full vitals reset.
+        // End-to-end PC608/609 source flow: held Tarcza -> vitals
+        // armor -> hull -> Game.Damage life and full vitals reset.
         var survival=CombatSurvival96(),dome=CombatTarcza145()
         var rescue=CombatRescue65()
         var player=CombatBody68(position:Vec2(x:640,y:360),
             velocity:Vec2(x:0,y:0),mass:2.4,radius:11.2)
         let gauge=CombatTalentVitals78()
         survival.shieldCharges=1
+        dome.tick(dt:1/120,held:true,playing:true,shipDown:false,
+                  reserve:&survival.shieldCharges)
         func collide() -> CombatVerifiedHit556.Outcome {
             CombatVerifiedHit556.hit(cause:"ASTEROIDA",
                 level:1,difficulty:.normal,player:.first,
@@ -55,10 +57,12 @@ import Foundation
                 cooperative:false,developerInfinite:false,
                 guardian:.clear,talent:.unverified,vitals:gauge)
         }
-        precondition(collide() == .applied(.shieldAbsorbed(
-            remaining:0,cause:"ASTEROIDA")))
-        precondition(gauge.armor==25 && gauge.hull==60)
+        precondition(collide() == .activeTarczaAbsorbed)
+        precondition(survival.shieldCharges==1 &&
+                     gauge.armor==25 && gauge.hull==60)
         survival.advance(dt:1)
+        dome.tick(dt:1,held:false,playing:true,shipDown:false,
+                  reserve:&survival.shieldCharges)
         precondition(collide() == .talentAbsorbed)
         precondition(gauge.armor==7 && gauge.hull==60)
         // This hit starts after the .85s of protection expires.
