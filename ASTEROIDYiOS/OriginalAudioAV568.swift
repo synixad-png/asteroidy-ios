@@ -99,7 +99,7 @@ final class OriginalAudioAV568: ObservableObject {
     @Published private(set) var backgroundPrepared = 0
     @Published private(set) var missingAssets: [String] = []
 
-    private enum Context { case menu, mission(Int), diagnostic }
+    private enum Context { case menu, orbit, mission(Int), diagnostic }
     private var context: Context = .menu
     private var settings = OriginalAudioSettings568.load()
     private var music: AVAudioPlayer?
@@ -114,6 +114,7 @@ final class OriginalAudioAV568: ObservableObject {
     // Windows/src/BossTunnelGame.cs PausedFrom=Playing is independent
     // of iOS background suspension. MusicAudio.cs ducks music to 55%.
     private var missionUserPaused=false
+    private var orbitUserPaused=false
     private var missionPhase:CarbonisCombat568.Phase = .playing
     private var masterMusicVolume:Float {
         Float(settings.musicPercent)/100*0.8*musicDuck
@@ -197,6 +198,7 @@ final class OriginalAudioAV568: ObservableObject {
                 if !previewStopped {playTrack(previewActive ? (pendingPreviewIndex ?? lastPreviewIndex) : 0)}
             case .mission(let sector):
                 playTrack(missionPhase == .playing ? OriginalAudioCatalog568.missionTrack(sector) : 0)
+            case .orbit:playTrack(0)
             case .diagnostic:break
             }
         }
@@ -465,11 +467,49 @@ final class OriginalAudioAV568: ObservableObject {
         enterMission(sector)
     }
 
+    /// PC602 MusicAudio.TrackFor(Mode.Orbit)=0, engine at .32 idle,
+    /// .70 side-thrust or 1.0 thrust, original CombatSound(10+Weapon).
+    /// Do not synthesize a second score or start the combat track.
+    func enterOrbit602() {
+        intro43Player?.stop()
+        intro43Player=nil
+        introMissionSector568=nil
+        missionUserPaused=false
+        orbitUserPaused=false
+        previewStopped=false
+        previewActive=false
+        pendingPreviewIndex=nil
+        musicDuck=1
+        context = .orbit
+        engineLevel52=0.32
+        musicGate.setAllowed(false)
+        if !suspended && reactivateAudioSession568() {
+            enginePlayback52.setPower(engineLevel52,
+                effectsVolume:Float(settings.effectsPercent)/100)
+            enginePlayback52.start()
+            playTrack(0)
+        }
+    }
+    func orbitPause602(_ paused:Bool) {
+        guard case .orbit=context else{return}
+        orbitUserPaused=paused
+        musicDuck=paused ? 0.55 : 1
+        musicGate.setAllowed(paused && !suspended)
+        if fadeTimer != nil {updateMusicFade()}
+        else {music?.volume=masterMusicVolume}
+        if paused {
+            enginePlayback52.stop()
+        } else {
+            restoreAudioAfterActivation568(rebuildPlayer:false)
+        }
+    }
+
     func returnToMenu() {
         intro43Player?.stop()
         intro43Player=nil
         introMissionSector568=nil
         missionUserPaused=false
+        orbitUserPaused=false
         musicGate.setAllowed(!suspended)
         previewStopped=false
         previewActive=false
@@ -484,6 +524,7 @@ final class OriginalAudioAV568: ObservableObject {
     func enterMission(_ sector: Int) {
         guard (1...26).contains(sector) else { return }
         missionUserPaused=false
+        orbitUserPaused=false
         musicGate.setAllowed(false)
         previewStopped=false
         previewActive=false
@@ -634,8 +675,13 @@ final class OriginalAudioAV568: ObservableObject {
         // primes DSP buffers; defer this until the source song is started
         // to minimise the brief silence after unlocking the iPad.
         defer {
-            if case .mission = context, missionPhase == .playing && !missionUserPaused &&
-                introMissionSector568 == nil {
+            let engineAllowed:Bool
+            switch context {
+            case .orbit:engineAllowed = !orbitUserPaused
+            case .mission:engineAllowed = missionPhase == .playing && !missionUserPaused
+            default:engineAllowed = false
+            }
+            if engineAllowed && introMissionSector568 == nil {
                 enginePlayback52.setPower(engineLevel52,
                     effectsVolume:Float(settings.effectsPercent)/100)
                 enginePlayback52.start()
@@ -687,6 +733,7 @@ final class OriginalAudioAV568: ObservableObject {
             case .mission(let sector):
                 playTrack(missionPhase == .playing ?
                     OriginalAudioCatalog568.missionTrack(sector) : 0)
+            case .orbit:playTrack(0)
             case .diagnostic: break
             }
         }
@@ -721,6 +768,8 @@ final class OriginalAudioAV568: ObservableObject {
         switch context {
         case .mission:
             musicGate.setAllowed(active && missionPhase != .playing)
+        case .orbit:
+            musicGate.setAllowed(active && orbitUserPaused)
         case .menu,.diagnostic:
             musicGate.setAllowed(active)
         }
@@ -739,7 +788,13 @@ final class OriginalAudioAV568: ObservableObject {
     }
     func sourceEnginePower(_ raw:Float) {
         engineLevel52=missionUserPaused ? 0 : max(0,min(1,raw))
-        if case .mission = context, !suspended {
+        let enabled:Bool
+        switch context {
+        case .mission:enabled = !missionUserPaused
+        case .orbit:enabled = !orbitUserPaused
+        default:enabled = false
+        }
+        if enabled && !suspended {
             enginePlayback52.setPower(engineLevel52,
                 effectsVolume:Float(settings.effectsPercent)/100)
         }

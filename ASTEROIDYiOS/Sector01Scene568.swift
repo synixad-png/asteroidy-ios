@@ -139,23 +139,6 @@ struct Sector01Scene568: View {
         .accessibilityIdentifier("sector01-settings-fullscreen")
     }
 
-    private var movement:some Gesture {
-        DragGesture(minimumDistance:0).onChanged { v in
-            session.input(move:Vec2(x:clamp(Float(v.translation.width)/110),
-                                    y:clamp(Float(v.translation.height)/110)))
-        }.onEnded { _ in session.input(move:Vec2(x:0,y:0)) }
-    }
-    // RIGHT half starts firing at touch-down and continues while held.
-    // Preserve the original drag-to-turn sensitivity and both-axis aim.
-    private var aiming:some Gesture {
-        DragGesture(minimumDistance:0).onChanged { v in
-            session.input(aim:Vec2(x:clamp(Float(v.translation.width)/100),
-                                    y:clamp(Float(v.translation.height)/100)),
-                          shooting:true)
-        }.onEnded { _ in
-            session.input(aim:Vec2(x:0,y:0),shooting:false)
-        }
-    }
     var body:some View {
         GeometryReader { geo in
             let compact=geo.size.height<550
@@ -184,15 +167,10 @@ struct Sector01Scene568: View {
                     .accessibilityIdentifier("sector01-carbonis-native-combat-3d")
 
                 // The control zones are gestures, not on-screen analog images.
-                HStack(spacing:0) {
-                    Color.clear.contentShape(Rectangle())
-                        .gesture(movement)
-                        .accessibilityLabel("Lewy obszar: lot i przemieszczanie statku")
-                    Color.clear.contentShape(Rectangle())
-                        .gesture(aiming)
-                        .accessibilityLabel("Prawy obszar: skręt i ciągły ostrzał")
-                        .accessibilityIdentifier("sector01-right-steer-auto-fire")
-                }
+                SourceCombatTouchZones568(
+                    onMove:{session.input(move:$0)},
+                    onAim:{session.input(aim:$0)},
+                    onFire:{session.input(shooting:$0)})
                 .allowsHitTesting(!showingHudEditor600)
                 // RendererW3Combat331.cs: native, transparent, screen-anchored
                 // HUD at the exact original 1280x720 virtual positions.

@@ -93,7 +93,7 @@ struct GameView: View {
             try homeWorld291.start(progress:campaign)
             input.releaseHeldControls()
             input.gameplayPaused=true
-            audio.stopForDiagnostic()
+            audio.enterOrbit602()
             showingHomeWorld291=true
             showMainMenu=false
             return nil
@@ -150,7 +150,7 @@ struct GameView: View {
             showingHomeWorld291=true
             showMainMenu=false
             homeWorld291.setSuspended(scenePhase != .active)
-            audio.stopForDiagnostic()
+            audio.enterOrbit602()
         } else {
             reopenAtlasAfterCarbonis=true
             audio.returnToMenu()
@@ -189,31 +189,32 @@ struct GameView: View {
     // Current iOS supports one actual CARBONIS ship. Source 2-player
     // gameplay and the 62-second story cinematic are NOT yet ported.
     private func startNewGameFromW3(_ choice:SourceNewGameSelection568)->Bool {
+        // PC602 Intro41.StartCampaign: with PlanetHub50 -> EnterOrbit50(true).
+        // NewGame568 alone owns the transactional H11 backup/reset. Verify
+        // actual assets BEFORE making a new profile; never fabricate C279.
         guard choice.players==1,
-              Sector01CarbonisPreview568.isAvailable else {return false}
-        let fresh=CampaignProgress556()
-        guard let entry=Sector01Entry568.open(
-                  selectedSector:1,campaign:fresh,
-                  hasOriginalC279Assets:true) else {return false}
-        let freshShop=Sector01Shop568.State(
-            lives:SourceNewGame568.startingLives(difficulty:choice.difficulty))
-        guard let prepared=Sector01PreparedWave568.prepare(
-            entry:entry,campaign:fresh,hasOriginalC279Assets:true,
-            difficulty:choice.difficulty,
-            seed:Int32.random(in:0...Int32.max),
-            currentLives:freshShop.lives,startingLives:freshShop.lives,
-            shopProfile:freshShop) else {return false}
-        // The source profile coordinator archives all H11 records and
-        // resets them together. Never reset them separately after create().
-        guard SourceNewGame568.create(choice) else {return false}
+              PC602HomeWorldDriver291.resourcesInstalled,
+              (try? PC602NewHome290.load()) != nil,
+              (try? PC602OrbitBelt51.load()) != nil,
+              PC602HomeFlight291.Equipment(craft:.vanguard) != nil
+        else{return false}
+        guard SourceNewGame568.create(choice) else{return false}
         campaign=CampaignStore556.load()
+        do {
+            try homeWorld291.start(progress:campaign)
+        } catch {
+            return false
+        }
+        sourceSector01=nil
+        sourceSector01Setup=nil
+        returnHomeWorldAfterCarbonis291=false
+        showingMissionIntro568=false
         input.releaseHeldControls()
         input.gameplayPaused=true
         reopenAtlasAfterCarbonis=false
-        sourceSector01Setup=prepared
-        sourceSector01=entry
-        beginMissionIntro568(sector:1)
-        showMainMenu=true
+        audio.enterOrbit602()
+        showingHomeWorld291=true
+        showMainMenu=false
         return true
     }
     // Windows Program.cs:94 + UiW3NativeLayout315.DrawW3Splash323:
@@ -249,7 +250,7 @@ struct GameView: View {
                             showingHomeWorld291=true
                             showMainMenu=false
                             homeWorld291.setSuspended(scenePhase != .active)
-                            audio.stopForDiagnostic()
+                            audio.enterOrbit602()
                         } else {
                             reopenAtlasAfterCarbonis = true
                             audio.returnToMenu()
@@ -301,6 +302,7 @@ struct GameView: View {
                 } else if showingHomeWorld291 {
                     PC602HomeWorldPage291(
                         driver:homeWorld291,
+                        audio:audio,
                         onExitToW3:{
                             homeWorld291.stop()
                             showingHomeWorld291=false

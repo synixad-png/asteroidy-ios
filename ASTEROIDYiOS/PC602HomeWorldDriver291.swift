@@ -19,6 +19,9 @@ final class PC602HomeWorldDriver291:ObservableObject {
         var missionEntrance:Int=0
         var physicalFrames:Int=0
         var projectiles:Int=0
+        var shotEmissions:Int=0
+        var enginePower:Float=0.32
+        var weaponSoundCode:Int=10
         var weaponName:String="IMPULS"
         var zone:Int=1
         var altitude:Float=12
@@ -178,6 +181,9 @@ final class PC602HomeWorldDriver291:ObservableObject {
                 planetHub:true,orbitMode:true)),
             missionEntrance:flight.entryMission,physicalFrames:frames,
             projectiles:weapons?.projectiles.count ?? 0,
+            shotEmissions:weapons?.emissions ?? 0,
+            enginePower:flight.thrusting ? 1 : abs(flight.sideThrust)>0.001 ? 0.70 : 0.32,
+            weaponSoundCode:10+(gun?.rawValue ?? 0),
             weaponName:gunLabel,
             zone:source330?.zone ?? 1,
             altitude:source330?.altitude ?? 12,
