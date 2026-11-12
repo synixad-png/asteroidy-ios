@@ -53,11 +53,13 @@ struct W3MainMenu568: View {
     let startNewGame: (SourceNewGameSelection568)->Bool
     let openOrbit:()->String?
     let continueOrbit:()->String?
+    let loadManualOrbit:(Int)->Bool
     let restoreArchivedGame:(URL)->Bool
     @State private var restoreCandidate568:URL?
     @State private var confirmRestore568=false
     @State private var restoreNotice568=""
     @State private var resumeMessage61=""
+    @State private var showingManualSlots61=false
     @State private var page: Page?
     @State private var newPlayers568=1
     @State private var newDifficulty568=SourceNewGame568.selection().difficulty
@@ -144,6 +146,15 @@ struct W3MainMenu568: View {
                     }
                     footer(compact:compact,layout:layout)
                 }
+                }
+                if showingManualSlots61 {
+                    PC602SaveSlots61View(
+                        allowSave:false,initialAction:1,
+                        onSave:{_ in false},
+                        onLoad:loadManualOrbit,
+                        onClose:{showingManualSlots61=false})
+                        .zIndex(4)
+                        .accessibilityIdentifier("w3-manual-save-slots61")
                 }
                 if w3Wiping327 {
                     // W3 native left-to-right shutter, NOT old modal
@@ -511,14 +522,25 @@ struct W3MainMenu568: View {
                             .foregroundStyle(paper)
                             .fixedSize(horizontal:false,vertical:true)
                         if item == .continueGame {
-                            Button("KONTYNUUJ OSTATNI LOT") {
-                                if let failure=continueOrbit() {
+                            Button(PC602OrbitSave61.hasManualSave
+                                   ? "KONTYNUUJ / 3 SLOTY" : "KONTYNUUJ OSTATNI LOT") {
+                                // Source NativeContinue358 opens valid manual saves first.
+                                if PC602OrbitSave61.hasManualSave {
+                                    showingManualSlots61=true
+                                    resumeMessage61=""
+                                } else if let failure=continueOrbit() {
                                     resumeMessage61=failure
                                 } else {resumeMessage61=""}
                             }
-                            .disabled(!PC602OrbitSave61.exists())
+                            .disabled(!PC602OrbitSave61.exists() &&
+                                      !PC602OrbitSave61.hasManualSave)
                             .foregroundStyle(gold)
                             .accessibilityIdentifier("w3-continue-orbit61")
+                            Button("ZAPISY RĘCZNE / 3 SLOTY") {
+                                showingManualSlots61=true
+                            }
+                            .foregroundStyle(cyan)
+                            .accessibilityIdentifier("w3-manual-slots61")
                             if !resumeMessage61.isEmpty {
                                 Text(resumeMessage61).foregroundStyle(.orange)
                             }
