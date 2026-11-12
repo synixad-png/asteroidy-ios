@@ -54,11 +54,17 @@ struct PC602OrbitHUDEditor291:View {
                       dx:Double,dy:Double,frame:CGRect,
                       viewport:CGSize,safeInsets:EdgeInsets) {
         guard dx.isFinite,dy.isFinite else{return}
+        let rect=PC602OrbitHUDLayout291.Rect(
+            x:Double(frame.origin.x),y:Double(frame.origin.y),
+            width:Double(frame.size.width),height:Double(frame.size.height))
         let clamped=PC602OrbitHUDLayout291.constrainedDrag(
-            id,delta:CGPoint(x:dx,y:dy),frame:frame,
-            viewport:viewport,
-            safeInsets:(left:safeInsets.leading,right:safeInsets.trailing,
-                        top:safeInsets.top,bottom:safeInsets.bottom))
+            id,deltaX:dx,deltaY:dy,frame:rect,
+            viewportWidth:Double(viewport.width),
+            viewportHeight:Double(viewport.height),
+            safeInsets:(left:Double(safeInsets.leading),
+                        right:Double(safeInsets.trailing),
+                        top:Double(safeInsets.top),
+                        bottom:Double(safeInsets.bottom)))
         let width=max(1,Double(viewport.width))
         let height=max(1,Double(viewport.height))
         // Legacy H290 group transforms still enclose every individual
@@ -73,8 +79,8 @@ struct PC602OrbitHUDEditor291:View {
         else {parent=nil}
         let inherited=parent.map{layout.item($0).scale} ?? 1
         let base=max(0.001,inherited)
-        let nextX=original.x+Double(clamped.x)*1280/(width*base)
-        let nextY=original.y+Double(clamped.y)*720/(height*base)
+        let nextX=original.x+clamped.x*1280/(width*base)
+        let nextY=original.y+clamped.y*720/(height*base)
         change(id){e in
             e.x=max(-600,min(600,nextX))
             e.y=max(-360,min(360,nextY))
@@ -354,11 +360,18 @@ private struct OrbitEditorTouchCanvas291:UIViewRepresentable {
             pinch.cancelsTouchesInView=false
             addGestureRecognizer(pinch)
         }
+        private func modelRect(_ f:CGRect)->PC602OrbitHUDLayout291.Rect {
+            PC602OrbitHUDLayout291.Rect(
+                x:Double(f.origin.x),y:Double(f.origin.y),
+                width:Double(f.size.width),height:Double(f.size.height))
+        }
         private func hit(_ point:CGPoint)->String? {
-            // Exactly one source of hit testing for this editor and its
-            // draw markers, in the spirit of HudEditorGeometry.hit.
-            PC602OrbitHUDLayout291.hit(point:point,frames:frames,
-                                       layout:layout)
+            // Identical source-space hit algorithm to HudEditorGeometry.hit;
+            // convert actual SwiftUI CGRects only at the UIKit boundary.
+            let converted=frames.mapValues{modelRect($0)}
+            return PC602OrbitHUDLayout291.hit(
+                x:Double(point.x),y:Double(point.y),
+                frames:converted,layout:layout)
         }
         override func touchesBegan(_ touches:Set<UITouch>,with event:UIEvent?) {
             super.touchesBegan(touches,with:event)
@@ -420,8 +433,10 @@ private struct OrbitEditorTouchCanvas291:UIViewRepresentable {
                          ? [selection] : [])
             for id in ordered {
                 guard let raw=frames[id] else{continue}
-                guard let border=PC602OrbitHUDLayout291.touchFrame(raw)
-                else{continue}
+                guard let source=PC602OrbitHUDLayout291.touchFrame(
+                    modelRect(raw)) else{continue}
+                let border=CGRect(x:source.x,y:source.y,
+                                  width:source.width,height:source.height)
                 let current=id==selection
                 let isControl=id.hasPrefix("control.")
                 let color:UIColor=current ? .systemYellow :
