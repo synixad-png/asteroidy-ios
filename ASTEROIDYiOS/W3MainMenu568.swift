@@ -52,10 +52,12 @@ struct W3MainMenu568: View {
     let openCampaignOnEntry: Bool
     let startNewGame: (SourceNewGameSelection568)->Bool
     let openOrbit:()->String?
+    let continueOrbit:()->String?
     let restoreArchivedGame:(URL)->Bool
     @State private var restoreCandidate568:URL?
     @State private var confirmRestore568=false
     @State private var restoreNotice568=""
+    @State private var resumeMessage61=""
     @State private var page: Page?
     @State private var newPlayers568=1
     @State private var newDifficulty568=SourceNewGame568.selection().difficulty
@@ -509,6 +511,17 @@ struct W3MainMenu568: View {
                             .foregroundStyle(paper)
                             .fixedSize(horizontal:false,vertical:true)
                         if item == .continueGame {
+                            Button("KONTYNUUJ OSTATNI LOT") {
+                                if let failure=continueOrbit() {
+                                    resumeMessage61=failure
+                                } else {resumeMessage61=""}
+                            }
+                            .disabled(!PC602OrbitSave61.exists())
+                            .foregroundStyle(gold)
+                            .accessibilityIdentifier("w3-continue-orbit61")
+                            if !resumeMessage61.isEmpty {
+                                Text(resumeMessage61).foregroundStyle(.orange)
+                            }
                             Button("OTWÓRZ KAMPANIĘ") {
                                 navigateW3(.campaign)
                             }
@@ -712,7 +725,7 @@ struct W3MainMenu568: View {
     private func message(for item:Page) -> String {
         switch item {
         case .continueGame:
-            return "Kontynuuj aktywną kampanię przez ATLAS albo wybierz lokalną kopię poprzedniego profilu H11. Wczytywanie ręcznych zapisów PC nie jest jeszcze przeniesione."
+            return "Wznów zapisany lot H290 albo otwórz atlas. Trzy sloty iOS są osobne od nieobsługiwanych jeszcze plików zapisu Windows."
         case .hangar:
             return ""
         case .settings:

@@ -133,7 +133,8 @@ final class PC602HomeWorldDriver291:ObservableObject {
         else {error="BRAK PRAWIDŁOWEGO ZAPISU";return false}
         do {
             let home=try PC602NewHome290.load()
-            let equipment=PC602HomeFlight291.Equipment(craft:.vanguard)!
+            guard let equipment=PC602HomeFlight291.Equipment(craft:.vanguard)
+            else{throw PC602HomeFlight291.SourceError.invalidEquipment}
             var replacement=try PC602HomeWorldSession291(
                 home:home,equipment:equipment,
                 completedMask:state.completedMask,

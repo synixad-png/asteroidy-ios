@@ -107,6 +107,7 @@ struct GameView: View {
         guard level==1,sourceSector01==nil,
               Sector01CarbonisPreview568.isAvailable else{return}
         returnHomeWorldAfterCarbonis291=true
+        _=homeWorld291.captureResume61()
         homeWorld291.setSuspended(true)
         inspectSourceSector(1)
         if sourceSector01 != nil {
@@ -212,6 +213,7 @@ struct GameView: View {
         input.releaseHeldControls()
         input.gameplayPaused=true
         reopenAtlasAfterCarbonis=false
+        PC602OrbitSave61.clearResume()
         audio.enterOrbit602()
         showingHomeWorld291=true
         showMainMenu=false
@@ -304,13 +306,17 @@ struct GameView: View {
                         driver:homeWorld291,
                         audio:audio,
                         onExitToW3:{
+                            _=homeWorld291.captureResume61()
                             homeWorld291.stop()
                             showingHomeWorld291=false
                             returnHomeWorldAfterCarbonis291=false
                             showMainMenu=true
                             audio.returnToMenu()
                         },
-                        onEnterMission:enterOrbitMission291)
+                        onEnterMission:enterOrbitMission291,
+                        onProfileRestored:{
+                            campaign=CampaignStore556.load()
+                        })
                         .ignoresSafeArea()
                 } else if showMainMenu {
                     if !audio.startupComplete {
@@ -332,6 +338,19 @@ struct GameView: View {
                     },openCampaignOnEntry:reopenAtlasAfterCarbonis,
                     startNewGame:startNewGameFromW3,
                     openOrbit:enterHomeWorld291,
+                    continueOrbit:{
+                        guard PC602OrbitSave61.exists(),
+                              homeWorld291.loadOrbitSlot61(nil)
+                        else{return "BRAK PRAWIDŁOWEGO ZAPISU ORBITY"}
+                        campaign=CampaignStore556.load()
+                        input.releaseHeldControls()
+                        input.gameplayPaused=true
+                        homeWorld291.setPaused(false)
+                        showingHomeWorld291=true
+                        showMainMenu=false
+                        audio.enterOrbit602()
+                        return nil
+                    },
                     restoreArchivedGame:{ archive in
                         // A restore is initiated only by a confirmed W3
                         // user action. Refresh the actual campaign state
@@ -340,6 +359,7 @@ struct GameView: View {
                               SourceNewGame568.restoreArchive(at:archive)
                         else{return false}
                         campaign=CampaignStore556.load()
+                        PC602OrbitSave61.clearResume()
                         input.releaseHeldControls()
                         input.gameplayPaused=true
                         return true

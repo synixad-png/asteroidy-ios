@@ -13,8 +13,13 @@ struct PC602HomeWorldPage291:View {
     @ObservedObject var audio:OriginalAudioAV568
     let onExitToW3:()->Void
     let onEnterMission:(Int)->Void
+    let onProfileRestored:()->Void
     @State private var showingAtlas330=false
     @State private var previouslyPaused330=false
+    @State private var showingSaves61=false
+    @State private var previouslyPaused61=false
+    @State private var loadingSave61=false
+    @State private var saveMessage61=""
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.39,green:0.75,blue:0.79)
 
@@ -44,6 +49,7 @@ struct PC602HomeWorldPage291:View {
                     overlay(screen:screen,flight:flight)
                     navigationCue50(screen:screen,flight:flight)
                     if showingAtlas330 {atlasPanel(screen:screen)}
+                    if showingSaves61 {savesPanel61(screen:screen)}
                 } else {
                     VStack(spacing:12) {
                         Text("PC602 / ORBITA NIEGOTOWA")
@@ -101,6 +107,90 @@ struct PC602HomeWorldPage291:View {
             }
         }
         .accessibilityIdentifier("pc602-orbit-real-gameplay-page")
+    }
+
+    private func openSaves61(load:Bool) {
+        previouslyPaused61=driver.paused
+        loadingSave61=load
+        saveMessage61=""
+        driver.setPaused(true)
+        showingSaves61=true
+    }
+
+    private func dismissSaves61() {
+        showingSaves61=false
+        driver.setPaused(previouslyPaused61)
+    }
+
+    /// SaveManager61 presents three native slots; the original H290 session
+    /// and canonical profile records are persisted together, never a
+    /// duplicate ship, mission completion or separate graphics renderer.
+    private func savesPanel61(screen:GeometryProxy)->some View {
+        let compact=screen.size.height<450
+        return ZStack {
+            Color.black.opacity(0.76).ignoresSafeArea()
+            VStack(alignment:.leading,spacing:9) {
+                HStack {
+                    Text(loadingSave61 ? "WCZYTAJ ZAPIS / 3 SLOTY" :
+                         "ZAPISZ ORBITĘ / 3 SLOTY")
+                        .font(.system(size:compact ? 13:16,weight:.bold,
+                                      design:.monospaced))
+                        .foregroundStyle(gold)
+                    Spacer()
+                    Button("WRÓĆ") {dismissSaves61()}
+                        .foregroundStyle(cyan)
+                }
+                ForEach(0..<3,id:\.self) { slot in
+                    let record=try? PC602OrbitSave61.read(slot:slot)
+                    let text=record.map { state in
+                        "MISJA \(String(format:"%02d",state.target)) · " +
+                        Date(timeIntervalSince1970:state.savedAt).formatted(
+                            date:.numeric,time:.shortened)
+                    } ?? "PUSTY SLOT"
+                    Button {
+                        if loadingSave61 {
+                            if driver.loadOrbitSlot61(slot) {
+                                onProfileRestored()
+                                dismissSaves61()
+                            } else {saveMessage61="WCZYTANIE NIEUDANE"}
+                        } else {
+                            if driver.saveOrbitSlot61(slot) {
+                                saveMessage61="ZAPISANO SLOT \(slot+1)"
+                            } else {saveMessage61="ZAPIS NIEUDANY"}
+                        }
+                    } label: {
+                        HStack {
+                            Text("SLOT \(slot+1)")
+                                .font(.system(size:compact ? 12:15,
+                                              weight:.bold,design:.monospaced))
+                            Spacer(minLength:6)
+                            Text(text)
+                                .font(.system(size:compact ? 10:12,
+                                              design:.monospaced))
+                                .lineLimit(1)
+                        }
+                        .foregroundStyle(.white)
+                        .padding(12)
+                        .background(Color(red:0.035,green:0.08,blue:0.12))
+                        .overlay(Rectangle().stroke(cyan.opacity(0.6)))
+                    }
+                    .disabled(loadingSave61 && record == nil)
+                    .accessibilityIdentifier("pc602-orbit-save61-slot-\(slot)")
+                }
+                if !saveMessage61.isEmpty {
+                    Text(saveMessage61)
+                        .font(.system(size:12,design:.monospaced))
+                        .foregroundStyle(gold)
+                }
+            }
+            .padding(14)
+            .frame(maxWidth:580)
+            .background(Color(red:0.008,green:0.028,blue:0.048))
+            .overlay(Rectangle().stroke(gold.opacity(0.7)))
+            .padding(12)
+        }
+        .zIndex(16)
+        .accessibilityIdentifier("pc602-orbit-three-slot-saves61")
     }
 
     private func dismissAtlas330() {
@@ -286,6 +376,10 @@ struct PC602HomeWorldPage291:View {
                             driver.setPaused(true)
                         }
                         .accessibilityIdentifier("pc602-orbit-open-atlas330")
+                        Button("ZAPISZ") {openSaves61(load:false)}
+                            .accessibilityIdentifier("pc602-orbit-save61")
+                        Button("WCZYTAJ") {openSaves61(load:true)}
+                            .accessibilityIdentifier("pc602-orbit-load61")
                         Button("CEL +") {driver.cycleMission()}
                             .disabled(driver.paused)
                             .accessibilityIdentifier("pc602-orbit-next-sector")
@@ -294,7 +388,6 @@ struct PC602HomeWorldPage291:View {
                         }
                         .accessibilityIdentifier("pc602-orbit-pause")
                         Button("MENU W3") {
-                            driver.stop()
                             onExitToW3()
                         }
                         .accessibilityIdentifier("pc602-orbit-return-w3")
