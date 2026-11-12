@@ -25,6 +25,12 @@ on:
       - Reports/PC602_IOS_O01_MACIERZ_ZGODNOSCI_2026-11-12.md
       - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
+      - ASTEROIDYiOS/SourcePauseMenu568.swift
+      - ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
+      - ASTEROIDYiOS/PC602SaveSlots61View.swift
+      - ASTEROIDYiOS/Sector01Scene568.swift
+      - ASTEROIDYiOS/HudLayoutEditor600.swift
+      - Tests/PC602UnifiedHUDMenu291Contract.py
       - ASTEROIDYiOS/SourceShipScale472.swift
       - ASTEROIDYiOS/CarbonisVisualSettings568.swift
       - ASTEROIDYiOS/MetalRenderer.swift
@@ -165,6 +171,7 @@ jobs:
           /tmp/pc602-projectile-light-tests
           python3 Tests/PC602OrbitSave61Contract.py
           python3 Tests/PC602ReplayHUDRegression291.py
+          python3 Tests/PC602UnifiedHUDMenu291Contract.py
           swiftc -O ASTEROIDYiOS/PC602OrbitHUDLayout291.swift Tests/PC602OrbitHUDLayout291Tests.swift -o /tmp/pc602-orbit-hud-tests
           /tmp/pc602-orbit-hud-tests
           python3 Tests/PC602O01SourceBaseline.py --ios-root .
