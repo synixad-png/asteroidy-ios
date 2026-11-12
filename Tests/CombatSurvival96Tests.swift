@@ -15,44 +15,42 @@ import Foundation
                 precondition(respawn==expectedProtection)
             }
         }
+        let cause="ASTEROIDA"
+        let damage=CombatSurvival96.collisionDamage(level:10,difficulty:.normal)
         var survival=CombatSurvival96()
         survival.lives=3
         survival.shieldCharges=2
-        let cause="ASTEROIDA"
-        let damage=CombatSurvival96.collisionDamage(level:10,difficulty:.normal)
-        // A purchased shield intercepts FLAT rock contacts before Damage().
-        precondition(survival.absorbPurchasedRockContact(cause:cause) ==
-                     .shieldAbsorbed(remaining:1,cause:cause))
-        precondition(abs(survival.invincible-0.8)<0.0001 && survival.lives==3)
-        precondition(survival.absorbPurchasedRockContact(cause:cause) == nil)
-        survival.advance(dt:0.8)
-        precondition(survival.absorbPurchasedRockContact(cause:cause) ==
-                     .shieldAbsorbed(remaining:0,cause:cause))
-        survival.advance(dt:0.8)
-        precondition(survival.applyUnblockedCollision(level:10,difficulty:.normal,cause:cause,
-                                                      damage:damage) ==
-                     .lifeLost(remaining:2,respawnProtection:3,cause:cause))
-        precondition(survival.lives==2 && survival.invincible==3)
+
+        // V608 removed all passive reserve-hit interception. If this
+        // reducer is reached, real armor/hull/guardian/Tarcza checks have
+        // already failed; lost life clears reserves via Game.Damage.
+        precondition(survival.applyUnblockedCollision(
+            level:10,difficulty:.normal,cause:cause,damage:damage) ==
+            .lifeLost(remaining:2,respawnProtection:3,cause:cause))
+        precondition(survival.shieldCharges==0 &&
+                     survival.lives==2 && survival.invincible==3)
+        precondition(survival.applyUnblockedCollision(
+            level:10,difficulty:.normal,cause:cause,damage:damage) == .ignored)
         survival.advance(dt:3)
-        precondition(survival.applyUnblockedCollision(level:10,difficulty:.normal,cause:cause,
-                                                      damage:damage) ==
-                     .lifeLost(remaining:1,respawnProtection:3,cause:cause))
+        precondition(survival.applyUnblockedCollision(
+            level:10,difficulty:.normal,cause:cause,damage:damage) ==
+            .lifeLost(remaining:1,respawnProtection:3,cause:cause))
         survival.advance(dt:3)
-        precondition(survival.applyUnblockedCollision(level:10,difficulty:.normal,cause:cause,
-                                                      damage:damage) == .gameOver(cause:cause))
+        precondition(survival.applyUnblockedCollision(
+            level:10,difficulty:.normal,cause:cause,damage:damage) ==
+            .gameOver(cause:cause))
         precondition(survival.lives==0 && !survival.playing)
         survival.advance(dt:20)
-        precondition(survival.applyUnblockedCollision(level:10,difficulty:.normal,cause:cause,
-                                                      damage:damage) == .ignored)
+        precondition(survival.applyUnblockedCollision(
+            level:10,difficulty:.normal,cause:cause,damage:damage) == .ignored)
 
-        // A bug or boss collision is NOT the shielded rock-contact branch.
-        var unblocked=CombatSurvival96()
-        unblocked.shieldCharges=3
-        let boss=unblocked.applyUnblockedCollision(level:10,difficulty:.normal,
-             cause:"BOSS",damage:damage)
-        precondition(boss == .lifeLost(remaining:2,
-                                      respawnProtection:3,cause:"BOSS"))
-        precondition(unblocked.shieldCharges==0 && unblocked.lives==2)
+        var other=CombatSurvival96()
+        other.shieldCharges=3
+        other.currentDown=true
+        precondition(other.applyUnblockedCollision(
+            level:10,difficulty:.normal,cause:"BOSS",damage:damage) == .ignored)
+        precondition(other.shieldCharges==3,
+                     "blocked hit cannot spend any full reserve bar")
         for guardFlag in 0..<4 {
             var blocked=CombatSurvival96()
             if guardFlag==0 {blocked.playing=false}
@@ -63,6 +61,6 @@ import Foundation
                 cause:"KOLIZJA",damage:18) == .ignored)
             precondition(blocked.lives==3)
         }
-        print("PASS: 78 original collision profiles, pre-Damage rock shield only, reset on hit, respawn and game over")
+        print("PASS PC608: 78 collision profiles, NO passive reserve interception, death clears charges, respawn/game over guards")
     }
 }
