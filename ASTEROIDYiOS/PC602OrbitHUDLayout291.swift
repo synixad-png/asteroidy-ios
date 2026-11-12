@@ -28,15 +28,53 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
             visible=try data.decodeIfPresent(Bool.self,forKey:.visible) ?? true
         }
     }
-    static let ids=[
+    /// The first 11 IDs are the original H290 layout and remain stable.
+    /// Leaf IDs let the player select each *actual* on-screen text, just as
+    /// the 46 independent widgets in HudLayoutEditor600 (mission F6).
+    static let legacyIDs=[
         "hud.mission","hud.telemetry","hud.atlas-grid","hud.dock",
         "hud.entry-label","hud.navigation",
         "control.options","control.atlas","control.next",
         "control.pause","control.enter"
     ]
+    static let ids=legacyIDs+[
+        "hud.mission.heading","hud.mission.target",
+        "hud.mission.distance","hud.mission.course",
+        "hud.mission.completed","hud.mission.locked",
+        "hud.telemetry.progress","hud.telemetry.zone",
+        "hud.telemetry.altitude","hud.telemetry.speed",
+        "hud.dock.distance","hud.dock.status","hud.dock.hint",
+        "hud.navigation.label","hud.warning","hud.error"
+    ]
     private static let key="asteroidy.ios.pc602.orbit-hud-layout291.v1"
     var schema:Int=1
     var elements:[Element]
+
+    private enum CodingKeys:String,CodingKey {
+        case schema,elements
+    }
+    init(schema:Int=1,elements:[Element]) {
+        self.schema=schema
+        self.elements=elements
+    }
+    /// Existing saved 11-element H290 JSON is migrated without changing
+    /// ANY original group position, scale or visibility. New atomic labels
+    /// default to identity transforms within the existing group container.
+    init(from decoder:Decoder)throws {
+        let c=try decoder.container(keyedBy:CodingKeys.self)
+        schema=try c.decode(Int.self,forKey:.schema)
+        let incoming=try c.decode([Element].self,forKey:.elements)
+        let names=incoming.map(\.id)
+        guard names.count==Set(names).count else{throw LayoutError.invalid}
+        let present=Set(names)
+        if present==Set(Self.legacyIDs) {
+            elements=incoming+Self.ids.filter{!present.contains($0)}.map{
+                Element(id:$0)
+            }
+        } else {
+            elements=incoming
+        }
+    }
 
     static func defaults()->Self {
         Self(elements:ids.map{Element(id:$0)})
@@ -78,9 +116,58 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
         edit(&elements[index])
         if !valid {elements[index]=old}
     }
+    /// UIKit and the SwiftUI screen share the SAME validated physical
+    /// rectangles. Like HudEditorGeometry.hit, smaller overlapping widgets
+    /// win; all five controls take precedence over passive HUD text.
+    static func touchFrame(_ rect:CGRect)->CGRect? {
+        guard rect.minX.isFinite,rect.minY.isFinite,
+              rect.width.isFinite,rect.height.isFinite,
+              rect.width>0,rect.height>0 else{return nil}
+        let w=max(CGFloat(44),rect.width)
+        let h=max(CGFloat(44),rect.height)
+        return CGRect(x:rect.midX-w/2,y:rect.midY-h/2,width:w,height:h)
+    }
+    static func hit(point:CGPoint,frames:[String:CGRect],layout:Self)->String? {
+        for id in Self.ids.reversed() where id.hasPrefix("control.") {
+            guard let box=frames[id].flatMap(touchFrame),
+                  box.contains(point) else{continue}
+            return id
+        }
+        var chosen:String?
+        var smallest=Double.infinity
+        for id in Self.ids.reversed() where id.hasPrefix("hud.") {
+            guard layout.item(id).visible,
+                  let raw=frames[id],
+                  let box=touchFrame(raw),
+                  box.contains(point) else{continue}
+            let area=Double(raw.width*raw.height)
+            if area<smallest {
+                smallest=area
+                chosen=id
+            }
+        }
+        return chosen
+    }
+
     static func title(_ id:String)->String {
         switch id {
-        case "hud.mission":return "HUD / CEL, KURS, ODLEGŁOŚĆ"
+        case "hud.mission":return "HUD / GRUPA MISJI"
+        case "hud.mission.heading":return "HUD / TYTUŁ ATLASU"
+        case "hud.mission.target":return "HUD / NAZWA CELU"
+        case "hud.mission.distance":return "HUD / ODLEGŁOŚĆ OD CELU"
+        case "hud.mission.course":return "HUD / KURS"
+        case "hud.mission.completed":return "HUD / UKOŃCZONA"
+        case "hud.mission.locked":return "HUD / BLOKADA MISJI"
+        case "hud.telemetry.progress":return "HUD / POSTĘP"
+        case "hud.telemetry.zone":return "HUD / STREFA"
+        case "hud.telemetry.altitude":return "HUD / PUŁAP"
+        case "hud.telemetry.speed":return "HUD / PRĘDKOŚĆ"
+        case "hud.dock.distance":return "HUD / ODLEGŁOŚĆ HANGARU"
+        case "hud.dock.status":return "HUD / STATUS DOKOWANIA"
+        case "hud.dock.hint":return "HUD / POMOC STEROWANIA"
+        case "hud.navigation.label":return "HUD / NAPIS PRZY STRZAŁCE"
+        case "hud.warning":return "HUD / OSTRZEŻENIE MISJI"
+        case "hud.error":return "HUD / KOMUNIKAT BŁĘDU"
         case "hud.telemetry":return "HUD / POSTĘP, STREFA, PUŁAP, PRĘDKOŚĆ"
         case "hud.atlas-grid":return "HUD / SIATKA 26 MISJI"
         case "hud.dock":return "HUD / INFORMACJE HANGARU"
