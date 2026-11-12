@@ -1,5 +1,7 @@
 # Explicit user-requested H290 iPhone+iPad IPA snapshot, 2026-11-12.
 # This is a TEST unsigned IPA, not an end-to-end certified release.
+# Source-only update: native H290 SaveManager61 slots, genuine sun, atmosphere,
+# mission signal, projectile terrain lights and original 26-cell atlas.
 # No iOS gameplay source is changed, no fake assets, no other IPA job.
 name: ASTEROIDY PC602 H290 - user test unsigned IPA 20261112
 
