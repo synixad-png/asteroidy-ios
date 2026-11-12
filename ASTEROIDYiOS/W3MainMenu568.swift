@@ -151,7 +151,8 @@ struct W3MainMenu568: View {
                 }
                 if showingManualSlots61 {
                     PC602SaveSlots61View(
-                        allowSave:canSaveMenu61,initialAction:1,
+                        allowSave:canSaveMenu61,confirmActiveLoad:false,
+                        initialAction:1,
                         onSave:saveMenuSlot61,
                         onLoad:loadManualOrbit,
                         onClose:{showingManualSlots61=false})
