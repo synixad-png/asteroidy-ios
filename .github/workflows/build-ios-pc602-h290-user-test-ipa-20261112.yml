@@ -21,6 +21,13 @@ on:
       - W3MenuUITests/PC602HomeOrbitUITests.swift
       - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
+      - ASTEROIDYiOS/PC602OrbitHUDLayout291.swift
+      - ASTEROIDYiOS/PC602OrbitHUDEditor291.swift
+      - ASTEROIDYiOS/CarbonisCombat568.swift
+      - ASTEROIDYiOS/Sector01Scene568.swift
+      - Tests/Sector01FullMission568Tests.swift
+      - Tests/PC602OrbitHUDLayout291Tests.swift
+      - Tests/PC602ReplayHUDRegression291.py
       - ASTEROIDYiOS/PC602OrbitHud330.swift
       - ASTEROIDYiOS/SourceSkyAssetFactory568.swift
       - ASTEROIDYiOS/SourceCombatSky568.swift
@@ -69,6 +76,9 @@ jobs:
           python3 Tests/PC602HomeWorldUI291Contract.py | tee reports/world-contract.txt
           python3 Tests/PC602H290MenuSkyRegression291.py | tee reports/menu-sky-regression.txt
           python3 Tests/PC602OrbitSave61Contract.py | tee reports/orbit-save-contract.txt
+          python3 Tests/PC602ReplayHUDRegression291.py | tee reports/replay-hud-regression.txt
+          swiftc -O ASTEROIDYiOS/PC602OrbitHUDLayout291.swift Tests/PC602OrbitHUDLayout291Tests.swift -o /tmp/pc602-h290-hud-model-tests
+          /tmp/pc602-h290-hud-model-tests | tee reports/h290-hud-editor-tests.txt
           python3 Tools/verify_original_audio568_assets.py | tee reports/audio-assets.txt
           python3 Tools/materialize_pc586_original_resources.py --report reports/pc586-source.json
       - name: Compile actual iPhone+iPad Release application, Apple ARM64 + Metal
