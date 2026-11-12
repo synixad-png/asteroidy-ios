@@ -8,6 +8,10 @@ on:
     paths:
       - '.github/workflows/verify-pc602-home-simulator291.yml'
       - 'W3MenuUITests/PC602HomeOrbitUITests.swift'
+      - 'ASTEROIDYiOS/PC602HomeWorldPage291.swift'
+      - 'ASTEROIDYiOS/PC602OrbitHUDEditor291.swift'
+      - 'ASTEROIDYiOS/PC602OrbitHUDLayout291.swift'
+      - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
   workflow_dispatch:
 
 concurrency:
