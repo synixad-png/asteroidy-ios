@@ -96,6 +96,13 @@ import Foundation
             "asteroidy.ios.pc580.h11.source-mechanics")!
         let originalShop=defaults.data(forKey:
             "asteroidy.ios.v568.shop-profile-first-sector")!
+        // The original PC v608 on-disk reserve lives in the OLD shop
+        // fields; active-bar energy is a separate optional iOS checkpoint.
+        // Archive/restore must preserve both with no HUD/profile rewrite.
+        check(SourceTarcza145.savePersistentEnergy(37.5,defaults:defaults),
+              "v608 active shield bar stored before campaign archive")
+        let previousShieldEnergy=SourceTarcza145.loadPersistentEnergy(defaults:defaults)
+        check(previousShieldEnergy==37.5,"active bar checkpoint 37.5")
         let oldMask=defaults.integer(forKey:
             "asteroidy.ios.v556.campaign.completedMask")
         check(oldMask==1 && oldShop.tokens==379,
@@ -114,6 +121,9 @@ import Foundation
         check(H55Workshop580.loadVitals(defaults:defaults)==H55Workshop580.Vitals() &&
               H55SourceMechanics580.load(defaults:defaults)==H55SourceMechanics580.State(),
               "direct create atomically resets both H11 records after backup")
+        check(SourceTarcza145.loadPersistentEnergy(defaults:defaults)==60 &&
+              defaults.object(forKey:SourceTarcza145.persistentKey)==nil,
+              "fresh campaign clears shield energy checkpoint to PC default 60")
         check(SourceNewGame568.selection(defaults:defaults).difficulty == .hard,
               "hard difficulty persisted")
         check(defaults.integer(forKey:"asteroidy.ios.graphics.test.persistent")==173,
@@ -136,6 +146,9 @@ import Foundation
               originalVitals,"H11 hull and armor archived byte-for-byte")
         check(archived["asteroidy.ios.pc580.h11.source-mechanics"] as? Data ==
               originalH11,"H11 ships, modules, talents and trophy bits archived byte-for-byte")
+        check((archived[SourceTarcza145.persistentKey] as? NSNumber)?
+              .floatValue == previousShieldEnergy,
+              "existing seven-field talent state unchanged; current shield energy archived")
         let failingURL=FileManager.default.temporaryDirectory
             .appendingPathComponent("backup-blocker-\(UUID().uuidString)")
         try Data("blocker".utf8).write(to:failingURL)
@@ -162,6 +175,8 @@ import Foundation
         check(SourceNewGame568.selection(defaults:defaults).difficulty == .easy &&
               defaults.integer(forKey:"asteroidy.ios.graphics.test.persistent")==173,
               "restored difficulty without touching graphics/settings")
+        check(SourceTarcza145.loadPersistentEnergy(defaults:defaults)==37.5,
+              "archive restores source active bar without extra spare charge")
         let backupAfterRestore=try FileManager.default.contentsOfDirectory(
             at:backup,includingPropertiesForKeys:nil)
         check(backupAfterRestore.count==2 &&
@@ -198,6 +213,7 @@ import Foundation
         var legacyState=archived
         legacyState.removeValue(forKey:"asteroidy.ios.pc580.h11.source-mechanics")
         legacyState.removeValue(forKey:"asteroidy.ios.h11.pc580.c279.vitals")
+        legacyState.removeValue(forKey:SourceTarcza145.persistentKey)
         legacyPayload["profile"]=legacyState
         let legacyBytes=try PropertyListSerialization.data(
             fromPropertyList:legacyPayload,format:.binary,options:0)
@@ -210,6 +226,8 @@ import Foundation
               "legacy restore clears stale modern H11 records")
         check(Sector01Shop568.load(defaults:defaults)==oldShop,
               "legacy restore retains source wallet and ion/bomb purchases")
+        check(SourceTarcza145.loadPersistentEnergy(defaults:defaults)==60,
+              "legacy archive without current shield energy defaults to 60")
         print("PASS \(checks) PC580 full active-profile archive, legacy migration, rollback and no-data-loss assertions")
     }
 }
