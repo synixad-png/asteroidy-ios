@@ -62,3 +62,35 @@ Zweryfikowano bezpośrednio w archiwum użytkownika, gałąź `Windows/src/`:
 **Konsekwencje:** w O09 implementować pozostałe pola `Snapshot61`, rejestrowanie punktów kontrolnych i odtwarzanie ich trybów według źródeł bez oczekiwania na pełne O08. Dalsze, jeszcze nieobsługiwane przejścia należy oznaczać jako nieprzetestowane i sprawdzić później integracyjnie. Nie wymyślać stanów walki ani nagród. Bez zmian w wyglądzie gry.
 
 Definicja i numeracja stałego harmonogramu O01–O12 pozostają niezmienione.
+
+
+## O09 — wdrożenie źródłowego checkpointu misji 01 (2026-11-12)
+
+**Źródło:** dostarczony PC v602, `Windows/src/SaveManager61.cs` (`Snapshot61`, `CaptureResume61`, `RefreshCheckpoint61`, `SaveSlot61`, `ReadSlot61`, `LoadSlot61`, `SaveKey61`), `Windows/src/Intro41.cs` (`BeginLevelIntro`) oraz obecne źródła CARBONIS 01 w repozytorium iOS. Nie korzystano z rozwiązań wymyślonych poza źródłami PC, nie modyfikowano wizualizacji ani geometrii.
+
+### Zaimplementowane teraz
+
+- `PC602OrbitSave61.Snapshot` rozróżnia teraz `sourceMode61=orbit/intro` oraz `missionLevel61`; brak pól w starszym JSON oznacza istniejący format orbity. `valid` wymaga pełnej geometrii/osi dla `orbit`, natomiast `intro` sprawdza jedynie skończoność wektorów niewykorzystywanych przy odtwarzaniu — zgodnie z PC `ReadSlot61`. Cały podpis SHA-256 nadal chroni dane.
+- `captureMissionStart61` pobiera istniejące, kanoniczne dane kampanii/sklepu/H55 **przed** zmianami wynikającymi z walki. Tylko rzeczywisty sektor 01 jest obsługiwany; żaden z pozostałych 25 nie jest pozorowany.
+- `GameView.beginMissionIntro568` odświeża checkpoint, jak `Intro41.BeginLevelIntro/RefreshCheckpoint61`. W `Sector01Scene568` przy zatrzymanej walce można zapisać **ten** checkpoint w jednym z 3 slotów. Nie są serializowane zmienne pociski, bieżące straty ani klatka fizyki.
+- `loadManualSave61` rozpoznaje zapis `Orbit` lub `Intro` w menu W3 oraz z H290 i podczas pauzy misji. Dla `Intro` najpierw sprawdza rzeczywiste zasoby C279 i przygotowuje istniejące `Sector01PreparedWave568.prepare`, później odtwarza zweryfikowany profil i wywołuje `beginMissionIntro568`. Dla `Orbit` pozostaje istniejąca ścieżka `PC602HomeWorldDriver291.loadOrbitSlot61`.
+- Tryb `Menu` może wykonać `SaveSlot61` tylko wtedy, gdy GameView posiada prawidłowy punkt kontrolny **bieżącego** `runID`. Po wyjściu z orbity checkpoint jest odświeżany, a po zakończeniu walki zachowany jest checkpoint Intro. Brak checkpointu nie włącza przycisku zapisu.
+- Panel trzech slotów osobno traktuje `allowSave` oraz `confirmActiveLoad`: W3 menu nie żąda potwierdzenia wczytania, natomiast zastąpienie bieżącej gry na H290/w CARBONIS żąda potwierdzenia, zgodnie z `SaveKey61`.
+- `Tests/PC602OrbitSave61Contract.py` chroni źródłowe ścieżki, tryby, brak podmiany geometrii i zgodność dotychczasowego UI. Nie jest to test pełnej rozgrywki na sprzęcie.
+
+### Macierz pól i ograniczeń, których nie wolno ukrywać
+
+| Dane PC `Snapshot61` | Status natywnego zapisu iOS O09 |
+|---|---|
+| `Mode.Orbit`, pozycja/kierunki, cel i maska postępu | Obsługiwane w ograniczeniu do rzeczywistego H290/Vanguard; istniejąca ścieżka odtwarzania |
+| `Mode.Intro`, punkt kontrolny sprzed walki | Dodane dla rzeczywistego CARBONIS 01; ręczne sloty i powrót do `BeginLevelIntro` |
+| `Mode.Playing/Tunnel/Menu` → ostatni checkpoint | Playing i Menu: logika oparta na checkpoint; Tunnel nie jest obsługiwanym natywnym trybem portu |
+| `Mode.Shop` | **Brak pełnego zapisu i przywracania trybu Shop**; nie symulować ukończenia misji |
+| `ShipType`, `Difficulty`, `OrbitTarget50`, `CompletedMissions50` | Obsługa aktualnego portu: Vanguard, trudność, atlas, bitmask |
+| `Score`, `ExtraLivesAwarded`, `BossDefeatedAt`, pozostałe metadane trybu | **Nie wszystkie pola odwzorowane**; nie deklarować pełnej zgodności PC |
+| `OrbitLookYaw53/OrbitLookPitch53`, `TarczaEnergy145` | **Brak odrębnego pełnego odtworzenia PC** |
+| `ShopLines61`, `TalentState78`, `ModuleState97` | Istniejące kanoniczne struktury `Sector01Shop568` i `H55SourceMechanics580/H55Workshop580`; pełne porównanie pole-po-polu PC pozostaje nieodebrane |
+| Ręczne 3 sloty, SHA-256, usuwanie, uszkodzenie, potwierdzenia | Obecne w kodzie; test sprzętowy i pełna symulacja przerwania procesu pozostają wymagane |
+| Format Windows `ASTEROIDY-SAVE-369` | **Nieczytany przez natywne iOS JSON**, bez twierdzenia o zgodności bajtowej |
+
+**Dowody i granice:** najnowsze testy CI należy odczytywać z bieżącego SHA gałęzi, nie przypisywać PASS z wcześniejszych commitów. Test źródłowy, kompilacja ARM64 i rzeczywisty test na iPhonie to trzy różne poziomy weryfikacji. O09 nadal jest `W TOKU`; ocena wizualna pozostaje po stronie użytkownika, a harmonogram O01–O12 nie ulega zmianie.
