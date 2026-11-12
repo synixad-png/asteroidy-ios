@@ -87,6 +87,21 @@ struct GameView: View {
     @State private var missionCheckpoint61:PC602OrbitSave61.Snapshot?
     @State private var reopenAtlasAfterCarbonis = false
 
+    /// PC602 SaveManager61.SaveSlot61 from Mode.Menu uses the most recent
+    /// verified Orbit/Intro checkpoint, never live combat-frame data.
+    private func menuCheckpoint61()->PC602OrbitSave61.Snapshot? {
+        guard SourceNewGame568.canContinueActive358(),
+              let run=SourceNewGame568.currentRunID(),
+              let checkpoint=missionCheckpoint61,
+              checkpoint.runID==run,checkpoint.valid else{return nil}
+        return checkpoint
+    }
+    private func saveMenuCheckpoint61(_ slot:Int)->Bool {
+        guard let checkpoint=menuCheckpoint61() else{return false}
+        do {try PC602OrbitSave61.store(checkpoint,slot:slot);return true}
+        catch{return false}
+    }
+
     // The player starts physical orbit from the actual W3 campaign page.
     // A menu action must never manufacture a mission or reset the campaign.
     private func enterHomeWorld291()->String? {
@@ -409,6 +424,9 @@ struct GameView: View {
                         audio:audio,
                         onExitToW3:{
                             _=homeWorld291.captureResume61()
+                            missionCheckpoint61=homeWorld291.readFlight().flatMap {
+                                PC602OrbitSave61.capture($0)
+                            }
                             homeWorld291.stop()
                             showingHomeWorld291=false
                             returnHomeWorldAfterCarbonis291=false
@@ -444,6 +462,8 @@ struct GameView: View {
                     loadManualOrbit:{ slot in
                         loadManualSave61(slot)
                     },
+                    canSaveMenu61:menuCheckpoint61() != nil,
+                    saveMenuSlot61:saveMenuCheckpoint61,
                      continueOrbit:{
                         // PC602 ContinueActive358: use a valid flight checkpoint
                         // when available; otherwise restart H290 from the
