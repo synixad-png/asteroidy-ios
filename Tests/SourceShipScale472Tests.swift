@@ -24,6 +24,8 @@ import Foundation
         v.setMission(140)
         v.setOrbit(85)
         v.save(defaults)
+        check(defaults.integer(forKey:SourceShipScale472.revisionKey)==1,
+              "first saved scale change triggers live Metal renderer")
         let copy=SourceShipScale472.load(defaults)
         check(copy==v,"two independent original options persisted")
         check(abs(copy.missionFactor-1.4)<0.00001 &&
@@ -33,6 +35,8 @@ import Foundation
         malicious.missionPercent = -900
         malicious.orbitPercent = 9000
         malicious.save(defaults)
+        check(defaults.integer(forKey:SourceShipScale472.revisionKey)==2,
+              "new scale change invalidates live mission and H290 caches")
         let safe=SourceShipScale472.load(defaults)
         check(safe.missionPercent==70 && safe.orbitPercent==150,
               "untrusted persisted values clamp")

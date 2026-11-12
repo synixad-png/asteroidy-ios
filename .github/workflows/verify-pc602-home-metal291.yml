@@ -25,6 +25,14 @@ on:
       - Reports/PC602_IOS_O01_MACIERZ_ZGODNOSCI_2026-11-12.md
       - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
+      - ASTEROIDYiOS/SourceShipScale472.swift
+      - ASTEROIDYiOS/CarbonisVisualSettings568.swift
+      - ASTEROIDYiOS/MetalRenderer.swift
+      - ASTEROIDYiOS/Sector01CarbonisPreview568.swift
+      - ASTEROIDYiOS/PC602HomeProjectileLights296.swift
+      - Tests/PC602H290LiveSettingsPause291Contract.py
+      - Tests/SourceShipScale472Tests.swift
+      - Tests/CarbonisVisualSettings568Tests.swift
       - ASTEROIDYiOS/PC602OrbitHUDLayout291.swift
       - ASTEROIDYiOS/PC602OrbitHUDEditor291.swift
       - Tests/PC602OrbitHUDLayout291Tests.swift
@@ -150,6 +158,11 @@ jobs:
           python3 Tests/PC602HomeScene291Contract.py
           python3 Tests/PC602HomeWorldUI291Contract.py
           python3 Tests/PC602H290MenuSkyRegression291.py
+          python3 Tests/PC602H290LiveSettingsPause291Contract.py
+          swiftc -O ASTEROIDYiOS/SourceShipScale472.swift Tests/SourceShipScale472Tests.swift -o /tmp/pc602-shipscale-live-tests
+          /tmp/pc602-shipscale-live-tests
+          swiftc -O ASTEROIDYiOS/CarbonisVisualSettings568.swift Tests/CarbonisVisualSettings568Tests.swift -o /tmp/pc602-projectile-light-tests
+          /tmp/pc602-projectile-light-tests
           python3 Tests/PC602OrbitSave61Contract.py
           python3 Tests/PC602ReplayHUDRegression291.py
           swiftc -O ASTEROIDYiOS/PC602OrbitHUDLayout291.swift Tests/PC602OrbitHUDLayout291Tests.swift -o /tmp/pc602-orbit-hud-tests

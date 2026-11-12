@@ -61,6 +61,8 @@ import Foundation
         config.projectileMixed=false
         config.autoRotate=false
         config.save(prefs)
+        check(prefs.integer(forKey:CarbonisVisualSettings568.revisionKey)==1,
+              "shot brightness and color trigger live H290 redraw")
         let restored=CarbonisVisualSettings568.load(prefs)
         check(restored==config,"original explosion/shot options persist across relaunch")
         check(restored.projectileBrightness==385 &&
@@ -74,6 +76,8 @@ import Foundation
         invalid.projectileBrightness=8999
         invalid.projectileColor=98
         invalid.save(prefs)
+        check(prefs.integer(forKey:CarbonisVisualSettings568.revisionKey)==2,
+              "second projectile edit invalidates cached Metal light settings")
         let safe=CarbonisVisualSettings568.load(prefs)
         check(safe.type==2 && safe.quality==2 &&
               safe.values==CarbonisVisualSettings568.presets[2] &&

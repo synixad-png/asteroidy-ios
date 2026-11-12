@@ -13,7 +13,7 @@ world=read("PC602HomeScene291.swift")
 source=read("Sphere67.swift")
 view=read("PC602HomeWorldView291.swift")
 for required in (
-    'Button("OPCJE") {openOrbitOptions291()}',
+    'Button("PAUZA") {openOrbitOptions291()}',
     '.frame(minWidth:100,minHeight:44)',
     'Button("POWRÓT DO MENU GŁÓWNEGO")',
     'accessibilityIdentifier("pc602-orbit-return-w3")',
@@ -24,6 +24,11 @@ for required in (
 ):
     assert required in page, required
 # Entering save/load from OPCJE must not leave the pilot frozen.
+# The single interactive pause must also be used after iPad locks.
+assert 'orbitPausePanel317' not in page
+assert 'if !driver.presentingH55 && !showingOrbitOptions291' in page
+assert 'openOrbitOptions291()' in page
+assert 'previouslyPausedOptions291=false' in page
 assert 'restorePaused:previouslyPausedOptions291' in page
 assert 'previouslyPaused61=restorePaused ?? driver.paused' in page
 assert 'driver.setPaused(previouslyPaused61)' in page
