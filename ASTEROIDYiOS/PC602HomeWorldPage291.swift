@@ -670,6 +670,19 @@ struct PC602HomeWorldPage291:View {
                         .allowsHitTesting(false)
                 }
             }
+            if showingOrbitHUD291 {
+                // The Path and positioned label use full-screen SwiftUI
+                // layouts. Only their actual visible arrow/label shapes
+                // receive a dedicated native touch target.
+                let rects=navigationHitRects291(screen:screen,flight:flight)
+                ForEach(["hud.navigation","hud.navigation.label"],id:\.self) { id in
+                    if let rect=rects[id] {
+                        orbitTouch291(id,screen:screen)
+                            .frame(width:rect.width,height:rect.height)
+                            .position(x:rect.midX,y:rect.midY)
+                    }
+                }
+            }
         }
     }
 
