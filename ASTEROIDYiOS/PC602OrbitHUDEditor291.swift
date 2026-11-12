@@ -56,7 +56,12 @@ struct PC602OrbitHUDEditor291:View {
         }
     }
     private func scale(_ id:String,original:Double,factor:Double) {
-        change(id){e in e.scale=max(0.55,min(2.5,original*factor))}
+        guard original.isFinite,original>0,factor.isFinite,factor>0 else{return}
+        let range=PC602OrbitHUDLayout291.scaleRange(for:id)
+        change(id){item in
+            item.scale=max(range.lowerBound,
+                           min(range.upperBound,original*factor))
+        }
     }
     private func slider(_ label:String,
                         key:WritableKeyPath<PC602OrbitHUDLayout291.Element,Double>,
@@ -108,7 +113,9 @@ struct PC602OrbitHUDEditor291:View {
                 if !selected.isEmpty {
                     slider("PRZESUNIĘCIE X",key:\.x,range:-600...600,step:1)
                     slider("PRZESUNIĘCIE Y",key:\.y,range:-360...360,step:1)
-                    slider("WIELKOŚĆ / SKALA",key:\.scale,range:0.55...2.5,step:0.01)
+                    slider("WIELKOŚĆ / SKALA",key:\.scale,
+                           range:PC602OrbitHUDLayout291.scaleRange(for:selected),
+                           step:0.01)
                     Button(selected.hasPrefix("hud.")
                            ? "PRZYWRÓĆ TEN ELEMENT":"PRZYWRÓĆ TEN PRZYCISK"){
                         change(selected){$0=PC602OrbitHUDLayout291.defaults().item(selected)}

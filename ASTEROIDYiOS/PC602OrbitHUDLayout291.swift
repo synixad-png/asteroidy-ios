@@ -85,7 +85,7 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
         elements.allSatisfy {
             $0.x.isFinite && $0.y.isFinite && $0.scale.isFinite &&
             (-600...600).contains($0.x) && (-360...360).contains($0.y) &&
-            (0.55...2.5).contains($0.scale) &&
+            Self.scaleRange(for:$0.id).contains($0.scale) &&
             (!$0.id.hasPrefix("control.") || $0.visible)
         }
     }
@@ -119,6 +119,14 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
     /// UIKit and the SwiftUI screen share the SAME validated physical
     /// rectangles. Like HudEditorGeometry.hit, smaller overlapping widgets
     /// win; all five controls take precedence over passive HUD text.
+    static func scaleRange(for id:String)->ClosedRange<Double> {
+        // Same constraints as the working F6/HudControlLayout600:
+        // 2D HUD 0.25–3; function buttons 0.65–3.5; PAUZA at top is
+        // intentionally capped at 1.5 to keep the pause escape route.
+        if id=="control.options" {return 0.65...1.5}
+        if id.hasPrefix("control.") {return 0.65...3.5}
+        return 0.25...3
+    }
     static func touchFrame(_ rect:CGRect)->CGRect? {
         guard rect.minX.isFinite,rect.minY.isFinite,
               rect.width.isFinite,rect.height.isFinite,

@@ -86,9 +86,14 @@ struct PC602HomeWorldPage291:View {
         let labelX=(Double(arrow.x)-mx)*label.scale+mx+label.x*dx
         let labelY=(Double(arrow.y)+26-my)*label.scale+my+label.y*dy
         let labelPoint=groupTransform(labelX,labelY)
-        let arrowFrame=CGRect(x:tip.x-24,y:tip.y-22,width:48,height:48)
-        let titleFrame=CGRect(x:labelPoint.x-45,y:labelPoint.y-22,
-                              width:90,height:44)
+        let arrowSize=CGFloat(48*group.scale)
+        let labelW=CGFloat(90*group.scale*label.scale)
+        let labelH=CGFloat(44*group.scale*label.scale)
+        let arrowFrame=CGRect(x:tip.x-arrowSize/2,y:tip.y-arrowSize/2,
+                              width:arrowSize,height:arrowSize)
+        let titleFrame=CGRect(x:labelPoint.x-labelW/2,
+                              y:labelPoint.y-labelH/2,
+                              width:labelW,height:labelH)
         return ["hud.navigation":arrowFrame,
                 "hud.navigation.label":titleFrame]
     }
