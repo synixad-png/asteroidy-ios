@@ -30,16 +30,13 @@ struct PC602HomeWorldSession291 {
             home:home,equipment:equipment,completedMask:completedMask)
     }
 
-    mutating func restoreOrbit61(_ saved:PC602OrbitSave61.Snapshot) throws {
-        try flight.restoreOrbit61(saved)
-        let mechanics=saved.mechanics
-        if let gun=PC602HomeWeaponTest292.Weapon(rawValue:saved.shop.weapon.rawValue),
-           let settings=PC602HomeWeaponTest292.Settings(
-               weapon:gun,upgrade:saved.shop.upgradeLevel,
-               rapid:saved.shop.rapidLevel,cooling:mechanics.cooling,
-               fireRateTalent:1/(1+Float(mechanics.rateRank)*0.06)) {
-            weapons=PC602HomeWeaponTest292(settings:settings)
-        } else {throw PC602HomeFlight291.SourceError.invalidInput}
+    mutating func restoreOrbit61(
+        position:SIMD3<Float>,forward:SIMD3<Float>,
+        target:Int,completedMask:Int,
+        weapon:PC602HomeWeaponTest292.Settings) throws {
+        try flight.restoreOrbit61(position:position,forward:forward,
+                                  target:target,completedMask:completedMask)
+        weapons=PC602HomeWeaponTest292(settings:weapon)
         steppedFrames=0
         paused=true
     }

@@ -154,23 +154,30 @@ enum SourceNewGame568 {
     /// snapshot after archiving the previous active profile.
     /// Do not modify preferences, touch layout or independent manual slots.
     @discardableResult static func restoreOrbitProfile61(
-        _ saved:PC602OrbitSave61.Snapshot,
+        runID:String,completedMask:Int,target:Int,
+        shop:Sector01Shop568.State,vitals:H55Workshop580.Vitals,
+        mechanics:H55SourceMechanics580.State,difficultyRaw:Int,
         defaults:UserDefaults = .standard)->Bool {
-        guard saved.valid,
+        guard UUID(uuidString:runID) != nil,
+              (1...26).contains(target),
+              PC602HomeFlight291.unlocked(target,mask:completedMask),
+              Sector01Shop568.validate(shop),vitals.valid,mechanics.valid,
+              mechanics.selectedShip==1,
+              CombatBalance556.Difficulty(rawValue:difficultyRaw) != nil,
               let support=archiveDirectory(nil),
               archiveActive(defaults:defaults,directory:support),
-              let shop=try? JSONEncoder().encode(saved.shop),
-              let vitals=try? JSONEncoder().encode(saved.vitals),
-              let mechanics=try? JSONEncoder().encode(saved.mechanics)
+              let shopBytes=try? JSONEncoder().encode(shop),
+              let vitalsBytes=try? JSONEncoder().encode(vitals),
+              let mechanicsBytes=try? JSONEncoder().encode(mechanics)
         else{return false}
         CampaignStore556.save(CampaignProgress556(
-            mask:saved.completedMask,selectedSector:saved.target),defaults:defaults)
-        defaults.set(shop,forKey:shopKey)
-        defaults.set(vitals,forKey:vitalsKey)
-        defaults.set(mechanics,forKey:mechanicsKey)
-        defaults.set(saved.difficultyRaw,forKey:difficultyKey)
+            mask:completedMask,selectedSector:target),defaults:defaults)
+        defaults.set(shopBytes,forKey:shopKey)
+        defaults.set(vitalsBytes,forKey:vitalsKey)
+        defaults.set(mechanicsBytes,forKey:mechanicsKey)
+        defaults.set(difficultyRaw,forKey:difficultyKey)
         defaults.set(1,forKey:playersKey)
-        defaults.set(saved.runID,forKey:activeIDKey)
+        defaults.set(runID,forKey:activeIDKey)
         return true
     }
 

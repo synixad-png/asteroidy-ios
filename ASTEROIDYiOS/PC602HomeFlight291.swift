@@ -232,17 +232,23 @@ struct PC602HomeFlight291 {
     /// orbit vector, rebind the same Sphere67 pilot and reset velocity,
     /// camera inertia and nonpersistent projectiles. The PC source calls
     /// InitializeHomeFlight291 after assigning the saved world vectors.
-    mutating func restoreOrbit61(_ saved:PC602OrbitSave61.Snapshot) throws {
-        guard saved.valid else{throw SourceError.invalidInput}
-        let p=SIMD3<Float>(saved.position[0],saved.position[1],saved.position[2])
-        let storedForward=Self.source(SIMD3<Float>(
-            saved.forward[0],saved.forward[1],saved.forward[2]))
-        let n=Self.source(p).normalized
+    mutating func restoreOrbit61(
+        position:SIMD3<Float>,forward:SIMD3<Float>,
+        target savedTarget:Int,completedMask savedMask:Int) throws {
+        guard (1...26).contains(savedTarget),
+              Self.unlocked(savedTarget,mask:savedMask),
+              [position.x,position.y,position.z,
+               forward.x,forward.y,forward.z].allSatisfy({$0.isFinite}),
+              Self.length(position)>100,Self.length(position)<1000,
+              Self.length(forward)>0.9,Self.length(forward)<1.1
+        else{throw SourceError.invalidInput}
+        let storedForward=Self.source(forward)
+        let n=Self.source(position).normalized
         guard let surface=home.surface(Self.world(n)) else {
             throw SourceError.missingSourceGeometry
         }
-        completedMask=saved.completedMask
-        target=saved.target
+        completedMask=savedMask
+        target=savedTarget
         orbitPosition=Self.world(n)*(surface+12)
         flight=SphereFlight67()
         flight.position=Sphere67.coordinates(n)

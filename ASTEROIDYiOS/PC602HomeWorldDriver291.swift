@@ -139,8 +139,21 @@ final class PC602HomeWorldDriver291:ObservableObject {
                 home:home,equipment:equipment,
                 completedMask:state.completedMask,
                 controls:SourceControls586.Profile.load())
-            try replacement.restoreOrbit61(state)
-            guard SourceNewGame568.restoreOrbitProfile61(state)
+            guard let gun=PC602HomeWeaponTest292.Weapon(rawValue:state.shop.weapon.rawValue),
+                  let gunSettings=PC602HomeWeaponTest292.Settings(
+                    weapon:gun,upgrade:state.shop.upgradeLevel,
+                    rapid:state.shop.rapidLevel,cooling:state.mechanics.cooling,
+                    fireRateTalent:1/(1+Float(state.mechanics.rateRank)*0.06))
+            else{error="NIEPOPRAWNE UZBROJENIE ZAPISU";return false}
+            try replacement.restoreOrbit61(
+                position:SIMD3<Float>(state.position[0],state.position[1],state.position[2]),
+                forward:SIMD3<Float>(state.forward[0],state.forward[1],state.forward[2]),
+                target:state.target,completedMask:state.completedMask,
+                weapon:gunSettings)
+            guard SourceNewGame568.restoreOrbitProfile61(
+                runID:state.runID,completedMask:state.completedMask,
+                target:state.target,shop:state.shop,vitals:state.vitals,
+                mechanics:state.mechanics,difficultyRaw:state.difficultyRaw)
             else{error="NIE MOŻNA ZARCHIWIZOWAĆ PROFILU";return false}
             let flight=replacement.flight
             withLock {
