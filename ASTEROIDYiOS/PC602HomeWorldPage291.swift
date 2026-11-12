@@ -76,6 +76,12 @@ struct PC602HomeWorldPage291:View {
             driver.setTouch(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0))
         }
         .onChange(of:scenePhase) { phase in
+            // SaveManager61.CaptureResume61: persist the last verified
+            // 67-pilot state BEFORE UIKit freezes MTKView on background.
+            // Disk I/O is on this lifecycle event, never inside draw(in:).
+            if phase != .active {
+                _=driver.captureResume61()
+            }
             driver.setSuspended(phase != .active)
         }
         // Original PC602 MusicAudio.TrackFor(Orbit)=0; engine/shot sound

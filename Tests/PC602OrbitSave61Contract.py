@@ -44,6 +44,9 @@ assert 'SourceNewGame568.restoreOrbitProfile61(' in driver
 assert 'saveOrbitSlot61(_ slot:Int)' in driver
 assert 'loadOrbitSlot61(_ slot:Int?)' in driver
 assert 'captureResume61()->Bool' in driver
+assert 'if phase != .active {' in page
+assert '_=driver.captureResume61()' in page
+assert 'driver.setSuspended(phase != .active)' in page
 assert 'return try?' not in save
 assert 'func currentRunID' in source
 assert 'archiveActive(defaults:defaults,directory:support)' in source
