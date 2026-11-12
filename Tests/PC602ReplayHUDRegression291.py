@@ -23,7 +23,7 @@ assert 'PC602OrbitHUDEditor291(' in page
 assert 'guard orbitDraft291.save() else{return}' in page
 assert 'orbitLayout291=orbitDraft291' in page
 assert 'orbitDraft291=orbitLayout291' in page
-assert 'driver.setPaused(previouslyPausedEditor291)' in page
+assert 'guard showingOrbitOptions291 && showingOrbitSettings291 else{return}' in page
 assert 'PC602OrbitHUDLayout291.load()' in page
 for id in ("hud.mission","hud.telemetry","hud.atlas-grid","hud.dock",
            "hud.entry-label","hud.navigation","control.options","control.atlas",
@@ -31,5 +31,11 @@ for id in ("hud.mission","hud.telemetry","hud.atlas-grid","hud.dock",
     assert id in layout
     assert f'orbitItem291("{id}",screen:screen)' in page,id
 assert 'Slider(value:Binding(' in editor
-assert 'MagnificationGesture()' in editor and 'DragGesture(minimumDistance:2)' in editor
+assert 'OrbitEditorTouchCanvas291(' in editor
+assert 'UIPinchGestureRecognizer(' in editor
+assert 'override func touchesBegan(' in editor
+assert 'override func touchesMoved(' in editor
+assert 'OrbitHUDFramePreference291' in editor
+assert 'measuredFrames:orbitFrames291' in page
+assert 'PC602OrbitHUDLayout291.decodeJSON' in editor
 print("PASS PC602 replay enabled, only money suppressed, shot counter stable and orbit HUD editor state")
