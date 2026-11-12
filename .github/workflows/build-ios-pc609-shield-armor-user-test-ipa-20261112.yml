@@ -1,0 +1,194 @@
+# User explicitly requested test IPA of PC v608 shields + PC v609 armor on 2026-11-12.
+# Source branch is isolated from the earlier H290 auto-build.
+# Full PC602 H290, original game/menu/HUD assets, no source replacements.
+# Unsigned physical-device iPhone+iPad package; requires external signing.
+# Explicit user-requested H290 iPhone+iPad IPA snapshot, 2026-11-12.
+# This is a TEST unsigned IPA, not an end-to-end certified release.
+# Source-only update: verified PC602 H290 sky, original 26-cell HUD/atlas,
+# mission signal, projectile lights, and correct OPCJE -> W3 navigation.
+# Push-trigger includes O04/O05 and the actual O09 save/continue code so that
+# test IPA never silently lags behind the pilot's corrected HUD source.
+# No iOS gameplay source is changed, no fake assets, no other IPA job.
+name: ASTEROIDY PC609 - H290 HUD + v608 reserves + v609 armor unsigned IPA
+
+on:
+  push:
+    branches: [feature/ios-pc609-shield-armor-verified]
+    paths:
+      - .github/workflows/build-ios-pc609-shield-armor-user-test-ipa-20261112.yml
+  workflow_dispatch:
+
+concurrency:
+  group: pc609-h290-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  one-shot-test-ipa:
+    name: Build source-verified PC609 H290/v608/v609 ARM64 iPhone+iPad unsigned IPA
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Stage EXACT source assets for H290, W3, CARBONIS, Vanguard and 820 rocks
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          echo "$GITHUB_SHA" | tee reports/source-commit.txt
+          python3 Tools/verify_ios_inputs.py | tee reports/preflight.txt
+          python3 Tools/prepare_vanguard431_assets.py | tee reports/vanguard-staging.txt
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets | tee reports/vanguard-verified.txt
+          python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets | tee reports/player-ship.txt
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required | tee reports/w3-menu.txt
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets | tee reports/carbonis.txt
+          python3 Tools/stage_pc602_planetarium.py | tee reports/planetarium-source.txt
+          python3 Tests/HudPlanetariumIntegration600Contract.py | tee reports/planetarium-isolation.txt
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets | tee reports/home-source.txt
+          python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets | tee reports/820-asteroids.txt
+          python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin | tee reports/belt-tests.txt
+          python3 Tests/PC602HomeScene291Contract.py | tee reports/scene-contract.txt
+          python3 Tests/PC602HomeWorldUI291Contract.py | tee reports/world-contract.txt
+          python3 Tests/PC602H290MenuSkyRegression291.py | tee reports/menu-sky-regression.txt
+          python3 Tests/PC602H290LiveSettingsPause291Contract.py | tee reports/live-settings-pause.txt
+          swiftc -O ASTEROIDYiOS/SourceShipScale472.swift Tests/SourceShipScale472Tests.swift -o /tmp/pc602-shipscale-live-tests
+          /tmp/pc602-shipscale-live-tests | tee reports/ship-scale-tests.txt
+          swiftc -O ASTEROIDYiOS/CarbonisVisualSettings568.swift Tests/CarbonisVisualSettings568Tests.swift -o /tmp/pc602-projectile-light-tests
+          /tmp/pc602-projectile-light-tests | tee reports/projectile-light-tests.txt
+          python3 Tests/PC602OrbitSave61Contract.py | tee reports/orbit-save-contract.txt
+          python3 Tests/PC602ReplayHUDRegression291.py | tee reports/replay-hud-regression.txt
+          python3 Tests/PC602UnifiedHUDMenu291Contract.py | tee reports/unified-interface-hud-291.txt
+          python3 Tests/IOSSourceCombatPause568Contract.py | tee reports/mission-pause-source-regression.txt
+          python3 Tests/PC602O01SourceBaseline.py --ios-root . | tee reports/o01-menu-source-map.txt
+          swiftc -O ASTEROIDYiOS/PC602OrbitHUDLayout291.swift Tests/PC602OrbitHUDLayout291Tests.swift -o /tmp/pc602-h290-hud-model-tests
+          /tmp/pc602-h290-hud-model-tests | tee reports/h290-hud-editor-tests.txt
+          python3 Tools/verify_original_audio568_assets.py | tee reports/audio-assets.txt
+          python3 Tools/materialize_pc586_original_resources.py --report reports/pc586-source.json
+      - name: Verify source behavior PC608 and PC609 before IPA packaging
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          git rev-parse HEAD | tee reports/v609-build-commit.txt
+          swiftc -O ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift Tests/PC608609MechanicsTests.swift -o /tmp/pc609-parity
+          /tmp/pc609-parity | tee reports/v609-parity.txt
+          python3 - <<'PY' | tee reports/v609-source-audit.txt
+          from pathlib import Path
+          a=Path('ASTEROIDYiOS/CombatTarcza145.swift').read_text()
+          b=Path('ASTEROIDYiOS/CombatTalentVitals78.swift').read_text()
+          c=Path('ASTEROIDYiOS/CarbonisCombat568.swift').read_text()
+          assert 'struct SourceTarcza145' in a and 'restoreFromReserve' in a
+          assert 'struct ArmorRegeneration609' in b and 'fraction:Double=0.25' in b
+          assert 'armorRegen609.advance' in c and 'reserve:&shieldCharges' in c
+          assert 'shieldCharges-=1' not in c
+          print('PASS exact PC608 shield reserve and PC609 armor regen in actual compiled iOS sources')
+          PY
+      - name: Compile actual iPhone+iPad Release application, Apple ARM64 + Metal
+        shell: bash
+        run: |
+          set -euo pipefail
+          { xcodebuild -version; xcrun --sdk iphoneos --show-sdk-version; } | tee reports/xcode-version.txt
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/PC609Release" \
+            build > reports/xcodebuild-release.log 2>&1 || {
+              grep -n -A 8 -B 3 -E 'error:|BUILD FAILED|failed' reports/xcodebuild-release.log | tail -n 120 || true
+              tail -n 70 reports/xcodebuild-release.log
+              exit 1
+            }
+      - name: Embed original PC586 H55 FPS / pickup files and package TEST IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/PC609Release/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" && test -f "$APP/Info.plist"
+          python3 - "$APP" <<'PY' | tee reports/app-bundle-audit.txt
+          from pathlib import Path
+          import plistlib,sys,hashlib
+          app=Path(sys.argv[1])
+          info=plistlib.loads((app/'Info.plist').read_bytes())
+          assert info['UIDeviceFamily']==[1,2] or set(info['UIDeviceFamily'])=={1,2}
+          required=['PC602Home290HeightMap.bin','PC602OrbitBelt51.bin',
+            'W3HomePlanet290OriginalGPU.bin','W3HomePlanet290Base.dat',
+            'W3HomePlanet293Glow.dat','Vanguard431Source.mesh',
+            'Vanguard431Base.jpg','Sector01CarbonisHeightMap.dat',
+            'W3Background568Original.dat','W3Logo568Original.dat',
+            'default.metallib','planetarium.glb']
+          missing=[x for x in required if not (app/x).is_file()]
+          assert not missing, 'Missing ORIGINAL H290/PC602 files in app: '+str(missing)
+          assert (app/'PC602Home290HeightMap.bin').stat().st_size == 512*256*4
+          assert (app/'PC602OrbitBelt51.bin').stat().st_size == 50403776
+          assert hashlib.sha256((app/'PC602Home290HeightMap.bin').read_bytes()).hexdigest() == '12d56a99634e4fc28ded9e03bcac34de05020750cc18e86d1086db8542b2d18d'
+          assert hashlib.sha256((app/'PC602OrbitBelt51.bin').read_bytes()).hexdigest() == '553336e3f071bbb09cf6ba4b1b7cbc36b6bc346537cf8fb06343b90f807f4f63'
+          original=app/'planetarium.glb'
+          assert original.stat().st_size==3228900
+          assert hashlib.sha256(original.read_bytes()).hexdigest()=='71ca9ff24e044a831a5c7197e343594dd1fd801284af6231870570b35ad43860'
+          print('PASS original 159-channel HUD planetarium in actual iPhone/iPad bundle')
+          print('PASS H290+820 originals, actual app bundles iPhone/iPad+Metal')
+          PY
+          mkdir -p distribution/Payload
+          cp -R "$APP" distribution/Payload/
+          python3 Tools/materialize_pc586_original_resources.py \
+            --app "distribution/Payload/$(basename "$APP")" --report reports/pc586-in-ipa.json
+          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa Payload)
+          python3 Tools/verify_ipa.py ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-structure.txt
+          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa | tee reports/ipa-pc586-complete.txt
+          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa | tee reports/ipa-planetarium-verified.txt
+          python3 - <<'PY' | tee reports/final-archive-check.txt
+          import zipfile,hashlib
+          p='ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa'
+          with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None
+              required=('PC602Home290HeightMap.bin','PC602OrbitBelt51.bin',
+                        'W3HomePlanet290OriginalGPU.bin','default.metallib')
+              for name in required:
+                  hits=[x for x in z.namelist() if x.startswith('Payload/') and x.endswith('/'+name)]
+                  assert len(hits)==1,(name,hits)
+              assert not any(x.endswith('/hangar_h55.glb') for x in z.namelist())
+          print('PASS IPA CRC, original planet assets, original belt, Metal; large H55 GLB requires one-time Files import')
+          PY
+          shasum -a 256 ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
+          stat -f '%z bytes' ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa | tee reports/size.txt
+      - name: Publish the user's actual unsigned test IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-PC609-OSLONY-PANCERZ-TEST-UNSIGNED-IPA
+          path: |
+            ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa
+            reports/v609-build-commit.txt
+            reports/v609-parity.txt
+            reports/v609-source-audit.txt
+            reports/SHA256SUMS.txt
+            reports/source-commit.txt
+            reports/app-bundle-audit.txt
+            reports/ipa-structure.txt
+            reports/ipa-planetarium-verified.txt
+            reports/planetarium-source.txt
+            reports/planetarium-isolation.txt
+            reports/menu-sky-regression.txt
+            reports/orbit-save-contract.txt
+            reports/unified-interface-hud-291.txt
+            reports/mission-pause-source-regression.txt
+            reports/o01-menu-source-map.txt
+            reports/final-archive-check.txt
+            reports/size.txt
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve proof of failures, without claiming an IPA was built
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-PC609-IPA-BUILD-DIAGNOSTICS
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 7
