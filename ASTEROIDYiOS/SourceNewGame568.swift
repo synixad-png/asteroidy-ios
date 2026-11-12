@@ -159,6 +159,10 @@ enum SourceNewGame568 {
         mechanics:H55SourceMechanics580.State,difficultyRaw:Int,
         archiveExisting:Bool=true,
         defaults:UserDefaults = .standard)->Bool {
+        // PC602 ContinueActive358 always resumes the current active61
+        // profile. Never let an old auto-resume overwrite a new campaign.
+        guard archiveExisting || currentRunID(defaults:defaults)==runID
+        else{return false}
         guard UUID(uuidString:runID) != nil,
               (1...26).contains(target),
               PC602HomeFlight291.unlocked(target,mask:completedMask),
