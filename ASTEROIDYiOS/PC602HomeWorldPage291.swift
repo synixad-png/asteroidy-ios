@@ -19,6 +19,7 @@ struct PC602HomeWorldPage291:View {
     @State private var previouslyPaused330=false
     @State private var showingSaves61=false
     @State private var previouslyPaused61=false
+    @State private var slotsReturnToPause291=false
     @State private var loadingSave61=false
     @State private var showingOrbitOptions291=false
     @State private var showingOrbitSettings291=false
@@ -186,17 +187,18 @@ struct PC602HomeWorldPage291:View {
                 // Deactivation uses the EXACT same interactive PAUZA/OPCJE
                 // panel as the on-screen button. Never show a second
                 // RendererW3Pause317 menu with nonfunctional actions.
-                if !driver.presentingH55 && !showingOrbitOptions291 {
+                if !driver.presentingH55 {
+                    let wasPaused=driver.paused
                     showingAtlas330=false
                     showingSaves61=false
+                    slotsReturnToPause291=false
                     showingOrbitSettings291=false
                     showingOrbitHUD291=false
                     orbitDraft291=orbitLayout291
-                    openOrbitOptions291()
-                    // If an editor/atlas was already paused when iOS locked,
-                    // continuing returns to playable flight, not a hidden
-                    // paused state with no controls.
-                    previouslyPausedOptions291=false
+                    if !showingOrbitOptions291 {openOrbitOptions291()}
+                    // If the screen was locked during active flight,
+                    // KONTYNUUJ restores it instead of a hidden pause.
+                    if !wasPaused {previouslyPausedOptions291=false}
                 }
             }
             driver.setSuspended(phase != .active)
@@ -289,71 +291,69 @@ struct PC602HomeWorldPage291:View {
         showingOrbitHUD291=true
     }
 
+    /// Identical visual composition, actions and touch sizes to CARBONIS 01.
+    /// The HUD editor is NOT a PAUZA action; it belongs to USTAWIENIA / INTERFEJS.
     private func orbitOptionsPanel291(screen:GeometryProxy)->some View {
+        SourcePauseMenu568(
+            compact:screen.size.height<450,
+            subtitle:"PLANETA GŁÓWNA",
+            details:"CEL \(String(format:"%02d",driver.hud.target))",
+            settingsID:"pc602-orbit-options-settings",
+            slotsID:"pc602-orbit-save61",
+            continueID:"pc602-orbit-options-back",
+            exitID:"pc602-orbit-return-w3",
+            onSettings:{showingOrbitSettings291=true},
+            onSlots:{
+                showingOrbitOptions291=false
+                slotsReturnToPause291=true
+                openSaves61(load:false,restorePaused:previouslyPausedOptions291)
+            },
+            onContinue:{closeOrbitOptions291()},
+            onExit:{
+                showingOrbitOptions291=false
+                onExitToW3()
+            })
+            .zIndex(40)
+            .accessibilityIdentifier("pc602-orbit-options291")
+    }
+
+    /// One full-screen settings navigation, composed exactly like the
+    /// mission settings page. The editor is hosted behind INTERFEJS.
+    private func orbitSettingsScreen291(screen:GeometryProxy)->some View {
         let compact=screen.size.height<450
-        return ZStack {
-            Color.black.opacity(0.84).ignoresSafeArea()
-            VStack(spacing:compact ? 8:14) {
-                HStack {
-                    Text(showingOrbitSettings291
-                        ? "PAUZA / USTAWIENIA"
-                        : "PAUZA / PLANETA GŁÓWNA")
-                        .font(.system(size:compact ? 14:19,
-                                      weight:.bold,design:.monospaced))
-                        .foregroundStyle(gold)
-                    Spacer(minLength:8)
-                    Button(showingOrbitSettings291 ? "WRÓĆ DO OPCJI":"KONTYNUUJ") {
-                        if showingOrbitSettings291 {showingOrbitSettings291=false}
-                        else {closeOrbitOptions291()}
-                    }
-                    .accessibilityIdentifier("pc602-orbit-options-back")
-                }
-                if showingOrbitSettings291 {
-                    // Reuse the authoritative W3 game settings.
-                    CarbonisVisualSettingsPanel568(
-                        compact:compact,initialTab:4)
-                        .frame(maxWidth:.infinity,maxHeight:.infinity)
-                } else {
-                    Button("USTAWIENIA") {showingOrbitSettings291=true}
-                        .accessibilityIdentifier("pc602-orbit-options-settings")
-                    Button("EDYTUJ HUD / PRZYCISKI H290") {
-                        openOrbitHUDEditor291()
-                    }
-                    .accessibilityIdentifier("pc602-orbit-hud-edit291")
-                    Button("ZAPISZ LOT") {
-                        showingOrbitOptions291=false
-                        openSaves61(load:false,
-                                    restorePaused:previouslyPausedOptions291)
-                    }
-                    .accessibilityIdentifier("pc602-orbit-save61")
-                    Button("WCZYTAJ LOT") {
-                        showingOrbitOptions291=false
-                        openSaves61(load:true,
-                                    restorePaused:previouslyPausedOptions291)
-                    }
-                    .accessibilityIdentifier("pc602-orbit-load61")
-                    Button("POWRÓT DO MENU GŁÓWNEGO") {
-                        showingOrbitSettings291=false
-                        showingOrbitOptions291=false
-                        onExitToW3()
-                    }
-                    .foregroundStyle(.orange)
-                    .accessibilityIdentifier("pc602-orbit-return-w3")
-                }
+        return VStack(spacing:0) {
+            HStack {
+                Text("USTAWIENIA / PLANETA GŁÓWNA")
+                    .font(.system(size:compact ? 16:19,weight:.bold,
+                                  design:.monospaced))
+                    .foregroundStyle(gold)
+                Spacer()
             }
-            .font(.system(size:compact ? 13:16,weight:.bold,
-                          design:.monospaced))
-            .foregroundStyle(cyan)
-            .buttonStyle(.plain)
-            .padding(compact ? 14:22)
-            .frame(maxWidth:720,
-                   maxHeight:showingOrbitSettings291 ? .infinity:nil)
+            .padding(.horizontal,compact ? 14:24)
+            .padding(.vertical,9)
             .background(Color(red:0.008,green:0.028,blue:0.048))
-            .overlay(Rectangle().stroke(gold.opacity(0.8),lineWidth:1))
-            .padding(12)
+            CarbonisVisualSettingsPanel568(
+                compact:compact,initialTab:4,
+                onEditOrbitHud:{openOrbitHUDEditor291()})
+                .frame(maxWidth:.infinity,maxHeight:.infinity)
+            HStack {
+                Button("‹ WRÓĆ DO PAUZY") {showingOrbitSettings291=false}
+                    .font(.system(size:compact ? 16:18,weight:.bold,
+                                  design:.monospaced))
+                    .frame(minHeight:52)
+                    .padding(.horizontal,16)
+                    .foregroundStyle(.white)
+                    .background(Color(red:0.05,green:0.15,blue:0.22))
+                    .accessibilityIdentifier("pc602-orbit-settings-back")
+                Spacer(minLength:0)
+            }
+            .padding(.leading,CGFloat(max(12,screen.safeAreaInsets.leading+12)))
+            .padding(.bottom,CGFloat(max(10,screen.safeAreaInsets.bottom+6)))
         }
-        .zIndex(40)
-        .accessibilityIdentifier("pc602-orbit-options291")
+        .background(Color(red:0.005,green:0.018,blue:0.034))
+        .ignoresSafeArea()
+        .zIndex(45)
+        .accessibilityIdentifier("pc602-orbit-settings-fullscreen")
     }
 
     private func openSaves61(load:Bool,restorePaused:Bool?=nil) {
@@ -367,7 +367,14 @@ struct PC602HomeWorldPage291:View {
 
     private func dismissSaves61() {
         showingSaves61=false
-        driver.setPaused(previouslyPaused61)
+        if slotsReturnToPause291 {
+            slotsReturnToPause291=false
+            showingOrbitSettings291=false
+            showingOrbitOptions291=true
+            driver.setPaused(true)
+        } else {
+            driver.setPaused(previouslyPaused61)
+        }
     }
 
     private func dismissAtlas330() {
