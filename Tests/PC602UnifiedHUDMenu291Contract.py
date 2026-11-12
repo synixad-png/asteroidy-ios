@@ -60,4 +60,9 @@ assert "pinchStart=(selection,layout.item(selection).scale)" in editor
 assert "let ordered=PC602OrbitHUDLayout291.ids.filter{$0 != selection}" in editor
 assert 'value:id.hasPrefix("hud.navigation") ? [:]' in orbit
 assert 'navigationFrames:navigationHitRects291(' in orbit
+assert 'if showingOrbitHUD291 && !id.hasPrefix("hud.navigation")' in orbit
+assert 'PC602OrbitHUDLayout291.constrainedDrag(' in editor
+assert 'safeInsets:geo.safeAreaInsets' in editor
+assert 'start.frame)' in editor
+assert 'static func constrainedDrag(' in layout
 print("PASS unified PC602: PAUZA and 3 slots, H290 touch select/drag/pinch, real layout measurements, JSON migration, larger controls")
