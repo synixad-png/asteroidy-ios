@@ -66,6 +66,7 @@ assert 'archiveExisting:Bool=true' in source
 assert 'static func deleteSlot(_ slot:Int)->Bool' in save
 # PC602 Mode.Intro is a pre-battle checkpoint; reject live-frame saves.
 assert 'static func captureMissionStart61(' in save
+assert save.count('SourceNewGame568.canContinueActive358(defaults:defaults)')==2
 assert 'result.sourceMode61="intro"' in save
 assert 'result.missionLevel61=level' in save
 assert 'var isMissionIntro61:Bool' in save
