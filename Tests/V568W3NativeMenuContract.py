@@ -215,7 +215,9 @@ assert "H55Asset580.inspect(url)" in scene_h55
 assert 'SourceNewGame568.archives()' in menu
 assert 'restoreArchivedGame(archive)' in menu
 assert 'w3-restore-profile-' in menu
-assert 'Wczytywanie ręcznych zapisów PC nie jest jeszcze przeniesione.' in menu
+assert 'nieobsługiwanych jeszcze plików zapisu Windows' in menu
+assert 'KONTYNUUJ OSTATNI LOT' in menu
+assert 'PC602OrbitSave61.exists()' in menu
 # Navigation is fully handled in one native SwiftUI view, without
 # silently connecting unavailable menu actions to test gameplay.
 assert "ScrollView(.vertical)" in menu
