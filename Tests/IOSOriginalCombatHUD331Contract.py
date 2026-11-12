@@ -84,12 +84,14 @@ assert 'H55FPSLighting580.configure(scene:fpsScene,mode:fpsMode)' in fpsScene
 assert 'H55FPSLighting580.configure(scene:scene,mode:settings.mode)' in fpsPreview
 # Gameplay OPTIONS must open the full W3 settings panel, not an inert pause.
 expect_all(scene,(
-    'Button("OPCJE / USTAWIENIA")',
-    'showingMissionSettings568=true',
+    'SourcePauseMenu568(',
+    'onSettings:{showingMissionSettings568=true}',
     'missionSettingsScreen568(compact:compact)',
     'initialTab:4,',
     'onEditHud:{',
 ), "mission settings entry")
+pauseSource=(root/"ASTEROIDYiOS/SourcePauseMenu568.swift").read_text()
+assert 'action("USTAWIENIA"' in pauseSource
 expect_all(interface,(
     'case 4: interfacePage600',
     'Button("EDYTUJ UKŁAD HUD (46 ELEMENTÓW)")',
