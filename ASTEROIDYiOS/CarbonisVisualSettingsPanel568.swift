@@ -442,7 +442,7 @@ struct CarbonisVisualSettingsPanel568: View {
                 .font(.system(size:14,weight:.bold,design:.monospaced))
                 .foregroundStyle(gold)
             if let edit=onEditOrbitHud {
-                Button("EDYTUJ HUD PLANETY GŁÓWNEJ (11 ELEMENTÓW)") {edit()}
+                Button("EDYTUJ HUD PLANETY GŁÓWNEJ (\(PC602OrbitHUDLayout291.ids.count) ELEMENTÓW)") {edit()}
                     .frame(maxWidth:.infinity,minHeight:52,alignment:.leading)
                     .padding(.horizontal,14)
                     .foregroundStyle(cyan)
