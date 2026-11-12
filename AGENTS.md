@@ -104,3 +104,21 @@ Ten dokument jest wymaganiem repozytorium, a nie propozycją.
 
 - **PC602 źródłowy Vanguard431 / HomeShipPose291:** dla faktycznej planety głównej v602 statkiem grającym może być tylko **prawdziwy model wybranego typu**. Zweryfikowany ShipType=1 VANGUARD431 ma 194427 oryginalnych wierzchołków i 2 punkty dysz, SHA256 źródłowego pełnego `Vanguard431Source.mesh` `f5d6d0107437fa54c3e8505f9adfbf6143cc877cb970eef687603609e26f9f4a`, JPEG `2945f711a6b559bfb5fdfb79750a2f2f77e2071aa5f3f4173eb450bce81b8b95`. Źródłowy C# `Vanguard431.TryApply` ma tylko slot materiałowy 0. Używać istniejących poprawnych zasobów i shaderów `sourceVanguardVertex431` + `sourceVanguardTexturedToonFragment431` zamiast ponownie przerabiać GLB. `PC602HomeShipPose291` odtwarza `HomeFlight291.cs:144-158`: poziom +12 m, nos kierunek VisualHeading81, skrzydło Cross(heading,surface), bank Ry/ pitch Rx, współczynnik `11.2*((144.19674+15)/(720/PI))*.65*1.35` = ok. 6.826792, *dodatkowo* źródłowy suwak `OrbitShipScale472`. Nie nadpisywać go skalą podglądu W3, misji ani własną oceną z obrazu. 5 pozostałych craft nadal wymaga osobnych modeli; nigdy nie zastępować ich VANGUARD-em po cichu. Dwie oryginalne dysze i `DrawCraftModules95` nie są jeszcze wdrożone jako efekty w nowej scenie.
 - **PC602 pojedynczy kontroler świata:** `PC602HomeWorldSession291.swift` jest jedynym przyszłym właścicielem źródłowej fizyki i statusu sesji orbitalnej. `PC602HomeFlightInput291.swift` musi pobierać faktycznie wybrane akcje z `SourceControls586.Profile` + `SourceHardwareInput586.Snapshot` — nie dodawać kopii statycznej tabeli klawiszy iOS i nie ignorować zatwierdzonego remapowania. Zachować oddzielne stany pauzy, 26 celów misji i `Hub90.CanDock90`; żadnych losowych sukcesów misji przy dotarciu do punktu. Nie podłączać częściowego trybu do działającego W3/Carbonis/H55 przed pełną i sprawdzoną integracją. Linux Swift z asercjami PASS: https://github.com/synixad-png/asteroidy-ios/actions/runs/43093484237. Automatyczne testy nie dowodzą jeszcze, że app działa na iPhonie ani że istnieje instalowalna IPA.
+
+
+## Blokada edytora HUD misji CARBONIS 01 (polecenie użytkownika 12.11.2026)
+
+Podczas napraw H290 **nie wolno edytować** działającego edytora HUD misji:
+`ASTEROIDYiOS/HudLayoutEditor600.swift`,
+`ASTEROIDYiOS/HudControlLayout600.swift`,
+`ASTEROIDYiOS/HudLayout600.swift`,
+`ASTEROIDYiOS/HudEditorGeometry.swift` ani jego integracji
+`ASTEROIDYiOS/Sector01Scene568.swift`.
+Edytor H290 używa **wyłącznie** własnych plików `PC602OrbitHUDLayout291`,
+`PC602OrbitHUDEditor291` i aktywnego `PC602HomeWorldPage291`.
+Test `Tests/PC602UnifiedHUDMenu291Contract.py` sprawdza niezmienność
+pięciu plików źródłowych edytora misji na podstawie ich blob SHA Git.
+Modyfikacja tych plików jest zabroniona bez osobnego, wyraźnego
+polecenia użytkownika dotyczącego misji i świadomej aktualizacji
+odpowiadającego im testu. Weryfikacja kompilacji nie zastępuje
+interaktywnego testu przenoszenia przycisków na iPhonie/iPadzie.
