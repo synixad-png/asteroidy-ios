@@ -157,6 +157,37 @@ struct PC602OrbitHUDLayout291:Codable,Equatable {
         return chosen
     }
 
+    /// Match HudEditorGeometry.move and HudControlLayout600.limits:
+    /// passive text keeps >=12 physical points visible, functional
+    /// controls remain fully reachable in the real safe screen.
+    /// Input rectangle comes from the SAME coordinate system as hit().
+    static func constrainedDrag(_ id:String,delta:CGPoint,frame:CGRect,
+                                viewport:CGSize,
+                                safeInsets:(left:CGFloat,right:CGFloat,
+                                            top:CGFloat,bottom:CGFloat) =
+                                (0,0,0,0))->CGPoint {
+        guard delta.x.isFinite,delta.y.isFinite,
+              let hitbox=touchFrame(frame),
+              viewport.width.isFinite,viewport.height.isFinite,
+              viewport.width>0,viewport.height>0 else{return .zero}
+        let control=id.hasPrefix("control.")
+        let minVisible:CGFloat=control ? 0:12
+        let left=safeInsets.left+minVisible
+        let right=viewport.width-safeInsets.right-minVisible
+        let top=safeInsets.top+minVisible
+        let bottom=viewport.height-safeInsets.bottom-minVisible
+        let minX=left-(control ? hitbox.minX : hitbox.maxX)
+        let maxX=right-(control ? hitbox.maxX : hitbox.minX)
+        let minY=top-(control ? hitbox.minY : hitbox.maxY)
+        let maxY=bottom-(control ? hitbox.maxY : hitbox.minY)
+        func clamp(_ x:CGFloat,_ lo:CGFloat,_ hi:CGFloat)->CGFloat {
+            if lo>hi {return (lo+hi)*0.5}
+            return min(hi,max(lo,x))
+        }
+        return CGPoint(x:clamp(delta.x,minX,maxX),
+                       y:clamp(delta.y,minY,maxY))
+    }
+
     static func title(_ id:String)->String {
         switch id {
         case "hud.mission":return "HUD / GRUPA MISJI"
