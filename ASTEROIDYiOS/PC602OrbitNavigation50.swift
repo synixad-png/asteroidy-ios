@@ -45,8 +45,7 @@ enum PC602OrbitNavigation50 {
         if !(candidate.depth>0.4 && visible) {
             guard let route=PC602OrbitHud330.routeDirection(flight)
             else{return nil}
-            let goal=flight.orbitPosition+route*36+
-                     unit(flight.orbitPosition)*3
+            let goal = flight.orbitPosition + route * 36 + unit(flight.orbitPosition) * 3
             candidate=project(goal)
         }
         var dx=candidate.x-width*0.5
@@ -55,7 +54,7 @@ enum PC602OrbitNavigation50 {
             guard let route=PC602OrbitHud330.routeDirection(flight)
             else{return nil}
             dx=(m[0]*route.x+m[4]*route.y+m[8]*route.z)*500*(width/1280)
-            dy=-(m[1]*route.x+m[5]*route.y+m[9]*route.z)*245*(height/720)
+            dy = -(m[1]*route.x+m[5]*route.y+m[9]*route.z)*245*(height/720)
             if abs(dx)+abs(dy)<20 {dx=500*(width/1280)}
         }
         let horizontalLimit=540*(width/1280)

@@ -67,9 +67,12 @@ assert 'accessibilityIdentifier("intro41-skip-to-real-mission")' in c
 
 # Source physics, original touch split and optical renderer unchanged:
 assert "let compact=geo.size.height<550" in scene
-assert "HStack(spacing:0)" in scene
-assert ".gesture(movement)" in scene
-assert ".gesture(aiming)" in scene
+assert "SourceCombatTouchZones568(" in scene
+touch=read("ASTEROIDYiOS/SourceCombatTouchZones568.swift")
+assert "HStack(spacing:0)" in touch
+assert "DragGesture(minimumDistance:0)" in touch
+assert 'Float(value.translation.width)/110' in touch
+assert 'Float(value.translation.width)/100' in touch
 assert "Sector01CarbonisPreview568(" in scene
 assert "let scale=min(1,a/sourceAspect)" in proj
 assert "sourceWidth:Float=1280" in proj
