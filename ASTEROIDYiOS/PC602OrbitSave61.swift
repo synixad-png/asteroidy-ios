@@ -80,7 +80,11 @@ enum PC602OrbitSave61 {
 
     static func capture(_ flight:PC602HomeFlight291,
                         defaults:UserDefaults = .standard)->Snapshot? {
-        guard let id=SourceNewGame568.currentRunID(defaults:defaults) else{return nil}
+        // SaveManager61 requires ProfileSession56; never turn a missing
+        // or corrupt active shop record into a new default campaign save.
+        guard SourceNewGame568.canContinueActive358(defaults:defaults),
+              let id=SourceNewGame568.currentRunID(defaults:defaults)
+        else{return nil}
         let position=flight.orbitPosition
         let forward=flight.orbitForward
         let right=flight.orbitRight
@@ -106,6 +110,7 @@ enum PC602OrbitSave61 {
         baseOrbit:Snapshot?=nil,
         defaults:UserDefaults = .standard)->Snapshot? {
         guard level==1,
+              SourceNewGame568.canContinueActive358(defaults:defaults),
               let runID=SourceNewGame568.currentRunID(defaults:defaults),
               UUID(uuidString:runID) != nil else{return nil}
         let progress=CampaignStore556.load(defaults:defaults)
