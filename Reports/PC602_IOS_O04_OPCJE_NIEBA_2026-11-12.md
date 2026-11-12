@@ -16,3 +16,11 @@ Windows Renderer.cs:240,356–357: niezależne przełączniki „GLOW / POŚWIAT
 ## Odbiór i ograniczenia
 
 Wymagane: przejście statycznych testów, kompilacji ARM64 i testów migracji ustawień. Brak natywnego interaktywnego testu na iPhonie i porównania klatek PC↔Metal oznacza, że **O04 nie jest jeszcze formalnie odebrane**. O02/O03 nadal pozostają otwarte do końcowego odbioru, zgodnie z decyzją użytkownika o równoległej weryfikacji. Nie zmieniono zakresu O01–O12.
+
+## 12.11.2026 — Korekta źródłowa dodatkowych aureoli 1500 gwiazd
+
+Oryginalny PC v602 `Windows/src/GpuIntro41.cs:452`: wszystkie gwiazdy otrzymują `IntroHalo(p,size*2,tint,halo)`, ale wyłącznie jasne gwiazdy przy aktywnym `glow` dostają wcześniejszą, dużą aureolę `IntroHalo(p,rz>.98f?21:10,Color.FromArgb(125,tint),halo)`. W iOS `SourceSkyAssetFactory568.sphereSky207()` generował wszystkie dodatkowe aureole bez względu na `glow`, więc przełącznik GLOW nie był w pełni zgodny z oryginałem.
+
+Poprawka: zachowano niezmienioną funkcję wyjściową i wszystkie współrzędne `SpaceRand207`, a obok dodano raz konstruowany wariant `sphereSky207(glow:false)` obejmujący wyłącznie 1500 podstawowych gwiazd. `SourceCombatSky568` wybiera bufor zgodnie z aktualną opcją GLOW, bez dodatkowego przeliczania co klatkę, bez zmiany shaderów ani istniejącego renderera Carbonis01. GLOW włączony zachowuje dotychczasowe bajty i kolejność punktów.
+
+Test `PC602HomeScene291Contract.py` sprawdza ten warunek w kodzie. **To poprawka warunku z oryginału, nie potwierdzenie widoczności gwiazd na fizycznym GPU iPhone.** Zgodność 2D `SkyProject55`/Metal oraz oddzielne obrazy na urządzeniu nadal należą do O04.

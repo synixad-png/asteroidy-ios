@@ -31,6 +31,15 @@ enum SourceSkyAssetFactory568 {
 
     /// Original SphereSky207 source-visible star and halo vertices.
     static func sphereSky207() -> ([AssetMesh.Vertex],[UInt32]) {
+        sphereSky207(glow:true)
+    }
+
+    /// GpuIntro41.cs:452: all 1500 base stars are ALWAYS drawn; the extra
+    /// 10/21px halo is CONDITIONAL on GlowEnabled for bright stars.
+    /// Both static variants use the same exact SpaceRand207 positions.
+    /// The core-only variant is generated once, never each Metal frame.
+    static func sphereSky207(glow:Bool)
+        -> ([AssetMesh.Vertex],[UInt32]) {
         var vertices:[AssetMesh.Vertex]=[]
         var indices:[UInt32]=[]
         vertices.reserveCapacity(SphereSky207.count*2)
@@ -52,8 +61,10 @@ enum SourceSkyAssetFactory568 {
             // Renderer.GlowEnabled defaults to true in original
             // Windows/src/Renderer.cs:25. Glow UI option is not ported.
             if SphereSky207.hasBrightHalo(star) {
-                appendHalo(SphereSky207.brightHaloDiameterPixels(star),
-                           125/255)
+                if glow {
+                    appendHalo(SphereSky207.brightHaloDiameterPixels(star),
+                               125/255)
+                }
             }
             appendHalo(SphereSky207.baseDiameterPixels(star),
                        star.alpha)

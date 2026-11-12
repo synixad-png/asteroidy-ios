@@ -17,6 +17,10 @@ final class SourceCombatSky568 {
     private let skyDepthState:MTLDepthStencilState
     private let starBuffer:MTLBuffer
     private let starCount:Int
+    /// Source GpuIntro41 IntroSky(GLOW=false) still draws all base stars
+    /// but skips the distinct preliminary large bright-star halos.
+    private let starCoreBuffer:MTLBuffer
+    private let starCoreCount:Int
     private let cloudBuffer:MTLBuffer
     private let solarBuffer:MTLBuffer
     private let solarCount:Int
@@ -87,6 +91,11 @@ final class SourceCombatSky568 {
         let stars=SourceSkyAssetFactory568.sphereSky207()
         starBuffer=try Self.buffer(device,stars.0)
         starCount=stars.1.count
+        let cores=SourceSkyAssetFactory568.sphereSky207(glow:false)
+        starCoreBuffer=try Self.buffer(device,cores.0)
+        starCoreCount=cores.1.count
+        assert(starCoreCount==SphereSky207.count)
+        assert(starCount>=starCoreCount)
         let clouds=SourceSkyAssetFactory568.nebulaSource556()
         cloudBuffer=try Self.buffer(device,clouds.0)
         let rays=SourceSkyAssetFactory568.solarOverlaySource556()
@@ -224,11 +233,13 @@ final class SourceCombatSky568 {
         encoder.setRenderPipelineState(skyPointPipeline)
         encoder.setDepthStencilState(skyDepthState)
         encoder.setFragmentTexture(sphereHaloTexture,index:0)
-        encoder.setVertexBuffer(starBuffer,offset:0,index:0)
+        encoder.setVertexBuffer(
+            glow ? starBuffer : starCoreBuffer,offset:0,index:0)
         encoder.setVertexBytes(
             &skyUniform,length:MemoryLayout<SceneUniforms>.stride,index:1)
         encoder.drawPrimitives(
-            type:.point,vertexStart:0,vertexCount:starCount)
+            type:.point,vertexStart:0,
+            vertexCount:glow ? starCount : starCoreCount)
         // GpuIntro41.cs:454: only draw solar effects when the source
         // 900-unit sky direction is in the original extended screen
         // bounds. SkyProject55 uses the camera rotation, NOT its eye.
