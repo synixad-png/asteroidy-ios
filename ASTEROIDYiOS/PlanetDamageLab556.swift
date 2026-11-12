@@ -39,12 +39,14 @@ struct PlanetDamageLab556 {
                           -> CombatVerifiedHit556.Outcome {
         guard dt>0 else {return .ignored}
         survival.advance(dt:dt)
-        vitals.advance(dt:dt)
+        vitals.advance(dt:dt,playing:survival.playing,
+                       shipDown:survival.currentDown)
         // Windows/src/Game.cs:240 StepTarcza145(dt,input.Tarcza145)
         // precedes player collision (Game.cs:248). The held input is
         // momentary and consumes original 12 energy/s + 35/impact.
         dome.tick(dt:dt,held:tarczaHeld,
-                  playing:survival.playing,shipDown:false)
+                  playing:survival.playing,shipDown:survival.currentDown,
+                  reserve:&survival.shieldCharges)
         guard contacts>0 && survival.playing else {
             lastOutcome = .ignored
             return .ignored
