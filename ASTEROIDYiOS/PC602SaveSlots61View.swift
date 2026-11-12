@@ -19,7 +19,10 @@ struct PC602SaveSlots61View:View {
         if let value=try? PC602OrbitSave61.read(slot:slot) {
             let stamp=Date(timeIntervalSince1970:value.savedAt)
                 .formatted(date:.numeric,time:.shortened)
-            return "VANGUARD / MISJA \(String(format:"%02d",value.target)) / \(stamp)"
+            let label=value.isMissionIntro61
+                ? "POCZĄTEK MISJI \(String(format:"%02d",value.missionLevel61 ?? 1))"
+                : "ORBITA / MISJA \(String(format:"%02d",value.target))"
+            return "VANGUARD / \(label) / \(stamp)"
         }
         return PC602OrbitSave61.slotFileExists(slot)
             ? "USZKODZONY ZAPIS" : "PUSTY SLOT"
