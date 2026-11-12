@@ -30,6 +30,7 @@ final class SourceHomeVanguard431 {
         var engine1:SIMD4<Float>
         var timePowerSideSize:SIMD4<Float>
     }
+    let shipType:Int
     private let pipeline:MTLRenderPipelineState
     private let plasmaPipeline:MTLRenderPipelineState
     private let depth:MTLDepthStencilState
@@ -54,15 +55,31 @@ final class SourceHomeVanguard431 {
         return (bytes,url)
     }
 
-    init(device:MTLDevice) throws {
-        let (originalMesh,_)=try Self.verified(
-            "Vanguard431Source","mesh",
-            SourceVanguardMesh431.exactMeshSHA256)
-        let (originalSkin,skinURL)=try Self.verified(
-            "Vanguard431Base","jpg",
-            SourceVanguardMesh431.exactBaseJPEG_SHA256)
-        guard !originalSkin.isEmpty else {throw SourceError.missing}
-        let baked=try SourceVanguardMesh431(data:originalMesh)
+    init(device:MTLDevice,shipType:Int=1) throws {
+        guard shipType==1 || shipType==2 else{throw SourceError.missing}
+        self.shipType=shipType
+        let baked:SourceBakedShipMesh
+        let skinURL:URL?
+        let skinData:Data
+        if shipType==2 {
+            guard let bastion=SourceBastion606.load() else {
+                throw SourceError.missing
+            }
+            baked=bastion.mesh
+            skinData=bastion.jpeg
+            skinURL=nil
+        } else {
+            let (originalMesh,_)=try Self.verified(
+                "Vanguard431Source","mesh",
+                SourceVanguardMesh431.exactMeshSHA256)
+            let (originalSkin,originalSkinURL)=try Self.verified(
+                "Vanguard431Base","jpg",
+                SourceVanguardMesh431.exactBaseJPEG_SHA256)
+            baked=try SourceBakedShipMesh(data:originalMesh)
+            skinData=originalSkin
+            skinURL=originalSkinURL
+        }
+        guard !skinData.isEmpty else{throw SourceError.missing}
         guard baked.engines.count==2 else {throw SourceError.missing}
         engine0=SIMD4(baked.engines[0].x,baked.engines[0].y,
                       baked.engines[0].z,0)
@@ -75,11 +92,16 @@ final class SourceHomeVanguard431 {
             }
         }) else {throw SourceError.metal}
         buffer=vertex
-        texture=try MTKTextureLoader(device:device).newTexture(
-            URL:skinURL,options:[
-                .SRGB:false,.generateMipmaps:false,
-                .origin:MTKTextureLoader.Origin.topLeft
-            ])
+        let loader=MTKTextureLoader(device:device)
+        let opts:[MTKTextureLoader.Option:Any]=[
+            .SRGB:false,.generateMipmaps:false,
+            .origin:MTKTextureLoader.Origin.topLeft
+        ]
+        if let skinURL {
+            texture=try loader.newTexture(URL:skinURL,options:opts)
+        } else {
+            texture=try loader.newTexture(data:skinData,options:opts)
+        }
         let library=try device.makeDefaultLibrary(bundle:.main)
         guard let vert=library.makeFunction(name:"sourceVanguardVertex431"),
               let frag=library.makeFunction(
@@ -152,7 +174,8 @@ final class SourceHomeVanguard431 {
               projection:simd_float4x4,
               view:simd_float4x4,
               orbitScale:Float) {
-        guard let pose=PC602HomeShipPose291.vanguard(
+        guard flight.equipment.craft.rawValue==shipType,
+              let pose=PC602HomeShipPose291.vanguard(
                   flight,orbitScale:orbitScale),
               let basis=Self.matrix(pose.basis) else{return}
         let bank=pose.bankDegrees*Float.pi/180
