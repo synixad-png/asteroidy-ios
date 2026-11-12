@@ -129,8 +129,10 @@ expect_all(scene,(
     "Button(\"KONTYNUUJ\") {resumeMission568()}",
     "Button(\"WYJDŹ DO MENU\") {exitMission568()}",
     "SourcePerformanceOverlay568()",
-    ".gesture(movement)",
-    ".gesture(aiming)",
+    "SourceCombatTouchZones568(",
+    "onMove:{session.input(move:$0)}",
+    "onAim:{session.input(aim:$0)}",
+    "onFire:{session.input(shooting:$0)}",
     "session.release()",
     "W3SafeAreaReader568(insets:$missionSafeInsets568)",
     "safeLeft:missionSafeInsets568.left",
@@ -147,6 +149,14 @@ expect_all(scene,(
     "boostFrame.centerY",
     ".ignoresSafeArea()",
 ),"scene integration")
+touch=(root/"ASTEROIDYiOS/SourceCombatTouchZones568.swift").read_text()
+expect_all(touch,(
+    "HStack(spacing:0)",
+    "Float(value.translation.width)/110",
+    "Float(value.translation.width)/100",
+    "onFire(true)",
+    "onFire(false)",
+),"same original mission touch surface")
 for old in (
     "PORT MISJI 01",
     "ORYGINALNA PLANETA C279 · VANGUARD · WAVE 01",
