@@ -314,7 +314,7 @@ struct PC602HomeWorldPage291:View {
                         .accessibilityIdentifier("pc602-orbit-close-atlas330")
                 }
                 Text("CEL \(String(format:"%02d",driver.hud.target)) · " +
-                     "POSTĘP \(driver.hud.completed)/26")
+                     PC602OrbitHud330.progressLabel(driver.hud.completed))
                     .font(.system(size:10,design:.monospaced))
                     .foregroundStyle(cyan)
                 LazyVGrid(columns:Array(repeating:GridItem(.fixed(cell),
@@ -487,12 +487,16 @@ struct PC602HomeWorldPage291:View {
                     statusText("CEL: \(MissionCatalog568.title(for:driver.hud.target) ?? "")",compact)
                     Text("ODL: \(Int(driver.hud.sectorDistance)) m")
                         .foregroundStyle(cyan)
-                    Text("KURS: \(Int(abs(driver.hud.courseDegrees)))° " +
-                         (driver.hud.courseDegrees<0 ? "W LEWO" : "W PRAWO"))
+                    Text(PC602OrbitHud330.courseLabel(
+                        driver.hud.courseDegrees,
+                        unlocked:driver.hud.selectedUnlocked))
                         .foregroundStyle(.white)
                     if driver.hud.selectedCompleted {
                         Text("UKOŃCZONA · MOŻNA POWTÓRZYĆ")
                             .foregroundStyle(.green)
+                    } else if !driver.hud.selectedUnlocked {
+                        Text("ODBLOCKUJ POPRZEDNIĄ MISJĘ")
+                            .foregroundStyle(.gray)
                     }
                 }
                 .font(.system(size:compact ? 10:12,weight:.semibold,
@@ -501,9 +505,9 @@ struct PC602HomeWorldPage291:View {
                 .minimumScaleFactor(0.7)
                 Spacer(minLength:4)
                 VStack(alignment:.trailing,spacing:4) {
-                    Text("POSTĘP \(driver.hud.completed) / 26")
+                    Text(PC602OrbitHud330.progressLabel(driver.hud.completed))
                         .foregroundStyle(cyan)
-                    statusText("STREFA \(driver.hud.zone)",compact)
+                    statusText(PC602OrbitHud330.zoneLabel(driver.hud.zone),compact)
                     statusText("PUŁAP \(Int(driver.hud.altitude)) m",compact)
                     statusText("PRĘDKOŚĆ \(Int(driver.hud.speed))",compact)
                     // PC602 OrbitHud330: 8 columns x 4 rows, 29x22

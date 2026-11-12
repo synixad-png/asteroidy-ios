@@ -3,6 +3,20 @@ import Foundation
 guard CommandLine.arguments.count==2 else {
     fatalError("Use exact 512x256 source H290 binary height map")
 }
+// Exact PC602 Windows/src/Orbit50.cs:145-159 HUD labels.
+assert(PC602OrbitHud330.zoneLabel(1)=="STREFA 01")
+assert(PC602OrbitHud330.zoneLabel(24)=="STREFA 24")
+assert(PC602OrbitHud330.progressLabel(0)=="POSTĘP 00 / 26")
+assert(PC602OrbitHud330.progressLabel(9)=="POSTĘP 09 / 26")
+assert(PC602OrbitHud330.progressLabel(26)=="POSTĘP 26 / 26")
+assert(PC602OrbitHud330.courseLabel(-18.99,unlocked:true) ==
+       "KURS: 18° W LEWO")
+assert(PC602OrbitHud330.courseLabel(18.99,unlocked:true) ==
+       "KURS: 18° W PRAWO")
+assert(PC602OrbitHud330.courseLabel(0,unlocked:true) ==
+       "KURS: 0° W PRAWO")
+assert(PC602OrbitHud330.courseLabel(92,unlocked:false) ==
+       "KURS: NIEDOSTĘPNA")
 let bytes=try Data(contentsOf:
     URL(fileURLWithPath:CommandLine.arguments[1]))
 let home=try PC602NewHome290(heightMapBytes:bytes)

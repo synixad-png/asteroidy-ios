@@ -11,6 +11,20 @@ enum PC602OrbitHud330 {
         let unlocked:Bool
         let completed:Bool
     }
+    /// Exact Windows/src/Orbit50.cs DrawOrbit50 numeric display:
+    /// Zone and completion count are two-digit strings. An unavailable
+    /// target must NOT receive a fake bearing.
+    static func zoneLabel(_ zone:Int)->String {
+        "STREFA "+String(format:"%02d",zone)
+    }
+    static func progressLabel(_ completed:Int)->String {
+        "POSTĘP "+String(format:"%02d",completed)+" / 26"
+    }
+    static func courseLabel(_ course:Float,unlocked:Bool)->String {
+        guard unlocked else{return "KURS: NIEDOSTĘPNA"}
+        return "KURS: "+String(Int(abs(course)))+"° "+
+            (course<0 ? "W LEWO" : "W PRAWO")
+    }
     private static func length(_ p:SIMD3<Float>)->Float {
         sqrt(p.x*p.x+p.y*p.y+p.z*p.z)
     }
