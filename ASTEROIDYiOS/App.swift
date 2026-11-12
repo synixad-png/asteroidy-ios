@@ -416,6 +416,7 @@ struct GameView: View {
                             audio.returnToMenu()
                         },
                         onEnterMission:enterOrbitMission291,
+                        onLoadIntro61:{slot in loadManualSave61(slot)},
                         onProfileRestored:{
                             campaign=CampaignStore556.load()
                         })
