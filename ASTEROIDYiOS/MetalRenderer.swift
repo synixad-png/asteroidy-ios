@@ -16,7 +16,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     let input: FlightInput
     // Original separate visual-only scale; IntroScene41 cinematic is not
     // affected, exactly as the source uses it only in CraftSphere67/Orbit50.
-    private let shipScale472=SourceShipScale472.load()
+    private var shipScale472=SourceShipScale472.load()
+    private var shipScaleRevision472=UserDefaults.standard.integer(
+        forKey:SourceShipScale472.revisionKey)
     let device: MTLDevice
     let queue: MTLCommandQueue
     let pipeline: MTLRenderPipelineState
@@ -1452,6 +1454,12 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 sphereFlight.position,
                 angle:sphereFlight.flight.visualHeading,
                 size:SphereSurfaceStamp556.sourceCraftRadius)
+            let shipScaleRevision=UserDefaults.standard.integer(
+                forKey:SourceShipScale472.revisionKey)
+            if shipScaleRevision != shipScaleRevision472 {
+                shipScale472=SourceShipScale472.load()
+                shipScaleRevision472=shipScaleRevision
+            }
             let shipModel=craft *
                 Self.rotateYDegrees(sphereFlight.flight.visualBank) *
                 Self.rotateXDegrees(sphereFlight.flight.visualPitch) *

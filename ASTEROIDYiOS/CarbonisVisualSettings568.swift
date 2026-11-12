@@ -26,6 +26,7 @@ struct CarbonisVisualSettings568: Codable, Equatable {
         [92,11,80,165,145,155,90,270],
         [130,15,160,110,175,150,75,350]]
     static let sourceKey="ASTEROIDY.V568.Visual.Explosion524.ProjectileLight285.v1"
+    static let revisionKey=sourceKey+".revision"
 
     var type:Int=0
     var quality:Int=0
@@ -74,6 +75,8 @@ struct CarbonisVisualSettings568: Codable, Equatable {
         result.clampAll()
         if let data=try? JSONEncoder().encode(result) {
             defaults.set(data,forKey:Self.sourceKey)
+            defaults.set(defaults.integer(forKey:Self.revisionKey)+1,
+                         forKey:Self.revisionKey)
         }
     }
 }

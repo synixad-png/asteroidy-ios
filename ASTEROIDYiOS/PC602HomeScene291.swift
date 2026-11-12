@@ -76,7 +76,9 @@ struct PC602HomeScene291: UIViewRepresentable {
             private var graphicsSettings=SourcePlanetGraphicsSettings568.load()
             private var graphicsRevision=UserDefaults.standard.integer(
                 forKey:SourcePlanetGraphicsSettings568.revisionKey)
-            let orbitVisualScale:Float
+            private var orbitVisualScale:Float
+            private var orbitScaleRevision472=UserDefaults.standard.integer(
+                forKey:SourceShipScale472.revisionKey)
             let depth:MTLDepthStencilState
             let beaconDepth:MTLDepthStencilState
             let source:SourceNewHome290MetalAssets
@@ -243,6 +245,12 @@ struct PC602HomeScene291: UIViewRepresentable {
 
                 // Windows GpuNewHome290: planetPush();shipScale(100,100,100).
                 // The 24.8 MB original triangle stream is NEVER rebuilt.
+                let visualRevision=UserDefaults.standard.integer(
+                    forKey:SourceShipScale472.revisionKey)
+                if visualRevision != orbitScaleRevision472 {
+                    orbitVisualScale=SourceShipScale472.load().orbitFactor
+                    orbitScaleRevision472=visualRevision
+                }
                 let shots=onProjectiles?() ?? []
                 let model=simd_float4x4(diagonal:SIMD4(100,100,100,1))
                 // OpenGL gl_NormalMatrix and the specular view vector use

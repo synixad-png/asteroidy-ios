@@ -5,6 +5,7 @@ import Foundation
 /// Flight/contact physics, ship health, bullets and collision radii stay unchanged.
 struct SourceShipScale472: Codable, Equatable {
     static let key = "ASTEROIDY.v568.VisualShipScale472"
+    static let revisionKey = "ASTEROIDY.v568.VisualShipScale472.revision"
     static let minimum = 70
     static let maximum = 150
     static let step = 5
@@ -28,6 +29,8 @@ struct SourceShipScale472: Codable, Equatable {
         value.clampAll()
         if let bytes = try? JSONEncoder().encode(value) {
             defaults.set(bytes,forKey:Self.key)
+            defaults.set(defaults.integer(forKey:Self.revisionKey)+1,
+                         forKey:Self.revisionKey)
         }
     }
     static func load(_ defaults: UserDefaults = .standard) -> Self {

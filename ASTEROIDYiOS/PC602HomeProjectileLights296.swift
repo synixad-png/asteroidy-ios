@@ -15,7 +15,9 @@ final class PC602HomeProjectileLights296 {
     private let depth:MTLDepthStencilState
     private let buffers:[MTLBuffer]
     private let slots=DispatchSemaphore(value:3)
-    private let settings=CarbonisVisualSettings568.load()
+    private var settings=CarbonisVisualSettings568.load()
+    private var settingsRevision=UserDefaults.standard.integer(
+        forKey:CarbonisVisualSettings568.revisionKey)
     private var ringIndex=0
     private var staging=[PC602HomeBeacons291.Vertex]()
     private static let circle:[SIMD2<Float>]=(0...24).map { i in
@@ -103,7 +105,13 @@ final class PC602HomeProjectileLights296 {
               home:PC602NewHome290,
               bullets:[PC602HomeWeaponTest292.Bullet],
               projection:simd_float4x4,view:simd_float4x4) {
-        guard !bullets.isEmpty,settings.projectileBrightness>0 else{return}
+        let revision=UserDefaults.standard.integer(
+            forKey:CarbonisVisualSettings568.revisionKey)
+        if revision != settingsRevision {
+            settings=CarbonisVisualSettings568.load()
+            settingsRevision=revision
+        }
+        guard !bullets.isEmpty,settings.projectileBrightness>0 else{return
         let power=min(2.8,max(0,settings.projectileBrightnessFactor))
         staging.removeAll(keepingCapacity:true)
         for bullet in bullets.prefix(Self.maxBullets) {

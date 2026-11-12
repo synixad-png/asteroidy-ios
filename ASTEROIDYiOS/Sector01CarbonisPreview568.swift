@@ -117,7 +117,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var nextVisualReload:TimeInterval=0
             private var lava287=SourceLavaLightSettings287.load()
             private let planetFx568=SourcePlanetGraphicsSettings568.load()
-            private let shipScale472=SourceShipScale472.load()
+            private var shipScale472=SourceShipScale472.load()
+            private var shipScaleRevision472=UserDefaults.standard.integer(
+                forKey:SourceShipScale472.revisionKey)
             private var sourceMissionSize580=SourceMissionSize580.load()
             private var pickupVisual586=SourcePickupVisual586.load()
             private let missionTerrainScale523:Float
@@ -1397,6 +1399,12 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     // visual MissionShipScale472 AFTER source StampSphere67.
                     // Reuse this very same model for exhaust sockets 491,
                     // without touching collision size or geodesic movement.
+                    let revision=UserDefaults.standard.integer(
+                        forKey:SourceShipScale472.revisionKey)
+                    if revision != shipScaleRevision472 {
+                        shipScale472=SourceShipScale472.load()
+                        shipScaleRevision472=revision
+                    }
                     let pct=shipScale472.missionFactor
                     let shipMatrix=Self.craftModel(session.game.flight) *
                         simd_float4x4(diagonal:SIMD4<Float>(pct,pct,pct,1))
