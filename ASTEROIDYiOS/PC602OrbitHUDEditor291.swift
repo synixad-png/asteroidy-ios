@@ -7,11 +7,11 @@ import UniformTypeIdentifiers
 struct PC602OrbitHUDEditor291:View {
     @Binding var layout:PC602OrbitHUDLayout291
     let measuredFrames:[String:CGRect]
-    let navigationFrame:CGRect?
+    let navigationFrames:[String:CGRect]
     let onSave:()->Void
     let onCancel:()->Void
 
-    @State private var selected="hud.mission"
+    @State private var selected="hud.mission.heading"
     @State private var inspectorOpen=false
     @State private var importingJSON=false
     @State private var exportingJSON=false
@@ -20,9 +20,10 @@ struct PC602OrbitHUDEditor291:View {
 
     private var item:PC602OrbitHUDLayout291.Element {layout.item(selected)}
     private var frames:[String:CGRect] {
-        var copy=measuredFrames
-        if let navigationFrame {copy["hud.navigation"]=navigationFrame}
-        return copy
+        // Both the UIKit hit detector and the drawn outlines use these
+        // same physical CGRects. Navigation Path/Text each occupy a
+        // FULL-SCREEN SwiftUI container, so use the true source arrow rects.
+        measuredFrames.merging(navigationFrames){_,authored in authored}
     }
     private func selectNeighbor(_ delta:Int) {
         let ids=PC602OrbitHUDLayout291.ids
@@ -34,11 +35,24 @@ struct PC602OrbitHUDEditor291:View {
     }
     private func move(_ id:String,original:PC602OrbitHUDLayout291.Element,
                       dx:Double,dy:Double,viewport:CGSize) {
+        guard dx.isFinite,dy.isFinite else{return}
         let width=max(1,Double(viewport.width))
         let height=max(1,Double(viewport.height))
+        // Legacy H290 group transforms still enclose every individual
+        // text. Convert gesture deltas through the parent group scale,
+        // precisely as mission HudEditorGeometry.move converts the
+        // physical delta using the active viewport transform.
+        let parent:String?
+        if id.hasPrefix("hud.mission.") {parent="hud.mission"}
+        else if id.hasPrefix("hud.telemetry.") {parent="hud.telemetry"}
+        else if id.hasPrefix("hud.dock.") {parent="hud.dock"}
+        else if id=="hud.navigation.label" {parent="hud.navigation"}
+        else {parent=nil}
+        let inherited=parent.map{layout.item($0).scale} ?? 1
+        let base=max(0.001,inherited)
         change(id){e in
-            e.x=max(-600,min(600,original.x+dx*1280/width))
-            e.y=max(-360,min(360,original.y+dy*720/height))
+            e.x=max(-600,min(600,original.x+dx*1280/(width*base)))
+            e.y=max(-360,min(360,original.y+dy*720/(height*base)))
         }
     }
     private func scale(_ id:String,original:Double,factor:Double) {
@@ -69,13 +83,15 @@ struct PC602OrbitHUDEditor291:View {
                     .font(.system(size:16,weight:.bold,design:.monospaced))
                     .foregroundStyle(.yellow)
                 Picker("ELEMENT",selection:$selected) {
+                    Text("BRAK").tag("")
                     ForEach(PC602OrbitHUDLayout291.ids,id:\.self){id in
                         Text(PC602OrbitHUDLayout291.title(id)).tag(id)
                     }
                 }
                 .pickerStyle(.menu)
                 .frame(minHeight:48)
-                Text(PC602OrbitHUDLayout291.title(selected))
+                Text(selected.isEmpty ? "Dotknij element HUD na ekranie" :
+                     PC602OrbitHUDLayout291.title(selected))
                     .font(.system(size:14,design:.monospaced))
                 if selected.hasPrefix("hud.") {
                     Toggle("WIDOCZNY",isOn:Binding(
@@ -89,12 +105,14 @@ struct PC602OrbitHUDEditor291:View {
                         .font(.system(size:12,weight:.medium,design:.monospaced))
                         .foregroundStyle(.cyan)
                 }
-                slider("PRZESUNIĘCIE X",key:\.x,range:-600...600,step:1)
-                slider("PRZESUNIĘCIE Y",key:\.y,range:-360...360,step:1)
-                slider("WIELKOŚĆ / SKALA",key:\.scale,range:0.55...2.5,step:0.01)
-                Button(selected.hasPrefix("hud.")
-                       ? "PRZYWRÓĆ TEN ELEMENT":"PRZYWRÓĆ TEN PRZYCISK"){
-                    change(selected){$0=PC602OrbitHUDLayout291.defaults().item(selected)}
+                if !selected.isEmpty {
+                    slider("PRZESUNIĘCIE X",key:\.x,range:-600...600,step:1)
+                    slider("PRZESUNIĘCIE Y",key:\.y,range:-360...360,step:1)
+                    slider("WIELKOŚĆ / SKALA",key:\.scale,range:0.55...2.5,step:0.01)
+                    Button(selected.hasPrefix("hud.")
+                           ? "PRZYWRÓĆ TEN ELEMENT":"PRZYWRÓĆ TEN PRZYCISK"){
+                        change(selected){$0=PC602OrbitHUDLayout291.defaults().item(selected)}
+                    }
                 }
                 Divider().overlay(Color.cyan.opacity(0.3))
                 Button("EKSPORTUJ UKŁAD JSON") {
@@ -131,6 +149,7 @@ struct PC602OrbitHUDEditor291:View {
                 Button("◀") {selectNeighbor(-1)}
                     .accessibilityIdentifier("pc602-orbit-hud-previous")
                 Picker("ELEMENT HUD",selection:$selected) {
+                    Text("BRAK").tag("")
                     ForEach(PC602OrbitHUDLayout291.ids,id:\.self){id in
                         Text(PC602OrbitHUDLayout291.title(id)).tag(id)
                     }
@@ -201,7 +220,11 @@ struct PC602OrbitHUDEditor291:View {
                 let url=try result.get()
                 let scoped=url.startAccessingSecurityScopedResource()
                 defer{if scoped{url.stopAccessingSecurityScopedResource()}}
-                let data=try Data(contentsOf:url)
+                let handle=try FileHandle(forReadingFrom:url)
+                defer{try? handle.close()}
+                // The mission HUD editor uses a bounded read, not an
+                // unrestricted Data(contentsOf:) on imported files.
+                let data=try handle.read(upToCount:65_537) ?? Data()
                 guard data.count<=65_536 else {
                     errorMessage="Układ JSON jest zbyt duży.";return
                 }
@@ -297,20 +320,11 @@ private struct OrbitEditorTouchCanvas291:UIViewRepresentable {
             pinch.cancelsTouchesInView=false
             addGestureRecognizer(pinch)
         }
-        private func tapFrame(_ r:CGRect)->CGRect {
-            let w=max(44,r.width),h=max(44,r.height)
-            return CGRect(x:r.midX-w/2,y:r.midY-h/2,width:w,height:h)
-        }
         private func hit(_ point:CGPoint)->String? {
-            // Interactive buttons win over overlapping text widgets.
-            let ids=PC602OrbitHUDLayout291.ids.filter{
-                $0.hasPrefix("control.")
-            }+PC602OrbitHUDLayout291.ids.filter{$0.hasPrefix("hud.")}
-            for id in ids {
-                guard let r=frames[id],tapFrame(r).contains(point) else{continue}
-                return id
-            }
-            return nil
+            // Exactly one source of hit testing for this editor and its
+            // draw markers, in the spirit of HudEditorGeometry.hit.
+            PC602OrbitHUDLayout291.hit(point:point,frames:frames,
+                                       layout:layout)
         }
         override func touchesBegan(_ touches:Set<UITouch>,with event:UIEvent?) {
             super.touchesBegan(touches,with:event)
@@ -347,13 +361,14 @@ private struct OrbitEditorTouchCanvas291:UIViewRepresentable {
             switch gesture.state {
             case .began:
                 dragStart=nil
-                let location=gesture.location(in:self)
-                let id=hit(location) ?? selection
-                guard PC602OrbitHUDLayout291.ids.contains(id) else {
+                // Match working HudLayoutEditor600: a pinch always
+                // transforms the CURRENTLY SELECTED widget/control.
+                // Picking a different item mid-pinch changed selection and
+                // made scale feel unreliable on the iPad.
+                guard PC602OrbitHUDLayout291.ids.contains(selection) else {
                     pinchStart=nil;return
                 }
-                onSelect?(id)
-                pinchStart=(id,layout.item(id).scale)
+                pinchStart=(selection,layout.item(selection).scale)
             case .changed:
                 if let start=pinchStart {
                     onScale?(start.id,start.scale,Double(gesture.scale))
@@ -364,9 +379,15 @@ private struct OrbitEditorTouchCanvas291:UIViewRepresentable {
         }
         override func draw(_ rect:CGRect) {
             guard let ctx=UIGraphicsGetCurrentContext() else{return}
-            for id in PC602OrbitHUDLayout291.ids {
+            // Selected child is drawn AFTER groups, for a visible yellow
+            // outline even when a nested legacy group overlaps it.
+            let ordered=PC602OrbitHUDLayout291.ids.filter{$0 != selection} +
+                        (PC602OrbitHUDLayout291.ids.contains(selection)
+                         ? [selection] : [])
+            for id in ordered {
                 guard let raw=frames[id] else{continue}
-                let border=tapFrame(raw)
+                guard let border=PC602OrbitHUDLayout291.touchFrame(raw)
+                else{continue}
                 let current=id==selection
                 let isControl=id.hasPrefix("control.")
                 let color:UIColor=current ? .systemYellow :
