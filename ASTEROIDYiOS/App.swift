@@ -322,6 +322,17 @@ struct GameView: View {
     // Existing explicit GPU/UI verification still enters its requested scene.
     @State private var startupSplashPassed568 = W3StartupPolicy568
         .skipForDiagnostic(ProcessInfo.processInfo.environment)
+    // Test-only simulator access to the real W3/H290 touch interfaces.
+    // A CI simulator needs >360 seconds to synthesize source menu music;
+    // unrelated UI tests must not fail before they reach the HUD editor.
+    // iPhone Release cannot enable this bypass (compile-time excluded).
+    private var h290SimulatorUITest291:Bool {
+        #if targetEnvironment(simulator)
+        ProcessInfo.processInfo.environment["ASTEROIDY_H290_SIMULATOR_UI_VERIFY"]=="1"
+        #else
+        false
+        #endif
+    }
     // The genuine W3 navigation is the normal entry point.
     // Existing source-GPU verification remains an explicit simulator mode.
     @State private var showMainMenu =
@@ -446,7 +457,7 @@ struct GameView: View {
                         })
                         .ignoresSafeArea()
                 } else if showMainMenu {
-                    if !audio.startupComplete {
+                    if !audio.startupComplete && !h290SimulatorUITest291 {
                         OriginalAudioLoadingView568(audio:audio)
                     } else {
                     ZStack {
@@ -725,7 +736,9 @@ struct GameView: View {
                 }
             }.frame(width: g.size.width, height: g.size.height)
         }
-        .onAppear { audio.prepareMenuAtStartup() }
+        .onAppear {
+            if !h290SimulatorUITest291 {audio.prepareMenuAtStartup()}
+        }
         .onChange(of: scenePhase) { phase in
             audio.sceneIsActive(phase == .active)
             input.gameplayPaused = phase != .active || showMainMenu
