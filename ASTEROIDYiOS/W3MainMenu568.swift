@@ -658,6 +658,8 @@ struct W3MainMenu568: View {
                         forShip:type) != nil
                     let stats=H55SourceMechanics580.shipStats(
                         type:type,engine:0,stabilizer:0,thruster:0)
+                    let lives=SourceNewGame568.startingLives(
+                        difficulty:newDifficulty568,shipType:type)
                     Button {
                         if available {
                             newShipType568=type
@@ -671,8 +673,7 @@ struct W3MainMenu568: View {
                             Text("A \(Int(stats?.acceleration ?? 0)) · V \(Int(stats?.topSpeed ?? 0))")
                                 .font(.system(size:compact ? 9 : 11,
                                               design:.monospaced))
-                            Text("ŻYCIA \(SourceNewGame568.startingLives(
-                                difficulty:newDifficulty568,shipType:type))")
+                            Text("ŻYCIA \(lives)")
                                 .font(.system(size:compact ? 9 : 11,
                                               design:.monospaced))
                         }
