@@ -50,6 +50,6 @@ import simd
             // Expected fail-closed behavior on malformed compressed source.
         }
         print("PASS original BOREAS ASNT: RFC1950 Swift decode, 48 node records, 96 node channels, 4320 animated vertices, CARBONIS Intro41 renderer initialization")
-        print("PASS original BOREAS ASNT frame t=0 -> t=2.5: \\(moved) source vertices changed; static vertices preserved")
+        print("PASS original BOREAS ASNT frame t=0 -> t=2.5: \(moved) source vertices changed; static vertices preserved")
     }
 }
