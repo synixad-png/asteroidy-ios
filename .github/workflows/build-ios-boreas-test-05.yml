@@ -4,11 +4,12 @@
 name: ASTEROIDY iOS PC609 BOREAS05 all 97 original GLB channels full Release unsigned IPA
 on:
   push:
-    branches: [feature/ios-boreas-test-05, feature/ios-pc609-h55-newgame-repairs]
+    branches: [feature/ios-boreas-test-05, feature/ios-pc609-h55-newgame-repairs, feature/ios-pc609-regression-models-orbit]
     paths:
       - .github/workflows/build-ios-boreas-test-05.yml
       - Tools/verify_embedded_pc609_assets.py
       - Tests/PC609H55FleetNewGameContract.py
+      - Tests/OriginalPC609PackDecoderTests.swift
       - Tests/PC602HomeScene291Contract.py
       - Tests/IOSKestrel603SourceContract.py
       - ASTEROIDYiOS/H55SourceMechanics580.swift
@@ -103,6 +104,12 @@ jobs:
         run: |
           set -euo pipefail
           python3 Tools/verify_embedded_pc609_assets.py --assets ASTEROIDYiOS/Assets --boreas | tee reports/embedded-pc609-source-assets.txt
+      - name: Decode BOTH ORIGINAL embedded PC609 ship packs with actual Swift 5 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/SourceVanguardMesh431.swift ASTEROIDYiOS/SourceKestrel603.swift ASTEROIDYiOS/SourceBastion606.swift Tests/OriginalPC609PackDecoderTests.swift -o /tmp/pc609-actual-packs
+          /tmp/pc609-actual-packs | tee reports/original-packs-real-decoding.txt
       - name: Verify KESTREL 6031 format and iOS source integration
         shell: bash
         run: |
@@ -197,6 +204,7 @@ jobs:
             ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa
             reports/SHA256SUMS.txt
             reports/embedded-pc609-source-assets.txt
+            reports/original-packs-real-decoding.txt
             reports/embedded-pc609-ipa-assets.txt
             reports/size.txt
             reports/source-commit.txt
