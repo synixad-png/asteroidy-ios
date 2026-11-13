@@ -14,6 +14,10 @@ on:
       - ASTEROIDYiOS/MissionCinematic568.swift
       - ASTEROIDYiOS/SourcePC609Zlib.swift
       - ASTEROIDYiOS/H55WorkshopPanel580.swift
+      - ASTEROIDYiOS/SourcePauseMenu568.swift
+      - ASTEROIDYiOS/MissionCinematic568.swift
+      - Tests/PC602HomeWorldUI291Contract.py
+      - W3MenuUITests/PC609RuntimeUITests.swift
       - Tests/PC602HomeScene291Contract.py
       - Tests/IOSKestrel603SourceContract.py
       - ASTEROIDYiOS/H55SourceMechanics580.swift
