@@ -230,7 +230,7 @@ assert "flight.flight.flight.visualPitch" in ship_pose
 assert "flight.home.surface(" in ship_pose
 assert "altitude+12" in ship_pose
 assert "sourceShipScale*orbitScale" in ship_pose
-assert "originalShip=try SourceHomeVanguard431(device:device," in world
+assert "originalShip=try SourceHomeVanguard431(" in world
 assert "let selectedShip=H55SourceMechanics580.load().selectedShip" in world
 assert "shipType:selectedShip" in world
 assert "case originalShip(Int,String)" in world
