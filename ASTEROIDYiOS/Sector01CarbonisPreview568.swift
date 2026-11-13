@@ -432,7 +432,13 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                     let equipped=gameSession?.game.sourceMechanics.selectedShip ?? 1
                     let parsed:SourceBakedShipMesh
                     let craftJPEG:Data
-                    if equipped==2 {
+                    if equipped==0 {
+                        guard let kestrel=SourceKestrel603.load() else {
+                            throw SourceError.invalid
+                        }
+                        parsed=kestrel.mesh
+                        craftJPEG=kestrel.jpeg
+                    } else if equipped==2 {
                         guard let bastion=SourceBastion606.load() else {
                             throw SourceError.invalid
                         }
