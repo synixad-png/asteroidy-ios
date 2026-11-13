@@ -1,5 +1,8 @@
 # Source regression tests for features already merged into main.
-# Jobs marked 'from <file>' are copied unchanged from that deleted workflow (only the job id changed).
+# Jobs marked 'from <file>' are copied unchanged from that deleted workflow (only the job id changed),
+# except: h11-rail-swarm-source and h11-guardian-source also compile CombatTarcza145.swift and
+# CombatTalentVitals78.swift (as PR #38 did in build-ios.yml), and h11-model-independent-source
+# checks the current 3-ship model mapping.
 # Those workflows only started on feature branches that are merged now, so main never ran them.
 # The last three jobs keep tests whose only other workflows were deleted IPA or one-shot runs;
 # each command is copied exactly from the workflow named in its comment.
@@ -360,6 +363,8 @@ jobs:
             ASTEROIDYiOS/SourcePickupModels586.swift \
             ASTEROIDYiOS/SourcePickupAbilities586.swift \
             ASTEROIDYiOS/SourceCombatSupply586.swift \
+            ASTEROIDYiOS/CombatTarcza145.swift \
+            ASTEROIDYiOS/CombatTalentVitals78.swift \
             ASTEROIDYiOS/CarbonisCombat568.swift \
             Tests/CombatGuardianDrone298Tests.swift \
             -o /tmp/h11-guardian-source
@@ -413,7 +418,12 @@ jobs:
           assert 'state.timeTrophies |= bit' in p
           assert 'id<3 || state.guardianOwned' in p
           assert 'case 5:return 620' in p
-          assert 'guard id==1 else{return nil}' in p
+          # dc2ac34 (BASTION) + 3263421 (KESTREL): only verified models are registered;
+          # every other ship id still has no model.
+          assert 'case 0:return kestrelAssetURL == nil ? nil : "SOURCE-PC603-KESTREL"' in p
+          assert 'case 1:return "SOURCE-C279-VANGUARD"' in p
+          assert 'case 2:return bastionAssetURL == nil ? nil : "SOURCE-PC606-BASTION"' in p
+          assert 'default:return nil' in p
           print("PASS H11 original source contracts, no fake purchased GLB")
           PY
   # from .github/workflows/h11-profile-archive.yml
@@ -483,6 +493,8 @@ jobs:
             ASTEROIDYiOS/SourcePickupModels586.swift
             ASTEROIDYiOS/SourcePickupAbilities586.swift
             ASTEROIDYiOS/SourceCombatSupply586.swift
+            ASTEROIDYiOS/CombatTarcza145.swift
+            ASTEROIDYiOS/CombatTalentVitals78.swift
             ASTEROIDYiOS/CarbonisCombat568.swift
           )
           swiftc "${sources[@]}" Tests/H11RailSwarm580Tests.swift -o /tmp/h11-rail-swarm-pc580

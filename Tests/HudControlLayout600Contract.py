@@ -38,7 +38,11 @@ for symbol in ("@State private var hudControlLayout600=HudControlLayout600.load(
                'Button("BOMBA \\(session.hud.bombs)") {',
                'Text("TARCZA \\(energy)/100")',
                'Button("DOPALACZ \\(session.hud.boostCharges)/3") {',
-               'Button("OPCJE / USTAWIENIA") {',
+               # 82e0d31: the CARBONIS 01 pause uses the one shared
+               # SourcePauseMenu568; its settings action opens the same
+               # mission settings, so no second Options button exists.
+               "SourcePauseMenu568(",
+               "onSettings:{showingMissionSettings568=true}",
                "shieldFrame.width",
                "shieldFrame.height",
                "shieldFrame.centerX",
@@ -46,7 +50,6 @@ for symbol in ("@State private var hudControlLayout600=HudControlLayout600.load(
                "pauseFrame.centerX",
                "bombFrame.centerX",
                "boostFrame.centerX",
-               "hudControlLayout600.control(\"control.options\")?.scale",
                "showingMissionSettings568=true",
                'DragGesture(minimumDistance:0)',
                "session.holdShield145(true)",
