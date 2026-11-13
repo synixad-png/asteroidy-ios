@@ -23,6 +23,10 @@ on:
       - ASTEROIDYiOS/SourceNewGame568.swift
       - Tests/PC602OrbitSave61Contract.py
       - Tests/PC602O01SourceBaseline.py
+      - Tests/SourceNewGame568Tests.swift
+      - Tests/SourceNewGame568Contract.py
+      - ASTEROIDYiOS/W3MainMenu568.swift
+      - ASTEROIDYiOS/App.swift
       - Tests/PC602HomeFlight291Tests.swift
       - Tests/CarbonisCombat568Tests.swift
       - Tests/SourceGPUProofWriter568Contract.py
@@ -66,6 +70,10 @@ jobs:
         run: |
           set -euo pipefail
           python3 Tests/IOSKestrel603SourceContract.py | tee reports/kestrel-source-audit.txt
+          python3 Tests/SourceNewGame568Contract.py | tee reports/starting-lives-source-contract.txt
+          swiftc -O ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/pc609-ship-starting-lives
+          /tmp/pc609-ship-starting-lives | tee reports/starting-lives-nine-combinations.txt
+          python3 Tests/PC602OrbitSave61Contract.py | tee reports/save-slots-shiptype.txt
           swiftc -O ASTEROIDYiOS/SourceVanguardMesh431.swift Tests/KestrelMesh603Tests.swift -o /tmp/kestrel603-mesh
           /tmp/kestrel603-mesh | tee reports/kestrel-mesh-abi.txt
           swiftc -O ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift Tests/PC608609MechanicsTests.swift -o /tmp/kestrel-shield-armor
@@ -132,6 +140,9 @@ jobs:
             reports/kestrel-source-audit.txt
             reports/kestrel-mesh-abi.txt
             reports/v608-v609-regression.txt
+            reports/starting-lives-source-contract.txt
+            reports/starting-lives-nine-combinations.txt
+            reports/save-slots-shiptype.txt
             reports/full-95-source-assets.txt
             reports/three-ships-source-audit.txt
             reports/model-import.txt
