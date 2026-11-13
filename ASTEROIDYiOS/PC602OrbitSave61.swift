@@ -53,7 +53,7 @@ enum PC602OrbitSave61 {
                   (isOrbit61 || returnHome61 != nil),
                   savedAt.isFinite,savedAt>0,
                   UUID(uuidString:runID) != nil,
-                  shipType==1, // Other craft explicitly out of scope.
+                  (0...2).contains(shipType), // Three verified original PC609 ships only.
                   (1...26).contains(target),
                   completedMask>=0,completedMask & ~PC602OrbitSave61.validMask == 0,
                   PC602HomeFlight291.unlocked(target,mask:completedMask),
@@ -66,7 +66,7 @@ enum PC602OrbitSave61 {
                   (!isOrbit61 || (0.9...1.1).contains(length(forward))),
                   (!isOrbit61 || (0.9...1.1).contains(length(right))),
                   (!isOrbit61 || abs(dot(forward,right))<=0.2),
-                  mechanics.valid && mechanics.selectedShip==1,
+                  mechanics.valid && mechanics.selectedShip==shipType,
                   vitals.valid,
                   (tarczaEnergy145.map {
                       $0.isFinite && (0...SourceTarcza145.maximum).contains($0)
@@ -124,8 +124,9 @@ enum PC602OrbitSave61 {
         guard progress.unlocked(level) else{return nil}
         let verifiedOrbit=baseOrbit?.isOrbit61 == true &&
             baseOrbit?.runID==runID && baseOrbit?.valid == true ? baseOrbit : nil
+        let activeShip=H55SourceMechanics580.load(defaults:defaults).selectedShip
         var result=Snapshot(schema:schema,savedAt:Date().timeIntervalSince1970,
-            runID:runID,shipType:1,
+            runID:runID,shipType:activeShip,
             position:verifiedOrbit?.position ?? [0,0,0],
             forward:verifiedOrbit?.forward ?? [0,0,0],
             right:verifiedOrbit?.right ?? [0,0,0],
