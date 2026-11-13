@@ -194,6 +194,30 @@ struct PC602HomeWorldPage291:View {
                         onAim:{driver.setTouch(aim:$0)},
                         onFire:{driver.setFiring($0)})
                     overlay(screen:screen,flight:flight)
+                    if let failure=driver.error,
+                       failure.hasPrefix("PC602 HomeScene291:") {
+                        VStack(spacing:12) {
+                            Text("NIE MOŻNA WYRYSOWAĆ ORBITY H290")
+                                .font(.system(size:15,weight:.bold,design:.monospaced))
+                            Text(failure)
+                                .font(.system(size:11,design:.monospaced))
+                                .multilineTextAlignment(.center)
+                            Button("WRÓĆ DO MENU GŁÓWNEGO") {
+                                onExitToW3()
+                            }
+                            .font(.system(size:13,weight:.bold,design:.monospaced))
+                            .padding(12)
+                            .foregroundStyle(.black)
+                            .background(gold)
+                            .accessibilityIdentifier("pc602-orbit-renderer-recovery")
+                        }
+                        .foregroundStyle(gold)
+                        .padding(18)
+                        .frame(maxWidth:490)
+                        .background(Color.black.opacity(0.94))
+                        .overlay(Rectangle().stroke(gold.opacity(0.65),lineWidth:1))
+                        .zIndex(90)
+                    }
                     navigationCue50(screen:screen,flight:flight)
                     if showingAtlas330 {atlasPanel(screen:screen)}
                     if showingSaves61 {
