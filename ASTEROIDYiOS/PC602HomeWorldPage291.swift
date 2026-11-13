@@ -324,6 +324,11 @@ struct PC602HomeWorldPage291:View {
         .onChange(of:driver.hud.enginePower) { _,power in
             audio.sourceEnginePower(power)
         }
+        // Every close path of the orbit settings screen lands here, so
+        // key assignments changed in STEROWANIE apply to orbit flight.
+        .onChange(of:showingOrbitSettings291) { _,open in
+            if !open {driver.refreshControls586()}
+        }
         .onChange(of:driver.hud.shotEmissions) { old,next in
             if next>old {
                 for _ in old..<next {

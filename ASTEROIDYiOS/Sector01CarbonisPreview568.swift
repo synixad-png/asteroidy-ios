@@ -116,7 +116,9 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
             private var fxBudget=CarbonisIOSFXBudget568.load()
             private var nextVisualReload:TimeInterval=0
             private var lava287=SourceLavaLightSettings287.load()
-            private let planetFx568=SourcePlanetGraphicsSettings568.load()
+            private var planetFx568=SourcePlanetGraphicsSettings568.load()
+            private var planetFxRevision568=UserDefaults.standard.integer(
+                forKey:SourcePlanetGraphicsSettings568.revisionKey)
             private var shipScale472=SourceShipScale472.load()
             private var shipScaleRevision472=UserDefaults.standard.integer(
                 forKey:SourceShipScale472.revisionKey)
@@ -1124,6 +1126,16 @@ struct Sector01CarbonisPreview568: UIViewRepresentable {
                 }
                 let vp:simd_float4x4?=gameSession.map {
                     Self.viewProjection($0.game.flight.camera,aspect:aspect)
+                }
+                // Glow #2 and PLANETY #55-#57 changed in the mission pause
+                // settings apply to this live renderer. Same integer
+                // revision check as PC602HomeScene291; JSON is decoded only
+                // after a save, never on unchanged frames.
+                let planetFxRevision=UserDefaults.standard.integer(
+                    forKey:SourcePlanetGraphicsSettings568.revisionKey)
+                if planetFxRevision != planetFxRevision568 {
+                    planetFx568=SourcePlanetGraphicsSettings568.load()
+                    planetFxRevision568=planetFxRevision
                 }
                 // Original GpuSphere67.cs:420:
                 // clear -> IntroSky(24 far clouds, three real distant

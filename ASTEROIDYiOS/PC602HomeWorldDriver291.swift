@@ -464,6 +464,16 @@ final class PC602HomeWorldDriver291:ObservableObject {
         return permitted
     }
 
+    /// Re-read PC586 key assignments when the orbit settings screen closes,
+    /// as CarbonisSession568.refreshControls586 does on mission resume.
+    /// Never called from the flight frame loop.
+    func refreshControls586() {
+        let controls=SourceControls586.Profile.load()
+        withLock {
+            session?.adoptControls(controls)
+        }
+    }
+
     func exitH55() {
         let result=withLock{
             session?.finishPhysicalH55Visit()

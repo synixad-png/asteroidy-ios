@@ -87,7 +87,9 @@ struct PC602HomeScene291: UIViewRepresentable {
             let source:SourceNewHome290MetalAssets
             private var beaconBuffer:MTLBuffer?
             private var beaconCacheKey:(Int,Int)?
-            let lava287=SourceLavaLightSettings287.load()
+            private var lava287=SourceLavaLightSettings287.load()
+            private var lavaRevision287=UserDefaults.standard.integer(
+                forKey:SourceLavaLightSettings287.revisionKey)
             var flight:PC602HomeFlight291?
             var onFrame:((TimeInterval)->PC602HomeFlight291?)?
             var onProjectiles:(()->[PC602HomeWeaponTest292.Bullet])?
@@ -254,6 +256,14 @@ struct PC602HomeScene291: UIViewRepresentable {
                     graphicsRevision=revision
                 }
                 let effects=graphicsSettings
+                // PLANETY #45 lava brightness changed in the orbit pause
+                // settings: decode only after a save, as above.
+                let lavaRevision=UserDefaults.standard.integer(
+                    forKey:SourceLavaLightSettings287.revisionKey)
+                if lavaRevision != lavaRevision287 {
+                    lava287=SourceLavaLightSettings287.load()
+                    lavaRevision287=lavaRevision
+                }
 
                 // Windows GpuNewHome290: planetPush();shipScale(100,100,100).
                 // The 24.8 MB original triangle stream is NEVER rebuilt.
