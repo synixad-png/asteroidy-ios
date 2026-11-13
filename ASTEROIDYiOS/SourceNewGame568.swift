@@ -205,7 +205,11 @@ enum SourceNewGame568 {
             defaults.object(forKey:difficultyKey) as? Int ?? 1) ?? .normal
         // Co-op is not yet a supported executable iOS mission; never
         // load a stale two-player choice as if the port had two ships.
-        return SourceNewGameSelection568(players:1,difficulty:difficulty)
+        // Continue uses the canonical H55 player craft; new campaigns may
+        // override it in W3 without modifying the previous saved profile.
+        let prior=H55SourceMechanics580.load(defaults:defaults).selectedShip
+        return SourceNewGameSelection568(players:1,difficulty:difficulty,
+            shipType:(0...2).contains(prior) ? prior : 1)
     }
     /// PC602 SaveManager61.ContinueActive358 requires a valid ACTIVE
     /// campaign profile; it does not require a manual or flight checkpoint.
