@@ -101,6 +101,19 @@ import simd
     private static var bastionGeometry:SCNGeometry?
     private static var kestrelGeometry:SCNGeometry?
 
+    /// Native-only verification for W3 and H55 equipment UI. The source
+    /// campaign rules intentionally remain Foundation-only for Linux tests.
+    /// A file name is not enough: Kestrel/Bastion decode the ORIGINAL
+    /// SHA-pinned PC609 mesh and JPEG before their button is enabled.
+    static func originalModelVerified(_ ship:Int)->Bool {
+        switch ship {
+        case 0:return SourceKestrel603.load() != nil
+        case 1:return H55SourceMechanics580.registeredModelName(forShip:1) != nil
+        case 2:return SourceBastion606.load() != nil
+        default:return false
+        }
+    }
+
     static func make()->SCNNode? {
         let selected=H55SourceMechanics580.load().selectedShip
         let chosen:SCNGeometry?
