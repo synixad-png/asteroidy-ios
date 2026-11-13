@@ -10,6 +10,8 @@ on:
       - Tools/verify_embedded_pc609_assets.py
       - Tests/PC609H55FleetNewGameContract.py
       - Tests/OriginalPC609PackDecoderTests.swift
+      - Tests/PC609IntroBlackScreenContract.py
+      - ASTEROIDYiOS/MissionCinematic568.swift
       - ASTEROIDYiOS/SourcePC609Zlib.swift
       - ASTEROIDYiOS/H55WorkshopPanel580.swift
       - Tests/PC602HomeScene291Contract.py
@@ -121,6 +123,7 @@ jobs:
           python3 Tests/IOSKestrel603SourceContract.py | tee reports/kestrel-source-audit.txt
           python3 Tests/SourceNewGame568Contract.py | tee reports/starting-lives-source-contract.txt
           python3 Tests/PC609H55FleetNewGameContract.py | tee reports/h55-fleet-newgame-regression.txt
+          python3 Tests/PC609IntroBlackScreenContract.py | tee reports/intro41-renderer-failure-visibility.txt
           swiftc -O ASTEROIDYiOS/SourcePC609Zlib.swift ASTEROIDYiOS/SourceVanguardMesh431.swift ASTEROIDYiOS/SourceKestrel603.swift ASTEROIDYiOS/SourceBastion606.swift ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/pc609-ship-starting-lives
           /tmp/pc609-ship-starting-lives | tee reports/starting-lives-nine-combinations.txt
           python3 Tests/PC602OrbitSave61Contract.py | tee reports/save-slots-shiptype.txt
@@ -220,6 +223,7 @@ jobs:
             reports/v608-v609-regression.txt
             reports/starting-lives-source-contract.txt
             reports/h55-fleet-newgame-regression.txt
+            reports/intro41-renderer-failure-visibility.txt
             reports/starting-lives-nine-combinations.txt
             reports/save-slots-shiptype.txt
             reports/full-95-source-assets.txt
