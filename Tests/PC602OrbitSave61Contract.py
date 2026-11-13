@@ -5,6 +5,18 @@ separately on Linux and full Swift/Metal compiled by Xcode on Apple.
 """
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
+
+
+def job_block(workflow_file, job):
+    """Text of one job in a merged workflow file: its id line up to the next job id."""
+    import re
+    lines = (root/".github/workflows"/workflow_file).read_text().split("\n")
+    start = lines.index(f"  {job}:")
+    end = next((i for i in range(start + 1, len(lines))
+                if re.match(r"^  [A-Za-z0-9_-]+:\s*$", lines[i])), len(lines))
+    return "\n".join(lines[start:end])
+
+
 read=lambda name:(root/"ASTEROIDYiOS"/name).read_text()
 save=read("PC602OrbitSave61.swift")
 flight=read("PC602HomeFlight291.swift")
@@ -153,5 +165,5 @@ assert 'stabilizerLevel:state.stabilizer' in driver
 assert 'let equipment=Self.vanguardEquipment291(state.mechanics)' in driver
 assert 'state.adoptVanguardEquipment(equipment)' in driver
 assert 'func enterOrbit602()' in read("OriginalAudioAV568.swift")
-assert "planetarium.glb" in (root/".github/workflows/build-ios-pc602-h290-user-test-ipa-20261112.yml").read_text()
+assert "planetarium.glb" in job_block("build-ipa.yml","one-shot-test-ipa")
 print("PASS O09 PC602: shared 3-slot UI, manual W3 load, overwrite/delete confirmation, corrupt-slot distinction and resume safety")

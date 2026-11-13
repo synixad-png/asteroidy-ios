@@ -13,6 +13,17 @@ root=pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/"Tools"))
 import prepare_vanguard431_assets as importer
 
+
+def job_block(workflow_file, job):
+    """Text of one job in a merged workflow file: its id line up to the next job id."""
+    import re
+    lines = (root/".github/workflows"/workflow_file).read_text().split("\n")
+    start = lines.index(f"  {job}:")
+    end = next((i for i in range(start + 1, len(lines))
+                if re.match(r"^  [A-Za-z0-9_-]+:\s*$", lines[i])), len(lines))
+    return "\n".join(lines[start:end])
+
+
 with tempfile.TemporaryDirectory() as folder:
     temp=pathlib.Path(folder)
     assets=temp/"Assets"
@@ -66,7 +77,7 @@ with tempfile.TemporaryDirectory() as folder:
         raise AssertionError("Accepted incomplete direct Vanguard431 upload")
     assert not (partial/"Vanguard431Base.jpg").exists()
 
-manual=(root/".github/workflows/build-ios-iphone-ipad-manual.yml").read_text()
+manual=job_block("build-ipa.yml","device-universal")
 assert "Tools/prepare_vanguard431_assets.py" in manual
 assert "Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets" in manual
 assert manual.index("Tools/prepare_vanguard431_assets.py") < manual.index(

@@ -14,6 +14,33 @@ import tempfile
 import zipfile
 
 root=pathlib.Path(__file__).resolve().parents[1]
+
+
+def job_block(workflow_file, job):
+    """Text of one job in a merged workflow file: its id line up to the next job id."""
+    import re
+    lines = (root/".github/workflows"/workflow_file).read_text().split("\n")
+    start = lines.index(f"  {job}:")
+    end = next((i for i in range(start + 1, len(lines))
+                if re.match(r"^  [A-Za-z0-9_-]+:\s*$", lines[i])), len(lines))
+    return "\n".join(lines[start:end])
+
+
+def job_rule(workflow_file, job):
+    """When a merged job runs: .github/ci-jobs.json (read by Tools/ci_select_jobs.py)."""
+    import json
+    return json.loads((root/".github/ci-jobs.json").read_text())[workflow_file][job]
+
+
+def dispatch_input(workflow_file, name):
+    """One workflow_dispatch input block of a workflow file."""
+    lines = (root/".github/workflows"/workflow_file).read_text().split("\n")
+    start = lines.index(f"      {name}:")
+    end = next(i for i in range(start + 1, len(lines))
+               if not lines[i].startswith("        "))
+    return "\n".join(lines[start:end])
+
+
 script=root/"Tools/verify_original_vanguard_resources.py"
 spec=importlib.util.spec_from_file_location("vanguard_source_gate",script)
 assert spec is not None and spec.loader is not None
@@ -50,9 +77,11 @@ with tempfile.TemporaryDirectory() as tmp:
     rejects(lambda:gate.read_app_ipa(path),
             "IPA missing original mesh (fallback-only IPA)")
 
-manual=(root/".github/workflows/build-ios-iphone-ipad-manual.yml").read_text()
+manual=job_block("build-ipa.yml","device-universal")
+manual_rule=job_rule("build-ipa.yml","device-universal")
+compat_input=dispatch_input("build-ipa.yml","compatibility_old_ship")
 ipa=(root/"Tools/verify_ipa.py").read_text()
-assert "default: false" in manual, "original asset gate bypass must not be default"
+assert "        default: false" in compat_input, "original asset gate bypass must not be default"
 assert "python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets" in manual
 assert "--require-vanguard-original" in manual
 assert "--require-vanguard-original" in ipa
@@ -64,7 +93,7 @@ assert manual.index("rm -f ASTEROIDYiOS/Assets/Vanguard431Source.mesh") < manual
     "Generate original iOS Xcode project"
 ), "Legacy compatibility must remove assets BEFORE XcodeGen bundles them"
 assert "TARGETED_DEVICE_FAMILY=1,2" in manual
-assert "workflow_dispatch:" in manual and "  push:" not in manual
+assert manual_rule["manual"] and manual_rule["push"] is None and manual_rule["pull_request"] is None
 print("PASS: original Vanguard source material is mandatory for textured")
 print("      releases; old AS3D fallback requires explicit compatibility")
 print("      switch. Missing/malformed/renamed JPEG/mesh IPA rejected.")

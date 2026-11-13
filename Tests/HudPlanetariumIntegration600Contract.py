@@ -3,6 +3,18 @@
 from pathlib import Path
 import json,lzma,struct,hashlib
 root=Path(__file__).resolve().parents[1]
+
+
+def job_block(workflow_file, job):
+    """Text of one job in a merged workflow file: its id line up to the next job id."""
+    import re
+    lines = (root/".github/workflows"/workflow_file).read_text().split("\n")
+    start = lines.index(f"  {job}:")
+    end = next((i for i in range(start + 1, len(lines))
+                if re.match(r"^  [A-Za-z0-9_-]+:\s*$", lines[i])), len(lines))
+    return "\n".join(lines[start:end])
+
+
 ios=root/"ASTEROIDYiOS"
 source=(ios/"HudPlanetariumOriginalMetal600.swift").read_text()
 metal=(ios/"HudPlanetariumMetal600.swift").read_text()
@@ -67,9 +79,9 @@ assert "sourcePickupMetal586" not in metal.lower()
 assert "hudLiveCapsules600=hudCapsules600.snapshot" in session
 assert "HudPlanetariumAsset600.availableURL()" in renderer
 # Release guard: separate Metal HUD pass cannot be silently omitted from IPA.
-release=(root/".github/workflows/build-ios-pc602-h290-user-test-ipa-20261112.yml").read_text()
-native=(root/".github/workflows/verify-pc602-home-metal291.yml").read_text()
-sim=(root/".github/workflows/verify-pc602-home-simulator291.yml").read_text()
+release=job_block("build-ipa.yml","one-shot-test-ipa")
+native=job_block("mac-tests.yml","source-home-metal")
+sim=job_block("mac-tests.yml","genuine-orbit-ui")
 stage=(root/"Tools/stage_pc602_planetarium.py").read_text()
 gate=(root/"Tools/verify_pc602_planetarium_ipa.py").read_text()
 for workflow in (release,native,sim):
