@@ -19,6 +19,7 @@ struct H55WorkshopPanel580:View {
     private var sector:Int {min(25,CampaignStore556.load().nextAvailableSector)}
     @State private var notice="STANOWISKA HANGARU PC v580"
     @State private var showBastionImporter606=false
+    @State private var showKestrelImporter603=false
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.33,green:0.77,blue:0.83)
     private let muted=Color(red:0.62,green:0.72,blue:0.78)
@@ -90,6 +91,20 @@ struct H55WorkshopPanel580:View {
             .overlay(RoundedRectangle(cornerRadius:8).stroke(cyan.opacity(0.6),lineWidth:1))
             .frame(maxWidth:.infinity,maxHeight:.infinity)
         }
+        .fileImporter(isPresented:$showKestrelImporter603,
+                      allowedContentTypes:[.item],
+                      allowsMultipleSelection:false) { result in
+            do {
+                guard let file=try result.get().first else {
+                    notice="KESTREL: NIE WYBRANO PLIKU"
+                    return
+                }
+                try SourceKestrel603.install(from:file)
+                notice="KESTREL PC609: MODEL I TEKSTURA ZWERYFIKOWANE · MOŻNA WYPOSAŻYĆ"
+            } catch {
+                notice="KESTREL: NIEPRAWIDŁOWA PACZKA PC609 · BRAK ZMIAN"
+            }
+        }
         .fileImporter(isPresented:$showBastionImporter606,
                       allowedContentTypes:[.item],
                       allowsMultipleSelection:false) { result in
@@ -114,6 +129,17 @@ struct H55WorkshopPanel580:View {
     }
     @ViewBuilder private func fleetTab()->some View {
                             headline("01 / FLOTA","SZEŚĆ STATKÓW · ŹRÓDŁO CAMPAIGN37")
+                            if H55SourceMechanics580.registeredModelName(forShip:0)==nil {
+                                Button("WCZYTAJ MODEL KESTREL PC609 Z PLIKÓW") {
+                                    showKestrelImporter603=true
+                                }
+                                .font(.system(size:12,weight:.bold,design:.monospaced))
+                                .foregroundStyle(.black)
+                                .padding(.horizontal,12)
+                                .padding(.vertical,10)
+                                .background(gold)
+                                .accessibilityIdentifier("h11-import-kestrel603")
+                            }
                             if H55SourceMechanics580.registeredModelName(forShip:2)==nil {
                                 Button("WCZYTAJ MODEL BASTION PC609 Z PLIKÓW") {
                                     showBastionImporter606=true
