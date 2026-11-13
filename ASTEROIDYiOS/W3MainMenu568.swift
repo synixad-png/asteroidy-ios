@@ -631,11 +631,17 @@ struct W3MainMenu568: View {
     private func launchNewGame568() {
         confirmNewGame568=false
         newGameLaunchFailed568 = !startNewGame(SourceNewGameSelection568(
-            players:newPlayers568,difficulty:newDifficulty568))
+            players:newPlayers568,difficulty:newDifficulty568,
+            shipType:H55SourceMechanics580.load().selectedShip))
     }
     // Windows ProgramW3Native315.cs:348-354 and v342 explicit
     // non-destructive confirmation. No fictional iOS co-op.
     private func newGamePage(compact:Bool) -> some View {
+        let shipType=H55SourceMechanics580.load().selectedShip
+        let playable=(0...2).contains(shipType) &&
+            H55SourceMechanics580.registeredModelName(forShip:shipType) != nil
+        let shipName=(0..<H55Workshop580.ships.count).contains(shipType)
+            ? H55Workshop580.ships[shipType] : "NIEZNANY"
         // iPhone 15 Pro Max landscape has only ~330pt central height
         // after the source W3 chrome and bottom home-indicator inset.
         // Scroll the REAL source controls; do not scale/tuck away the
@@ -678,9 +684,19 @@ struct W3MainMenu568: View {
                         .accessibilityIdentifier("w3-new-difficulty-\(mode.rawValue)")
                     }
                 }
-                Text("VANGUARD / ŻYCIA NA START: \(SourceNewGame568.startingLives(difficulty:newDifficulty568))")
+                // PC609 Campaign37: calculate from the REAL selected ship,
+                // not from the default Vanguard model.
+                Text("\(shipName) / ŻYCIA NA START: \(SourceNewGame568.startingLives(
+                    difficulty:newDifficulty568,shipType:shipType))")
                     .font(.system(size:compact ? 10 : 12,design:.monospaced))
                     .foregroundStyle(paper)
+                    .accessibilityIdentifier("w3-new-selected-ship-lives")
+                if !playable {
+                    Text("WYBRANY STATEK NIE MA ZWERYFIKOWANEGO MODELU iOS. Wybierz dostępny statek w HANGARZE / FLOTA.")
+                        .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal:false,vertical:true)
+                }
                 if newPlayers568==2 {
                     Text("TRYB 2 GRACZY: NIEGOTOWY — brak drugiego statku, sterowania i oryginalnej synchronizacji. Start jest zablokowany.")
                         .font(.system(size:compact ? 10 : 12,design:.monospaced))
@@ -698,8 +714,8 @@ struct W3MainMenu568: View {
                     .padding(.horizontal,18)
                     .frame(minHeight:44)
                     .background(gold)
-                    .disabled(newPlayers568 != 1)
-                    .opacity(newPlayers568==1 ? 1 : 0.5)
+                    .disabled(newPlayers568 != 1 || !playable)
+                    .opacity(newPlayers568==1 && playable ? 1 : 0.5)
                     .accessibilityIdentifier("w3-new-start-source")
                 if newGameLaunchFailed568 {
                     Text("Nie udało się zabezpieczyć profilu lub brakuje zweryfikowanych zasobów CARBONIS. Dane poprzedniej gry pozostają bez zmian.")
