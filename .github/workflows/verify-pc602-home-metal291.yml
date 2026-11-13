@@ -220,6 +220,39 @@ jobs:
           print("PASS: real iPhone/iPad ARM64 Swift and Metal, source H290 bundle")
           print("NOT TESTED: native GPU draw, 820-asteroid belt, docking, complete active world")
           PY
+      - name: Package original-source BASTION iPhone+iPad unsigned test IPA
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feature/ios-bastion-pc609' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/PC602Home291/Build/Products/Debug-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" && test -f "$APP/Info.plist"
+          mkdir -p distribution/Payload diagnostics
+          cp -R "$APP" distribution/Payload/
+          python3 Tools/materialize_pc586_original_resources.py --app "distribution/Payload/$(basename "$APP")" --report diagnostics/bastion-pc586-resources.json
+          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa Payload)
+          unzip -t ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tail -1
+          python3 Tools/verify_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa --require-vanguard-original | tee diagnostics/bastion-ipa-verification.txt
+          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-h55-verification.txt
+          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-hud-verification.txt
+          shasum -a 256 ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-ipa-sha256.txt
+          echo "$GITHUB_SHA" > diagnostics/bastion-source-commit.txt
+          echo 'BASTION model must be imported once in H55/FLOTA from the separately verified BASTION_PC609.bastion file.' > diagnostics/bastion-import-readme.txt
+      - name: Publish BASTION unsigned iPhone/iPad test IPA
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feature/ios-bastion-pc609' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-BASTION-PC609-iOS-UNSIGNED-TEST-IPA
+          path: |
+            ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa
+            diagnostics/bastion-ipa-verification.txt
+            diagnostics/bastion-h55-verification.txt
+            diagnostics/bastion-hud-verification.txt
+            diagnostics/bastion-ipa-sha256.txt
+            diagnostics/bastion-source-commit.txt
+            diagnostics/bastion-import-readme.txt
+          retention-days: 14
+          if-no-files-found: error
       - name: Source-only diagnostics (no unsigned IPA or executable artifact)
         if: always()
         uses: actions/upload-artifact@v4
