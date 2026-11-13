@@ -123,6 +123,7 @@ polecenia użytkownika dotyczącego misji i świadomej aktualizacji
 odpowiadającego im testu. Weryfikacja kompilacji nie zastępuje
 interaktywnego testu przenoszenia przycisków na iPhonie/iPadzie.
 
+
 ## Stała polityka gałęzi i kompletnego IPA — wyraźne polecenie użytkownika 13.11.2026
 
 **Nadrzędna reguła.** Zastępuje wcześniejsze sugestie automatycznego scalania KESTRELA/BOREASA do `main` i osobnego importowania modeli statków. Przeczytaj przed każdą sesją i przed każdym buildem.
