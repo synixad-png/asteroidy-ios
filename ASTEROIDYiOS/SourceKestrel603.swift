@@ -64,7 +64,21 @@ enum SourceKestrel603 {
         return Asset(mesh:mesh,jpeg:jpeg)
     }
 
+    // Immutable IPA resources are verified only once. W3, H55 and H290
+    // reuse the same original, decoded source, avoiding repeated zlib work
+    // during SwiftUI updates. Legacy Files data is never preferred to IPA.
+    private static let verifiedBundleAsset:Asset? = {
+        guard let url=Bundle.main.url(forResource:"KESTREL_PC609",
+                                      withExtension:"kestrel")
+                  ?? Bundle.main.url(forResource:"KESTREL_PC609",
+                                       withExtension:"kestrel",subdirectory:"Assets"),
+              let bytes=try? Data(contentsOf:url,options:.mappedIfSafe)
+        else{return nil}
+        return try? decode(bytes)
+    }()
+
     static func load()->Asset? {
+        if let asset=verifiedBundleAsset {return asset}
         guard let path=H55SourceMechanics580.kestrelAssetURL,
               let bytes=try? Data(contentsOf:path,options:.mappedIfSafe)
         else{return nil}
