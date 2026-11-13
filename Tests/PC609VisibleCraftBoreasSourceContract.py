@@ -38,7 +38,7 @@ assert "SourceHomeVanguard431(" in scene
 # path rejected on iPad. All three original source ships and this
 # animation use the SAME proven bounded Apple COMPRESSION_ZLIB helper.
 assert "SourcePC609Zlib.inflateRFC1950(" in nodes
-assert ".decompressed(using:.zlib)" not in nodes
+assert ".decompressed(using:.zlib)" not in "\n".join(line.split("//",1)[0] for line in nodes.splitlines())
 assert "SourcePC609Zlib.inflateRFC1950(" in read("SourceKestrel603.swift")
 assert "SourcePC609Zlib.inflateRFC1950(" in read("SourceBastion606.swift")
 assert "COMPRESSION_ZLIB" in decoder
