@@ -66,7 +66,7 @@ final class PC609RuntimeUITests: XCTestCase {
                 distinct.insert((r/16)<<8 | (g/16)<<4 | (b/16))
             }
         }
-        print("PC609_REAL_FRAME_ANALYSIS_\\(tag): nonDark=\\(nonDark), distinct16=\\(distinct.count), max=\\(maxChannel)")
+        print("PC609_REAL_FRAME_ANALYSIS_\(tag): nonDark=\(nonDark), distinct16=\(distinct.count), max=\(maxChannel)")
         XCTAssertGreaterThan(distinct.count,10,
             "Flat/black central GPU screen in real Apple simulator: " + tag)
         XCTAssertGreaterThan(nonDark,0,
@@ -153,7 +153,7 @@ final class PC609RuntimeUITests: XCTestCase {
             let error=app.staticTexts.matching(NSPredicate(
                 format:"label CONTAINS %@", "METAL")).firstMatch
             if error.exists {
-                print("PC609_INTRO41_VISIBLE_METAL_DIAGNOSTIC=\\(error.label)")
+                print("PC609_INTRO41_VISIBLE_METAL_DIAGNOSTIC=\(error.label)")
             }
             captureNonFlatFrame("CARBONIS01-Intro41")
             let skip=app.buttons["intro41-skip-to-real-mission"]
