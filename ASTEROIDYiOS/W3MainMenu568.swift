@@ -48,6 +48,7 @@ struct W3MainMenu568: View {
     let progress: CampaignProgress556
     let selectMission: (Int) -> Void
     let inspectSector: (Int) -> Void
+    let openBoreasTest: () -> Void
     let openDiagnostic: () -> Void
     let openCampaignOnEntry: Bool
     let startNewGame: (SourceNewGameSelection568)->Bool
@@ -507,7 +508,8 @@ struct W3MainMenu568: View {
                                      dismiss:{page=nil},
                                      onSelect:selectMission,
                                      onInspect:inspectSector,
-                                     onEnterOrbit:openOrbit)
+                                     onEnterOrbit:openOrbit,
+                                     onBoreasTest:openBoreasTest)
                         .frame(maxWidth:.infinity,maxHeight:.infinity)
                 } else if item == .newGame {
                     newGamePage(compact:compact)
