@@ -1,3 +1,14 @@
+## BLOKADA ZATWIERDZONEJ BAZY — WYMAGANA ZGODA UŻYTKOWNIKA (13.11.2026)
+
+**Nadrzędne polecenie użytkownika po scaleniu PR #36.** Zatwierdzony stan `main`, w tym VANGUARD, BASTION, KESTREL, animowany BOREAS, naprawy IPA, H55/H290, HUD oraz istniejące mechaniki, jest bazą **nietykalną bez uprzedniej, wyraźnej zgody użytkownika**. Dotyczy to także optymalizacji, porządkowania i „drobnych” poprawek.
+
+1. **ZANIM COKOLWIEK ZMIENISZ** w ASTEROIDY iOS (kod, dane, modele, animacje, konfigurację, testy, workflow GitHub Actions, instrukcje, gałęzie, PR lub `main`), opisz dokładnie planowane zmiany oraz co pozostanie nietknięte. Wyświetl użytkownikowi interaktywny przycisk potwierdzenia z jednoznacznym komunikatem, np. „Zatwierdzam wskazane zmiany ASTEROIDY iOS”. Nie traktuj samej prośby o analizę, diagnostykę czy przygotowanie planu jako zgody na zapis.
+2. **BRAK KLIKNIĘCIA = BRAK MODYFIKACJI.** Przed otrzymaniem potwierdzenia wykonuj wyłącznie operacje odczytu, porównania i diagnostykę bez skutków ubocznych. Nie twórz commitów, PR, gałęzi ani nie uruchamiaj zadań mogących modyfikować repozytorium lub jego stan.
+3. Zgoda dotyczy **wyłącznie zakresu wskazanego w komunikacie**. Każda kolejna, rozszerzona albo niezależna zmiana wymaga ponownego przycisku i zgody. Nie traktuj starej zgody jako blankietowego upoważnienia.
+4. **Nie używaj force-push, resetu `main`, nadpisywania historii ani usuwania zatwierdzonych elementów.** Nowy kod rozwijaj na osobnej gałęzi dopiero po zatwierdzeniu zakresu; scalenie do `main` wymaga odrębnego potwierdzenia i pełnych testów regresji.
+5. Jeśli środowisko nie udostępnia interaktywnego przycisku, **nie wykonuj zmian na podstawie milczenia**. Poproś o jednoznaczne potwierdzenie w obsługiwanym interfejsie. Tekstowa zasada w repozytorium nie zastępuje technicznej blokady GitHub (branch protection/ruleset); nie deklaruj jej włączenia bez sprawdzenia ustawień.
+6. Wyjątek dla tego jednorazowego zapisu: użytkownik wyraźnie zlecił ustanowienie niniejszej ochrony. Nie wykorzystuj tego upoważnienia do żadnych dodatkowych zmian w grze.
+
 # AGENTS.md — stałe reguły jakości ASTEROIDY iOS
 
 **Obowiązuje przy każdej następnej zmianie, PR, audycie, optymalizacji i wydaniu.**
