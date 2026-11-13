@@ -77,6 +77,7 @@ struct GameView: View {
     @StateObject private var homeWorld291=PC602HomeWorldDriver291()
     @State private var campaign = CampaignStore556.load()
     @State private var showingHomeWorld291=false
+    @State private var showingBoreasTest05=false
     @State private var returnHomeWorldAfterCarbonis291=false
     // Native CARBONIS first mission runs an original source-driven state,
     // isolated from Boreas diagnostic scenes and unported later sectors.
@@ -117,6 +118,33 @@ struct GameView: View {
         } catch {
             return "NIE MOŻNA OTWORZYĆ ORBITY: "+String(describing:error)
         }
+    }
+
+    // Authenticated PC v556 Boreas visual model at its original sector-05
+    // slot. No sector unlock, checkpoint, reward or active mission is made.
+    private func enterBoreasTest05() {
+        guard sourceSector01==nil, !showingHomeWorld291,
+              AnimatedPlanetTestSlot556.sourceAssetsVerified else{return}
+        input.releaseHeldControls()
+        input.introPreview41=false
+        input.planetPreview=true
+        input.planetTestLevel=AnimatedPlanetTestSlot556.sector
+        input.sectorTraining=false
+        input.verifiedDamageLab=false
+        input.missionIntroSector=0
+        input.rendererError=nil
+        input.gameplayPaused=false
+        audio.stopForDiagnostic()
+        showingBoreasTest05=true
+        showMainMenu=false
+    }
+    private func returnFromBoreasTest05() {
+        input.releaseHeldControls()
+        input.gameplayPaused=true
+        showingBoreasTest05=false
+        reopenAtlasAfterCarbonis=true
+        showMainMenu=true
+        audio.returnToMenu()
     }
 
     private func enterOrbitMission291(_ level:Int) {
@@ -444,6 +472,10 @@ struct GameView: View {
                         loadManualSave61(slot)
                     },preparedWave:preparedWave)
                     }
+                } else if showingBoreasTest05 {
+                    AnimatedPlanetTestPage556(input:input,
+                                               onExit:returnFromBoreasTest05)
+                        .ignoresSafeArea()
                 } else if showingHomeWorld291 {
                     PC602HomeWorldPage291(
                         driver:homeWorld291,
@@ -476,7 +508,7 @@ struct GameView: View {
                         }
                     },inspectSector: { sector in
                         inspectSourceSector(sector)
-                    },openDiagnostic:{
+                    },openBoreasTest:enterBoreasTest05,openDiagnostic:{
                         input.releaseHeldControls()
                         input.gameplayPaused = false
                         reopenAtlasAfterCarbonis = false
@@ -781,6 +813,7 @@ struct CampaignAtlas556: View {
     let onSelect: (Int) -> Void
     let onInspect: (Int) -> Void
     let onEnterOrbit:()->String?
+    let onBoreasTest:()->Void
     @State private var orbitLaunchIssue=""
     private let columns = [GridItem(.adaptive(minimum:52,maximum:90),spacing:8)]
 
@@ -826,6 +859,25 @@ struct CampaignAtlas556: View {
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth:.infinity,alignment:.leading)
+                }
+                // Original Boreas is sector 05 on PC. Offer a separate
+                // authenticated visual test without selecting/unlocking it.
+                if AnimatedPlanetTestSlot556.sourceAssetsVerified {
+                    Button("BOREAS 05 · TEST ANIMOWANEJ PLANETY GLB") {
+                        onBoreasTest()
+                    }
+                    .font(.system(size:12,weight:.bold,design:.monospaced))
+                    .foregroundStyle(.black)
+                    .frame(maxWidth:.infinity,minHeight:46)
+                    .background(Color(red:0.39,green:0.75,blue:0.79))
+                    .accessibilityIdentifier("campaign-boreas05-animated-test")
+                    Text("TYMCZASOWY MODEL DO PÓŹNIEJSZEJ PODMIANY · NIE ODBLOKOWUJE MISJI 05")
+                        .font(.system(size:10,design:.monospaced))
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("BOREAS 05 · BRAK WERYFIKACJI ORYGINALNYCH DANYCH ANIMACJI")
+                        .font(.system(size:11,design:.monospaced))
+                        .foregroundStyle(.orange)
                 }
                 LazyVGrid(columns:columns,spacing:8) {
                     ForEach(1...CampaignProgress556.missionCount,id:\.self) { sector in
