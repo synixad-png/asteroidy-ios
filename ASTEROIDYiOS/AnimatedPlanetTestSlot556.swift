@@ -12,6 +12,7 @@ enum AnimatedPlanetTestSlot556 {
     static let meshName="Boreas556"
     static let animationName="Boreas556"
     static let bindingName="BoreasMorphBinding556"
+    static let nodeTracksName="Boreas556"
     static let duration:Double=5
 
     private static let assetHashes:[String:String]=[
@@ -20,7 +21,9 @@ enum AnimatedPlanetTestSlot556 {
         "Boreas556.asmo":
             "33c7bec0a53fe8a63e0c351658155ee74fc364cddef8ec261af15d6675a103a6",
         "BoreasMorphBinding556.json":
-            "f5f099707a1e63582934dc2bd26155e739225db26f3d358fd4a100fff9e50593"
+            "f5f099707a1e63582934dc2bd26155e739225db26f3d358fd4a100fff9e50593",
+        "Boreas556.asnt":
+            "bdf22733cfe6a1314517537e2400019a97c3a83507b8f654fd1307dbf9809edc"
     ]
 
     static func resourceURL(_ name:String,_ ext:String)->URL? {
