@@ -46,10 +46,15 @@ enum SourceKestrel603 {
               jpegBytes>0,headerBytes+packedBytes+jpegBytes==pack.count
         else {throw ImportError.invalidPack}
         let compressed=Data(pack[headerBytes..<(headerBytes+packedBytes)])
-        let meshBytes:Data
-        do {
-            meshBytes=try ((compressed as NSData).decompressed(using:.zlib) as Data)
-        } catch {throw ImportError.invalidGeometry}
+        // PC609 source uses Python zlib.compress (RFC1950 framing).
+        // Foundation .zlib expects a different frame on Apple and fails
+        // NSDecompressionFailedError 5377 for BOTH original ship packs.
+        // Decode the original raw DEFLATE payload once without changing
+        // the hash-pinned mesh, texture or model geometry.
+        guard let meshBytes=SourcePC609Zlib.inflateRFC1950(
+            compressed,exactBytes:expectedMeshBytes) else {
+            throw ImportError.invalidGeometry
+        }
         guard meshBytes.count==expectedMeshBytes,
               sha256(meshBytes)==meshSHA256,
               let mesh=try? SourceBakedShipMesh(
