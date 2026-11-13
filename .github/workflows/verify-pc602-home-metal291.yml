@@ -1,4 +1,4 @@
-name: PC602 NewHome291 - native iPhone/iPad Metal source compile (NO IPA)
+name: PC602 NewHome291 - native Apple compile and BASTION complete Release IPA
 
 on:
   push:
@@ -81,6 +81,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/verify-pc602-home-metal291.yml
+      - Tools/verify_bastion_full_ipa.py
       - ASTEROIDYiOS/PC602HomeScene291.metal
       - ASTEROIDYiOS/PC602HomeScene291.swift
       - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
@@ -153,6 +154,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Same verified staging used by the complete PC609 Release IPA.
+          # Without these, the earlier 44.9MB BASTION Debug IPA omitted
+          # the CARBONIS mesh/textures, PlayerShip367, W3 background/logo.
+          python3 Tools/verify_ios_inputs.py
+          python3 Tools/prepare_vanguard431_assets.py
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tools/stage_pc602_planetarium.py
           python3 Tests/HudPlanetariumIntegration600Contract.py
           python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
@@ -176,16 +186,20 @@ jobs:
           /tmp/pc602-orbit-hud-tests
           python3 Tests/PC602O01SourceBaseline.py --ios-root .
           python3 Tools/code_quality_audit.py --root . --gate
-      - name: Build actual Swift and Metal for physical iPhone and iPad (no IPA)
+      - name: Build original full Swift and Metal for iPhone/iPad (BASTION Release)
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p diagnostics
           xcodebuild -version
+          # Preserve existing Debug CI for unrelated PRs; BASTION IPA
+          # must have the same standalone Release binary as PC609.
+          CONFIGURATION=Debug
+          if [[ "${{ github.head_ref }}" == "feature/ios-bastion-pc609" ]]; then CONFIGURATION=Release; fi
           if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
           xcodegen generate --spec project.yml
           xcodebuild -project ASTEROIDYiOS.xcodeproj \
-            -scheme ASTEROIDYiOS -configuration Debug \
+            -scheme ASTEROIDYiOS -configuration "$CONFIGURATION" \
             -sdk iphoneos -destination 'generic/platform=iOS' \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
@@ -195,10 +209,10 @@ jobs:
               tail -n 45 diagnostics/xcodebuild.log
               exit 1
             }
-          python3 - <<'PY'
+          python3 - "$CONFIGURATION" <<'PY'
           from pathlib import Path
-          import plistlib
-          build=Path("build/PC602Home291/Build/Products/Debug-iphoneos")
+          import plistlib,sys
+          build=Path(f"build/PC602Home291/Build/Products/{sys.argv[1]}-iphoneos")
           apps=list(build.glob("*.app"))
           assert len(apps)==1, apps
           app=apps[0]
@@ -225,7 +239,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          APP=$(find build/PC602Home291/Build/Products/Debug-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          APP=$(find build/PC602Home291/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
           test -n "$APP" && test -f "$APP/Info.plist"
           mkdir -p distribution/Payload diagnostics
           cp -R "$APP" distribution/Payload/
@@ -233,6 +247,7 @@ jobs:
           (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa Payload)
           unzip -t ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tail -1
           python3 Tools/verify_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa --require-vanguard-original | tee diagnostics/bastion-ipa-verification.txt
+          python3 Tools/verify_bastion_full_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-full-v609-release-audit.txt
           python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-h55-verification.txt
           python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-hud-verification.txt
           shasum -a 256 ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-ipa-sha256.txt
@@ -246,6 +261,7 @@ jobs:
           path: |
             ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa
             diagnostics/bastion-ipa-verification.txt
+            diagnostics/bastion-full-v609-release-audit.txt
             diagnostics/bastion-h55-verification.txt
             diagnostics/bastion-hud-verification.txt
             diagnostics/bastion-ipa-sha256.txt
@@ -253,7 +269,7 @@ jobs:
             diagnostics/bastion-import-readme.txt
           retention-days: 14
           if-no-files-found: error
-      - name: Source-only diagnostics (no unsigned IPA or executable artifact)
+      - name: Preserve native compile and packaging diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
