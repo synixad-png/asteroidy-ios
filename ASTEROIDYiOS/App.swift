@@ -859,6 +859,25 @@ struct CampaignAtlas556: View {
                     .font(.system(size:11,weight:.semibold,design:.monospaced))
                     .foregroundStyle(.cyan)
                     .accessibilityIdentifier("campaign-selected-planet")
+                // Original Boreas is sector 05 on PC. Offer a separate
+                // authenticated visual test without selecting/unlocking it.
+                if AnimatedPlanetTestSlot556.sourceAssetsVerified {
+                    Button("BOREAS 05 · TEST ANIMOWANEJ PLANETY GLB") {
+                        onBoreasTest()
+                    }
+                    .font(.system(size:12,weight:.bold,design:.monospaced))
+                    .foregroundStyle(.black)
+                    .frame(maxWidth:.infinity,minHeight:46)
+                    .background(Color(red:0.39,green:0.75,blue:0.79))
+                    .accessibilityIdentifier("campaign-boreas05-animated-test")
+                    Text("TYMCZASOWY MODEL DO PÓŹNIEJSZEJ PODMIANY · NIE ODBLOKOWUJE MISJI 05")
+                        .font(.system(size:10,design:.monospaced))
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("BOREAS 05 · BRAK WERYFIKACJI ORYGINALNYCH DANYCH ANIMACJI")
+                        .font(.system(size:11,design:.monospaced))
+                        .foregroundStyle(.orange)
+                }
                 if progress.selectedSector == 1 {
                     VStack(alignment:.leading,spacing:5) {
                         Text("CARBONIS — ORYGINALNA PLANETA 3D / ŹRÓDŁOWA SIATKA")
@@ -878,25 +897,6 @@ struct CampaignAtlas556: View {
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth:.infinity,alignment:.leading)
-                }
-                // Original Boreas is sector 05 on PC. Offer a separate
-                // authenticated visual test without selecting/unlocking it.
-                if AnimatedPlanetTestSlot556.sourceAssetsVerified {
-                    Button("BOREAS 05 · TEST ANIMOWANEJ PLANETY GLB") {
-                        onBoreasTest()
-                    }
-                    .font(.system(size:12,weight:.bold,design:.monospaced))
-                    .foregroundStyle(.black)
-                    .frame(maxWidth:.infinity,minHeight:46)
-                    .background(Color(red:0.39,green:0.75,blue:0.79))
-                    .accessibilityIdentifier("campaign-boreas05-animated-test")
-                    Text("TYMCZASOWY MODEL DO PÓŹNIEJSZEJ PODMIANY · NIE ODBLOKOWUJE MISJI 05")
-                        .font(.system(size:10,design:.monospaced))
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("BOREAS 05 · BRAK WERYFIKACJI ORYGINALNYCH DANYCH ANIMACJI")
-                        .font(.system(size:11,design:.monospaced))
-                        .foregroundStyle(.orange)
                 }
                 LazyVGrid(columns:columns,spacing:8) {
                     ForEach(1...CampaignProgress556.missionCount,id:\.self) { sector in
