@@ -38,6 +38,10 @@ on:
       - Tests/BoreasTestPlanet05Contract.py
       - Tests/IntroBoreasMorphSourceContract556.py
       - ASTEROIDYiOS/BoreasNodeTracks556.swift
+      - ASTEROIDYiOS/PC602HomeShipPose291.swift
+      - Tests/PC602HomeShipPose291Tests.swift
+      - Tests/BoreasNodeTracks556RuntimeTests.swift
+      - Tests/PC609VisibleCraftBoreasSourceContract.py
       - Tools/export_boreas_node_tracks556.py
       - Tests/BoreasNodeTracks556Tests.py
       - ASTEROIDYiOS/AnimatedPlanetTestSlot556.swift
@@ -107,6 +111,11 @@ jobs:
           python3 Tools/export_boreas_node_tracks556.py --root . \
             --destination ASTEROIDYiOS/Assets/Boreas556.asnt | tee reports/boreas-export-96-channels.txt
           python3 Tests/BoreasNodeTracks556Tests.py | tee reports/boreas-96-channels-tests.txt
+          python3 Tests/PC609VisibleCraftBoreasSourceContract.py | tee reports/pc609-visible-kestrel-boreas-source.txt
+          # Python source-only zlib checks previously missed the real
+          # Foundation Swift failure; run the original ASNT parser on Apple.
+          swiftc -Onone ASTEROIDYiOS/SourcePC609Zlib.swift ASTEROIDYiOS/AssetMesh.swift ASTEROIDYiOS/BoreasNodeTracks556.swift Tests/BoreasNodeTracks556RuntimeTests.swift -o /tmp/boreas556-real-swift-runtime
+          /tmp/boreas556-real-swift-runtime | tee reports/boreas-original-asnt-apple-runtime.txt
       - name: Fail closed unless original PC609 ship packs are in app resources
         shell: bash
         run: |
@@ -218,6 +227,8 @@ jobs:
             reports/size.txt
             reports/source-commit.txt
             reports/boreas-planet05-audit.txt
+            reports/boreas-original-asnt-apple-runtime.txt
+            reports/pc609-visible-kestrel-boreas-source.txt
             reports/boreas-morph-loop-audit.txt
             reports/boreas-original-resources-in-ipa.txt
             reports/boreas-export-96-channels.txt
