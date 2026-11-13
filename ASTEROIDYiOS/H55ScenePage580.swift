@@ -180,16 +180,28 @@ import simd
     func closeWorkshop() {
         showingWorkshop=false
         setMove(forward:0,right:0)
-        // HubEquipShip369: reflect a newly equipped 6061 Bastion immediately
-        // in the actual existing hangar. Do not replace on unsupported IDs.
+        refreshEquippedShip()
+    }
+
+    /// PC609 HubEquipShip369 changes the REAL displayed craft immediately
+    /// after equipment is saved, not only on exiting the workshop. A model
+    /// validation failure must never leave an old Vanguard pretending to be
+    /// the newly selected Kestrel or Bastion.
+    func refreshEquippedShip() {
         let equipped=H55SourceMechanics580.load().selectedShip
-        let expected=equipped==2 ? H55PlayerShip580.bastionNodeName :
+        let expected=equipped==0 ? H55PlayerShip580.kestrelNodeName :
+                     equipped==2 ? H55PlayerShip580.bastionNodeName :
                      equipped==1 ? H55PlayerShip580.nodeName : nil
-        if let expected,playerShip?.name != expected,
-           let replacement=H55PlayerShip580.make() {
-            playerShip?.removeFromParentNode()
-            scene?.rootNode.addChildNode(replacement)
+        guard let expected,playerShip?.name != expected,let scene else{return}
+        let replacement=H55PlayerShip580.make()
+        playerShip?.removeFromParentNode()
+        playerShip=nil
+        if let replacement {
+            scene.rootNode.addChildNode(replacement)
             playerShip=replacement
+        } else {
+            h13MaterialReport += "\nSTATEK: NIE ZAŁADOWANO ORYGINALNEGO MODELU " +
+                                 H55Workshop580.ships[equipped]
         }
     }
     func skipArrival() {arrival.skip()}
@@ -765,11 +777,13 @@ import simd
         if let craft=H55PlayerShip580.make() {
             realScene.rootNode.addChildNode(craft)
             playerShip=craft
-            h13MaterialReport += craft.name==H55PlayerShip580.bastionNodeName
+            h13MaterialReport += craft.name==H55PlayerShip580.kestrelNodeName
+                ? "\nSTATEK: ORYGINALNY KESTREL603 / MESH I JPEG SHA256 OK"
+                : craft.name==H55PlayerShip580.bastionNodeName
                 ? "\nSTATEK: ORYGINALNY BASTION606 / MESH I JPEG SHA256 OK"
                 : "\nSTATEK: ORYGINALNY VANGUARD431 / MESH I JPEG SHA256 OK"
         } else {
-            h13MaterialReport += "\nSTATEK: BRAK ZWERYFIKOWANEGO ORYGINALNEGO VANGUARD431 (BEZ ZAMIENNIKA)"
+            h13MaterialReport += "\nSTATEK: BRAK ZWERYFIKOWANEGO MODELU WYBRANEGO STATKU (BEZ ZAMIENNIKA)"
         }
         H55LoadDiagnostics580.mark("11_MATERIALY_GOTOWE_ATTACH_KONIEC")
         scene=realScene
@@ -1224,7 +1238,8 @@ struct H55ScenePage580: View {
 
                          if loader.showingWorkshop {
                             H55WorkshopPanel580(initialTab:loader.workshopInitialPanel,
-                                                onClose:{loader.closeWorkshop()})
+                                                onClose:{loader.closeWorkshop()},
+                                                onShipEquipped:{loader.refreshEquippedShip()})
                                 .zIndex(5)
                         }
                         if loader.arriving && loader.firstFramePresented { arrivalOverlay }

@@ -47,12 +47,15 @@ enum SourceBastion606 {
               jpegBytes>0,headerBytes+packedBytes+jpegBytes==pack.count
         else {throw ImportError.invalidPack}
         let compressed=Data(pack[headerBytes..<(headerBytes+packedBytes)])
-        let meshBytes:Data
-        do {
-            // Lossless standard zlib transfer; the original PC GPU float32
-            // normals, coordinates, color/alpha and UV are NOT requantized.
-            meshBytes=try ((compressed as NSData).decompressed(using:.zlib) as Data)
-        } catch {throw ImportError.invalidGeometry}
+        // PC609 source uses Python zlib.compress (RFC1950 framing).
+        // Foundation .zlib expects a different frame on Apple and fails
+        // NSDecompressionFailedError 5377 for BOTH original ship packs.
+        // Decode the original raw DEFLATE payload once without changing
+        // the hash-pinned mesh, texture or model geometry.
+        guard let meshBytes=SourcePC609Zlib.inflateRFC1950(
+            compressed,exactBytes:expectedMeshBytes) else {
+            throw ImportError.invalidGeometry
+        }
         guard meshBytes.count==expectedMeshBytes,
               sha256(meshBytes)==meshSHA256,
               let mesh=try? SourceBakedShipMesh(
@@ -67,7 +70,21 @@ enum SourceBastion606 {
         return Asset(mesh:mesh,jpeg:jpeg)
     }
 
+    // Immutable IPA resources are verified only once. W3, H55 and H290
+    // reuse the same original, decoded source, avoiding repeated zlib work
+    // during SwiftUI updates. Legacy Files data is never preferred to IPA.
+    private static let verifiedBundleAsset:Asset? = {
+        guard let url=Bundle.main.url(forResource:"BASTION_PC609",
+                                      withExtension:"bastion")
+                  ?? Bundle.main.url(forResource:"BASTION_PC609",
+                                       withExtension:"bastion",subdirectory:"Assets"),
+              let bytes=try? Data(contentsOf:url,options:.mappedIfSafe)
+        else{return nil}
+        return try? decode(bytes)
+    }()
+
     static func load()->Asset? {
+        if let asset=verifiedBundleAsset {return asset}
         guard let path=H55SourceMechanics580.bastionAssetURL,
               let bytes=try? Data(contentsOf:path,options:.mappedIfSafe)
         else{return nil}

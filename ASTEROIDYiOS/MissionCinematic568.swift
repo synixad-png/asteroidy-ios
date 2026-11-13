@@ -152,7 +152,12 @@ struct MissionCinematic568:View {
                 let fade=t<0.5 ? 1-t/0.5 :
                     t>IntroOrbit41.duration-0.65
                     ? (t-(IntroOrbit41.duration-0.65))/0.65 : 0
-                Color.black.opacity(Double(min(1,max(0,fade))))
+                // At t=0 the cinematic fade is 100% black. If the
+                // original Metal renderer cannot start, introProgress41
+                // stays zero and the fade must NOT hide the genuine
+                // failure message and return-to-atlas action forever.
+                Color.black.opacity(input.rendererError == nil
+                    ? Double(min(1,max(0,fade))) : 0)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
             }
@@ -182,6 +187,5 @@ struct MissionCinematic568:View {
             input.gameplayPaused=true
             input.releaseHeldControls()
         }
-        .accessibilityIdentifier("mission-intro41-cinematic-568")
     }
 }

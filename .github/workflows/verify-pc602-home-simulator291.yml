@@ -1,13 +1,14 @@
 # Runs a REAL installed iOS app in Apple Simulator, unlike the Swift/Metal
 # compile-only gate. One branch-scoped run avoids a new Actions job backlog.
-name: PC602 H290 - real iPad Simulator editor direct-touch regression (NO IPA)
+name: PC602 H290 / PC609 three ships - real iPad Simulator regression (NO IPA)
 
 on:
   push:
-    branches: [feature/ios-pc602-newhome-world-source]
+    branches: [feature/ios-pc602-newhome-world-source, feature/ios-pc609-regression-models-orbit]
     paths:
       - '.github/workflows/verify-pc602-home-simulator291.yml'
       - 'W3MenuUITests/PC602HomeOrbitUITests.swift'
+      - 'W3MenuUITests/PC609RuntimeUITests.swift'
       - 'ASTEROIDYiOS/PC602HomeWorldPage291.swift'
       - 'ASTEROIDYiOS/PC602OrbitHUDEditor291.swift'
       - 'ASTEROIDYiOS/PC602OrbitHUDLayout291.swift'
@@ -15,15 +16,17 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: pc602-h290-simulator-${{ github.ref }}
-  cancel-in-progress: true
+  group: pc609-real-ipad-smoke-${{ github.ref }}
+  # Preserve an actively running physical simulator test; do not cancel it
+  # solely because a later revision was committed.
+  cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
   genuine-orbit-ui:
-    name: Real iPad simulator - W3, H290 HUD direct tap/drag and back
+    name: Real iPad simulator - PC609 model selection, H290 and real CARBONIS01 scene
     # Apple Silicon simulator runner avoids the CoreSimulator 60s timeout
     # observed on saturated macos-15-intel before XCUITest even launched.
     runs-on: macos-15
@@ -39,13 +42,28 @@ jobs:
           set -euo pipefail
           mkdir -p diagnostics
           python3 Tools/stage_pc602_planetarium.py
+          python3 Tools/prepare_vanguard431_assets.py
+          python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tests/HudPlanetariumIntegration600Contract.py
           python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required
           python3 Tools/prepare_v568_w3_home_planet290.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/export_boreas_node_tracks556.py --root . --destination ASTEROIDYiOS/Assets/Boreas556.asnt
+          python3 Tools/materialize_pc586_original_resources.py
+          python3 Tools/verify_embedded_pc609_assets.py --assets ASTEROIDYiOS/Assets --boreas
           python3 Tests/PC602HomeWorldUI291Contract.py
+      - name: Decode the original bundled PC609 KESTREL and BASTION with native Swift
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -Onone ASTEROIDYiOS/SourcePC609Zlib.swift ASTEROIDYiOS/SourceVanguardMesh431.swift ASTEROIDYiOS/SourceKestrel603.swift ASTEROIDYiOS/SourceBastion606.swift Tests/OriginalPC609PackDecoderTests.swift -o /tmp/pc609-simulator-preflight
+          /tmp/pc609-simulator-preflight > diagnostics/original-pc609-runtime-decode.txt 2>&1 || {
+            cat diagnostics/original-pc609-runtime-decode.txt
+            exit 1
+          }
+          cat diagnostics/original-pc609-runtime-decode.txt
       - name: Generate original native app / XCTest targets
         shell: bash
         run: |
@@ -83,7 +101,7 @@ jobs:
             -scheme ASTEROIDYiOS -configuration Debug \
             -destination "platform=iOS Simulator,id=$UDID" \
             -parallel-testing-enabled NO \
-            -only-testing:ASTEROIDYW3UITests/PC602HomeOrbitUITests \
+            -only-testing:ASTEROIDYW3UITests/PC609RuntimeUITests \
             -derivedDataPath "$PWD/build/PC602OrbitSimulator" \
             -resultBundlePath "$PWD/diagnostics/PC602-H290-Real-UI.xcresult" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
@@ -114,7 +132,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: PC602-H290-Real-iPad-HUD-DirectTouch-XCTest-NO-IPA
+          name: PC609-Real-iPad-ThreeShips-Home-Carbonis-XCTest-NO-IPA
           path: diagnostics/
           if-no-files-found: ignore
           retention-days: 7

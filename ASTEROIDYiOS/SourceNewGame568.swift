@@ -8,6 +8,9 @@ import Foundation
 struct SourceNewGameSelection568: Equatable {
     var players:Int=1
     var difficulty:CombatBalance556.Difficulty = .normal
+    // PC609 Campaign37: retain the original ship chosen BEFORE Start().
+    // Values 3...5 await their authentic iOS playable models.
+    var shipType:Int=1
 }
 
 enum SourceNewGame568 {
@@ -176,7 +179,7 @@ enum SourceNewGame568 {
               (1...26).contains(target),
               CampaignProgress556(mask:completedMask).unlocked(target),
               Sector01Shop568.validate(shop),vitals.valid,mechanics.valid,
-              mechanics.selectedShip==1,
+              (0...2).contains(mechanics.selectedShip),
               CombatBalance556.Difficulty(rawValue:difficultyRaw) != nil,
               (!archiveExisting || archiveDirectory(nil).map {
                    archiveActive(defaults:defaults,directory:$0)
@@ -202,7 +205,11 @@ enum SourceNewGame568 {
             defaults.object(forKey:difficultyKey) as? Int ?? 1) ?? .normal
         // Co-op is not yet a supported executable iOS mission; never
         // load a stale two-player choice as if the port had two ships.
-        return SourceNewGameSelection568(players:1,difficulty:difficulty)
+        // Continue uses the canonical H55 player craft; new campaigns may
+        // override it in W3 without modifying the previous saved profile.
+        let prior=H55SourceMechanics580.load(defaults:defaults).selectedShip
+        return SourceNewGameSelection568(players:1,difficulty:difficulty,
+            shipType:(0...2).contains(prior) ? prior : 1)
     }
     /// PC602 SaveManager61.ContinueActive358 requires a valid ACTIVE
     /// campaign profile; it does not require a manual or flight checkpoint.
@@ -231,7 +238,7 @@ enum SourceNewGame568 {
             guard let bytes=rawMechanics as? Data,
                   let state=try? JSONDecoder().decode(
                       H55SourceMechanics580.State.self,from:bytes),
-                  state.valid,state.selectedShip==1 else{return false}
+                  state.valid,(0...2).contains(state.selectedShip) else{return false}
         }
         return true
     }
@@ -254,18 +261,32 @@ enum SourceNewGame568 {
         defaults:UserDefaults = .standard,
         backupDirectory:URL? = nil
     )->Bool {
-        guard request.players==1 else {return false}
+        // Campaign37.StartingLives reads the chosen ShipType at Game.Start().
+        // Do not accidentally reset it to Vanguard during iOS fresh-profile
+        // initialization; only the upgrades/ownership/progress are reset.
+        guard request.players==1,(0...2).contains(request.shipType)
+        else{return false}
         guard let directory=archiveDirectory(backupDirectory),
               archiveActive(defaults:defaults,directory:directory)
         else{return false}
         let fresh=CampaignProgress556()
         CampaignStore556.save(fresh,defaults:defaults)
         Sector01Shop568.save(Sector01Shop568.State(
-            lives:startingLives(difficulty:request.difficulty)),defaults:defaults)
+            lives:startingLives(difficulty:request.difficulty,
+                                shipType:request.shipType)),defaults:defaults)
         // One transaction boundary for BOTH direct create() and the W3
         // menu: do not leave prior-game H11 ships, trophies or hull behind.
         H55Workshop580.resetVitals(defaults:defaults)
         H55SourceMechanics580.reset(defaults:defaults)
+        if request.shipType != 1 {
+            // The default Vanguard remains an implicit empty H55 record.
+            // A selected Kestrel/Bastion needs only its ID persisted; never
+            // transfer modules, trophies or ownership from the old campaign.
+            var selected=H55SourceMechanics580.State()
+            selected.selectedShip=request.shipType
+            guard H55SourceMechanics580.save(selected,defaults:defaults)
+            else{return false}
+        }
         SourceTarcza145.resetPersistentEnergy(defaults:defaults)
         defaults.set(request.difficulty.rawValue,forKey:difficultyKey)
         defaults.set(1,forKey:playersKey)

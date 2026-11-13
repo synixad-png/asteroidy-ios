@@ -105,11 +105,23 @@ assert(live.orbitPosition==preservedPosition)
 assert(live.orbitSpeed==preservedSpeed)
 assert(live.flight.heading==preservedHeading)
 assert(live.orbitTime==preservedTime)
-assert(!live.adoptVanguardEquipment(equipment(.kestrel)))
 try baseline.step(.init(move:Vec2(x:0,y:-1)),dt:1/60)
 try live.step(.init(move:Vec2(x:0,y:-1)),dt:1/60)
 assert(live.orbitSpeed>baseline.orbitSpeed,
        "O02 upgrades must affect the immediately following live orbit tick")
+let beforeKestrelSwitch=live.orbitPosition
+let speedBeforeKestrelSwitch=live.orbitSpeed
+let headingBeforeKestrelSwitch=live.flight.heading
+let timeBeforeKestrelSwitch=live.orbitTime
+assert(live.adoptVanguardEquipment(equipment(.kestrel)))
+assert(live.equipment.craft == .kestrel)
+assert(live.orbitPosition == beforeKestrelSwitch &&
+       live.orbitSpeed == speedBeforeKestrelSwitch &&
+       live.flight.heading == headingBeforeKestrelSwitch &&
+       live.orbitTime == timeBeforeKestrelSwitch,
+       "Switching to genuine KESTREL must preserve orbit and time")
+assert(!live.adoptVanguardEquipment(equipment(.titan)),
+       "Unported heavy craft cannot be equipped in the iOS orbit")
 
 let detached=equipment(.mammoth,detached:true)
 close(detached.surfaceSpeed,180.96,0.005,"MAMMOTH shuttle speed")

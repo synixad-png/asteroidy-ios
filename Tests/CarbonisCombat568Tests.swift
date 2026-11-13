@@ -632,6 +632,24 @@ import Foundation
               "Bastion source physical speed and engine upgrades")
         check(abs(bastionStats.fireRateScale-0.96)<0.0002,
               "Bastion source 0.96 shot interval multiplier")
+        // PC609 KESTREL ShipType=0: actual C279 flight/collision/rate,
+        // not a Vanguard visual substitution or a merely selectable UI.
+        var kestrelState=bonuses
+        kestrelState.selectedShip=0
+        check(H55SourceMechanics580.save(kestrelState),
+              "PC609 Kestrel is a legitimate original source-owned craft")
+        let kestrelSim=CarbonisCombat568(prepared)
+        let kestrelStats=H55SourceMechanics580.shipStats(
+            type:0,engine:1,stabilizer:1,thruster:1)!
+        check(kestrelSim.sourceMechanics.selectedShip==0 &&
+              abs(kestrelSim.shipCollisionMass-2.4)<0.0001 &&
+              abs(kestrelSim.shipContactRadius-10.528)<0.001,
+              "PC609 Kestrel: original 2.4 mass and 0.94x contact radius")
+        check(abs(kestrelSim.flight.flight.configuration.cruiseSpeed -
+                  kestrelStats.topSpeed * 0.40)<0.0002,
+              "Kestrel source physical speed and engine upgrades")
+        check(abs(kestrelStats.fireRateScale-1.08)<0.0002,
+              "Kestrel source 1.08 shot interval multiplier")
         check(abs(bonusSim.shipCollisionMass-3.4)<0.0001 &&
               abs(bonusSim.shipContactRadius-11.2)<0.0001,
               "no Vanguard physics regression when Bastion is installed")

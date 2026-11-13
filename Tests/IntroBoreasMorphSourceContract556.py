@@ -68,8 +68,11 @@ ck('if input.introPreview41 != wasIntroPreview41 {' in s and
    'Switching Intro <-> sphere must restart morph sampling')
 ck('truncatingRemainder(dividingBy:IntroOrbit41.duration)' in s,
    'Cinematic 16-second original timeline is no longer looping')
-ck('BoreasMorphBinding556' in s and 'planetAnimator = try BoreasMorphRenderer556(' in s,
-   'Original Boreas GLB node-0 morph binding missing')
+slot=(r/'ASTEROIDYiOS/AnimatedPlanetTestSlot556.swift').read_text()
+ck('AnimatedPlanetTestSlot556.bindingName' in s and
+   'static let bindingName="BoreasMorphBinding556"' in slot and
+   'planetAnimator = try BoreasMorphRenderer556(' in s,
+   'Original Boreas GLB node-0 morph binding missing from verified asset slot')
 ck('func updateVertices(seconds: Double, into result: inout [AssetMesh.Vertex])' in m,
    'Original source-morph calculation was unexpectedly replaced')
 ck('let range =' in method and 'staticVertexCount' in m,

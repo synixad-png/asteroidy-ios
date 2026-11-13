@@ -80,6 +80,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private let planetIndices: MTLBuffer
     private let planetIndexCount: Int
     private let planetAnimator: BoreasMorphRenderer556
+    private let planetNodeTracks: BoreasNodeTracks556
     private var planetMorphScratch: [AssetMesh.Vertex]
     private var planetAnimationTime: Double = 0
     private var lastPlanetMorphUpload: Double = -1
@@ -365,8 +366,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         // MTLTexture resources are loaded on their first visible use.
         // Only use the verified v556 Boreas GLB conversion when bundled.
         // Never silently claim that the diagnostic UV sphere is an imported asset.
-        guard let planetURL = Bundle.main.url(forResource:"Boreas556",withExtension:"as3d")
-             ?? Bundle.main.url(forResource:"Boreas556",withExtension:"as3d",subdirectory:"Assets") else {
+        guard AnimatedPlanetTestSlot556.sourceAssetsVerified,
+              let planetURL=AnimatedPlanetTestSlot556.resourceURL(
+                AnimatedPlanetTestSlot556.meshName,"as3d") else {
             throw NSError(domain:"ASTEROIDY iOS",code:5,userInfo:[NSLocalizedDescriptionKey:"Brak planety Boreas556.as3d — GLB z v556 nie został zapakowany"])
         }
         let planet = try AssetMesh(data: Data(contentsOf:planetURL))
@@ -382,14 +384,22 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         planetVertexBuffers = ring
         planetIndices = initialPlanetMesh.indices
         planetIndexCount = initialPlanetMesh.count
-        guard let animURL = Bundle.main.url(forResource:"Boreas556",withExtension:"asmo")
-             ?? Bundle.main.url(forResource:"Boreas556",withExtension:"asmo",subdirectory:"Assets"),
-              let bindingURL = Bundle.main.url(forResource:"BoreasMorphBinding556",withExtension:"json")
-             ?? Bundle.main.url(forResource:"BoreasMorphBinding556",withExtension:"json",subdirectory:"Assets") else {
+        guard let animURL=AnimatedPlanetTestSlot556.resourceURL(
+                    AnimatedPlanetTestSlot556.animationName,"asmo"),
+              let bindingURL=AnimatedPlanetTestSlot556.resourceURL(
+                    AnimatedPlanetTestSlot556.bindingName,"json") else {
             throw NSError(domain:"ASTEROIDY iOS",code:6,userInfo:[NSLocalizedDescriptionKey:"Brak danych animacji lub wiązania Boreas"])
         }
         planetAnimator = try BoreasMorphRenderer556(source:BoreasMorph556(data:Data(contentsOf:animURL)),
                                                     bindingData:Data(contentsOf:bindingURL), mesh:planet)
+        guard let tracksURL=AnimatedPlanetTestSlot556.resourceURL(
+                AnimatedPlanetTestSlot556.nodeTracksName,"asnt") else {
+            throw NSError(domain:"ASTEROIDY iOS",code:563,
+                userInfo:[NSLocalizedDescriptionKey:
+                    "Brak oryginalnych 96 kanałów animacji BOREAS / ASNT"])
+        }
+        planetNodeTracks=try BoreasNodeTracks556(
+            data:Data(contentsOf:tracksURL),mesh:planet)
         planetMorphScratch = planetAnimator.makeScratchVertices()
     }
 
@@ -600,15 +610,25 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         let morphStarted = ProcessInfo.processInfo.systemUptime
         planetAnimator.updateVertices(seconds: seconds, into: &planetMorphScratch)
+        // The other 96 authored GLB channels animate the 24 droplets and
+        // 24 liquid necks using this SAME clock and GPU triple-buffer.
+        // No second scene, independent GPU renderer or fake particles.
+        planetNodeTracks.updateVertices(seconds:seconds,
+                                        into:&planetMorphScratch)
         telemetry.record(.morphCPU,
             seconds: ProcessInfo.processInfo.systemUptime - morphStarted)
         let range = planetAnimator.dynamicVertexRange
         let strideBytes = MemoryLayout<AssetMesh.Vertex>.stride
         let startByte = range.lowerBound * strideBytes
         let dynamicBytes = range.count * strideBytes
+        let nodes = planetNodeTracks.dynamicVertexRange
+        let nodeStartByte = nodes.lowerBound * strideBytes
+        let nodeBytes = nodes.count * strideBytes
         let target = planetVertexBuffers[slot]
         guard startByte <= target.length &&
-              dynamicBytes <= target.length - startByte else {
+              dynamicBytes <= target.length - startByte &&
+              nodeStartByte <= target.length &&
+              nodeBytes <= target.length - nodeStartByte else {
             telemetry.noteUpload(success: false)
             planetBufferSlots.cancelWrite(slot)
             return
@@ -619,6 +639,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             if let p = bytes.baseAddress {
                 memcpy(target.contents().advanced(by:startByte),
                        p.advanced(by:startByte),dynamicBytes)
+                memcpy(target.contents().advanced(by:nodeStartByte),
+                       p.advanced(by:nodeStartByte),nodeBytes)
             }
         }
         telemetry.record(.uploadCPU,
@@ -742,11 +764,12 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         // The native playable Boreas diagnostic was previously hardwired
         // to level 1. Switch only among source-audited test sectors:
-        // Gameplay65 waves 9/17 and AmigaOnly266 level 25.
+        // Boreas sector 05 is visual-only test; Gameplay65 waves 9/17
+        // and AmigaOnly266 level 25 remain test-only as before.
         // Do not claim campaign progress or reset unrelated flat GameCore.
         let selected=input.planetTestLevel
         if selected != activePlanetTestLevel &&
-           [1,9,17,25].contains(selected),
+           [1,AnimatedPlanetTestSlot556.sector,9,17,25].contains(selected),
            let balance=CombatBalance556(level:selected,difficulty:.normal,
                                          spherical:true) {
             sphereSector=SphereSector556(balance:balance)

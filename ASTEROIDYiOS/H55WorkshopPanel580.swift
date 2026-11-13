@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 /// H11 native W3 Hub320 six-station console, over the original H55 SceneKit.
 /// Actions mutate ONLY actual C279 Sector01Shop568 + persistent combat vitals.
@@ -7,9 +6,12 @@ import UniformTypeIdentifiers
 /// exist. No fabricated balance, purchases, player ships or trophies.
 struct H55WorkshopPanel580:View {
     let onClose:()->Void
+    let onShipEquipped:()->Void
     @State private var tab:Int
-    init(initialTab:Int,onClose:@escaping ()->Void){
+    init(initialTab:Int,onClose:@escaping ()->Void,
+         onShipEquipped:@escaping ()->Void={}){
         self.onClose=onClose
+        self.onShipEquipped=onShipEquipped
         _tab=State(initialValue:max(0,min(5,initialTab)))
     }
     @State private var wallet=Sector01Shop568.load()
@@ -18,7 +20,6 @@ struct H55WorkshopPanel580:View {
     @State private var rules=H55SourceMechanics580.load()
     private var sector:Int {min(25,CampaignStore556.load().nextAvailableSector)}
     @State private var notice="STANOWISKA HANGARU PC v580"
-    @State private var showBastionImporter606=false
     private let gold=Color(red:0.89,green:0.67,blue:0.31)
     private let cyan=Color(red:0.33,green:0.77,blue:0.83)
     private let muted=Color(red:0.62,green:0.72,blue:0.78)
@@ -90,20 +91,6 @@ struct H55WorkshopPanel580:View {
             .overlay(RoundedRectangle(cornerRadius:8).stroke(cyan.opacity(0.6),lineWidth:1))
             .frame(maxWidth:.infinity,maxHeight:.infinity)
         }
-        .fileImporter(isPresented:$showBastionImporter606,
-                      allowedContentTypes:[.item],
-                      allowsMultipleSelection:false) { result in
-            do {
-                guard let file=try result.get().first else {
-                    notice="BASTION: NIE WYBRANO PLIKU"
-                    return
-                }
-                try SourceBastion606.install(from:file)
-                notice="BASTION PC609: MODEL I TEKSTURA ZWERYFIKOWANE · MOŻNA WYPOSAŻYĆ"
-            } catch {
-                notice="BASTION: NIEPRAWIDŁOWA PACZKA PC609 · BRAK ZMIAN"
-            }
-        }
         .onAppear {
             // Reload canonical mission profile whenever the console is opened.
             wallet=Sector01Shop568.load()
@@ -114,23 +101,23 @@ struct H55WorkshopPanel580:View {
     }
     @ViewBuilder private func fleetTab()->some View {
                             headline("01 / FLOTA","SZEŚĆ STATKÓW · ŹRÓDŁO CAMPAIGN37")
-                            if H55SourceMechanics580.registeredModelName(forShip:2)==nil {
-                                Button("WCZYTAJ MODEL BASTION PC609 Z PLIKÓW") {
-                                    showBastionImporter606=true
-                                }
-                                .font(.system(size:12,weight:.bold,design:.monospaced))
-                                .foregroundStyle(.black)
-                                .padding(.horizontal,12)
-                                .padding(.vertical,10)
-                                .background(gold)
-                                .accessibilityIdentifier("h11-import-bastion606")
+                            // PC609 ships are immutable IPA resources.
+                            // Only hangar_h55.glb is user-imported.
+                            // Show real missing-model diagnostics rather than
+                            // asking for a second copy of an embedded resource.
+                            if !H55PlayerShip580.originalModelVerified(0) ||
+                               !H55PlayerShip580.originalModelVerified(2) {
+                                Text("BŁĄD ODCZYTU WBUDOWANEGO MODELU PC609 · SPRAWDŹ WERSJĘ IPA")
+                                    .font(.system(size:11,weight:.bold,design:.monospaced))
+                                    .foregroundStyle(.orange)
+                                    .accessibilityIdentifier("h55-pc609-embedded-model-error")
                             }
                             ForEach(H55Workshop580.ships.indices,id:\.self){i in
                                 let stats=H55SourceMechanics580.shipStats(
                                     type:i,engine:rules.engine,
                                     stabilizer:rules.stabilizer,
                                     thruster:rules.thruster)
-                                let modeled=H55SourceMechanics580.registeredModelName(forShip:i) != nil
+                                let modeled=H55PlayerShip580.originalModelVerified(i)
                                 let owned=H55SourceMechanics580.shipOwned(i,state:rules)
                                 let price=H55SourceMechanics580.shipPrice(i)
                                 let detail="A:\(Int(stats?.acceleration ?? 0)) · V:\(Int(stats?.topSpeed ?? 0)) · SKR:\(Int((stats?.turnSpeed ?? 0)*100)/100) · MASA:\(stats?.mass ?? 0)"
@@ -149,7 +136,10 @@ struct H55WorkshopPanel580:View {
                                             result == .changed
                                             ? "ZAKUPIONO "+H55Workshop580.ships[i]+" · CZEKAMY NA GLB"
                                             : shipMessage(result,i)
-                                        if result == .changed {persistSource()}
+                                        if result == .changed {
+                                            persistSource()
+                                            if modeled {onShipEquipped()}
+                                        }
                                     } : nil)
                             }
     }

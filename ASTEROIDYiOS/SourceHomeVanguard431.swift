@@ -56,12 +56,19 @@ final class SourceHomeVanguard431 {
     }
 
     init(device:MTLDevice,shipType:Int=1) throws {
-        guard shipType==1 || shipType==2 else{throw SourceError.missing}
+        guard (0...2).contains(shipType) else{throw SourceError.missing}
         self.shipType=shipType
         let baked:SourceBakedShipMesh
         let skinURL:URL?
         let skinData:Data
-        if shipType==2 {
+        if shipType==0 {
+            guard let kestrel=SourceKestrel603.load() else {
+                throw SourceError.missing
+            }
+            baked=kestrel.mesh
+            skinData=kestrel.jpeg
+            skinURL=nil
+        } else if shipType==2 {
             guard let bastion=SourceBastion606.load() else {
                 throw SourceError.missing
             }

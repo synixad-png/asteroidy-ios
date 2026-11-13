@@ -55,7 +55,10 @@ struct PC602HomeScene291: UIViewRepresentable {
         var renderer:Renderer?
 
         final class Renderer:NSObject,MTKViewDelegate {
-            enum SourceError:Error {case metal,invalidCamera}
+            enum SourceError:Error {
+                case metal,invalidCamera
+                case originalShip(Int,String)
+            }
             let device:MTLDevice
             let queue:MTLCommandQueue
             let pipeline:MTLRenderPipelineState
@@ -100,8 +103,16 @@ struct PC602HomeScene291: UIViewRepresentable {
                 // Shares the existing source-verified full hull generator;
                 // never invent a second partial GLB or duplicate debris.
                 originalWreck=try SourceHomeWreck209(device:device)
-                originalShip=try SourceHomeVanguard431(device:device,
-                     shipType:H55SourceMechanics580.load().selectedShip)
+                let selectedShip=H55SourceMechanics580.load().selectedShip
+                do {
+                    originalShip=try SourceHomeVanguard431(
+                        device:device,shipType:selectedShip)
+                } catch {
+                    // Make the exact failing PC609 ship visible in diagnostics
+                    // instead of a generic black screen marked "missing".
+                    throw SourceError.originalShip(
+                        selectedShip,String(describing:error))
+                }
                 // Reuse GpuIntro41.IntroSky for BOTH original CARBONIS
                 // and H290: clouds, 3 planets, black hole, stars and sun.
                 // This cache is only created for the actual 3D world,

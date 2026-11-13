@@ -21,8 +21,10 @@ lights=read("PC602HomeProjectileLights296.swift")
 world=read("PC602HomeScene291.swift")
 assert 'case unavailable,invalid,unsupported,io' in save
 assert 'static let validMask=(1<<26)-1' in save
-assert 'shipType==1' in save
-assert 'mechanics.selectedShip==1' in save
+assert '(0...2).contains(shipType)' in save
+assert 'mechanics.selectedShip==shipType' in save
+assert 'shipType:activeShip' in save
+assert '(0...2).contains(mechanics.selectedShip)' in source
 assert 'PC602HomeFlight291.unlocked(target,mask:completedMask)' in save
 assert 'UUID(uuidString:runID)' in save
 assert '(position+forward+right).allSatisfy' in save
@@ -114,14 +116,14 @@ assert 'allowSave:true,confirmActiveLoad:true' in read("Sector01Scene568.swift")
 assert 'PC602OrbitSave61.hasManualSave' in w3
 assert 'static func canContinueActive358(' in source
 assert 'Sector01Shop568.validate(shop)' in source
-assert 'state.valid,state.selectedShip==1' in source
+assert 'state.valid,(0...2).contains(state.selectedShip)' in source
 assert 'SourceNewGame568.canContinueActive358()' in app
 assert 'try homeWorld291.start(progress:CampaignStore556.load())' in app
 assert 'SourceNewGame568.canContinueActive358()' in w3
 assert 'if let rawVitals=defaults.object(forKey:vitalsKey)' in source
 assert 'if let rawMechanics=defaults.object(forKey:mechanicsKey)' in source
 assert 'rawVitals as? Data' in source
-assert 'state.valid,state.selectedShip==1' in source
+assert 'state.valid,(0...2).contains(state.selectedShip)' in source
 assert '"pc602-orbit-compact-26-atlas330"' in page
 assert r'ForEach(0..<4,id:\.self)' in page
 assert r'ForEach(0..<8,id:\.self)' in page
@@ -140,10 +142,10 @@ assert 'sourceKeyEye:sunEye' in world
 assert world.count('onProjectiles?() ?? []')==1
 assert 'if sector==1 {onEnterMission(sector)}' in page
 assert 'guard level==1,sourceSector01==nil' in app
-# The only authorized craft remains Vanguard; the PC602 original
-# Campaign37/Modules97 ranks now come from the canonical H55 source state.
+# The three authentic PC609 craft use the canonical H55 source state;
+# source Campaign37/Modules97 ranks remain preserved on resume.
 assert 'private static func vanguardEquipment291(' in driver
-assert 'craft:state.selectedShip==2 ? .bastion : .vanguard,' in driver
+assert 'craft:state.selectedShip==0 ? .kestrel :' in driver
 assert 'registeredModelName(' in driver
 assert 'engineLevel:state.engine' in driver
 assert 'thrusterRank:state.thruster' in driver

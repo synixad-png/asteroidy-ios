@@ -48,9 +48,10 @@ struct W3MainMenu568: View {
     let progress: CampaignProgress556
     let selectMission: (Int) -> Void
     let inspectSector: (Int) -> Void
+    let openBoreasTest: () -> Void
     let openDiagnostic: () -> Void
     let openCampaignOnEntry: Bool
-    let startNewGame: (SourceNewGameSelection568)->Bool
+    let startNewGame: (SourceNewGameSelection568)->String?
     let openOrbit:()->String?
     let loadManualOrbit:(Int)->Bool
     let canSaveMenu61:Bool
@@ -65,8 +66,9 @@ struct W3MainMenu568: View {
     @State private var page: Page?
     @State private var newPlayers568=1
     @State private var newDifficulty568=SourceNewGame568.selection().difficulty
+    @State private var newShipType568=SourceNewGame568.selection().shipType
     @State private var confirmNewGame568=false
-    @State private var newGameLaunchFailed568=false
+    @State private var newGameLaunchIssue568:String?
     // Windows UiW3NativeLayout315.cs BeginW3NativeTransition327:
     // 1.25 s total, 36% left-side cover + 64% right-side uncover.
     @State private var w3Wiping327 = false
@@ -251,6 +253,12 @@ struct W3MainMenu568: View {
             w3WipeAmount327=1
         }
         DispatchQueue.main.asyncAfter(deadline:.now()+0.45) {
+            if destination == .newGame {
+                // PC609 Campaign37: choice stays local until confirmation.
+                let existing=H55SourceMechanics580.load().selectedShip
+                newShipType568=(0...2).contains(existing) ? existing : 1
+                newGameLaunchIssue568=nil
+            }
             page=destination
             w3WipeFromRight327=true
             withAnimation(.timingCurve(0.22,0.7,0.15,1,duration:0.80)) {
@@ -454,11 +462,23 @@ struct W3MainMenu568: View {
             Text("DOTKNIJ FUNKCJĘ / W3 · NAWIGACJA NATYWNA")
                 .foregroundStyle(muted)
             Spacer()
+            // Explicitly requested temporary PC609 BOREAS05 preview.
+            // Its own independently verified assets are mandatory. It is
+            // NOT an eighth production W3 action or an unlocked mission.
+            Button("BOREAS 05 · TEST PLANETY") {
+                openBoreasTest()
+            }
+            .font(.system(size:compact ? 10 : 12,
+                          weight:.bold,design:.monospaced))
+            .foregroundStyle(AnimatedPlanetTestSlot556.sourceAssetsVerified
+                             ? cyan : muted)
+            .frame(minHeight:32)
+            .disabled(!AnimatedPlanetTestSlot556.sourceAssetsVerified)
+            .accessibilityIdentifier("w3-boreas05-test-direct")
             Text("UI W3 / METAL")
                 .foregroundStyle(gold)
-            // Windows ProgramW3Native315 does NOT display a test-scene
-            // entry in the normal W3 HOME. It must never lead users
-            // into the older diagnostic arena unintentionally.
+            // Windows ProgramW3Native315 does NOT display the OLD
+            // arbitrary diagnostic arena in the normal W3 HOME.
             if ProcessInfo.processInfo.environment["ASTEROIDY_DEBUG_MENU"] == "1" {
                 Button("SCENA TESTOWA") { openDiagnostic() }
                     .fontWeight(.bold)
@@ -507,7 +527,8 @@ struct W3MainMenu568: View {
                                      dismiss:{page=nil},
                                      onSelect:selectMission,
                                      onInspect:inspectSector,
-                                     onEnterOrbit:openOrbit)
+                                     onEnterOrbit:openOrbit,
+                                     onBoreasTest:openBoreasTest)
                         .frame(maxWidth:.infinity,maxHeight:.infinity)
                 } else if item == .newGame {
                     newGamePage(compact:compact)
@@ -621,7 +642,7 @@ struct W3MainMenu568: View {
 
     private func requestNewGame568() {
         guard newPlayers568==1 else {return}
-        newGameLaunchFailed568=false
+        newGameLaunchIssue568=nil
         if SourceNewGame568.hasActiveProfile() {
             confirmNewGame568=true
         } else {
@@ -630,17 +651,75 @@ struct W3MainMenu568: View {
     }
     private func launchNewGame568() {
         confirmNewGame568=false
-        newGameLaunchFailed568 = !startNewGame(SourceNewGameSelection568(
-            players:newPlayers568,difficulty:newDifficulty568))
+        newGameLaunchIssue568=startNewGame(SourceNewGameSelection568(
+            players:newPlayers568,difficulty:newDifficulty568,
+            shipType:newShipType568))
     }
+    /// Original Campaign37 starter ship selection shown inside W3 NEW GAME.
+    /// Separate from the larger page body to keep SwiftUI type checking fast.
+    private func newGameShipSelector(compact:Bool)->some View {
+        VStack(alignment:.leading,spacing:compact ? 6 : 10) {
+            // Campaign37.ShipNames/HangarClick: original starter craft
+            // 0 Kestrel, 1 Vanguard, 2 Bastion, each independently balanced.
+            Text("STATEK / WYBIERZ PRZED ROZPOCZĘCIEM")
+                .font(.system(size:compact ? 10 : 12,weight:.bold,design:.monospaced))
+                .foregroundStyle(cyan)
+            HStack(spacing:compact ? 5 : 10) {
+                ForEach(0..<3,id:\.self) { type in
+                    let available=H55PlayerShip580.originalModelVerified(type)
+                    let stats=H55SourceMechanics580.shipStats(
+                        type:type,engine:0,stabilizer:0,thruster:0)
+                    let lives=SourceNewGame568.startingLives(
+                        difficulty:newDifficulty568,shipType:type)
+                    Button {
+                        if available {
+                            newShipType568=type
+                            newGameLaunchIssue568=nil
+                        }
+                    } label: {
+                        VStack(alignment:.leading,spacing:4) {
+                            Text(H55Workshop580.ships[type])
+                                .font(.system(size:compact ? 10 : 13,
+                                              weight:.bold,design:.monospaced))
+                            Text("A \(Int(stats?.acceleration ?? 0)) · V \(Int(stats?.topSpeed ?? 0))")
+                                .font(.system(size:compact ? 9 : 11,
+                                              design:.monospaced))
+                            Text("ŻYCIA \(lives)")
+                                .font(.system(size:compact ? 9 : 11,
+                                              design:.monospaced))
+                        }
+                        .frame(maxWidth:.infinity,alignment:.leading)
+                        .padding(.horizontal,compact ? 7 : 12)
+                        .frame(minHeight:62)
+                        .background(newShipType568==type ? gold :
+                                    Color(red:0.03,green:0.09,blue:0.13))
+                        .foregroundStyle(newShipType568==type ? .black : paper)
+                        .overlay(Rectangle().stroke(
+                            newShipType568==type ? gold : cyan.opacity(0.35),
+                            lineWidth:1))
+                    }
+                    .disabled(!available)
+                    .opacity(available ? 1 : 0.45)
+                    .accessibilityIdentifier("w3-new-ship-\(type)")
+                }
+            }
+        }
+    }
+
     // Windows ProgramW3Native315.cs:348-354 and v342 explicit
     // non-destructive confirmation. No fictional iOS co-op.
     private func newGamePage(compact:Bool) -> some View {
+        let shipType=newShipType568
+        let playable=H55PlayerShip580.originalModelVerified(shipType)
+        let shipName=(0..<H55Workshop580.ships.count).contains(shipType)
+            ? H55Workshop580.ships[shipType] : "NIEZNANY"
+        let startingLives=SourceNewGame568.startingLives(
+            difficulty:newDifficulty568,shipType:shipType)
         // iPhone 15 Pro Max landscape has only ~330pt central height
         // after the source W3 chrome and bottom home-indicator inset.
         // Scroll the REAL source controls; do not scale/tuck away the
         // difficulty, crew, start button or profile confirmation.
-        ScrollView(.vertical) {
+        return ScrollView(.vertical) {
             VStack(alignment:.leading,spacing:compact ? 9 : 16) {
                 Text("NOWA GRA / KONFIGURACJA")
                     .font(.system(size:compact ? 14 : 20,
@@ -653,7 +732,7 @@ struct W3MainMenu568: View {
                     ForEach([1,2],id:\.self) { count in
                         Button(count==1 ? "1 GRACZ" : "2 GRACZY") {
                             newPlayers568=count
-                            newGameLaunchFailed568=false
+                            newGameLaunchIssue568=nil
                         }
                         .font(.system(size:compact ? 10 : 13,weight:.semibold,design:.monospaced))
                         .foregroundStyle(newPlayers568==count ? .black : paper)
@@ -669,7 +748,7 @@ struct W3MainMenu568: View {
                     ForEach(CombatBalance556.Difficulty.allCases,id:\.rawValue) { mode in
                         Button(mode == .easy ? "ŁATWY" : mode == .normal ? "NORMALNY" : "TRUDNY") {
                             newDifficulty568=mode
-                            newGameLaunchFailed568=false
+                            newGameLaunchIssue568=nil
                         }
                         .font(.system(size:compact ? 10 : 13,weight:.semibold,design:.monospaced))
                         .foregroundStyle(newDifficulty568==mode ? .black : paper)
@@ -678,9 +757,19 @@ struct W3MainMenu568: View {
                         .accessibilityIdentifier("w3-new-difficulty-\(mode.rawValue)")
                     }
                 }
-                Text("VANGUARD / ŻYCIA NA START: \(SourceNewGame568.startingLives(difficulty:newDifficulty568))")
+                newGameShipSelector(compact:compact)
+                // PC609 Campaign37: calculate from the independently selected
+                // original ship, not the prior game's hangar selection.
+                Text("\(shipName) / ŻYCIA NA START: \(startingLives)")
                     .font(.system(size:compact ? 10 : 12,design:.monospaced))
                     .foregroundStyle(paper)
+                    .accessibilityIdentifier("w3-new-selected-ship-lives")
+                if !playable {
+                    Text("WYBRANY STATEK NIE MA ZWERYFIKOWANEGO MODELU iOS. Wybierz dostępny statek w HANGARZE / FLOTA.")
+                        .font(.system(size:compact ? 10 : 12,design:.monospaced))
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal:false,vertical:true)
+                }
                 if newPlayers568==2 {
                     Text("TRYB 2 GRACZY: NIEGOTOWY — brak drugiego statku, sterowania i oryginalnej synchronizacji. Start jest zablokowany.")
                         .font(.system(size:compact ? 10 : 12,design:.monospaced))
@@ -698,11 +787,11 @@ struct W3MainMenu568: View {
                     .padding(.horizontal,18)
                     .frame(minHeight:44)
                     .background(gold)
-                    .disabled(newPlayers568 != 1)
-                    .opacity(newPlayers568==1 ? 1 : 0.5)
+                    .disabled(newPlayers568 != 1 || !playable)
+                    .opacity(newPlayers568==1 && playable ? 1 : 0.5)
                     .accessibilityIdentifier("w3-new-start-source")
-                if newGameLaunchFailed568 {
-                    Text("Nie udało się zabezpieczyć profilu lub brakuje zweryfikowanych zasobów CARBONIS. Dane poprzedniej gry pozostają bez zmian.")
+                if let issue=newGameLaunchIssue568 {
+                    Text(issue)
                         .font(.system(size:compact ? 10 : 12,design:.monospaced))
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal:false,vertical:true)

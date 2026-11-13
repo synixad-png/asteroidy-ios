@@ -9,6 +9,7 @@ import simd
 @MainActor enum H55PlayerShip580 {
     static let nodeName="H55_PC580_VANGUARD431_SHIP"
     static let bastionNodeName="H55_PC606_BASTION_SHIP"
+    static let kestrelNodeName="H55_PC603_KESTREL_SHIP"
     enum Error:Swift.Error {case missing,invalidSource,invalidTexture,notTriangles}
 
     private static func resource(_ name:String,_ ext:String)->URL? {
@@ -74,6 +75,16 @@ import simd
         return result
     }
 
+    private static func loadKestrel() throws ->SCNGeometry {
+        guard let asset=SourceKestrel603.load(),
+              let image=UIImage(data:asset.jpeg)
+        else{throw Error.missing}
+        guard let result=geometry(asset.mesh,image:image,
+             name:"Kestrel603_PC609_GLTF_BaseColor",baseFactor:1)
+        else{throw Error.notTriangles}
+        return result
+    }
+
     private static func loadBastion() throws ->SCNGeometry {
         guard let asset=SourceBastion606.load(),
               let image=UIImage(data:asset.jpeg)
@@ -88,11 +99,28 @@ import simd
     /// A missing Bastion is never silently replaced with Vanguard.
     private static let vanguardGeometry:SCNGeometry?=try? loadVanguard()
     private static var bastionGeometry:SCNGeometry?
+    private static var kestrelGeometry:SCNGeometry?
+
+    /// Native-only verification for W3 and H55 equipment UI. The source
+    /// campaign rules intentionally remain Foundation-only for Linux tests.
+    /// A file name is not enough: Kestrel/Bastion decode the ORIGINAL
+    /// SHA-pinned PC609 mesh and JPEG before their button is enabled.
+    static func originalModelVerified(_ ship:Int)->Bool {
+        switch ship {
+        case 0:return SourceKestrel603.load() != nil
+        case 1:return H55SourceMechanics580.registeredModelName(forShip:1) != nil
+        case 2:return SourceBastion606.load() != nil
+        default:return false
+        }
+    }
 
     static func make()->SCNNode? {
         let selected=H55SourceMechanics580.load().selectedShip
         let chosen:SCNGeometry?
         switch selected {
+        case 0:
+            if kestrelGeometry==nil {kestrelGeometry=try? loadKestrel()}
+            chosen=kestrelGeometry
         case 1:chosen=vanguardGeometry
         case 2:
             if bastionGeometry==nil {bastionGeometry=try? loadBastion()}
@@ -101,7 +129,8 @@ import simd
         }
         guard let chosen else{return nil}
         let result=SCNNode(geometry:chosen)
-        result.name=selected==2 ? bastionNodeName : nodeName
+        result.name=selected==0 ? kestrelNodeName :
+                    selected==2 ? bastionNodeName : nodeName
         // Same native PC Hub90 fighter transform for all baked ships.
         result.scale=SCNVector3(2.35,2.35,2.35)
         pose(result,time:0)

@@ -15,9 +15,10 @@ struct W3HomeShipPreview568: UIViewRepresentable {
                 ?? Bundle.main.url(forResource:name,withExtension:ext,
                                    subdirectory:"Assets")
         }
-        if H55SourceMechanics580.load().selectedShip==2 {
-            return SourceBastion606.load() != nil
-        }
+        let selected=H55SourceMechanics580.load().selectedShip
+        if selected==0 {return SourceKestrel603.load() != nil}
+        if selected==2 {return SourceBastion606.load() != nil}
+        guard selected==1 else{return false}
         return file("Vanguard431Source","mesh") != nil
             && file("Vanguard431Base","jpg") != nil
     }
@@ -87,7 +88,14 @@ struct W3HomeShipPreview568: UIViewRepresentable {
                 let original:SourceBakedShipMesh
                 let textureBytes:Data
                 let textureURL:URL?
-                if selectedShip==2 {
+                if selectedShip==0 {
+                    guard let kestrel=SourceKestrel603.load() else {
+                        throw SourceError.missing
+                    }
+                    original=kestrel.mesh
+                    textureBytes=kestrel.jpeg
+                    textureURL=nil
+                } else if selectedShip==2 {
                     guard let bastion=SourceBastion606.load() else {
                         throw SourceError.missing
                     }
@@ -224,18 +232,24 @@ struct W3HomeShipPreview568: UIViewRepresentable {
                     let id=selectedShip
                     command.addCompletedHandler { result in
                         let obj:[String:Any]=[
-                            "source":id==2 ? "Bastion-PC609-ShipType2" :
+                            "source":id==0 ? "Kestrel-PC609-ShipType0" :
+                                id==2 ? "Bastion-PC609-ShipType2" :
                                 "Vanguard431-default-ShipType1-v568",
                             "gpuCommandBufferCompleted":result.status == .completed,
                             "vertexCount":originalCount,
-                            "meshSHA256":id==2 ? SourceBastion606.meshSHA256 :
+                            "meshSHA256":id==0 ? SourceKestrel603.meshSHA256 :
+                                id==2 ? SourceBastion606.meshSHA256 :
                                 SourceVanguardMesh431.exactMeshSHA256,
-                            "skinSHA256":id==2 ? SourceBastion606.jpegSHA256 :
+                            "skinSHA256":id==0 ? SourceKestrel603.jpegSHA256 :
+                                id==2 ? SourceBastion606.jpegSHA256 :
                                 SourceVanguardMesh431.exactBaseJPEG_SHA256,
                             "originalW3PreviewScale":0.34,
                             "simulatorOnly":true
                         ]
-                        if id==2 {
+                        if id==0 {
+                            OriginalRenderProofWriter568.save(
+                                obj,filename:"ASTEROIDY_W3_Kestrel603_GPUProof.json")
+                        } else if id==2 {
                             OriginalRenderProofWriter568.save(
                                 obj,filename:"ASTEROIDY_W3_Bastion606_GPUProof.json")
                         } else {

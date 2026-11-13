@@ -74,13 +74,16 @@ assert "OrbitTouchStick291" not in page
 assert "SourceCombatTouchZones568(" in source("Sector01Scene568.swift")
 assert "private var movement:some Gesture" not in source("Sector01Scene568.swift")
 assert 'source-combat-left-touch-zone' in source("SourceCombatTouchZones568.swift")
-assert 'accessibilityIdentifier("pc602-orbit-live-touch-hud")' in page
+assert 'accessibilityIdentifier("pc602-orbit-live-touch-hud")' not in page
+assert 'accessibilityIdentifier("pc602-orbit-pause")' in page
+assert 'accessibilityIdentifier("pc602-orbit-open-atlas330")' in page
 assert "driver.setPaused(true)" in page
 assert "driver.setPaused(previouslyPausedOptions291)" in page
 # One fully interactive PAUZA panel for touch/keyboard/pad and iPad screen lock.
 assert 'Button("PAUZA") {openOrbitOptions291()}' in page
 assert 'accessibilityIdentifier("pc602-orbit-pause")' in page
-assert 'accessibilityIdentifier("pc602-orbit-options291")' in page
+assert 'accessibilityIdentifier("pc602-orbit-options291")' not in page
+assert 'exitID:"pc602-orbit-return-w3"' in page
 assert 'SourcePauseMenu568(' in page
 assert 'SourcePauseMenu568(' in source("Sector01Scene568.swift")
 assert 'exitID:"pc602-orbit-return-w3"' in page

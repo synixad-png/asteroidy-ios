@@ -324,7 +324,10 @@ enum H55SourceMechanics580 {
     static let bastionAssetExtension="bastion"
     static var bastionAssetURL:URL? {
         if let bundle=Bundle.main.url(forResource:bastionAssetName,
-                                      withExtension:bastionAssetExtension) {
+                                      withExtension:bastionAssetExtension)
+            ?? Bundle.main.url(forResource:bastionAssetName,
+                               withExtension:bastionAssetExtension,
+                               subdirectory:"Assets") {
             return bundle
         }
         guard let support=FileManager.default.urls(
@@ -335,8 +338,33 @@ enum H55SourceMechanics580 {
         return FileManager.default.fileExists(atPath:url.path) ? url : nil
     }
 
+    // PC v603 KESTREL is ShipType 0; its 6031 GLB GPU stream is kept
+    // separate from Vanguard431 and Bastion606 without fallback.
+    static let kestrelAssetName="KESTREL_PC609"
+    static let kestrelAssetExtension="kestrel"
+    static var kestrelAssetURL:URL? {
+        if let bundle=Bundle.main.url(forResource:kestrelAssetName,
+                                      withExtension:kestrelAssetExtension)
+            ?? Bundle.main.url(forResource:kestrelAssetName,
+                               withExtension:kestrelAssetExtension,
+                               subdirectory:"Assets") {
+            return bundle
+        }
+        guard let support=FileManager.default.urls(
+            for:.applicationSupportDirectory,in:.userDomainMask).first
+        else{return nil}
+        let url=support.appendingPathComponent(
+            kestrelAssetName+"."+kestrelAssetExtension)
+        return FileManager.default.fileExists(atPath:url.path) ? url : nil
+    }
+
     static func registeredModelName(forShip id:Int)->String? {
         switch id {
+        // Pure campaign registration stays Foundation-only for source
+        // PC609 mechanics/test portability. Native iOS gameplay and H55
+        // verify full pack SHA, GPU ABI and JPEG with the source decoders
+        // before a model is selected or rendered.
+        case 0:return kestrelAssetURL == nil ? nil : "SOURCE-PC603-KESTREL"
         case 1:return "SOURCE-C279-VANGUARD"
         case 2:return bastionAssetURL == nil ? nil : "SOURCE-PC606-BASTION"
         default:return nil

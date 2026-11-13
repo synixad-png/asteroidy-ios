@@ -54,6 +54,50 @@ close(PC602HomeShipPose291.vanguard(flight,orbitScale:1.3)!.basis[12],
 assert(PC602HomeShipPose291.vanguard(flight,orbitScale:0)==nil)
 assert(PC602HomeShipPose291.vanguard(
     flight,orbitScale:Float.infinity)==nil)
+assert(PC602HomeShipPose291.active(flight) != nil)
+
+// Regression: KESTREL had its original 6031 geometry and loaded weapons,
+// but PC602HomeShipPose291.active returned nil, so H290 drew NO fighter.
+// All three original PC609 starter ships use the identical Sphere67 pose
+// calculation and have independent validated source hulls.
+for craft in [PC602HomeFlight291.Craft.kestrel,.bastion] {
+    let state=try PC602HomeFlight291(home:home,
+        equipment:PC602HomeFlight291.Equipment(craft:craft)!)
+    guard let active=PC602HomeShipPose291.active(state) else {
+        fatalError("PC609 \(craft) has no real H290 orbit pose (invisible hull)")
+    }
+    let direct=craft == .kestrel
+        ? PC602HomeShipPose291.kestrel(state)
+        : PC602HomeShipPose291.bastion(state)
+    guard let direct else {
+        fatalError("PC609 \(craft) cannot reuse original Sphere67 transform")
+    }
+    assert(active.basis == direct.basis)
+    assert(active.basis.count == 16)
+    assert(active.basis.allSatisfy{$0.isFinite})
+    close(active.basis[12],state.orbitPosition.x,0.0002,
+          "PC609 model world X")
+    close(active.basis[13],state.orbitPosition.y,0.0002,
+          "PC609 model world Y")
+    close(active.basis[14],state.orbitPosition.z,0.0002,
+          "PC609 model world Z")
+    let basisScale=SIMD3(active.basis[0],active.basis[1],active.basis[2])
+    close(length(basisScale),PC602HomeShipPose291.sourceShipScale,
+          0.00003,"PC609 craft source scale")
+    let scaled=PC602HomeShipPose291.active(state,orbitScale:1.3)!
+    close(scaled.basis[0],active.basis[0]*1.3,0.00002,
+          "PC609 visual size changes but physics does not")
+    close(scaled.basis[12],active.basis[12],0.00002,
+          "PC609 visual scale does not move the craft")
+    assert(PC602HomeShipPose291.active(state,orbitScale:0)==nil)
+    assert(PC602HomeShipPose291.vanguard(state)==nil)
+}
+for craft in [PC602HomeFlight291.Craft.vanguardX,.titan,.mammoth] {
+    let state=try PC602HomeFlight291(home:home,
+        equipment:PC602HomeFlight291.Equipment(craft:craft)!)
+    assert(PC602HomeShipPose291.active(state)==nil,
+           "Unsupported source craft must NOT silently fall back to Vanguard")
+}
 for other in PC602HomeFlight291.Craft.allCases where other != .vanguard {
     let state=try PC602HomeFlight291(home:home,
         equipment:PC602HomeFlight291.Equipment(craft:other)!)

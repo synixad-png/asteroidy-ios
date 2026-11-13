@@ -228,6 +228,55 @@ import Foundation
               "legacy restore retains source wallet and ion/bomb purchases")
         check(SourceTarcza145.loadPersistentEnergy(defaults:defaults)==60,
               "legacy archive without current shield energy defaults to 60")
+        // PC v609 Campaign37.StartingLives is evaluated from the ship
+        // selected BEFORE fresh Start(). Verify the complete W3 reset for
+        // every real iOS craft and all three difficulty settings.
+        for shipType in 0...2 {
+            for difficulty in CombatBalance556.Difficulty.allCases {
+                let testName="pc609-ship-lives-\(shipType)-\(difficulty.rawValue)-\(UUID().uuidString)"
+                let game=UserDefaults(suiteName:testName)!
+                defer {game.removePersistentDomain(forName:testName)}
+                let newBackup=FileManager.default.temporaryDirectory
+                    .appendingPathComponent(testName,isDirectory:true)
+                defer {try? FileManager.default.removeItem(at:newBackup)}
+                var oldCraft=H55SourceMechanics580.State()
+                oldCraft.selectedShip=shipType
+                oldCraft.engine=2
+                oldCraft.thruster=2
+                oldCraft.guardianOwned=true
+                oldCraft.cooling=1
+                check(H55SourceMechanics580.save(oldCraft,defaults:game),
+                      "preexisting selected craft and upgrades saved")
+                var oldWallet=Sector01Shop568.State()
+                oldWallet.award(157)
+                Sector01Shop568.save(oldWallet,defaults:game)
+                let choice=SourceNewGameSelection568(
+                    players:1,difficulty:difficulty,shipType:shipType)
+                check(SourceNewGame568.create(choice,defaults:game,
+                      backupDirectory:newBackup),
+                      "PC609 start with selected Kestrel/Vanguard/Bastion")
+                let expectedLives=SourceNewGame568.startingLives(
+                    difficulty:difficulty,shipType:shipType)
+                check(Sector01Shop568.load(defaults:game).lives==expectedLives,
+                      "starting lives equal Campaign37 for chosen ship/difficulty")
+                var onlyIdentity=H55SourceMechanics580.State()
+                onlyIdentity.selectedShip=shipType
+                check(H55SourceMechanics580.load(defaults:game)==onlyIdentity,
+                      "only original ship identity survives fresh campaign; upgrades reset")
+                check(H55Workshop580.loadVitals(defaults:game)==H55Workshop580.Vitals() &&
+                      Sector01Shop568.load(defaults:game).tokens==0 &&
+                      SourceNewGame568.canContinueActive358(defaults:game),
+                      "new campaign remains resumable with no previous rewards")
+                let before=game.data(forKey:"asteroidy.ios.v568.shop-profile-first-sector")
+                check(!SourceNewGame568.create(.init(
+                    players:1,difficulty:difficulty,shipType:3),
+                    defaults:game,backupDirectory:newBackup),
+                      "unsupported unported ship cannot start a fake PC609 campaign")
+                check(game.data(forKey:"asteroidy.ios.v568.shop-profile-first-sector")==before &&
+                      H55SourceMechanics580.load(defaults:game)==onlyIdentity,
+                      "blocked unported ship never modifies active profile")
+            }
+        }
         print("PASS \(checks) PC580 full active-profile archive, legacy migration, rollback and no-data-loss assertions")
     }
 }

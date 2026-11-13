@@ -58,11 +58,12 @@ final class PC602HomeWorldDriver291:ObservableObject {
     private static func vanguardEquipment291(
         _ state:H55SourceMechanics580.State)
         ->PC602HomeFlight291.Equipment? {
-        guard state.valid,(1...2).contains(state.selectedShip),
+        guard state.valid,(0...2).contains(state.selectedShip),
               H55SourceMechanics580.registeredModelName(
                 forShip:state.selectedShip) != nil else{return nil}
         return PC602HomeFlight291.Equipment(
-            craft:state.selectedShip==2 ? .bastion : .vanguard,
+            craft:state.selectedShip==0 ? .kestrel :
+                  state.selectedShip==2 ? .bastion : .vanguard,
             engineLevel:state.engine,
             thrusterRank:state.thruster,
             stabilizerLevel:state.stabilizer)
@@ -76,13 +77,14 @@ final class PC602HomeWorldDriver291:ObservableObject {
         mechanics:H55SourceMechanics580.State)
         ->PC602HomeWeaponTest292.Settings? {
         guard Sector01Shop568.validate(shop),mechanics.valid,
-              (1...2).contains(mechanics.selectedShip),
+              (0...2).contains(mechanics.selectedShip),
               let gun=PC602HomeWeaponTest292.Weapon(rawValue:shop.weapon.rawValue)
         else{return nil}
         return PC602HomeWeaponTest292.Settings(
             weapon:gun,upgrade:shop.upgradeLevel,
             rapid:shop.rapidLevel,cooling:mechanics.cooling,
-            fireRateScale:mechanics.selectedShip==2 ? 0.96:1,
+            fireRateScale:mechanics.selectedShip==0 ? 1.08 :
+                          mechanics.selectedShip==2 ? 0.96 : 1,
             fireRateTalent:1/(1+0.06*Float(mechanics.rateRank)),
             ionAmmo:shop.ionAmmo)
     }
@@ -115,17 +117,23 @@ final class PC602HomeWorldDriver291:ObservableObject {
     }
 
     static var resourcesInstalled:Bool {
+        resourcesInstalled(forShip:H55SourceMechanics580.load().selectedShip)
+    }
+    /// Validate the exact starter craft requested for a NEW campaign,
+    /// independent of the selected ship in the PREVIOUS saved profile.
+    static func resourcesInstalled(forShip ship:Int)->Bool {
+        guard (0...2).contains(ship) else{return false}
         let b=Bundle.main
         func exists(_ name:String,_ ext:String)->Bool {
             b.url(forResource:name,withExtension:ext) != nil ||
             b.url(forResource:name,withExtension:ext,
                   subdirectory:"Assets") != nil
         }
-        let ship=H55SourceMechanics580.load().selectedShip
         let playerModelReady=ship==1
             ? exists("Vanguard431Source","mesh") &&
               exists("Vanguard431Base","jpg")
-            : ship==2 && SourceBastion606.load() != nil
+            : ship==2 ? SourceBastion606.load() != nil
+            : ship==0 && SourceKestrel603.load() != nil
         return exists("PC602Home290HeightMap","bin") &&
                exists("PC602OrbitBelt51","bin") &&
                playerModelReady &&
@@ -137,12 +145,18 @@ final class PC602HomeWorldDriver291:ObservableObject {
     /// Called explicitly by W3 after a player presses ENTER ORBIT; the
     /// completed mask comes ONLY from CampaignStore556. No mission is earned
     /// or started by constructing the orbit.
-    func start(progress:CampaignProgress556) throws {
+    func start(progress:CampaignProgress556,
+               mechanicsOverride:H55SourceMechanics580.State?=nil,
+               shopOverride:Sector01Shop568.State?=nil) throws {
+        // The same original orbit constructor is used for Continue and
+        // New Game. An explicit fresh selection can be preflighted BEFORE
+        // the old campaign is archived/reset (no transient Vanguard state).
+        let mechanics=mechanicsOverride ?? H55SourceMechanics580.load()
+        let shop=shopOverride ?? Sector01Shop568.load()
         let home=try PC602NewHome290.load()
         _=try PC602OrbitBelt51.load()
-        guard Self.resourcesInstalled
+        guard Self.resourcesInstalled(forShip:mechanics.selectedShip)
         else {throw PC602NewHome290.SourceError.missing}
-        let mechanics=H55SourceMechanics580.load()
         guard let equipment=Self.vanguardEquipment291(mechanics)
         else {throw PC602HomeFlight291.SourceError.invalidEquipment}
         var initial=try PC602HomeWorldSession291(
@@ -153,7 +167,7 @@ final class PC602HomeWorldDriver291:ObservableObject {
             _=initial.selectMission(progress.selectedSector)
         }
         if let settings=Self.vanguardShotSettings291(
-            shop:Sector01Shop568.load(),
+            shop:shop,
             mechanics:mechanics) {
             initial.setWeaponSettings(settings)
         }

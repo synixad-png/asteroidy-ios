@@ -68,6 +68,12 @@ assert 'worldScale:Float=1' in sky # Carbonis default unmodified
 outer=100*1.4419674
 assert abs(900/outer*outer-900)<1e-4
 assert 'guard level==1,sourceSector01==nil' in app
-assert 'craft:.vanguard' in app
+# New PC609 campaigns preserve the actual selected original ship instead
+# of silently equipping Vanguard; reject ships without validated 3D data.
+assert 'choice.shipType==selected' not in app
+assert 'PC602HomeFlight291.Equipment(craft:craft)' in app
+assert 'H55PlayerShip580.originalModelVerified(choice.shipType)' in app
+assert 'mechanicsOverride:freshMechanics' in app
+assert 'shopOverride:freshShop' in app
 print("PASS PC602: H290 options->W3, paused Carbonis01->W3, "
       "independent service/atlas return; original 900-unit sky")

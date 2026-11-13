@@ -3,9 +3,9 @@ import Foundation
 /// Exact original PC v602 HomeFlight291.cs:144-158 fighter transform,
 /// composed from the SAME live Sphere67/DirectFlight298 state as orbital
 /// movement. No fake flight camera, no substitute ship or saved-location guess.
-/// Model type 1 (Vanguard431) is the only original orbit fighter with
-/// SHA-verified geometry+skin already present in the iOS asset bundle.
-/// Do NOT silently show it for types 0 or 2–5.
+/// KESTREL (0), VANGUARD (1) and BASTION (2) share the original
+/// Sphere67 orbital pose, but retain separate immutable GPU hulls.
+/// Never substitute a different craft or a fabricated pose for types 3–5.
 enum PC602HomeShipPose291 {
     // Game.ShipContactRadius=10*1.12; GpuSphere67.WorldUnitScale=
     // (100*GpuPlanetGltf463.HomeOuterRadius523+15)/(Game.H/Game.PI).
@@ -26,6 +26,11 @@ enum PC602HomeShipPose291 {
 
     /// Reproduces HomeScene291 with the real current visual heading,
     /// normal, terrain altitude, bank and pitch. Not the raw combat angle.
+    static func kestrel(_ flight:PC602HomeFlight291,
+                         orbitScale:Float=1)->Pose? {
+        guard flight.equipment.craft == .kestrel else{return nil}
+        return sourcePose(flight,orbitScale:orbitScale)
+    }
     static func vanguard(_ flight:PC602HomeFlight291,
                          orbitScale:Float=1)->Pose? {
         guard flight.equipment.craft == .vanguard else{return nil}
@@ -39,6 +44,7 @@ enum PC602HomeShipPose291 {
     static func active(_ flight:PC602HomeFlight291,
                        orbitScale:Float=1)->Pose? {
         switch flight.equipment.craft {
+        case .kestrel:return kestrel(flight,orbitScale:orbitScale)
         case .vanguard:return vanguard(flight,orbitScale:orbitScale)
         case .bastion:return bastion(flight,orbitScale:orbitScale)
         default:return nil

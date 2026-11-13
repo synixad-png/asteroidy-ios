@@ -77,6 +77,7 @@ struct GameView: View {
     @StateObject private var homeWorld291=PC602HomeWorldDriver291()
     @State private var campaign = CampaignStore556.load()
     @State private var showingHomeWorld291=false
+    @State private var showingBoreasTest05=false
     @State private var returnHomeWorldAfterCarbonis291=false
     // Native CARBONIS first mission runs an original source-driven state,
     // isolated from Boreas diagnostic scenes and unported later sectors.
@@ -117,6 +118,33 @@ struct GameView: View {
         } catch {
             return "NIE MOŻNA OTWORZYĆ ORBITY: "+String(describing:error)
         }
+    }
+
+    // Authenticated PC v556 Boreas visual model at its original sector-05
+    // slot. No sector unlock, checkpoint, reward or active mission is made.
+    private func enterBoreasTest05() {
+        guard sourceSector01==nil, !showingHomeWorld291,
+              AnimatedPlanetTestSlot556.sourceAssetsVerified else{return}
+        input.releaseHeldControls()
+        input.introPreview41=false
+        input.planetPreview=true
+        input.planetTestLevel=AnimatedPlanetTestSlot556.sector
+        input.sectorTraining=false
+        input.verifiedDamageLab=false
+        input.missionIntroSector=0
+        input.rendererError=nil
+        input.gameplayPaused=false
+        audio.stopForDiagnostic()
+        showingBoreasTest05=true
+        showMainMenu=false
+    }
+    private func returnFromBoreasTest05() {
+        input.releaseHeldControls()
+        input.gameplayPaused=true
+        showingBoreasTest05=false
+        reopenAtlasAfterCarbonis=true
+        showMainMenu=true
+        audio.returnToMenu()
     }
 
     private func enterOrbitMission291(_ level:Int) {
@@ -199,7 +227,8 @@ struct GameView: View {
                   entry:entry,campaign:restored,hasOriginalC279Assets:true,
                   difficulty:difficulty,seed:Int32.random(in:0...Int32.max),
                   currentLives:state.shop.lives,
-                  startingLives:SourceNewGame568.startingLives(difficulty:difficulty),
+                  startingLives:SourceNewGame568.startingLives(
+                      difficulty:difficulty,shipType:state.shipType),
                   shopProfile:state.shop)
         else{return false}
         if state.returnHome61 == true {
@@ -271,7 +300,8 @@ struct GameView: View {
             seed:Int32.random(in:0...Int32.max),
             currentLives:sourceShop.lives,
             startingLives:SourceNewGame568.startingLives(
-                difficulty:SourceNewGame568.selection().difficulty),
+                difficulty:SourceNewGame568.selection().difficulty,
+                shipType:H55SourceMechanics580.load().selectedShip),
             shopProfile:sourceShop)
         else { return }
         campaign=current
@@ -287,23 +317,47 @@ struct GameView: View {
     // Original W3 start action: preserve an active profile before reset.
     // Current iOS supports one actual CARBONIS ship. Source 2-player
     // gameplay and the 62-second story cinematic are NOT yet ported.
-    private func startNewGameFromW3(_ choice:SourceNewGameSelection568)->Bool {
-        // PC602 Intro41.StartCampaign: with PlanetHub50 -> EnterOrbit50(true).
-        // NewGame568 alone owns the transactional H11 backup/reset. Verify
-        // actual assets BEFORE making a new profile; never fabricate C279.
-        guard choice.players==1,
-              PC602HomeWorldDriver291.resourcesInstalled,
-              (try? PC602NewHome290.load()) != nil,
-              (try? PC602OrbitBelt51.load()) != nil,
-              PC602HomeFlight291.Equipment(craft:.vanguard) != nil
-        else{return false}
-        guard SourceNewGame568.create(choice) else{return false}
-        campaign=CampaignStore556.load()
-        do {
-            try homeWorld291.start(progress:campaign)
-        } catch {
-            return false
+    private func startNewGameFromW3(_ choice:SourceNewGameSelection568)->String? {
+        // PC609 ProgramW3Native315.NativeStartFresh342 and Campaign37:
+        // preserve old profile until ALL source assets and the original orbit
+        // session for the explicitly selected new ship have passed preflight.
+        guard sourceSector01==nil,choice.players==1 else {
+            return "TRWA INNA MISJA LUB NIEDOSTĘPNY TRYB ZAŁOGI"
         }
+        guard let craft=PC602HomeFlight291.Craft(rawValue:choice.shipType),
+              (0...2).contains(choice.shipType),
+              H55PlayerShip580.originalModelVerified(choice.shipType),
+              PC602HomeFlight291.Equipment(craft:craft) != nil else {
+            return "BRAK ORYGINALNEGO MODELU WYBRANEGO STATKU PC609"
+        }
+        guard Sector01CarbonisPreview568.isAvailable else {
+            return "BRAK ZWERYFIKOWANYCH ZASOBÓW CARBONIS 01 — PROFIL NIEZMIENIONY"
+        }
+        guard PC602HomeWorldDriver291.resourcesInstalled(
+                  forShip:choice.shipType) else {
+            return "BRAK ZASOBÓW H290 LUB WYBRANEGO STATKU — PROFIL NIEZMIENIONY"
+        }
+        // Use the same one canonical PC602 orbit constructor, but with
+        // the new campaign's initial ship and service profile. This MUST
+        // precede destructive profile reset: no split-brain previous craft.
+        var freshMechanics=H55SourceMechanics580.State()
+        freshMechanics.selectedShip=choice.shipType
+        let freshShop=Sector01Shop568.State(lives:SourceNewGame568.startingLives(
+            difficulty:choice.difficulty,shipType:choice.shipType))
+        do {
+            try homeWorld291.start(
+                progress:CampaignProgress556(),
+                mechanicsOverride:freshMechanics,
+                shopOverride:freshShop)
+        } catch {
+            return "NIE MOŻNA URUCHOMIĆ ORYGINALNEJ ORBITY H290: " +
+                   String(describing:error) + " — PROFIL NIEZMIENIONY"
+        }
+        guard SourceNewGame568.create(choice) else {
+            homeWorld291.stop()
+            return "NIE UDAŁO SIĘ ZABEZPIECZYĆ POPRZEDNIEGO PROFILU — BRAK ZMIAN"
+        }
+        campaign=CampaignStore556.load()
         sourceSector01=nil
         sourceSector01Setup=nil
         returnHomeWorldAfterCarbonis291=false
@@ -316,7 +370,7 @@ struct GameView: View {
         audio.enterOrbit602()
         showingHomeWorld291=true
         showMainMenu=false
-        return true
+        return nil
     }
     // Windows Program.cs:94 + UiW3NativeLayout315.DrawW3Splash323:
     // music preparation -> persistent press-Enter W3 splash -> HOME.
@@ -436,6 +490,10 @@ struct GameView: View {
                         loadManualSave61(slot)
                     },preparedWave:preparedWave)
                     }
+                } else if showingBoreasTest05 {
+                    AnimatedPlanetTestPage556(input:input,
+                                               onExit:returnFromBoreasTest05)
+                        .ignoresSafeArea()
                 } else if showingHomeWorld291 {
                     PC602HomeWorldPage291(
                         driver:homeWorld291,
@@ -468,7 +526,7 @@ struct GameView: View {
                         }
                     },inspectSector: { sector in
                         inspectSourceSector(sector)
-                    },openDiagnostic:{
+                    },openBoreasTest:enterBoreasTest05,openDiagnostic:{
                         input.releaseHeldControls()
                         input.gameplayPaused = false
                         reopenAtlasAfterCarbonis = false
@@ -773,6 +831,7 @@ struct CampaignAtlas556: View {
     let onSelect: (Int) -> Void
     let onInspect: (Int) -> Void
     let onEnterOrbit:()->String?
+    let onBoreasTest:()->Void
     @State private var orbitLaunchIssue=""
     private let columns = [GridItem(.adaptive(minimum:52,maximum:90),spacing:8)]
 
@@ -799,6 +858,25 @@ struct CampaignAtlas556: View {
                     .font(.system(size:11,weight:.semibold,design:.monospaced))
                     .foregroundStyle(.cyan)
                     .accessibilityIdentifier("campaign-selected-planet")
+                // Original Boreas is sector 05 on PC. Offer a separate
+                // authenticated visual test without selecting/unlocking it.
+                if AnimatedPlanetTestSlot556.sourceAssetsVerified {
+                    Button("BOREAS 05 · TEST ANIMOWANEJ PLANETY GLB") {
+                        onBoreasTest()
+                    }
+                    .font(.system(size:12,weight:.bold,design:.monospaced))
+                    .foregroundStyle(.black)
+                    .frame(maxWidth:.infinity,minHeight:46)
+                    .background(Color(red:0.39,green:0.75,blue:0.79))
+                    .accessibilityIdentifier("campaign-boreas05-animated-test")
+                    Text("TYMCZASOWY MODEL DO PÓŹNIEJSZEJ PODMIANY · NIE ODBLOKOWUJE MISJI 05")
+                        .font(.system(size:10,design:.monospaced))
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("BOREAS 05 · BRAK WERYFIKACJI ORYGINALNYCH DANYCH ANIMACJI")
+                        .font(.system(size:11,design:.monospaced))
+                        .foregroundStyle(.orange)
+                }
                 if progress.selectedSector == 1 {
                     VStack(alignment:.leading,spacing:5) {
                         Text("CARBONIS — ORYGINALNA PLANETA 3D / ŹRÓDŁOWA SIATKA")

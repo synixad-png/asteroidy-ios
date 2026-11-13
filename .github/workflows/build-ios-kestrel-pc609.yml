@@ -1,0 +1,161 @@
+# Complete PC609 iPhone/iPad Release IPA with the original v603 Kestrel importer.
+# KESTREL_PC609.kestrel is delivered separately for one-time H55 Files import.
+# Never reuse the earlier incomplete 44MB Debug packaging route.
+name: ASTEROIDY iOS PC609 - KESTREL full Release unsigned IPA
+on:
+  push:
+    branches: [feature/ios-kestrel-pc609]
+    paths:
+      - .github/workflows/build-ios-kestrel-pc609.yml
+      - ASTEROIDYiOS/SourceKestrel603.swift
+      - ASTEROIDYiOS/SourceHomeVanguard431.swift
+      - ASTEROIDYiOS/H55PlayerShip580.swift
+      - ASTEROIDYiOS/H55SourceMechanics580.swift
+      - ASTEROIDYiOS/H55WorkshopPanel580.swift
+      - ASTEROIDYiOS/H55ScenePage580.swift
+      - ASTEROIDYiOS/PC602HomeFlight291.swift
+      - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
+      - ASTEROIDYiOS/Sector01CarbonisPreview568.swift
+      - ASTEROIDYiOS/W3HomeShipPreview568.swift
+      - Tests/KestrelMesh603Tests.swift
+      - Tests/IOSKestrel603SourceContract.py
+      - ASTEROIDYiOS/PC602OrbitSave61.swift
+      - ASTEROIDYiOS/SourceNewGame568.swift
+      - Tests/PC602OrbitSave61Contract.py
+      - Tests/PC602O01SourceBaseline.py
+      - Tests/SourceNewGame568Tests.swift
+      - Tests/SourceNewGame568Contract.py
+      - ASTEROIDYiOS/W3MainMenu568.swift
+      - ASTEROIDYiOS/App.swift
+      - Tests/PC602HomeFlight291Tests.swift
+      - Tests/CarbonisCombat568Tests.swift
+      - Tests/SourceGPUProofWriter568Contract.py
+      - Tools/build_kestrel603_ios_pack.py
+  workflow_dispatch:
+concurrency:
+  group: kestrel-pc609-release-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  kestrel-complete-release:
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Stage exact complete v609 PC602 / CARBONIS / W3 / H55 assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          git rev-parse HEAD | tee reports/source-commit.txt
+          python3 Tools/verify_ios_inputs.py | tee reports/preflight.txt
+          python3 Tools/prepare_vanguard431_assets.py | tee reports/vanguard-staging.txt
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets | tee reports/vanguard-verified.txt
+          python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets | tee reports/player-ship.txt
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required | tee reports/w3-menu.txt
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets | tee reports/carbonis.txt
+          python3 Tools/stage_pc602_planetarium.py | tee reports/planetarium-source.txt
+          python3 Tests/HudPlanetariumIntegration600Contract.py | tee reports/planetarium-isolation.txt
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets | tee reports/home-source.txt
+          python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets | tee reports/820-asteroids.txt
+          python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin | tee reports/belt-tests.txt
+          python3 Tools/verify_original_audio568_assets.py | tee reports/audio-assets.txt
+          python3 Tools/materialize_pc586_original_resources.py --report reports/pc586-source.json
+      - name: Verify KESTREL 6031 format and iOS source integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tests/IOSKestrel603SourceContract.py | tee reports/kestrel-source-audit.txt
+          python3 Tests/SourceNewGame568Contract.py | tee reports/starting-lives-source-contract.txt
+          swiftc -O ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/pc609-ship-starting-lives
+          /tmp/pc609-ship-starting-lives | tee reports/starting-lives-nine-combinations.txt
+          python3 Tests/PC602OrbitSave61Contract.py | tee reports/save-slots-shiptype.txt
+          swiftc -O ASTEROIDYiOS/SourceVanguardMesh431.swift Tests/KestrelMesh603Tests.swift -o /tmp/kestrel603-mesh
+          /tmp/kestrel603-mesh | tee reports/kestrel-mesh-abi.txt
+          swiftc -O ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift Tests/PC608609MechanicsTests.swift -o /tmp/kestrel-shield-armor
+          /tmp/kestrel-shield-armor | tee reports/v608-v609-regression.txt
+          python3 Tests/PC602HomeScene291Contract.py | tee reports/home-scene-contract.txt
+          python3 Tests/PC602HomeWorldUI291Contract.py | tee reports/home-world-contract.txt
+          python3 Tests/PC602UnifiedHUDMenu291Contract.py | tee reports/unified-ui.txt
+          python3 Tests/IOSSourceCombatPause568Contract.py | tee reports/mission-pause.txt
+      - name: Compile physical iPhone and iPad ARM64 full Release application
+        shell: bash
+        run: |
+          set -euo pipefail
+          { xcodebuild -version; xcrun --sdk iphoneos --show-sdk-version; } | tee reports/xcode-version.txt
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/KestrelPC609Release" \
+            build > reports/xcodebuild-release.log 2>&1 || {
+              grep -n -A 8 -B 3 -E 'error:|BUILD FAILED|failed' reports/xcodebuild-release.log | tail -n 140 || true
+              tail -n 70 reports/xcodebuild-release.log
+              exit 1
+            }
+      - name: Package full Release IPA and enforce 95-file v609 resource gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/KestrelPC609Release/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" && test -f "$APP/Info.plist"
+          mkdir -p distribution/Payload
+          cp -R "$APP" distribution/Payload/
+          python3 Tools/materialize_pc586_original_resources.py --app "distribution/Payload/$(basename "$APP")" --report reports/pc586-in-ipa.json
+          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_PC609_KESTREL_RELEASE_UNSIGNED.ipa Payload)
+          python3 Tools/verify_ipa.py ASTEROIDY_iOS_PC609_KESTREL_RELEASE_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-structure.txt
+          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_PC609_KESTREL_RELEASE_UNSIGNED.ipa | tee reports/ipa-pc586-complete.txt
+          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_PC609_KESTREL_RELEASE_UNSIGNED.ipa | tee reports/ipa-planetarium.txt
+          python3 Tools/verify_bastion_full_ipa.py ASTEROIDY_iOS_PC609_KESTREL_RELEASE_UNSIGNED.ipa | tee reports/full-95-source-assets.txt
+          python3 - <<'PY' | tee reports/three-ships-source-audit.txt
+          from pathlib import Path
+          root=Path('ASTEROIDYiOS')
+          kestrel=(root/'SourceKestrel603.swift').read_text()
+          bastion=(root/'SourceBastion606.swift').read_text()
+          vanguard=(root/'SourceVanguardMesh431.swift').read_text()
+          assert 'expectedMagic:6031' in kestrel and 'expectedMagic:6061' in bastion
+          assert 'static let magic: Int = 4311' in vanguard
+          assert 'expectedGPUVertexCount=189_906' in kestrel
+          print('PASS 3 original playable ships: KESTREL 6031, VANGUARD 4311, BASTION 6061; separate Files import for KESTREL/BASTION')
+          PY
+          shasum -a 256 ASTEROIDY_iOS_PC609_KESTREL_RELEASE_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
+          stat -f '%z bytes' ASTEROIDY_iOS_PC609_KESTREL_RELEASE_UNSIGNED.ipa | tee reports/size.txt
+          echo 'KESTREL_PC609.kestrel is a separate original source-verified file for H55/FLOTA Files import. BASTION import remains unchanged. IPA unsigned.' | tee reports/model-import.txt
+      - name: Publish complete KESTREL Release unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-PC609-KESTREL-COMPLETE-RELEASE-UNSIGNED-IPA
+          path: |
+            ASTEROIDY_iOS_PC609_KESTREL_RELEASE_UNSIGNED.ipa
+            reports/SHA256SUMS.txt
+            reports/size.txt
+            reports/source-commit.txt
+            reports/kestrel-source-audit.txt
+            reports/kestrel-mesh-abi.txt
+            reports/v608-v609-regression.txt
+            reports/starting-lives-source-contract.txt
+            reports/starting-lives-nine-combinations.txt
+            reports/save-slots-shiptype.txt
+            reports/full-95-source-assets.txt
+            reports/three-ships-source-audit.txt
+            reports/model-import.txt
+            reports/ipa-structure.txt
+            reports/ipa-pc586-complete.txt
+            reports/ipa-planetarium.txt
+          retention-days: 14
+          if-no-files-found: error
+      - name: Preserve diagnostics if any build gate fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-PC609-KESTREL-RELEASE-DIAGNOSTICS
+          path: reports/
+          retention-days: 7
+          if-no-files-found: ignore
