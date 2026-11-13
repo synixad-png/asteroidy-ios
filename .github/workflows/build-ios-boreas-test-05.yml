@@ -6,7 +6,7 @@ on:
   push:
     branches: [feature/ios-boreas-test-05]
     paths:
-      - .github/workflows/build-ios-kestrel-pc609.yml
+      - .github/workflows/build-ios-boreas-test-05.yml
       - ASTEROIDYiOS/AnimatedPlanetTestSlot556.swift
       - ASTEROIDYiOS/AnimatedPlanetTestPage556.swift
       - ASTEROIDYiOS/App.swift
