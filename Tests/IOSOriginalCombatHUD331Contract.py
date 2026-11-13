@@ -128,8 +128,8 @@ expect_all(scene,(
     "session.useBomb()",
     "persistConsumables580()",
     ".accessibilityIdentifier(\"sector01-pause-button\")",
-    "Button(\"KONTYNUUJ\") {resumeMission568()}",
-    "Button(\"WYJDŹ DO MENU\") {exitMission568()}",
+    "onContinue:{resumeMission568()}",
+    "onExit:{exitMission568()}",
     "SourcePerformanceOverlay568()",
     "SourceCombatTouchZones568(",
     "onMove:{session.input(move:$0)}",
@@ -151,6 +151,13 @@ expect_all(scene,(
     "boostFrame.centerY",
     ".ignoresSafeArea()",
 ),"scene integration")
+# The common pause component owns the physical buttons for both H290 and
+# CARBONIS. Scene callbacks must still invoke the real gameplay handlers.
+expect_all(pauseSource,(
+    'action("KONTYNUUJ",primary:true,identifier:continueID,',
+    'perform:onContinue)',
+    'action("WYJDŹ DO MENU",identifier:exitID,perform:onExit)',
+), "shared pause actions")
 touch=(root/"ASTEROIDYiOS/SourceCombatTouchZones568.swift").read_text()
 expect_all(touch,(
     "HStack(spacing:0)",
