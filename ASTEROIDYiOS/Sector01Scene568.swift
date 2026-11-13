@@ -555,6 +555,5 @@ struct Sector01Scene568: View {
             session.paused=true
             session.release()
         }
-        .accessibilityIdentifier("sector01-real-source-scene")
     }
 }
