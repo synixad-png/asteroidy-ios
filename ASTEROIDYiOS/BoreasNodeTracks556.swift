@@ -55,14 +55,14 @@ struct BoreasNodeTracks556 {
         guard originalRadius.isFinite,originalRadius>0,
               originalCenter.x.isFinite,originalCenter.y.isFinite,
               originalCenter.z.isFinite else {throw SourceError.wrongHeader}
-        let decompressed:Data
-        do {
-            decompressed=try ((Data(data.dropFirst(40)) as NSData)
-                .decompressed(using:.zlib) as Data)
-        } catch {throw SourceError.invalidData}
-        guard decompressed.count==Int(word(20)) else {
-            throw SourceError.invalidData
-        }
+        // Source exporter uses Python zlib.compress (RFC1950 framing).
+        // Foundation NSData.decompressed(using:.zlib) rejects that stream on
+        // Apple (NSCocoaErrorDomain 5377); the same bug was found in PC609
+        // KESTREL/BASTION. Use the already-verified, bounded shared decoder
+        // without changing the original SHA-pinned ASNT animation channels.
+        guard let decompressed=SourcePC609Zlib.inflateRFC1950(
+            Data(data.dropFirst(40)),exactBytes:Int(word(20)))
+        else {throw SourceError.invalidData}
         var cursor=0
         func readWord() throws->UInt32 {
             guard cursor+4<=decompressed.count else {
