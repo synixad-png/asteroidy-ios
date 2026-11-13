@@ -8,6 +8,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/build-main-bastion-release-proof.yml'
+      - 'ASTEROIDYiOS/Assets/BASTION_PC609.bastion'
+      - 'Tools/verify_bastion_full_ipa.py'
   workflow_dispatch:
 concurrency:
   group: bastion-main-proof-${{ github.ref }}
@@ -29,8 +31,16 @@ jobs:
           set -euo pipefail
           VERIFIED_BASE=2d9dc98765824bfbe15a5f6dfb999c8f98d5d991
           git fetch --no-tags --depth=1 origin "$VERIFIED_BASE"
-          git diff --exit-code "$VERIFIED_BASE" HEAD -- . ':(exclude).github/workflows/**' ':(exclude)Reports/**'
-          echo "PASS: main full game source tree equals approved BASTION; only CI and reports excluded"
+          git diff --exit-code "$VERIFIED_BASE" HEAD -- . ':(exclude).github/workflows/**' ':(exclude)Reports/**' ':(exclude)ASTEROIDYiOS/Assets/BASTION_PC609.bastion' ':(exclude)Tools/verify_bastion_full_ipa.py'
+          python3 - <<'PY'
+          from pathlib import Path
+          from hashlib import sha256
+          p=Path("ASTEROIDYiOS/Assets/BASTION_PC609.bastion")
+          assert p.is_file() and p.stat().st_size==2472062
+          assert sha256(p.read_bytes()).hexdigest()=="d18d651aab74bebdb2215940c0774c8aa3f0aff9101c0b7122c336110b3f5e7c"
+          print("PASS: original Bastion 6061 pack embedded in source, SHA256 exact")
+          PY
+          echo "PASS: gameplay sources match approved BASTION; changes only CI, bundle asset and verifier"
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
@@ -114,6 +124,11 @@ jobs:
           assert (app/"Vanguard431Base.jpg").is_file()
           assert (app/"W3HomePlanet290Base.dat").is_file()
           assert (app/"W3HomePlanet293Glow.dat").is_file()
+          bastion=app/"BASTION_PC609.bastion"
+          assert bastion.is_file(), "BASTION missing from iOS app bundle"
+          assert bastion.stat().st_size==2472062, "BASTION bundle truncated"
+          assert hashlib.sha256(bastion.read_bytes()).hexdigest()=="d18d651aab74bebdb2215940c0774c8aa3f0aff9101c0b7122c336110b3f5e7c"
+          print("PASS: authentic Bastion permanently embedded in native .app; no Files import")
           print("PASS: real iPhone/iPad ARM64 Swift and Metal, source H290 bundle")
           print("NOT TESTED: native GPU draw, 820-asteroid belt, docking, complete active world")
           PY
@@ -134,7 +149,7 @@ jobs:
           python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-hud-verification.txt
           shasum -a 256 ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-ipa-sha256.txt
           echo "$GITHUB_SHA" > diagnostics/bastion-source-commit.txt
-          echo 'BASTION model must be imported once in H55/FLOTA from the separately verified BASTION_PC609.bastion file.' > diagnostics/bastion-import-readme.txt
+          echo 'BASTION_PC609.bastion is embedded in IPA and loaded automatically by Bundle.main; manual import not required.' > diagnostics/bastion-import-readme.txt
       - name: Publish BASTION unsigned iPhone/iPad test IPA
         uses: actions/upload-artifact@v4
         with:
