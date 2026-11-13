@@ -1106,9 +1106,9 @@ jobs:
           set -euo pipefail
           python3 -m py_compile Tools/run_v568_player_ship367_simulator_capture.py Tests/V568PlayerShip367GPUProofContract.py
           python3 Tests/V568PlayerShip367GPUProofContract.py
-  # from .github/workflows/build-ios-h55-fps-preview-ipa.yml (planetarium staging + glTF import lines)
+  # from .github/workflows/build-ios-h55-fps-preview-ipa.yml (planetarium staging + glTF import lines; needs CryptoKit, same macOS runner as the original)
   pc602-planetarium-gltf-import:
-    runs-on: ubuntu-24.04
+    runs-on: macos-15-intel
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
