@@ -8,6 +8,9 @@ import Foundation
 struct SourceNewGameSelection568: Equatable {
     var players:Int=1
     var difficulty:CombatBalance556.Difficulty = .normal
+    // PC609 Campaign37: retain the original ship chosen BEFORE Start().
+    // Values 3...5 await their authentic iOS playable models.
+    var shipType:Int=1
 }
 
 enum SourceNewGame568 {
@@ -254,18 +257,32 @@ enum SourceNewGame568 {
         defaults:UserDefaults = .standard,
         backupDirectory:URL? = nil
     )->Bool {
-        guard request.players==1 else {return false}
+        // Campaign37.StartingLives reads the chosen ShipType at Game.Start().
+        // Do not accidentally reset it to Vanguard during iOS fresh-profile
+        // initialization; only the upgrades/ownership/progress are reset.
+        guard request.players==1,(0...2).contains(request.shipType)
+        else{return false}
         guard let directory=archiveDirectory(backupDirectory),
               archiveActive(defaults:defaults,directory:directory)
         else{return false}
         let fresh=CampaignProgress556()
         CampaignStore556.save(fresh,defaults:defaults)
         Sector01Shop568.save(Sector01Shop568.State(
-            lives:startingLives(difficulty:request.difficulty)),defaults:defaults)
+            lives:startingLives(difficulty:request.difficulty,
+                                shipType:request.shipType)),defaults:defaults)
         // One transaction boundary for BOTH direct create() and the W3
         // menu: do not leave prior-game H11 ships, trophies or hull behind.
         H55Workshop580.resetVitals(defaults:defaults)
         H55SourceMechanics580.reset(defaults:defaults)
+        if request.shipType != 1 {
+            // The default Vanguard remains an implicit empty H55 record.
+            // A selected Kestrel/Bastion needs only its ID persisted; never
+            // transfer modules, trophies or ownership from the old campaign.
+            var selected=H55SourceMechanics580.State()
+            selected.selectedShip=request.shipType
+            guard H55SourceMechanics580.save(selected,defaults:defaults)
+            else{return false}
+        }
         SourceTarcza145.resetPersistentEnergy(defaults:defaults)
         defaults.set(request.difficulty.rawValue,forKey:difficultyKey)
         defaults.set(1,forKey:playersKey)
