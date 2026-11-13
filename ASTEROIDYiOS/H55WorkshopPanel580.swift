@@ -7,9 +7,12 @@ import UniformTypeIdentifiers
 /// exist. No fabricated balance, purchases, player ships or trophies.
 struct H55WorkshopPanel580:View {
     let onClose:()->Void
+    let onShipEquipped:()->Void
     @State private var tab:Int
-    init(initialTab:Int,onClose:@escaping ()->Void){
+    init(initialTab:Int,onClose:@escaping ()->Void,
+         onShipEquipped:@escaping ()->Void={}){
         self.onClose=onClose
+        self.onShipEquipped=onShipEquipped
         _tab=State(initialValue:max(0,min(5,initialTab)))
     }
     @State private var wallet=Sector01Shop568.load()
@@ -175,7 +178,10 @@ struct H55WorkshopPanel580:View {
                                             result == .changed
                                             ? "ZAKUPIONO "+H55Workshop580.ships[i]+" · CZEKAMY NA GLB"
                                             : shipMessage(result,i)
-                                        if result == .changed {persistSource()}
+                                        if result == .changed {
+                                            persistSource()
+                                            if modeled {onShipEquipped()}
+                                        }
                                     } : nil)
                             }
     }
