@@ -72,7 +72,7 @@ assert 'guard level==1,sourceSector01==nil' in app
 # of silently equipping Vanguard; reject ships without validated 3D data.
 assert 'choice.shipType==selected' not in app
 assert 'PC602HomeFlight291.Equipment(craft:craft)' in app
-assert 'forShip:choice.shipType) != nil' in app
+assert 'H55PlayerShip580.originalModelVerified(choice.shipType)' in app
 assert 'mechanicsOverride:freshMechanics' in app
 assert 'shopOverride:freshShop' in app
 print("PASS PC602: H290 options->W3, paused Carbonis01->W3, "
