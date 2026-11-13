@@ -187,6 +187,5 @@ struct MissionCinematic568:View {
             input.gameplayPaused=true
             input.releaseHeldControls()
         }
-        .accessibilityIdentifier("mission-intro41-cinematic-568")
     }
 }
