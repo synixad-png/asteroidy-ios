@@ -97,7 +97,7 @@ jobs:
       - name: Verify original Windows v568 NEW GAME and profile protection
         run: |
           set -euo pipefail
-          swiftc ASTEROIDYiOS/SourcePC609Zlib.swift ASTEROIDYiOS/SourceVanguardMesh431.swift ASTEROIDYiOS/SourceKestrel603.swift ASTEROIDYiOS/SourceBastion606.swift ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/source-newgame568
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/source-newgame568
           /tmp/source-newgame568
           python3 Tests/SourceNewGame568Contract.py
   expose-build-run:
