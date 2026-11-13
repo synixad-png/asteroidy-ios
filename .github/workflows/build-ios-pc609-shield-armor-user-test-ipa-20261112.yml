@@ -9,17 +9,17 @@
 # Push-trigger includes O04/O05 and the actual O09 save/continue code so that
 # test IPA never silently lags behind the pilot's corrected HUD source.
 # No iOS gameplay source is changed, no fake assets, no other IPA job.
-name: ASTEROIDY PC609 - H290 HUD + v608 reserves + v609 armor unsigned IPA
+name: ASTEROIDY PC609 - BASTION + H290 + shields and armor unsigned IPA
 
 on:
   push:
-    branches: [feature/ios-pc609-shield-armor-verified]
+    branches: [feature/ios-bastion-pc609]
     paths:
       - .github/workflows/build-ios-pc609-shield-armor-user-test-ipa-20261112.yml
   workflow_dispatch:
 
 concurrency:
-  group: pc609-h290-ipa-${{ github.ref }}
+  group: pc609-bastion-ipa-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   one-shot-test-ipa:
-    name: Build source-verified PC609 H290/v608/v609 ARM64 iPhone+iPad unsigned IPA
+    name: Build PC609 BASTION H290/v608/v609 ARM64 iPhone+iPad unsigned IPA
     runs-on: macos-15-intel
     timeout-minutes: 60
     steps:
@@ -69,6 +69,28 @@ jobs:
           /tmp/pc602-h290-hud-model-tests | tee reports/h290-hud-editor-tests.txt
           python3 Tools/verify_original_audio568_assets.py | tee reports/audio-assets.txt
           python3 Tools/materialize_pc586_original_resources.py --report reports/pc586-source.json
+      - name: Verify Bastion uses the same source mesh decoder and GPU path as Vanguard
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourceVanguardMesh431.swift Tests/BastionMesh606Tests.swift -o /tmp/bastion606-original
+          /tmp/bastion606-original | tee reports/bastion-model-contract.txt
+          python3 - <<'PY' | tee reports/bastion-source-audit.txt
+          from pathlib import Path
+          importer=Path('ASTEROIDYiOS/SourceBastion606.swift').read_text()
+          home=Path('ASTEROIDYiOS/SourceHomeVanguard431.swift').read_text()
+          hangar=Path('ASTEROIDYiOS/H55PlayerShip580.swift').read_text()
+          fleet=Path('ASTEROIDYiOS/H55WorkshopPanel580.swift').read_text()
+          assert 'd18d651aab74bebdb2215940c0774c8aa3f0aff9101c0b7122c336110b3f5e7c' in importer
+          assert 'expectedGPUVertexCount=164_379' in importer
+          assert 'SourceBakedShipMesh(' in importer and 'expectedMagic:6061' in importer
+          assert 'SourceBastion606.load()' in home and 'SourceBastion606.load()' in hangar
+          assert 'SourceBastion606.install(from:file)' in fleet
+          assert 'shipType==1 || shipType==2' in home
+          print('PASS PC609 BASTION: source SHA, common GPU decoder/renderers, H55 Files import')
+          print('MODEL: external original BASTION_PC609.bastion required for first use')
+          PY
+
       - name: Verify source behavior PC608 and PC609 before IPA packaging
         shell: bash
         run: |
@@ -140,13 +162,13 @@ jobs:
           cp -R "$APP" distribution/Payload/
           python3 Tools/materialize_pc586_original_resources.py \
             --app "distribution/Payload/$(basename "$APP")" --report reports/pc586-in-ipa.json
-          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa Payload)
-          python3 Tools/verify_ipa.py ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-structure.txt
-          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa | tee reports/ipa-pc586-complete.txt
-          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa | tee reports/ipa-planetarium-verified.txt
+          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_PC609_BASTION_TEST_UNSIGNED.ipa Payload)
+          python3 Tools/verify_ipa.py ASTEROIDY_iOS_PC609_BASTION_TEST_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-structure.txt
+          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_PC609_BASTION_TEST_UNSIGNED.ipa | tee reports/ipa-pc586-complete.txt
+          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_PC609_BASTION_TEST_UNSIGNED.ipa | tee reports/ipa-planetarium-verified.txt
           python3 - <<'PY' | tee reports/final-archive-check.txt
           import zipfile,hashlib
-          p='ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa'
+          p='ASTEROIDY_iOS_PC609_BASTION_TEST_UNSIGNED.ipa'
           with zipfile.ZipFile(p) as z:
               assert z.testzip() is None
               required=('PC602Home290HeightMap.bin','PC602OrbitBelt51.bin',
@@ -157,17 +179,19 @@ jobs:
               assert not any(x.endswith('/hangar_h55.glb') for x in z.namelist())
           print('PASS IPA CRC, original planet assets, original belt, Metal; large H55 GLB requires one-time Files import')
           PY
-          shasum -a 256 ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
-          stat -f '%z bytes' ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa | tee reports/size.txt
+          shasum -a 256 ASTEROIDY_iOS_PC609_BASTION_TEST_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
+          stat -f '%z bytes' ASTEROIDY_iOS_PC609_BASTION_TEST_UNSIGNED.ipa | tee reports/size.txt
       - name: Publish the user's actual unsigned test IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ASTEROIDY-PC609-OSLONY-PANCERZ-TEST-UNSIGNED-IPA
+          name: ASTEROIDY-PC609-BASTION-TEST-UNSIGNED-IPA
           path: |
-            ASTEROIDY_iOS_PC609_OSLONY_PANCERZ_TEST_UNSIGNED.ipa
+            ASTEROIDY_iOS_PC609_BASTION_TEST_UNSIGNED.ipa
             reports/v609-build-commit.txt
             reports/v609-parity.txt
             reports/v609-source-audit.txt
+            reports/bastion-model-contract.txt
+            reports/bastion-source-audit.txt
             reports/SHA256SUMS.txt
             reports/source-commit.txt
             reports/app-bundle-audit.txt
