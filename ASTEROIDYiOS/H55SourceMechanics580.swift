@@ -324,7 +324,10 @@ enum H55SourceMechanics580 {
     static let bastionAssetExtension="bastion"
     static var bastionAssetURL:URL? {
         if let bundle=Bundle.main.url(forResource:bastionAssetName,
-                                      withExtension:bastionAssetExtension) {
+                                      withExtension:bastionAssetExtension)
+            ?? Bundle.main.url(forResource:bastionAssetName,
+                               withExtension:bastionAssetExtension,
+                               subdirectory:"Assets") {
             return bundle
         }
         guard let support=FileManager.default.urls(
@@ -341,7 +344,10 @@ enum H55SourceMechanics580 {
     static let kestrelAssetExtension="kestrel"
     static var kestrelAssetURL:URL? {
         if let bundle=Bundle.main.url(forResource:kestrelAssetName,
-                                      withExtension:kestrelAssetExtension) {
+                                      withExtension:kestrelAssetExtension)
+            ?? Bundle.main.url(forResource:kestrelAssetName,
+                               withExtension:kestrelAssetExtension,
+                               subdirectory:"Assets") {
             return bundle
         }
         guard let support=FileManager.default.urls(
@@ -354,9 +360,12 @@ enum H55SourceMechanics580 {
 
     static func registeredModelName(forShip id:Int)->String? {
         switch id {
-        case 0:return kestrelAssetURL == nil ? nil : "SOURCE-PC603-KESTREL"
+        // A file's presence alone does not prove that SceneKit/Metal can
+        // use it. Original pack SHA, mesh ABI and JPEG are checked by the
+        // shared, cached source decoders before a ship can be equipped.
+        case 0:return SourceKestrel603.load() != nil ? "SOURCE-PC603-KESTREL" : nil
         case 1:return "SOURCE-C279-VANGUARD"
-        case 2:return bastionAssetURL == nil ? nil : "SOURCE-PC606-BASTION"
+        case 2:return SourceBastion606.load() != nil ? "SOURCE-PC606-BASTION" : nil
         default:return nil
         }
     }
