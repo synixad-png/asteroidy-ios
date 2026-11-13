@@ -1,7 +1,7 @@
 # Complete PC609 iPhone/iPad Release IPA with the original v603 Kestrel importer.
 # KESTREL_PC609.kestrel is delivered separately for one-time H55 Files import.
 # Never reuse the earlier incomplete 44MB Debug packaging route.
-name: ASTEROIDY iOS PC609 - BOREAS05 temporary animated planet full Release unsigned IPA
+name: ASTEROIDY iOS PC609 BOREAS05 all 97 original GLB channels full Release unsigned IPA
 on:
   push:
     branches: [feature/ios-boreas-test-05]
@@ -14,6 +14,11 @@ on:
       - ASTEROIDYiOS/MetalRenderer.swift
       - Tests/BoreasTestPlanet05Contract.py
       - Tests/IntroBoreasMorphSourceContract556.py
+      - ASTEROIDYiOS/BoreasNodeTracks556.swift
+      - Tools/export_boreas_node_tracks556.py
+      - Tests/BoreasNodeTracks556Tests.py
+      - ASTEROIDYiOS/AnimatedPlanetTestSlot556.swift
+      - ASTEROIDYiOS/AnimatedPlanetTestPage556.swift
       - ASTEROIDYiOS/SourceKestrel603.swift
       - ASTEROIDYiOS/SourceHomeVanguard431.swift
       - ASTEROIDYiOS/H55PlayerShip580.swift
@@ -72,6 +77,13 @@ jobs:
           python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin | tee reports/belt-tests.txt
           python3 Tools/verify_original_audio568_assets.py | tee reports/audio-assets.txt
           python3 Tools/materialize_pc586_original_resources.py --report reports/pc586-source.json
+      - name: Recreate all 96 original node clips from SHA256-verified PC568 GLB
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/export_boreas_node_tracks556.py --root . \
+            --destination ASTEROIDYiOS/Assets/Boreas556.asnt | tee reports/boreas-export-96-channels.txt
+          python3 Tests/BoreasNodeTracks556Tests.py | tee reports/boreas-96-channels-tests.txt
       - name: Verify KESTREL 6031 format and iOS source integration
         shell: bash
         run: |
@@ -118,18 +130,19 @@ jobs:
           mkdir -p distribution/Payload
           cp -R "$APP" distribution/Payload/
           python3 Tools/materialize_pc586_original_resources.py --app "distribution/Payload/$(basename "$APP")" --report reports/pc586-in-ipa.json
-          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_PC609_BOREAS05_TEST_RELEASE_UNSIGNED.ipa Payload)
-          python3 Tools/verify_ipa.py ASTEROIDY_iOS_PC609_BOREAS05_TEST_RELEASE_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-structure.txt
-          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_PC609_BOREAS05_TEST_RELEASE_UNSIGNED.ipa | tee reports/ipa-pc586-complete.txt
-          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_PC609_BOREAS05_TEST_RELEASE_UNSIGNED.ipa | tee reports/ipa-planetarium.txt
-          python3 Tools/verify_bastion_full_ipa.py ASTEROIDY_iOS_PC609_BOREAS05_TEST_RELEASE_UNSIGNED.ipa | tee reports/full-95-source-assets.txt
+          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa Payload)
+          python3 Tools/verify_ipa.py ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-structure.txt
+          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa | tee reports/ipa-pc586-complete.txt
+          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa | tee reports/ipa-planetarium.txt
+          python3 Tools/verify_bastion_full_ipa.py ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa | tee reports/full-95-source-assets.txt
           python3 - <<'PY' | tee reports/boreas-original-resources-in-ipa.txt
           import hashlib,zipfile
-          f='ASTEROIDY_iOS_PC609_BOREAS05_TEST_RELEASE_UNSIGNED.ipa'
+          f='ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa'
           expected={
             'Boreas556.as3d':'0a18d88a734906811fc6421d79d68a56a2ae4bd7dd7a622fc89c46a4cd5fbf9b',
             'Boreas556.asmo':'33c7bec0a53fe8a63e0c351658155ee74fc364cddef8ec261af15d6675a103a6',
             'BoreasMorphBinding556.json':'f5f099707a1e63582934dc2bd26155e739225db26f3d358fd4a100fff9e50593',
+            'Boreas556.asnt':'bdf22733cfe6a1314517537e2400019a97c3a83507b8f654fd1307dbf9809edc',
           }
           with zipfile.ZipFile(f) as z:
             assert z.testzip() is None
@@ -138,8 +151,8 @@ jobs:
               assert len(matched)==1,(file,matched)
               actual=hashlib.sha256(z.read(matched[0])).hexdigest()
               assert actual==digest,(file,actual)
-          print('PASS original PC v556 Boreas geometry, morph 5s loop and binding: SHA256 3/3')
-          print('NOT YET PORTED: original 48+48 GLB droplet/neck transform channels')
+          print('PASS original PC v609 Boreas geometry, morph and 96 glTF node channels: SHA256 4/4')
+          print('PASS 97 original glTF channels (1 weights + 48 translation + 48 scale), 5s source loop')
           PY
           python3 - <<'PY' | tee reports/three-ships-source-audit.txt
           from pathlib import Path
@@ -152,21 +165,23 @@ jobs:
           assert 'expectedGPUVertexCount=189_906' in kestrel
           print('PASS 3 original playable ships: KESTREL 6031, VANGUARD 4311, BASTION 6061; separate Files import for KESTREL/BASTION')
           PY
-          shasum -a 256 ASTEROIDY_iOS_PC609_BOREAS05_TEST_RELEASE_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
-          stat -f '%z bytes' ASTEROIDY_iOS_PC609_BOREAS05_TEST_RELEASE_UNSIGNED.ipa | tee reports/size.txt
+          shasum -a 256 ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
+          stat -f '%z bytes' ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa | tee reports/size.txt
           echo 'KESTREL_PC609.kestrel is a separate original source-verified file for H55/FLOTA Files import. BASTION import remains unchanged. IPA unsigned.' | tee reports/model-import.txt
-      - name: Publish complete KESTREL Release unsigned IPA
+      - name: Publish complete BOREAS05 97-channel unsigned Release IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ASTEROIDY-PC609-BOREAS05-ANIMATED-RELEASE-UNSIGNED-IPA
+          name: ASTEROIDY-PC609-BOREAS05-97CH-RELEASE-UNSIGNED-IPA
           path: |
-            ASTEROIDY_iOS_PC609_BOREAS05_TEST_RELEASE_UNSIGNED.ipa
+            ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa
             reports/SHA256SUMS.txt
             reports/size.txt
             reports/source-commit.txt
             reports/boreas-planet05-audit.txt
             reports/boreas-morph-loop-audit.txt
             reports/boreas-original-resources-in-ipa.txt
+            reports/boreas-export-96-channels.txt
+            reports/boreas-96-channels-tests.txt
             reports/kestrel-source-audit.txt
             reports/kestrel-mesh-abi.txt
             reports/v608-v609-regression.txt
@@ -185,7 +200,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ASTEROIDY-PC609-BOREAS05-RELEASE-DIAGNOSTICS
+          name: ASTEROIDY-PC609-BOREAS05-97CH-RELEASE-DIAGNOSTICS
           path: reports/
           retention-days: 7
           if-no-files-found: ignore
