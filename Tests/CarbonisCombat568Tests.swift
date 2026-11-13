@@ -627,8 +627,8 @@ import Foundation
               abs(bastionSim.shipCollisionMass-5)<0.0001 &&
               abs(bastionSim.shipContactRadius-12.096)<0.001,
               "PC609 Bastion 5.0 mass and 1.08x physical impact radius")
-        check(abs(bastionSim.flight.flight.configuration.cruiseSpeed-
-                  bastionStats.topSpeed*0.40)<0.0002,
+        check(abs(bastionSim.flight.flight.configuration.cruiseSpeed -
+                  bastionStats.topSpeed * 0.40)<0.0002,
               "Bastion source physical speed and engine upgrades")
         check(abs(bastionStats.fireRateScale-0.96)<0.0002,
               "Bastion source 0.96 shot interval multiplier")
