@@ -71,7 +71,8 @@ IOS_ANCHORS = {
     ),
     "PC602HomeWorldDriver291.swift": (
         "vanguardEquipment291(",
-        "craft:state.selectedShip==2 ? .bastion : .vanguard,",
+        "craft:state.selectedShip==0 ? .kestrel :",
+        "state.selectedShip==2 ? .bastion : .vanguard,",
         "engineLevel:state.engine",
         "thrusterRank:state.thruster",
         "stabilizerLevel:state.stabilizer",
