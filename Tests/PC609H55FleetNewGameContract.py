@@ -41,7 +41,7 @@ assert 'w3-new-selected-ship-lives' in ui
 # the fresh campaign; H290 preflights original chosen assets first.
 assert "choice.shipType==selected" not in app
 fresh=app.split("private func startNewGameFromW3",1)[1].split("// Windows Program.cs:",1)[0]
-assert "forShip:choice.shipType" in fresh
+assert "H55PlayerShip580.originalModelVerified(choice.shipType)" in fresh
 assert "forShip:choice.shipType)" in fresh
 assert "freshMechanics.selectedShip=choice.shipType" in fresh
 assert "mechanicsOverride:freshMechanics" in fresh
@@ -62,8 +62,8 @@ assert 'H55PlayerShip580.make()' in h55
 
 # Both new craft must be validated by their original SHA/mesh/JPEG decoder,
 # not merely by testing that a file has the expected name.
-assert "SourceKestrel603.load() != nil" in models
-assert "SourceBastion606.load() != nil" in models
+assert "SourceKestrel603.load() != nil" in read("H55PlayerShip580.swift")
+assert "SourceBastion606.load() != nil" in read("H55PlayerShip580.swift")
 for content in (kestrel,bastion):
     assert "verifiedBundleAsset" in content
     assert "try? decode(bytes)" in content
