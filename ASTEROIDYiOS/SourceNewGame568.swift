@@ -176,7 +176,7 @@ enum SourceNewGame568 {
               (1...26).contains(target),
               CampaignProgress556(mask:completedMask).unlocked(target),
               Sector01Shop568.validate(shop),vitals.valid,mechanics.valid,
-              mechanics.selectedShip==1,
+              (0...2).contains(mechanics.selectedShip),
               CombatBalance556.Difficulty(rawValue:difficultyRaw) != nil,
               (!archiveExisting || archiveDirectory(nil).map {
                    archiveActive(defaults:defaults,directory:$0)
@@ -231,7 +231,7 @@ enum SourceNewGame568 {
             guard let bytes=rawMechanics as? Data,
                   let state=try? JSONDecoder().decode(
                       H55SourceMechanics580.State.self,from:bytes),
-                  state.valid,state.selectedShip==1 else{return false}
+                  state.valid,(0...2).contains(state.selectedShip) else{return false}
         }
         return true
     }
