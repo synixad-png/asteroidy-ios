@@ -183,7 +183,8 @@ import simd
         // HubEquipShip369: reflect a newly equipped 6061 Bastion immediately
         // in the actual existing hangar. Do not replace on unsupported IDs.
         let equipped=H55SourceMechanics580.load().selectedShip
-        let expected=equipped==2 ? H55PlayerShip580.bastionNodeName :
+        let expected=equipped==0 ? H55PlayerShip580.kestrelNodeName :
+                     equipped==2 ? H55PlayerShip580.bastionNodeName :
                      equipped==1 ? H55PlayerShip580.nodeName : nil
         if let expected,playerShip?.name != expected,
            let replacement=H55PlayerShip580.make() {
@@ -765,11 +766,13 @@ import simd
         if let craft=H55PlayerShip580.make() {
             realScene.rootNode.addChildNode(craft)
             playerShip=craft
-            h13MaterialReport += craft.name==H55PlayerShip580.bastionNodeName
+            h13MaterialReport += craft.name==H55PlayerShip580.kestrelNodeName
+                ? "\nSTATEK: ORYGINALNY KESTREL603 / MESH I JPEG SHA256 OK"
+                : craft.name==H55PlayerShip580.bastionNodeName
                 ? "\nSTATEK: ORYGINALNY BASTION606 / MESH I JPEG SHA256 OK"
                 : "\nSTATEK: ORYGINALNY VANGUARD431 / MESH I JPEG SHA256 OK"
         } else {
-            h13MaterialReport += "\nSTATEK: BRAK ZWERYFIKOWANEGO ORYGINALNEGO VANGUARD431 (BEZ ZAMIENNIKA)"
+            h13MaterialReport += "\nSTATEK: BRAK ZWERYFIKOWANEGO MODELU WYBRANEGO STATKU (BEZ ZAMIENNIKA)"
         }
         H55LoadDiagnostics580.mark("11_MATERIALY_GOTOWE_ATTACH_KONIEC")
         scene=realScene
