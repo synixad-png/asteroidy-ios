@@ -110,7 +110,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          swiftc -O ASTEROIDYiOS/SourcePC609Zlib.swift ASTEROIDYiOS/SourceVanguardMesh431.swift ASTEROIDYiOS/SourceKestrel603.swift ASTEROIDYiOS/SourceBastion606.swift Tests/OriginalPC609PackDecoderTests.swift -o /tmp/pc609-actual-packs
+          swiftc -Onone ASTEROIDYiOS/SourcePC609Zlib.swift ASTEROIDYiOS/SourceVanguardMesh431.swift ASTEROIDYiOS/SourceKestrel603.swift ASTEROIDYiOS/SourceBastion606.swift Tests/OriginalPC609PackDecoderTests.swift -o /tmp/pc609-actual-packs
           /tmp/pc609-actual-packs | tee reports/original-packs-real-decoding.txt
       - name: Verify KESTREL 6031 format and iOS source integration
         shell: bash
