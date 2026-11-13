@@ -84,7 +84,7 @@ enum SourceKestrel603 {
         try FileManager.default.createDirectory(
             at:support,withIntermediateDirectories:true)
         let target=support.appendingPathComponent(
-            H55SourceMechanics580.kestrelAssetName+"."+
+            H55SourceMechanics580.kestrelAssetName + "." +
             H55SourceMechanics580.kestrelAssetExtension)
         try bytes.write(to:target,options:.atomic)
     }
