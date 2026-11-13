@@ -5,9 +5,11 @@ name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, feature/ios-bastion-pc609]
     paths:
       - '.github/workflows/build-ios.yml'
+      - 'Tests/IOSOriginalCombatHUD331Contract.py'
+      - 'ASTEROIDYiOS/SourceBastion606.swift'
       - 'ASTEROIDYiOS/W3StartupSplash568.swift'
       - 'ASTEROIDYiOS/W3AdaptiveViewport568.swift'
       - 'ASTEROIDYiOS/W3SafeAreaReader568.swift'
@@ -91,7 +93,7 @@ jobs:
           /tmp/source-newgame568
           python3 Tests/SourceNewGame568Contract.py
   expose-build-run:
-    if: ${{ github.event.repository.private == false }}
+    if: ${{ github.event.repository.private == false && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
