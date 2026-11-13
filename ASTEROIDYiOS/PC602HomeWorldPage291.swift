@@ -903,6 +903,5 @@ struct PC602HomeWorldPage291:View {
             .padding(.trailing,trailing)
             .padding(.bottom,bottom)
         }
-        .accessibilityIdentifier("pc602-orbit-live-touch-hud")
     }
 }
