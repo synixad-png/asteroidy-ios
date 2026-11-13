@@ -39,7 +39,7 @@ import Foundation
                      vitals.armor==25 && survival.lives==3)
         survival.advance(dt:1)
         precondition(collide() == .ignored)
-        survival.advance(dt:0.2)
+        survival.advance(dt:0.21) // Allow for Float32 rounding after 1.2 s
         precondition(collide() == .talentAbsorbed)
         precondition(vitals.armor==0 && vitals.hull==59)
         precondition(survival.shieldCharges==1 && survival.lives==3)
