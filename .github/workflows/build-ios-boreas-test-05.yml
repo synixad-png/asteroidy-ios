@@ -4,10 +4,19 @@
 name: ASTEROIDY iOS PC609 BOREAS05 all 97 original GLB channels full Release unsigned IPA
 on:
   push:
-    branches: [feature/ios-boreas-test-05]
+    branches: [feature/ios-boreas-test-05, feature/ios-pc609-h55-newgame-repairs]
     paths:
       - .github/workflows/build-ios-boreas-test-05.yml
       - Tools/verify_embedded_pc609_assets.py
+      - Tests/PC609H55FleetNewGameContract.py
+      - ASTEROIDYiOS/H55SourceMechanics580.swift
+      - ASTEROIDYiOS/H55ScenePage580.swift
+      - ASTEROIDYiOS/PC602HomeWorldPage291.swift
+      - ASTEROIDYiOS/PC602HomeWorldDriver291.swift
+      - ASTEROIDYiOS/PC602HomeScene291.swift
+      - ASTEROIDYiOS/SourceBastion606.swift
+      - ASTEROIDYiOS/SourceNewGame568.swift
+      - Tests/SourceNewGame568Contract.py
       - 'ASTEROIDYiOS/Assets/KESTREL_PC609.kestrel'
       - 'ASTEROIDYiOS/Assets/BASTION_PC609.bastion'
       - ASTEROIDYiOS/AnimatedPlanetTestSlot556.swift
@@ -100,6 +109,7 @@ jobs:
           python3 Tests/IntroBoreasMorphSourceContract556.py | tee reports/boreas-morph-loop-audit.txt
           python3 Tests/IOSKestrel603SourceContract.py | tee reports/kestrel-source-audit.txt
           python3 Tests/SourceNewGame568Contract.py | tee reports/starting-lives-source-contract.txt
+          python3 Tests/PC609H55FleetNewGameContract.py | tee reports/h55-fleet-newgame-regression.txt
           swiftc -O ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/pc609-ship-starting-lives
           /tmp/pc609-ship-starting-lives | tee reports/starting-lives-nine-combinations.txt
           python3 Tests/PC602OrbitSave61Contract.py | tee reports/save-slots-shiptype.txt
@@ -197,6 +207,7 @@ jobs:
             reports/kestrel-mesh-abi.txt
             reports/v608-v609-regression.txt
             reports/starting-lives-source-contract.txt
+            reports/h55-fleet-newgame-regression.txt
             reports/starting-lives-nine-combinations.txt
             reports/save-slots-shiptype.txt
             reports/full-95-source-assets.txt
