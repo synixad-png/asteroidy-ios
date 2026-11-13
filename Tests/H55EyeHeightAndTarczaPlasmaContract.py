@@ -13,7 +13,8 @@ settings=(ios/"CarbonisVisualSettingsPanel568.swift").read_text()
 shield=(ios/"SourceShieldShell145.swift").read_text()
 metal=(ios/"SourceShieldShell145.metal").read_text()
 renderer=(ios/"Sector01CarbonisPreview568.swift").read_text()
-ability=(ios/"SourcePickupAbilities586.swift").read_text()
+# SourceTarcza145 moved unchanged into CombatTarcza145.swift (commit 78b5f6a).
+ability=(ios/"SourcePickupAbilities586.swift").read_text()+(ios/"CombatTarcza145.swift").read_text()
 combat=(ios/"CarbonisCombat568.swift").read_text()
 
 # Original PC HubWalk375: eye 1.80m, bodyRadius .34, bodyHeight 2.
@@ -47,9 +48,12 @@ for source in ('static let maximum:Float = 100','static let initial:Float = 60',
                'static let impactCost:Float = 35',
                'flash=0.37'):
     assert source in ability,source
-assert 'tarcza145.step(dt:dt,held:shieldHeld,playing:true)' in combat
-assert 'if tarcza145.absorb(invincible:&invincible) {return}' in combat
-assert 'let parsed=try SourceVanguardMesh431(' in renderer
+# PC608 full-bar reserves (commit a869566) pass the reserve count.
+assert 'tarcza145.step(dt:dt,held:shieldHeld,playing:true,\n                       reserve:&shieldCharges)' in combat
+assert 'if tarcza145.absorb(invincible:&invincible,\n                            reserve:&shieldCharges) {return}' in combat
+# Commit 623a876: the mission loads the equipped ship (KESTREL, VANGUARD or
+# BASTION) into one parsed mesh; the shield shell still uses that same mesh.
+assert 'let parsed:SourceBakedShipMesh' in renderer
 assert 'shieldShell145=try SourceShieldShell145(' in renderer
 assert 'sourceMesh:parsed.vertices' in renderer
 assert 'if session.game.tarcza145.active,' in renderer

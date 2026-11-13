@@ -23,7 +23,12 @@ for key in ("vertexCount","gpuCommandBufferCompleted","sourceGPU_SHA256",
 app=(root/"ASTEROIDYiOS/App.swift").read_text()
 renderer=(root/"ASTEROIDYiOS/MetalRenderer.swift").read_text()
 capture=(root/"Tools/run_v568_player_ship367_simulator_capture.py").read_text()
-assert app.count('ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"]')==2
+# The flag only gates diagnostics: it enables the Ship367 preview, turns
+# off Intro41, and (commit 0b70633) keeps the W3 menu from opening.
+assert app.count('ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"]')==3
+assert 'sourceShip367Preview =\n        ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] == "1"' in app
+assert 'introPreview41 =\n        ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] != "1"' in app
+assert 'ProcessInfo.processInfo.environment["ASTEROIDY_RENDER_VERIFY"] != "1" &&\n        ProcessInfo.processInfo.environment["ASTEROIDY_SHIP367_VERIFY"] != "1"' in app
 assert "sourceShip367DrawProofRequested" in renderer
 assert "sourceShip367DrawProofScheduled" in renderer
 assert '"ASTEROIDY_PlayerShip367_RenderProof.json"' in renderer

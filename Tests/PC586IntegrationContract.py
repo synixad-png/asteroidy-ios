@@ -37,19 +37,29 @@ abilities=read("ASTEROIDYiOS/SourcePickupAbilities586.swift")
 session=read("ASTEROIDYiOS/CarbonisSession568.swift")
 touch=read("ASTEROIDYiOS/Sector01Scene568.swift")
 flight=read("ASTEROIDYiOS/Sphere67.swift")
+# PC145 shield values moved unchanged into the single shared owner
+# CombatTarcza145.swift (commit 78b5f6a). PC608 replaced the old
+# "+20 energy" cell with "+1 full-bar reserve" (commit 695e074);
+# CombatTarcza145Tests.swift and PC608609MechanicsTests.swift cover it.
+tarcza=read("ASTEROIDYiOS/CombatTarcza145.swift")
 for rule in ("drainPerSecond:Float = 12","impactCost:Float = 35",
-             "refill:Float = 20","var energy:Float = initial",
-             "remaining=0.9","charges=min(3,charges+1)",
+             "var energy:Float = initial",
+             "mutating func collectCell(reserve:inout Int)->Bool"):
+    assert rule in tarcza, "Missing PC145/PC608 shield logic: "+rule
+for rule in ("remaining=0.9","charges=min(3,charges+1)",
              "remaining=max(0,remaining-dt)","firstRockContact",
              "firstShooterContact","rockSize>=3 ? 0.20",
              "untilBoost=5+random.integer(5)"):
     assert rule in abilities, "Missing PC145/PC71 logic: "+rule
-for call in ("tarcza145.step(","tarcza145.absorb(","tarcza145.collectCell()",
+for call in ("tarcza145.step(","tarcza145.absorb(","tarcza145.collectCell(",
              "boost71.collect()","boost71.activate(","boost71.advance(",
              "applyBoostRam71(from:previousShip)","rocks[i].health-=8",
              "shooters[i].core.hp-=6","tryDropLegacyPickup586("):
     assert call in game, "Missing real simulation path: "+call
-assert game.index("guardianCharges>0") < game.index("tarcza145.absorb(") < game.index("shieldCharges>0")
+# Guardian intercepts before the shield. PC608 (commit a869566): no passive
+# reserve absorption any more; reserves are spent only inside Tarcza145.
+assert game.index("guardianCharges>0") < game.index("tarcza145.absorb(")
+assert "shieldCharges>0" not in game
 assert "boostMultiplier:boosting ? 2.6 : nil" in game
 assert "boostMultiplier:Float?=nil" in flight
 assert "boostCharges=game.boost71.charges" in session
