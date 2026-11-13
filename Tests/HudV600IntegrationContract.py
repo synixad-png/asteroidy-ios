@@ -63,7 +63,12 @@ assert "case 4: interfacePage600" in settingsUI
 assert "HudMotionSettingsPanel600" in settingsUI
 assert 'Button("EDYTUJ UKŁAD HUD (46 ELEMENTÓW)")' in settingsUI
 assert "onEditHud:(()->Void)?" in settingsUI
-assert 'Button("OPCJE / USTAWIENIA")' in scene
+# Settings are opened through the shared H290/CARBONIS pause menu.
+# Verify the real routing rather than a removed duplicate scene button.
+pause = (root / "ASTEROIDYiOS/SourcePauseMenu568.swift").read_text()
+assert 'SourcePauseMenu568(' in scene
+assert 'onSettings:{showingMissionSettings568=true}' in scene
+assert 'action("USTAWIENIA",identifier:settingsID,perform:onSettings)' in pause
 assert "onEditHud:{" in scene
 assert "showingMissionSettings568=true" in scene
 assert "missionSettingsScreen568(compact:compact)" in scene
