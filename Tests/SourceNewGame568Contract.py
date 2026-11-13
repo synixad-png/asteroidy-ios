@@ -37,7 +37,7 @@ assert 'newShipType568' in ui and 'shipType:newShipType568' in ui
 assert 'shipType:shipType' in ui
 assert '!playable' in ui
 assert 'choice.shipType==selected' not in app
-assert 'forShip:choice.shipType) != nil' in app
+assert 'H55PlayerShip580.originalModelVerified(choice.shipType)' in app
 assert 'resourcesInstalled(' in app and 'forShip:choice.shipType)' in app
 assert 'mechanicsOverride:freshMechanics' in app and 'shopOverride:freshShop' in app
 assert 'shipType:state.shipType' in app
