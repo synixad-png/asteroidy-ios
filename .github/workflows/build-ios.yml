@@ -5,7 +5,7 @@ name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
 on:
   workflow_dispatch:
   push:
-    branches: [main, feature/ios-bastion-pc609]
+    branches: [main]
     paths:
       - '.github/workflows/build-ios.yml'
       - 'Tests/IOSOriginalCombatHUD331Contract.py'

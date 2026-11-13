@@ -3,16 +3,6 @@
 name: PC602 H290 / PC609 three ships - real iPad Simulator regression (NO IPA)
 
 on:
-  push:
-    branches: [feature/ios-pc602-newhome-world-source, feature/ios-pc609-regression-models-orbit]
-    paths:
-      - '.github/workflows/verify-pc602-home-simulator291.yml'
-      - 'W3MenuUITests/PC602HomeOrbitUITests.swift'
-      - 'W3MenuUITests/PC609RuntimeUITests.swift'
-      - 'ASTEROIDYiOS/PC602HomeWorldPage291.swift'
-      - 'ASTEROIDYiOS/PC602OrbitHUDEditor291.swift'
-      - 'ASTEROIDYiOS/PC602OrbitHUDLayout291.swift'
-      - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
   workflow_dispatch:
 
 concurrency:

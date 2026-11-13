@@ -1,16 +1,6 @@
 name: PC602 original 820 asteroid belt - source generator verification
 
 on:
-  push:
-    branches: [feature/ios-pc602-newhome-world-source]
-    paths:
-      - .github/workflows/verify-pc602-belt-source.yml
-      - Tools/PC602OrbitBelt51.cs
-      - Tools/stage_pc602_orbit_belt51.py
-      - Tests/PC602OrbitBelt51Tests.py
-      - Tests/PC602OrbitBelt51Tests.swift
-      - ASTEROIDYiOS/PC602OrbitBelt51.swift
-      - Tools/stage_pc602_newhome290.py
   pull_request:
     paths:
       - .github/workflows/verify-pc602-belt-source.yml
