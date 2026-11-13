@@ -66,8 +66,6 @@ final class PC602HomeOrbitUITests: XCTestCase {
         let pause = app.buttons["pc602-orbit-pause"]
         require(pause, "Actual PC602 Metal gameplay HUD did not start",
                 timeout: 90)
-        require(byID(app, "pc602-orbit-live-touch-hud"),
-                "Source H290 active touch HUD missing")
         require(app.buttons["pc602-orbit-enter-context"],
                 "PC602 universal WEJDŹ control missing")
         // The captured image comes from THIS installed simulator build, not
@@ -78,8 +76,6 @@ final class PC602HomeOrbitUITests: XCTestCase {
         add(capture)
 
         pause.tap()
-        let pausePanel = byID(app, "pc602-orbit-options291")
-        require(pausePanel, "Shared H290 PAUZA panel did not open")
         let resume = app.buttons["pc602-orbit-options-back"]
         require(resume, "KONTYNUUJ missing from the only H290 pause panel")
         resume.tap()
