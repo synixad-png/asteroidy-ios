@@ -47,7 +47,7 @@ def parse(blob):
         cursor+=8
         if cursor+length>len(blob):raise ValueError('glTF chunk out of range')
         if typ==b'JSON':json_data=json.loads(blob[cursor:cursor+length])
-        elif typ==b'BIN\\x00':binary=memoryview(blob)[cursor:cursor+length]
+        elif typ==b'BIN\x00':binary=memoryview(blob)[cursor:cursor+length]
         cursor+=length
     if cursor!=len(blob) or json_data is None or binary is None:
         raise ValueError('Missing glTF JSON/BIN')
