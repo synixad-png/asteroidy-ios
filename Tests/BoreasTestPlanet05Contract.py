@@ -24,6 +24,8 @@ for source in ("ASTEROIDYiOS/Assets/Boreas556.as3d",
 assert '"BOREAS / LODOWCE"' in catalog
 assert 'static let sector=5' in slot
 assert 'static let duration:Double=5' in slot
+assert 'static let nodeTracksName="Boreas556"' in slot
+assert 'bdf22733cfe6a1314517537e2400019a97c3a83507b8f654fd1307dbf9809edc' in slot
 for sha in ("0a18d88a734906811fc6421d79d68a56a2ae4bd7dd7a622fc89c46a4cd5fbf9b",
             "33c7bec0a53fe8a63e0c351658155ee74fc364cddef8ec261af15d6675a103a6",
             "f5f099707a1e63582934dc2bd26155e739225db26f3d358fd4a100fff9e50593"):
@@ -33,6 +35,14 @@ assert 'AnimatedPlanetTestSlot556.meshName' in renderer
 assert 'AnimatedPlanetTestSlot556.animationName' in renderer
 assert 'AnimatedPlanetTestSlot556.bindingName' in renderer
 assert 'AnimatedPlanetTestSlot556.sourceAssetsVerified' in renderer
+assert 'BoreasNodeTracks556' in renderer
+assert 'planetNodeTracks.updateVertices(seconds:seconds,' in renderer
+assert 'let nodeBytes = nodes.count * strideBytes' in renderer
+assert 'p.advanced(by:nodeStartByte),nodeBytes)' in renderer
+assert 'planetNodeTracks=try BoreasNodeTracks556(' in renderer
+nodeSource=read("ASTEROIDYiOS/BoreasNodeTracks556.swift")
+assert '48 translation and 48 scale tracks' in nodeSource
+assert 'abs(keys.last!.time-5)' in nodeSource
 assert 'AnimatedPlanetTestSlot556.sector,9,17,25' in renderer
 assert 'planetAnimator.updateVertices(seconds: seconds, into: &planetMorphScratch)' in renderer
 assert 'planetBufferSlots.reserveWrite()' in renderer
@@ -60,4 +70,4 @@ assert 'sourceSector01==nil, !showingHomeWorld291' in preview
 assert 'sourceAssetsVerified else{return}' in preview
 print("PASS: authenticated Boreas sector-05 morph test, 5s loop, 3-buffer GPU")
 print("PASS: W3 atlas entry, no mission unlock, progress, reward or save changes")
-print("LIMIT: original GLB node translation/scale (96 channels) not yet in the ASMO v1 bundle")
+print("PASS: original PC v609 GLB node translation and scale clips, 96/96 channels")
