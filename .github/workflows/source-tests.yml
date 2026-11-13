@@ -1,0 +1,1121 @@
+# Source regression tests for features already merged into main.
+# Jobs marked 'from <file>' are copied unchanged from that deleted workflow (only the job id changed).
+# Those workflows only started on feature branches that are merged now, so main never ran them.
+# The last three jobs keep tests whose only other workflows were deleted IPA or one-shot runs;
+# each command is copied exactly from the workflow named in its comment.
+name: ASTEROIDY iOS - source regression tests (merged features)
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: source-tests-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  # from .github/workflows/h05-parity-check.yml
+  h05-parity-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check source H02-H05 implementation
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Entry580.swift Tests/H55Entry580Tests.swift -o /tmp/h05-spawn
+          /tmp/h05-spawn
+      - name: Export exact H05/H02-H04 source for real GLB differential
+        uses: actions/upload-artifact@v4
+        with:
+          name: H05-GLB-ENTRY-SOURCE-EVIDENCE
+          path: |
+            ASTEROIDYiOS/H55CollisionGeometry580.swift
+            ASTEROIDYiOS/H55SpatialSupport580.swift
+            ASTEROIDYiOS/H55TriangleBody580.swift
+            ASTEROIDYiOS/H55Entry580.swift
+            Tests/H55Entry580Tests.swift
+          retention-days: 1
+          if-no-files-found: error
+  # from .github/workflows/h07-parity-check.yml
+  h07-parity-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: PC v393/v544 controller, actual GLB-format channels, H06 player and NPC collision
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O \
+            ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55Sweep401580.swift \
+            ASTEROIDYiOS/H55Walk580.swift \
+            ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            ASTEROIDYiOS/H55Airlocks580.swift \
+            Tests/H55Airlocks580Tests.swift -o /tmp/h07-parity
+          /tmp/h07-parity
+      - name: Verify actual GLB test can compile and H07 SceneKit source parses
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/H55Airlocks580.swift \
+            Tests/H55AirlocksRealGLB580Tests.swift -o /tmp/h07-real-glb
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55Sweep401580.swift \
+            ASTEROIDYiOS/H55Walk580.swift \
+            ASTEROIDYiOS/H55Entry580.swift \
+            ASTEROIDYiOS/H55Airlocks580.swift \
+            Tests/H55AirlockRealGLBIntegration580Tests.swift \
+            -o /tmp/h07-real-glb-traversal
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+      - name: Make exact H07 source available for offline real 126MB GLB check
+        uses: actions/upload-artifact@v4
+        with:
+          name: H07-SOURCE-TO-REAL-GLB-DIFFERENTIAL
+          path: |
+            ASTEROIDYiOS/H55Airlocks580.swift
+            ASTEROIDYiOS/H55CollisionGeometry580.swift
+            ASTEROIDYiOS/H55SpatialSupport580.swift
+            ASTEROIDYiOS/H55TriangleBody580.swift
+            ASTEROIDYiOS/H55Sweep401580.swift
+            ASTEROIDYiOS/H55Walk580.swift
+            ASTEROIDYiOS/H55NpcDetour580.swift
+            ASTEROIDYiOS/H55Mechanic580.swift
+            ASTEROIDYiOS/H55Entry580.swift
+            Tests/H55Airlocks580Tests.swift
+            Tests/H55AirlocksRealGLB580Tests.swift
+            Tests/H55AirlockRealGLBIntegration580Tests.swift
+          if-no-files-found: error
+          retention-days: 2
+  # from .github/workflows/h08-npc-route.yml
+  h08-npc-route:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile real H08 NPC with original H02-H07 physics and authenticated-GLB E2E harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O \
+            ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55NpcSurface580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            ASTEROIDYiOS/H55Airlocks580.swift \
+            Tests/H55NpcRealRoute580Tests.swift -o /tmp/h08-original-glb-e2e
+          swiftc -O \
+            ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            Tests/H55Mechanic580Tests.swift -o /tmp/h08-source-physics
+          /tmp/h08-source-physics
+          python3 - <<'PY'
+          from pathlib import Path
+          source=Path("ASTEROIDYiOS/H55NpcDetour580.swift").read_text()
+          assert 'let legEnd=goalIndex<=workshopIndex ? workshopIndex-1 : routeX.count-1' in source
+          assert 'let limit=min(legEnd,goalIndex+3)' in source
+          assert 'NpcWorkshopIndex530-1' in source, 'original PC regression explicitly documented'
+          print("PASS: H08 return leg A* verified against source PC580 deadlock")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: H08-CURRENT-REAL-SOURCE-SNAPSHOT
+          path: |
+            ASTEROIDYiOS/H55Mechanic580.swift
+            ASTEROIDYiOS/H55NpcSurface580.swift
+            ASTEROIDYiOS/H55NpcDetour580.swift
+            ASTEROIDYiOS/H55Airlocks580.swift
+            ASTEROIDYiOS/H55CollisionGeometry580.swift
+            ASTEROIDYiOS/H55SpatialSupport580.swift
+            ASTEROIDYiOS/H55TriangleBody580.swift
+            ASTEROIDYiOS/H55Entry580.swift
+            Tests/H55Mechanic580Tests.swift
+            Tests/H55NpcRealRoute580Tests.swift
+          if-no-files-found: error
+          retention-days: 2
+  # from .github/workflows/h08-parity-check.yml
+  h08-parity-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: NPC v525-v544 route geometry and fail-closed source tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            ASTEROIDYiOS/H55NpcSurface580.swift \
+            ASTEROIDYiOS/H55Airlocks580.swift \
+            Tests/H55H08SourceTests.swift -o /tmp/h08-source
+          /tmp/h08-source
+          # Verify existing H08 precursor and H07 door-regression unchanged.
+          swiftc ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            Tests/H55Mechanic580Tests.swift -o /tmp/h08-previous-npc
+          /tmp/h08-previous-npc
+      - name: Compile entire 126MB original GLB patrol integration harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            ASTEROIDYiOS/H55NpcSurface580.swift \
+            ASTEROIDYiOS/H55Airlocks580.swift \
+            Tests/H55H08PatrolRealGLBTests.swift -o /tmp/h08-real-glb
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            ASTEROIDYiOS/H55NpcSurface580.swift \
+            ASTEROIDYiOS/H55Airlocks580.swift \
+            Tests/H55NpcRealRoute580Tests.swift -o /tmp/h08-real-glb-two-leg-e2e
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          python3 - <<'PY'
+          from pathlib import Path
+          scene=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          route=Path('ASTEROIDYiOS/H55NpcSurface580.swift').read_text()
+          assert 'let npcSurface=try H55NpcSurface580.prepare(collision:physical)' in scene
+          assert scene.index('H55NpcSurface580.prepare(collision:physical)') < scene.index('GLTFAsset.load(with:url')
+          assert 'groundAt:{x,z in npcSurface.ground(x:x,z:z)}' in scene
+          assert 'root.position=SCNVector3(mechanic.x,mechanic.y,mechanic.z)' in scene
+          assert 'mechanic.configureSpawn(' in scene
+          assert 'abs(importedNpc.position.x-H55NpcSurface580.rootX)<0.001' in scene
+          assert 'routeX' not in scene, 'The route belongs only to H55Mechanic580'
+          assert 'collision.bodyClear379' in route
+          assert 'for j in 0...n' in route and '0.08' in route
+          assert 'H55NpcDetour580.bypass' in Path('ASTEROIDYiOS/H55Mechanic580.swift').read_text()
+          print("PASS H08: exact GLB root, complete 28-point preflight, original ground seam, dynamic NPC height and A*/H07 unchanged")
+          PY
+          echo 'REAL-GLB TEST REQUIRES 126419336-byte SHA-authenticated hangar_h55.glb (not in repository)'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: H08-ORIGINAL-GLB-ROUTE-PARITY-SOURCES
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            ASTEROIDYiOS/H55CollisionGeometry580.swift
+            ASTEROIDYiOS/H55SpatialSupport580.swift
+            ASTEROIDYiOS/H55TriangleBody580.swift
+            ASTEROIDYiOS/H55NpcSurface580.swift
+            ASTEROIDYiOS/H55NpcDetour580.swift
+            ASTEROIDYiOS/H55Mechanic580.swift
+            ASTEROIDYiOS/H55Airlocks580.swift
+            Tests/H55H08SourceTests.swift
+            Tests/H55H08PatrolRealGLBTests.swift
+            Tests/H55NpcRealRoute580Tests.swift
+  # from .github/workflows/h09-parity-check.yml
+  h09-parity-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile real 80 bone original GLB mocap and original 110kg physics tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/H55NpcTracks580.swift \
+            Tests/H55NpcTracks580Tests.swift -o /tmp/h09-rig-original-glb
+          swiftc -O ASTEROIDYiOS/H55NpcTracks580.swift \
+            ASTEROIDYiOS/H55NpcMotion580.swift \
+            Tests/H55NpcMotion580Tests.swift -o /tmp/h09-motion-original-glb
+          swiftc -O \
+            ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55NpcDetour580.swift \
+            ASTEROIDYiOS/H55NpcSurface580.swift \
+            ASTEROIDYiOS/H55Mechanic580.swift \
+            ASTEROIDYiOS/H55Airlocks580.swift \
+            ASTEROIDYiOS/H55NpcTracks580.swift \
+            ASTEROIDYiOS/H55NpcMotion580.swift \
+            Tests/H55NpcH09RealPatrol580Tests.swift -o /tmp/h09-original-glb-h08-integrated
+          swiftc -frontend -parse ASTEROIDYiOS/H55NpcSceneAnimator580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+      - name: Do not regress H08/H07 or enable concurrent autoplay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          scene=Path("ASTEROIDYiOS/H55ScenePage580.swift").read_text()
+          original=Path("ASTEROIDYiOS/H55NpcMotion580.swift").read_text()
+          feet=Path("ASTEROIDYiOS/H55NpcSceneAnimator580.swift").read_text()
+          assert "H55NpcTracks580.load(url)" in scene
+          assert "npcAnimator?.apply(dt:dt" in scene
+          assert "root.position=SCNVector3(mechanic.x,mechanic.y,mechanic.z)" in scene
+          assert "airlocks.blockingGate" in scene
+          assert "if name == H55Asset580.idleClip || name == H55Asset580.walkClip {return}" in scene
+          assert "mechanicMotionPlaying" not in scene
+          assert "walkCycleMeters:Float=4.01" in original
+          assert "blendSeconds:Float=0.25" in original
+          assert "bodyMass:Float=110" in original
+          assert "landingSpring:Float=18000" in original
+          assert "activeWalk=allowWalking && mechanic.phase == .walking && mechanic.moving" in feet
+          assert "for _ in 0..<10" in feet
+          assert "point(foot.calf" in feet and "point(foot.thigh" in feet
+          assert "floor.support(" in feet and "SCNTransaction.disableActions=true" in feet
+          print("PASS H09 code gates: source motion, IK and H08/H07 unchanged")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: H09-ORIGINAL-GLB-80-BONE-MOCAP-PHYSICS-IK-SOURCES
+          path: |
+            ASTEROIDYiOS/H55NpcTracks580.swift
+            ASTEROIDYiOS/H55NpcMotion580.swift
+            ASTEROIDYiOS/H55NpcSceneAnimator580.swift
+            ASTEROIDYiOS/H55ScenePage580.swift
+            ASTEROIDYiOS/H55Mechanic580.swift
+            ASTEROIDYiOS/H55NpcDetour580.swift
+            ASTEROIDYiOS/H55NpcSurface580.swift
+            ASTEROIDYiOS/H55CollisionGeometry580.swift
+            ASTEROIDYiOS/H55SpatialSupport580.swift
+            ASTEROIDYiOS/H55TriangleBody580.swift
+            ASTEROIDYiOS/H55Airlocks580.swift
+            Tests/H55NpcTracks580Tests.swift
+            Tests/H55NpcMotion580Tests.swift
+            Tests/H55NpcH09RealPatrol580Tests.swift
+          retention-days: 14
+          if-no-files-found: error
+  # from .github/workflows/h11-fast-source.yml
+  h11-fast-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native pure Swift source PC v580 service and wallet transaction regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/Sector01Shop568.swift \
+            ASTEROIDYiOS/H55Workshop580.swift \
+            Tests/H55Workshop580Tests.swift -o /tmp/h11-source-operations
+          /tmp/h11-source-operations
+          swiftc -frontend -parse ASTEROIDYiOS/H55WorkshopPanel580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          python3 - <<'PY'
+          from pathlib import Path
+          scene=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          assert 'workshopInitialPanel=hypot(movement.x-9.4,movement.z-9.85)<3.55 ? 4 : 0' in scene
+          assert 'forward:showingWorkshop ? 0 :' in scene and '(input.moveForward != 0 ? input.moveForward : moveForward)' in scene
+          assert 'right:showingWorkshop ? 0 :' in scene
+          assert 'input.moveRight != 0 ? input.moveRight : moveRight' in scene
+          assert 'if arrival.walking && !conversationOpen,let physical {' in scene
+          assert 'H55WorkshopPanel580(initialTab:loader.workshopInitialPanel' in scene
+          assert 'mechanic.step(dt:dt' in scene
+          assert 'npcAnimator?.apply(dt:dt' in scene
+          assert 'H55Workshop580.updateFromCombat(hull:hull,armor:armor)' in Path('ASTEROIDYiOS/App.swift').read_text()
+          print('PASS H11 original H55 source interaction and shared real C279 vitals')
+          PY
+  # from .github/workflows/h11-guardian-source.yml
+  h11-guardian-source:
+    name: Exact PC580 targeting and live C279 projectile regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native Swift H11 original Guardian autonomous drone tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc \
+            ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/SphereAsteroid556.swift \
+            ASTEROIDYiOS/MissionWave568.swift \
+            ASTEROIDYiOS/MissionIncoming568.swift \
+            ASTEROIDYiOS/MissionStart261.swift \
+            ASTEROIDYiOS/CampaignProgress556.swift \
+            ASTEROIDYiOS/MissionCatalog568.swift \
+            ASTEROIDYiOS/Sector01Entry568.swift \
+            ASTEROIDYiOS/Sector01PreparedWave568.swift \
+            ASTEROIDYiOS/CarbonisBodyContact68.swift \
+            ASTEROIDYiOS/SphereRockContact68.swift \
+            ASTEROIDYiOS/ShooterTactics71.swift \
+            ASTEROIDYiOS/Sector01Shop568.swift \
+            ASTEROIDYiOS/Sector01MissionSummary568.swift \
+            ASTEROIDYiOS/Sector01MissionSettlement568.swift \
+            ASTEROIDYiOS/CarbonisDestruction524.swift \
+            ASTEROIDYiOS/H55Workshop580.swift \
+            ASTEROIDYiOS/H55SourceMechanics580.swift \
+            ASTEROIDYiOS/CombatGuardianDrone298.swift \
+            ASTEROIDYiOS/SourcePickupModels586.swift \
+            ASTEROIDYiOS/SourcePickupAbilities586.swift \
+            ASTEROIDYiOS/SourceCombatSupply586.swift \
+            ASTEROIDYiOS/CarbonisCombat568.swift \
+            Tests/CombatGuardianDrone298Tests.swift \
+            -o /tmp/h11-guardian-source
+          /tmp/h11-guardian-source
+      - name: Verify native source ownership and no visual-only projectile
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          game=Path('ASTEROIDYiOS/CarbonisCombat568.swift').read_text()
+          drone=Path('ASTEROIDYiOS/CombatGuardianDrone298.swift').read_text()
+          assert 'guardianDrone.step(' in game
+          assert 'guardian298:true' in game
+          assert 'guardianDrone.guidedVelocity(' in game
+          assert 'stepShots(dt:dt)' in game
+          assert 'Sphere67.delta' in drone and 'Sphere67.offset' in drone
+          assert 'H55SourceMechanics580.guardianShotCooldown' in drone
+          assert 'H55SourceMechanics580.guardianShotDamage' in drone
+          assert 'var guardian298:Bool = false' in game
+          print('PASS Guardian298 real autonomous plasma, shared swept collision, no duplicate wallet')
+          PY
+  # from .github/workflows/h11-model-independent-source.yml
+  h11-model-independent-source:
+    name: Source v580 six-ship/modules/trophies exact rules
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and run original PC580 source-derived test fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O \
+            ASTEROIDYiOS/Sector01Shop568.swift \
+            ASTEROIDYiOS/H55Workshop580.swift \
+            ASTEROIDYiOS/H55SourceMechanics580.swift \
+            Tests/H55SourceMechanics580Tests.swift \
+            -o /tmp/h11-pc580-source-models
+          /tmp/h11-pc580-source-models
+          swiftc -O \
+            ASTEROIDYiOS/Sector01Shop568.swift \
+            ASTEROIDYiOS/H55Workshop580.swift \
+            Tests/H55Workshop580Tests.swift \
+            -o /tmp/h11-existing-service
+          /tmp/h11-existing-service
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("ASTEROIDYiOS/H55SourceMechanics580.swift").read_text()
+          assert '245*a[type]' in p and '390*s[type]' in p
+          assert 'wallet.tokens-=cost' in p and 'wallet.totalSpent=addCapped' in p
+          assert 'guard state.valid' in p
+          assert 'state.timeTrophies |= bit' in p
+          assert 'id<3 || state.guardianOwned' in p
+          assert 'case 5:return 620' in p
+          assert 'guard id==1 else{return nil}' in p
+          print("PASS H11 original source contracts, no fake purchased GLB")
+          PY
+  # from .github/workflows/h11-profile-archive.yml
+  h11-profile-archive:
+    name: Actual H11 wallet ships modules talents vitals and trophy archive roundtrip
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and execute complete W3 archive/new campaign/rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O \
+            ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/CampaignProgress556.swift \
+            ASTEROIDYiOS/Sector01Shop568.swift \
+            ASTEROIDYiOS/H55Workshop580.swift \
+            ASTEROIDYiOS/H55SourceMechanics580.swift \
+            ASTEROIDYiOS/CombatTarcza145.swift \
+            ASTEROIDYiOS/SourceNewGame568.swift \
+            Tests/SourceNewGame568Tests.swift \
+            -o /tmp/h11-profile-archive
+          /tmp/h11-profile-archive
+          python3 Tests/SourceNewGame568Contract.py
+          python3 Tests/V568W3NativeMenuContract.py
+          swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/App.swift
+  # from .github/workflows/h11-rail-swarm-source.yml
+  h11-rail-swarm-source:
+    name: PC580 weapons, ions, bombs, save migration and real collisions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and run PC580 Rail, Swarm, Ion, Bomb and profile regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          sources=(
+            ASTEROIDYiOS/GameCore.swift
+            ASTEROIDYiOS/FlightDynamics556.swift
+            ASTEROIDYiOS/CombatCollision556.swift
+            ASTEROIDYiOS/CombatBalance556.swift
+            ASTEROIDYiOS/Sphere67.swift
+            ASTEROIDYiOS/SphereAsteroid556.swift
+            ASTEROIDYiOS/MissionWave568.swift
+            ASTEROIDYiOS/MissionIncoming568.swift
+            ASTEROIDYiOS/MissionStart261.swift
+            ASTEROIDYiOS/CampaignProgress556.swift
+            ASTEROIDYiOS/MissionCatalog568.swift
+            ASTEROIDYiOS/Sector01Entry568.swift
+            ASTEROIDYiOS/Sector01PreparedWave568.swift
+            ASTEROIDYiOS/CarbonisBodyContact68.swift
+            ASTEROIDYiOS/SphereRockContact68.swift
+            ASTEROIDYiOS/ShooterTactics71.swift
+            ASTEROIDYiOS/Sector01Shop568.swift
+            ASTEROIDYiOS/Sector01MissionSummary568.swift
+            ASTEROIDYiOS/Sector01MissionSettlement568.swift
+            ASTEROIDYiOS/CarbonisDestruction524.swift
+            ASTEROIDYiOS/H55Workshop580.swift
+            ASTEROIDYiOS/H55SourceMechanics580.swift
+            ASTEROIDYiOS/CombatGuardianDrone298.swift
+            ASTEROIDYiOS/SourcePickupModels586.swift
+            ASTEROIDYiOS/SourcePickupAbilities586.swift
+            ASTEROIDYiOS/SourceCombatSupply586.swift
+            ASTEROIDYiOS/CarbonisCombat568.swift
+          )
+          swiftc "${sources[@]}" Tests/H11RailSwarm580Tests.swift -o /tmp/h11-rail-swarm-pc580
+          /tmp/h11-rail-swarm-pc580
+          swiftc "${sources[@]}" Tests/H11Consumables580Tests.swift -o /tmp/h11-consumables-pc580
+          /tmp/h11-consumables-pc580
+          swiftc "${sources[@]}" Tests/Sector01MissionFinish568Tests.swift -o /tmp/h11-shop-mission-pc580
+          /tmp/h11-shop-mission-pc580
+          # A new game and restore must archive the ENTIRE H11 profile
+          # before mutating any active campaign state. Original source
+          # SaveManager61.ArchiveActiveProfile358 is the acceptance rule.
+          swiftc "${sources[@]}" ASTEROIDYiOS/SourceNewGame568.swift \
+            Tests/SourceNewGame568Tests.swift -o /tmp/h11-new-game-profile358
+          /tmp/h11-new-game-profile358
+          swiftc -O \
+            ASTEROIDYiOS/Sector01Shop568.swift \
+            ASTEROIDYiOS/H55Workshop580.swift \
+            Tests/H55Workshop580Tests.swift \
+            -o /tmp/h11-old-shop
+          /tmp/h11-old-shop
+          swiftc -frontend -parse ASTEROIDYiOS/H55WorkshopPanel580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisSession568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01ShopPanel568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
+      - name: Guard exact original weapons, shader kinds and migration contract
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          shop=Path("ASTEROIDYiOS/Sector01Shop568.swift").read_text()
+          combat=Path("ASTEROIDYiOS/CarbonisCombat568.swift").read_text()
+          fx=Path("ASTEROIDYiOS/CarbonisProjectileFX69.swift").read_text()
+          assert "case pulse=0,twin=1,scatter=2,rail=3,swarm=4" in shop
+          assert "case .rail:return railOwned ? 0 : 160" in shop
+          assert "case .swarm:return swarmOwned ? 0 : 190" in shop
+          assert "decodeIfPresent(Bool.self,forKey:.railOwned)" in shop
+          assert "decodeIfPresent(Bool.self,forKey:.swarmOwned)" in shop
+          assert "selectedWeapon == .rail ? 4" in combat
+          assert "selectedWeapon == .swarm ? 3" in combat
+          assert "let t=min(1,dt*4)" in combat
+          assert "case 3:return RGB(r:181/255,g:123/255,b:1)" in fx
+          assert "case 4:return RGB(r:88/255,g:1,b:143/255)" in fx
+          print("PASS H11 source original 160/190 prices, 4/3 payloads, homing and real GPU kinds")
+          PY
+  # from .github/workflows/h12-drone-source.yml
+  h12-drone-source:
+    name: PC580 imported drones, 2m graph, collision verified real flight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and execute actual DroneNav453 + StepHangarDrone451 source parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -Onone \
+            ASTEROIDYiOS/H55DroneImports580.swift \
+            ASTEROIDYiOS/H55DroneNavigation580.swift \
+            ASTEROIDYiOS/H55DroneFlight580.swift \
+            Tests/H55Drone580Tests.swift -o /tmp/h12-h71-source
+          /tmp/h12-h71-source
+          swiftc -frontend -parse ASTEROIDYiOS/H55DroneScene580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          python3 - <<'PY'
+          from pathlib import Path
+          scene=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          renderer=Path('ASTEROIDYiOS/H55DroneScene580.swift').read_text()
+          nav=Path('ASTEROIDYiOS/H55DroneNavigation580.swift').read_text()
+          assert 'H55DroneImports580.load(url)' in scene
+          flags=Path('ASTEROIDYiOS/H55DroneImports580.swift').read_text()
+          assert 'static let autonomousDronesEnabled=true' in flags
+          assert 'let droneSpawns:[H55DroneImports580.Spawn]' in scene
+          assert 'droneSpawns=try H55DroneImports580.load(url)' in scene
+          assert 'if H55H12FeatureFlags580.autonomousDronesEnabled,' in scene
+          assert 'h71-pause-status' in scene, 'H71 activation or error must be accessible without debug mode'
+          assert 'H71: ODCZYT GLB DRONÓW NIEUDANY' in scene, 'Never swallow import failure'
+          assert 'h13MaterialReport += "\\n"+h71Status' in scene, 'Include H71 binding status in shareable H13 report'
+          assert 'H55DroneNavigation580(clearance:' in scene
+          assert 'physical.cameraClear406(x,y,z,radius:radius)' in scene
+          assert 'H55DroneScene580(' in scene
+          assert 'droneScene.advance(dt:dt' in scene
+          assert 'droneScene=nil' in scene
+          assert 'b.root.simdWorldTransform=delta*b.root.simdWorldTransform' in renderer
+          assert 'func restoreSourceRoots()' in renderer
+          assert scene.index('droneScene?.restoreSourceRoots()') < scene.index('machinery?.advance(dt:dt)') < scene.index('droneScene.advance(dt:dt')
+          assert 'scene.rootNode.addChildNode(' not in renderer
+          assert 'return H55DroneNavigation580' not in renderer
+          assert 'let bridgeHeights' in nav
+          print("PASS H71 ENABLED: original imported GLB roots, bounded 2m collision lattice, two aircraft, protected H07/H09, fail-closed diagnostics and no duplicate geometry")
+          PY
+  # from .github/workflows/h12-machinery-source.yml
+  h12-machinery-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and test original PC580 H51 composite source time and H07/H09 guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -Onone ASTEROIDYiOS/H55H12Timeline580.swift \
+            Tests/H55H12Timeline580Tests.swift \
+            -o /tmp/h12-original-pc580
+          /tmp/h12-original-pc580
+          swiftc -Onone ASTEROIDYiOS/H55H12Timeline580.swift \
+            ASTEROIDYiOS/H55H12Tracks580.swift \
+            Tests/H55H12Tracks580Tests.swift \
+            -o /tmp/h12-glb2-source
+          /tmp/h12-glb2-source
+          swiftc -frontend -parse ASTEROIDYiOS/H55H12Tracks580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55H12SceneAnimator580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          python3 - <<'PY'
+          from pathlib import Path
+          scene=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          anim=Path('ASTEROIDYiOS/H55H12SceneAnimator580.swift').read_text()
+          tracks=Path('ASTEROIDYiOS/H55H12Tracks580.swift').read_text()
+          assert 'let h12=try? H55H12Tracks580.load(' in scene
+          assert '!H55H12FeatureFlags580.autonomousDronesEnabled' in scene
+          assert 'excludeImportedDroneRoots:' in scene
+          assert 'func sample(_ t:Float,into output:inout [Float])' in tracks
+          assert 'binding.track.sample(sample.at,into:&frameValues)' in anim
+          assert 'origin.contains("drone") || origin.contains("dron")' in tracks
+          assert 'rootName.contains("drone") || rootName.contains("dron")' in tracks
+          assert 'machinery=nil' in scene and 'h12Status="H12: BRAK ZGODNYCH' in scene
+          assert 'machinery?.advance(dt:dt)' in scene
+          assert scene.index('machinery?.advance(dt:dt)')<scene.index('updateAirlocks(dt:dt)')
+          assert 'protectedNpcRoot:importedNpc' in scene
+          assert 'excludedAirlockNames:Set(H55AirlockController580.leafNames.flatMap{$0})' in scene
+          assert 'machinery?.apply(time:0)' in scene
+          assert 'if machinery != nil {return}' in scene
+          assert 'node.simdPosition=' in anim
+          assert 'node.simdOrientation=' in anim
+          assert 'node.simdScale=' in anim
+          assert 'SCNMorpher' not in anim or 'morpher.setWeight' in anim
+          assert 'word(header,0)==0x46546c67' in tracks
+          assert 'sourceDurations:[String:Float]' in tracks
+          assert 'ANIMATION_LOOP' in tracks
+          print("PASS H12 source-only: one real GLB, H51 timeline, SceneKit TRS, native H07 doors/H09 NPC protected; hardware/real GLB check remains")
+          PY
+  # from .github/workflows/h13-material-metadata.yml
+  h13-material-metadata:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test GLB 2.0 material reading and non-mutating behavior
+        run: python3 Tests/H55H13MaterialAudit580Tests.py
+      - name: Test iOS-compatible Swift material report in isolation
+        run: |
+          set -euo pipefail
+          swiftc -Onone ASTEROIDYiOS/H55H13MaterialReport580.swift ASTEROIDYiOS/H55H13EmissionRules580.swift Tests/H55H13MaterialReport580Tests.swift -o /tmp/h13-native-materials
+          /tmp/h13-native-materials
+          swiftc ASTEROIDYiOS/H55VisualSource580.swift Tests/H55VisualSource580Tests.swift -o /tmp/h55-source-visual
+          /tmp/h55-source-visual
+          swiftc -frontend -parse ASTEROIDYiOS/H55VisualScene580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55PlayerShip580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55SpaceBackdrop580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55DockingPresentation580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55LoadDiagnostics580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55H13SceneMaterials580.swift
+          python3 - <<'PY'
+          from pathlib import Path
+          scene=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          assert 'let metadata=try H55Asset580.inspect(url)' in scene
+          assert 'H55H13MaterialReport580.inspect(url)' in scene
+          assert 'H55H13SceneMaterials580.apply(' in scene
+          assert 'materialSnapshot:H55H13MaterialReport580.Snapshot?' in scene
+          assert scene.index('H55H13SceneMaterials580.apply(') < scene.index('scene=realScene')
+          assert 'H55H13EmissionRules580.gains(' in Path('ASTEROIDYiOS/H55H13SceneMaterials580.swift').read_text()
+          assert '_surface.emission.rgb *=' in Path('ASTEROIDYiOS/H55H13EmissionRules580.swift').read_text()
+          assert '.shaderModifiers = modifiers' not in Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          assert scene.index('H55Asset580.inspect(url)') < scene.index('H55H13MaterialReport580.inspect(url)') < scene.index('GLTFAsset.load(with:url')
+          assert 'ShareLink(item:loader.h13MaterialReport)' in scene
+          assert '.accessibilityIdentifier("h13-share-glb-report")' in scene
+          assert 'machinery?.advance(dt:dt)' in scene and 'updateAirlocks(dt:dt)' in scene
+          assert 'H55TouchControls580(' in scene
+          assert 'H55LightBalance580.selectedNames(candidates)' in scene
+          assert 'if loader.showingWorkshop {loader.closeWorkshop()}' in scene
+          assert 'if conversationOpen || showingWorkshop {moveForward=0;moveRight=0;return}' in scene
+          print('PASS H13 integration: background-only diagnostic after source authentication, manual sharing, protected H01-H12')
+          PY
+      - name: Syntax and CLI interface
+        run: |
+          python3 -m py_compile Tools/audit_h55_materials580.py Tests/H55H13MaterialAudit580Tests.py
+          python3 Tools/audit_h55_materials580.py --help
+      - name: Assert diagnostic GLB reader is read-only (runtime patch only in SceneKit)
+
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('Tools/audit_h55_materials580.py').read_text()
+          assert 'path.open("rb")' in s
+          assert '.write_bytes(' not in s
+          assert 'GLTFKit2' not in s
+          print('PASS: read-only audit, no production scene modifications')
+          PY
+  # from .github/workflows/h55-fps-original-weapon.yml
+  h55-fps-original-weapon:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source PC v580 exact pose and walk-sway fixture
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/H55FPSPose580.swift Tests/H55FPSPose580Tests.swift -o /tmp/fps-source580
+          /tmp/fps-source580
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSAssets580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSScene580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSSettingsSection580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSPreview580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSOverlayViewport580.swift
+          python3 Tests/H55FPSPreviewDepth580Contract.py
+          python3 Tests/H55FPSOriginalMaterial580Tests.py
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSLighting580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55FPSMeshSplit580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          python3 - <<'PY'
+          from pathlib import Path
+          assets=Path('ASTEROIDYiOS/H55FPSAssets580.swift').read_text()
+          scene=Path('ASTEROIDYiOS/H55FPSScene580.swift').read_text()
+          splitter=Path('ASTEROIDYiOS/H55FPSMeshSplit580.swift').read_text()
+          main=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          ui=Path('ASTEROIDYiOS/H55FPSSettingsSection580.swift').read_text()
+          visual=Path('ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift').read_text()
+          checks=[
+            ('gloves_parted.glb','8a494bbd9a3dd6eb70cb5e22a7db4da7ec33b069dc1b0bab36f6a1c5b4c257ca'),
+            ('gloves_combined.glb','643bfa2799535852362103fa4d24b84d712637d686e773403214400a31ae4516'),
+            ('EXP01_SOURCE_v601.glb','07403302f23cb81ce6c26501ca7361c646550c6f91e0a949ce81566553139762')]
+          for name,sha in checks:
+              assert name in assets and sha in assets, name
+          assert 'H55FPSAssets580.install(url,as:kind)' in main
+          assert 'H55FPSScene580(camera:fpsCamera' in main
+          assert 'H55FPSOverlayViewport580(scene:fpsScene,pointOfView:fpsCamera)' in main
+          assert 'fpsOverlayScene=fpsScene' in main and 'fpsOverlayCamera=fpsCamera' in main
+          assert 'fpsViewmodel?.advance(time:arrival.time,walking:arrival.walking' in main
+          assert 'h55-fps-import-hands' in ui and 'h55-fps-import-weapon' in ui
+          assert 'h55-fps-show-hands' in ui and 'h55-fps-show-weapon' in ui
+          assert 'h55-fps-show-hands' not in main and 'h55-fps-import-hands' not in main
+          assert 'case 6: H55FPSSettingsSection580(category:.gloves' in visual
+          assert 'case 8: H55FPSSettingsSection580(category:.weapon' in visual
+          assert 'fpsLoader:loader' in main
+          assert 'Bundle.main.url(forResource:kind.fileName' in assets
+          assert 'hashlib.sha256' in Path('Tools/pack_h55_original_models_ipa.py').read_text()
+          assert 'H55FPSMeshSplit580.build(scene:scene,kind:kind)' in scene
+          assert 'element.primitiveCount*3*w<=bytes.count' in splitter
+          assert 'let centre=(axisPositions[v0]+axisPositions[v1]+axisPositions[v2])/3' in splitter
+          assert 'threshold:-0.0002' in splitter and 'threshold:0.4929' in splitter
+          assert 'reverse:true' in splitter and 'reverse:false' in splitter
+          assert 'SCNGeometry(sources:geometry.sources' in splitter
+          assert 'h55-fps-import-monolith' in ui and 'h55-fps-show-monolith' in ui
+          assert 'source.defaultScene' in scene and 'protectMaterials' in scene
+          assert 'camera.addChildNode(fpsRoot)' in scene
+          assert 'fpsRoot.isHidden = !walking' in scene
+          assert 'SceneKit' in scene and 'GLTFKit2' in scene
+          assert 'SCNSphere' not in scene and 'SCNBox' not in scene and 'SCNCapsule' not in scene
+          assert 'GLOVES v417' not in scene
+          assert 'gloves_combined' in assets
+          print('PASS PC580 immutable glTF, TRIPO X and MONOLIT Y authentic triangle split, camera-space FPS layer')
+          PY
+  # from .github/workflows/h55-touch-light-fix.yml
+  h55-touch-light-fix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exact four-way control vs H06 movement and original PC H46 palette
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55Sweep401580.swift \
+            ASTEROIDYiOS/H55Walk580.swift \
+            ASTEROIDYiOS/H55TouchMapping580.swift \
+            ASTEROIDYiOS/H55LightingProfile580.swift \
+            ASTEROIDYiOS/H55LightBalance580.swift \
+            Tests/H55TouchLightFix580Tests.swift -o /tmp/h55-touch-light-test
+          /tmp/h55-touch-light-test
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift \
+            ASTEROIDYiOS/H55SpatialSupport580.swift \
+            ASTEROIDYiOS/H55TriangleBody580.swift \
+            ASTEROIDYiOS/H55Sweep401580.swift \
+            ASTEROIDYiOS/H55Walk580.swift \
+            ASTEROIDYiOS/H55Entry580.swift \
+            ASTEROIDYiOS/H55TouchMapping580.swift \
+            Tests/H55TouchRealGLB580Tests.swift -o /tmp/h55-touch-real-glb
+      - name: SwiftUI full-screen touch domains and button placement contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -frontend -parse ASTEROIDYiOS/H55TouchControls580.swift
+          swiftc ASTEROIDYiOS/H55VisualSource580.swift Tests/H55VisualSource580Tests.swift -o /tmp/h55-source-visual
+          /tmp/h55-source-visual
+          swiftc -frontend -parse ASTEROIDYiOS/H55VisualScene580.swift
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Entry580.swift ASTEROIDYiOS/H55DockingPresentation580.swift Tests/H55DockingPresentation580Tests.swift -o /tmp/h55-docking
+          /tmp/h55-docking
+          swiftc -frontend -parse ASTEROIDYiOS/H55SpaceBackdrop580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55PlayerShip580.swift
+          swiftc ASTEROIDYiOS/H55RenderStartGate580.swift Tests/H55RenderStartGate580Tests.swift -o /tmp/h55-start-gate
+          /tmp/h55-start-gate
+          swiftc -frontend -parse ASTEROIDYiOS/H55SceneViewport580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55LoadDiagnostics580.swift
+          swiftc ASTEROIDYiOS/H55LoadDiagnostics580.swift Tests/H55LoadDiagnostics580Tests.swift -o /tmp/h55-diagnostics-test
+          /tmp/h55-diagnostics-test
+          python3 - <<'PY'
+          from pathlib import Path
+          c=Path('ASTEROIDYiOS/H55TouchControls580.swift').read_text()
+          s=Path('ASTEROIDYiOS/H55ScenePage580.swift').read_text()
+          assert 'HStack(spacing:0)' in c and '.frame(width:w,height:h)' in c
+          assert '.gesture(walkGesture)' in c and '.gesture(lookGesture)' in c
+          assert 'walkIndicator(' not in c and 'lookIndicator(' not in c, 'No visible controls'
+          assert 'walkTranslation' not in c, 'No joystick state'
+          assert 'H55DockingPresentation580.camera(time:arrival.time)' in s
+          assert 'H55PlayerShip580.make()' in s and 'H55SpaceBackdrop580.make()' in s
+          assert 'H55SceneViewport580(' in s and 'h55-gpu-first-frame-mask' in s
+          assert 'onWalk(0,0)' in c, 'releasing LEFT must zero velocity'
+          assert '.position(x:w*0.33,y:h*0.79)' in c
+          assert '.position(x:w*0.84,y:h*0.79)' in c
+          assert 'h55-v580-npc-interact' in c and 'h55-v580-jump' in c
+          assert '.allowsHitTesting(false)' in s, 'SceneKit must not steal drag'
+          assert 'H55TouchMapping580.scenePitch(for:movement.pitch)' in s
+          assert 'H55TouchMapping580.sceneYaw(for:movement.yaw)' in s
+          assert 'H55LightBalance580.sceneIntensity(' in s
+          assert 'H55LightBalance580.selectedNames(candidates)' in s
+          assert 'lightRefresh>=0.16' in s, 'bounded lighting updates'
+          assert 'frame(height:105)' not in s, 'obsolete bottom-only touch strip'
+          assert 'H55TouchControls580(' in s
+          print('PASS: full LEFT and RIGHT view input, inset SKOK / ROZMAWIAJ, fixed camera signs, iPhone light budget')
+          PY
+      - name: Export exact code for differential original hangar touch tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: H55-TOUCH-REAL-GLB-SOURCE-REGRESSION
+          path: |
+            ASTEROIDYiOS/H55CollisionGeometry580.swift
+            ASTEROIDYiOS/H55SpatialSupport580.swift
+            ASTEROIDYiOS/H55TriangleBody580.swift
+            ASTEROIDYiOS/H55Sweep401580.swift
+            ASTEROIDYiOS/H55Walk580.swift
+            ASTEROIDYiOS/H55Entry580.swift
+            ASTEROIDYiOS/H55TouchMapping580.swift
+            ASTEROIDYiOS/H55LightBalance580.swift
+            Tests/H55TouchRealGLB580Tests.swift
+            Tests/H55TouchLightFix580Tests.swift
+          retention-days: 2
+          if-no-files-found: error
+  # from .github/workflows/verify-bastion606-source-no-ipa.yml
+  verify-bastion606-source-no-ipa:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify binary 6061 format with the SAME reader as Vanguard431
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourceVanguardMesh431.swift Tests/BastionMesh606Tests.swift -o /tmp/bastion606
+          /tmp/bastion606
+      - name: Verify PC609 asset transfer constants remain SHA locked
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          script=Path('Tools/build_bastion606_ios_pack.py').read_text()
+          source=Path('ASTEROIDYiOS/SourceBastion606.swift').read_text()
+          physics=Path('ASTEROIDYiOS/H55SourceMechanics580.swift').read_text()
+          assert 'BST60901' in script and 'BST60901' in source
+          for digest in ('5b9257d55d403a28ef37d370f95a1796e236b7bef34a695a313b1a48450baca6',
+                         '4882d508b527d1f13171cf72d732addbaf393681d37942378be5b39ef09fe65e',
+                         'd18d651aab74bebdb2215940c0774c8aa3f0aff9101c0b7122c336110b3f5e7c'):
+              assert digest in script and digest in source
+          assert 'case 2:return bastionAssetURL == nil ? nil' in physics
+          print('PASS PC609 Bastion source checksums, separate asset registration, no Vanguard substitution')
+          PY
+      - name: Verify shared CARBONIS/H290 pause HUD contract
+        run: |
+          set -euo pipefail
+          python3 Tests/IOSOriginalCombatHUD331Contract.py
+  # from .github/workflows/verify-pc586-controls.yml
+  verify-pc586-controls:
+    name: Exact 60 source actions, migration, safe router and 65-row rules
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile pure Foundation PC control profile and run all tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/SourceControls586.swift Tests/SourceControls586Tests.swift -o /tmp/test_pc586_controls
+          /tmp/test_pc586_controls
+      - name: Verify shared hardware action router without a second physics loop
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -Onone ASTEROIDYiOS/SourceControls586.swift ASTEROIDYiOS/SourceControlRouter586.swift Tests/SourceControlRouter586Tests.swift -o /tmp/test_pc586_router
+          /tmp/test_pc586_router
+      - name: Assert all source actions and genuine 65-row settings
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          source=Path('ASTEROIDYiOS/SourceControls586.swift').read_text()
+          assert 'static let actionCount=60' in source
+          assert 'static let extraCount=5' in source
+          assert 'static let rowCount=65' in source
+          assert 'case 0...7,9,21,33,34,35,44...47' in source
+          assert 'case 11,12,59:return .hangar' in source
+          assert 'ASTEROIDY_CONTROLS_1' in source and 'ASTEROIDY_CONTROLS_2' in source
+          print('PASS fixed PC source indices; no fake co-op/atlas implementation')
+          PY
+      - name: Guard W3 native 65-row menu and real CARBONIS/H55 input integration
+        run: |
+          set -euo pipefail
+          python3 Tests/PC586InputIntegrationContract.py
+  # from .github/workflows/verify-pc586-pickup-catalog.yml
+  verify-pc586-pickup-catalog:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and execute original PC586 model registry tests
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourcePickupModels586.swift Tests/SourcePickupModels586Tests.swift -o /tmp/pc586-original-models
+          /tmp/pc586-original-models
+      - name: Verify six native item visual defaults and persistence
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/SourcePickupVisual586.swift Tests/SourcePickupVisual586Tests.swift -o /tmp/pc586-original-visual-settings
+          /tmp/pc586-original-visual-settings
+      - name: Enforce true gameplay to GPU to IPA integration contract
+        run: |
+          set -euo pipefail
+          python3 -m py_compile Tools/prepare_pc586_runtime_resources.py Tools/pack_pc586_unsigned_ipa.py Tools/pack_pc586_complete_test_ipa.py Tools/verify_pc586_complete_ipa.py
+          python3 Tests/PC586IntegrationContract.py
+  # from .github/workflows/verify-pc609-shield-armor-no-ipa.yml
+  verify-pc609-shield-armor-no-ipa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift toolchain
+        run: swiftc --version
+      - name: PC608 / PC609 reserve and armor fractional timing
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift Tests/PC608609MechanicsTests.swift -o /tmp/pc608609
+          /tmp/pc608609
+      - name: PC v609 profile archive and legacy restore
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/pc608609-profile
+          /tmp/pc608609-profile
+      - name: PC608 flat rock protection cannot spend a passive reserve
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CombatFlatShield556.swift Tests/CombatFlatShield556Tests.swift -o /tmp/pc608-flat
+          /tmp/pc608-flat
+      - name: PC608 contact router no passive shield on any collision
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/CombatVerifiedEncounter556.swift Tests/CombatContactRouter96Tests.swift -o /tmp/pc608-contact
+          /tmp/pc608-contact
+      - name: PC608 verified hit Guardian first, no extra reserve consumption
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/CombatVerifiedEncounter556.swift Tests/CombatVerifiedHit556Tests.swift -o /tmp/pc608-hit
+          /tmp/pc608-hit
+      - name: Source Physics68 guardian, active shield and rescue
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/CombatVerifiedEncounter556.swift Tests/CombatVerifiedEncounter556Tests.swift -o /tmp/verified-encounter-556
+          /tmp/verified-encounter-556
+      - name: Boreas Physics68 damage lab
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/PlanetDamageLab556.swift Tests/PlanetDamageLab556Tests.swift -o /tmp/boreas-damage-lab556
+          /tmp/boreas-damage-lab556
+      - name: Original C279 Carbonis live mission
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/ShooterTactics71.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01MissionSummary568.swift ASTEROIDYiOS/Sector01MissionSettlement568.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatGuardianDrone298.swift ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/SourceCombatSupply586.swift ASTEROIDYiOS/SourcePickupAbilities586.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CarbonisCombat568.swift Tests/CarbonisCombat568Tests.swift -o /tmp/carbonis-live568-tests
+          /tmp/carbonis-live568-tests
+      - name: Full first-sector mission regression
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/ShooterTactics71.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01MissionSummary568.swift ASTEROIDYiOS/Sector01MissionSettlement568.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatGuardianDrone298.swift ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/SourceCombatSupply586.swift ASTEROIDYiOS/SourcePickupAbilities586.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CarbonisCombat568.swift Tests/Sector01FullMission568Tests.swift -o /tmp/sector01-fully-integrated-source-test
+          /tmp/sector01-fully-integrated-source-test
+  # from .github/workflows/audit-boreas-glb-archives.yml
+  audit-boreas-glb-archives:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect all original SHA256-verified PC v568 asset archives
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from Tools.stage_v568_resources import verify_archive_set
+          archives,entries,manifest,_=verify_archive_set(Path.cwd())
+          try:
+              k='PortingResources/v568/Shared/assets/planets/boreas_ferrofluid.glb'
+              print('BOREAS_ARCHIVE_PRESENT=',k in entries)
+              print('GLB_SOURCE_CANDIDATES=',[x for x in entries if 'boreas' in x.lower() or 'ferrofluid' in x.lower()])
+              if k in entries:
+                  import hashlib
+                  blob=entries[k][0].read(entries[k][1])
+                  print('BOREAS_GLB_BYTES=',len(blob))
+                  print('BOREAS_GLB_SHA256=',hashlib.sha256(blob).hexdigest())
+          finally:
+              for z in archives: z.close()
+          PY
+  # from .github/workflows/hud-v600-validation.yml
+  hud-v600-validation--verify-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check exact PC v600 layout and active status renderer
+        run: |
+          python3 Tests/HudV600IntegrationContract.py
+          python3 Tests/HudPlasmaLive600Contract.py
+          python3 Tests/HudPlasmaIndependent600Contract.py
+          python3 Tests/HudPlanetariumIntegration600Contract.py
+          python3 Tests/HudPlanetariumGLTFImportContract.py
+          python3 Tests/HudPlanetariumCorona600Contract.py
+          python3 Tests/HudMotionEventCounters600Contract.py
+          python3 Tests/HudMotionLiveRenderer600Contract.py
+          python3 Tests/HudControlLayout600Contract.py
+          python3 Tests/HudSmoothRadar600Contract.py
+          python3 Tests/H55EyeHeightAndTarczaPlasmaContract.py
+          python3 Tests/HudMissionGate600Contract.py
+          python3 Tests/HudPickupMetal600Contract.py
+      - name: Compile and execute Swift motion and plasma reference contracts
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-core
+          /tmp/hud-v600-core
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudIconMotion600.swift Tests/HudIconMotion600Tests.swift -o /tmp/hud-v600-springs
+          /tmp/hud-v600-springs
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift Tests/HudMotionProject600Tests.swift -o /tmp/hud-v600-project
+          /tmp/hud-v600-project
+          swiftc ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudLayout600Tests.swift -o /tmp/hud-v600-layout
+          /tmp/hud-v600-layout
+          swiftc ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift Tests/HudWidgetPlacement600Tests.swift -o /tmp/hud-v600-placement
+          /tmp/hud-v600-placement
+          swiftc ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudEditorGeometry.swift Tests/HudEditorGeometryTests.swift -o /tmp/hud-editor-geometry
+          /tmp/hud-editor-geometry
+          swiftc ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift ASTEROIDYiOS/HudPlanetariumProjection.swift Tests/HudPlanetariumProjectionTests.swift -o /tmp/hud-planetarium-screen
+          /tmp/hud-planetarium-screen
+          swiftc ASTEROIDYiOS/HudMissionGate600.swift Tests/HudMissionGate600Tests.swift -o /tmp/hud-v600-mission
+          /tmp/hud-v600-mission
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudV600StressTests.swift -o /tmp/hud-v600-stress
+          /tmp/hud-v600-stress
+          swiftc ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudCapsuleController600Tests.swift -o /tmp/hud-v600-capsule
+          /tmp/hud-v600-capsule
+          swiftc ASTEROIDYiOS/HudCapsuleController600.swift ASTEROIDYiOS/HudCapsuleBinding600.swift Tests/HudCapsuleBinding600Tests.swift -o /tmp/hud-v600-bubble
+          /tmp/hud-v600-bubble
+  hud-v600-validation--verify-ios-parser:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse active HUD view with Swift compiler
+        run: |
+          swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift ASTEROIDYiOS/HudPlasmaLayer600.swift ASTEROIDYiOS/HudPlanetariumHost600.swift
+          swiftc -frontend -parse ASTEROIDYiOS/HudControlLayout600.swift ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/Sector01Scene568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55EyeHeight580.swift ASTEROIDYiOS/H55ScenePage580.swift ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift ASTEROIDYiOS/SourceShieldShell145.swift ASTEROIDYiOS/Sector01CarbonisPreview568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/HudIconMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift
+          swiftc -frontend -parse ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift
+          swiftc -frontend -parse ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumTracks600.swift ASTEROIDYiOS/HudPlanetariumProjection.swift ASTEROIDYiOS/HudPlanetariumScene600.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift ASTEROIDYiOS/HudLayoutEditor600.swift ASTEROIDYiOS/HudEditorGeometry.swift ASTEROIDYiOS/HudLayoutDocument600.swift
+          swiftc -typecheck ASTEROIDYiOS/HudPlanetariumOriginalMetal600.swift ASTEROIDYiOS/HudPlanetariumMetal600.swift ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumProjection.swift ASTEROIDYiOS/HudCapsuleController600.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift ASTEROIDYiOS/CombatHUDViewport568.swift
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudPlasmaIndependent600Tests.swift -o /tmp/hud-plasma-independent
+          /tmp/hud-plasma-independent
+          swiftc ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudControlLayout600.swift Tests/HudControlLayout600Tests.swift -o /tmp/hud-functional-controls
+          /tmp/hud-functional-controls
+          swiftc ASTEROIDYiOS/HudPlanetariumOriginalMetal600.swift ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudPlanetariumBubbleWrapTests.swift -o /tmp/hud-planetarium-bubble
+          /tmp/hud-planetarium-bubble
+          swiftc ASTEROIDYiOS/HudPlanetariumCorona600.swift Tests/HudPlanetariumCorona600Tests.swift -o /tmp/hud-v600-corona
+          /tmp/hud-v600-corona
+          swiftc -O ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudIconMotion600.swift ASTEROIDYiOS/HudMotionProject600.swift ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift ASTEROIDYiOS/HudPickupTransform600.swift Tests/HudPickupTransform600Tests.swift -o /tmp/hud-v600-icons
+          /tmp/hud-v600-icons
+  # from .github/workflows/build-ios-h55-fps-preview-ipa.yml (job build-full, first step)
+  hud-v602-touch-runtime-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm source PC v602 HUD touch runtime contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tests/HudV602TouchRuntimeContract.py
+  # from .github/workflows/h12-test-ipa.yml (also h10/h11-test-ipa.yml), source dialogue test
+  h55-npc-dialogue-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Original H55 NPC dialogue source regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/H55NpcDetour580.swift ASTEROIDYiOS/H55Mechanic580.swift ASTEROIDYiOS/H55NpcDialogue580.swift Tests/H55NpcDialogue580Tests.swift -o /tmp/h10-source-dialogue
+          /tmp/h10-source-dialogue
+  # from .github/workflows/verify-ios-playership367-gpu-once.yml (first step, contract lines only)
+  playership367-gpu-proof-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail-closed PlayerShip367 GPU proof contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile Tools/run_v568_player_ship367_simulator_capture.py Tests/V568PlayerShip367GPUProofContract.py
+          python3 Tests/V568PlayerShip367GPUProofContract.py
+  # from .github/workflows/build-ios-h55-fps-preview-ipa.yml (planetarium staging + glTF import lines)
+  pc602-planetarium-gltf-import:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage original PC v602 planetarium and test the glTF import
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/stage_pc602_planetarium.py
+          swiftc ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumGLTFImport.swift Tests/HudPlanetariumGLTFImportTests.swift -o /tmp/pc602-gltf-import
+          /tmp/pc602-gltf-import ASTEROIDYiOS/Assets/planetarium.glb
