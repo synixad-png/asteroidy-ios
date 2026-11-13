@@ -122,3 +122,16 @@ Modyfikacja tych plików jest zabroniona bez osobnego, wyraźnego
 polecenia użytkownika dotyczącego misji i świadomej aktualizacji
 odpowiadającego im testu. Weryfikacja kompilacji nie zastępuje
 interaktywnego testu przenoszenia przycisków na iPhonie/iPadzie.
+
+
+## Zarządzanie gałęziami i ochrona przed ponownym dopisywaniem funkcji (13.11.2026)
+
+**Stałe polecenie użytkownika. Przeczytaj przed każdą kolejną pracą w repozytorium.**
+
+1. Jedyną bazą dalszego rozwoju jest aktualny, zweryfikowany `main`. Nową gałąź roboczą zakładaj od bieżącego `main`, nie od dawnego PR, snapshotu ani historycznej gałęzi (wyjątek: świadomie zależne, jeszcze niescalone PR, które należy przed integracją ponownie porównać z `main`).
+2. Nie kopiuj, nie implementuj drugi raz, nie „uzupełniaj” i nie podmieniaj mechanizmów z gałęzi, których zmiany są już obecne w `main`. Najpierw sprawdź aktywne źródła i istniejący mechanizm, a potem `git merge-base`, `git log`, `git diff` lub GitHub compare; samo istnienie starej gałęzi albo PR nie oznacza brakującej funkcji.
+3. Przed każdym wdrożeniem sprawdź stan docelowej funkcji w `main` oraz testy/regresje. Jeżeli funkcja już działa, nie dopisuj jej ponownie i nie twórz drugiej ścieżki. Modyfikacja tylko po konkretnym zgłoszeniu, z dowodem przyczyny.
+4. Starsze gałęzie po scaleniu są historyczne, nie są bazą zmian. Nie usuwaj automatycznie gałęzi zawierających commity nieobecne w `main`: zweryfikuj, czy zmiany nie zostały przeniesione przez squash/cherry-pick, i nie kasuj historii bez osobnej zgody użytkownika.
+5. Na 13.11.2026 aktywne niescalone PR to **#32 KESTREL** (baza BASTION) i **#33 BOREAS** (baza KESTREL). Wartości te są migawką, nie wiecznym stanem: przed pracą zawsze odczytaj aktualny status PR i head `main`. Inne starsze gałęzie z niescalonymi commitami wymagają audytu; nie zakładaj ani że trzeba je scalać, ani że można je usunąć.
+6. PR, build i raport muszą określać: dokładny SHA bazy `main`, pliki zmienione, mechanizmy już obecne (niezmienione), brak duplikacji, wyniki CI oraz status testów na fizycznym iPadzie/iPhonie. Nie traktuj poprawnego builda jednej gałęzi jako dowodu powodzenia przyszłego scalenia; nie zakładaj też błędów bez testów.
+7. Zapisanie tej zasady w GitHub służy przyszłym sesjom: każdy asystent przed kontynuacją ma przeczytać `AGENTS.md`, aktualny `main`, otwarte PR i raporty. Jeśli kontekst rozmowy i repozytorium się różnią, zweryfikuj GitHub i poinformuj użytkownika zamiast zgadywać.
