@@ -133,8 +133,7 @@ struct BoreasNodeTracks556 {
             for i in 0..<count {
                 let actual=mesh.vertices[first+i].position
                 let rotated=quaternion.act(positions[i]*keys[0].scale)
-                let expected=(keys[0].translation+rotated-originalCenter)/
-                    originalRadius
+                let expected=(keys[0].translation+rotated-originalCenter) / originalRadius
                 let observed=SIMD3(actual.x,actual.y,actual.z)
                 guard simd_length(expected-observed)<0.0001 else {
                     throw SourceError.mismatch
