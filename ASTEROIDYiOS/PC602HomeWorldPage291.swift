@@ -364,7 +364,6 @@ struct PC602HomeWorldPage291:View {
                 .accessibilityHidden(true)
             }
         }
-        .accessibilityIdentifier("pc602-orbit-real-gameplay-page")
     }
 
     // PC602 BossTunnelGame.cs:48-50 + Program.cs:197-201.
@@ -431,7 +430,6 @@ struct PC602HomeWorldPage291:View {
                 onExitToW3()
             })
             .zIndex(40)
-            .accessibilityIdentifier("pc602-orbit-options291")
     }
 
     /// One full-screen settings navigation, composed exactly like the
