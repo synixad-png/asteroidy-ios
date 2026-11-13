@@ -112,7 +112,7 @@ jobs:
           python3 Tests/IOSKestrel603SourceContract.py | tee reports/kestrel-source-audit.txt
           python3 Tests/SourceNewGame568Contract.py | tee reports/starting-lives-source-contract.txt
           python3 Tests/PC609H55FleetNewGameContract.py | tee reports/h55-fleet-newgame-regression.txt
-          swiftc -O ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/pc609-ship-starting-lives
+          swiftc -O ASTEROIDYiOS/SourceVanguardMesh431.swift ASTEROIDYiOS/SourceKestrel603.swift ASTEROIDYiOS/SourceBastion606.swift ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/pc609-ship-starting-lives
           /tmp/pc609-ship-starting-lives | tee reports/starting-lives-nine-combinations.txt
           python3 Tests/PC602OrbitSave61Contract.py | tee reports/save-slots-shiptype.txt
           swiftc -O ASTEROIDYiOS/SourceVanguardMesh431.swift Tests/KestrelMesh603Tests.swift -o /tmp/kestrel603-mesh
