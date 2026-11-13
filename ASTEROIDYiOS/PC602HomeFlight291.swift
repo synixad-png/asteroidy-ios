@@ -231,16 +231,15 @@ struct PC602HomeFlight291 {
     /// Game.Campaign37.EngineLevel/StabilizerLevel/ThrusterRank97 are live
     /// properties on PC602; when a player purchases a level in H55, the
     /// source DirectMotion298 reads the new values on the next flight tick.
-    /// Only Vanguard is currently usable in the iOS world, never silently
-    /// substitute Vanguard for another selected ship.
+    /// Three genuine PC v609 ships (0..2) are now available after their
+    /// own original mesh/JPEG has been verified. Never substitute ships.
     ///
     /// Keep position, velocity, heading, camera, elapsed time and projectile
     /// state unchanged; replace only the source FlightDynamics298 settings.
     @discardableResult
     mutating func adoptVanguardEquipment(_ next:Equipment)->Bool {
-        guard (equipment.craft == .vanguard ||
-               equipment.craft == .bastion),
-              (next.craft == .vanguard || next.craft == .bastion),
+        guard [.kestrel,.vanguard,.bastion].contains(equipment.craft),
+              [.kestrel,.vanguard,.bastion].contains(next.craft),
               !next.miningDetached,
               (0...2).contains(next.engineLevel),
               (0...2).contains(next.thrusterRank),
