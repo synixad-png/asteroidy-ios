@@ -22,6 +22,7 @@ on:
       - ASTEROIDYiOS/PC602OrbitSave61.swift
       - ASTEROIDYiOS/SourceNewGame568.swift
       - Tests/PC602OrbitSave61Contract.py
+      - Tests/PC602O01SourceBaseline.py
       - Tests/PC602HomeFlight291Tests.swift
       - Tests/CarbonisCombat568Tests.swift
       - Tests/SourceGPUProofWriter568Contract.py
