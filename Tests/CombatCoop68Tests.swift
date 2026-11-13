@@ -57,16 +57,16 @@ import Foundation
             defenseSecond:.noneAbsorbed,isRobot:[true])
         precondition(results == [
             R.TeamOutcome(player:.first,outcome:.applied(
-                .shieldAbsorbed(remaining:0,cause:"ASTEROIDA"))),
+                .lifeLost(remaining:2,respawnProtection:3,cause:"ASTEROIDA"))),
             R.TeamOutcome(player:.second,outcome:.applied(
                 .lifeLost(remaining:2,respawnProtection:3,cause:"ROBOTYCZNY WAZ"))),
             R.TeamOutcome(player:nil,outcome:.ignoredNonPlayer),
             R.TeamOutcome(player:.second,outcome:.applied(.ignored)),
             R.TeamOutcome(player:.first,outcome:.applied(.ignored))
         ])
-        precondition(first.lives==3 && first.shieldCharges==0)
+        precondition(first.lives==2 && first.shieldCharges==0)
         precondition(second.lives==2 && second.invincible==3)
-        first.advance(dt:1)
+        first.advance(dt:3)
         second.advance(dt:3)
         let next=R.applyTeam([.shipBoss,.partnerRock(0)],
             first:&first,second:&second,level:cfgLevel,difficulty:.normal,
@@ -74,10 +74,10 @@ import Foundation
             isRobot:[false])
         precondition(next == [
             R.TeamOutcome(player:.first,outcome:.applied(
-                .lifeLost(remaining:2,respawnProtection:3,cause:"ZDERZENIE Z BOSSEM"))),
+                .lifeLost(remaining:1,respawnProtection:3,cause:"ZDERZENIE Z BOSSEM"))),
             R.TeamOutcome(player:.second,outcome:.externalDefenseAbsorbed)
         ])
-        precondition(second.lives==2 && first.lives==2)
+        precondition(second.lives==2 && first.lives==1)
         let pending=R.applyTeam([.partnerRock(0)],first:&first,second:&second,
             level:cfgLevel,difficulty:.normal,defenseFirst:.noneAbsorbed,
             defenseSecond:.unverified,isRobot:[])
