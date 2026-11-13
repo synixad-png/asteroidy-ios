@@ -71,5 +71,10 @@ for content in (kestrel,bastion):
 assert "originalShip(shipType" not in renderer
 assert "case originalShip(Int,String)" in renderer
 assert "pc602-orbit-renderer-recovery" in orbit
+assert "SourcePC609Zlib.inflateRFC1950" in kestrel
+assert "SourcePC609Zlib.inflateRFC1950" in bastion
+assert ".fileImporter(" not in fleet
+assert "h11-import-kestrel603" not in fleet
+assert "h11-import-bastion606" not in fleet
 
 print("PASS PC609 starter fleet 0/1/2, live H55 model swap, independent W3 new game, old-profile protection and renderer recovery")
