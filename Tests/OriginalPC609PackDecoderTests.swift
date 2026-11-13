@@ -28,7 +28,9 @@ enum H55SourceMechanics580 {
         guard let rawK=SourcePC609Zlib.inflateRFC1950(compK,exactBytes:9_495_364),
               let rawB=SourcePC609Zlib.inflateRFC1950(compB,exactBytes:8_284_756)
         else {fatalError("Original PC609 RFC1950 to Apple DEFLATE failed")}
+        FileHandle.standardError.write(Data(("DECODER KESTREL raw bytes=\(rawK.count), SHA=\(SourceKestrel603.sha256(rawK))\n").utf8))
         precondition(SourceKestrel603.sha256(rawK)==SourceKestrel603.meshSHA256)
+        FileHandle.standardError.write(Data(("DECODER BASTION raw bytes=\(rawB.count), SHA=\(SourceBastion606.sha256(rawB))\n").utf8))
         precondition(SourceBastion606.sha256(rawB)==SourceBastion606.meshSHA256)
         print("PASS PC609 RFC1950/Apple raw DEFLATE: byte-identical original meshes")
         // Fail closed on invalid RFC1950 header, wrong requested output
@@ -38,7 +40,7 @@ enum H55SourceMechanics580 {
         precondition(SourcePC609Zlib.inflateRFC1950(bad,
             exactBytes:9_495_364)==nil)
         precondition(SourcePC609Zlib.inflateRFC1950(compK,
-            exactBytes:9_495_363)==nil)
+            exactBytes:9_495_365)==nil)
         var wrong=kestrelBytes
         wrong[wrong.count-1]^=0x01
         precondition((try? SourceKestrel603.decode(wrong))==nil)
