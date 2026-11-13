@@ -31,9 +31,14 @@ for s in (packer,importer):
 assert "6031" in packer and "expectedMagic:6031" in importer
 assert "expectedGPUVertexCount=189_906" in importer
 assert "SourceBakedShipMesh(" in importer
-assert "try SourceKestrel603.install(from:file)" in fleet
-assert 'WCZYTAJ MODEL KESTREL PC609 Z PLIKÓW' in fleet
-assert "h11-import-kestrel603" in fleet
+assert "try SourceKestrel603.install(from:file)" not in fleet
+assert "h11-import-kestrel603" not in fleet
+assert "h11-import-bastion606" not in fleet
+assert 'WCZYTAJ MODEL KESTREL PC609 Z PLIKÓW' not in fleet
+assert 'WCZYTAJ MODEL BASTION PC609 Z PLIKÓW' not in fleet
+assert "h55-pc609-embedded-model-error" in fleet
+assert "SourcePC609Zlib.inflateRFC1950" in importer
+assert "SourcePC609Zlib.inflateRFC1950" in read("ASTEROIDYiOS/SourceBastion606.swift")
 assert 'case 0:return kestrelAssetURL == nil ? nil : "SOURCE-PC603-KESTREL"' in mechanics
 assert "SourceKestrel603.load()" in hangar and "originalModelVerified" in hangar
 assert "kestrelNodeName" in hangar and "kestrelNodeName" in hangar_scene
@@ -48,4 +53,4 @@ assert "if selectedShip==0" in menu and "SourceKestrel603.load()" in menu
 assert 'id==0 ? "Kestrel-PC609-ShipType0"' in menu
 assert "SourceBakedShipMesh" in read("ASTEROIDYiOS/SourceVanguardMesh431.swift")
 assert 'case 2:return bastionAssetURL == nil ? nil : "SOURCE-PC606-BASTION"' in mechanics
-print("PASS KESTREL PC609: SHA, 6031 GPU ABI, authentic import, H55/H290/C279/W3, PC shipType=0 dynamics, Vanguard/Bastion regressions")
+print("PASS KESTREL PC609: SHA, 6031 GPU ABI, embedded pack runtime decoder, H55/H290/C279/W3, PC shipType=0 dynamics, Vanguard/Bastion regressions")
