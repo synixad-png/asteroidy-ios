@@ -9,6 +9,9 @@ on:
       - 'ASTEROIDYiOS/PC602HomeShipPose291.swift'
       - 'ASTEROIDYiOS/PC602HomeFlight291.swift'
       - 'Tests/BastionMesh606Tests.swift'
+      - 'Tests/IOSOriginalCombatHUD331Contract.py'
+      - 'ASTEROIDYiOS/SourcePauseMenu568.swift'
+      - 'ASTEROIDYiOS/Sector01Scene568.swift'
       - 'Tools/build_bastion606_ios_pack.py'
   workflow_dispatch:
 permissions:
@@ -39,3 +42,7 @@ jobs:
           assert 'case 2:return bastionAssetURL == nil ? nil' in physics
           print('PASS PC609 Bastion source checksums, separate asset registration, no Vanguard substitution')
           PY
+      - name: Verify shared CARBONIS/H290 pause HUD contract
+        run: |
+          set -euo pipefail
+          python3 Tests/IOSOriginalCombatHUD331Contract.py
