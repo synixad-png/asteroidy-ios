@@ -6,6 +6,9 @@ import Foundation
 /// Stored separately so old v568 planet settings decode without migration loss.
 struct SourceLavaLightSettings287: Codable, Equatable {
     static let key = "ASTEROIDY.v568.PlanetLavaBrightness287"
+    /// Live renderers read this integer each frame and decode the value
+    /// only after a save, as SourcePlanetGraphicsSettings568 does.
+    static let revisionKey = key + ".revision"
     static let minimum = 0
     static let maximum = 400
     static let step = 5
@@ -23,6 +26,8 @@ struct SourceLavaLightSettings287: Codable, Equatable {
         copy.setBrightness(copy.brightnessPercent)
         if let bytes=try? JSONEncoder().encode(copy) {
             defaults.set(bytes,forKey:Self.key)
+            defaults.set(defaults.integer(forKey:Self.revisionKey) &+ 1,
+                         forKey:Self.revisionKey)
         }
     }
     static func load(_ defaults: UserDefaults = .standard) -> Self {
