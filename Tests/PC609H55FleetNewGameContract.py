@@ -30,7 +30,7 @@ for coefficient in (
     "[0.94,1,1.08,", "[2.4,3.4,5,",
 ):
     assert coefficient in models,coefficient
-assert "shipType==0 ? -1 : shipType==2 ? 1 : 0" in start
+assert "shipType == 0 ? -1 : shipType == 2 ? 1 : 0" in start
 assert 'ForEach(0..<3,id:\\.self)' in ui
 assert 'newShipType568=type' in ui
 assert 'shipType:newShipType568' in ui
