@@ -9,6 +9,8 @@ on:
       - .github/workflows/build-ios-boreas-test-05.yml
       - Tools/verify_embedded_pc609_assets.py
       - Tests/PC609H55FleetNewGameContract.py
+      - Tests/PC602HomeScene291Contract.py
+      - Tests/IOSKestrel603SourceContract.py
       - ASTEROIDYiOS/H55SourceMechanics580.swift
       - ASTEROIDYiOS/H55ScenePage580.swift
       - ASTEROIDYiOS/PC602HomeWorldPage291.swift
