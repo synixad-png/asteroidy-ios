@@ -21,10 +21,10 @@ import Foundation
         precondition(hit.contacts == [.shipRock(0)])
         precondition(hit.damage == [
             CombatContactRouter96.TeamOutcome(player:.first,
-                outcome:.applied(.shieldAbsorbed(
-                    remaining:0,cause:"ASTEROIDA")))
+                outcome:.applied(.lifeLost(
+                    remaining:2,respawnProtection:3,cause:"ASTEROIDA")))
         ])
-        precondition(encounter.firstSurvival.lives==3 &&
+        precondition(encounter.firstSurvival.lives==2 &&
                      encounter.firstSurvival.shieldCharges==0)
         let rockPosition=encounter.rocks[0].position
         precondition(rockPosition.x != 660)
@@ -80,6 +80,6 @@ import Foundation
                                       defenseFirst:.noneAbsorbed)
         precondition(blocked.contacts.isEmpty && blocked.damage.isEmpty)
         precondition(coop.pickups[0].position==oldPickup)
-        print("PASS: integrated Physics68 pickup/contact/WithSecond62 -> ApplyHit96 shields/lives; verified defense and scene gates")
+        print("PASS: PC608 integrated Physics68 pickup/contact/WithSecond62 -> ApplyHit96, no passive reserve absorption; verified defense and scene gates")
     }
 }
