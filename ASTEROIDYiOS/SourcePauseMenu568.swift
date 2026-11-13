@@ -74,6 +74,5 @@ struct SourcePauseMenu568:View {
                 .stroke(Color(red:0.24,green:0.38,blue:0.44),lineWidth:1))
             .padding(12)
         }
-        .accessibilityIdentifier("source-common-pause568")
     }
 }
