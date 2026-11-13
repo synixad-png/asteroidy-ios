@@ -58,11 +58,12 @@ final class PC602HomeWorldDriver291:ObservableObject {
     private static func vanguardEquipment291(
         _ state:H55SourceMechanics580.State)
         ->PC602HomeFlight291.Equipment? {
-        guard state.valid,(1...2).contains(state.selectedShip),
+        guard state.valid,(0...2).contains(state.selectedShip),
               H55SourceMechanics580.registeredModelName(
                 forShip:state.selectedShip) != nil else{return nil}
         return PC602HomeFlight291.Equipment(
-            craft:state.selectedShip==2 ? .bastion : .vanguard,
+            craft:state.selectedShip==0 ? .kestrel :
+                  state.selectedShip==2 ? .bastion : .vanguard,
             engineLevel:state.engine,
             thrusterRank:state.thruster,
             stabilizerLevel:state.stabilizer)
@@ -76,13 +77,14 @@ final class PC602HomeWorldDriver291:ObservableObject {
         mechanics:H55SourceMechanics580.State)
         ->PC602HomeWeaponTest292.Settings? {
         guard Sector01Shop568.validate(shop),mechanics.valid,
-              (1...2).contains(mechanics.selectedShip),
+              (0...2).contains(mechanics.selectedShip),
               let gun=PC602HomeWeaponTest292.Weapon(rawValue:shop.weapon.rawValue)
         else{return nil}
         return PC602HomeWeaponTest292.Settings(
             weapon:gun,upgrade:shop.upgradeLevel,
             rapid:shop.rapidLevel,cooling:mechanics.cooling,
-            fireRateScale:mechanics.selectedShip==2 ? 0.96:1,
+            fireRateScale:mechanics.selectedShip==0 ? 1.08 :
+                          mechanics.selectedShip==2 ? 0.96 : 1,
             fireRateTalent:1/(1+0.06*Float(mechanics.rateRank)),
             ionAmmo:shop.ionAmmo)
     }
@@ -125,7 +127,8 @@ final class PC602HomeWorldDriver291:ObservableObject {
         let playerModelReady=ship==1
             ? exists("Vanguard431Source","mesh") &&
               exists("Vanguard431Base","jpg")
-            : ship==2 && SourceBastion606.load() != nil
+            : ship==2 ? SourceBastion606.load() != nil
+            : ship==0 && SourceKestrel603.load() != nil
         return exists("PC602Home290HeightMap","bin") &&
                exists("PC602OrbitBelt51","bin") &&
                playerModelReady &&
