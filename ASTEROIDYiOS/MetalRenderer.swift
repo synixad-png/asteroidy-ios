@@ -80,6 +80,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private let planetIndices: MTLBuffer
     private let planetIndexCount: Int
     private let planetAnimator: BoreasMorphRenderer556
+    private let planetNodeTracks: BoreasNodeTracks556
     private var planetMorphScratch: [AssetMesh.Vertex]
     private var planetAnimationTime: Double = 0
     private var lastPlanetMorphUpload: Double = -1
@@ -391,6 +392,14 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         planetAnimator = try BoreasMorphRenderer556(source:BoreasMorph556(data:Data(contentsOf:animURL)),
                                                     bindingData:Data(contentsOf:bindingURL), mesh:planet)
+        guard let tracksURL=AnimatedPlanetTestSlot556.resourceURL(
+                AnimatedPlanetTestSlot556.nodeTracksName,"asnt") else {
+            throw NSError(domain:"ASTEROIDY iOS",code:563,
+                userInfo:[NSLocalizedDescriptionKey:
+                    "Brak oryginalnych 96 kanałów animacji BOREAS / ASNT"])
+        }
+        planetNodeTracks=try BoreasNodeTracks556(
+            data:Data(contentsOf:tracksURL),mesh:planet)
         planetMorphScratch = planetAnimator.makeScratchVertices()
     }
 
@@ -601,15 +610,25 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         }
         let morphStarted = ProcessInfo.processInfo.systemUptime
         planetAnimator.updateVertices(seconds: seconds, into: &planetMorphScratch)
+        // The other 96 authored GLB channels animate the 24 droplets and
+        // 24 liquid necks using this SAME clock and GPU triple-buffer.
+        // No second scene, independent GPU renderer or fake particles.
+        planetNodeTracks.updateVertices(seconds:seconds,
+                                        into:&planetMorphScratch)
         telemetry.record(.morphCPU,
             seconds: ProcessInfo.processInfo.systemUptime - morphStarted)
         let range = planetAnimator.dynamicVertexRange
         let strideBytes = MemoryLayout<AssetMesh.Vertex>.stride
         let startByte = range.lowerBound * strideBytes
         let dynamicBytes = range.count * strideBytes
+        let nodes = planetNodeTracks.dynamicVertexRange
+        let nodeStartByte = nodes.lowerBound * strideBytes
+        let nodeBytes = nodes.count * strideBytes
         let target = planetVertexBuffers[slot]
         guard startByte <= target.length &&
-              dynamicBytes <= target.length - startByte else {
+              dynamicBytes <= target.length - startByte &&
+              nodeStartByte <= target.length &&
+              nodeBytes <= target.length - nodeStartByte else {
             telemetry.noteUpload(success: false)
             planetBufferSlots.cancelWrite(slot)
             return
@@ -620,6 +639,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             if let p = bytes.baseAddress {
                 memcpy(target.contents().advanced(by:startByte),
                        p.advanced(by:startByte),dynamicBytes)
+                memcpy(target.contents().advanced(by:nodeStartByte),
+                       p.advanced(by:nodeStartByte),nodeBytes)
             }
         }
         telemetry.record(.uploadCPU,
