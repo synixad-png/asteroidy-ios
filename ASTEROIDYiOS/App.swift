@@ -317,29 +317,48 @@ struct GameView: View {
     // Original W3 start action: preserve an active profile before reset.
     // Current iOS supports one actual CARBONIS ship. Source 2-player
     // gameplay and the 62-second story cinematic are NOT yet ported.
-    private func startNewGameFromW3(_ choice:SourceNewGameSelection568)->Bool {
-        // PC602 Intro41.StartCampaign: with PlanetHub50 -> EnterOrbit50(true).
-        // NewGame568 alone owns the transactional H11 backup/reset. Verify
-        // actual assets BEFORE making a new profile; never fabricate C279.
-        let selected=H55SourceMechanics580.load().selectedShip
-        // PC Campaign37: start with the exact ship selected in H55, never
-        // silently substitute Vanguard. Verify the model before archive/reset.
-        guard choice.players==1,choice.shipType==selected,
-              let craft=PC602HomeFlight291.Craft(rawValue:selected),
-              (0...2).contains(selected),
-              H55SourceMechanics580.registeredModelName(forShip:selected) != nil,
-              PC602HomeWorldDriver291.resourcesInstalled,
-              (try? PC602NewHome290.load()) != nil,
-              (try? PC602OrbitBelt51.load()) != nil,
-              PC602HomeFlight291.Equipment(craft:craft) != nil
-        else{return false}
-        guard SourceNewGame568.create(choice) else{return false}
-        campaign=CampaignStore556.load()
-        do {
-            try homeWorld291.start(progress:campaign)
-        } catch {
-            return false
+    private func startNewGameFromW3(_ choice:SourceNewGameSelection568)->String? {
+        // PC609 ProgramW3Native315.NativeStartFresh342 and Campaign37:
+        // preserve old profile until ALL source assets and the original orbit
+        // session for the explicitly selected new ship have passed preflight.
+        guard sourceSector01==nil,choice.players==1 else {
+            return "TRWA INNA MISJA LUB NIEDOSTĘPNY TRYB ZAŁOGI"
         }
+        guard let craft=PC602HomeFlight291.Craft(rawValue:choice.shipType),
+              (0...2).contains(choice.shipType),
+              H55SourceMechanics580.registeredModelName(
+                  forShip:choice.shipType) != nil,
+              PC602HomeFlight291.Equipment(craft:craft) != nil else {
+            return "BRAK ORYGINALNEGO MODELU WYBRANEGO STATKU PC609"
+        }
+        guard Sector01CarbonisPreview568.isAvailable else {
+            return "BRAK ZWERYFIKOWANYCH ZASOBÓW CARBONIS 01 — PROFIL NIEZMIENIONY"
+        }
+        guard PC602HomeWorldDriver291.resourcesInstalled(
+                  forShip:choice.shipType) else {
+            return "BRAK ZASOBÓW H290 LUB WYBRANEGO STATKU — PROFIL NIEZMIENIONY"
+        }
+        // Use the same one canonical PC602 orbit constructor, but with
+        // the new campaign's initial ship and service profile. This MUST
+        // precede destructive profile reset: no split-brain previous craft.
+        var freshMechanics=H55SourceMechanics580.State()
+        freshMechanics.selectedShip=choice.shipType
+        let freshShop=Sector01Shop568.State(lives:SourceNewGame568.startingLives(
+            difficulty:choice.difficulty,shipType:choice.shipType))
+        do {
+            try homeWorld291.start(
+                progress:CampaignProgress556(),
+                mechanicsOverride:freshMechanics,
+                shopOverride:freshShop)
+        } catch {
+            return "NIE MOŻNA URUCHOMIĆ ORYGINALNEJ ORBITY H290: " +
+                   String(describing:error) + " — PROFIL NIEZMIENIONY"
+        }
+        guard SourceNewGame568.create(choice) else {
+            homeWorld291.stop()
+            return "NIE UDAŁO SIĘ ZABEZPIECZYĆ POPRZEDNIEGO PROFILU — BRAK ZMIAN"
+        }
+        campaign=CampaignStore556.load()
         sourceSector01=nil
         sourceSector01Setup=nil
         returnHomeWorldAfterCarbonis291=false
@@ -352,7 +371,7 @@ struct GameView: View {
         audio.enterOrbit602()
         showingHomeWorld291=true
         showMainMenu=false
-        return true
+        return nil
     }
     // Windows Program.cs:94 + UiW3NativeLayout315.DrawW3Splash323:
     // music preparation -> persistent press-Enter W3 splash -> HOME.
