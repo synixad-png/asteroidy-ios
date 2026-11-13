@@ -132,7 +132,7 @@ struct H55WorkshopPanel580:View {
     }
     @ViewBuilder private func fleetTab()->some View {
                             headline("01 / FLOTA","SZEŚĆ STATKÓW · ŹRÓDŁO CAMPAIGN37")
-                            if H55SourceMechanics580.registeredModelName(forShip:0)==nil {
+                            if !H55PlayerShip580.originalModelVerified(0) {
                                 Button("WCZYTAJ MODEL KESTREL PC609 Z PLIKÓW") {
                                     showKestrelImporter603=true
                                 }
@@ -143,7 +143,7 @@ struct H55WorkshopPanel580:View {
                                 .background(gold)
                                 .accessibilityIdentifier("h11-import-kestrel603")
                             }
-                            if H55SourceMechanics580.registeredModelName(forShip:2)==nil {
+                            if !H55PlayerShip580.originalModelVerified(2) {
                                 Button("WCZYTAJ MODEL BASTION PC609 Z PLIKÓW") {
                                     showBastionImporter606=true
                                 }
@@ -159,7 +159,7 @@ struct H55WorkshopPanel580:View {
                                     type:i,engine:rules.engine,
                                     stabilizer:rules.stabilizer,
                                     thruster:rules.thruster)
-                                let modeled=H55SourceMechanics580.registeredModelName(forShip:i) != nil
+                                let modeled=H55PlayerShip580.originalModelVerified(i)
                                 let owned=H55SourceMechanics580.shipOwned(i,state:rules)
                                 let price=H55SourceMechanics580.shipPrice(i)
                                 let detail="A:\(Int(stats?.acceleration ?? 0)) · V:\(Int(stats?.topSpeed ?? 0)) · SKR:\(Int((stats?.turnSpeed ?? 0)*100)/100) · MASA:\(stats?.mass ?? 0)"
