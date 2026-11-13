@@ -69,8 +69,24 @@ final class PC609RuntimeUITests: XCTestCase {
         if accept.waitForExistence(timeout:3) {accept.tap()}
 
         let orbit=byID(app,"pc602-orbit-live-metal")
-        XCTAssertTrue(orbit.waitForExistence(timeout:120),
-                      "Nowa kampania nie otworzyła H290 Metal")
+        if !orbit.waitForExistence(timeout:50) {
+            // Record exact visible application error in a REAL simulator
+            // without inventing an alternative scene or claiming success.
+            let texts=app.staticTexts.allElementsBoundByIndex.prefix(90)
+                .map { $0.label }.filter { !$0.isEmpty }
+            let buttons=app.buttons.allElementsBoundByIndex.prefix(60)
+                .map { "\($0.identifier):\($0.label)" }
+            print("PC609_NEW_GAME_FAILURE_VISIBLE_TEXTS: \(texts)")
+            print("PC609_NEW_GAME_FAILURE_VISIBLE_BUTTONS: \(buttons)")
+            let failureShot=XCTAttachment(
+                screenshot:XCUIScreen.main.screenshot())
+            failureShot.name="REAL-SIM-PC609-newgame-orbit-failure"
+            failureShot.lifetime = .keepAlways
+            add(failureShot)
+            XCTFail("Nowa kampania nie otworzyła H290 Metal. " +
+                    "Widoczne komunikaty: \(texts)")
+            return
+        }
         XCTAssertTrue(app.buttons["pc602-orbit-pause"].waitForExistence(timeout:20))
         XCTAssertFalse(byID(app,"pc602-orbit-renderer-recovery").exists,
                        "H290 uruchomił błąd renderer missing/metal")
