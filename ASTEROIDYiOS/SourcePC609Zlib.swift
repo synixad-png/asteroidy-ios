@@ -12,8 +12,8 @@ enum SourcePC609Zlib {
             return nil
         }
         let cmf=Int(input[0]),flg=Int(input[1])
-        guard cmf&0x0F==8,cmf>>4<=7,(cmf*256+flg)%31==0,
-              (flg&0x20)==0 else { return nil }
+        guard (cmf & 0x0F)==8,(cmf >> 4)<=7,
+              ((cmf*256+flg)%31)==0,(flg & 0x20)==0 else {return nil}
         let deflate=Data(input[2..<(input.count-4)])
         var output=Data(count:exactBytes)
         let written=output.withUnsafeMutableBytes { dst -> Int in
