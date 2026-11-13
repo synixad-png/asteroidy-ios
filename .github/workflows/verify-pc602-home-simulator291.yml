@@ -17,7 +17,9 @@ on:
 
 concurrency:
   group: pc609-real-ipad-smoke-${{ github.ref }}
-  cancel-in-progress: true
+  # Preserve an actively running physical simulator test; do not cancel it
+  # solely because a later revision was committed.
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -52,6 +54,16 @@ jobs:
           python3 Tools/materialize_pc586_original_resources.py
           python3 Tools/verify_embedded_pc609_assets.py --assets ASTEROIDYiOS/Assets --boreas
           python3 Tests/PC602HomeWorldUI291Contract.py
+      - name: Decode the original bundled PC609 KESTREL and BASTION with native Swift
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -Onone ASTEROIDYiOS/SourcePC609Zlib.swift ASTEROIDYiOS/SourceVanguardMesh431.swift ASTEROIDYiOS/SourceKestrel603.swift ASTEROIDYiOS/SourceBastion606.swift Tests/OriginalPC609PackDecoderTests.swift -o /tmp/pc609-simulator-preflight
+          /tmp/pc609-simulator-preflight > diagnostics/original-pc609-runtime-decode.txt 2>&1 || {
+            cat diagnostics/original-pc609-runtime-decode.txt
+            exit 1
+          }
+          cat diagnostics/original-pc609-runtime-decode.txt
       - name: Generate original native app / XCTest targets
         shell: bash
         run: |
