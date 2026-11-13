@@ -31,18 +31,18 @@ import Foundation
                 guardian:.unverified,talent:.unverified,
                 vitals:vitals,guardianState:guardian)
         }
-        // HitByBoss bought shield BEFORE Campaign37 guardian.
-        precondition(collide() == .applied(.shieldAbsorbed(
-            remaining:0,cause:"ASTEROIDA")))
-        precondition(guardian.charges==1 && vitals.armor==25)
-        survival.advance(dt:1)
+        // PC608-609: reserve shield charges are not passive per-hit guards.
+        // HitByBoss invokes Campaign37 Guardian BEFORE active Tarcza145.
         precondition(collide() == .guardianAbsorbed)
         precondition(guardian.charges==0 && survival.invincible==1.2)
-        precondition(vitals.armor==25 && survival.lives==3)
-        survival.advance(dt:1.2)
+        precondition(survival.shieldCharges==1 &&
+                     vitals.armor==25 && survival.lives==3)
+        survival.advance(dt:1)
+        precondition(collide() == .ignored)
+        survival.advance(dt:0.2)
         precondition(collide() == .talentAbsorbed)
         precondition(vitals.armor==0 && vitals.hull==59)
-        precondition(survival.lives==3)
-        print("PASS: Guardian37 source single per-sector charge, 1.2s immunity, strict HitByBoss shield -> drone -> armor/hull priority")
+        precondition(survival.shieldCharges==1 && survival.lives==3)
+        print("PASS PC608-609: Guardian37 charge, respawn immunity, no passive reserve hit, then real armor/hull")
     }
 }
