@@ -462,11 +462,23 @@ struct W3MainMenu568: View {
             Text("DOTKNIJ FUNKCJĘ / W3 · NAWIGACJA NATYWNA")
                 .foregroundStyle(muted)
             Spacer()
+            // Explicitly requested temporary PC609 BOREAS05 preview.
+            // Its own independently verified assets are mandatory. It is
+            // NOT an eighth production W3 action or an unlocked mission.
+            Button("BOREAS 05 · TEST PLANETY") {
+                openBoreasTest()
+            }
+            .font(.system(size:compact ? 10 : 12,
+                          weight:.bold,design:.monospaced))
+            .foregroundStyle(AnimatedPlanetTestSlot556.sourceAssetsVerified
+                             ? cyan : muted)
+            .frame(minHeight:32)
+            .disabled(!AnimatedPlanetTestSlot556.sourceAssetsVerified)
+            .accessibilityIdentifier("w3-boreas05-test-direct")
             Text("UI W3 / METAL")
                 .foregroundStyle(gold)
-            // Windows ProgramW3Native315 does NOT display a test-scene
-            // entry in the normal W3 HOME. It must never lead users
-            // into the older diagnostic arena unintentionally.
+            // Windows ProgramW3Native315 does NOT display the OLD
+            // arbitrary diagnostic arena in the normal W3 HOME.
             if ProcessInfo.processInfo.environment["ASTEROIDY_DEBUG_MENU"] == "1" {
                 Button("SCENA TESTOWA") { openDiagnostic() }
                     .fontWeight(.bold)
