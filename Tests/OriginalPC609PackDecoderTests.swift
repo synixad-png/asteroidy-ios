@@ -20,33 +20,28 @@ enum H55SourceMechanics580 {
         let kestrelBytes=try Data(contentsOf:kestrelFile)
         let bastionBytes=try Data(contentsOf:bastionFile)
         print("PC609 runtime decoder test: Kestrel bytes=\(kestrelBytes.count); Bastion bytes=\(bastionBytes.count)")
-        func diagnose(_ bytes:Data, name:String, expectedMagic:Int) {
-            func note(_ message:String) {
-                FileHandle.standardError.write(Data((message+"\n").utf8))
-            }
-            func word(_ index:Int)->Int {
-                Int(bytes[index]) | Int(bytes[index+1])<<8 |
-                Int(bytes[index+2])<<16 | Int(bytes[index+3])<<24
-            }
-            let packed=word(12),jpeg=word(16),expectedRaw=word(8)
-            note("DIAG \(name) transport: compressed=\(packed) jpeg=\(jpeg) uncompressed=\(expectedRaw), total=\(bytes.count)")
-            guard bytes.count==20+packed+jpeg else {note("DIAG invalid transport");return}
-            let compressed=Data(bytes[20..<(20+packed)])
-            do {
-                let raw=try (compressed as NSData).decompressed(using:.zlib) as Data
-                note("DIAG \(name) NSData.decompressed success: \(raw.count), SHA256=\(SourceKestrel603.sha256(raw))")
-                do {
-                    let mesh=try SourceBakedShipMesh(data:raw,expectedMagic:expectedMagic)
-                    note("DIAG \(name) mesh parsed: vertices \(mesh.vertexCount), cpu \(mesh.cpuFaceCount)")
-                } catch {
-                    note("DIAG \(name) SOURCE BAKED MESH parse FAILED: \(error)")
-                }
-            } catch {
-                note("DIAG \(name) Apple Foundation zlib decompression FAILED: \(error)")
-            }
-        }
-        diagnose(kestrelBytes,name:"KESTREL",expectedMagic:6031)
-        diagnose(bastionBytes,name:"BASTION",expectedMagic:6061)
+        // The ORIGINAL source packs include a standard RFC1950 header.
+        // Verify the same Apple Compression path used by the game. Tests
+        // must actually decompress, parse and SHA-check both full models.
+        let compK=Data(kestrelBytes[20..<(20+2_201_881)])
+        let compB=Data(bastionBytes[20..<(20+1_942_595)])
+        guard let rawK=SourcePC609Zlib.inflateRFC1950(compK,exactBytes:9_495_364),
+              let rawB=SourcePC609Zlib.inflateRFC1950(compB,exactBytes:8_284_756)
+        else {fatalError("Original PC609 RFC1950 to Apple DEFLATE failed")}
+        precondition(SourceKestrel603.sha256(rawK)==SourceKestrel603.meshSHA256)
+        precondition(SourceBastion606.sha256(rawB)==SourceBastion606.meshSHA256)
+        print("PASS PC609 RFC1950/Apple raw DEFLATE: byte-identical original meshes")
+        // Fail closed on invalid RFC1950 header, wrong requested output
+        // size, and mutated original immutable PC609 pack (source SHA).
+        var bad=compK
+        bad[0]=0
+        precondition(SourcePC609Zlib.inflateRFC1950(bad,
+            exactBytes:9_495_364)==nil)
+        precondition(SourcePC609Zlib.inflateRFC1950(compK,
+            exactBytes:9_495_363)==nil)
+        var wrong=kestrelBytes
+        wrong[wrong.count-1]^=0x01
+        precondition((try? SourceKestrel603.decode(wrong))==nil)
         do {
             let model=try SourceKestrel603.decode(kestrelBytes)
             precondition(model.mesh.vertexCount==189906 && model.mesh.engines.count==2)
