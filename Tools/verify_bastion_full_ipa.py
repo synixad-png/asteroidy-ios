@@ -3,7 +3,7 @@
 
 The SHA-256 values come from the complete PC609 iPhone/iPad IPA build.
 This complements (does not replace) verify_ipa.py's arm64/CRC checks.
-BASTION_PC609.bastion is intentionally a separate, one-time imported model.
+BASTION_PC609.bastion must be an original SHA-256-verified bundled iOS resource.
 """
 from hashlib import sha256
 from pathlib import Path
@@ -47,9 +47,15 @@ def audit(ipa:Path)->None:
             assert path in archive.namelist(), f"Missing original game resource: {name}"
             digest = sha256(archive.read(path)).hexdigest()
             assert digest == expected, f"Original resource changed: {name} ({digest})"
-        print(f"PASS full v609 Release game: {len(REQUIRED)} restored original assets verified SHA256, no Debug launcher, IPA CRC")
+        bastion=f"{root}/BASTION_PC609.bastion"
+        assert bastion in archive.namelist(), "BASTION missing: IPA is not standalone"
+        packed=archive.read(bastion)
+        assert len(packed)==2_472_062, "BASTION size mismatch"
+        assert sha256(packed).hexdigest()=="d18d651aab74bebdb2215940c0774c8aa3f0aff9101c0b7122c336110b3f5e7c", "BASTION SHA mismatch"
+        assert packed[:8]==b"BST60901", "BASTION transport magic mismatch"
+        print(f"PASS full v609 Release game: {len(REQUIRED)} original assets and bundled BASTION SHA256, no Debug launcher, IPA CRC")
         print(f"IPA: {ipa.name} / {ipa.stat().st_size:,} bytes")
-        print("BASTION is imported separately via Files / H55 Fleet; not bundled in IPA")
+        print("BASTION is included inside IPA and is accessible via Bundle.main; no import required")
 
 if __name__ == "__main__":
     audit(Path(sys.argv[1]))
