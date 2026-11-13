@@ -360,12 +360,13 @@ enum H55SourceMechanics580 {
 
     static func registeredModelName(forShip id:Int)->String? {
         switch id {
-        // A file's presence alone does not prove that SceneKit/Metal can
-        // use it. Original pack SHA, mesh ABI and JPEG are checked by the
-        // shared, cached source decoders before a ship can be equipped.
-        case 0:return SourceKestrel603.load() != nil ? "SOURCE-PC603-KESTREL" : nil
+        // Pure campaign registration stays Foundation-only for source
+        // PC609 mechanics/test portability. Native iOS gameplay and H55
+        // verify full pack SHA, GPU ABI and JPEG with the source decoders
+        // before a model is selected or rendered.
+        case 0:return kestrelAssetURL == nil ? nil : "SOURCE-PC603-KESTREL"
         case 1:return "SOURCE-C279-VANGUARD"
-        case 2:return SourceBastion606.load() != nil ? "SOURCE-PC606-BASTION" : nil
+        case 2:return bastionAssetURL == nil ? nil : "SOURCE-PC606-BASTION"
         default:return nil
         }
     }
