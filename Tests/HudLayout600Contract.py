@@ -24,7 +24,11 @@ assert "viewport:combatHUDLayout" in scene
 assert "onPreview:{ updated in" in scene
 assert ".sheet(isPresented:$showingHudEditor600)" not in scene
 assert "guard userPaused && !showingHudEditor600" in scene
-assert "if userPaused && session.hud.phase == .playing && !showingService && !showingHudEditor600" in scene
+# The common pause overlay is gated separately from settings, save slots and
+# the live HUD editor. Preserve those exclusions instead of matching whitespace.
+assert re.search(r"if userPaused && session\\.hud\\.phase == \\.playing &&\\s*"
+                 r"!showingService && !showingHudEditor600 &&\\s*"
+                 r"!showingMissionSettings568 && !showingSaveSlots61",scene)
 geometry=(root/"ASTEROIDYiOS/HudEditorGeometry.swift").read_text()
 assert 'struct HudLayoutEditor600:View' in editor
 assert 'HudEditorTouchCanvas(' in editor
