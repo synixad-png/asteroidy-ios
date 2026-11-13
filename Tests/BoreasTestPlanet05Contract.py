@@ -55,6 +55,14 @@ assert 'showingBoreasTest05=true' in app
 assert 'onBoreasTest:openBoreasTest' in w3
 assert 'onBoreasTest()' in app
 assert 'campaign-boreas05-animated-test' in app
+assert 'w3-boreas05-test-direct' in w3
+assert 'Button("BOREAS 05 · TEST PLANETY")' in w3
+assert '.disabled(!AnimatedPlanetTestSlot556.sourceAssetsVerified)' in w3
+assert app.index('campaign-boreas05-animated-test') < app.index('if progress.selectedSector == 1 {')
+# The original W3 menu has seven production actions. This temporary
+# explicit test must not become another production menu page or unlock.
+assert 'case campaign = "KAMPANIA"' in w3
+assert 'case boreas' not in w3
 assert 'returnFromBoreasTest05' in app
 assert 'reopenAtlasAfterCarbonis=true' in app
 assert 'boreas-test-return-atlas' in page
