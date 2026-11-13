@@ -26,5 +26,19 @@ assert '"ASTEROIDY/backups61"' in profiles
 assert 'bytes.write(to:target,options:.atomic)' in profiles
 assert 'CampaignStore556.save(fresh,defaults:defaults)' in profiles
 assert 'guard request.players==1' in profiles
+assert 'var shipType:Int=1' in profiles
+assert 'request.shipType' in profiles
+assert 'lives:startingLives(difficulty:request.difficulty,' in profiles
+assert 'selected.selectedShip=request.shipType' in profiles
+assert 'H55SourceMechanics580.save(selected,defaults:defaults)' in profiles
+assert 'shipType:H55SourceMechanics580.load().selectedShip' in ui
+assert 'w3-new-selected-ship-lives' in ui
+assert 'shipType:shipType' in ui
+assert '!playable' in ui
+assert 'choice.shipType==selected' in app
+assert 'registeredModelName(forShip:selected) != nil' in app
+assert 'shipType:state.shipType' in app
+assert 'shipType:H55SourceMechanics580.load().selectedShip' in app
+assert 'PC602HomeFlight291.Equipment(craft:craft)' in app
 assert '62-sekundowy prolog Story359 nie jest jeszcze przeniesiony' in ui
-print("PASS W3 native NEW GAME source / fail-closed boundaries")
+print("PASS PC609 W3 NEW GAME: exact selected Kestrel/Vanguard/Bastion lives, safe source profile reset and mission intro")
