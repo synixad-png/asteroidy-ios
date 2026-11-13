@@ -643,6 +643,57 @@ struct W3MainMenu568: View {
             players:newPlayers568,difficulty:newDifficulty568,
             shipType:newShipType568))
     }
+    /// Original Campaign37 starter ship selection shown inside W3 NEW GAME.
+    /// Separate from the larger page body to keep SwiftUI type checking fast.
+    private func newGameShipSelector(compact:Bool)->some View {
+        VStack(alignment:.leading,spacing:compact ? 6 : 10) {
+            // Campaign37.ShipNames/HangarClick: original starter craft
+            // 0 Kestrel, 1 Vanguard, 2 Bastion, each independently balanced.
+            Text("STATEK / WYBIERZ PRZED ROZPOCZĘCIEM")
+                .font(.system(size:compact ? 10 : 12,weight:.bold,design:.monospaced))
+                .foregroundStyle(cyan)
+            HStack(spacing:compact ? 5 : 10) {
+                ForEach(0..<3,id:\.self) { type in
+                    let available=H55SourceMechanics580.registeredModelName(
+                        forShip:type) != nil
+                    let stats=H55SourceMechanics580.shipStats(
+                        type:type,engine:0,stabilizer:0,thruster:0)
+                    Button {
+                        if available {
+                            newShipType568=type
+                            newGameLaunchIssue568=nil
+                        }
+                    } label: {
+                        VStack(alignment:.leading,spacing:4) {
+                            Text(H55Workshop580.ships[type])
+                                .font(.system(size:compact ? 10 : 13,
+                                              weight:.bold,design:.monospaced))
+                            Text("A \(Int(stats?.acceleration ?? 0)) · V \(Int(stats?.topSpeed ?? 0))")
+                                .font(.system(size:compact ? 9 : 11,
+                                              design:.monospaced))
+                            Text("ŻYCIA \(SourceNewGame568.startingLives(
+                                difficulty:newDifficulty568,shipType:type))")
+                                .font(.system(size:compact ? 9 : 11,
+                                              design:.monospaced))
+                        }
+                        .frame(maxWidth:.infinity,alignment:.leading)
+                        .padding(.horizontal,compact ? 7 : 12)
+                        .frame(minHeight:62)
+                        .background(newShipType568==type ? gold :
+                                    Color(red:0.03,green:0.09,blue:0.13))
+                        .foregroundStyle(newShipType568==type ? .black : paper)
+                        .overlay(Rectangle().stroke(
+                            newShipType568==type ? gold : cyan.opacity(0.35),
+                            lineWidth:1))
+                    }
+                    .disabled(!available)
+                    .opacity(available ? 1 : 0.45)
+                    .accessibilityIdentifier("w3-new-ship-\(type)")
+                }
+            }
+        }
+    }
+
     // Windows ProgramW3Native315.cs:348-354 and v342 explicit
     // non-destructive confirmation. No fictional iOS co-op.
     private func newGamePage(compact:Bool) -> some View {
@@ -695,50 +746,7 @@ struct W3MainMenu568: View {
                         .accessibilityIdentifier("w3-new-difficulty-\(mode.rawValue)")
                     }
                 }
-                // Campaign37.ShipNames/HangarClick: original starter craft
-                // 0 Kestrel, 1 Vanguard, 2 Bastion, each independently balanced.
-                Text("STATEK / WYBIERZ PRZED ROZPOCZĘCIEM")
-                    .font(.system(size:compact ? 10 : 12,weight:.bold,design:.monospaced))
-                    .foregroundStyle(cyan)
-                HStack(spacing:compact ? 5 : 10) {
-                    ForEach(0..<3,id:\.self) { type in
-                        let available=H55SourceMechanics580.registeredModelName(
-                            forShip:type) != nil
-                        let stats=H55SourceMechanics580.shipStats(
-                            type:type,engine:0,stabilizer:0,thruster:0)
-                        Button {
-                            if available {
-                                newShipType568=type
-                                newGameLaunchIssue568=nil
-                            }
-                        } label: {
-                            VStack(alignment:.leading,spacing:4) {
-                                Text(H55Workshop580.ships[type])
-                                    .font(.system(size:compact ? 10 : 13,
-                                                  weight:.bold,design:.monospaced))
-                                Text("A \(Int(stats?.acceleration ?? 0)) · V \(Int(stats?.topSpeed ?? 0))")
-                                    .font(.system(size:compact ? 9 : 11,
-                                                  design:.monospaced))
-                                Text("ŻYCIA \(SourceNewGame568.startingLives(
-                                    difficulty:newDifficulty568,shipType:type))")
-                                    .font(.system(size:compact ? 9 : 11,
-                                                  design:.monospaced))
-                            }
-                            .frame(maxWidth:.infinity,alignment:.leading)
-                            .padding(.horizontal,compact ? 7 : 12)
-                            .frame(minHeight:62)
-                            .background(newShipType568==type ? gold :
-                                        Color(red:0.03,green:0.09,blue:0.13))
-                            .foregroundStyle(newShipType568==type ? .black : paper)
-                            .overlay(Rectangle().stroke(
-                                newShipType568==type ? gold : cyan.opacity(0.35),
-                                lineWidth:1))
-                        }
-                        .disabled(!available)
-                        .opacity(available ? 1 : 0.45)
-                        .accessibilityIdentifier("w3-new-ship-\(type)")
-                    }
-                }
+                newGameShipSelector(compact:compact)
                 // PC609 Campaign37: calculate from the independently selected
                 // original ship, not the prior game's hangar selection.
                 Text("\(shipName) / ŻYCIA NA START: \(startingLives)")
