@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """All original GPU proofs use one atomic writer, without hiding write errors.
 
-Five GPU diagnostic proofs: Vanguard431, PlayerShip367, NewHome290, Carbonis L1 and W3 Vanguard preview.
+Original GPU diagnostic proofs for Vanguard431, PlayerShip367, NewHome290, Carbonis L1 and W3 source-ship previews.
 Each remains opt-in and runs only from a completed Metal command callback.
 """
 from pathlib import Path
@@ -17,14 +17,15 @@ paths={
     "W3HomePlanetMetal568.swift":["ASTEROIDY_W3_NewHome290_GPUProof.json"],
     "Sector01CarbonisPreview568.swift":["ASTEROIDY_CARBONIS_L1_GPUProof.json"],
     "W3HomeShipPreview568.swift":["ASTEROIDY_W3_Vanguard431_GPUProof.json",
-                                   "ASTEROIDY_W3_Bastion606_GPUProof.json"],
+                                   "ASTEROIDY_W3_Bastion606_GPUProof.json",
+                                   "ASTEROIDY_W3_Kestrel603_GPUProof.json"],
 }
 for name,filenames in paths.items():
     source=(gpu/name).read_text()
     assert source.count("OriginalRenderProofWriter568.save(")==len(filenames),name
     for filename in filenames:
         assert f'filename:"{filename}"' in source, (name,filename)
-    # W3 Vanguard and Bastion are exclusive alternatives from ONE frame.
+    # W3 Kestrel, Vanguard and Bastion are exclusive alternatives from ONE frame.
     # A single completed-command callback dispatches both proof names.
     callback_min=1 if name=="W3HomeShipPreview568.swift" else len(filenames)
     assert source.count("command.addCompletedHandler")>=callback_min,name
@@ -54,4 +55,4 @@ for contract in ("JSONSerialization.data(", "withJSONObject: payload",
                  "ASTEROIDY render proof write failed"):
     assert contract in writer,contract
 
-print("PASS original GPU proofs plus exclusive W3 Bastion proof: one atomic writer, no duplicate callback")
+print("PASS original GPU proofs with exclusive W3 Kestrel/Vanguard/Bastion: one atomic writer, no duplicate callback")
