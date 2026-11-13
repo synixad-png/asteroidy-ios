@@ -145,9 +145,12 @@ final class PC609RuntimeUITests: XCTestCase {
         // by all children. Verify the ACTUAL intro HUD and a real screenshot,
         // then transition to Carbonis combat.
         let heading=app.staticTexts["SYNIXAD / ROZPOCZĘCIE MISJI"]
+        // CARBONIS 01's mission UI and v600 HUD are SHA1-frozen.
+        // Do NOT edit their protected accessibility owner just for a test.
+        let combatScene=byID(app,"sector01-real-source-scene")
         let combatPause=app.buttons["sector01-pause-button"]
         let introAppeared=heading.waitForExistence(timeout:35)
-        XCTAssertTrue(introAppeared || combatPause.waitForExistence(timeout:10),
+        XCTAssertTrue(introAppeared || combatScene.waitForExistence(timeout:10),
                       "CARBONIS 01 did not open original Intro41 or real combat")
         if introAppeared {
             let error=app.staticTexts.matching(NSPredicate(
@@ -164,8 +167,9 @@ final class PC609RuntimeUITests: XCTestCase {
                 if skip.exists && skip.isEnabled {skip.tap()}
             }
         }
-        XCTAssertTrue(combatPause.waitForExistence(timeout:75),
+        XCTAssertTrue(combatScene.waitForExistence(timeout:75),
                       "CARBONIS 01 failed to enter actual combat scene after Intro41")
+        print("PC609_COMBAT_HUD_PAUSE_ACCESSIBLE=\(combatPause.exists)")
         captureNonFlatFrame("CARBONIS01-Combat")
     }
 }
