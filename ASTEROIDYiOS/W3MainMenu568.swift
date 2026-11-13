@@ -642,6 +642,8 @@ struct W3MainMenu568: View {
             H55SourceMechanics580.registeredModelName(forShip:shipType) != nil
         let shipName=(0..<H55Workshop580.ships.count).contains(shipType)
             ? H55Workshop580.ships[shipType] : "NIEZNANY"
+        let startingLives=SourceNewGame568.startingLives(
+            difficulty:newDifficulty568,shipType:shipType)
         // iPhone 15 Pro Max landscape has only ~330pt central height
         // after the source W3 chrome and bottom home-indicator inset.
         // Scroll the REAL source controls; do not scale/tuck away the
@@ -686,8 +688,7 @@ struct W3MainMenu568: View {
                 }
                 // PC609 Campaign37: calculate from the REAL selected ship,
                 // not from the default Vanguard model.
-                Text("\(shipName) / ŻYCIA NA START: \(SourceNewGame568.startingLives(
-                    difficulty:newDifficulty568,shipType:shipType))")
+                Text("\(shipName) / ŻYCIA NA START: \(startingLives)")
                     .font(.system(size:compact ? 10 : 12,design:.monospaced))
                     .foregroundStyle(paper)
                     .accessibilityIdentifier("w3-new-selected-ship-lives")
