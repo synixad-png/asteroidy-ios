@@ -1,19 +1,6 @@
 name: PC602 NewHome290 - exact source terrain and atlas tests
 
 on:
-  push:
-    branches:
-      - feature/ios-pc602-newhome-world-source
-    paths:
-      - .github/workflows/verify-pc602-newhome290.yml
-      - Tools/stage_pc602_newhome290.py
-      - ASTEROIDYiOS/PC602NewHome290.swift
-      - Tests/PC602NewHome290Tests.swift
-      - ASTEROIDYiOS/PC602HomeFlight291.swift
-      - ASTEROIDYiOS/PC602HomeWorldView291.swift
-      - ASTEROIDYiOS/PC602HomeBeacons291.swift
-      - ASTEROIDYiOS/FlightDynamics556.swift
-      - Tests/PC602HomeFlight291Tests.swift
   pull_request:
     paths:
       - .github/workflows/verify-pc602-newhome290.yml

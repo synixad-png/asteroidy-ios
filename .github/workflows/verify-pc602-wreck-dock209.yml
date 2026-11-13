@@ -1,33 +1,6 @@
 name: PC602 original wreck source / H55 docking routing tests
 
 on:
-  push:
-    branches: [feature/ios-pc602-newhome-world-source]
-    paths:
-      - .github/workflows/verify-pc602-wreck-dock209.yml
-      - ASTEROIDYiOS/PC602WreckDebris209.swift
-      - ASTEROIDYiOS/ResearchWreckGeometry214.swift
-      - ASTEROIDYiOS/SourceHomeWreck209.swift
-      - Tests/PC602OrbitWreck211Tests.swift
-      - ASTEROIDYiOS/PC602HomeShipPose291.swift
-      - ASTEROIDYiOS/SourceHomeVanguard431.swift
-      - Tests/PC602HomeShipPose291Tests.swift
-      - ASTEROIDYiOS/PC602HomeFlightInput291.swift
-      - ASTEROIDYiOS/SourceControls586.swift
-      - Tests/PC602HomeFlightInput291Tests.swift
-      - ASTEROIDYiOS/PC602HomeWorldSession291.swift
-      - ASTEROIDYiOS/PC602HomeWeaponTest292.swift
-      - ASTEROIDYiOS/PC602HomeShotGeometry292.swift
-      - Tests/PC602HomeWeapons292Tests.swift
-      - ASTEROIDYiOS/SourcePlanetAtmosphere568.swift
-      - Tests/PC602O04GraphicsSettings291Tests.swift
-      - ASTEROIDYiOS/PC602OrbitHud330.swift
-      - Tests/PC602OrbitHud330Tests.swift
-      - Tests/PC602HomeWorldSession291Tests.swift
-      - ASTEROIDYiOS/PC602HomeHubRoute90.swift
-      - ASTEROIDYiOS/PC602HomeFlight291.swift
-      - ASTEROIDYiOS/PC602NewHome290.swift
-      - Tests/PC602WreckDock209Tests.swift
   pull_request:
     paths:
       - .github/workflows/verify-pc602-wreck-dock209.yml
