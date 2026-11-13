@@ -666,8 +666,7 @@ struct W3MainMenu568: View {
                 .foregroundStyle(cyan)
             HStack(spacing:compact ? 5 : 10) {
                 ForEach(0..<3,id:\.self) { type in
-                    let available=H55SourceMechanics580.registeredModelName(
-                        forShip:type) != nil
+                    let available=H55PlayerShip580.originalModelVerified(type)
                     let stats=H55SourceMechanics580.shipStats(
                         type:type,engine:0,stabilizer:0,thruster:0)
                     let lives=SourceNewGame568.startingLives(
@@ -711,8 +710,7 @@ struct W3MainMenu568: View {
     // non-destructive confirmation. No fictional iOS co-op.
     private func newGamePage(compact:Bool) -> some View {
         let shipType=newShipType568
-        let playable=(0...2).contains(shipType) &&
-            H55SourceMechanics580.registeredModelName(forShip:shipType) != nil
+        let playable=H55PlayerShip580.originalModelVerified(shipType)
         let shipName=(0..<H55Workshop580.ships.count).contains(shipType)
             ? H55Workshop580.ships[shipType] : "NIEZNANY"
         let startingLives=SourceNewGame568.startingLives(
