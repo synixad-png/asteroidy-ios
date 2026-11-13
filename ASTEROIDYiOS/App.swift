@@ -326,8 +326,7 @@ struct GameView: View {
         }
         guard let craft=PC602HomeFlight291.Craft(rawValue:choice.shipType),
               (0...2).contains(choice.shipType),
-              H55SourceMechanics580.registeredModelName(
-                  forShip:choice.shipType) != nil,
+              H55PlayerShip580.originalModelVerified(choice.shipType),
               PC602HomeFlight291.Equipment(craft:craft) != nil else {
             return "BRAK ORYGINALNEGO MODELU WYBRANEGO STATKU PC609"
         }
