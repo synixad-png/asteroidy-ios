@@ -142,7 +142,7 @@ expect_all(scene,(
     "safeTop:missionSafeInsets568.top",
     "safeBottom:missionSafeInsets568.bottom",
     "HudControlLayout600.frame(",
-    "hudControlLayout600.control(",
+    "hudControlLayout600.resolved(\"control.pause\")",
     "pauseFrame.centerX",
     "pauseFrame.centerY",
     "shieldFrame.centerX",
