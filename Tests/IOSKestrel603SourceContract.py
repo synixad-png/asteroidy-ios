@@ -34,7 +34,7 @@ assert "SourceBakedShipMesh(" in importer
 assert "try SourceKestrel603.install(from:file)" in fleet
 assert 'WCZYTAJ MODEL KESTREL PC609 Z PLIKÓW' in fleet
 assert "h11-import-kestrel603" in fleet
-assert 'case 0:return kestrelAssetURL == nil ? nil : "SOURCE-PC603-KESTREL"' in mechanics
+assert 'case 0:return SourceKestrel603.load() != nil ? "SOURCE-PC603-KESTREL" : nil' in mechanics
 assert "SourceKestrel603.load()" in hangar
 assert "kestrelNodeName" in hangar and "kestrelNodeName" in hangar_scene
 assert "case 0:" in hangar and "kestrelGeometry=try? loadKestrel()" in hangar
@@ -47,5 +47,5 @@ assert "if equipped==0" in combat and "SourceKestrel603.load()" in combat
 assert "if selectedShip==0" in menu and "SourceKestrel603.load()" in menu
 assert 'id==0 ? "Kestrel-PC609-ShipType0"' in menu
 assert "SourceBakedShipMesh" in read("ASTEROIDYiOS/SourceVanguardMesh431.swift")
-assert 'case 2:return bastionAssetURL == nil ? nil' in mechanics
+assert 'case 2:return SourceBastion606.load() != nil ? "SOURCE-PC606-BASTION" : nil' in mechanics
 print("PASS KESTREL PC609: SHA, 6031 GPU ABI, authentic import, H55/H290/C279/W3, PC shipType=0 dynamics, Vanguard/Bastion regressions")
