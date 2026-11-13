@@ -1,25 +1,87 @@
-# Source regression tests for features already merged into main.
-# Jobs marked 'from <file>' are copied unchanged from that deleted workflow (only the job id changed),
-# except: h11-rail-swarm-source and h11-guardian-source also compile CombatTarcza145.swift and
-# CombatTalentVitals78.swift (as PR #38 did in build-ios.yml), and h11-model-independent-source
-# checks the current 3-ship model mapping.
-# Those workflows only started on feature branches that are merged now, so main never ran them.
-# The last three jobs keep tests whose only other workflows were deleted IPA or one-shot runs;
-# each command is copied exactly from the workflow named in its comment.
-name: ASTEROIDY iOS - source regression tests (merged features)
+# Linux (and two macOS) source regression tests.
+# Every job copies the steps of the workflow named in its '# from' comment.
+# A job runs in the same cases as its old workflow: the select job checks
+# .github/ci-jobs.json (events + path lists) with Tools/ci_select_jobs.py.
+# Jobs from h05..h13/h55/pc586/pc609/hud-v600/source-tests always run on PRs and main.
+# Concurrency is per job: each job keeps the group its old workflow had.
+name: ASTEROIDY iOS - source regression tests
 on:
   pull_request:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      run:
+        description: Old workflow name to run, or all
+        type: choice
+        default: all
+        options:
+          - all
+          - audit-boreas-glb-archives
+          - build-ios-h55-fps-preview-ipa
+          - h05-parity-check
+          - h07-parity-check
+          - h08-npc-route
+          - h08-parity-check
+          - h09-parity-check
+          - h11-fast-source
+          - h11-guardian-source
+          - h11-model-independent-source
+          - h11-profile-archive
+          - h11-rail-swarm-source
+          - h12-drone-source
+          - h12-machinery-source
+          - h12-test-ipa
+          - h13-material-metadata
+          - h55-fps-original-weapon
+          - h55-touch-light-fix
+          - hud-v600-validation
+          - source-tests
+          - verify-bastion606-source-no-ipa
+          - verify-combat-only
+          - verify-ios-inputs
+          - verify-ios-playership367-gpu-once
+          - verify-metal-camera
+          - verify-pc586-controls
+          - verify-pc586-pickup-catalog
+          - verify-pc602-belt-source
+          - verify-pc602-wreck-dock209
+          - verify-pc609-shield-armor-no-ipa
+          - verify-simulator-runner-safety
+          - verify-v568-assets
+          - verify-v568-carbonis-source
 permissions:
   contents: read
-concurrency:
-  group: source-tests-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
+  # Picks which jobs below run: .github/ci-jobs.json + Tools/ci_select_jobs.py
+  select:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      jobs: ${{ steps.pick.outputs.jobs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: pick
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          RUN: ${{ inputs.run }}
+        run: python3 Tools/ci_select_jobs.py --workflow source-tests.yml
   # from .github/workflows/h05-parity-check.yml
   h05-parity-check:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h05-parity-check ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h05-parity-check
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -43,6 +105,11 @@ jobs:
           if-no-files-found: error
   # from .github/workflows/h07-parity-check.yml
   h07-parity-check:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h07-parity-check ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h07-parity-check
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 18
     steps:
@@ -99,6 +166,11 @@ jobs:
           retention-days: 2
   # from .github/workflows/h08-npc-route.yml
   h08-npc-route:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h08-npc-route ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h08-npc-route
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -146,6 +218,11 @@ jobs:
           retention-days: 2
   # from .github/workflows/h08-parity-check.yml
   h08-parity-check:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h08-parity-check ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h08-parity-check
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 18
     steps:
@@ -224,6 +301,11 @@ jobs:
             Tests/H55NpcRealRoute580Tests.swift
   # from .github/workflows/h09-parity-check.yml
   h09-parity-check:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h09-parity-check ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h09-parity-check
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -297,6 +379,11 @@ jobs:
           if-no-files-found: error
   # from .github/workflows/h11-fast-source.yml
   h11-fast-source:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h11-fast-source ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h11-fast-source
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 7
     steps:
@@ -327,6 +414,11 @@ jobs:
           PY
   # from .github/workflows/h11-guardian-source.yml
   h11-guardian-source:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h11-guardian-source ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h11-guardian-source
+      cancel-in-progress: true
     name: Exact PC580 targeting and live C279 projectile regression
     runs-on: ubuntu-24.04
     timeout-minutes: 12
@@ -388,6 +480,11 @@ jobs:
           PY
   # from .github/workflows/h11-model-independent-source.yml
   h11-model-independent-source:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h11-model-independent-source ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h11-model-independent-source
+      cancel-in-progress: true
     name: Source v580 six-ship/modules/trophies exact rules
     runs-on: ubuntu-24.04
     steps:
@@ -428,6 +525,11 @@ jobs:
           PY
   # from .github/workflows/h11-profile-archive.yml
   h11-profile-archive:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h11-profile-archive ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h11-profile-archive
+      cancel-in-progress: true
     name: Actual H11 wallet ships modules talents vitals and trophy archive roundtrip
     runs-on: ubuntu-24.04
     timeout-minutes: 12
@@ -457,6 +559,11 @@ jobs:
           swiftc -frontend -parse ASTEROIDYiOS/App.swift
   # from .github/workflows/h11-rail-swarm-source.yml
   h11-rail-swarm-source:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h11-rail-swarm-source ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h11-rail-swarm-source
+      cancel-in-progress: true
     name: PC580 weapons, ions, bombs, save migration and real collisions
     runs-on: ubuntu-24.04
     timeout-minutes: 12
@@ -541,6 +648,11 @@ jobs:
           PY
   # from .github/workflows/h12-drone-source.yml
   h12-drone-source:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h12-drone-source ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h12-drone-source
+      cancel-in-progress: true
     name: PC580 imported drones, 2m graph, collision verified real flight
     runs-on: ubuntu-24.04
     timeout-minutes: 12
@@ -587,6 +699,11 @@ jobs:
           PY
   # from .github/workflows/h12-machinery-source.yml
   h12-machinery-source:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h12-machinery-source ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h12-machinery-source
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -637,6 +754,11 @@ jobs:
           PY
   # from .github/workflows/h13-material-metadata.yml
   h13-material-metadata:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h13-material-metadata ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h13-material-metadata
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -697,6 +819,11 @@ jobs:
           PY
   # from .github/workflows/h55-fps-original-weapon.yml
   h55-fps-original-weapon:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h55-fps-original-weapon ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h55-fps-original-weapon
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -761,6 +888,11 @@ jobs:
           PY
   # from .github/workflows/h55-touch-light-fix.yml
   h55-touch-light-fix:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h55-touch-light-fix ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h55-touch-light-fix
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 14
     steps:
@@ -852,6 +984,11 @@ jobs:
           if-no-files-found: error
   # from .github/workflows/verify-bastion606-source-no-ipa.yml
   verify-bastion606-source-no-ipa:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' verify-bastion606-source-no-ipa ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-verify-bastion606-source-no-ipa
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -882,6 +1019,11 @@ jobs:
           python3 Tests/IOSOriginalCombatHUD331Contract.py
   # from .github/workflows/verify-pc586-controls.yml
   verify-pc586-controls:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' verify-pc586-controls ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-verify-pc586-controls
+      cancel-in-progress: true
     name: Exact 60 source actions, migration, safe router and 65-row rules
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -919,6 +1061,11 @@ jobs:
           python3 Tests/PC586InputIntegrationContract.py
   # from .github/workflows/verify-pc586-pickup-catalog.yml
   verify-pc586-pickup-catalog:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' verify-pc586-pickup-catalog ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-verify-pc586-pickup-catalog
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -940,6 +1087,11 @@ jobs:
           python3 Tests/PC586IntegrationContract.py
   # from .github/workflows/verify-pc609-shield-armor-no-ipa.yml
   verify-pc609-shield-armor-no-ipa:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' verify-pc609-shield-armor-no-ipa ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-verify-pc609-shield-armor-no-ipa
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 28
     steps:
@@ -993,6 +1145,11 @@ jobs:
           /tmp/sector01-fully-integrated-source-test
   # from .github/workflows/audit-boreas-glb-archives.yml
   audit-boreas-glb-archives:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' audit-boreas-glb-archives ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-audit-boreas-glb-archives
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -1016,6 +1173,11 @@ jobs:
           PY
   # from .github/workflows/hud-v600-validation.yml
   hud-v600-validation--verify-core:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' hud-v600-validation--verify-core ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-hud-v600-validation--verify-core
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -1060,6 +1222,11 @@ jobs:
           swiftc ASTEROIDYiOS/HudCapsuleController600.swift ASTEROIDYiOS/HudCapsuleBinding600.swift Tests/HudCapsuleBinding600Tests.swift -o /tmp/hud-v600-bubble
           /tmp/hud-v600-bubble
   hud-v600-validation--verify-ios-parser:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' hud-v600-validation--verify-ios-parser ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-hud-v600-validation--verify-ios-parser
+      cancel-in-progress: true
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -1085,6 +1252,11 @@ jobs:
           /tmp/hud-v600-icons
   # from .github/workflows/build-ios-h55-fps-preview-ipa.yml (job build-full, first step)
   hud-v602-touch-runtime-contract:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' hud-v602-touch-runtime-contract ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-hud-v602-touch-runtime-contract
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -1096,6 +1268,11 @@ jobs:
           python3 Tests/HudV602TouchRuntimeContract.py
   # from .github/workflows/h12-test-ipa.yml (also h10/h11-test-ipa.yml), source dialogue test
   h55-npc-dialogue-source:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' h55-npc-dialogue-source ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-h55-npc-dialogue-source
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 7
     steps:
@@ -1108,6 +1285,11 @@ jobs:
           /tmp/h10-source-dialogue
   # from .github/workflows/verify-ios-playership367-gpu-once.yml (first step, contract lines only)
   playership367-gpu-proof-contract:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' playership367-gpu-proof-contract ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-playership367-gpu-proof-contract
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -1120,6 +1302,11 @@ jobs:
           python3 Tests/V568PlayerShip367GPUProofContract.py
   # from .github/workflows/build-ios-h55-fps-preview-ipa.yml (planetarium staging + glTF import lines; needs CryptoKit, same macOS runner as the original)
   pc602-planetarium-gltf-import:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' pc602-planetarium-gltf-import ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-pc602-planetarium-gltf-import
+      cancel-in-progress: true
     runs-on: macos-15-intel
     timeout-minutes: 10
     steps:
@@ -1131,3 +1318,972 @@ jobs:
           python3 Tools/stage_pc602_planetarium.py
           swiftc ASTEROIDYiOS/HudPlanetariumAsset600.swift ASTEROIDYiOS/HudPlanetariumGLTFImport.swift Tests/HudPlanetariumGLTFImportTests.swift -o /tmp/pc602-gltf-import
           /tmp/pc602-gltf-import ASTEROIDYiOS/Assets/planetarium.glb
+  # new: checks Tools/ci_select_jobs.py and .github/ci-jobs.json
+  ci-select-jobs:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' ci-select-jobs ') }}
+    concurrency:
+      group: source-tests-${{ github.ref }}-ci-select-jobs
+      cancel-in-progress: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: CI job selector and ci-jobs.json rules
+        run: python3 Tests/CISelectJobsTests.py
+  # from .github/workflows/verify-ios-inputs.yml
+  original-assets:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' original-assets ') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact original v556 SHA256 and binary resource formats
+        run: python3 Tools/verify_ios_inputs.py
+      - name: Validate actual original Vanguard431 source mesh, BaseColor and ALL 194427 UVs
+        run: |
+          set -euo pipefail
+          python3 Tests/OriginalVanguard431InstalledAssetsTests.py
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets
+      - name: Guard v556 Boreas default scene, flat diagnostic and both iOS device families
+        run: python3 Tests/SourceSceneStartupContract556.py
+      - name: Swift frontend parse of current iPhone/iPad Metal scene (syntax only)
+        run: |
+          swiftc -frontend -parse ASTEROIDYiOS/App.swift
+          swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
+          swiftc -frontend -parse ASTEROIDYiOS/IntroOrbit41.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourceFighterToon60.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourceVanguardMesh431.swift
+          swiftc -frontend -parse ASTEROIDYiOS/IntroEnginePlasma491.swift
+          swiftc -frontend -parse ASTEROIDYiOS/IntroVanguard431.swift
+          swiftc -frontend -parse ASTEROIDYiOS/IntroRockGeometry41.swift
+          swiftc -frontend -parse ASTEROIDYiOS/IntroAtmosphere47.swift
+          python3 Tests/IntroOrbitSourceContract41.py
+          python3 Tests/IntroBoreasMorphSourceContract556.py
+          python3 Tests/IntroAtmosphereSourceContract47.py
+          python3 Tests/IntroVanguardSourceContract431.py
+          python3 Tests/IntroEnginePlasmaSourceContract491.py
+          python3 Tests/SourceFighterToonContract60.py
+          python3 Tests/SourceVanguardTextureContract431.py
+          python3 Tests/ReleaseGateVanguard431Tests.py
+          python3 Tests/PrepareVanguardPackTests.py
+          python3 -m py_compile Tools/run_original_ios_simulator_capture.py
+          python3 Tests/SimulatorSmokeHarnessTests.py
+  # from .github/workflows/verify-pc602-belt-source.yml
+  verify-pc602-belt:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' verify-pc602-belt ') }}
+    concurrency:
+      group: verify-pc602-belt-source-${{ github.ref }}-verify-pc602-belt
+      cancel-in-progress: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Verify original H290 from 4 source-hashed GitHub ZIPs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Build all 820 original asteroids with the actual C# Random
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin
+          sha256sum ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin
+      - name: Compile source-native Swift 820-stone loader and reject corrupt data
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v swiftc
+          cp Tests/PC602OrbitBelt51Tests.swift /tmp/main.swift
+          swiftc -Onone ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602OrbitBelt51.swift \
+            /tmp/main.swift -o /tmp/pc602-original-belt-swift-tests
+          /tmp/pc602-original-belt-swift-tests \
+            ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin \
+            ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin
+      - name: Audit no synthetic asteroid fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tests/PC602HomeScene291Contract.py
+          test -f ASTEROIDYiOS/PC602OrbitBelt51.swift
+          test -f ASTEROIDYiOS/PC602OrbitBelt51.metal
+          echo "PASS: PC602 source 820 asteroids; NO fabricated GLB, alternative mesh, full ZIP copy, or GPU claim"
+  # from .github/workflows/verify-pc602-wreck-dock209.yml
+  original-wreck-and-dock:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' original-wreck-and-dock ') }}
+    concurrency:
+      group: verify-pc602-wreck-dock209-${{ github.ref }}-original-wreck-and-dock
+      cancel-in-progress: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage SHA-verified ORIGINAL PC602 H290 terrain
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Extract original Vec2 from active iOS game (no fake test Vec2)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          source=Path("ASTEROIDYiOS/GameCore.swift").read_text()
+          start=source.index("struct Vec2: Equatable {")
+          brace=source.index("{",start)
+          level=0
+          for i in range(brace,len(source)):
+              if source[i]=="{":level+=1
+              elif source[i]=="}":
+                  level-=1
+                  if level==0:
+                      end=i+1
+                      break
+          else:
+              raise RuntimeError("Original source Vec2 braces not closed")
+          Path("/tmp/PC602ActualGameVec2.swift").write_text(
+              "import Foundation\n"+source[start:end]+"\n")
+          PY
+      - name: Compile and execute original PC602 debris + Hub90 against live Swift physics
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602WreckDock209Tests.swift /tmp/main.swift
+          swiftc -Onone \
+            /tmp/PC602ActualGameVec2.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602HomeFlight291.swift \
+            ASTEROIDYiOS/PC602HomeHubRoute90.swift \
+            ASTEROIDYiOS/PC602WreckDebris209.swift \
+            /tmp/main.swift -o /tmp/pc602-wreck-dock-source-test
+          /tmp/pc602-wreck-dock-source-test \
+            ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+      - name: Test actual PC602 source Vanguard431 flight/orbit pose
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602HomeShipPose291Tests.swift /tmp/main.swift
+          swiftc -Onone \
+            /tmp/PC602ActualGameVec2.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602HomeFlight291.swift \
+            ASTEROIDYiOS/PC602HomeShipPose291.swift \
+            /tmp/main.swift -o /tmp/pc602-original-vanguard-pose
+          /tmp/pc602-original-vanguard-pose \
+            ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+          mesh=Path("ASTEROIDYiOS/Assets/Vanguard431Source.mesh")
+          skin=Path("ASTEROIDYiOS/Assets/Vanguard431Base.jpg")
+          expected={
+            mesh:"f5d6d0107437fa54c3e8505f9adfbf6143cc877cb970eef687603609e26f9f4a",
+            skin:"2945f711a6b559bfb5fdfb79750a2f2f77e2071aa5f3f4173eb450bce81b8b95",
+          }
+          for path,digest in expected.items():
+              assert path.is_file(),str(path)
+              assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,str(path)
+          print("PASS original PC602 Vanguard431 entire mesh and skin SHA256")
+          PY
+      - name: Compile original PC586 saved key-pad to HomeFlight291 input mapping
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602HomeFlightInput291Tests.swift /tmp/main.swift
+          swiftc -Onone \
+            /tmp/PC602ActualGameVec2.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602HomeFlight291.swift \
+            ASTEROIDYiOS/SourceControls586.swift \
+            ASTEROIDYiOS/PC602HomeFlightInput291.swift \
+            /tmp/main.swift -o /tmp/pc602-orbit-saved-controls
+          /tmp/pc602-orbit-saved-controls
+      - name: Compile source world state coordination (flight-controls-missions-H55)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602HomeWorldSession291Tests.swift /tmp/main.swift
+          swiftc -Onone \
+            /tmp/PC602ActualGameVec2.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602HomeFlight291.swift \
+            ASTEROIDYiOS/PC602HomeHubRoute90.swift \
+            ASTEROIDYiOS/SourceControls586.swift \
+            ASTEROIDYiOS/PC602HomeFlightInput291.swift \
+            ASTEROIDYiOS/PC602HomeWeaponTest292.swift \
+            ASTEROIDYiOS/PC602HomeWorldSession291.swift \
+            /tmp/main.swift -o /tmp/pc602-original-home-session
+          /tmp/pc602-original-home-session \
+            ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+      - name: Compile and exercise real PC602 nonhostile five-gun shot patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602HomeWeapons292Tests.swift /tmp/main.swift
+          swiftc -Onone \
+            /tmp/PC602ActualGameVec2.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602HomeFlight291.swift \
+            ASTEROIDYiOS/PC602HomeWorldView291.swift \
+            ASTEROIDYiOS/PC602HomeShipPose291.swift \
+            ASTEROIDYiOS/PC602HomeWeaponTest292.swift \
+            ASTEROIDYiOS/PC602HomeShotGeometry292.swift \
+            /tmp/main.swift -o /tmp/pc602-guns-geodesic-test
+          /tmp/pc602-guns-geodesic-test \
+            ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+      - name: O04 source PC602 sky settings defaults, migration and hot reload revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602O04GraphicsSettings291Tests.swift /tmp/main.swift
+          swiftc -Onone ASTEROIDYiOS/SourcePlanetAtmosphere568.swift             /tmp/main.swift -o /tmp/pc602-o04-graphics-settings
+          /tmp/pc602-o04-graphics-settings
+      - name: Compile and verify original source OrbitHud330 26-tile course zone
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602OrbitHud330Tests.swift /tmp/main.swift
+          swiftc -Onone \
+            /tmp/PC602ActualGameVec2.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602HomeFlight291.swift \
+            ASTEROIDYiOS/PC602OrbitHud330.swift \
+            /tmp/main.swift -o /tmp/pc602-original-orbit-hud330
+          /tmp/pc602-original-orbit-hud330 \
+            ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+      - name: Run actual original complete 3D wreck source golden Swift tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602OrbitWreck211Tests.swift /tmp/main.swift
+          swiftc -Onone ASTEROIDYiOS/ResearchWreckGeometry214.swift \
+            /tmp/main.swift -o /tmp/pc602-full-original-wreck-test
+          /tmp/pc602-full-original-wreck-test
+      - name: Assert routing does not change active W3 and H55 scene
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          router=Path("ASTEROIDYiOS/PC602HomeHubRoute90.swift").read_text()
+          debris=Path("ASTEROIDYiOS/PC602WreckDebris209.swift").read_text()
+          assert "flight.canDock90(context:context)" not in router or "PC602HomeFlight291.canDock90" in router
+          assert "location == .orbit" in router
+          assert "location == .menu" in router
+          assert "PC602NewHome290.wreckDebrisCount295" in debris
+          assert "PC602NewHome290.wreckTrailLength295" in debris
+          assert "spaceHash207" in debris and "spaceRand207" in debris
+          assert "scale=PC602NewHome290.wreckScale295" in debris
+          app=Path("ASTEROIDYiOS/App.swift").read_text()
+          assert "PC602WreckDebris209" not in app
+          assert "PC602HomeHubRoute90" not in app
+          print("PASS: authenticated PC602 source dock and 146 debris; live W3/H55 unchanged")
+          PY
+          python3 Tools/code_quality_audit.py --root . --gate
+  # from .github/workflows/verify-simulator-runner-safety.yml
+  proof-safety:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' proof-safety ') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile Python test and runner
+        run: python3 -m py_compile Tools/run_original_ios_simulator_capture.py Tests/SimulatorSmokeHarnessTests.py
+      - name: Execute deterministic real-process timeout and stale-proof safeguards
+        run: python3 Tests/SimulatorSmokeHarnessTests.py
+      - name: Validate no IPA creation
+        run: |
+          test ! -e ASTEROIDY_iOS_UNSIGNED.ipa
+          echo 'PASS: regression tests only; no iOS app or IPA created'
+  # from .github/workflows/verify-v568-assets.yml
+  verify-v568-original-assets:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' verify-v568-original-assets ') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out the exact four user-uploaded v568 ZIPs
+        uses: actions/checkout@v4
+      - name: Verify Python scripts have valid syntax
+        run: python3 -m py_compile Tools/stage_v568_resources.py Tests/V568ArchiveStagingTests.py
+      - name: Verify original ZIPs, all source SHA256 hashes and full manifest
+        run: python3 Tools/stage_v568_resources.py --root . --verify-only
+      - name: Test atomic extraction, original source paths and malicious path rejection
+        run: python3 Tests/V568ArchiveStagingTests.py
+      - name: Validate original v568 PlayerShip367 engine positions, UVs, skin and geometry
+        run: python3 Tests/V568PlayerShip367Tests.py
+      - name: Guard source v568 craft axis/size placement and vertex bounds
+        run: python3 Tests/V568PlayerShip367SpatialSourceContract.py
+      - name: Verify exact original boss 4 B82S geometry and animated clips
+        run: python3 Tests/V568AlienScoutB82STests.py
+      - name: Verify source v568 W3 key light and NewHome290 shader constants
+        run: python3 Tests/V568W3HomeSourceLightTests.py
+      - name: Verify that original assets remain separate from the iOS application
+        run: |
+          test ! -d ASTEROIDYiOS/Assets/PortingResources
+          test ! -e ASTEROIDY_iOS_UNSIGNED.ipa
+          echo 'PASS: original v568 staging validated; no IPA or automatic runtime replacement'
+  # from .github/workflows/verify-v568-carbonis-source.yml
+  source-sector01:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' source-sector01 ') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate exactly original C279 2-material mesh/UV/index/heightmap
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile Tools/prepare_v568_carbonis_sector01.py Tests/V568CarbonisIndexedSourceTests.py
+          python3 Tests/V568CarbonisIndexedSourceTests.py
+      - name: Verify no IPA created
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(find . -name '*.ipa' -print -quit)"
+  # from .github/workflows/verify-combat-only.yml
+  publish-combat-verify-run:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' publish-combat-verify-run ') && (github.event_name != 'pull_request') }}
+    concurrency:
+      group: verify-combat-only-${{ github.ref }}-publish-combat-verify-run
+      cancel-in-progress: true
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Expose run for source fighter regression review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner,repo}=context.repo;
+            const path='Reports/LAST_COMBAT_VERIFY_RUN.md';
+            const body='# ASTEROIDY CARBONIS source combat CI\n\nRun ID: '+context.runId+
+              '\nCommit: '+context.sha+'\nActions: https://github.com/'+owner+
+              '/'+repo+'/actions/runs/'+context.runId+'\n';
+            // Other workflows (build-ios.yml) also commit status files to
+            // main. If main moves between read and write, GitHub answers
+            // 409; re-read the file sha and retry. A 4th failure still fails.
+            for (let attempt=1;;attempt++) {
+              let sha;
+              try {
+                sha=(await github.rest.repos.getContent({owner,repo,path,ref:'main'})).data.sha;
+              } catch (error) {
+                if (error.status!==404) core.warning(String(error));
+              }
+              try {
+                await github.rest.repos.createOrUpdateFileContents({
+                  owner,repo,path,sha,branch:'main',
+                  message:'Expose source fighter geometry CI run',
+                  content:Buffer.from(body).toString('base64')
+                });
+                break;
+              } catch (error) {
+                if (error.status!==409 || attempt>=4) throw error;
+                core.warning('main moved during status write, retry '+attempt+': '+error.message);
+                await new Promise(resolve=>setTimeout(resolve,3000*attempt));
+              }
+            }
+  # from .github/workflows/verify-combat-only.yml
+  verify-combat-no-ipa:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' verify-combat-no-ipa ') }}
+    concurrency:
+      group: verify-combat-only-${{ github.ref }}-verify-combat-no-ipa
+      cancel-in-progress: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify no forced rock-hit dictionary unwrap and real 3120-step flat scenario
+        run: |
+          set -euo pipefail
+          python3 Tests/SafeDamageDictionary556Contract.py
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift Tests/GameCoreTests.swift -o /tmp/asteroidy-flat-damage-safe
+          /tmp/asteroidy-flat-damage-safe
+      - name: Verify authentic pre-mission Intro41 route and source Carbonis globe
+        run: |
+          set -euo pipefail
+          python3 Tests/MissionIntro41SourceContract568.py
+      - name: Test original GpuSphere67 mission sky and ResearchWreck211 mesh
+        run: |
+          set -euo pipefail
+          python3 Tests/CombatOriginalSkyWreck214Contract.py
+          python3 Tests/CarbonisSourceBufferProof568Contract.py
+          python3 Tests/SourceGPUProofWriter568Contract.py
+          python3 Tests/SourceSkyAssetFactory568Contract.py
+          python3 Tests/SourceSkyTextureLifecycle55Contract.py
+          python3 Tests/SourceMetalBlendSafetyContract.py
+          python3 Tests/SourceSkyUniformPackingContract.py
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/DeepSkyPlanets55.swift ASTEROIDYiOS/BlackHoleSky55.swift ASTEROIDYiOS/SourceSkyUniformPacking.swift Tests/SourceSkyUniformPackingTests.swift -o /tmp/source-sky-uniforms
+          /tmp/source-sky-uniforms
+          swiftc ASTEROIDYiOS/ResearchWreckGeometry214.swift Tests/ResearchWreckGeometry214Tests.swift -o /tmp/wreck211-mesh
+          /tmp/wreck211-mesh
+      - name: Verify source-exact Explosion524 static GPU geometry and precomputed GPU constants
+        run: |
+          set -euo pipefail
+          python3 Tests/Explosion524GpuAlgebraAndStaticMeshTests.py
+          python3 Tests/Explosion524ConservativePolygonTests.py
+          python3 Tests/Explosion524OptimizedRayBoundsTests.py
+      - name: Verify original iPad 4:3 and iPhone 15 Pro Max 19.5:9 responsive native layout
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/W3AdaptiveViewport568.swift Tests/W3AdaptiveViewport568Tests.swift -o /tmp/w3-iphone15-layout
+          /tmp/w3-iphone15-layout
+          swiftc ASTEROIDYiOS/MissionViewportFraming568.swift Tests/MissionViewportFraming568Tests.swift -o /tmp/w3-iphone15-projection
+          /tmp/w3-iphone15-projection
+          python3 Tests/W3AdaptiveViewportContract568.py
+          swiftc -frontend -parse ASTEROIDYiOS/W3SafeAreaReader568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3StartupSplash568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/MissionCinematic568.swift
+      - name: Verify real iPhone MTKView callback cadence vs GPU completed FPS
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/PhoneFrameCadence568.swift Tests/PhoneFrameCadence568Tests.swift -o /tmp/phone-frame-cadence568
+          /tmp/phone-frame-cadence568
+          python3 Tests/IOSPhoneFrameCadence568Contract.py
+          swiftc -frontend -parse ASTEROIDYiOS/SourcePerformance568.swift
+      - name: Verify iPhone-only adaptive 30 FPS shooting without iPad quality regression
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/PhoneCombatResolution568.swift Tests/PhoneCombatResolution568Tests.swift -o /tmp/phone-combat-resolution568
+          /tmp/phone-combat-resolution568
+          python3 Tests/PhoneCombatResolution568Contract.py
+          python3 Tests/IOSPhoneLateDrawable568Contract.py
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourcePerformance568.swift
+      - name: Verify original Combat69 shooting-only broadphase and indexed 3D source bullets
+        run: |
+          set -euo pipefail
+          python3 Tests/SourceShotCollisionAndDrawing568Contract.py
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/ShooterTactics71.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01MissionSummary568.swift ASTEROIDYiOS/Sector01MissionSettlement568.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatGuardianDrone298.swift ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/SourceCombatSupply586.swift ASTEROIDYiOS/SourcePickupAbilities586.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CarbonisCombat568.swift Tests/SourceShotSweepGate568Tests.swift -o /tmp/shot-sweep568-test
+          /tmp/shot-sweep568-test
+      - name: Verify PC v580 independent enemy and rock visual size settings
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourceMissionSize580.swift Tests/SourceMissionSize580Tests.swift -o /tmp/mission-object-scale580
+          /tmp/mission-object-scale580
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
+      - name: Verify v580 H55 authentic GLB eligibility before native load
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/H55GLBCompatibility580.swift ASTEROIDYiOS/H55Asset580.swift Tests/H55Asset580Tests.swift -o /tmp/h55-asset580-test
+          /tmp/h55-asset580-test
+          swiftc ASTEROIDYiOS/H55FloorRule580.swift Tests/H55SpawnSurface580Tests.swift -o /tmp/h55-spawn-surface580-test
+          /tmp/h55-spawn-surface580-test
+          swiftc ASTEROIDYiOS/H55GLBCompatibility580.swift Tests/H55GLBCompatibility580Tests.swift -o /tmp/h55-glb-compat580-test
+          /tmp/h55-glb-compat580-test
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift ASTEROIDYiOS/H55Walk580.swift Tests/H55Walk580Tests.swift -o /tmp/h55-walk580-test
+          /tmp/h55-walk580-test
+          swiftc ASTEROIDYiOS/H55NpcDetour580.swift Tests/H55NpcDetour580Tests.swift -o /tmp/h55-npc-detour580-test
+          /tmp/h55-npc-detour580-test
+          swiftc ASTEROIDYiOS/H55NpcDetour580.swift ASTEROIDYiOS/H55Mechanic580.swift Tests/H55Mechanic580Tests.swift -o /tmp/h55-mechanic580-test
+          /tmp/h55-mechanic580-test
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift Tests/H55CollisionGeometry580Tests.swift -o /tmp/h02-geometry-test
+          /tmp/h02-geometry-test
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift Tests/H55SpatialSupport580Tests.swift -o /tmp/h03-spatial-test
+          /tmp/h03-spatial-test
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift Tests/H55TriangleBody580Tests.swift -o /tmp/h04-triangle-body-test
+          /tmp/h04-triangle-body-test
+          swiftc ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Sweep401580.swift Tests/H55Sweep401580Tests.swift -o /tmp/h04-sweep-test
+          /tmp/h04-sweep-test
+          swiftc -O ASTEROIDYiOS/H55CollisionGeometry580.swift ASTEROIDYiOS/H55SpatialSupport580.swift ASTEROIDYiOS/H55TriangleBody580.swift ASTEROIDYiOS/H55Entry580.swift Tests/H55Entry580Tests.swift -o /tmp/h05-entry-test
+          /tmp/h05-entry-test
+          swiftc -frontend -parse ASTEROIDYiOS/H55ScenePage580.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
+      - name: Verify Swift compiler
+        run: swift --version
+      - name: Verify source STATEK v472 70–150% separate visual scales and unchanged combat physics
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourceShipScale472.swift Tests/SourceShipScale472Tests.swift -o /tmp/source-ship472
+          /tmp/source-ship472
+          python3 Tests/ShipScale472IntegrationContract.py
+      - name: Verify original lava emission 287 and single-pass source Carbonis469
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourceLavaLightSettings287.swift Tests/SourceLavaLightSettings287Tests.swift -o /tmp/ios-lava287
+          /tmp/ios-lava287
+          python3 Tests/SourceLavaLight287SourceContract.py
+      - name: Verify source GpuPlanet Atmosphere47, Glow and Menu139 #2 / #55-57
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourcePlanetAtmosphere568.swift Tests/SourcePlanetAtmosphere568Tests.swift -o /tmp/original-source-planet-glow568
+          /tmp/original-source-planet-glow568
+      - name: Verify all 58 original v568 generated sound resources (no IPA)
+        run: python3 Tools/verify_original_audio568_assets.py
+      - name: Verify MusicAudio.cs engine/flame original DSP seeds and PCM on Swift/Linux
+        run: |
+          swiftc ASTEROIDYiOS/OriginalEngineDSP52.swift Tests/OriginalEngineDSP52Tests.swift -o /tmp/engine-dsp52-regression
+          /tmp/engine-dsp52-regression
+          swiftc -frontend -parse ASTEROIDYiOS/OriginalEnginePlayback52.swift
+      - name: Verify exact original MusicMix 2s equal-power audio transition (NO IPA)
+        run: |
+          swiftc ASTEROIDYiOS/OriginalMusicTransition568.swift Tests/OriginalMusicTransition568Tests.swift -o /tmp/v568-music-fade
+          /tmp/v568-music-fade
+      - name: Verify no combat FPS contention from original 13 background music synth jobs
+        run: |
+          set -euo pipefail
+          python3 Tests/OriginalMusicCombatPause568Contract.py
+          swiftc -O ASTEROIDYiOS/OriginalMusicSynth568.swift Tests/OriginalMusicSynth568Tests.swift -o /tmp/music568-combat-pauses
+          /tmp/music568-combat-pauses
+      - name: Compare source-generated PCM byte-for-byte with the user-approved 8af0f3f1 baseline
+        run: |
+          set -euo pipefail
+          python3 Tests/OriginalMusicCacheSafety568Contract.py
+          baseline=8af0f3f1c08adc3638fc1db145db82767208cb6e
+          git fetch --no-tags --depth=1 origin "$baseline"
+          git show "$baseline":ASTEROIDYiOS/OriginalMusicSynth568.swift > /tmp/approved-music568.swift
+          swiftc -O /tmp/approved-music568.swift Tests/OriginalMusicPCMParity568.swift -o /tmp/approved-music568
+          swiftc -O ASTEROIDYiOS/OriginalMusicSynth568.swift Tests/OriginalMusicPCMParity568.swift -o /tmp/refactored-music568
+          /tmp/approved-music568 /tmp/asteroidy-music-baseline
+          /tmp/refactored-music568 /tmp/asteroidy-music-current
+          for original in /tmp/asteroidy-music-baseline/*.wav; do
+            current="/tmp/asteroidy-music-current/${original##*/}"
+            cmp "$original" "$current"
+            sha256sum "$original" "$current"
+          done
+          test "$(find /tmp/asteroidy-music-current -maxdepth 1 -name '*.wav' | wc -l)" -eq 3
+          echo 'PASS: source track 0/7/14 PCM files byte-for-byte identical to approved release'
+      - name: Verify original v568 audio startup order, lazy mission, cache and no replacements
+        run: |
+          set -euo pipefail
+          python3 Tests/IOSAudioLockResume568Contract.py
+          python3 Tests/IOSSourceCombatPause568Contract.py
+          python3 Tests/IOSOriginalCombatHUD331Contract.py
+          # PC v600 HUD must remain wired to real iOS combat, not a static demo.
+          python3 Tests/HudV600IntegrationContract.py
+          python3 Tests/HudLayout600Contract.py
+          swiftc ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudLayout600Tests.swift -o /tmp/hud-v600-layout
+          /tmp/hud-v600-layout
+          swiftc ASTEROIDYiOS/CombatHUDViewport568.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift ASTEROIDYiOS/HudWidgetPlacement600.swift Tests/HudWidgetPlacement600Tests.swift -o /tmp/hud-v600-placement
+          /tmp/hud-v600-placement
+          python3 Tests/HudPlanetariumIntegration600Contract.py
+          python3 Tests/HudPlanetariumCorona600Contract.py
+          python3 Tests/HudMotionEventCounters600Contract.py
+          python3 Tests/HudMotionLiveRenderer600Contract.py
+          python3 Tests/HudMissionGate600Contract.py
+          swiftc ASTEROIDYiOS/HudMissionGate600.swift Tests/HudMissionGate600Tests.swift -o /tmp/hud-v600-mission
+          /tmp/hud-v600-mission
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift ASTEROIDYiOS/HudWidgetGeometry600.swift ASTEROIDYiOS/HudLayout600.swift Tests/HudV600StressTests.swift -o /tmp/hud-v600-stress
+          /tmp/hud-v600-stress
+          python3 Tests/HudPickupMetal600Contract.py
+          swiftc ASTEROIDYiOS/HudMotion600.swift ASTEROIDYiOS/HudEnergy600.swift Tests/HudV600CoreTests.swift -o /tmp/hud-v600-core
+          /tmp/hud-v600-core
+          swiftc ASTEROIDYiOS/HudCapsuleController600.swift Tests/HudCapsuleController600Tests.swift -o /tmp/hud-v600-capsules
+          /tmp/hud-v600-capsules
+          swiftc ASTEROIDYiOS/HudCapsuleController600.swift ASTEROIDYiOS/HudCapsuleBinding600.swift Tests/HudCapsuleBinding600Tests.swift -o /tmp/hud-v600-node-bindings
+          /tmp/hud-v600-node-bindings
+          swiftc ASTEROIDYiOS/CombatHUDViewport568.swift Tests/CombatHUDViewport568Tests.swift -o /tmp/combat-hud-viewport568
+          /tmp/combat-hud-viewport568
+          python3 Tests/IOSShotExplosionAudioResume568Contract.py
+          swiftc -frontend -parse ASTEROIDYiOS/OriginalShotSFXWorker568.swift
+          swiftc ASTEROIDYiOS/OriginalAudioLifecycle568.swift Tests/OriginalAudioLifecycle568Tests.swift -o /tmp/original-audio-v568
+          /tmp/original-audio-v568
+          swiftc -frontend -parse ASTEROIDYiOS/OriginalAudioAV568.swift
+      - name: Verify authentic Carbonis terrain scale v523 (no IPA)
+        run: |
+          swiftc ASTEROIDYiOS/CarbonisMissionPlanet523.swift Tests/CarbonisMissionPlanet523Tests.swift -o /tmp/carbonis-mission-scale-523
+          /tmp/carbonis-mission-scale-523
+      - name: PC v608 + v609 source parity, exact 3 reserves and 25 percent armor per 3s (NO IPA)
+        run: |
+          swiftc ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift Tests/PC608609MechanicsTests.swift -o /tmp/pc608609-shield-armor
+          /tmp/pc608609-shield-armor
+      - name: PC v608 shield energy checkpoint, profile archive, restore, legacy migration (NO IPA)
+        run: |
+          swiftc -O ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/pc608-profile-archive
+          /tmp/pc608-profile-archive
+      - name: Compile and run source-verified Gameplay65 rescue and Physics68 regressions
+        run: |
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/CombatVerifiedEncounter556.swift Tests/CombatVerifiedEncounter556Tests.swift -o /tmp/verified-encounter-556
+          /tmp/verified-encounter-556
+      - name: Verify direct Gameplay65 rescue state machine
+        run: |
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatRescue65.swift Tests/CombatRescue65Tests.swift -o /tmp/rescue-65
+          /tmp/rescue-65
+      - name: Verify playable Boreas armor, hull and held Tarcza145
+        run: |
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/PlanetDamageLab556.swift Tests/PlanetDamageLab556Tests.swift -o /tmp/boreas-damage-lab556
+          /tmp/boreas-damage-lab556
+      - name: Syntax-parse active SwiftUI and Metal renderer (NO iOS build or IPA)
+        run: |
+          swiftc -frontend -parse ASTEROIDYiOS/MissionCinematic568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisIntroPlanet568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourceCombatSky568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourceCombatWreck214.swift
+          swiftc -frontend -parse ASTEROIDYiOS/ResearchWreckGeometry214.swift
+          swiftc -frontend -parse ASTEROIDYiOS/App.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3MainMenu568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01CarbonisPreview568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Scene568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourceCombatHUD331.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Entry568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisSurface277.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisRockGeometry568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisShooterMesh71.swift
+          swiftc -frontend -parse ASTEROIDYiOS/ShooterTactics71.swift
+          swiftc -frontend -parse ASTEROIDYiOS/MissionWave568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/MissionIncoming568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisBodyContact68.swift
+          swiftc -frontend -parse ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatGuardianDrone298.swift ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/SourceCombatSupply586.swift ASTEROIDYiOS/SourcePickupAbilities586.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CarbonisCombat568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisDestruction524.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisExplosionNoise524.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisExplosion524Meshes.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisExplosion524Renderer.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettings568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisExplosion524Preview568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisProjectileFX69.swift
+          swiftc -frontend -parse ASTEROIDYiOS/CarbonisSession568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01ShopPanel568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/W3HomePlanetMetal568.swift
+          swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
+          swiftc -frontend -parse ASTEROIDYiOS/SourcePlayerShip367.swift
+      - name: Verify SHA256 source W3 JPEG and PNG and reject lookalikes
+        run: python3 Tests/V568W3MenuSourceImagesTests.py
+      - name: Verify source v568 W3 menu start and real navigation contracts
+        run: python3 Tests/V568W3NativeMenuContract.py
+      - name: Verify functional 26-sector mission selection and persistence (no gameplay bypass)
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift Tests/CampaignSelection568Tests.swift -o /tmp/campaign-selection-v568
+          /tmp/campaign-selection-v568
+      - name: Verify original Orbit50.cs StartHubMission261 reset preparation for 26 missions (no fake combat)
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/MissionStart261.swift Tests/MissionStart261Tests.swift -o /tmp/mission-start261-tests
+          /tmp/mission-start261-tests
+      - name: Source v568 Wave generation regression
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift Tests/MissionWave568Tests.swift -o /tmp/mission-wave568-tests
+          /tmp/mission-wave568-tests
+      - name: Verify Action38 source incoming waves and timers
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift Tests/MissionIncoming568Tests.swift -o /tmp/mission-incoming568-tests
+          /tmp/mission-incoming568-tests
+      - name: Verify CARBONIS 01 original Wave startup bridge, locks and no fabricated victories
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift Tests/Sector01PreparedWave568Tests.swift -o /tmp/sector01-wave-entry-tests
+          /tmp/sector01-wave-entry-tests
+      - name: Verify original Physics68 two-body ship-rock and ship-fighter contacts
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/CarbonisBodyContact68.swift Tests/CarbonisBodyContact68Tests.swift -o /tmp/carbonis-body-contact68-tests
+          /tmp/carbonis-body-contact68-tests
+      - name: Verify first CARBONIS mission source result, replay, wallet, service and real campaign unlock
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01MissionSummary568.swift ASTEROIDYiOS/Sector01MissionSettlement568.swift Tests/Sector01MissionFinish568Tests.swift -o /tmp/sector01-source-finish-tests
+          /tmp/sector01-source-finish-tests
+      - name: Verify source Game, HitBug and Explosion524 real death events plus 3D geometric shards and exact noise
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/CarbonisExplosionNoise524.swift ASTEROIDYiOS/CarbonisExplosion524Meshes.swift ASTEROIDYiOS/MissionViewportFraming568.swift ASTEROIDYiOS/SourceVisibleSurface73.swift ASTEROIDYiOS/CarbonisVisualSettings568.swift ASTEROIDYiOS/CarbonisIOSFXBudget568.swift Tests/CarbonisDestruction524Tests.swift -o /tmp/carbonis-explosion524-tests
+          /tmp/carbonis-explosion524-tests
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/CarbonisExplosionNoise524.swift ASTEROIDYiOS/CarbonisExplosion524Meshes.swift ASTEROIDYiOS/MissionViewportFraming568.swift ASTEROIDYiOS/SourceVisibleSurface73.swift ASTEROIDYiOS/CarbonisVisualSettings568.swift ASTEROIDYiOS/CarbonisIOSFXBudget568.swift Tests/SourceGeodesicFX568Tests.swift -o /tmp/source-geodesic-fx568
+          /tmp/source-geodesic-fx568
+          python3 Tests/FXCPUGeodesicSourceContract568.py
+      - name: Verify 12 original Explosion524 W3 settings and 3 projectile light settings are saved, clamped and preset-accurate
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/CarbonisVisualSettings568.swift Tests/CarbonisVisualSettings568Tests.swift -o /tmp/c279-w3-effects-options
+          /tmp/c279-w3-effects-options
+      - name: Verify source Combat69 geodesic 3-layer player and hostile shots, radial heads, muzzle and 400-percent four-layer colored ground lighting
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/ShooterTactics71.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01MissionSummary568.swift ASTEROIDYiOS/Sector01MissionSettlement568.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatGuardianDrone298.swift ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/SourceCombatSupply586.swift ASTEROIDYiOS/SourcePickupAbilities586.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CarbonisCombat568.swift ASTEROIDYiOS/CarbonisVisualSettings568.swift ASTEROIDYiOS/CarbonisIOSFXBudget568.swift ASTEROIDYiOS/CarbonisIndexedFXMesh568.swift ASTEROIDYiOS/CarbonisProjectileFX69.swift Tests/CarbonisProjectileFX69Tests.swift -o /tmp/c279-shots69-fx
+          /tmp/c279-shots69-fx
+      - name: Verify live CARBONIS 01 ship, geodesic motion and combat outcome
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/ShooterTactics71.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01MissionSummary568.swift ASTEROIDYiOS/Sector01MissionSettlement568.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatGuardianDrone298.swift ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/SourceCombatSupply586.swift ASTEROIDYiOS/SourcePickupAbilities586.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CarbonisCombat568.swift Tests/CarbonisCombat568Tests.swift -o /tmp/carbonis-live568-tests
+          /tmp/carbonis-live568-tests
+      - name: Complete genuine first CARBONIS wave through real hits, loot, mission victory and saved shop
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/ShooterTactics71.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01MissionSummary568.swift ASTEROIDYiOS/Sector01MissionSettlement568.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatGuardianDrone298.swift ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/SourceCombatSupply586.swift ASTEROIDYiOS/SourcePickupAbilities586.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CarbonisCombat568.swift Tests/Sector01FullMission568Tests.swift -o /tmp/sector01-fully-integrated-source-test
+          /tmp/sector01-fully-integrated-source-test
+      - name: Verify source fighter AI for 25 levels, six kinds and all difficulties
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/ShooterTactics71.swift Tests/ShooterTactics71Tests.swift -o /tmp/source-shooter-tactics71-tests
+          /tmp/source-shooter-tactics71-tests
+      - name: Verify original v568 CARBONIS shooter source solid mesh and material groups
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/CarbonisShooterMesh71.swift Tests/CarbonisShooterMesh71Tests.swift -o /tmp/carbonis-shooter-mesh71-test
+          /tmp/carbonis-shooter-mesh71-test
+      - name: Verify PC v568 source rock geometry for real C279 rendering (no IPA)
+        run: |
+          set -euo pipefail
+          python3 Tests/RockShapeWarmup568Contract.py
+          swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/CarbonisRockGeometry568.swift Tests/CarbonisRockGeometry568Tests.swift -o /tmp/carbonis-rock-mesh-tests
+          /tmp/carbonis-rock-mesh-tests
+      - name: Verify real Carbonis277 terrain lookup against original C279 height-map (no IPA)
+        run: |
+          set -euo pipefail
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination /tmp/carbonis-277-assets
+          echo '3ce9a0456d23a5b88de718e7fd8fe6560cb53cd112a31ecc876e6200a762cb39  /tmp/carbonis-277-assets/Sector01CarbonisHeightMap.dat' | sha256sum --check
+          swiftc ASTEROIDYiOS/CarbonisSurface277.swift Tests/CarbonisSurface277Tests.swift -o /tmp/carbonis-surface277-tests
+          /tmp/carbonis-surface277-tests /tmp/carbonis-277-assets/Sector01CarbonisHeightMap.dat
+      - name: Verify unlocked-only CARBONIS first sector entry, never fake campaign completion
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift Tests/Sector01Entry568Tests.swift -o /tmp/carbonis-source-entry-v568
+          /tmp/carbonis-source-entry-v568
+      - name: Regress original v568 PlayerShip367 optional runtime model and source-matching skin
+        run: python3 Tests/V568PlayerShip367RuntimeContract.py
+      - name: Guard against invalid PBR highlight pixels under opposing view and light
+        run: python3 Tests/MetalPBRHalfVectorContract.py
+      - name: Guard against stuck iPhone/iPad touch inputs after app interruption
+        run: python3 Tests/IOSInterruptedTouchSourceContract.py
+      - name: Full Physics68/Damage556/destruction regression matrix (NO IPA)
+        run: |
+          set -eu
+          sources="ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/SphereSector556.swift ASTEROIDYiOS/CombatSolids68.swift ASTEROIDYiOS/CombatPickupPhysics68.swift ASTEROIDYiOS/CombatSurvival96.swift ASTEROIDYiOS/CombatContactRouter96.swift ASTEROIDYiOS/CombatEncounter68.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatRescue65.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CombatGuardian37.swift ASTEROIDYiOS/CombatVerifiedHit556.swift ASTEROIDYiOS/CombatRespawn556.swift ASTEROIDYiOS/CombatVerifiedEncounter556.swift ASTEROIDYiOS/CombatHazards68.swift ASTEROIDYiOS/CombatFlatShield556.swift ASTEROIDYiOS/PlanetDamageLab556.swift"
+          for test in \
+            SphereRockContact68Tests \
+            SphereShipRigidContact556Tests \
+            CombatSolids68Tests \
+            CombatCoop68Tests \
+            CombatEncounter68Tests \
+            CombatHazards68Tests \
+            CombatDamageShared556Tests \
+            CombatCollision556Tests \
+            CombatRespawn556Tests \
+            CombatSurvival96Tests \
+            CombatTalentVitals78Tests \
+            CombatGuardian37Tests \
+            CombatTarcza145Tests \
+            CombatFlatShield556Tests \
+            CombatContactRouter96Tests \
+            CombatVerifiedHit556Tests \
+            CombatPickupPhysics68Tests \
+            SphereCombatBatch556Tests \
+            SpherePhysicsAndMissionGate556Tests \
+            RockCombat556Tests \
+            SphereSector556Tests \
+            ContinuousCollisionTests \
+            Action38SphereQuota556Tests \
+            Action38FrameOrder556Tests \
+            AmigaBalance70Sphere556Tests; do
+            echo "Verifying $test"
+            swiftc $sources "Tests/$test.swift" -o /tmp/source-physics68-test
+            /tmp/source-physics68-test
+          done
+  # from .github/workflows/verify-metal-camera.yml
+  # Keep only the latest Metal source-check revision in the runner queue.
+  # Does not trigger, archive, sign, or upload any IPA.
+  source-camera-linux:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' source-camera-linux ') }}
+    concurrency:
+      group: asteroidy-ios-metal-source-${{ github.ref }}-source-camera-linux
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Original C# v556 camera orbit and right/up/forward projection
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            Tests/SphereCameraView556Tests.swift \
+            -o /tmp/sphere-camera-556
+          /tmp/sphere-camera-556
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            Tests/SphereSolarOverlay556Tests.swift \
+            -o /tmp/sphere-solar-overlay-556
+          /tmp/sphere-solar-overlay-556
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            Tests/SphereNebula556Tests.swift \
+            -o /tmp/sphere-nebula-556
+          /tmp/sphere-nebula-556
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/BlackHoleSky55.swift \
+            Tests/BlackHoleSky55Tests.swift \
+            -o /tmp/black-hole-55
+          /tmp/black-hole-55
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/DeepSkyPlanets55.swift \
+            Tests/DeepSkyPlanets55Tests.swift \
+            -o /tmp/deep-planets-55
+          /tmp/deep-planets-55
+          swiftc ASTEROIDYiOS/SkyTextureGate55.swift \
+            Tests/SkyTextureGate55Tests.swift \
+            -o /tmp/sky-texture-gate55
+          /tmp/sky-texture-gate55
+      - name: Verify original v556 .4/1600 spherical camera clip planes in Metal
+        run: python3 Tests/SphereProjectionSourceContract556.py
+      - name: Original IntroScene41 camera, Vanguard axes and 820 seeded orbital stones
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/IntroOrbit41.swift \
+            Tests/IntroOrbit41Tests.swift \
+            -o /tmp/intro-orbit-source41
+          /tmp/intro-orbit-source41
+          python3 Tests/IntroOrbitSourceContract41.py
+          python3 Tests/IntroBoreasMorphSourceContract556.py
+      - name: Verify authentic PC v4311 Vanguard cinematic size and center from baked GPU resource
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/IntroOrbit41.swift \
+            ASTEROIDYiOS/IntroVanguard431.swift \
+            Tests/IntroVanguard431Tests.swift \
+            -o /tmp/intro-vanguard-431
+          /tmp/intro-vanguard-431
+          python3 Tests/IntroVanguardSourceContract431.py
+      - name: Reject silent AS3D fallback in future textured Vanguard IPA
+        run: |
+          set -eu
+          python3 Tests/ReleaseGateVanguard431Tests.py
+          python3 Tests/PrepareVanguardPackTests.py
+      - name: Positive validation of the user's actual v568 Vanguard mesh and texture files
+        run: |
+          set -eu
+          python3 Tests/OriginalVanguard431InstalledAssetsTests.py
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets
+      - name: Source Vanguard v4311 exact UV stream parser and optional original JPEG material
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/SourceVanguardMesh431.swift \
+            Tests/SourceVanguardMesh431Tests.swift \
+            -o /tmp/source-vanguard-uv431
+          /tmp/source-vanguard-uv431
+          python3 Tests/SourceVanguardTextureContract431.py
+      - name: Original GpuToon60 three-band source lighting on Vanguard (CPU math and Metal contract)
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/SourceFighterToon60.swift \
+            Tests/SourceFighterToon60Tests.swift \
+            -o /tmp/fighter-toon60
+          /tmp/fighter-toon60
+          python3 Tests/SourceFighterToonContract60.py
+      - name: Original GpuShip v491 additive two-engine plasma (CPU golden tests + GPU source contract)
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/IntroEnginePlasma491.swift \
+            Tests/IntroEnginePlasma491Tests.swift \
+            -o /tmp/intro-plasma491
+          /tmp/intro-plasma491
+          python3 Tests/IntroEnginePlasmaSourceContract491.py
+      - name: Original GpuIntro41 seed-specific cratered rock geometry and normals
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/AssetMesh.swift \
+            ASTEROIDYiOS/IntroOrbit41.swift \
+            ASTEROIDYiOS/IntroRockGeometry41.swift \
+            Tests/IntroRockGeometry41Tests.swift \
+            -o /tmp/intro-rock-source41
+          /tmp/intro-rock-source41
+      - name: Original 3D Boreas atmosphere 24x96 cap and camera-facing source basis
+        run: |
+          set -eu
+          swiftc ASTEROIDYiOS/GameCore.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/CombatCollision556.swift \
+            ASTEROIDYiOS/CombatBalance556.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/AssetMesh.swift \
+            ASTEROIDYiOS/IntroAtmosphere47.swift \
+            Tests/IntroAtmosphere47Tests.swift \
+            -o /tmp/intro-atmosphere47
+          /tmp/intro-atmosphere47
+          python3 Tests/IntroAtmosphereSourceContract47.py
+      - name: Verify original RGBA sky point sprites and pipeline contract (static)
+        run: python3 Tests/SkyPointSourceContract556.py
+      - name: Original GpuIntro41 + GpuCosmos39 source solar ray and GPU contract
+        run: python3 Tests/SolarOverlaySourceContract556.py
+      - name: Original GpuCosmos39 nebula texture and 36-layer Metal contract
+        run: python3 Tests/NebulaSourceContract556.py
+      - name: BlackHole55 source GPU blend and 3-layer render contract
+        run: python3 Tests/BlackHoleSourceContract556.py
+      - name: Verify three source BuildDeepPlanet55 bodies and Metal painter order
+        run: python3 Tests/DeepSkyPlanetsSourceContract556.py
+      - name: Confirm lazy visible-only source PArgb sky GPU allocations
+        run: python3 Tests/SkyTextureGateSourceContract55.py
+      - name: Parse Metal renderer Swift sources (not an Xcode compile)
+        run: |
+          swiftc -frontend -parse ASTEROIDYiOS/MetalRenderer.swift
+          swiftc -frontend -parse ASTEROIDYiOS/App.swift

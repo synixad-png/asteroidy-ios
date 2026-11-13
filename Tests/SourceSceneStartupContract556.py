@@ -10,11 +10,30 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def job_block(workflow_file, job):
+    """Text of one job in a merged workflow file: its id line up to the next job id."""
+    import re
+    lines = (ROOT/".github/workflows"/workflow_file).read_text().split("\n")
+    start = lines.index(f"  {job}:")
+    end = next((i for i in range(start + 1, len(lines))
+                if re.match(r"^  [A-Za-z0-9_-]+:\s*$", lines[i])), len(lines))
+    return "\n".join(lines[start:end])
+
+
+def job_rule(workflow_file, job):
+    """When a merged job runs: .github/ci-jobs.json (read by Tools/ci_select_jobs.py)."""
+    import json
+    return json.loads((ROOT/".github/ci-jobs.json").read_text())[workflow_file][job]
+
+
 app = (ROOT / "ASTEROIDYiOS/App.swift").read_text()
 renderer = (ROOT / "ASTEROIDYiOS/MetalRenderer.swift").read_text()
 project = (ROOT / "project.yml").read_text()
 verify = (ROOT / "Tools/verify_ipa.py").read_text()
-workflow = (ROOT / ".github/workflows/build-ios-iphone-ipad-manual.yml").read_text()
+workflow = job_block("build-ipa.yml", "device-universal")
+workflow_rule = job_rule("build-ipa.yml", "device-universal")
 
 def check(ok, description):
     if not ok:
@@ -53,7 +72,8 @@ check(re.search(r"TARGETED_DEVICE_FAMILY:\s*['\"]1,2['\"]",project) is not None,
       "Native project no longer targets iPhone + iPad")
 check("set(info['UIDeviceFamily']) == {1, 2}" in verify,
       "The shipped dual-device IPA must be checked for both families")
-check("  workflow_dispatch:" in workflow and "\n  push:" not in workflow,
+check(workflow_rule["manual"] and workflow_rule["push"] is None
+      and workflow_rule["pull_request"] is None,
       "Dual-device IPA must remain manual-only, not auto-built every commit")
 check("runs-on: macos-15-intel" in workflow and
       "'TARGETED_DEVICE_FAMILY=1,2'" in workflow and

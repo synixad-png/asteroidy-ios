@@ -1,95 +1,56 @@
-## User explicitly requested W3 NEW GAME iPhone/iPad IPA with source difficulty, active profile backup and actual CARBONIS 01.
-# v568 IPA requested 07.11.2026: source Explosion524 optimized V8.2 GPU raymarch + C279 CarbonisCombined469 and NewHome293 lava emission Menu139 #45, original audio runtime synth iPhone/iPad unsigned.
-# Do not include fireflies or remove original audio. The user requested this exact next IPA.
-name: ASTEROIDY iOS - unsigned iPhone and iPad IPA
+# IPA builds. Each job copies the steps of the workflow named in its '# from' comment.
+# On push to main, build-ios and the BASTION release proof run in the same cases as
+# before (path lists in .github/ci-jobs.json). A manual run builds only `target`.
+name: ASTEROIDY iOS - IPA builds
 on:
-  workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - '.github/workflows/build-ios.yml'
-      - 'Tests/IOSOriginalCombatHUD331Contract.py'
-      - 'ASTEROIDYiOS/SourceBastion606.swift'
-      - 'ASTEROIDYiOS/SourceVanguardMesh431.swift'
-      - 'ASTEROIDYiOS/SourceHomeVanguard431.swift'
-      - 'ASTEROIDYiOS/H55PlayerShip580.swift'
-      - 'ASTEROIDYiOS/H55SourceMechanics580.swift'
-      - 'Tests/CarbonisCombat568Tests.swift'
-      - 'Tests/CombatCoop68Tests.swift'
-      - 'Tests/HudLayout600Contract.py'
-      - 'Tests/HudV600IntegrationContract.py'
-      - 'ASTEROIDYiOS/W3StartupSplash568.swift'
-      - 'ASTEROIDYiOS/W3AdaptiveViewport568.swift'
-      - 'ASTEROIDYiOS/W3SafeAreaReader568.swift'
-      - 'ASTEROIDYiOS/SourceFPSAccumulator568.swift'
-      - 'ASTEROIDYiOS/SourcePerformance568.swift'
-      - 'ASTEROIDYiOS/CarbonisVisualSettingsPanel568.swift'
-      - 'ASTEROIDYiOS/Sector01CarbonisPreview568.swift'
-      - 'ASTEROIDYiOS/PhoneCombatResolution568.swift'
-      - 'Tests/PhoneCombatResolution568Tests.swift'
-      - 'Tests/PhoneCombatResolution568Contract.py'
-      - 'Tests/IOSPhoneLateDrawable568Contract.py'
-      - 'ASTEROIDYiOS/PhoneFrameCadence568.swift'
-      - 'Tests/PhoneFrameCadence568Tests.swift'
-      - 'Tests/IOSPhoneFrameCadence568Contract.py'
-      - 'ASTEROIDYiOS/SourceCombatSky568.swift'
-      - 'ASTEROIDYiOS/SourceCombatWreck214.swift'
-      - 'ASTEROIDYiOS/ResearchWreckGeometry214.swift'
-      - 'Tests/CombatOriginalSkyWreck214Contract.py'
-      - 'Tests/ResearchWreckGeometry214Tests.swift'
-      - 'ASTEROIDYiOS/Sector01Carbonis568.metal'
-      - 'ASTEROIDYiOS/CarbonisCombined469Bake.metal'
-      - 'Tests/CarbonisCombined469BakeTests.py'
-      - 'ASTEROIDYiOS/CarbonisIndexedFXMesh568.swift'
-      - 'ASTEROIDYiOS/CarbonisFXStreamingBuffers568.swift'
-      - 'ASTEROIDYiOS/CarbonisProjectileFX69.swift'
-      - 'Tests/SourceShotSweepGate568Tests.swift'
-      - 'Tests/SourceShotCollisionAndDrawing568Contract.py'
-      - 'ASTEROIDYiOS/CarbonisIOSFXBudget568.swift'
-      - 'ASTEROIDYiOS/CarbonisExplosion524Preview568.swift'
-      - 'ASTEROIDYiOS/SourceVisibleSurface73.swift'
-      - 'Tests/SourceVisibleSurface73Tests.swift'
-      - 'Tests/CarbonisPlanetOpaqueCull568.py'
-      - 'ASTEROIDYiOS/CarbonisExplosion524Meshes.swift'
-      - 'Tests/SourceGeodesicFX568Tests.swift'
-      - 'Tests/FXCPUGeodesicSourceContract568.py'
-      - 'Tests/CarbonisIOSFXBudget568Tests.swift'
-      - 'Tests/CarbonisIOSFXBudgetSourceContract568.py'
-      - 'ASTEROIDYiOS/CarbonisExplosion524Renderer.swift'
-      - 'ASTEROIDYiOS/Sector01Explosion524.metal'
-      - 'Tests/Explosion524GpuAlgebraAndStaticMeshTests.py'
-      - 'Tests/CarbonisFXSourcePerformanceContract568.py'
-      - 'Tests/Explosion524ConservativePolygonTests.py'
-      - 'Tests/CarbonisProjectileFX69Tests.swift'
-      - 'ASTEROIDYiOS/MetalRenderer.swift'
-      - 'ASTEROIDYiOS/CarbonisIntroPlanet568.swift'
-      - 'ASTEROIDYiOS/MissionCinematic568.swift'
-      - 'ASTEROIDYiOS/OriginalAudioAV568.swift'
-      - 'ASTEROIDYiOS/OriginalShotSFXWorker568.swift'
-      - 'ASTEROIDYiOS/OriginalEnginePlayback52.swift'
-      - 'ASTEROIDYiOS/OriginalMusicSynth568.swift'
-      - 'Tests/OriginalMusicSynth568Tests.swift'
-      - 'Tests/OriginalMusicCombatPause568Contract.py'
-      - 'Tests/IOSAudioLockResume568Contract.py'
-      - 'Tests/IOSSourceCombatPause568Contract.py'
-      - 'Tests/IOSShotExplosionAudioResume568Contract.py'
-      - 'Tests/MissionIntro41SourceContract568.py'
-      - 'ASTEROIDYiOS/Sector01Scene568.swift'
-      - 'ASTEROIDYiOS/SourceCombatHUD331.swift'
-      - 'ASTEROIDYiOS/CombatHUDViewport568.swift'
-      - 'Tests/CombatHUDViewport568Tests.swift'
-      - 'ASTEROIDYiOS/W3MainMenu568.swift'
-      - 'ASTEROIDYiOS/App.swift'
-      - 'Tests/W3AdaptiveViewport568Tests.swift'
-      - 'Tests/SourceFPSAccumulator568Tests.swift'
-      - 'Tests/W3AdaptiveViewportContract568.py'
-      - 'Tests/SourcePerformance568Contract.py'
-      - 'ASTEROIDYiOS/W3StartupPolicy568.swift'
-      - 'Tests/W3StartupPolicy568Tests.swift'
-      - 'Tests/W3StartupContract568.py'
-
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Which IPA build to run
+        type: choice
+        default: build-ios
+        options:
+          - build-ios
+          - build-ios-boreas-test-05
+          - build-ios-iphone-ipad-manual
+          - build-ios-pc602-h290-user-test-ipa-20261112
+          - build-main-bastion-release-proof
+      compatibility_old_ship:
+        description: "Tylko stary Vanguard AS3D \u2014 \u015bwiadomie pomi\u0144 oryginaln\u0105 tekstur\u0119"
+        type: boolean
+        default: false
 jobs:
+  # Picks which jobs below run: .github/ci-jobs.json + Tools/ci_select_jobs.py
+  select:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      jobs: ${{ steps.pick.outputs.jobs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: pick
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          RUN: ${{ inputs.target }}
+        run: python3 Tools/ci_select_jobs.py --workflow build-ipa.yml
+  # from .github/workflows/build-ios.yml
+  # User explicitly requested W3 NEW GAME iPhone/iPad IPA with source difficulty, active profile backup and actual CARBONIS 01.
+  # v568 IPA requested 07.11.2026: source Explosion524 optimized V8.2 GPU raymarch + C279 CarbonisCombined469 and NewHome293 lava emission Menu139 #45, original audio runtime synth iPhone/iPad unsigned.
+  # Do not include fireflies or remove original audio. The user requested this exact next IPA.
   verify-new-game-source:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' verify-new-game-source ') }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -100,8 +61,10 @@ jobs:
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/source-newgame568
           /tmp/source-newgame568
           python3 Tests/SourceNewGame568Contract.py
+  # from .github/workflows/build-ios.yml
   expose-build-run:
-    if: ${{ github.event.repository.private == false && github.ref == 'refs/heads/main' }}
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' expose-build-run ') && (github.event.repository.private == false && github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -139,8 +102,10 @@ jobs:
             } catch(error) {
               core.warning('Could not record run id: '+String(error));
             }
+  # from .github/workflows/build-ios.yml
   verify-sphere-linux:
-    if: ${{ github.event.repository.private == false }}
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' verify-sphere-linux ') && (github.event.repository.private == false) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -362,9 +327,10 @@ jobs:
           set -euo pipefail
           swiftc ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/Sphere67.swift ASTEROIDYiOS/SphereAsteroid556.swift ASTEROIDYiOS/MissionWave568.swift ASTEROIDYiOS/MissionIncoming568.swift ASTEROIDYiOS/MissionStart261.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/MissionCatalog568.swift ASTEROIDYiOS/Sector01Entry568.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/Sector01MissionSummary568.swift ASTEROIDYiOS/Sector01PreparedWave568.swift ASTEROIDYiOS/CarbonisBodyContact68.swift ASTEROIDYiOS/SphereRockContact68.swift ASTEROIDYiOS/ShooterTactics71.swift ASTEROIDYiOS/Sector01MissionSettlement568.swift ASTEROIDYiOS/CarbonisDestruction524.swift ASTEROIDYiOS/SourcePickupModels586.swift ASTEROIDYiOS/SourceCombatSupply586.swift ASTEROIDYiOS/SourcePickupAbilities586.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatGuardianDrone298.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift ASTEROIDYiOS/CarbonisCombat568.swift Tests/Sector01FullMission568Tests.swift -o /tmp/sector01-fully-integrated-source-test
           /tmp/sector01-fully-integrated-source-test
+  # from .github/workflows/build-ios.yml
   compile-device:
-    needs: [verify-sphere-linux, verify-new-game-source]
-    if: ${{ github.event.repository.private == false }}
+    needs: [select, verify-sphere-linux, verify-new-game-source]
+    if: ${{ contains(needs.select.outputs.jobs, ' compile-device ') && (github.event.repository.private == false) }}
     runs-on: macos-15-intel
     timeout-minutes: 45
     permissions:
@@ -625,3 +591,640 @@ jobs:
             reports/
           if-no-files-found: error
           retention-days: 14
+  # from .github/workflows/build-main-bastion-release-proof.yml (job source-home-metal)
+  # Reproducibility build on MAIN: exact source of user-approved BASTION PC609 IPA.
+  # This workflow changes no gameplay files. It builds unsigned iPhone/iPad Release IPA,
+  # packages verified original assets, and publishes independent release checks.
+  # It intentionally does not gate native compilation on legacy standalone test harnesses.
+  bastion-main-proof:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' bastion-main-proof ') }}
+    permissions:
+      contents: read
+    concurrency:
+      group: bastion-main-proof-${{ github.ref }}-bastion-main-proof
+      cancel-in-progress: false
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Prove all game sources and resources match approved BASTION
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERIFIED_BASE=2d9dc98765824bfbe15a5f6dfb999c8f98d5d991
+          git fetch --no-tags --depth=1 origin "$VERIFIED_BASE"
+          git diff --exit-code "$VERIFIED_BASE" HEAD -- . ':(exclude).github/workflows/**' ':(exclude)Reports/**' ':(exclude)ASTEROIDYiOS/Assets/BASTION_PC609.bastion' ':(exclude)Tools/verify_bastion_full_ipa.py'
+          python3 - <<'PY'
+          from pathlib import Path
+          from hashlib import sha256
+          p=Path("ASTEROIDYiOS/Assets/BASTION_PC609.bastion")
+          assert p.is_file() and p.stat().st_size==2472062
+          assert sha256(p.read_bytes()).hexdigest()=="d18d651aab74bebdb2215940c0774c8aa3f0aff9101c0b7122c336110b3f5e7c"
+          print("PASS: original Bastion 6061 pack embedded in source, SHA256 exact")
+          PY
+          echo "PASS: gameplay sources match approved BASTION; changes only CI, bundle asset and verifier"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Verify exact PC v602 H290 resources on GitHub
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Same verified staging used by the complete PC609 Release IPA.
+          # Without these, the earlier 44.9MB BASTION Debug IPA omitted
+          # the CARBONIS mesh/textures, PlayerShip367, W3 background/logo.
+          python3 Tools/verify_ios_inputs.py
+          python3 Tools/prepare_vanguard431_assets.py
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/stage_pc602_planetarium.py
+          python3 Tests/HudPlanetariumIntegration600Contract.py
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin
+          python3 Tests/V568W3HomeSourceLightTests.py
+          python3 Tests/V568W3PlanetTransparentSourceContract.py
+          python3 Tests/SourceLavaLight287SourceContract.py
+          python3 Tests/PC602HomeScene291Contract.py
+          python3 Tests/PC602HomeWorldUI291Contract.py
+          python3 Tests/PC602H290MenuSkyRegression291.py
+          python3 Tests/PC602H290LiveSettingsPause291Contract.py
+          swiftc -O ASTEROIDYiOS/SourceShipScale472.swift Tests/SourceShipScale472Tests.swift -o /tmp/pc602-shipscale-live-tests
+          /tmp/pc602-shipscale-live-tests
+          swiftc -O ASTEROIDYiOS/CarbonisVisualSettings568.swift Tests/CarbonisVisualSettings568Tests.swift -o /tmp/pc602-projectile-light-tests
+          /tmp/pc602-projectile-light-tests
+          python3 Tests/PC602OrbitSave61Contract.py
+          python3 Tests/PC602ReplayHUDRegression291.py
+          python3 Tests/PC602UnifiedHUDMenu291Contract.py
+          swiftc -O ASTEROIDYiOS/PC602OrbitHUDLayout291.swift Tests/PC602OrbitHUDLayout291Tests.swift -o /tmp/pc602-orbit-hud-tests
+          /tmp/pc602-orbit-hud-tests
+          python3 Tests/PC602O01SourceBaseline.py --ios-root .
+          python3 Tools/code_quality_audit.py --root . --gate
+      - name: Build original full Swift and Metal for iPhone/iPad (BASTION Release)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics
+          xcodebuild -version
+          # Preserve existing Debug CI for unrelated PRs; BASTION IPA
+          # must have the same standalone Release binary as PC609.
+          CONFIGURATION=Release
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration "$CONFIGURATION" \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/PC602Home291" \
+            build > diagnostics/xcodebuild.log 2>&1 || {
+              grep -n -A 9 -B 4 -E 'error:|FAILED|failed' diagnostics/xcodebuild.log | tail -n 130
+              tail -n 45 diagnostics/xcodebuild.log
+              exit 1
+            }
+          python3 - "$CONFIGURATION" <<'PY'
+          from pathlib import Path
+          import plistlib,sys
+          build=Path(f"build/PC602Home291/Build/Products/{sys.argv[1]}-iphoneos")
+          apps=list(build.glob("*.app"))
+          assert len(apps)==1, apps
+          app=apps[0]
+          info=plistlib.loads((app/"Info.plist").read_bytes())
+          assert set(info["UIDeviceFamily"])=={1,2}
+          assert (app/"default.metallib").is_file()
+          import hashlib
+          original=app/"planetarium.glb"
+          assert original.is_file(), "Original PC602 HUD planetarium missing from iOS app"
+          assert original.stat().st_size==3228900
+          assert hashlib.sha256(original.read_bytes()).hexdigest()=="71ca9ff24e044a831a5c7197e343594dd1fd801284af6231870570b35ad43860"
+          assert (app/"W3HomePlanet290OriginalGPU.bin").is_file()
+          assert (app/"PC602Home290HeightMap.bin").is_file()
+          assert (app/"PC602OrbitBelt51.bin").is_file()
+          assert (app/"Vanguard431Source.mesh").is_file()
+          assert (app/"Vanguard431Base.jpg").is_file()
+          assert (app/"W3HomePlanet290Base.dat").is_file()
+          assert (app/"W3HomePlanet293Glow.dat").is_file()
+          bastion=app/"BASTION_PC609.bastion"
+          assert bastion.is_file(), "BASTION missing from iOS app bundle"
+          assert bastion.stat().st_size==2472062, "BASTION bundle truncated"
+          assert hashlib.sha256(bastion.read_bytes()).hexdigest()=="d18d651aab74bebdb2215940c0774c8aa3f0aff9101c0b7122c336110b3f5e7c"
+          print("PASS: authentic Bastion permanently embedded in native .app; no Files import")
+          print("PASS: real iPhone/iPad ARM64 Swift and Metal, source H290 bundle")
+          print("NOT TESTED: native GPU draw, 820-asteroid belt, docking, complete active world")
+          PY
+      - name: Package original-source BASTION iPhone+iPad unsigned test IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/PC602Home291/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" && test -f "$APP/Info.plist"
+          mkdir -p distribution/Payload diagnostics
+          cp -R "$APP" distribution/Payload/
+          python3 Tools/materialize_pc586_original_resources.py --app "distribution/Payload/$(basename "$APP")" --report diagnostics/bastion-pc586-resources.json
+          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa Payload)
+          unzip -t ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tail -1
+          python3 Tools/verify_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa --require-vanguard-original | tee diagnostics/bastion-ipa-verification.txt
+          python3 Tools/verify_bastion_full_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-full-v609-release-audit.txt
+          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-h55-verification.txt
+          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-hud-verification.txt
+          shasum -a 256 ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-ipa-sha256.txt
+          echo "$GITHUB_SHA" > diagnostics/bastion-source-commit.txt
+          echo 'BASTION_PC609.bastion is embedded in IPA and loaded automatically by Bundle.main; manual import not required.' > diagnostics/bastion-import-readme.txt
+      - name: Publish BASTION unsigned iPhone/iPad test IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-MAIN-BASTION-PC609-RELEASE-IPA-PROOF
+          path: |
+            ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa
+            diagnostics/bastion-ipa-verification.txt
+            diagnostics/bastion-full-v609-release-audit.txt
+            diagnostics/bastion-h55-verification.txt
+            diagnostics/bastion-hud-verification.txt
+            diagnostics/bastion-ipa-sha256.txt
+            diagnostics/bastion-source-commit.txt
+            diagnostics/bastion-import-readme.txt
+          retention-days: 14
+          if-no-files-found: error
+      - name: Preserve native compile and packaging diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PC602-NewHome291-Metal-ARM64-build-log
+          path: diagnostics/
+          if-no-files-found: ignore
+          retention-days: 7
+  # from .github/workflows/build-ios-boreas-test-05.yml
+  # Complete PC609 iPhone/iPad Release IPA with the original v603 Kestrel importer.
+  # Ship models are mandatory embedded iOS resources; only H55 hangar is imported separately.
+  # Never reuse the earlier incomplete 44MB Debug packaging route.
+  boreas-complete-release:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' boreas-complete-release ') }}
+    permissions:
+      contents: read
+    concurrency:
+      group: boreas05-pc609-release-${{ github.ref }}-boreas-complete-release
+      cancel-in-progress: true
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Stage exact complete v609 PC602 / CARBONIS / W3 / H55 assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          git rev-parse HEAD | tee reports/source-commit.txt
+          python3 Tools/verify_ios_inputs.py | tee reports/preflight.txt
+          python3 Tools/prepare_vanguard431_assets.py | tee reports/vanguard-staging.txt
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets | tee reports/vanguard-verified.txt
+          python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets | tee reports/player-ship.txt
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required | tee reports/w3-menu.txt
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets | tee reports/carbonis.txt
+          python3 Tools/stage_pc602_planetarium.py | tee reports/planetarium-source.txt
+          python3 Tests/HudPlanetariumIntegration600Contract.py | tee reports/planetarium-isolation.txt
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets | tee reports/home-source.txt
+          python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets | tee reports/820-asteroids.txt
+          python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin | tee reports/belt-tests.txt
+          python3 Tools/verify_original_audio568_assets.py | tee reports/audio-assets.txt
+          python3 Tools/materialize_pc586_original_resources.py --report reports/pc586-source.json
+      - name: Recreate all 96 original node clips from SHA256-verified PC568 GLB
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/export_boreas_node_tracks556.py --root . \
+            --destination ASTEROIDYiOS/Assets/Boreas556.asnt | tee reports/boreas-export-96-channels.txt
+          python3 Tests/BoreasNodeTracks556Tests.py | tee reports/boreas-96-channels-tests.txt
+          python3 Tests/PC609VisibleCraftBoreasSourceContract.py | tee reports/pc609-visible-kestrel-boreas-source.txt
+          # Python source-only zlib checks previously missed the real
+          # Foundation Swift failure; run the original ASNT parser on Apple.
+          swiftc -Onone ASTEROIDYiOS/SourcePC609Zlib.swift ASTEROIDYiOS/AssetMesh.swift ASTEROIDYiOS/BoreasNodeTracks556.swift Tests/BoreasNodeTracks556RuntimeTests.swift -o /tmp/boreas556-real-swift-runtime
+          /tmp/boreas556-real-swift-runtime | tee reports/boreas-original-asnt-apple-runtime.txt
+      - name: Fail closed unless original PC609 ship packs are in app resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/verify_embedded_pc609_assets.py --assets ASTEROIDYiOS/Assets --boreas | tee reports/embedded-pc609-source-assets.txt
+      - name: Decode BOTH ORIGINAL embedded PC609 ship packs with actual Swift 5 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -Onone ASTEROIDYiOS/SourcePC609Zlib.swift ASTEROIDYiOS/SourceVanguardMesh431.swift ASTEROIDYiOS/SourceKestrel603.swift ASTEROIDYiOS/SourceBastion606.swift Tests/OriginalPC609PackDecoderTests.swift -o /tmp/pc609-actual-packs
+          /tmp/pc609-actual-packs | tee reports/original-packs-real-decoding.txt
+      - name: Verify KESTREL 6031 format and iOS source integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tests/BoreasTestPlanet05Contract.py | tee reports/boreas-planet05-audit.txt
+          python3 Tests/IntroBoreasMorphSourceContract556.py | tee reports/boreas-morph-loop-audit.txt
+          python3 Tests/IOSKestrel603SourceContract.py | tee reports/kestrel-source-audit.txt
+          python3 Tests/SourceNewGame568Contract.py | tee reports/starting-lives-source-contract.txt
+          python3 Tests/PC609H55FleetNewGameContract.py | tee reports/h55-fleet-newgame-regression.txt
+          python3 Tests/PC609IntroBlackScreenContract.py | tee reports/intro41-renderer-failure-visibility.txt
+          swiftc -O ASTEROIDYiOS/SourcePC609Zlib.swift ASTEROIDYiOS/SourceVanguardMesh431.swift ASTEROIDYiOS/SourceKestrel603.swift ASTEROIDYiOS/SourceBastion606.swift ASTEROIDYiOS/GameCore.swift ASTEROIDYiOS/FlightDynamics556.swift ASTEROIDYiOS/CombatCollision556.swift ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CampaignProgress556.swift ASTEROIDYiOS/Sector01Shop568.swift ASTEROIDYiOS/H55Workshop580.swift ASTEROIDYiOS/H55SourceMechanics580.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/SourceNewGame568.swift Tests/SourceNewGame568Tests.swift -o /tmp/pc609-ship-starting-lives
+          /tmp/pc609-ship-starting-lives | tee reports/starting-lives-nine-combinations.txt
+          python3 Tests/PC602OrbitSave61Contract.py | tee reports/save-slots-shiptype.txt
+          swiftc -O ASTEROIDYiOS/SourceVanguardMesh431.swift Tests/KestrelMesh603Tests.swift -o /tmp/kestrel603-mesh
+          /tmp/kestrel603-mesh | tee reports/kestrel-mesh-abi.txt
+          swiftc -O ASTEROIDYiOS/CombatBalance556.swift ASTEROIDYiOS/CombatTarcza145.swift ASTEROIDYiOS/CombatTalentVitals78.swift Tests/PC608609MechanicsTests.swift -o /tmp/kestrel-shield-armor
+          /tmp/kestrel-shield-armor | tee reports/v608-v609-regression.txt
+          python3 Tests/PC602HomeScene291Contract.py | tee reports/home-scene-contract.txt
+          python3 Tests/PC602HomeWorldUI291Contract.py | tee reports/home-world-contract.txt
+          python3 Tests/PC602UnifiedHUDMenu291Contract.py | tee reports/unified-ui.txt
+          python3 Tests/IOSSourceCombatPause568Contract.py | tee reports/mission-pause.txt
+      - name: Compile physical iPhone and iPad ARM64 full Release application
+        shell: bash
+        run: |
+          set -euo pipefail
+          { xcodebuild -version; xcrun --sdk iphoneos --show-sdk-version; } | tee reports/xcode-version.txt
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/BoreasTest05Release" \
+            build > reports/xcodebuild-release.log 2>&1 || {
+              grep -n -A 8 -B 3 -E 'error:|BUILD FAILED|failed' reports/xcodebuild-release.log | tail -n 140 || true
+              tail -n 70 reports/xcodebuild-release.log
+              exit 1
+            }
+      - name: Package full Release IPA and enforce 95-file v609 resource gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/BoreasTest05Release/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" && test -f "$APP/Info.plist"
+          mkdir -p distribution/Payload
+          cp -R "$APP" distribution/Payload/
+          python3 Tools/materialize_pc586_original_resources.py --app "distribution/Payload/$(basename "$APP")" --report reports/pc586-in-ipa.json
+          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa Payload)
+          python3 Tools/verify_embedded_pc609_assets.py --ipa ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa --boreas | tee reports/embedded-pc609-ipa-assets.txt
+          python3 Tools/verify_ipa.py ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-structure.txt
+          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa | tee reports/ipa-pc586-complete.txt
+          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa | tee reports/ipa-planetarium.txt
+          python3 Tools/verify_bastion_full_ipa.py ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa | tee reports/full-95-source-assets.txt
+          python3 - <<'PY' | tee reports/boreas-original-resources-in-ipa.txt
+          import hashlib,zipfile
+          f='ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa'
+          expected={
+            'Boreas556.as3d':'0a18d88a734906811fc6421d79d68a56a2ae4bd7dd7a622fc89c46a4cd5fbf9b',
+            'Boreas556.asmo':'33c7bec0a53fe8a63e0c351658155ee74fc364cddef8ec261af15d6675a103a6',
+            'BoreasMorphBinding556.json':'f5f099707a1e63582934dc2bd26155e739225db26f3d358fd4a100fff9e50593',
+            'Boreas556.asnt':'bdf22733cfe6a1314517537e2400019a97c3a83507b8f654fd1307dbf9809edc',
+          }
+          with zipfile.ZipFile(f) as z:
+            assert z.testzip() is None
+            for file,digest in expected.items():
+              matched=[n for n in z.namelist() if n.startswith('Payload/') and n.endswith('/'+file)]
+              assert len(matched)==1,(file,matched)
+              actual=hashlib.sha256(z.read(matched[0])).hexdigest()
+              assert actual==digest,(file,actual)
+          print('PASS original PC v609 Boreas geometry, morph and 96 glTF node channels: SHA256 4/4')
+          print('PASS 97 original glTF channels (1 weights + 48 translation + 48 scale), 5s source loop')
+          PY
+          python3 - <<'PY' | tee reports/three-ships-source-audit.txt
+          from pathlib import Path
+          root=Path('ASTEROIDYiOS')
+          kestrel=(root/'SourceKestrel603.swift').read_text()
+          bastion=(root/'SourceBastion606.swift').read_text()
+          vanguard=(root/'SourceVanguardMesh431.swift').read_text()
+          assert 'expectedMagic:6031' in kestrel and 'expectedMagic:6061' in bastion
+          assert 'static let magic: Int = 4311' in vanguard
+          assert 'expectedGPUVertexCount=189_906' in kestrel
+          print('PASS 3 original playable ships: KESTREL 6031, VANGUARD 4311, BASTION 6061; original model packs embedded')
+          PY
+          shasum -a 256 ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
+          stat -f '%z bytes' ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa | tee reports/size.txt
+          echo 'Original KESTREL and BASTION are embedded in IPA and checked by SHA256. Only hangar H55 is imported. IPA unsigned.' | tee reports/model-import.txt
+      - name: Publish complete BOREAS05 97-channel unsigned Release IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-PC609-BOREAS05-97CH-RELEASE-UNSIGNED-IPA
+          path: |
+            ASTEROIDY_iOS_PC609_BOREAS05_97CH_RELEASE_UNSIGNED.ipa
+            reports/SHA256SUMS.txt
+            reports/embedded-pc609-source-assets.txt
+            reports/original-packs-real-decoding.txt
+            reports/embedded-pc609-ipa-assets.txt
+            reports/size.txt
+            reports/source-commit.txt
+            reports/boreas-planet05-audit.txt
+            reports/boreas-original-asnt-apple-runtime.txt
+            reports/pc609-visible-kestrel-boreas-source.txt
+            reports/boreas-morph-loop-audit.txt
+            reports/boreas-original-resources-in-ipa.txt
+            reports/boreas-export-96-channels.txt
+            reports/boreas-96-channels-tests.txt
+            reports/kestrel-source-audit.txt
+            reports/kestrel-mesh-abi.txt
+            reports/v608-v609-regression.txt
+            reports/starting-lives-source-contract.txt
+            reports/h55-fleet-newgame-regression.txt
+            reports/intro41-renderer-failure-visibility.txt
+            reports/starting-lives-nine-combinations.txt
+            reports/save-slots-shiptype.txt
+            reports/full-95-source-assets.txt
+            reports/three-ships-source-audit.txt
+            reports/model-import.txt
+            reports/ipa-structure.txt
+            reports/ipa-pc586-complete.txt
+            reports/ipa-planetarium.txt
+          retention-days: 14
+          if-no-files-found: error
+      - name: Preserve diagnostics if any build gate fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-PC609-BOREAS05-97CH-RELEASE-DIAGNOSTICS
+          path: reports/
+          retention-days: 7
+          if-no-files-found: ignore
+  # from .github/workflows/build-ios-iphone-ipad-manual.yml
+  # ASTEROIDY iOS v556/v21: physical iPhone + iPad, ONLY on manual request.
+  # The user asked to restore iPad support after the temporary iPhone-only IPA.
+  # Do not run automatically during normal gameplay implementation.
+  device-universal:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' device-universal ') }}
+    permissions:
+      contents: read
+    name: Compile iPhone + iPad arm64 and validate unsigned IPA
+    # macos-15-intel produced a real verified iPhone IPA in run 42090319849.
+    # The runner's CPU is Intel; Xcode targets arm64 physical iOS devices.
+    runs-on: macos-15-intel
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify iPhone and iPad are enabled in the source project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python3 - <<'PY' | tee reports/device-families.txt
+          from pathlib import Path
+          project = Path('project.yml').read_text()
+          assert "TARGETED_DEVICE_FAMILY: '1,2'" in project, 'Expected both iPhone and iPad'
+          assert 'INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone' in project
+          assert 'INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad' in project
+          print('PASS: native project declares iPhone + iPad (UIDeviceFamily 1,2)')
+          PY
+          python3 Tools/verify_ios_inputs.py | tee reports/source-assets.txt
+      - name: Import compact source-verified Vanguard431 asset bundle when supplied
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/prepare_vanguard431_assets.py | tee reports/vanguard-asset-import.txt
+      - name: Require original Vanguard 4311 UV + BaseColor for NEW textured release
+        shell: bash
+        env:
+          COMPAT_OLD_SHIP: ${{ inputs.compatibility_old_ship }}
+        run: |
+          set -euo pipefail
+          if [ "$COMPAT_OLD_SHIP" = "true" ]; then
+            echo "WARNING: explicitly requested v556 AS3D compatibility release; original Vanguard texture NOT bundled" | tee reports/vanguard-material.txt
+          else
+            python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets | tee reports/vanguard-material.txt
+          fi
+      - name: Honor explicitly selected old AS3D compatibility mode
+        if: inputs.compatibility_old_ship == true
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Only mutate the temporary GitHub Actions checkout, NEVER
+          # remove the verified original source files from GitHub.
+          # Otherwise, the renderer would still select the real source
+          # texture despite the user's explicit legacy toggle.
+          rm -f ASTEROIDYiOS/Assets/Vanguard431Source.mesh
+          rm -f ASTEROIDYiOS/Assets/Vanguard431Base.jpg
+          test ! -e ASTEROIDYiOS/Assets/Vanguard431Source.mesh
+          test ! -e ASTEROIDYiOS/Assets/Vanguard431Base.jpg
+          echo "PASS: explicit old-AS3D compatibility mode really omits both source assets" | tee -a reports/vanguard-material.txt
+      - name: Record native Apple compiler and source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          { sw_vers; xcodebuild -version; xcrun --sdk iphoneos --show-sdk-version; echo "Commit: $GITHUB_SHA"; } | tee reports/environment.txt
+      - name: Generate original iOS Xcode project
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+      - name: Compile universal iPhone and iPad device target (unsigned)
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/DerivedData" \
+            build 2>&1 | tee reports/xcodebuild.log
+      - name: Package and verify actual unsigned dual-device IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" && test -f "$APP/Info.plist"
+          mkdir -p distribution/Payload
+          cp -R "$APP" distribution/Payload/
+          (cd distribution && zip -q -r -y ../ASTEROIDY_iPhone_iPad_UNSIGNED.ipa Payload)
+          if [ "${{ inputs.compatibility_old_ship }}" = "true" ]; then
+            python3 Tools/verify_ipa.py ASTEROIDY_iPhone_iPad_UNSIGNED.ipa | tee reports/verification.txt
+          else
+            python3 Tools/verify_ipa.py ASTEROIDY_iPhone_iPad_UNSIGNED.ipa --require-vanguard-original | tee reports/verification.txt
+          fi
+          shasum -a 256 ASTEROIDY_iPhone_iPad_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
+      - name: Upload real unsigned iPhone + iPad IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-iPhone-iPad-unsigned-IPA
+          path: |
+            ASTEROIDY_iPhone_iPad_UNSIGNED.ipa
+            reports/device-families.txt
+            reports/source-assets.txt
+            reports/vanguard-material.txt
+            reports/vanguard-asset-import.txt
+            reports/environment.txt
+            reports/verification.txt
+            reports/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish build diagnostics on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-iPhone-iPad-build-diagnostics
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 7
+  # from .github/workflows/build-ios-pc602-h290-user-test-ipa-20261112.yml
+  # Explicit user-requested H290 iPhone+iPad IPA snapshot, 2026-11-12.
+  # This is a TEST unsigned IPA, not an end-to-end certified release.
+  # Source-only update: verified PC602 H290 sky, original 26-cell HUD/atlas,
+  # mission signal, projectile lights, and correct OPCJE -> W3 navigation.
+  # Push-trigger includes O04/O05 and the actual O09 save/continue code so that
+  # test IPA never silently lags behind the pilot's corrected HUD source.
+  # No iOS gameplay source is changed, no fake assets, no other IPA job.
+  one-shot-test-ipa:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' one-shot-test-ipa ') }}
+    permissions:
+      contents: read
+    concurrency:
+      group: pc602-h290-ipa-${{ github.ref }}-one-shot-test-ipa
+      cancel-in-progress: true
+    name: Build source-verified PC602 H290 Release ARM64 unsigned IPA
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Stage EXACT source assets for H290, W3, CARBONIS, Vanguard and 820 rocks
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          echo "$GITHUB_SHA" | tee reports/source-commit.txt
+          python3 Tools/verify_ios_inputs.py | tee reports/preflight.txt
+          python3 Tools/prepare_vanguard431_assets.py | tee reports/vanguard-staging.txt
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets | tee reports/vanguard-verified.txt
+          python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets | tee reports/player-ship.txt
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required | tee reports/w3-menu.txt
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets | tee reports/carbonis.txt
+          python3 Tools/stage_pc602_planetarium.py | tee reports/planetarium-source.txt
+          python3 Tests/HudPlanetariumIntegration600Contract.py | tee reports/planetarium-isolation.txt
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets | tee reports/home-source.txt
+          python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets | tee reports/820-asteroids.txt
+          python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin | tee reports/belt-tests.txt
+          python3 Tests/PC602HomeScene291Contract.py | tee reports/scene-contract.txt
+          python3 Tests/PC602HomeWorldUI291Contract.py | tee reports/world-contract.txt
+          python3 Tests/PC602H290MenuSkyRegression291.py | tee reports/menu-sky-regression.txt
+          python3 Tests/PC602H290LiveSettingsPause291Contract.py | tee reports/live-settings-pause.txt
+          swiftc -O ASTEROIDYiOS/SourceShipScale472.swift Tests/SourceShipScale472Tests.swift -o /tmp/pc602-shipscale-live-tests
+          /tmp/pc602-shipscale-live-tests | tee reports/ship-scale-tests.txt
+          swiftc -O ASTEROIDYiOS/CarbonisVisualSettings568.swift Tests/CarbonisVisualSettings568Tests.swift -o /tmp/pc602-projectile-light-tests
+          /tmp/pc602-projectile-light-tests | tee reports/projectile-light-tests.txt
+          python3 Tests/PC602OrbitSave61Contract.py | tee reports/orbit-save-contract.txt
+          python3 Tests/PC602ReplayHUDRegression291.py | tee reports/replay-hud-regression.txt
+          python3 Tests/PC602UnifiedHUDMenu291Contract.py | tee reports/unified-interface-hud-291.txt
+          python3 Tests/IOSSourceCombatPause568Contract.py | tee reports/mission-pause-source-regression.txt
+          python3 Tests/PC602O01SourceBaseline.py --ios-root . | tee reports/o01-menu-source-map.txt
+          swiftc -O ASTEROIDYiOS/PC602OrbitHUDLayout291.swift Tests/PC602OrbitHUDLayout291Tests.swift -o /tmp/pc602-h290-hud-model-tests
+          /tmp/pc602-h290-hud-model-tests | tee reports/h290-hud-editor-tests.txt
+          python3 Tools/verify_original_audio568_assets.py | tee reports/audio-assets.txt
+          python3 Tools/materialize_pc586_original_resources.py --report reports/pc586-source.json
+      - name: Compile actual iPhone+iPad Release application, Apple ARM64 + Metal
+        shell: bash
+        run: |
+          set -euo pipefail
+          { xcodebuild -version; xcrun --sdk iphoneos --show-sdk-version; } | tee reports/xcode-version.txt
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/PC602H290Release" \
+            build > reports/xcodebuild-release.log 2>&1 || {
+              grep -n -A 8 -B 3 -E 'error:|BUILD FAILED|failed' reports/xcodebuild-release.log | tail -n 120 || true
+              tail -n 70 reports/xcodebuild-release.log
+              exit 1
+            }
+      - name: Embed original PC586 H55 FPS / pickup files and package TEST IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/PC602H290Release/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" && test -f "$APP/Info.plist"
+          python3 - "$APP" <<'PY' | tee reports/app-bundle-audit.txt
+          from pathlib import Path
+          import plistlib,sys,hashlib
+          app=Path(sys.argv[1])
+          info=plistlib.loads((app/'Info.plist').read_bytes())
+          assert info['UIDeviceFamily']==[1,2] or set(info['UIDeviceFamily'])=={1,2}
+          required=['PC602Home290HeightMap.bin','PC602OrbitBelt51.bin',
+            'W3HomePlanet290OriginalGPU.bin','W3HomePlanet290Base.dat',
+            'W3HomePlanet293Glow.dat','Vanguard431Source.mesh',
+            'Vanguard431Base.jpg','Sector01CarbonisHeightMap.dat',
+            'W3Background568Original.dat','W3Logo568Original.dat',
+            'default.metallib','planetarium.glb']
+          missing=[x for x in required if not (app/x).is_file()]
+          assert not missing, 'Missing ORIGINAL H290/PC602 files in app: '+str(missing)
+          assert (app/'PC602Home290HeightMap.bin').stat().st_size == 512*256*4
+          assert (app/'PC602OrbitBelt51.bin').stat().st_size == 50403776
+          assert hashlib.sha256((app/'PC602Home290HeightMap.bin').read_bytes()).hexdigest() == '12d56a99634e4fc28ded9e03bcac34de05020750cc18e86d1086db8542b2d18d'
+          assert hashlib.sha256((app/'PC602OrbitBelt51.bin').read_bytes()).hexdigest() == '553336e3f071bbb09cf6ba4b1b7cbc36b6bc346537cf8fb06343b90f807f4f63'
+          original=app/'planetarium.glb'
+          assert original.stat().st_size==3228900
+          assert hashlib.sha256(original.read_bytes()).hexdigest()=='71ca9ff24e044a831a5c7197e343594dd1fd801284af6231870570b35ad43860'
+          print('PASS original 159-channel HUD planetarium in actual iPhone/iPad bundle')
+          print('PASS H290+820 originals, actual app bundles iPhone/iPad+Metal')
+          PY
+          mkdir -p distribution/Payload
+          cp -R "$APP" distribution/Payload/
+          python3 Tools/materialize_pc586_original_resources.py \
+            --app "distribution/Payload/$(basename "$APP")" --report reports/pc586-in-ipa.json
+          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa Payload)
+          python3 Tools/verify_ipa.py ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa --require-vanguard-original | tee reports/ipa-structure.txt
+          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa | tee reports/ipa-pc586-complete.txt
+          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa | tee reports/ipa-planetarium-verified.txt
+          python3 - <<'PY' | tee reports/final-archive-check.txt
+          import zipfile,hashlib
+          p='ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa'
+          with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None
+              required=('PC602Home290HeightMap.bin','PC602OrbitBelt51.bin',
+                        'W3HomePlanet290OriginalGPU.bin','default.metallib')
+              for name in required:
+                  hits=[x for x in z.namelist() if x.startswith('Payload/') and x.endswith('/'+name)]
+                  assert len(hits)==1,(name,hits)
+              assert not any(x.endswith('/hangar_h55.glb') for x in z.namelist())
+          print('PASS IPA CRC, original planet assets, original belt, Metal; large H55 GLB requires one-time Files import')
+          PY
+          shasum -a 256 ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa | tee reports/SHA256SUMS.txt
+          stat -f '%z bytes' ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa | tee reports/size.txt
+      - name: Publish the user's actual unsigned test IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-PC602-H290-REAL-TEST-UNSIGNED-IPA
+          path: |
+            ASTEROIDY_iOS_PC602_H290_TEST_UNSIGNED.ipa
+            reports/SHA256SUMS.txt
+            reports/source-commit.txt
+            reports/app-bundle-audit.txt
+            reports/ipa-structure.txt
+            reports/ipa-planetarium-verified.txt
+            reports/planetarium-source.txt
+            reports/planetarium-isolation.txt
+            reports/menu-sky-regression.txt
+            reports/orbit-save-contract.txt
+            reports/unified-interface-hud-291.txt
+            reports/mission-pause-source-regression.txt
+            reports/o01-menu-source-map.txt
+            reports/final-archive-check.txt
+            reports/size.txt
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve proof of failures, without claiming an IPA was built
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-PC602-H290-IPA-BUILD-DIAGNOSTICS
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 7

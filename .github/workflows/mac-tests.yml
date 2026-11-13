@@ -1,0 +1,776 @@
+# macOS, Xcode and simulator tests.
+# Every job copies the steps of the workflow named in its '# from' comment.
+# A job runs in the same cases as its old workflow: the select job checks
+# .github/ci-jobs.json (events + path lists) with Tools/ci_select_jobs.py.
+# Concurrency is per job: each job keeps the group its old workflow had.
+name: ASTEROIDY iOS - macOS and simulator tests
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run:
+        description: Old workflow name to run, or all
+        type: choice
+        default: all
+        options:
+          - all
+          - verify-combat-only
+          - verify-metal-camera
+          - verify-pc602-home-metal291
+          - verify-pc602-home-simulator291
+          - verify-pc602-newhome290
+          - verify-v568-scout-native
+          - verify-v568-w3-native-menu-once
+          - verify-v568-w3-navigation-ui
+permissions:
+  contents: read
+jobs:
+  # Picks which jobs below run: .github/ci-jobs.json + Tools/ci_select_jobs.py
+  select:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      jobs: ${{ steps.pick.outputs.jobs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: pick
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          RUN: ${{ inputs.run }}
+        run: python3 Tools/ci_select_jobs.py --workflow mac-tests.yml
+  # from .github/workflows/verify-combat-only.yml
+  compile-ios-no-ipa:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' compile-ios-no-ipa ') }}
+    concurrency:
+      group: verify-combat-only-${{ github.ref }}-compile-ios-no-ipa
+      cancel-in-progress: true
+    name: Compile iOS source only (NO IPA / NO artifact)
+    runs-on: macos-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Xcode compiler
+        run: xcodebuild -version
+      - name: Verify native outer-sphere HUD corona geometry and animation
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/HudPlanetariumCorona600.swift Tests/HudPlanetariumCorona600Tests.swift -o /tmp/hud-v600-corona
+          /tmp/hud-v600-corona
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Prepare ONLY original source-verified PlayerShip367 assets for native iOS compilation
+        run: python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Stage original W3 v568 menu images when supplied, verify SHA256
+        run: python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Stage exact indexed CARBONIS sector01 preview and three source texture maps
+        run: python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Validate original PArgb sky mixing against actual Apple Metal descriptors
+        run: |
+          set -euo pipefail
+          swiftc ASTEROIDYiOS/SourceSkyPremultipliedBlend.swift Tests/SourceSkyPremultipliedBlendTests.swift -o /tmp/asteroidy-metal-blend-test
+          /tmp/asteroidy-metal-blend-test
+      - name: Generate native Xcode project from verified project.yml
+        run: xcodegen generate
+      - name: Resolve exact pinned GLTFKit2 v0.5.15 without changing dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          ok=no
+          for attempt in 1 2 3 4 5; do
+            echo "Original GLTFKit2 binary fetch, attempt $attempt/5"
+            if xcodebuild -project ASTEROIDYiOS.xcodeproj \
+              -scheme ASTEROIDYiOS \
+              -derivedDataPath /tmp/asteroidy-ios-verify-only \
+              -resolvePackageDependencies 2>&1 | tee "/tmp/h11-gltf-resolve-$attempt.log"; then
+              ok=yes
+              break
+            fi
+            # SwiftPM may keep a partial download of the EXACT pinned
+            # GLTFKit2 0.5.15 binary in a file-system slot. Remove only
+            # that malformed artifact before retrying, never other packages.
+            cache="$HOME/Library/Caches/org.swift.swiftpm/artifacts"
+            incomplete="$cache/https___github_com_warrenm_GLTFKit2_releases_download_0_5_15_GLTFKit2_xcframework_zip"
+            if grep -Fq 'already exists in file system' "/tmp/h11-gltf-resolve-$attempt.log"; then
+              if [ -d "$incomplete" ]; then
+                echo "Reset incomplete original GLTFKit2 0.5.15 binary artifact"
+                rm -rf -- "$incomplete"
+              fi
+            fi
+            if [ "$attempt" -lt 5 ]; then sleep $((attempt * 7)); fi
+          done
+          test "$ok" = yes
+
+      - name: Typecheck and compile all native iOS Swift/Metal sources (unsigned, NO IPA)
+        run: |
+          set -euo pipefail
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS \
+            -configuration Debug \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath /tmp/asteroidy-ios-verify-only build \
+            2>&1 | tee /tmp/asteroidy-ios-compile-only.log
+          test -f '/tmp/asteroidy-ios-verify-only/Build/Products/Debug-iphoneos/ASTEROIDY iOS.app/Info.plist'
+          python3 Tools/verify_original_audio568_assets.py --app '/tmp/asteroidy-ios-verify-only/Build/Products/Debug-iphoneos/ASTEROIDY iOS.app'
+          echo "PASS: native iOS project compiles; no package, IPA, or artifact created."
+  # from .github/workflows/verify-metal-camera.yml
+  # Keep only the latest Metal source-check revision in the runner queue.
+  # Does not trigger, archive, sign, or upload any IPA.
+  apple-metal-source-compile:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' apple-metal-source-compile ') && (github.event_name == 'workflow_dispatch') }}
+    concurrency:
+      group: asteroidy-ios-metal-source-${{ github.ref }}-apple-metal-source-compile
+      cancel-in-progress: true
+    # Push commits continuously during the port. Previously, branch
+    # concurrency cancelled the queued Apple job on every source change.
+    # Keep automatic Linux checks; request Apple compile explicitly
+    # through workflow_dispatch or the independent one-shot check.
+    name: Xcode Metal/Swift compile verification ONLY (NO IPA)
+    # This job only checks whether genuine Apple Metal and iOS Swift
+    # compilers accept the current sources. It never archives, exports,
+    # uploads or signs an app for installation.
+    # Proven available in successful device IPA build 42090319849;
+    # still compiles original arm64 iPhoneOS + Metal, but NEVER creates IPA.
+    runs-on: macos-15-intel
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record Apple tools and SDK versions
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          xcrun --find metal
+      - name: Generate native iOS app project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Compile complete iPhoneOS sources and real Metal shaders (NO IPA)
+        run: |
+          set -euo pipefail
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Debug \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath /tmp/asteroidy-ios-metal-check \
+            build 2>&1 | tee /tmp/asteroidy-ios-metal-check.log
+          test -f '/tmp/asteroidy-ios-metal-check/Build/Products/Debug-iphoneos/ASTEROIDY iOS.app/Info.plist'
+          test -f '/tmp/asteroidy-ios-metal-check/Build/Products/Debug-iphoneos/ASTEROIDY iOS.app/default.metallib'
+          echo "PASS: Apple Swift and Metal shader compile; no IPA packaged"
+  # from .github/workflows/verify-pc602-newhome290.yml
+  source-v602-h290:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' source-v602-h290 ') }}
+    permissions:
+      contents: read
+    concurrency:
+      group: verify-pc602-newhome290-${{ github.ref }}-source-v602-h290
+      cancel-in-progress: false
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate exact GitHub source archives and extract PC602 surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
+          shasum -a 256 ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+          python3 - <<'PY'
+          import hashlib, pathlib
+          base=pathlib.Path("ASTEROIDYiOS/Assets")
+          expected={
+            "W3HomePlanet290OriginalGPU.bin":"e93a0bbafc9bb50a25726a828ada81f36675bf88d802c5a8f985b89b6dc96c1b",
+            "W3HomePlanet290Base.dat":"4987f35cd6f021fd98794f406c641f4853c538a82b10625e6b79e860c8a787c0",
+            "W3HomePlanet293Glow.dat":"6f1debd175f52b7ce1fbc687e9977597335ee432858d7d6d6e47cf66b5f9aa39",
+            "PC602Home290HeightMap.bin":"12d56a99634e4fc28ded9e03bcac34de05020750cc18e86d1086db8542b2d18d",
+          }
+          for name,digest in expected.items():
+              path=base/name
+              assert path.exists() and hashlib.sha256(path.read_bytes()).hexdigest()==digest,name
+          print("PASS: all four v602 runtime assets independently SHA-checked in GitHub CI")
+          PY
+      - name: Compile and execute exact H290 surface and 26-beacon math
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp Tests/PC602NewHome290Tests.swift /tmp/main.swift
+          xcrun swiftc ASTEROIDYiOS/PC602NewHome290.swift /tmp/main.swift -o /tmp/pc602-newhome-tests
+          /tmp/pc602-newhome-tests ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+      - name: Compile actual shared sphere/flight code and test PC602 HomeFlight291
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Extract Vec2 verbatim from GameCore.swift for the standalone
+          # regression executable; do not define a second synthetic Vec2.
+          python3 - <<'PY'
+          from pathlib import Path
+          source=Path("ASTEROIDYiOS/GameCore.swift").read_text()
+          start=source.index("struct Vec2: Equatable {")
+          open_brace=source.index("{",start)
+          depth=0
+          end=None
+          for i in range(open_brace,len(source)):
+              if source[i]=="{":depth+=1
+              elif source[i]=="}":
+                  depth-=1
+                  if depth==0:
+                      end=i+1
+                      break
+          assert end is not None
+          Path("/tmp/PC602ActualGameVec2.swift").write_text(
+              "import Foundation\n"+source[start:end]+"\n")
+          PY
+          cp Tests/PC602HomeFlight291Tests.swift /tmp/main.swift
+          xcrun swiftc -Onone \
+            /tmp/PC602ActualGameVec2.swift \
+            ASTEROIDYiOS/Sphere67.swift \
+            ASTEROIDYiOS/FlightDynamics556.swift \
+            ASTEROIDYiOS/PC602NewHome290.swift \
+            ASTEROIDYiOS/PC602HomeFlight291.swift \
+            ASTEROIDYiOS/PC602HomeWorldView291.swift \
+            ASTEROIDYiOS/PC602HomeBeacons291.swift \
+            /tmp/main.swift -o /tmp/pc602-homeflight-tests
+          /tmp/pc602-homeflight-tests ASTEROIDYiOS/Assets/PC602Home290HeightMap.bin
+      - name: Document scope accurately (no fake gameplay acceptance)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f ASTEROIDYiOS/PC602NewHome290.swift
+          test -f ASTEROIDYiOS/W3HomePlanetMetal568.swift
+          echo "PASS: PC602 H290 source, flight, camera and 26 native 3D sector marker tests with assertions enabled."
+          echo "NOT TESTED: active in-game HomeFlight291 integration, 820-asteroid belt, wreck mesh, interactive docking, Metal world rendering, iPhone/iPad."
+  # from .github/workflows/verify-pc602-home-metal291.yml
+  source-home-metal:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' source-home-metal ') }}
+    permissions:
+      contents: read
+    concurrency:
+      group: verify-pc602-home-metal291-${{ github.ref }}-source-home-metal
+      cancel-in-progress: true
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Verify exact PC v602 H290 resources on GitHub
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Same verified staging used by the complete PC609 Release IPA.
+          # Without these, the earlier 44.9MB BASTION Debug IPA omitted
+          # the CARBONIS mesh/textures, PlayerShip367, W3 background/logo.
+          python3 Tools/verify_ios_inputs.py
+          python3 Tools/prepare_vanguard431_assets.py
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/stage_pc602_planetarium.py
+          python3 Tests/HudPlanetariumIntegration600Contract.py
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin
+          python3 Tests/V568W3HomeSourceLightTests.py
+          python3 Tests/V568W3PlanetTransparentSourceContract.py
+          python3 Tests/SourceLavaLight287SourceContract.py
+          python3 Tests/PC602HomeScene291Contract.py
+          python3 Tests/PC602HomeWorldUI291Contract.py
+          python3 Tests/PC602H290MenuSkyRegression291.py
+          python3 Tests/PC602H290LiveSettingsPause291Contract.py
+          swiftc -O ASTEROIDYiOS/SourceShipScale472.swift Tests/SourceShipScale472Tests.swift -o /tmp/pc602-shipscale-live-tests
+          /tmp/pc602-shipscale-live-tests
+          swiftc -O ASTEROIDYiOS/CarbonisVisualSettings568.swift Tests/CarbonisVisualSettings568Tests.swift -o /tmp/pc602-projectile-light-tests
+          /tmp/pc602-projectile-light-tests
+          python3 Tests/PC602OrbitSave61Contract.py
+          python3 Tests/PC602ReplayHUDRegression291.py
+          python3 Tests/PC602UnifiedHUDMenu291Contract.py
+          swiftc -O ASTEROIDYiOS/PC602OrbitHUDLayout291.swift Tests/PC602OrbitHUDLayout291Tests.swift -o /tmp/pc602-orbit-hud-tests
+          /tmp/pc602-orbit-hud-tests
+          python3 Tests/PC602O01SourceBaseline.py --ios-root .
+          python3 Tools/code_quality_audit.py --root . --gate
+      - name: Build original full Swift and Metal for iPhone/iPad (BASTION Release)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics
+          xcodebuild -version
+          # Preserve existing Debug CI for unrelated PRs; BASTION IPA
+          # must have the same standalone Release binary as PC609.
+          CONFIGURATION=Debug
+          if [[ "${{ github.head_ref }}" == "feature/ios-bastion-pc609" ]]; then CONFIGURATION=Release; fi
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration "$CONFIGURATION" \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO 'TARGETED_DEVICE_FAMILY=1,2' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/PC602Home291" \
+            build > diagnostics/xcodebuild.log 2>&1 || {
+              grep -n -A 9 -B 4 -E 'error:|FAILED|failed' diagnostics/xcodebuild.log | tail -n 130
+              tail -n 45 diagnostics/xcodebuild.log
+              exit 1
+            }
+          python3 - "$CONFIGURATION" <<'PY'
+          from pathlib import Path
+          import plistlib,sys
+          build=Path(f"build/PC602Home291/Build/Products/{sys.argv[1]}-iphoneos")
+          apps=list(build.glob("*.app"))
+          assert len(apps)==1, apps
+          app=apps[0]
+          info=plistlib.loads((app/"Info.plist").read_bytes())
+          assert set(info["UIDeviceFamily"])=={1,2}
+          assert (app/"default.metallib").is_file()
+          import hashlib
+          original=app/"planetarium.glb"
+          assert original.is_file(), "Original PC602 HUD planetarium missing from iOS app"
+          assert original.stat().st_size==3228900
+          assert hashlib.sha256(original.read_bytes()).hexdigest()=="71ca9ff24e044a831a5c7197e343594dd1fd801284af6231870570b35ad43860"
+          assert (app/"W3HomePlanet290OriginalGPU.bin").is_file()
+          assert (app/"PC602Home290HeightMap.bin").is_file()
+          assert (app/"PC602OrbitBelt51.bin").is_file()
+          assert (app/"Vanguard431Source.mesh").is_file()
+          assert (app/"Vanguard431Base.jpg").is_file()
+          assert (app/"W3HomePlanet290Base.dat").is_file()
+          assert (app/"W3HomePlanet293Glow.dat").is_file()
+          print("PASS: real iPhone/iPad ARM64 Swift and Metal, source H290 bundle")
+          print("NOT TESTED: native GPU draw, 820-asteroid belt, docking, complete active world")
+          PY
+      - name: Package original-source BASTION iPhone+iPad unsigned test IPA
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feature/ios-bastion-pc609' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/PC602Home291/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" && test -f "$APP/Info.plist"
+          mkdir -p distribution/Payload diagnostics
+          cp -R "$APP" distribution/Payload/
+          python3 Tools/materialize_pc586_original_resources.py --app "distribution/Payload/$(basename "$APP")" --report diagnostics/bastion-pc586-resources.json
+          (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa Payload)
+          unzip -t ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tail -1
+          python3 Tools/verify_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa --require-vanguard-original | tee diagnostics/bastion-ipa-verification.txt
+          python3 Tools/verify_bastion_full_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-full-v609-release-audit.txt
+          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-h55-verification.txt
+          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-hud-verification.txt
+          shasum -a 256 ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa | tee diagnostics/bastion-ipa-sha256.txt
+          echo "$GITHUB_SHA" > diagnostics/bastion-source-commit.txt
+          echo 'BASTION model must be imported once in H55/FLOTA from the separately verified BASTION_PC609.bastion file.' > diagnostics/bastion-import-readme.txt
+      - name: Publish BASTION unsigned iPhone/iPad test IPA
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feature/ios-bastion-pc609' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-BASTION-PC609-iOS-UNSIGNED-TEST-IPA
+          path: |
+            ASTEROIDY_iOS_BASTION_PC609_TEST_UNSIGNED.ipa
+            diagnostics/bastion-ipa-verification.txt
+            diagnostics/bastion-full-v609-release-audit.txt
+            diagnostics/bastion-h55-verification.txt
+            diagnostics/bastion-hud-verification.txt
+            diagnostics/bastion-ipa-sha256.txt
+            diagnostics/bastion-source-commit.txt
+            diagnostics/bastion-import-readme.txt
+          retention-days: 14
+          if-no-files-found: error
+      - name: Preserve native compile and packaging diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PC602-NewHome291-Metal-ARM64-build-log
+          path: diagnostics/
+          if-no-files-found: ignore
+          retention-days: 7
+  # from .github/workflows/verify-pc602-home-simulator291.yml
+  # Runs a REAL installed iOS app in Apple Simulator, unlike the Swift/Metal
+  # compile-only gate. One branch-scoped run avoids a new Actions job backlog.
+  genuine-orbit-ui:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' genuine-orbit-ui ') }}
+    permissions:
+      contents: read
+    concurrency:
+      group: pc609-real-ipad-smoke-${{ github.ref }}-genuine-orbit-ui
+      cancel-in-progress: false
+    name: Real iPad simulator - PC609 model selection, H290 and real CARBONIS01 scene
+    # Apple Silicon simulator runner avoids the CoreSimulator 60s timeout
+    # observed on saturated macos-15-intel before XCUITest even launched.
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Verify and stage original graphics / actual PC602 world
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics
+          python3 Tools/stage_pc602_planetarium.py
+          python3 Tools/prepare_vanguard431_assets.py
+          python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tests/HudPlanetariumIntegration600Contract.py
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required
+          python3 Tools/prepare_v568_w3_home_planet290.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_carbonis_sector01.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/export_boreas_node_tracks556.py --root . --destination ASTEROIDYiOS/Assets/Boreas556.asnt
+          python3 Tools/materialize_pc586_original_resources.py
+          python3 Tools/verify_embedded_pc609_assets.py --assets ASTEROIDYiOS/Assets --boreas
+          python3 Tests/PC602HomeWorldUI291Contract.py
+      - name: Decode the original bundled PC609 KESTREL and BASTION with native Swift
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -Onone ASTEROIDYiOS/SourcePC609Zlib.swift ASTEROIDYiOS/SourceVanguardMesh431.swift ASTEROIDYiOS/SourceKestrel603.swift ASTEROIDYiOS/SourceBastion606.swift Tests/OriginalPC609PackDecoderTests.swift -o /tmp/pc609-simulator-preflight
+          /tmp/pc609-simulator-preflight > diagnostics/original-pc609-runtime-decode.txt 2>&1 || {
+            cat diagnostics/original-pc609-runtime-decode.txt
+            exit 1
+          }
+          cat diagnostics/original-pc609-runtime-decode.txt
+      - name: Generate original native app / XCTest targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+          python3 - <<'PY'
+          import sys, subprocess
+          sys.path.insert(0, 'Tools')
+          from run_original_ios_simulator_capture import available_devices
+          # CoreSimulator service can take time to start on a fresh runner;
+          # do not misreport startup infrastructure as an editor failure.
+          for attempt in range(2):
+              try:
+                  subprocess.run(["xcrun","simctl","list","-j","devices","available"],
+                                 check=True,capture_output=True,timeout=120)
+                  break
+              except (subprocess.SubprocessError,TimeoutError) as error:
+                  print("CoreSimulator warmup",attempt+1,str(error))
+          _, name, udid, state = available_devices(('IPAD',))['IPAD']
+          with open('diagnostics/device-udid.txt', 'w') as f:
+              f.write(udid+'\n')
+          print('Real Apple Simulator:', name, udid, state)
+          PY
+      - name: Launch actual app, enter H290, capture real framebuffer, exercise HUD and return
+        shell: bash
+        timeout-minutes: 29
+        run: |
+          set -euo pipefail
+          UDID=$(cat diagnostics/device-udid.txt)
+          # Avoid counting a cold CoreSimulator boot as an audio-start delay.
+          xcrun simctl boot "$UDID" 2>/dev/null || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcodebuild test -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Debug \
+            -destination "platform=iOS Simulator,id=$UDID" \
+            -parallel-testing-enabled NO \
+            -only-testing:ASTEROIDYW3UITests/PC609RuntimeUITests \
+            -derivedDataPath "$PWD/build/PC602OrbitSimulator" \
+            -resultBundlePath "$PWD/diagnostics/PC602-H290-Real-UI.xcresult" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            > diagnostics/xcodebuild-simulator.log 2>&1 || {
+              # A real device-frame capture is best-effort and must never
+              # mask the first failure or block the workflow indefinitely.
+              python3 - <<'PY'
+          import subprocess
+          from pathlib import Path
+          udid=Path("diagnostics/device-udid.txt").read_text().strip()
+          try:
+              p=subprocess.run(["xcrun","simctl","io",udid,"screenshot",
+                  "diagnostics/simulator-failure-state.png"],
+                  capture_output=True,text=True,timeout=15)
+              print("SIMULATOR_FRAME_CAPTURE",p.returncode,p.stderr[-500:])
+          except subprocess.TimeoutExpired:
+              print("SIMULATOR_FRAME_CAPTURE_TIMEOUT (original XCUITest error preserved)")
+          PY
+              grep -n -A 8 -B 4 -E 'error:|failed|FAILED|Timed out' diagnostics/xcodebuild-simulator.log | tail -n 110 || true
+              tail -n 85 diagnostics/xcodebuild-simulator.log
+              exit 1
+            }
+          grep -E 'Executed [0-9]+ tests|Test Suite .* passed|\*\* TEST SUCCEEDED' \
+            diagnostics/xcodebuild-simulator.log | tail -n 12 \
+            | tee diagnostics/ui-smoke-summary.txt
+          test ! -e ASTEROIDY_iOS_UNSIGNED.ipa
+      - name: Preserve ONLY authentic XCTest screenshots, logs and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PC609-Real-iPad-ThreeShips-Home-Carbonis-XCTest-NO-IPA
+          path: diagnostics/
+          if-no-files-found: ignore
+          retention-days: 7
+  # from .github/workflows/verify-v568-scout-native.yml
+  native-scout-source:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' native-scout-source ') }}
+    permissions:
+      contents: read
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact Windows v568 source campaign boss type 4 and original animation
+        run: |
+          set -euo pipefail
+          python3 Tools/stage_v568_resources.py --root . --verify-only
+          python3 Tests/V568AlienScoutB82STests.py
+      - name: Extract isolated original source v568 B82S asset
+        run: |
+          set -euo pipefail
+          python3 Tools/stage_v568_resources.py --root . --destination "$RUNNER_TEMP/asteroidy-v568-original"
+          python3 Tools/convert_v568_alien_scout_b82s.py \
+            --source "$RUNNER_TEMP/asteroidy-v568-original/PortingResources/v568/Shared/Assets_Boss82_GZ/alien_scout_173.b82.gz" \
+            --out "$RUNNER_TEMP/v568-boss-original"
+      - name: Compile and execute original B82S reader on Apple Swift
+        run: |
+          set -euo pipefail
+          swiftc -O ASTEROIDYiOS/SourceAlienScout173.swift \
+            Tests/SourceAlienScout173NativeTests.swift \
+            -o "$RUNNER_TEMP/b82s-source-verify"
+          "$RUNNER_TEMP/b82s-source-verify" "$RUNNER_TEMP/v568-boss-original"
+      - name: Verify original iOS app still typechecks with the additional source reader, without IPA
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$RUNNER_TEMP/asteroidy-v568-scout-build" build \
+            > "$RUNNER_TEMP/scout-xcodebuild.log" 2>&1 || {
+              tail -n 120 "$RUNNER_TEMP/scout-xcodebuild.log"
+              exit 1
+            }
+          test ! -e ASTEROIDY_iOS_UNSIGNED.ipa
+          echo "PASS: iOS simulator code compiles; B82S source reader validated; NO IPA"
+  # from .github/workflows/verify-v568-w3-native-menu-once.yml
+  # One-shot REAL source-guided W3 home-screen screenshots on Apple simulators.
+  # No illustrative mockups, no IPA, no signing and no mission unlock.
+  # Avoid spending macOS runner minutes on obsolete intermediate revisions.
+  genuine-w3-menu-simulator:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' genuine-w3-menu-simulator ') }}
+    permissions:
+      contents: read
+    concurrency:
+      group: w3-original-menu-${{ github.ref }}-genuine-w3-menu-simulator-${{ strategy.job-index }}
+      cancel-in-progress: true
+    name: Source-guided native W3 menu on ${{ matrix.device }} Simulator
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [IPHONE, IPAD]
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify original source captions and actual navigation routes
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python3 Tests/V568W3NativeMenuContract.py | tee reports/w3-source-contract.txt
+          python3 -m py_compile Tools/run_w3_native_menu_simulator_capture.py
+          python3 Tests/V568W3SimulatorAudioWaitContract.py
+          python3 -m py_compile Tools/convert_v568_w3_home_planet290.py Tools/prepare_v568_w3_home_planet290.py
+          python3 Tests/V568W3HomePlanet290Tests.py | tee reports/w3-NewHome290-source-planet.txt
+          python3 Tests/V568W3HomeShipSourceContract.py | tee reports/w3-source-vanguard-ship.txt
+          swift Tools/verify_simulator_render_snapshot.swift --self-test | tee reports/w3-screenshot-detector.txt
+      - name: Require exact v568 W3 background/logo, verify CRC and both SHA256
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          python3 Tests/V568W3MenuSourceImagesTests.py
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required
+          test -s ASTEROIDYiOS/Assets/W3Background568Original.dat
+          test -s ASTEROIDYiOS/Assets/W3Logo568Original.dat
+      - name: Prepare real original NewHome290 3D planet for native W3 home
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          python3 Tools/prepare_v568_w3_home_planet290.py --root . --destination ASTEROIDYiOS/Assets | tee reports/w3-source-planet-stage.txt
+          test -s ASTEROIDYiOS/Assets/W3HomePlanet290OriginalGPU.bin
+          test -s ASTEROIDYiOS/Assets/W3HomePlanet290Base.dat
+          test -s ASTEROIDYiOS/Assets/W3HomePlanet293Glow.dat
+      - name: Create native iOS source project (no HTML/WebView)
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+      - name: Compile original ASTEROIDY native iPhone/iPad application without IPA
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          xcodebuild -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$PWD/build/W3NativeMenuSimulator" \
+            build > reports/xcodebuild.log 2>&1 || {
+              tail -n 140 reports/xcodebuild.log
+              exit 1
+            }
+          APP=$(find build/W3NativeMenuSimulator/Build/Products/Debug-iphonesimulator \
+                -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP"
+          python3 - "$APP" <<'PY' | tee reports/menu-compiled-app.txt
+          import pathlib,plistlib,sys,hashlib
+          app=pathlib.Path(sys.argv[1])
+          info=plistlib.loads((app/"Info.plist").read_bytes())
+          assert set(info.get("UIDeviceFamily",[]))=={1,2}
+          assert info.get("CFBundleIdentifier")=="com.synixad.asteroidyios"
+          assert len(list(app.rglob("default.metallib")))==1
+          originals={
+            "W3Background568Original.dat":"a8aa28883084657f0c38900dbb011de09e2b0fd461704d370a68858be0178145",
+            "W3Logo568Original.dat":"cab4198b953640c787975c5a8436a0fdeaa82502b40e000077ff055cc0709e09",
+            "W3HomePlanet290OriginalGPU.bin":"e93a0bbafc9bb50a25726a828ada81f36675bf88d802c5a8f985b89b6dc96c1b",
+            "W3HomePlanet290Base.dat":"4987f35cd6f021fd98794f406c641f4853c538a82b10625e6b79e860c8a787c0",
+            "W3HomePlanet293Glow.dat":"6f1debd175f52b7ce1fbc687e9977597335ee432858d7d6d6e47cf66b5f9aa39"
+          }
+          for name,sha in originals.items():
+            bundled=list(app.rglob(name))
+            assert len(bundled)==1,(name,bundled)
+            actual=hashlib.sha256(bundled[0].read_bytes()).hexdigest()
+            assert actual==sha,(name,actual)
+          print("PASS: native iPhone+iPad app contains BOTH original SHA256-pinned W3 images and Metal")
+          PY
+      - name: Actually run W3 main menu on Apple simulator and capture real frame
+        timeout-minutes: 18
+        run: |
+          set -euo pipefail
+          APP=$(find build/W3NativeMenuSimulator/Build/Products/Debug-iphonesimulator \
+                -maxdepth 1 -type d -name '*.app' -print -quit)
+          python3 -u Tools/run_w3_native_menu_simulator_capture.py \
+            --app "$APP" --reports reports --only ${{ matrix.device }} \
+            | tee reports/w3-actual-simulator.txt
+      - name: Archive only genuine W3 screenshot and diagnostic logs, no IPA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-v568-W3-NATIVE-${{ matrix.device }}-real-screen-NO-IPA
+          path: |
+            reports/*.txt
+            reports/*.log
+            reports/*_W3_appearance_proof.json
+            reports/*_W3_NewHome290_GPU_proof.json
+            reports/*_W3_Vanguard431_GPU_proof.json
+            reports/*_VERIFIED_ASTEROIDY_W3_NATIVE.png
+            reports/selected-devices.json
+          if-no-files-found: ignore
+          retention-days: 7
+  # from .github/workflows/verify-v568-w3-navigation-ui.yml
+  # True UIKit/SwiftUI user interactions, NOT a source string or screenshot test.
+  # Separate from the menu GPU proof so a slow Apple simulator does not
+  # invalidate successful graphics validation.
+  actual-touch-navigation:
+    needs: select
+    if: ${{ contains(needs.select.outputs.jobs, ' actual-touch-navigation ') }}
+    permissions:
+      contents: read
+    concurrency:
+      group: w3-menu-touch-${{ github.ref }}-actual-touch-navigation-${{ strategy.job-index }}
+      cancel-in-progress: true
+    name: Tap all seven original W3 actions on ${{ matrix.device }}
+    runs-on: macos-15-intel
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [IPHONE, IPAD]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact original assets and native source menu contracts
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python3 Tests/V568W3NativeMenuContract.py | tee reports/menu-source.txt
+          python3 Tests/V568W3HomeShipSourceContract.py | tee reports/menu-source-ship.txt
+          python3 Tests/V568W3MenuSourceImagesTests.py | tee reports/original-images.txt
+          python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets --required
+          python3 Tools/prepare_v568_w3_home_planet290.py --root . --destination ASTEROIDYiOS/Assets
+      - name: Generate app and W3 XCTest Xcode projects
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen generate --spec project.yml
+      - name: Locate authentic Apple Simulator device
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0,"Tools")
+          from run_original_ios_simulator_capture import available_devices
+          devices=available_devices(("${{ matrix.device }}",))
+          _,name,udid,state=devices["${{ matrix.device }}"]
+          print("Apple Simulator:",name,udid,state)
+          with open("reports/selected-device.txt","w") as f:
+              f.write(name+" "+udid+"\n")
+          with open("reports/device-udid.txt","w") as f:
+              f.write(udid+"\n")
+          PY
+      - name: Tap seven W3 actions and test native explosion/projectile settings after relaunch
+        timeout-minutes: 29
+        shell: bash
+        run: |
+          set -euo pipefail
+          UDID=$(cat reports/device-udid.txt)
+          xcodebuild test \
+            -project ASTEROIDYiOS.xcodeproj \
+            -scheme ASTEROIDYiOS -configuration Debug \
+            -destination "platform=iOS Simulator,id=$UDID" \
+            -parallel-testing-enabled NO \
+            -only-testing:ASTEROIDYW3UITests/W3MenuNavigationUITests \
+            -only-testing:ASTEROIDYW3UITests/W3StartupSplashUITests \
+            -only-testing:ASTEROIDYW3UITests/CarbonisVisualSettingsUITests \
+            -derivedDataPath "$PWD/build/W3Touch" \
+            -resultBundlePath "$PWD/reports/W3-Actual-${{ matrix.device }}.xcresult" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            > reports/xcodebuild-ui-test.log 2>&1 || {
+              tail -n 160 reports/xcodebuild-ui-test.log
+              exit 1
+            }
+          grep -E 'Executed [0-9]+ tests|Test Suite .* passed' \
+            reports/xcodebuild-ui-test.log | tail -n 6 \
+            | tee reports/w3-ui-tests-pass.txt
+          test ! -e ASTEROIDY_iOS_UNSIGNED.ipa
+      - name: Preserve real XCTest results, never fabricated UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTEROIDY-v568-W3-REAL-TOUCH-${{ matrix.device }}-XCTest-NO-IPA
+          path: |
+            reports/*.txt
+            reports/*.log
+            reports/W3-Actual-*.xcresult
+          if-no-files-found: ignore
+          retention-days: 7
