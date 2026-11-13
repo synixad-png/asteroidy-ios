@@ -648,7 +648,7 @@ struct W3MainMenu568: View {
         // after the source W3 chrome and bottom home-indicator inset.
         // Scroll the REAL source controls; do not scale/tuck away the
         // difficulty, crew, start button or profile confirmation.
-        ScrollView(.vertical) {
+        return ScrollView(.vertical) {
             VStack(alignment:.leading,spacing:compact ? 9 : 16) {
                 Text("NOWA GRA / KONFIGURACJA")
                     .font(.system(size:compact ? 14 : 20,
