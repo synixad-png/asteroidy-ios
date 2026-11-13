@@ -199,7 +199,8 @@ struct GameView: View {
                   entry:entry,campaign:restored,hasOriginalC279Assets:true,
                   difficulty:difficulty,seed:Int32.random(in:0...Int32.max),
                   currentLives:state.shop.lives,
-                  startingLives:SourceNewGame568.startingLives(difficulty:difficulty),
+                  startingLives:SourceNewGame568.startingLives(
+                      difficulty:difficulty,shipType:state.shipType),
                   shopProfile:state.shop)
         else{return false}
         if state.returnHome61 == true {
@@ -271,7 +272,8 @@ struct GameView: View {
             seed:Int32.random(in:0...Int32.max),
             currentLives:sourceShop.lives,
             startingLives:SourceNewGame568.startingLives(
-                difficulty:SourceNewGame568.selection().difficulty),
+                difficulty:SourceNewGame568.selection().difficulty,
+                shipType:H55SourceMechanics580.load().selectedShip),
             shopProfile:sourceShop)
         else { return }
         campaign=current
@@ -291,11 +293,17 @@ struct GameView: View {
         // PC602 Intro41.StartCampaign: with PlanetHub50 -> EnterOrbit50(true).
         // NewGame568 alone owns the transactional H11 backup/reset. Verify
         // actual assets BEFORE making a new profile; never fabricate C279.
-        guard choice.players==1,
+        let selected=H55SourceMechanics580.load().selectedShip
+        // PC Campaign37: start with the exact ship selected in H55, never
+        // silently substitute Vanguard. Verify the model before archive/reset.
+        guard choice.players==1,choice.shipType==selected,
+              let craft=PC602HomeFlight291.Craft(rawValue:selected),
+              (0...2).contains(selected),
+              H55SourceMechanics580.registeredModelName(forShip:selected) != nil,
               PC602HomeWorldDriver291.resourcesInstalled,
               (try? PC602NewHome290.load()) != nil,
               (try? PC602OrbitBelt51.load()) != nil,
-              PC602HomeFlight291.Equipment(craft:.vanguard) != nil
+              PC602HomeFlight291.Equipment(craft:craft) != nil
         else{return false}
         guard SourceNewGame568.create(choice) else{return false}
         campaign=CampaignStore556.load()
