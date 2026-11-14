@@ -39,6 +39,7 @@ final class CarbonisSession568: ObservableObject {
         var destroyedRocks:Int
         var shotDownEnemies:Int
         var summary:Sector01MissionSummary568?
+        var sector:Int
         var summarySeconds:Float
         var targets:[Vec2]
         var hazards:[Vec2]
@@ -56,6 +57,7 @@ final class CarbonisSession568: ObservableObject {
                                origin:game.flight.position)
             }
             summary=game.missionSummary
+            sector=game.level
             self.summarySeconds=summarySeconds
             rocks=game.rocks.count;fighters=game.shooters.count
             shots=game.bullets.count

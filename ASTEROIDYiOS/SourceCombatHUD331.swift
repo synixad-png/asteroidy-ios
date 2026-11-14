@@ -221,7 +221,9 @@ struct SourceCombatHUD331: View {
                   34,42,cyan)
         }
         if let sector=widgetContext(right,layout,pose:hud.motion,id:"status.sector",baseX:777,baseY:17) {
-            label(sector,"SEKTOR 01 / 26",777,17,white)
+            let sectorLabel=hud.sector==1 ? "SEKTOR 01 / 26" :
+                String(format:"SEKTOR %02d / 26",hud.sector)
+            label(sector,sectorLabel,777,17,white)
         }
         if let score=widgetContext(right,layout,pose:hud.motion,id:"status.score",baseX:936,baseY:17) {
             label(score,"PKT \(hud.score)",936,17,cyan)

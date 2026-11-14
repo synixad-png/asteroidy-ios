@@ -21,9 +21,19 @@ struct Sector01MissionSummary568: Equatable {
     static func completedFirstMission(
         rocks:Int,enemies:Int,score:Int,lootTokens:Int,
         replay:Bool,elapsed:Float) -> Self {
+        completedSourceMission(sector:1,rocks:rocks,enemies:enemies,
+                               score:score,lootTokens:lootTokens,
+                               replay:replay,elapsed:elapsed)
+    }
+
+    /// Game.FinishLevel: 10+level*2 on a first clear, no reward on replay.
+    /// The caller alone persists campaign progression after actual combat.
+    static func completedSourceMission(
+        sector:Int,rocks:Int,enemies:Int,score:Int,lootTokens:Int,
+        replay:Bool,elapsed:Float) -> Self {
         let pickupReward=replay ? 0 : max(0,lootTokens)
-        let bonus=replay ? 0 : 12
-        return Self(sector:1,rocksDestroyed:max(0,rocks),
+        let bonus=replay ? 0 : 10+sector*2
+        return Self(sector:sector,rocksDestroyed:max(0,rocks),
                     enemiesDestroyed:max(0,enemies),
                     scoreGained:max(0,score),
                     collectedTokens:pickupReward,

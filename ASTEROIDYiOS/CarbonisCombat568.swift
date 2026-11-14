@@ -84,6 +84,12 @@ struct CarbonisCombat568 {
     var boost71=SourceBoost71()
     var shieldHeld=false
     private var legacyDrops586=SourceLegacyPickupDrops586(seed:0)
+    let level:Int
+    let objective:MissionWave568.Objective
+    // Preserve every original RobotSnake spawn as a real pending threat.
+    // The separate source AI/render path must be installed before it can
+    // leave this list; never reward a false 'all enemies cleared'.
+    private(set) var robots:[MissionWave568.Robot]
     let difficulty:CombatBalance556.Difficulty
     let selectedWeapon:Sector01Shop568.Weapon
     let upgradeLevel:Int
@@ -137,6 +143,9 @@ struct CarbonisCombat568 {
     private(set) var lastContactCount=0
 
     init(_ prepared:Sector01PreparedWave568) {
+        level=prepared.reset.level
+        objective=prepared.encounter.objective
+        robots=prepared.encounter.robots
         var f=SphereFlight67()
         f.heading = -Float.pi/2
         // H11: compute original Campaign37 source bonuses in ONE place.
@@ -346,8 +355,19 @@ struct CarbonisCombat568 {
         // threats and all reinforcements, not a timer-based fake win.
         // Game.Step checks objective, rocks and Bugs; hostile shots
         // do NOT delay clear. FinishLevel guards remaining reinforcements.
+        // Gameplay65/Objective: BOREAS 05 defends for 50 s; a preview
+        // or an empty frame is never enough to win. RobotSnake actors
+        // remain pending until their real source runtime defeats them.
+        let requiredTime:Float
+        switch objective {
+        case .clear: requiredTime=0
+        case .escort: requiredTime=40
+        case .defend: requiredTime=50
+        case .waves: requiredTime=48
+        }
         let allThreatsCleared=rocks.isEmpty &&
-            shooters.isEmpty && incoming.incomingLeft==0
+            shooters.isEmpty && robots.isEmpty &&
+            incoming.incomingLeft==0 && elapsed>=requiredTime
         if allThreatsCleared && !completed {
             // Game.cs:276: original spherical NextWave > .20s victory
             // staging; a transient empty rock list cannot instantly win.
@@ -488,8 +508,8 @@ struct CarbonisCombat568 {
         // the battle instead of being silently turned into currency.
         tokenPickups.removeAll(keepingCapacity:true)
         bullets.removeAll(keepingCapacity:true)
-        missionSummary=Sector01MissionSummary568.completedFirstMission(
-            rocks:rocksDestroyed,enemies:shooterKills,score:score,
+        missionSummary=Sector01MissionSummary568.completedSourceMission(
+            sector:level,rocks:rocksDestroyed,enemies:shooterKills,score:score,
             lootTokens:collectedLootTokens,replay:isReplay,
             elapsed:elapsed)
         phase = .victory
@@ -779,7 +799,7 @@ struct CarbonisCombat568 {
             return
         }
         guard parent.size>1,
-              let balance=CombatBalance556(level:1,difficulty:difficulty,
+              let balance=CombatBalance556(level:level,difficulty:difficulty,
                                            spherical:true) else{return}
         let speed=sqrt(parent.velocity.lengthSquared)
         let sideways=speed>0.00001
@@ -814,7 +834,7 @@ struct CarbonisCombat568 {
     private mutating func spawnTerminalShards187(_ parent:SphereAsteroid556) {
         let pieces=18
         if rocks.count>220 {return}
-        let basis=CombatBalance556(level:1,difficulty:difficulty,
+        let basis=CombatBalance556(level:level,difficulty:difficulty,
                                    spherical:true)
         for i in 0..<pieces {
             let a=Float(2)*Float.pi*Float(i)/Float(pieces)
@@ -856,7 +876,7 @@ struct CarbonisCombat568 {
             // CARBONIS remains level 1, but the W3 NEW GAME difficulty
             // reaches actual fighter tactics (not only the spawn wave).
             let tactics=ShooterTactics71(
-                level:1,type:fighter.core.type,difficulty:difficulty.rawValue)
+                level:level,type:fighter.core.type,difficulty:difficulty.rawValue)
             let speed=tactics.sourceSpeed
             let delta=Sphere67.delta(target:player,origin:fighter.core.position)
             let dir=Self.unit(delta)
