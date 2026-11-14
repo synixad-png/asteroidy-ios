@@ -1086,6 +1086,7 @@ struct TouchPad: View {
 
 struct MetalScene: UIViewRepresentable {
     @ObservedObject var input: FlightInput
+    var combatSession05:CarbonisSession568? = nil
     func makeUIView(context: Context) -> MTKView {
         let view = MTKView(frame: .zero, device: MTLCreateSystemDefaultDevice())
         view.colorPixelFormat = .bgra8Unorm
@@ -1097,7 +1098,8 @@ struct MetalScene: UIViewRepresentable {
         view.enableSetNeedsDisplay = false
         if let device = view.device {
             do {
-                let renderer = try MetalRenderer(device: device, input: input)
+                let renderer = try MetalRenderer(
+                    device:device,input:input,combatSession05:combatSession05)
                 context.coordinator.renderer = renderer
                 view.delegate = renderer
             } catch {

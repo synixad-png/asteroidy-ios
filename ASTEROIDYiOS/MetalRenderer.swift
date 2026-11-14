@@ -14,6 +14,11 @@ private struct GPUModel {
 // while the real C# v556 simulation and PBR shaders remain to be ported.
 final class MetalRenderer: NSObject, MTKViewDelegate {
     let input: FlightInput
+    // Optional authoritative sector-05 source combat; never use the
+    // independent SphereSector sandbox to score a campaign victory.
+    private weak var combatSession05:CarbonisSession568?
+    private var sourceShooterModels05:[Int:GPUModel]=[:]
+    private let sourceMissionScale05=SourceMissionSize580.load()
     // Original separate visual-only scale; IntroScene41 cinematic is not
     // affected, exactly as the source uses it only in CraftSphere67/Orbit50.
     private var shipScale472=SourceShipScale472.load()
@@ -116,9 +121,11 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private let fixedClockStep: Double = 1.0 / 120.0
     private var lastHUDTime: CFTimeInterval = 0
 
-    init(device: MTLDevice, input: FlightInput) throws {
+    init(device: MTLDevice, input: FlightInput,
+         combatSession05:CarbonisSession568? = nil) throws {
         self.device = device
         self.input = input
+        self.combatSession05=combatSession05
         guard let q = device.makeCommandQueue() else { throw NSError(domain:"ASTEROIDY iOS",code:1) }
         queue = q
         let library = try device.makeDefaultLibrary(bundle: .main)
@@ -348,6 +355,30 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             sourceVanguard431=nil
             NSLog("ASTEROIDY: original Vanguard431 texture assets not in app;"
                 + " using previous v556 AS3D model, no texture fidelity claim")
+        }
+        // Two authentic ShipMesh kinds from GpuRobot70, once at startup.
+        // BOREAS 05 currently generates kinds 0 and 1 only. Never fake
+        // unported kinds 2-5 by silently substituting another kind.
+        if combatSession05 != nil {
+            for kind in 0...1 {
+                let mesh=kind==0 ? CarbonisShooterMesh71.typeZero() :
+                                     CarbonisShooterMesh71.typeOne()
+                guard mesh.vertices.count % 12 == 0 else {
+                    throw NSError(domain:"ASTEROIDY source enemy mesh",code:71)
+                }
+                var vertices:[AssetMesh.Vertex]=[]
+                vertices.reserveCapacity(mesh.vertices.count/12)
+                for i in stride(from:0,to:mesh.vertices.count,by:12) {
+                    let v=mesh.vertices
+                    vertices.append(AssetMesh.Vertex(
+                        position:SIMD4<Float>(v[i],v[i+1],v[i+2],1),
+                        color:SIMD4<Float>(v[i+6],v[i+7],v[i+8],v[i+9]),
+                        normal:SIMD4<Float>(v[i+3],v[i+4],v[i+5],0)))
+                }
+                let indices=(0..<vertices.count).map { UInt32($0) }
+                sourceShooterModels05[kind]=try Self.makeMesh(
+                    device,vertices,indices)
+            }
         }
         asteroidMesh = try Self.makeMesh(device, Self.asteroidVertices(), Self.octahedronIndices())
         bulletMesh = try Self.makeMesh(device, Self.bulletVertices(), Self.octahedronIndices())
@@ -768,7 +799,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         // and AmigaOnly266 level 25 remain test-only as before.
         // Do not claim campaign progress or reset unrelated flat GameCore.
         let selected=input.planetTestLevel
-        if selected != activePlanetTestLevel &&
+        if combatSession05 == nil && selected != activePlanetTestLevel &&
            [1,AnimatedPlanetTestSlot556.sector,9,17,25].contains(selected),
            let balance=CombatBalance556(level:selected,difficulty:.normal,
                                          spherical:true) {
@@ -781,6 +812,14 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             activePlanetTestLevel=selected
         }
         let command = FlightCommand(turn:input.steer,throttle:input.thrust,fire:input.shooting)
+        if let combatSession05, input.planetPreview {
+            // One combat owner: advance the same CarbonisSession568
+            // stepped by the original HUD, weapons, damage and victory.
+            // The independent sphere sandbox is never stepped here.
+            combatSession05.frame(at:now)
+            sphereFlight=combatSession05.game.flight
+            planetAnimationTime += elapsed
+        } else {
         fixedClock.advance(elapsed:elapsed) {
             if input.introPreview41 {
                 // Source cinematic must not run either test simulation.
@@ -820,21 +859,26 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 game.tick(command,dt:Float(fixedClockStep))
             }
         }
+        }
         if now-lastHUDTime > 0.14 {
             lastHUDTime = now
             let introElapsed41=introTime41
-            let score = input.planetPreview ? sphereSector.score : game.score
-            let hull = input.planetPreview
-                ? (input.verifiedDamageLab ? damageLab.lives : sphereSector.hull)
-                : game.hull
+            let score = combatSession05?.game.score ??
+                (input.planetPreview ? sphereSector.score : game.score)
+            let hull = combatSession05?.game.lives ??
+                (input.planetPreview
+                 ? (input.verifiedDamageLab ? damageLab.lives : sphereSector.hull)
+                 : game.hull)
             let gameOver = input.planetPreview && input.verifiedDamageLab && damageLab.gameOver
             let deaths = damageLab.deathCount
             let armor = damageLab.armor
             let health = damageLab.hull
             let domeEnergy = damageLab.tarczaEnergy
             let domeActive = damageLab.tarczaActive
-            let rockCount = input.planetPreview ? sphereSector.asteroids.count : game.rocks.count
-            let sectorCleared = sphereSector.sectorCleared
+            let rockCount = combatSession05?.game.rocks.count ??
+                (input.planetPreview ? sphereSector.asteroids.count : game.rocks.count)
+            let sectorCleared = combatSession05?.game.phase == .victory ||
+                (combatSession05 == nil && sphereSector.sectorCleared)
             let objectiveWave = sphereSector.objectiveWave
             let incomingNotice = sphereSector.arrivalNoticeRemaining > 0
             let amigaDemo=sphereSector.isAmigaDemo
@@ -1451,7 +1495,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             drawMesh(activeMesh, Self.scale(1.0))
             // Geodesic asteroid positions on the visible Boreas mesh.
             // Radius is translated from the original H/pi spherical atlas.
-            for asteroid in sphereSector.asteroids {
+            for asteroid in (combatSession05?.game.rocks ?? sphereSector.asteroids) {
                 // Windows GpuSphere67.RockSphere67: StampSphere67
                 // followed by rock.Angle*41 X and rock.Angle*23 Y.
                 // Level 25 uses Amiga263's unrotated stamp + radial hop.
@@ -1465,9 +1509,37 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                             Self.rotateYDegrees(asteroid.angle*23)
                 drawMesh(asteroidMesh,model)
             }
-            for bolt in sphereSector.bolts {
-                let position = PlanetPreview556.shipSurfacePosition(bolt.position,altitude:0.12)
-                drawMesh(bulletMesh,Self.translation(position.x,position.y,position.z) * Self.scale(0.014),unlit:1)
+            if let live=combatSession05 {
+                // Original source enemy meshes + identical contact positions
+                // and orientations from the actual active shooter AI.
+                for enemy in live.game.shooters {
+                    guard let mesh=sourceShooterModels05[enemy.core.type]
+                    else { continue }
+                    let pose=Self.sphereStamp(enemy.core.position,
+                        angle:enemy.aim,
+                        size:9*sourceMissionScale05.enemyFactor)
+                    drawMesh(mesh,pose)
+                }
+                for shot in live.game.bullets {
+                    let p=PlanetPreview556.shipSurfacePosition(
+                        shot.point,altitude:0.12)
+                    drawMesh(bulletMesh,Self.translation(p.x,p.y,p.z)*
+                             Self.scale(0.014),unlit:1)
+                }
+                for shot in live.game.hostileShots {
+                    let p=PlanetPreview556.shipSurfacePosition(
+                        shot.point,altitude:0.12)
+                    drawMesh(bulletMesh,Self.translation(p.x,p.y,p.z)*
+                             Self.scale(0.014),unlit:1)
+                }
+            } else {
+                for bolt in sphereSector.bolts {
+                    let position=PlanetPreview556.shipSurfacePosition(
+                        bolt.position,altitude:0.12)
+                    drawMesh(bulletMesh,
+                        Self.translation(position.x,position.y,position.z)*
+                        Self.scale(0.014),unlit:1)
+                }
             }
             // GpuSphere67.CraftSphere67: real sphere tangent basis,
             // source world ShipContactRadius*Scale67*.65 and visual
