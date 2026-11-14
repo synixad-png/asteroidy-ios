@@ -1755,13 +1755,7 @@
     },
     "bastion-main-proof": {
       "from": "build-main-bastion-release-proof",
-      "push": [
-        ".github/workflows/build-ipa.yml",
-        "ASTEROIDYiOS/Assets/BASTION_PC609.bastion",
-        "Tools/verify_bastion_full_ipa.py",
-        ".github/ci-jobs.json",
-        "Tools/ci_select_jobs.py"
-      ],
+      "push": null,
       "pull_request": null,
       "manual": true
     },
