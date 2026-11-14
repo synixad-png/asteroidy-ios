@@ -32,6 +32,16 @@ import Foundation
    ok(first.fighters.count==4,"CARBONIS 4 armed fighters")
    ok(first.robots.isEmpty,"CARBONIS no robot")
    ok(first.initialReinforcements==0,"CARBONIS 0 reinforcement")
+   // Source BOREAS 05 must include every generated actor and the defense
+   // objective. A native port may not silently discard the RobotSnake.
+   let boreas=MissionWave568.generate(level:5,difficulty:.normal,seed:1)!
+   ok(boreas.sector==5,"BOREAS authentic sector")
+   ok(boreas.objective == .defend,"BOREAS defense objective")
+   ok(boreas.fighters.count == MissionWave568.shooterCount(5,.normal),
+      "BOREAS all shooter actors")
+   ok(boreas.robots.count == MissionWave568.robotCount(5,.normal),
+      "BOREAS original RobotSnake cannot be omitted")
+   ok(!boreas.robots.isEmpty,"BOREAS requires real RobotSnake runtime")
    ok(MissionWave568.generate(level:26,difficulty:.normal,seed:1)==nil,"PC campaign excludes atlas entry 26")
    ok(MissionWave568.generate(level:0,difficulty:.normal,seed:1)==nil,"invalid level")
    print("PASS \(checks) source Wave568 spawn, fighters, snakes, quotas, C# seed checks")
