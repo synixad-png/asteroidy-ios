@@ -69,7 +69,9 @@ assert 'TYLKO TEST MODELU 3D' in page
 assert 'static let missionCount = 26' in progress
 assert 'guard level==1,sourceSector01==nil' in app
 assert 'Sector01MissionSettlement568.commit' in app
-preview=app.split('private func enterBoreasTest05() {',1)[1].split('private func returnFromBoreasTest05()',1)[0]
+# Inspect only the diagnostic entry function, not the later real mission
+# and W3 launch handlers (which may legitimately persist a selected sector).
+preview=app.split('private func enterBoreasTest05() {',1)[1].split('private func enterCampaignBoreas05(',1)[0]
 for prohibited in ("CampaignStore556.save(", "finishMission(", "Sector01MissionSettlement568.commit(",
                    "Sector01Shop568.save(", "onMissionCompleted", "PC602OrbitSave61.store("):
     assert prohibited not in preview,prohibited
@@ -89,7 +91,8 @@ assert 'guard level==1,sourceSector01==nil' in app
 assert 'pc602-orbit-enter-boreas05-planet' in orbit
 assert 'driver.hud.selectedUnlocked' in orbit
 assert 'onEnterMission(AnimatedPlanetTestSlot556.sector)' in orbit
-entry=app.split('private func enterCampaignBoreas05(fromOrbit:Bool=false) {',1)[1].split('private func returnFromBoreasTest05()',1)[0]
+# The campaign entry is also isolated from the separate W3 shortcut.
+entry=app.split('private func enterCampaignBoreas05(fromOrbit:Bool=false) {',1)[1].split('private func launchBoreas05FromMenu()',1)[0]
 for gate in ('progress.selectedSector==AnimatedPlanetTestSlot556.sector',
              'progress.unlocked(AnimatedPlanetTestSlot556.sector)',
              'AnimatedPlanetTestSlot556.sourceAssetsVerified',
