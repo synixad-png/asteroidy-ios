@@ -247,6 +247,8 @@ struct CarbonisCombat568 {
         var pierce:Int = 1
         var hitRockSeeds:[Int] = []
         var hitShooterPhases:[Float] = []
+        var hitRobotRings70:[Int] = []
+        var hitRobotHeads70:[Int] = []
         // Game.cs Guardian298 plasma shares real player-bullet collisions.
         var guardian298:Bool = false
     }
@@ -795,7 +797,7 @@ struct CarbonisCombat568 {
                 // v608: no passive 3/3 shield collision branch.
                 // Normal physical contact still resolves; suffer()
                 // checks the active Tarcza145 and real armor/hull.
-                suffer(18)
+                suffer(level<=2 ? 18 : level<=4 ? 22 : level<=8 ? 26 : 32)
                 if phase != .playing {return}
             }
         }
@@ -811,7 +813,7 @@ struct CarbonisCombat568 {
                 flight.velocity=player.velocity
                 shooters[i].core.position=enemy.position
                 shooters[i].velocity=enemy.velocity
-                suffer(18)
+                suffer(level<=2 ? 18 : level<=4 ? 22 : level<=8 ? 26 : 32)
                 if phase != .playing {return}
             }
         }
@@ -973,7 +975,7 @@ struct CarbonisCombat568 {
     /// Boss/tunnel branches remain outside the playable CARBONIS 01 scene.
     @discardableResult mutating func useBomb()->Bool {
         guard phase == .playing,bombs>0,bombCooldown<=0,
-              !rocks.isEmpty || !shooters.isEmpty
+              !rocks.isEmpty || !shooters.isEmpty || !robots.isEmpty
         else {return false}
         bombs-=1
         bombCooldown=1.5
@@ -1001,6 +1003,13 @@ struct CarbonisCombat568 {
                 velocity:Vec2(x:0,y:0),momentum:shooters[i].velocity,
                 defeated:fatal,time:elapsed,rng:&random)
             if fatal {defeatShooter(at:i)}
+        }
+        // PC609 BombRobot70: every ring first, then the armored head.
+        for i in robots.indices.reversed() {
+            for j in robots[i].rings.indices.reversed() {
+                damageRobotRing70(snakeIndex:i,ringIndex:j,damage:5)
+            }
+            damageRobotHead70(snakeIndex:i,damage:5)
         }
         hostileShots.removeAll(keepingCapacity:true)
         invincible=max(invincible,0.5)
@@ -1178,6 +1187,114 @@ struct CarbonisCombat568 {
             robots[i]=snake
             if phase != .playing {return}
         }
+    }
+
+
+    /// PC609 DamageRing70: one real HP-bearing body segment, detachable
+    /// without killing the snake's armored head prematurely.
+    private mutating func damageRobotRing70(
+        snakeIndex:Int,ringIndex:Int,damage:Int) {
+        guard robots.indices.contains(snakeIndex),
+              robots[snakeIndex].rings.indices.contains(ringIndex),
+              damage>0 else{return}
+        var snake=robots[snakeIndex]
+        snake.rings[ringIndex].hp-=damage
+        snake.rings[ringIndex].hitFlash=0.13
+        let position=snake.rings[ringIndex].position
+        destruction.burst(at:position,count:3,kind:1,rng:&random)
+        if snake.rings[ringIndex].hp<=0 {
+            snake.rings.remove(at:ringIndex)
+            if ringIndex<snake.rings.count {
+                let prior=ringIndex==0 ? snake.position :
+                    snake.rings[ringIndex-1].position
+                snake.rings[ringIndex].link=Self.distance(
+                    snake.rings[ringIndex].position,prior)
+            }
+            destruction.burst(at:position,count:10,kind:1,rng:&random)
+            destruction.light(at:position,kind:1,life:0.22)
+            score+=20
+            emitOriginalAudio568(20)
+        }
+        robots[snakeIndex]=snake
+    }
+
+    /// PC609 DamageRobotHead70: head is armored by every surviving ring.
+    /// One genuine death increments original 400 points and Earn(9).
+    private mutating func damageRobotHead70(snakeIndex:Int,damage:Int) {
+        guard robots.indices.contains(snakeIndex),damage>0 else{return}
+        var snake=robots[snakeIndex]
+        snake.headFlash=0.12
+        destruction.burst(at:snake.position,count:3,kind:1,rng:&random)
+        guard snake.rings.isEmpty else{robots[snakeIndex]=snake;return}
+        snake.hp-=damage
+        guard snake.hp<=0 else{robots[snakeIndex]=snake;return}
+        robots.remove(at:snakeIndex)
+        shooterKills+=1
+        score+=400
+        if !isReplay {collectedLootTokens+=9}
+        destruction.burst(at:snake.position,count:26,kind:1,rng:&random)
+        destruction.light(at:snake.position,kind:1,life:0.5)
+        emitOriginalAudio568(21)
+        tryDropLegacyPickup586(at:snake.position,enemy:true,rockSize:0)
+        tryDropCombatSupply586(at:snake.position,enemy:true)
+    }
+
+    /// PC609 HitRobot70 first resolves nearest head/ring and checks
+    /// physical rocks/fighters for an earlier occluding contact.
+    private mutating func hitRobot70(
+        _ projectile:inout Projectile,dt:Float)->Bool {
+        guard !robots.isEmpty else{return false}
+        let gate=ShotSweepGate568(shot:projectile,dt:dt)
+        var selected:Int?=nil,ringIndex:Int?=nil
+        var first:Float=2
+        for i in robots.indices {
+            let snake=robots[i]
+            let headRadius:Float=18*SourceRobotSnake70.sizeScale
+            if !projectile.hitRobotHeads70.contains(snake.id),
+               gate.mayReach(snake.position,radius:headRadius),
+               let t=Self.projectedHit71(projectile,
+                    target:snake.position,radius:headRadius,dt:dt),
+               t<first {
+                first=t;selected=i;ringIndex=nil
+            }
+            for j in snake.rings.indices {
+                let ring=snake.rings[j]
+                let identity=snake.id*100+ring.id
+                let radius:Float=11*SourceRobotSnake70.sizeScale
+                guard !projectile.hitRobotRings70.contains(identity),
+                      gate.mayReach(ring.position,radius:radius),
+                      let t=Self.projectedHit71(projectile,
+                          target:ring.position,radius:radius,dt:dt),
+                      t<first else{continue}
+                first=t;selected=i;ringIndex=j
+            }
+        }
+        guard let i=selected else{return false}
+        for rock in rocks where rock.shardLife<=0 &&
+            !projectile.hitRockSeeds.contains(rock.shapeSeed) {
+            if gate.mayReach(rock.position,radius:rock.radius+2),
+               let t=Self.projectedHit71(projectile,
+                    target:rock.position,radius:rock.radius+2,dt:dt),
+               t<first {return false}
+        }
+        for fighter in shooters {
+            if gate.mayReach(fighter.core.position,radius:16),
+               let t=Self.projectedHit71(projectile,
+                    target:fighter.core.position,radius:16,dt:dt),
+               t<first {return false}
+        }
+        if let j=ringIndex {
+            let identity=robots[i].id*100+robots[i].rings[j].id
+            projectile.hitRobotRings70.append(identity)
+            damageRobotRing70(snakeIndex:i,ringIndex:j,
+                damage:projectile.damage)
+        } else {
+            projectile.hitRobotHeads70.append(robots[i].id)
+            damageRobotHead70(snakeIndex:i,damage:projectile.damage)
+        }
+        projectile.pierce-=1
+        hudEvents.hits+=1
+        return true
     }
 
     private mutating func updateShooters(dt:Float) {
@@ -1480,6 +1597,16 @@ struct CarbonisCombat568 {
                     at:bullets[i].point,velocity:bullets[i].velocity,dt:dt,
                     ship:flight.position,shooters:shooters,rocks:rocks,
                     focus:sourceMechanics.guardianFocus)
+            }
+            var robotShot=bullets[i]
+            if hitRobot70(&robotShot,dt:dt) {
+                if robotShot.pierce<=0 {bullets.remove(at:i);continue}
+                robotShot.point=Sphere67.advance(
+                    robotShot.point,velocity:&robotShot.velocity,dt:dt)
+                robotShot.life-=dt
+                if robotShot.life<=0 {bullets.remove(at:i)}
+                else{bullets[i]=robotShot}
+                continue
             }
             let shot=bullets[i]
             let gate=ShotSweepGate568(shot:shot,dt:dt)
