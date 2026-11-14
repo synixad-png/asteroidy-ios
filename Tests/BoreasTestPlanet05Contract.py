@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""BOREAS sector-05 visual-only source contract.
-
-This is a temporary animated planet slot and NOT a fifth playable mission.
-Protect source-authenticated v556 geometry, 5s morph animation, existing
-three-buffer GPU upload, HUD/mission routing and all PC609 progress rules.
+"""BOREAS 05: protect the unchanged W3 GLB diagnostic AND the separate
+source-backed campaign combat integration. The diagnostic cannot award or
+unlock. The live mission must not claim a clear while RobotSnake AI is absent.
+Protect 97 source animation channels, three-buffer GPU uploads and CARBONIS 01.
 """
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
@@ -119,3 +118,50 @@ print("PASS: existing W3 test, sector-01 combat, rewards, saves and locks untouc
 print("PASS: authenticated Boreas sector-05 morph test, 5s loop, 3-buffer GPU")
 print("PASS: W3 atlas entry, no mission unlock, progress, reward or save changes")
 print("PASS: original PC v609 GLB node translation and scale clips, 96/96 channels")
+
+# Source-authenticated native mission 05 is independent of the W3 preview.
+boreasSource=read("ASTEROIDYiOS/BoreasMission05Source.swift")
+boreasScene=read("ASTEROIDYiOS/BoreasMission05Scene.swift")
+boreasSettlement=read("ASTEROIDYiOS/BoreasMission05Settlement.swift")
+combat=read("ASTEROIDYiOS/CarbonisCombat568.swift")
+session=read("ASTEROIDYiOS/CarbonisSession568.swift")
+hud=read("ASTEROIDYiOS/SourceCombatHUD331.swift")
+for anchor in ('campaign.selectedSector == sector',
+               'campaign.unlocked(sector)',
+               'MissionWave568.generate(',
+               'encounter.objective == .defend',
+               'MissionStart261.prepare(',
+               'prepared.encounter.robots.isEmpty'):
+    if anchor=='prepared.encounter.robots.isEmpty':
+        assert 'prepared.encounter.robots.isEmpty' not in boreasSource
+    else:
+        assert anchor in boreasSource,anchor
+assert 'BoreasMission05Source.prepare(' in app
+assert 'boreasMission05Prepared=prepared05' in app
+assert 'if let prepared05=boreasMission05Prepared' in app
+assert 'BoreasMission05Scene(prepared:prepared05' in app
+assert 'MetalScene(input:input,combatSession05:session)' in boreasScene
+assert 'SourceCombatTouchZones568(' in boreasScene
+assert 'SourceCombatHUD331(' in boreasScene
+assert 'HudPlasmaLayer600(' in boreasScene
+assert 'BoreasMission05Settlement.commit(' in app
+assert 'campaign.finishMission(report.sector)' in boreasSettlement
+assert 'report.elapsedSeconds>=50' in boreasSettlement
+assert 'report.sector==BoreasMission05Source.sector' in boreasSettlement
+assert 'robots=prepared.encounter.robots' in combat
+assert 'shooters.isEmpty && robots.isEmpty' in combat
+assert 'case .defend: requiredTime=50' in combat
+assert 'level=prepared.reset.level' in combat
+assert 'level:level,type:fighter.core.type' in combat
+assert 'sector=game.level' in session
+assert 'SEKTOR 01 / 26' in hud
+assert 'sourceShooterModels05[kind]' in renderer
+assert 'CarbonisShooterMesh71.typeOne()' in renderer
+assert 'combatSession05.frame(at:now)' in renderer
+assert 'if combatSession05 == nil && selected != activePlanetTestLevel' in renderer
+assert 'WERSJA ROBOCZA' in boreasScene
+# Critical: dedicated CARBONIS 01 view and its approved touch editor untouched.
+assert 'struct Sector01Scene568' in read("ASTEROIDYiOS/Sector01Scene568.swift")
+print("PASS: sector 05 uses one real battle state and authentic level-5 wave")
+print("PASS: no mission-05 clear while RobotSnake actors remain unimplemented")
+print("PASS: W3 diagnostic still never grants unlocks or source rewards")
