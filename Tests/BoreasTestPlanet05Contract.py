@@ -153,6 +153,14 @@ assert 'level:level,type:fighter.core.type' in combat
 assert 'sector=game.level' in session
 assert 'SEKTOR 01 / 26' in hud
 assert 'sourceShooterModels05[kind]' in renderer
+assert 'sourceRockModels05[shape]' in renderer
+assert 'CarbonisRockGeometry568.vertices(shape:shape)' in renderer
+assert 'CarbonisRockGeometry568.shape(for:asteroid)' in renderer
+assert 'makeSourceTriangles05(' in renderer
+assert 'combatCraft05' in renderer
+assert 'SourceKestrel603.load()' in renderer
+assert 'SourceBastion606.load()' in renderer
+assert 'Wybrany statek nie ma zweryfikowanego modelu PC609' in renderer
 assert 'CarbonisShooterMesh71.typeOne()' in renderer
 assert 'combatSession05.frame(at:now)' in renderer
 assert 'if combatSession05 == nil && selected != activePlanetTestLevel' in renderer
