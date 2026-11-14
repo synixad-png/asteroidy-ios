@@ -86,7 +86,10 @@ assert "accessibilityIdentifier(\"sector01-result-to-service\")" in source_scene
 assert "accessibilityIdentifier(\"sector01-retry-after-defeat\")" in source_scene
 assert "session.hud.summarySeconds>=4.2" in source_scene
 assert "static func completedFirstMission(" in source_summary
-assert "Sector01MissionSummary568.completedFirstMission(" in (root/"ASTEROIDYiOS/CarbonisCombat568.swift").read_text()
+# The shared battle now produces real summaries for source sectors 01 and 05.
+combat_source=(root/"ASTEROIDYiOS/CarbonisCombat568.swift").read_text()
+assert "Sector01MissionSummary568.completedSourceMission(" in combat_source
+assert "sector:level,rocks:rocksDestroyed" in combat_source
 assert "CampaignStore556.save(campaign,defaults:defaults)" in source_settlement
 assert "Sector01Shop568.save(profile,defaults:defaults)" in source_settlement
 assert "enum Item:Int,CaseIterable" in source_shop
