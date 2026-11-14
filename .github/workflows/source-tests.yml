@@ -1670,7 +1670,7 @@ jobs:
   # from .github/workflows/verify-combat-only.yml
   publish-combat-verify-run:
     needs: select
-    if: ${{ contains(needs.select.outputs.jobs, ' publish-combat-verify-run ') && (github.event_name != 'pull_request') }}
+    if: ${{ contains(needs.select.outputs.jobs, ' publish-combat-verify-run ') && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     concurrency:
       group: verify-combat-only-${{ github.ref }}-publish-combat-verify-run
       cancel-in-progress: true
