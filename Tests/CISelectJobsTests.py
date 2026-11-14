@@ -254,3 +254,29 @@ assert "  workflow_dispatch:" in ipa_source
 assert config["build-ipa.yml"]["boreas-complete-release"]["push"] is None
 print("PASS: automatic source CI + true unsigned iOS Swift/Metal compile "
       "on every development branch; feature IPA remains manual")
+
+
+# Every IPA workflow run must publish its own Run ID on its source branch.
+# No duplicate reporter may overwrite main during a feature-branch build.
+ipa_source = (workflow_dir / "build-ipa.yml").read_text(encoding="utf-8")
+reporter = ipa_source.split("\n  expose-build-run:\n", 1)[1].split(
+    "\n  # from .github/workflows/build-ios.yml\n  verify-sphere-linux:", 1)[0]
+assert "    needs: select" not in reporter
+assert "github.ref == 'refs/heads/main'" not in reporter
+assert "permissions:\n      contents: write" in reporter
+assert "const branch = context.ref.startsWith('refs/heads/')" in reporter
+assert "path = 'Reports/LAST_REQUESTED_IPA_RUN.md'" in reporter
+assert "'Branch: ' + branch" in reporter
+assert "'Run ID: ' + runId" in reporter
+assert "'Actions: ' + url" in reporter
+assert "path, ref: branch" in reporter
+assert "owner, repo, path, branch, sha" in reporter
+assert "Number(matched[1]) > runId" in reporter
+assert "core.setFailed(" in reporter
+assert "if (error.status !== 404) throw error" in reporter
+assert "if (error.status !== 409 && error.status !== 422) throw error" in reporter
+assert "LAST_REQUESTED_IPA_RUN.md" not in ipa_source.split(
+    "\n  compile-device:\n", 1)[1]
+assert "branch:'main'" not in reporter
+assert "branch:'main'" not in ipa_source
+print("PASS: IPA Run ID recorded per branch, fail-visible, newest-run-wins")
