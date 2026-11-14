@@ -2,8 +2,8 @@ import SwiftUI
 
 /// Sector 05 uses the existing source combat simulation and Metal Boreas
 /// model. This view owns controls and lifecycle, not a second physics world.
-/// Mission completion is withheld while original RobotSnake actors remain
-/// unported; their encounter count is never silently erased.
+/// The original source RobotSnake70 actors and their ring armor are owned by
+/// the same real combat session. No visual-only enemy or invented victory.
 struct BoreasMission05Scene:View {
     let prepared:Sector01PreparedWave568
     let onExit:()->Void
@@ -196,11 +196,11 @@ struct BoreasMission05Scene:View {
                     .buttonStyle(.borderedProminent)
                     .padding(24)
                 }
-                // Visible engineering limitation, never a fake level clear.
+                // Genuine remaining RobotSnake70 heads and armored rings.
                 if !session.game.robots.isEmpty && session.hud.phase == .playing {
                     VStack {
                         Spacer()
-                        Text("WERSJA ROBOCZA · OCZEKUJE NA ORYGINALNĄ AI WĘŻY")
+                        Text("WĘŻE: \(session.game.robots.count) · WRĘGI: \(session.game.robots.reduce(0) { $0 + $1.rings.count })")
                             .font(.system(size:10,weight:.medium,design:.monospaced))
                             .foregroundStyle(.orange)
                             .padding(.bottom,CGFloat(safe.bottom+60))
