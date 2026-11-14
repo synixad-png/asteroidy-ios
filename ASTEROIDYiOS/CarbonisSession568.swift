@@ -59,10 +59,12 @@ final class CarbonisSession568: ObservableObject {
             summary=game.missionSummary
             sector=game.level
             self.summarySeconds=summarySeconds
-            rocks=game.rocks.count;fighters=game.shooters.count
+            rocks=game.rocks.count;fighters=game.shooters.count+game.robots.count
             shots=game.bullets.count
             targets=game.shooters.map {
                 Sphere67.delta(target:$0.core.position,origin:game.flight.position)
+            } + game.robots.map {
+                Sphere67.delta(target:$0.position,origin:game.flight.position)
             }
             hazards=game.rocks.prefix(40).map {
                 Sphere67.delta(target:$0.position,origin:game.flight.position)
@@ -99,6 +101,7 @@ final class CarbonisSession568: ObservableObject {
             }
             return game.rocks.compactMap {contact($0.position,0)}
                 + game.shooters.compactMap {contact($0.core.position,1)}
+                + game.robots.compactMap {contact($0.position,1)}
                 + game.tokenPickups.compactMap {contact($0.position,2)}
         }
     }
