@@ -115,7 +115,13 @@ assert 'if sector == 5 && Self.boreas05TestAccess { return true }' in progress
 assert 'launchBoreas05FromMenu' in app
 assert 'openBoreasTest:launchBoreas05FromMenu' in app
 assert 'guard current.selectUnlocked(AnimatedPlanetTestSlot556.sector)' in app
-assert 'CampaignStore556.save(current)' in app
+# Preserve the legitimate selected-sector save in the W3 shortcut, but
+# forbid completion/reward writes in that shortcut as well.
+menuLaunch=app.split('private func launchBoreas05FromMenu() {',1)[1].split('private func returnFromBoreasTest05()',1)[0]
+assert 'CampaignStore556.save(current)' in menuLaunch
+for prohibited in ("finishMission(", "Sector01MissionSettlement568.commit(",
+                   "Sector01Shop568.save(", "onMissionCompleted", "PC602OrbitSave61.store("):
+    assert prohibited not in menuLaunch,prohibited
 assert 'ROZPOCZNIJ BOREAS 05 · WALKA' in app
 assert 'returnToOrbit:returnHomeWorldAfterBoreas05' in app
 assert 'PLANETA 05 · MISJA W OPRACOWANIU · BEZ ZMIAN POSTĘPU' in page
