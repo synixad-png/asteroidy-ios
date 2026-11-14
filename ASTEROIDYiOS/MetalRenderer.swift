@@ -1590,22 +1590,22 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 for shot in live.game.bullets {
                     let p=PlanetPreview556.shipSurfacePosition(
                         shot.point,altitude:0.12)
-                    drawMesh(bulletMesh,Self.translation(p.x,p.y,p.z)*
-                             Self.scale(0.014),unlit:1)
+                    let projectileModel=Self.translation(p.x,p.y,p.z) * Self.scale(0.014)
+                    drawMesh(bulletMesh,projectileModel,unlit:1)
                 }
                 for shot in live.game.hostileShots {
                     let p=PlanetPreview556.shipSurfacePosition(
                         shot.point,altitude:0.12)
-                    drawMesh(bulletMesh,Self.translation(p.x,p.y,p.z)*
-                             Self.scale(0.014),unlit:1)
+                    let projectileModel=Self.translation(p.x,p.y,p.z) * Self.scale(0.014)
+                    drawMesh(bulletMesh,projectileModel,unlit:1)
                 }
             } else {
                 for bolt in sphereSector.bolts {
                     let position=PlanetPreview556.shipSurfacePosition(
                         bolt.position,altitude:0.12)
-                    drawMesh(bulletMesh,
-                        Self.translation(position.x,position.y,position.z)*
-                        Self.scale(0.014),unlit:1)
+                    let projectileModel=Self.translation(
+                        position.x,position.y,position.z) * Self.scale(0.014)
+                    drawMesh(bulletMesh,projectileModel,unlit:1)
                 }
             }
             // GpuSphere67.CraftSphere67: real sphere tangent basis,
