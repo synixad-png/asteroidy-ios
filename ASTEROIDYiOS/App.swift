@@ -78,6 +78,8 @@ struct GameView: View {
     @State private var campaign = CampaignStore556.load()
     @State private var showingHomeWorld291=false
     @State private var showingBoreasTest05=false
+    // Authoritative mission 05 wave; nil means the unchanged W3 GLB test.
+    @State private var boreasMission05Prepared:Sector01PreparedWave568?
     // Campaign sector 05 uses the existing authenticated GLB scene.
     // The independent W3 diagnostic remains available but cannot unlock it.
     @State private var boreasCampaignSector05=false
@@ -129,6 +131,7 @@ struct GameView: View {
     private func enterBoreasTest05() {
         guard sourceSector01==nil, !showingHomeWorld291,
               AnimatedPlanetTestSlot556.sourceAssetsVerified else{return}
+        boreasMission05Prepared=nil
         boreasCampaignSector05=false
         returnHomeWorldAfterBoreas05=false
         input.releaseHeldControls()
@@ -153,6 +156,20 @@ struct GameView: View {
               progress.unlocked(AnimatedPlanetTestSlot556.sector),
               AnimatedPlanetTestSlot556.sourceAssetsVerified,
               sourceSector01==nil else{return}
+        // The one authentic source wave is prepared BEFORE hiding the
+        // orbit or starting a renderer; a failed preparation changes nothing.
+        let shop05=Sector01Shop568.load()
+        let difficulty05=SourceNewGame568.selection().difficulty
+        guard let prepared05=BoreasMission05Source.prepare(
+            campaign:progress,
+            verifiedAssets:AnimatedPlanetTestSlot556.sourceAssetsVerified,
+            difficulty:difficulty05,
+            seed:Int32.random(in:0...Int32.max),
+            currentLives:shop05.lives,
+            startingLives:SourceNewGame568.startingLives(
+                difficulty:difficulty05,
+                shipType:H55SourceMechanics580.load().selectedShip),
+            shopProfile:shop05) else{return}
         if fromOrbit {
             guard showingHomeWorld291, !homeWorld291.paused,
                   homeWorld291.hud.target==AnimatedPlanetTestSlot556.sector
@@ -163,10 +180,12 @@ struct GameView: View {
             guard !showingHomeWorld291 else{return}
         }
         enterBoreasTest05()
+        boreasMission05Prepared=prepared05
         boreasCampaignSector05=true
         returnHomeWorldAfterBoreas05=fromOrbit
     }
     private func returnFromBoreasTest05() {
+        boreasMission05Prepared=nil
         input.releaseHeldControls()
         input.gameplayPaused=true
         showingBoreasTest05=false
@@ -535,11 +554,27 @@ struct GameView: View {
                     },preparedWave:preparedWave)
                     }
                 } else if showingBoreasTest05 {
-                    AnimatedPlanetTestPage556(
-                        input:input,onExit:returnFromBoreasTest05,
-                        campaignSector05:boreasCampaignSector05,
-                        returnToOrbit:returnHomeWorldAfterBoreas05)
-                        .ignoresSafeArea()
+                    if let prepared05=boreasMission05Prepared {
+                        BoreasMission05Scene(prepared:prepared05,
+                            onExit:returnFromBoreasTest05,
+                            onCompleted:{ report in
+                                var changed=campaign
+                                _=BoreasMission05Settlement.commit(
+                                    report,campaign:&changed)
+                                campaign=changed
+                            },
+                            onAudioEvent:{ code in audio.sourceEffect(code) },
+                            onEnginePower:{ power in audio.sourceEnginePower(power) },
+                            onMissionPause:{ paused in audio.missionUserPause568(paused) },
+                            onMissionPhase:{ phase in audio.missionPhase568(phase) })
+                            .ignoresSafeArea()
+                    } else {
+                        AnimatedPlanetTestPage556(
+                            input:input,onExit:returnFromBoreasTest05,
+                            campaignSector05:boreasCampaignSector05,
+                            returnToOrbit:returnHomeWorldAfterBoreas05)
+                            .ignoresSafeArea()
+                    }
                 } else if showingHomeWorld291 {
                     PC602HomeWorldPage291(
                         driver:homeWorld291,
