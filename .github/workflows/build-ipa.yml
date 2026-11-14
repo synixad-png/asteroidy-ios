@@ -62,45 +62,74 @@ jobs:
           /tmp/source-newgame568
           python3 Tests/SourceNewGame568Contract.py
   # from .github/workflows/build-ios.yml
+  # Record the start of every IPA workflow run on its own source branch.
+  # A GITHUB_TOKEN file commit does not trigger another Actions push run.
   expose-build-run:
-    needs: select
-    if: ${{ contains(needs.select.outputs.jobs, ' expose-build-run ') && (github.event.repository.private == false && github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: write
     steps:
-      - name: Expose user-requested IPA run identifier
+      - name: Record current IPA Run ID and exact source branch
         uses: actions/github-script@v7
         with:
           script: |
-            const {owner,repo}=context.repo;
-            const path='Reports/LAST_REQUESTED_IPA_RUN.md';
-            const text=[
-              '# User requested iOS IPA build',
-              '',
-              'Run ID: '+context.runId,
-              'Commit: '+context.sha,
-              'Actions: https://github.com/'+owner+'/'+repo+'/actions/runs/'+context.runId,
-              'Status: requested; consult latest GitHub Actions jobs/artifacts',
-              'Signing: unsigned IPA, device signing required'
-            ].join('\n')+'\n';
-            let sha;
-            try {
-              const current=await github.rest.repos.getContent({owner,repo,path});
-              sha=current.data.sha;
-            } catch(error) {
-              if(error.status!==404) core.warning(String(error));
+            const {owner, repo} = context.repo;
+            const branch = context.ref.startsWith('refs/heads/')
+              ? context.ref.slice('refs/heads/'.length) : '';
+            if (!branch) {
+              core.setFailed('No source branch ref; cannot publish IPA run ID');
+              return;
             }
-            try {
-              await github.rest.repos.createOrUpdateFileContents({
-                owner,repo,path,branch:'main',
-                sha,
-                message:'Expose requested iPhone IPA workflow run id',
-                content:Buffer.from(text).toString('base64')
-              });
-              core.info('Latest IPA run recorded in '+path);
-            } catch(error) {
-              core.warning('Could not record run id: '+String(error));
+            const path = 'Reports/LAST_REQUESTED_IPA_RUN.md';
+            const runId = context.runId;
+            const url = 'https://github.com/' + owner + '/' + repo +
+              '/actions/runs/' + runId;
+            const data = [
+              '# Latest ASTEROIDY iOS IPA workflow run',
+              '',
+              'Run ID: ' + runId,
+              'Branch: ' + branch,
+              'Commit: ' + context.sha,
+              'Event: ' + context.eventName,
+              'Target: ' + (context.payload.inputs?.target || 'build-ios'),
+              'Actions: ' + url,
+              'Status: started (check Actions jobs for final result)',
+              'Signing: unsigned IPA; signing required for device'
+            ].join('\\n') + '\\n';
+            // Re-read blob SHA after conflicts; prevent an older, slower run
+            // from overwriting the marker of a newer workflow run.
+            for (let attempt = 0; attempt < 5; attempt++) {
+              let sha;
+              try {
+                const old = await github.rest.repos.getContent({
+                  owner, repo, path, ref: branch
+                });
+                if (Array.isArray(old.data)) throw new Error('Marker is directory');
+                sha = old.data.sha;
+                const oldText = Buffer.from(old.data.content || '', 'base64')
+                  .toString('utf8');
+                const matched = oldText.match(/^Run ID: (\\d+)$/m);
+                if (matched && Number(matched[1]) > runId) {
+                  core.info('Newer run ' + matched[1] + ' already recorded on ' + branch);
+                  return;
+                }
+              } catch (error) {
+                if (error.status !== 404) throw error;
+              }
+              try {
+                await github.rest.repos.createOrUpdateFileContents({
+                  owner, repo, path, branch, sha,
+                  message: 'CI: record IPA run ' + runId + ' on ' + branch,
+                  content: Buffer.from(data, 'utf8').toString('base64')
+                });
+                core.info('Recorded run ' + runId + ' on ' + branch + ': ' + url);
+                return;
+              } catch (error) {
+                if (error.status !== 409 && error.status !== 422) throw error;
+                if (attempt === 4) throw error;
+                core.warning('Marker conflict; retrying with current blob SHA');
+              }
             }
   # from .github/workflows/build-ios.yml
   verify-sphere-linux:
@@ -341,37 +370,6 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      - name: Publish run number for live project status
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          python3 - <<'PY'
-          import os,json,base64,urllib.request,urllib.error
-          repo=os.environ.get("GITHUB_REPOSITORY","")
-          run=os.environ.get("GITHUB_RUN_ID","")
-          sha=os.environ.get("GITHUB_SHA","")
-          path="Reports/LAST_REQUESTED_IPA_RUN.md"
-          data=f"# User-requested iPhone/iPad build\\n\\nRun ID: {run}\\nCommit: {sha}\\nStatus: GitHub Actions running; check job conclusion before claiming IPA.\\n"
-          url=f"https://api.github.com/repos/{repo}/contents/{path}"
-          token=os.environ["GH_TOKEN"]
-          headers={"Authorization":f"Bearer {token}",
-                   "Accept":"application/vnd.github+json",
-                   "X-GitHub-Api-Version":"2022-11-28"}
-          try:
-              response=urllib.request.urlopen(urllib.request.Request(url,headers=headers))
-              old=json.load(response).get("sha")
-          except urllib.error.HTTPError:
-              old=None
-          payload={"message":"Record requested iPhone iPad IPA build run",
-                   "content":base64.b64encode(data.encode()).decode(),"branch":"main"}
-          if old:payload["sha"]=old
-          req=urllib.request.Request(url,data=json.dumps(payload).encode(),
-              headers={**headers,"Content-Type":"application/json"},method="PUT")
-          try:
-              print(urllib.request.urlopen(req).status)
-          except Exception as error:
-              print("Status reporting unavailable:",error)
-          PY
       - name: Record build environment
         run: |
           mkdir -p reports
