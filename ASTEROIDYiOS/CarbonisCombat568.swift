@@ -1,5 +1,220 @@
 import Foundation
 
+/// Windows PC609 RobotSnake70.cs + EnemyTactics71.cs: real head, connected
+/// armored rings and source pursuit/charge/fire on the 1280x720 sphere.
+/// Not an independent sandbox: the owner is CarbonisCombat568.
+struct SourceRobotSnake70 {
+    struct Ring {
+        let id:Int
+        var position:Vec2
+        var velocity=Vec2(x:0,y:0)
+        var hp:Int
+        let maxHP:Int
+        var link:Float
+        var hitFlash:Float=0
+    }
+    struct Shot {
+        let point:Vec2
+        let velocity:Vec2
+    }
+    let id:Int
+    let initialRings:Int
+    var position:Vec2
+    var velocity=Vec2(x:0,y:0)
+    var hp:Int
+    let phase:Float
+    var age:Float=0
+    var aim:Float=0
+    var fireClock:Float=2
+    var telegraph:Float=0
+    var gunAim:Float=0
+    var burst=0
+    var muzzle:Float=0
+    var headFlash:Float=0
+    var warning=false
+    var charging=false
+    var rings:[Ring]
+    var trail:[Vec2]=[]
+    // Windows Renderer.cs assigns MissionEnemyPercent=77 by default.
+    // Recomputed from source ring topology at initial simulation entry.
+    static let sizeScale:Float=0.77
+    static let ringMass:Float=3.2
+    static let headMass:Float=8
+    static let ringContactRadius:Float=9*sizeScale
+    static let headContactRadius:Float=16*sizeScale
+
+    init(_ source:MissionWave568.Robot,id:Int) {
+        self.id=id
+        position=source.position
+        hp=source.hp
+        phase=source.phase
+        initialRings=source.rings.count
+        let first=source.rings.first.map {
+            Sphere67.delta(target:$0.position,origin:source.position)
+        } ?? Vec2(x:0,y:1)
+        let tail=CarbonisCombat568.unit(first)
+        rings=source.rings.enumerated().map { index,entry in
+            let offset=Self.sizeScale*Float(26+index*18)
+            return Ring(id:index+1,position:Sphere67.offset(source.position,
+                by:tail*offset),hp:entry.hp,maxHP:entry.hp,
+                link:Self.sizeScale*(index==0 ? 26:18))
+        }
+    }
+
+    private static func distance(_ a:Vec2,_ b:Vec2)->Float {
+        sqrt(Sphere67.delta(target:a,origin:b).lengthSquared)
+    }
+    /// RobotSnake70.ConstrainRobot70: a polyline of maximum 220 points.
+    /// Ring separation is physically maintained across longitude/poles.
+    mutating func constrain(dt:Float) {
+        if !trail.isEmpty && Self.distance(position,trail[0])>100 {
+            trail.removeAll(keepingCapacity:true)
+        }
+        if trail.isEmpty {
+            trail.append(position)
+            var last=position
+            for ring in rings {
+                let delta=Sphere67.delta(target:ring.position,origin:last)
+                let steps=max(1,Int(ceil(sqrt(delta.lengthSquared)/2)))
+                for i in 1...steps {
+                    trail.append(Sphere67.offset(last,
+                        by:delta*(Float(i)/Float(steps))))
+                }
+                last=ring.position
+            }
+        }
+        let moved=Self.distance(position,trail[0])
+        if moved>2 || (trail.count>1 &&
+                        Self.distance(position,trail[1])>2) {
+            trail.insert(position,at:0)
+        } else {
+            trail[0]=position
+        }
+        if trail.count>220 {trail.removeSubrange(220..<trail.count)}
+        var parent=position
+        var distance:Float=0,passed:Float=0
+        var cursor=0
+        for i in rings.indices {
+            var ring=rings[i]
+            ring.link=max(Self.sizeScale*(i==0 ? 26:18),
+                          ring.link-100*dt)
+            distance+=ring.link
+            while cursor+1<trail.count {
+                let length=Self.distance(trail[cursor+1],trail[cursor])
+                if passed+length>=distance {break}
+                passed+=length
+                cursor+=1
+            }
+            var target=trail[cursor]
+            if cursor+1<trail.count {
+                let d=Sphere67.delta(target:trail[cursor+1],origin:target)
+                let len=sqrt(d.lengthSquared)
+                target=Sphere67.offset(target,by:d*min(1,
+                    (distance-passed)/max(0.001,len)))
+            }
+            let gap=Sphere67.delta(target:target,origin:parent)
+            let old=ring.position
+            ring.position=Sphere67.offset(parent,
+                by:CarbonisCombat568.unit(gap)*ring.link)
+            ring.velocity=CarbonisBodyContact68.transported(
+                ring.velocity,from:old,to:ring.position)*exp(-dt*7)
+            rings[i]=ring
+            parent=ring.position
+        }
+    }
+
+    /// RobotSnake70.StepRobot70, then EnemyTactics71.StepEnemyFire71.
+    /// Returned bolts join the SAME hostile-shot world and player damage.
+    mutating func advance(dt:Float,target:Vec2,
+                          playerVelocity:Vec2,
+                          difficulty:CombatBalance556.Difficulty)->[Shot] {
+        age+=dt
+        headFlash=max(0,headFlash-dt)
+        let cycle:Float=difficulty == .easy ? 8:6.5
+        let chargePhase=(age+phase).truncatingRemainder(dividingBy:cycle)
+        warning=chargePhase>cycle-1.5 && chargePhase<cycle-0.65
+        charging=chargePhase>=cycle-0.65
+        let delta=Sphere67.delta(target:target,origin:position)
+        let dir=CarbonisCombat568.unit(delta)
+        let side=Vec2(x:-dir.y,y:dir.x)
+        let base:Float=difficulty == .easy ? 70 :
+            difficulty == .hard ? 108:90
+        let speed=warning ? base*0.55 :
+            charging ? base*2.2 :
+            base+min(15,Float(initialRings-rings.count)*1.6)
+        let desired=dir*speed+
+            side*(sin(age*1.7+phase)*(charging ? 0:18))
+        velocity=velocity+(desired-velocity)*(1-exp(-dt*2.4))
+        position=Sphere67.advance(position,velocity:&velocity,dt:dt)
+
+        // EnemyTactics71.Predicted71 -> Turn72, robot type=0.
+        let danger:Float=difficulty == .easy ? 0.86 :
+            difficulty == .hard ? 1.32:1.10
+        let distance=sqrt(Sphere67.delta(target:target,
+                                          origin:position).lengthSquared)
+        let future=Sphere67.offset(target,by:playerVelocity*
+            min(Float(0.8),distance/(230*danger)))
+        let predicted=Sphere67.delta(target:future,origin:position)
+        let targetAngle=atan2(predicted.y,predicted.x)
+        aim=CarbonisCombat568.turn72(aim,targetAngle,dt:dt)
+        muzzle=max(0,muzzle-dt)
+        var shots:[Shot]=[]
+        if distance>160 {
+            fireClock=max(0.45,fireClock-dt)
+            telegraph=0
+            burst=0
+        } else {
+            fireClock-=dt
+            let warningTime:Float=0.28
+            if fireClock<=warningTime && telegraph<=0 && burst==0 {
+                gunAim=targetAngle
+                telegraph=warningTime
+            }
+            if telegraph>0 {telegraph=max(0.001,telegraph-dt)}
+            if fireClock<=0 {
+                let alignment=abs(atan2(sin(aim-targetAngle),
+                                        cos(aim-targetAngle)))
+                if alignment<=0.25 {
+                    // PC609 robots have exactly two bolts per volley.
+                    if burst<3 {
+                        for i in 0..<2 {
+                            let a=aim+(Float(i)-0.5)*0.055
+                            let d=Vec2(x:cos(a),y:sin(a))
+                            let start=Sphere67.offset(position,by:d*18)
+                            let original=Sphere67.vector(position,
+                                d*(230*danger))
+                            let tangent=Sphere67.components(start,
+                                Sphere67.transport(original,
+                                    from:Sphere67.normal(position),
+                                    to:Sphere67.normal(start)))
+                            shots.append(Shot(point:start,velocity:tangent))
+                        }
+                    }
+                    muzzle=0.10
+                    telegraph=0
+                    burst+=1
+                    let burstLength=difficulty == .easy ? 2:3
+                    if burst<burstLength {
+                        fireClock=0.19
+                    } else {
+                        burst=0
+                        fireClock=1.3*(difficulty == .easy ? 1.3 :
+                                        difficulty == .hard ? 0.90:1)
+                    }
+                }
+            }
+        }
+        for i in rings.indices {
+            rings[i].hitFlash=max(0,rings[i].hitFlash-dt)
+            rings[i].velocity=rings[i].velocity*exp(-dt*0.8)
+            rings[i].position=Sphere67.advance(rings[i].position,
+                velocity:&rings[i].velocity,dt:dt)
+        }
+        constrain(dt:dt)
+        return shots
+    }
+}
+
 /// Native CARBONIS level-one combat simulation. All movement takes place in
 /// original 1280x720 spherical coordinates, independent of SwiftUI and Metal.
 /// Matches Game.Step + DirectFlight67 + EnemyTactics71 for CARBONIS 01.
@@ -86,10 +301,9 @@ struct CarbonisCombat568 {
     private var legacyDrops586=SourceLegacyPickupDrops586(seed:0)
     let level:Int
     let objective:MissionWave568.Objective
-    // Preserve every original RobotSnake spawn as a real pending threat.
-    // The separate source AI/render path must be installed before it can
-    // leave this list; never reward a false 'all enemies cleared'.
-    private(set) var robots:[MissionWave568.Robot]
+    // PC609 RobotSnake70: real spherical head and linked body; the same
+    // simulation state owns its AI, hits, pickups, collision and render poses.
+    private(set) var robots:[SourceRobotSnake70]
     let difficulty:CombatBalance556.Difficulty
     let selectedWeapon:Sector01Shop568.Weapon
     let upgradeLevel:Int
@@ -145,7 +359,9 @@ struct CarbonisCombat568 {
     init(_ prepared:Sector01PreparedWave568) {
         level=prepared.reset.level
         objective=prepared.encounter.objective
-        robots=prepared.encounter.robots
+        robots=prepared.encounter.robots.enumerated().map {
+            SourceRobotSnake70($0.element,id:$0.offset+1)
+        }
         var f=SphereFlight67()
         f.heading = -Float.pi/2
         // H11: compute original Campaign37 source bonuses in ONE place.
@@ -327,6 +543,7 @@ struct CarbonisCombat568 {
              objectivePosition:Vec2(x:640,y:420))
         rocks.append(contentsOf:additions)
         updateShooters(dt:dt)
+        updateRobots70(dt:dt)
         if boosting {applyBoostRam71(from:previousShip)}
         // Game.Step: StepBugs -> StepGuardian298 before solids/player Fire.
         // Damage-bearing Guardian plasma enters the SAME swept-hit pipeline.
@@ -346,6 +563,7 @@ struct CarbonisCombat568 {
         // BEFORE the player's new bullets are fired.
         resolveWorldContacts()
         resolveShipContacts()
+        resolveRobotContacts70(dt:dt)
         if phase != .playing {return}
         if shooting && cooldown<=0 && bullets.count<=140 {
             fireSourceWeapon()
