@@ -1335,7 +1335,7 @@ jobs:
       - name: CI job selector and ci-jobs.json rules
         run: python3 Tests/CISelectJobsTests.py
       - name: Publish one-time BOREAS verification run for error inspection
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ios-boreas-planet05' && github.event.head_commit.message == 'ci(ios): dispatch repaired Boreas IPA once after passing source contract' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ios-boreas-planet05' && contains(github.event.head_commit.message, 'dispatch repaired Boreas IPA once after passing source contract') }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -1366,7 +1366,7 @@ jobs:
       - name: Verify Boreas 05 source and correct save guards
         run: python3 Tests/BoreasTestPlanet05Contract.py
       - name: Dispatch repaired BOREAS 05 IPA once after source PASS
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ios-boreas-planet05' && github.event.head_commit.message == 'ci(ios): dispatch repaired Boreas IPA once after passing source contract' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ios-boreas-planet05' && contains(github.event.head_commit.message, 'dispatch repaired Boreas IPA once after passing source contract') }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
