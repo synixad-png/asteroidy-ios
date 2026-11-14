@@ -1,5 +1,5 @@
 # IPA builds. Each job copies the steps of the workflow named in its '# from' comment.
-# On push to main, build-ios and the BASTION release proof run in the same cases as
+# On push to main, only build-ios runs, in the same cases as
 # before (path lists in .github/ci-jobs.json). A manual run builds only `target`.
 name: ASTEROIDY iOS - IPA builds
 on:
