@@ -1331,6 +1331,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: CI job selector and ci-jobs.json rules
         run: python3 Tests/CISelectJobsTests.py
+      - name: Verify Boreas 05 source and correct save guards
+        run: python3 Tests/BoreasTestPlanet05Contract.py
   # from .github/workflows/verify-ios-inputs.yml
   original-assets:
     needs: select
