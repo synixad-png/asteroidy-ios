@@ -177,7 +177,13 @@ for name, file_rules in config.items():
                 for pattern in value:
                     sel.glob_regex(pattern.lstrip("!"))
                     moved = re.fullmatch(r"\.github/workflows/(.+)", pattern)
-                    assert not moved or (workflow_dir / moved.group(1)).is_file(), \
+                    # Exact workflow names must exist. Broad patterns like
+                    # .github/workflows/** must match a real workflow, too.
+                    # Treating '*' literally incorrectly rejected valid CI.
+                    assert not moved or any(
+                        sel.glob_regex(pattern).match(
+                            f".github/workflows/{item.name}")
+                        for item in workflow_dir.glob("*.yml")), \
                         (name, job, pattern)
         if rule["pull_request"] is not None:
             assert has_pr, (name, job, "pull_request rule without a trigger")
