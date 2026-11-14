@@ -76,6 +76,46 @@ for prohibited in ("CampaignStore556.save(", "finishMission(", "Sector01MissionS
     assert prohibited not in preview,prohibited
 assert 'sourceSector01==nil, !showingHomeWorld291' in preview
 assert 'sourceAssetsVerified else{return}' in preview
+# The approved campaign binding is separate from the W3 diagnostic:
+# sector 05 must be selected, unlocked by source progress, and verified.
+orbit=read("ASTEROIDYiOS/PC602HomeWorldPage291.swift")
+assert 'if progress.selectedSector==AnimatedPlanetTestSlot556.sector &&' in app
+assert 'progress.unlocked(AnimatedPlanetTestSlot556.sector)' in app
+assert 'campaign-enter-boreas05-planet' in app
+assert 'onInspect(AnimatedPlanetTestSlot556.sector)' in app
+assert 'if sector==AnimatedPlanetTestSlot556.sector {' in app
+assert 'enterCampaignBoreas05()' in app
+assert 'if level==AnimatedPlanetTestSlot556.sector {' in app
+assert 'enterCampaignBoreas05(fromOrbit:true)' in app
+assert 'guard level==1,sourceSector01==nil' in app
+assert 'pc602-orbit-enter-boreas05-planet' in orbit
+assert 'driver.hud.selectedUnlocked' in orbit
+assert 'onEnterMission(AnimatedPlanetTestSlot556.sector)' in orbit
+entry=app.split('private func enterCampaignBoreas05(fromOrbit:Bool=false) {',1)[1].split('private func returnFromBoreasTest05()',1)[0]
+for gate in ('progress.selectedSector==AnimatedPlanetTestSlot556.sector',
+             'progress.unlocked(AnimatedPlanetTestSlot556.sector)',
+             'AnimatedPlanetTestSlot556.sourceAssetsVerified',
+             'homeWorld291.hud.target==AnimatedPlanetTestSlot556.sector',
+             'homeWorld291.setSuspended(true)',
+             'enterBoreasTest05()'):
+    assert gate in entry,gate
+for forbidden in ("CampaignStore556.save(", "finishMission(",
+                  "Sector01MissionSettlement568.commit(",
+                  "Sector01Shop568.save(", "PC602OrbitSave61.store("):
+    assert forbidden not in entry,forbidden
+returnPath=app.split('private func returnFromBoreasTest05() {',1)[1].split('private func enterOrbitMission291(',1)[0]
+assert 'if wasOrbit {' in returnPath
+assert 'showingHomeWorld291=true' in returnPath
+assert 'audio.enterOrbit602()' in returnPath
+assert 'reopenAtlasAfterCarbonis=true' in returnPath
+assert 'campaignSector05:boreasCampaignSector05' in app
+assert 'returnToOrbit:returnHomeWorldAfterBoreas05' in app
+assert 'PLANETA 05 · MISJA W OPRACOWANIU · BEZ ZMIAN POSTĘPU' in page
+assert 'Button(returnToOrbit ? "WRÓĆ DO ORBITY" : "WRÓĆ DO ATLASU")' in page
+assert 'campaign-boreas05-animated-planet' in page
+assert 'static let missionCount = 26' in progress
+print("PASS: BOREAS 05 is wired into selected/unlocked campaign and orbit")
+print("PASS: existing W3 test, sector-01 combat, rewards, saves and locks untouched")
 print("PASS: authenticated Boreas sector-05 morph test, 5s loop, 3-buffer GPU")
 print("PASS: W3 atlas entry, no mission unlock, progress, reward or save changes")
 print("PASS: original PC v609 GLB node translation and scale clips, 96/96 channels")
