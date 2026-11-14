@@ -4,6 +4,9 @@ import Foundation
 // An atlas entry does NOT imply that the corresponding mission has been ported.
 struct CampaignProgress556: Equatable {
     static let missionCount = 26
+    // Approved feature-branch-only test access to sector 05.
+    // Selection does not set a single campaign completion bit.
+    static let boreas05TestAccess = true
     static let validMask = (1 << missionCount) - 1
     private(set) var completedMask: Int = 0
     private(set) var selectedSector: Int = 1
@@ -17,6 +20,7 @@ struct CampaignProgress556: Equatable {
     }
     func unlocked(_ sector: Int) -> Bool {
         guard (1...Self.missionCount).contains(sector) else { return false }
+        if sector == 5 && Self.boreas05TestAccess { return true }
         return sector == 1 || completed(sector) || completed(sector == 26 ? 24 : sector - 1)
     }
     var completedCount: Int {

@@ -55,7 +55,7 @@ assert 'onBoreasTest:openBoreasTest' in w3
 assert 'onBoreasTest()' in app
 assert 'campaign-boreas05-animated-test' in app
 assert 'w3-boreas05-test-direct' in w3
-assert 'Button("BOREAS 05 · TEST PLANETY")' in w3
+assert 'Button("BOREAS 05 · GRAJ W MISJĘ")' in w3
 assert '.disabled(!AnimatedPlanetTestSlot556.sourceAssetsVerified)' in w3
 assert app.index('campaign-boreas05-animated-test') < app.index('if progress.selectedSector == 1 {')
 # The original W3 menu has seven production actions. This temporary
@@ -75,8 +75,7 @@ for prohibited in ("CampaignStore556.save(", "finishMission(", "Sector01MissionS
     assert prohibited not in preview,prohibited
 assert 'sourceSector01==nil, !showingHomeWorld291' in preview
 assert 'sourceAssetsVerified else{return}' in preview
-# The approved campaign binding is separate from the W3 diagnostic:
-# sector 05 must be selected, unlocked by source progress, and verified.
+# BOREAS 05 explicitly uses the approved test unlock and source combat.
 orbit=read("ASTEROIDYiOS/PC602HomeWorldPage291.swift")
 assert 'if progress.selectedSector==AnimatedPlanetTestSlot556.sector &&' in app
 assert 'progress.unlocked(AnimatedPlanetTestSlot556.sector)' in app
@@ -108,15 +107,22 @@ assert 'showingHomeWorld291=true' in returnPath
 assert 'audio.enterOrbit602()' in returnPath
 assert 'reopenAtlasAfterCarbonis=true' in returnPath
 assert 'campaignSector05:boreasCampaignSector05' in app
+assert 'static let boreas05TestAccess = true' in progress
+assert 'if sector == 5 && Self.boreas05TestAccess { return true }' in progress
+assert 'launchBoreas05FromMenu' in app
+assert 'openBoreasTest:launchBoreas05FromMenu' in app
+assert 'guard current.selectUnlocked(AnimatedPlanetTestSlot556.sector)' in app
+assert 'CampaignStore556.save(current)' in app
+assert 'ROZPOCZNIJ BOREAS 05 · WALKA' in app
 assert 'returnToOrbit:returnHomeWorldAfterBoreas05' in app
 assert 'PLANETA 05 · MISJA W OPRACOWANIU · BEZ ZMIAN POSTĘPU' in page
 assert 'Button(returnToOrbit ? "WRÓĆ DO ORBITY" : "WRÓĆ DO ATLASU")' in page
 assert 'campaign-boreas05-animated-planet' in page
 assert 'static let missionCount = 26' in progress
 print("PASS: BOREAS 05 is wired into selected/unlocked campaign and orbit")
-print("PASS: existing W3 test, sector-01 combat, rewards, saves and locks untouched")
+print("PASS: sector-01 combat, rewards, saves and all other sector locks untouched")
 print("PASS: authenticated Boreas sector-05 morph test, 5s loop, 3-buffer GPU")
-print("PASS: W3 atlas entry, no mission unlock, progress, reward or save changes")
+print("PASS: W3 and campaign both open authenticated BOREAS05 combat without false completion")
 print("PASS: original PC v609 GLB node translation and scale clips, 96/96 channels")
 
 # Source-authenticated native mission 05 is independent of the W3 preview.

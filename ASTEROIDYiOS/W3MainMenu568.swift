@@ -462,10 +462,8 @@ struct W3MainMenu568: View {
             Text("DOTKNIJ FUNKCJĘ / W3 · NAWIGACJA NATYWNA")
                 .foregroundStyle(muted)
             Spacer()
-            // Explicitly requested temporary PC609 BOREAS05 preview.
-            // Its own independently verified assets are mandatory. It is
-            // NOT an eighth production W3 action or an unlocked mission.
-            Button("BOREAS 05 · TEST PLANETY") {
+            // Source-authenticated test mission; no new W3 page.
+            Button("BOREAS 05 · GRAJ W MISJĘ") {
                 openBoreasTest()
             }
             .font(.system(size:compact ? 10 : 12,

@@ -184,6 +184,17 @@ struct GameView: View {
         boreasCampaignSector05=true
         returnHomeWorldAfterBoreas05=fromOrbit
     }
+    // User-approved test shortcut enters genuine sector-05 combat.
+    // Only the selected sector is persisted, never the completion bits.
+    private func launchBoreas05FromMenu() {
+        guard sourceSector01==nil, !showingHomeWorld291,
+              AnimatedPlanetTestSlot556.sourceAssetsVerified else{return}
+        var current=CampaignStore556.load()
+        guard current.selectUnlocked(AnimatedPlanetTestSlot556.sector) else{return}
+        CampaignStore556.save(current)
+        campaign=current
+        enterCampaignBoreas05()
+    }
     private func returnFromBoreasTest05() {
         boreasMission05Prepared=nil
         input.releaseHeldControls()
@@ -206,7 +217,7 @@ struct GameView: View {
     }
 
     private func enterOrbitMission291(_ level:Int) {
-        // Sector 05 is an authenticated animated planet, NOT playable combat.
+        // Sector 05 opens genuine source combat with the authenticated animated planet.
         if level==AnimatedPlanetTestSlot556.sector {
             enterCampaignBoreas05(fromOrbit:true)
             return
@@ -611,7 +622,7 @@ struct GameView: View {
                         } else {
                             inspectSourceSector(sector)
                         }
-                    },openBoreasTest:enterBoreasTest05,openDiagnostic:{
+                    },openBoreasTest:launchBoreas05FromMenu,openDiagnostic:{
                         input.releaseHeldControls()
                         input.gameplayPaused = false
                         reopenAtlasAfterCarbonis = false
@@ -946,7 +957,7 @@ struct CampaignAtlas556: View {
                 // Original Boreas is sector 05 on PC. Offer a separate
                 // authenticated visual test without selecting/unlocking it.
                 if AnimatedPlanetTestSlot556.sourceAssetsVerified {
-                    Button("BOREAS 05 · TEST ANIMOWANEJ PLANETY GLB") {
+                    Button("GRAJ W BOREAS 05 · TEST MISJI") {
                         onBoreasTest()
                     }
                     .font(.system(size:12,weight:.bold,design:.monospaced))
@@ -954,7 +965,7 @@ struct CampaignAtlas556: View {
                     .frame(maxWidth:.infinity,minHeight:46)
                     .background(Color(red:0.39,green:0.75,blue:0.79))
                     .accessibilityIdentifier("campaign-boreas05-animated-test")
-                    Text("TYMCZASOWY MODEL DO PÓŹNIEJSZEJ PODMIANY · NIE ODBLOKOWUJE MISJI 05")
+                    Text("ODBLOKOWANY TEST MISJI 05 · ORYGINALNA ANIMOWANA PLANETA")
                         .font(.system(size:10,design:.monospaced))
                         .foregroundStyle(.secondary)
                 } else {
@@ -982,12 +993,10 @@ struct CampaignAtlas556: View {
                     }
                     .frame(maxWidth:.infinity,alignment:.leading)
                 }
-                // Selecting the unlocked fifth sector now opens its own
-                // source-authenticated planet instead of a placeholder.
-                // The actual mission remains unavailable until ported.
+                // Feature-branch test unlock routes sector 05 to live combat.
                 if progress.selectedSector==AnimatedPlanetTestSlot556.sector &&
                    progress.unlocked(AnimatedPlanetTestSlot556.sector) {
-                    Button("BOREAS 05 · OTWÓRZ PLANETĘ 3D") {
+                    Button("ROZPOCZNIJ BOREAS 05 · WALKA") {
                         onInspect(AnimatedPlanetTestSlot556.sector)
                     }
                     .font(.system(size:12,weight:.bold,design:.monospaced))
@@ -996,7 +1005,7 @@ struct CampaignAtlas556: View {
                     .background(Color(red:0.39,green:0.75,blue:0.79))
                     .disabled(!AnimatedPlanetTestSlot556.sourceAssetsVerified)
                     .accessibilityIdentifier("campaign-enter-boreas05-planet")
-                    Text("SEKTOR 05: ORYGINALNA ANIMOWANA PLANETA · MISJA W OPRACOWANIU")
+                    Text("SEKTOR 05: TEST WALKI · NIE WYMAGA ZALICZENIA MISJI 01–04")
                         .font(.system(size:10,design:.monospaced))
                         .foregroundStyle(.orange)
                 }
@@ -1076,7 +1085,7 @@ struct CampaignAtlas556: View {
                     .background(Color(red:0.89,green:0.67,blue:0.31))
                     .accessibilityIdentifier("campaign-enter-source-sector01")
                 }
-                Text("SEKTOR 01: WALKA, RAPORT, ŻETONY I ZAPIS · POZOSTAŁE SEKTORY W OPRACOWANIU")
+                Text("CARBONIS 01 I BOREAS 05: SCENY WALKI · POZOSTAŁE SEKTORY W OPRACOWANIU")
                     .font(.system(size:11,weight:.bold,design:.monospaced))
                     .foregroundStyle(.orange)
             }

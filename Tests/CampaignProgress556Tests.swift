@@ -4,6 +4,11 @@ import Foundation
     static func main() {
         var p = CampaignProgress556()
         precondition(p.completedCount == 0 && p.unlocked(1) && !p.unlocked(2))
+        precondition(p.unlocked(5) && !p.completed(5))
+        precondition(!p.unlocked(3) && !p.unlocked(4))
+        precondition(p.selectUnlocked(5) && p.selectedSector == 5)
+        precondition(p.completedMask == 0)
+        precondition(p.selectUnlocked(1) && p.selectedSector == 1)
         precondition(!p.unlocked(26) && !p.finishMission(26))
         precondition(p.finishMission(1) && !p.finishMission(1))
         precondition(p.unlocked(2) && !p.unlocked(3))

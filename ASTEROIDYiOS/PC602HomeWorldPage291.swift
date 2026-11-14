@@ -893,13 +893,12 @@ struct PC602HomeWorldPage291:View {
                         .disabled(!enterAvailable())
                         .accessibilityIdentifier("pc602-orbit-enter-context")
                     }
-                    // Orbit sector 05 uses the campaign's authenticated
-                    // animated planet without claiming an unported mission
-                    // beacon or changing the physical H55 / ENTER rules.
+                    // The unlocked sector-05 test launches live combat,
+                    // without changing orbital docking/H55 rules.
                     if driver.hud.target==AnimatedPlanetTestSlot556.sector &&
                        driver.hud.selectedUnlocked &&
                        AnimatedPlanetTestSlot556.sourceAssetsVerified {
-                        Button("BOREAS 05 · PLANETA 3D") {
+                        Button("BOREAS 05 · GRAJ") {
                             onEnterMission(AnimatedPlanetTestSlot556.sector)
                         }
                         .font(.system(size:compact ? 10:12,
