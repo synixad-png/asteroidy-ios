@@ -18,6 +18,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     // independent SphereSector sandbox to score a campaign victory.
     private weak var combatSession05:CarbonisSession568?
     private var sourceShooterModels05:[Int:GPUModel]=[:]
+    private var sourceRockModels05:[Int:GPUModel]=[:]
     private let sourceMissionScale05=SourceMissionSize580.load()
     // Original separate visual-only scale; IntroScene41 cinematic is not
     // affected, exactly as the source uses it only in CraftSphere67/Orbit50.
@@ -406,21 +407,15 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             for kind in 0...1 {
                 let mesh=kind==0 ? CarbonisShooterMesh71.typeZero() :
                                      CarbonisShooterMesh71.typeOne()
-                guard mesh.vertices.count % 12 == 0 else {
-                    throw NSError(domain:"ASTEROIDY source enemy mesh",code:71)
-                }
-                var vertices:[AssetMesh.Vertex]=[]
-                vertices.reserveCapacity(mesh.vertices.count/12)
-                for i in stride(from:0,to:mesh.vertices.count,by:12) {
-                    let v=mesh.vertices
-                    vertices.append(AssetMesh.Vertex(
-                        position:SIMD4<Float>(v[i],v[i+1],v[i+2],1),
-                        color:SIMD4<Float>(v[i+6],v[i+7],v[i+8],v[i+9]),
-                        normal:SIMD4<Float>(v[i+3],v[i+4],v[i+5],0)))
-                }
-                let indices=(0..<vertices.count).map { UInt32($0) }
-                sourceShooterModels05[kind]=try Self.makeMesh(
-                    device,vertices,indices)
+                sourceShooterModels05[kind]=try Self.makeSourceTriangles05(
+                    device,mesh.vertices)
+            }
+            // GpuSphere67/RockSphere67: exactly the same deterministic
+            // procedural source stones as the existing combat renderer.
+            // All 80 shapes are baked ONCE, not inside draw(in:).
+            for shape in 0..<CarbonisRockGeometry568.sourceShapeCount {
+                sourceRockModels05[shape]=try Self.makeSourceTriangles05(
+                    device,CarbonisRockGeometry568.vertices(shape:shape))
             }
         }
         asteroidMesh = try Self.makeMesh(device, Self.asteroidVertices(), Self.octahedronIndices())
@@ -475,6 +470,25 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         planetNodeTracks=try BoreasNodeTracks556(
             data:Data(contentsOf:tracksURL),mesh:planet)
         planetMorphScratch = planetAnimator.makeScratchVertices()
+    }
+
+    /// Shared native vertex format for source rock and enemy float streams:
+    /// position XYZ, normal XYZ, color RGBA, 2 auxiliary values.
+    /// Source geometry may be indexed only after preserving all triangles.
+    private static func makeSourceTriangles05(
+        _ device:MTLDevice,_ stream:[Float]) throws -> GPUModel {
+        guard !stream.isEmpty,stream.count % 12 == 0 else {
+            throw NSError(domain:"ASTEROIDY source mesh ABI",code:568)
+        }
+        var vertices:[AssetMesh.Vertex]=[]
+        vertices.reserveCapacity(stream.count/12)
+        for i in stride(from:0,to:stream.count,by:12) {
+            vertices.append(AssetMesh.Vertex(
+                position:SIMD4<Float>(stream[i],stream[i+1],stream[i+2],1),
+                color:SIMD4<Float>(stream[i+6],stream[i+7],stream[i+8],stream[i+9]),
+                normal:SIMD4<Float>(stream[i+3],stream[i+4],stream[i+5],0)))
+        }
+        return try makeMesh(device,vertices,(0..<vertices.count).map(UInt32.init))
     }
 
     private static func makeMesh(_ device: MTLDevice, _ v: [AssetMesh.Vertex], _ idx: [UInt32]) throws -> GPUModel {
@@ -1550,7 +1564,16 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 let model=demo ? stamp :
                     stamp * Self.rotateXDegrees(asteroid.angle*41) *
                             Self.rotateYDegrees(asteroid.angle*23)
-                drawMesh(asteroidMesh,model)
+                if combatSession05 != nil {
+                    // No diagnostic octahedron in the live campaign.
+                    // A different source shape must never be substituted.
+                    if let original=sourceRockModels05[
+                        CarbonisRockGeometry568.shape(for:asteroid)] {
+                        drawMesh(original,model)
+                    }
+                } else {
+                    drawMesh(asteroidMesh,model)
+                }
             }
             if let live=combatSession05 {
                 // Original source enemy meshes + identical contact positions
