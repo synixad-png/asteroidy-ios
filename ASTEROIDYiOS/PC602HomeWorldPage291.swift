@@ -893,6 +893,25 @@ struct PC602HomeWorldPage291:View {
                         .disabled(!enterAvailable())
                         .accessibilityIdentifier("pc602-orbit-enter-context")
                     }
+                    // Orbit sector 05 uses the campaign's authenticated
+                    // animated planet without claiming an unported mission
+                    // beacon or changing the physical H55 / ENTER rules.
+                    if driver.hud.target==AnimatedPlanetTestSlot556.sector &&
+                       driver.hud.selectedUnlocked &&
+                       AnimatedPlanetTestSlot556.sourceAssetsVerified {
+                        Button("BOREAS 05 · PLANETA 3D") {
+                            onEnterMission(AnimatedPlanetTestSlot556.sector)
+                        }
+                        .font(.system(size:compact ? 10:12,
+                                      weight:.bold,design:.monospaced))
+                        .foregroundStyle(cyan)
+                        .frame(minHeight:44)
+                        .padding(.horizontal,8)
+                        .background(Color.black.opacity(0.65))
+                        .overlay(Rectangle().stroke(cyan.opacity(0.65),lineWidth:1))
+                        .disabled(driver.paused || showingOrbitHUD291)
+                        .accessibilityIdentifier("pc602-orbit-enter-boreas05-planet")
+                    }
                     if driver.hud.missionEntrance>1 && !driver.hud.canDock {
                         orbitItem291("hud.warning",screen:screen) {
                             Text("SEKTOR NIEPRZENIESIONY")
