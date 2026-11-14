@@ -1085,6 +1085,101 @@ struct CarbonisCombat568 {
         return angle + max(-speed*dt,min(speed*dt,delta))
     }
 
+
+    /// PC609 RobotSnake70.StepRobot70: same sphere and hostile bullet path.
+    private mutating func updateRobots70(dt:Float) {
+        let robotShotDamage=ShooterTactics71(
+            level:level,type:0,difficulty:difficulty.rawValue).projectileDamage
+        for i in robots.indices {
+            let volleys=robots[i].advance(
+                dt:dt,target:flight.position,playerVelocity:flight.velocity,
+                difficulty:difficulty)
+            for bolt in volleys where hostileShots.count<160 {
+                hostileShots.append(Projectile(
+                    point:bolt.point,velocity:bolt.velocity,life:2.6,
+                    hostile:true,kind:0,damage:robotShotDamage))
+            }
+        }
+    }
+
+    /// PC609 RobotContacts70: 3.2-unit ring mass, 8-unit head mass.
+    /// Physical contacts use the existing real Sphere67/Physics68 solver.
+    private mutating func resolveRobotContacts70(dt:Float) {
+        guard phase == .playing else{return}
+        let contactDamage=level<=2 ? 18 : level<=4 ? 22 :
+            level<=8 ? 26 : level<=12 ? 27 : level<=16 ? 32 : 38
+        for i in robots.indices {
+            var snake=robots[i]
+            for j in snake.rings.indices {
+                var ring=snake.rings[j]
+                for k in rocks.indices where rocks[k].shardLife<=0 {
+                    var a=CarbonisBodyContact68.Body(
+                        position:ring.position,velocity:ring.velocity,
+                        mass:3.2,radius:SourceRobotSnake70.ringContactRadius)
+                    var b=CarbonisBodyContact68.Body(
+                        position:rocks[k].position,velocity:rocks[k].velocity,
+                        mass:rocks[k].mass,radius:rocks[k].radius)
+                    if CarbonisBodyContact68.resolve(&a,&b,restitution:0.4) {
+                        ring.position=a.position;ring.velocity=a.velocity
+                        rocks[k].position=b.position;rocks[k].velocity=b.velocity
+                    }
+                }
+                for k in shooters.indices {
+                    var a=CarbonisBodyContact68.Body(
+                        position:ring.position,velocity:ring.velocity,
+                        mass:3.2,radius:SourceRobotSnake70.ringContactRadius)
+                    var b=CarbonisBodyContact68.Body(
+                        position:shooters[k].core.position,
+                        velocity:shooters[k].velocity,mass:2,radius:16)
+                    if CarbonisBodyContact68.resolve(&a,&b,restitution:0.35) {
+                        ring.position=a.position;ring.velocity=a.velocity
+                        shooters[k].core.position=b.position
+                        shooters[k].velocity=b.velocity
+                    }
+                }
+                var pilot=CarbonisBodyContact68.Body(
+                    position:flight.position,velocity:flight.velocity,
+                    mass:shipCollisionMass,radius:shipContactRadius)
+                var body=CarbonisBodyContact68.Body(
+                    position:ring.position,velocity:ring.velocity,
+                    mass:3.2,radius:SourceRobotSnake70.ringContactRadius)
+                if CarbonisBodyContact68.resolve(&pilot,&body,restitution:0.35) {
+                    flight.position=pilot.position;flight.velocity=pilot.velocity
+                    ring.position=body.position;ring.velocity=body.velocity
+                    suffer(contactDamage)
+                }
+                snake.rings[j]=ring
+                if phase != .playing {robots[i]=snake;return}
+            }
+            for k in rocks.indices where rocks[k].shardLife<=0 {
+                var a=CarbonisBodyContact68.Body(
+                    position:snake.position,velocity:snake.velocity,
+                    mass:8,radius:SourceRobotSnake70.headContactRadius)
+                var b=CarbonisBodyContact68.Body(
+                    position:rocks[k].position,velocity:rocks[k].velocity,
+                    mass:rocks[k].mass,radius:rocks[k].radius)
+                if CarbonisBodyContact68.resolve(&a,&b,restitution:0.45) {
+                    snake.position=a.position;snake.velocity=a.velocity
+                    rocks[k].position=b.position;rocks[k].velocity=b.velocity
+                }
+            }
+            var pilot=CarbonisBodyContact68.Body(
+                position:flight.position,velocity:flight.velocity,
+                mass:shipCollisionMass,radius:shipContactRadius)
+            var head=CarbonisBodyContact68.Body(
+                position:snake.position,velocity:snake.velocity,
+                mass:8,radius:SourceRobotSnake70.headContactRadius)
+            if CarbonisBodyContact68.resolve(&pilot,&head,restitution:0.35) {
+                flight.position=pilot.position;flight.velocity=pilot.velocity
+                snake.position=head.position;snake.velocity=head.velocity
+                suffer(contactDamage)
+            }
+            snake.constrain(dt:dt)
+            robots[i]=snake
+            if phase != .playing {return}
+        }
+    }
+
     private mutating func updateShooters(dt:Float) {
         let player=flight.position
         let dangerSpeed:Float=difficulty == .easy ? 0.86 :
