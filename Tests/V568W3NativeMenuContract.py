@@ -55,7 +55,9 @@ assert "MissionCatalog568.title(for:progress.selectedSector)" in app
 assert 'accessibilityIdentifier("campaign-26-sector-selector")' in app
 assert 'accessibilityIdentifier("campaign-sector-' in app
 assert ".disabled(!available)" in app
-assert "SEKTOR 01: WALKA, RAPORT, ŻETONY I ZAPIS" in app
+# The atlas now names both playable CARBONIS 01 and test-enabled BOREAS 05;
+# the sector-01 launch, result and shop are guarded separately below.
+assert "CARBONIS 01 I BOREAS 05: SCENY WALKI · POZOSTAŁE SEKTORY W OPRACOWANIU" in app
 assert "ROZPOCZNIJ CARBONIS 01 / PEŁNA WALKA" in app
 assert 'accessibilityIdentifier("campaign-enter-source-sector01")' in app
 assert "if let sourceEntry=sourceSector01" in app
