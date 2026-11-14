@@ -7,16 +7,20 @@ on:
       - 'Tools/**'
       - 'W3MenuUITests/**'
       - '.github/workflows/**'
+      - '.github/ci-jobs.json'
       - 'AGENTS.md'
       - 'project.yml'
   push:
-    branches: [main]
+    branches: ['**']
     paths:
       - 'ASTEROIDYiOS/**'
-      - 'Tools/code_quality_audit.py'
-      - 'Tests/CodeQualityAuditTests.py'
-      - '.github/workflows/code-quality.yml'
+      - 'Tests/**'
+      - 'Tools/**'
+      - 'W3MenuUITests/**'
+      - '.github/workflows/**'
+      - '.github/ci-jobs.json'
       - 'AGENTS.md'
+      - 'project.yml'
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

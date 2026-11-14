@@ -7,7 +7,7 @@ name: ASTEROIDY iOS - macOS and simulator tests
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: ['**']
   workflow_dispatch:
     inputs:
       run:

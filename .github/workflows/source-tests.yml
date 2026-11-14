@@ -8,7 +8,7 @@ name: ASTEROIDY iOS - source regression tests
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: ['**']
   workflow_dispatch:
     inputs:
       run:

@@ -189,3 +189,62 @@ for name, file_rules in config.items():
 
 print(f"CI job selector: OK ({sum(len(r) for r in config.values())} jobs in "
       f"{len(config)} workflows)")
+
+
+# 5. Permanent CI guard for every user-created working branch.
+# GitHub's '**' branch glob also covers branches containing '/', e.g.
+# feature/ios-boreas-planet05. No test creates/merges/deletes branches.
+for workflow in ("source-tests.yml", "mac-tests.yml", "code-quality.yml"):
+    source = (workflow_dir / workflow).read_text(encoding="utf-8")
+    assert "  push:\n    branches: ['**']\n" in source, workflow
+    assert "\n  pull_request:" in source, workflow
+    assert "\n  workflow_dispatch:" in source, workflow
+
+# One automatic real Swift/Metal iPhoneOS compilation for EVERY source
+# path, including new Swift files absent from the old hand-maintained list.
+mac_source = (workflow_dir / "mac-tests.yml").read_text(encoding="utf-8")
+compile_rule = config["mac-tests.yml"]["compile-ios-no-ipa"]
+for event in ("push", "pull_request"):
+    for path in ("ASTEROIDYiOS/MetalRenderer.swift",
+                 "ASTEROIDYiOS/NewSourceModule999.swift",
+                 "ASTEROIDYiOS/NewShader999.metal",
+                 "ASTEROIDYiOS/Assets/OriginalModel.glb",
+                 "Tests/NewMechanic999Tests.swift",
+                 "Tools/new_source_staging999.py",
+                 "W3MenuUITests/NewNavigation999.swift",
+                 "project.yml", ".github/workflows/mac-tests.yml",
+                 ".github/ci-jobs.json"):
+        selected = sel.select(config["mac-tests.yml"], event, [path])
+        assert "compile-ios-no-ipa" in selected, (event, path, selected)
+    assert "compile-ios-no-ipa" not in sel.select(
+        config["mac-tests.yml"], event, ["README.md"]), event
+assert compile_rule["push"] == compile_rule["pull_request"]
+assert "runs-on: macos-latest" in mac_source
+assert "xcodebuild -project ASTEROIDYiOS.xcodeproj" in mac_source
+assert "-sdk iphoneos" in mac_source
+assert "CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO" in mac_source
+assert "if: ${{ contains(needs.select.outputs.jobs, ' compile-ios-no-ipa ') }}" in mac_source
+assert "if: ${{ contains(needs.select.outputs.jobs, ' apple-metal-source-compile ') && (github.event_name == 'workflow_dispatch') }}" in mac_source
+
+# The source test-selection contract itself must execute on every branch
+# push, not just on main and not silently skip under a non-main ref.
+for event in ("push", "pull_request"):
+    source_jobs = sel.select(config["source-tests.yml"], event,
+                             ["ASTEROIDYiOS/NewSourceModule999.swift"])
+    assert "ci-select-jobs" in source_jobs, (event, source_jobs)
+quality_source = (workflow_dir / "code-quality.yml").read_text(encoding="utf-8")
+for pattern in ("'ASTEROIDYiOS/**'", "'Tests/**'", "'Tools/**'",
+                "'.github/workflows/**'", "'.github/ci-jobs.json'",
+                "'project.yml'"):
+    assert pattern in quality_source, pattern
+assert "python3 Tests/CISelectJobsTests.py" in (
+    workflow_dir / "source-tests.yml").read_text(encoding="utf-8")
+
+# Automatic CI must NOT archive/produce a potentially unfinished IPA.
+# User-selected workflow_dispatch remains the sole feature-branch IPA route.
+ipa_source = (workflow_dir / "build-ipa.yml").read_text(encoding="utf-8")
+assert "  push:\n    branches: [main]\n" in ipa_source
+assert "  workflow_dispatch:" in ipa_source
+assert config["build-ipa.yml"]["boreas-complete-release"]["push"] is None
+print("PASS: automatic source CI + true unsigned iOS Swift/Metal compile "
+      "on every development branch; feature IPA remains manual")
