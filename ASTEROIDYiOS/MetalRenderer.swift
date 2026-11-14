@@ -1559,7 +1559,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 let demo=sphereSector.isAmigaDemo
                 let stamp=Self.sphereStamp(
                     asteroid.position,angle:asteroid.angle,
-                    size:asteroid.radius,
+                    size:asteroid.radius * (combatSession05 == nil
+                        ? 1 : sourceMissionScale05.rockFactor),
                     lift:demo ? asteroid.bounceHeight : 0)
                 let model=demo ? stamp :
                     stamp * Self.rotateXDegrees(asteroid.angle*41) *
