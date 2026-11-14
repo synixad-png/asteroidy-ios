@@ -179,7 +179,9 @@ assert 'Wybrany statek nie ma zweryfikowanego modelu PC609' in renderer
 assert 'CarbonisShooterMesh71.typeOne()' in renderer
 assert 'combatSession05.frame(at:now)' in renderer
 assert 'if combatSession05 == nil && selected != activePlanetTestLevel' in renderer
-assert 'WERSJA ROBOCZA' in boreasScene
+# The live combat view now identifies its real defense mission; the
+# separate animated-planet diagnostic still carries the test-only notice.
+assert 'BOREAS / SEKTOR 05 · OBRONA' in boreasScene
 assert 'session.onPauseRequested={' in boreasScene
 assert 'session.onPauseRequested=nil' in boreasScene
 assert 'SourceHardwareInput586.shared.clearKeyboard()' in boreasScene
