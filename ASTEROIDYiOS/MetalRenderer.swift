@@ -46,6 +46,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     // BOTH source resources are bundled. Previous v556 AS3D stays.
     let sourceFighterTexturedPipeline431: MTLRenderPipelineState
     private let sourceVanguard431: (buffer:MTLBuffer,count:Int,skin:MTLTexture)?
+    // Selected source ship (0 KESTREL, 1 VANGUARD, 2 BASTION).
+    // Verified once at startup, never fallback to an incorrect craft.
+    private var combatCraft05:(buffer:MTLBuffer,count:Int,skin:MTLTexture)?
     // Separate v568 player craft, loaded ONLY on explicit diagnostic selection.
     private var sourcePlayerShip367: (buffer:MTLBuffer,count:Int,skin:MTLTexture)?
     private var sourcePlayerShip367LoadAttempted = false
@@ -355,6 +358,46 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
             sourceVanguard431=nil
             NSLog("ASTEROIDY: original Vanguard431 texture assets not in app;"
                 + " using previous v556 AS3D model, no texture fidelity claim")
+        }
+        if let combatSession05 {
+            let type=combatSession05.game.sourceMechanics.selectedShip
+            if type==1 {
+                guard let original=sourceVanguard431 else {
+                    throw NSError(domain:"ASTEROIDY source VANGUARD",code:431,
+                        userInfo:[NSLocalizedDescriptionKey:
+                            "Brak oryginalnego VANGUARD431 do misji 05"])
+                }
+                combatCraft05=original
+            } else {
+                // The exact same SHA-checked packs as live CARBONIS,
+                // H290 and H55: no duplicated mesh or asset import code.
+                let parsed:SourceBakedShipMesh
+                let jpeg:Data
+                if type==0,let pack=SourceKestrel603.load() {
+                    parsed=pack.mesh
+                    jpeg=pack.jpeg
+                } else if type==2,let pack=SourceBastion606.load() {
+                    parsed=pack.mesh
+                    jpeg=pack.jpeg
+                } else {
+                    throw NSError(domain:"ASTEROIDY source craft",code:609,
+                        userInfo:[NSLocalizedDescriptionKey:
+                            "Wybrany statek nie ma zweryfikowanego modelu PC609"])
+                }
+                guard let vb=parsed.vertices.withUnsafeBytes({ raw in
+                    raw.baseAddress.flatMap {
+                        device.makeBuffer(bytes:$0,length:parsed.vertices.count,
+                                          options:[])
+                    }
+                }) else {
+                    throw NSError(domain:"ASTEROIDY source craft GPU",code:431)
+                }
+                let texture=try MTKTextureLoader(device:device).newTexture(
+                    data:jpeg,options:[
+                        .SRGB:false,.generateMipmaps:false,
+                        .origin:MTKTextureLoader.Origin.topLeft])
+                combatCraft05=(buffer:vb,count:parsed.vertexCount,skin:texture)
+            }
         }
         // Two authentic ShipMesh kinds from GpuRobot70, once at startup.
         // BOREAS 05 currently generates kinds 0 and 1 only. Never fake
@@ -1559,7 +1602,19 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                 Self.rotateYDegrees(sphereFlight.flight.visualBank) *
                 Self.rotateXDegrees(sphereFlight.flight.visualPitch) *
                 Self.scale(shipScale472.missionFactor)
-            if input.sourceShip367Preview {
+            if let original=combatCraft05 {
+                var uniforms=FighterSourceUniform431(
+                    mvp:vp*shipModel,model:shipModel,eyeView:cameraFrame.view)
+                encoder.setRenderPipelineState(sourceFighterTexturedPipeline431)
+                encoder.setVertexBuffer(original.buffer,offset:0,index:0)
+                encoder.setVertexBytes(&uniforms,
+                    length:MemoryLayout<FighterSourceUniform431>.stride,
+                    index:1)
+                encoder.setFragmentTexture(original.skin,index:0)
+                encoder.drawPrimitives(type:.triangle,vertexStart:0,
+                                       vertexCount:original.count)
+                encoder.setRenderPipelineState(pipeline)
+            } else if input.sourceShip367Preview {
                 // Original Windows/src/GpuSphere67.cs CraftSphere67 uses the
                 // same tangent basis and ShipContactRadius * Scale67 * .65.
                 // PlayerShip363 has already applied StandardSize369=.714
