@@ -4,7 +4,7 @@
 name: ASTEROIDY iOS - IPA builds
 on:
   push:
-    branches: [main, feature/ios-boreas-planet05]
+    branches: [main]
   workflow_dispatch:
     inputs:
       target:
@@ -804,7 +804,7 @@ jobs:
   # Never reuse the earlier incomplete 44MB Debug packaging route.
   boreas-complete-release:
     needs: select
-    if: ${{ contains(needs.select.outputs.jobs, ' boreas-complete-release ') || (github.event_name == 'push' && github.ref == 'refs/heads/feature/ios-boreas-planet05' && contains(github.event.head_commit.message, 'one-shot Boreas IPA rebuild after regression fix')) }}
+    if: ${{ contains(needs.select.outputs.jobs, ' boreas-complete-release ') }}
     permissions:
       contents: read
     concurrency:
