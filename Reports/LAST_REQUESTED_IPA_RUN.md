@@ -1,10 +1,10 @@
 # Latest ASTEROIDY iOS IPA workflow run
 
-Run ID: 43606321315
+Run ID: 43607769428
 Branch: feature/ios-boreas-planet05
-Commit: 8070bae327645aea4d1bf7568ff1306a89b87efc
-Event: workflow_dispatch
-Target: build-ios-boreas-test-05
-Actions: https://github.com/synixad-png/asteroidy-ios/actions/runs/43606321315
+Commit: c420c60c1b13824d2c93e687d3efbe6239113d90
+Event: push
+Target: build-ios
+Actions: https://github.com/synixad-png/asteroidy-ios/actions/runs/43607769428
 Status: started (check Actions jobs for final result)
 Signing: unsigned IPA; signing required for device
