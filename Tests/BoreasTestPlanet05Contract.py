@@ -165,6 +165,10 @@ assert 'CarbonisShooterMesh71.typeOne()' in renderer
 assert 'combatSession05.frame(at:now)' in renderer
 assert 'if combatSession05 == nil && selected != activePlanetTestLevel' in renderer
 assert 'WERSJA ROBOCZA' in boreasScene
+assert 'session.onPauseRequested={' in boreasScene
+assert 'session.onPauseRequested=nil' in boreasScene
+assert 'SourceHardwareInput586.shared.clearKeyboard()' in boreasScene
+assert 'sourceMissionScale05.rockFactor' in renderer
 # Critical: dedicated CARBONIS 01 view and its approved touch editor untouched.
 assert 'struct Sector01Scene568' in read("ASTEROIDYiOS/Sector01Scene568.swift")
 print("PASS: sector 05 uses one real battle state and authentic level-5 wave")
