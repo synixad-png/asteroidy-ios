@@ -78,6 +78,10 @@ struct GameView: View {
     @State private var campaign = CampaignStore556.load()
     @State private var showingHomeWorld291=false
     @State private var showingBoreasTest05=false
+    // Campaign sector 05 uses the existing authenticated GLB scene.
+    // The independent W3 diagnostic remains available but cannot unlock it.
+    @State private var boreasCampaignSector05=false
+    @State private var returnHomeWorldAfterBoreas05=false
     @State private var returnHomeWorldAfterCarbonis291=false
     // Native CARBONIS first mission runs an original source-driven state,
     // isolated from Boreas diagnostic scenes and unported later sectors.
@@ -125,6 +129,8 @@ struct GameView: View {
     private func enterBoreasTest05() {
         guard sourceSector01==nil, !showingHomeWorld291,
               AnimatedPlanetTestSlot556.sourceAssetsVerified else{return}
+        boreasCampaignSector05=false
+        returnHomeWorldAfterBoreas05=false
         input.releaseHeldControls()
         input.introPreview41=false
         input.planetPreview=true
@@ -138,16 +144,54 @@ struct GameView: View {
         showingBoreasTest05=true
         showMainMenu=false
     }
+    // Unlike the diagnostic W3 shortcut, the real atlas/orbit sector-05
+    // entrance requires sector 04 completion and selected target 05.
+    // No fabricated enemy wave, mission completion, reward or save is made.
+    private func enterCampaignBoreas05(fromOrbit:Bool=false) {
+        let progress=CampaignStore556.load()
+        guard progress.selectedSector==AnimatedPlanetTestSlot556.sector,
+              progress.unlocked(AnimatedPlanetTestSlot556.sector),
+              AnimatedPlanetTestSlot556.sourceAssetsVerified,
+              sourceSector01==nil else{return}
+        if fromOrbit {
+            guard showingHomeWorld291, !homeWorld291.paused,
+                  homeWorld291.hud.target==AnimatedPlanetTestSlot556.sector
+            else{return}
+            homeWorld291.setSuspended(true)
+            showingHomeWorld291=false
+        } else {
+            guard !showingHomeWorld291 else{return}
+        }
+        enterBoreasTest05()
+        boreasCampaignSector05=true
+        returnHomeWorldAfterBoreas05=fromOrbit
+    }
     private func returnFromBoreasTest05() {
         input.releaseHeldControls()
         input.gameplayPaused=true
         showingBoreasTest05=false
-        reopenAtlasAfterCarbonis=true
-        showMainMenu=true
-        audio.returnToMenu()
+        boreasCampaignSector05=false
+        let wasOrbit=returnHomeWorldAfterBoreas05
+        returnHomeWorldAfterBoreas05=false
+        if wasOrbit {
+            homeWorld291.refreshCampaign(CampaignStore556.load())
+            showingHomeWorld291=true
+            showMainMenu=false
+            homeWorld291.setSuspended(scenePhase != .active)
+            audio.enterOrbit602()
+        } else {
+            reopenAtlasAfterCarbonis=true
+            showMainMenu=true
+            audio.returnToMenu()
+        }
     }
 
     private func enterOrbitMission291(_ level:Int) {
+        // Sector 05 is an authenticated animated planet, NOT playable combat.
+        if level==AnimatedPlanetTestSlot556.sector {
+            enterCampaignBoreas05(fromOrbit:true)
+            return
+        }
         // Only source Carbonis 01 is available as playable combat on iOS.
         guard level==1,sourceSector01==nil,
               Sector01CarbonisPreview568.isAvailable else{return}
@@ -491,8 +535,10 @@ struct GameView: View {
                     },preparedWave:preparedWave)
                     }
                 } else if showingBoreasTest05 {
-                    AnimatedPlanetTestPage556(input:input,
-                                               onExit:returnFromBoreasTest05)
+                    AnimatedPlanetTestPage556(
+                        input:input,onExit:returnFromBoreasTest05,
+                        campaignSector05:boreasCampaignSector05,
+                        returnToOrbit:returnHomeWorldAfterBoreas05)
                         .ignoresSafeArea()
                 } else if showingHomeWorld291 {
                     PC602HomeWorldPage291(
@@ -525,7 +571,11 @@ struct GameView: View {
                             CampaignStore556.save(campaign)
                         }
                     },inspectSector: { sector in
-                        inspectSourceSector(sector)
+                        if sector==AnimatedPlanetTestSlot556.sector {
+                            enterCampaignBoreas05()
+                        } else {
+                            inspectSourceSector(sector)
+                        }
                     },openBoreasTest:enterBoreasTest05,openDiagnostic:{
                         input.releaseHeldControls()
                         input.gameplayPaused = false
@@ -896,6 +946,24 @@ struct CampaignAtlas556: View {
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth:.infinity,alignment:.leading)
+                }
+                // Selecting the unlocked fifth sector now opens its own
+                // source-authenticated planet instead of a placeholder.
+                // The actual mission remains unavailable until ported.
+                if progress.selectedSector==AnimatedPlanetTestSlot556.sector &&
+                   progress.unlocked(AnimatedPlanetTestSlot556.sector) {
+                    Button("BOREAS 05 · OTWÓRZ PLANETĘ 3D") {
+                        onInspect(AnimatedPlanetTestSlot556.sector)
+                    }
+                    .font(.system(size:12,weight:.bold,design:.monospaced))
+                    .foregroundStyle(.black)
+                    .frame(maxWidth:.infinity,minHeight:46)
+                    .background(Color(red:0.39,green:0.75,blue:0.79))
+                    .disabled(!AnimatedPlanetTestSlot556.sourceAssetsVerified)
+                    .accessibilityIdentifier("campaign-enter-boreas05-planet")
+                    Text("SEKTOR 05: ORYGINALNA ANIMOWANA PLANETA · MISJA W OPRACOWANIU")
+                        .font(.system(size:10,design:.monospaced))
+                        .foregroundStyle(.orange)
                 }
                 LazyVGrid(columns:columns,spacing:8) {
                     ForEach(1...CampaignProgress556.missionCount,id:\.self) { sector in
