@@ -653,6 +653,73 @@ import Foundation
         check(abs(bonusSim.shipCollisionMass-3.4)<0.0001 &&
               abs(bonusSim.shipContactRadius-11.2)<0.0001,
               "no Vanguard physics regression when Bastion is installed")
+
+        // PC609 BOREAS05: the very same authoritative combat solver now
+        // runs RobotSnake70 heads, armored rings, real projectiles and bombs.
+        var trial05=CampaignProgress556()
+        check(trial05.selectUnlocked(5) && !trial05.completed(1) &&
+              !trial05.completed(4) && !trial05.completed(5),
+              "BOREAS05 user-approved test access never fakes previous clears")
+        guard let wave05=MissionWave568.generate(level:5,difficulty:.normal,
+                        seed:127,ship:Vec2(x:640,y:360)) else {
+            fatalError("source PC609 wave 05 missing")
+        }
+        guard case let .success(reset05)=MissionStart261.prepare(
+            sector:5,unlocked:true,sceneBusy:false,
+            hasOriginalScene:true,currentLives:3,startingLives:3) else {
+            fatalError("original mission-05 reset missing")
+        }
+        let prepared05=Sector01PreparedWave568(
+            reset:reset05,encounter:wave05,
+            incoming:MissionIncoming568(from:wave05,difficulty:.normal),
+            difficulty:.normal)
+        var snake05=CarbonisCombat568(prepared05)
+        check(snake05.level==5 && snake05.objective == .defend &&
+              snake05.robots.count==1 && snake05.robots[0].rings.count==6,
+              "authentic PC609 BOREAS05 RobotSnake70 source spawn")
+        let robotStart=snake05.robots[0].position
+        for _ in 0..<90 {
+            snake05.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                         shooting:false,dt:1/120)
+        }
+        check(snake05.robots.count==1 &&
+              CarbonisCombat568.distance(
+                  robotStart,snake05.robots[0].position)>1,
+              "PC609 robot head actually pursues on source geodesic sphere")
+        check(snake05.robots[0].rings.allSatisfy { ring in
+            ring.hp==ring.maxHP && ring.position.x.isFinite &&
+            ring.position.y.isFinite
+        },"each living armored segment retains finite physical HP/pose")
+        var armored05=CarbonisCombat568(prepared05)
+        armored05.rocks=[];armored05.shooters=[]
+        let armoredHead=armored05.robots[0]
+        armored05.bullets=[CarbonisCombat568.Projectile(
+            point:armoredHead.position,velocity:Vec2(x:0,y:0),
+            life:0.4,hostile:false,damage:10)]
+        armored05.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                       shooting:false,dt:1/120)
+        check(armored05.robots.count==1 &&
+              armored05.robots[0].hp==armoredHead.hp,
+              "RobotSnake70 head is invulnerable until all armor rings die")
+        var bomb05=CarbonisCombat568(prepared05)
+        bomb05.rocks=[];bomb05.shooters=[]
+        bomb05.bombs=1
+        check(bomb05.useBomb() && bomb05.bombs==0,
+              "PC609 bomb recognizes RobotSnake70 as a real threat")
+        check(bomb05.robots.count==1 && bomb05.robots[0].rings.isEmpty &&
+              bomb05.robots[0].hp==2 && bomb05.score==120,
+              "BombRobot70 hits six 3-HP rings first then 7-HP head once")
+        let exposed=bomb05.robots[0].position
+        bomb05.bullets=[CarbonisCombat568.Projectile(
+            point:exposed,velocity:Vec2(x:0,y:0),
+            life:0.4,hostile:false,damage:3)]
+        bomb05.step(move:Vec2(x:0,y:0),aim:Vec2(x:0,y:0),
+                    shooting:false,dt:1/120)
+        check(bomb05.robots.isEmpty && bomb05.shooterKills==1 &&
+              bomb05.score==520,
+              "real physical bullet destroys exposed head, scores 400 once")
+        check(bomb05.phase != .victory && bomb05.missionSummary==nil,
+              "mission cannot falsely clear before source defend timer and wave quota")
         print("PASS H11 actual C279: source ship dynamics, talents, guardian shield, hostile dampener, collector and cooling")
         print("PASS \(checks) live Carbonis C279 flight, shot, hit, victory and defeat checks")
     }
