@@ -131,11 +131,8 @@ for anchor in ('campaign.selectedSector == sector',
                'MissionWave568.generate(',
                'encounter.objective == .defend',
                'MissionStart261.prepare(',
-               'prepared.encounter.robots.isEmpty'):
-    if anchor=='prepared.encounter.robots.isEmpty':
-        assert 'prepared.encounter.robots.isEmpty' not in boreasSource
-    else:
-        assert anchor in boreasSource,anchor
+               '!prepared.encounter.robots.isEmpty'):
+    assert anchor in boreasSource,anchor
 assert 'BoreasMission05Source.prepare(' in app
 assert 'boreasMission05Prepared=prepared05' in app
 assert 'if let prepared05=boreasMission05Prepared' in app
