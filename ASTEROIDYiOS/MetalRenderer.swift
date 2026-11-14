@@ -18,6 +18,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     // independent SphereSector sandbox to score a campaign victory.
     private weak var combatSession05:CarbonisSession568?
     private var sourceShooterModels05:[Int:GPUModel]=[:]
+    private var sourceRobotModels05:[Int:GPUModel]=[:]
     private var sourceRockModels05:[Int:GPUModel]=[:]
     private let sourceMissionScale05=SourceMissionSize580.load()
     // Original separate visual-only scale; IntroScene41 cinematic is not
@@ -409,6 +410,12 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                                      CarbonisShooterMesh71.typeOne()
                 sourceShooterModels05[kind]=try Self.makeSourceTriangles05(
                     device,mesh.vertices)
+            }
+            // PC609 BossMesh65 head/ring/connector are baked exactly once,
+            // with one shared GPU model for all robots and detached rings.
+            for kind in 0...2 {
+                sourceRobotModels05[kind]=try Self.makeSourceTriangles05(
+                    device,SourceRobotMesh70.vertices(kind:kind))
             }
             // GpuSphere67/RockSphere67: exactly the same deterministic
             // procedural source stones as the existing combat renderer.
@@ -1586,6 +1593,44 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                         angle:enemy.aim,
                         size:9*sourceMissionScale05.enemyFactor)
                     drawMesh(mesh,pose)
+                }
+                // PC609 GpuRobot70.DrawRobot70: actual head and articulated
+                // rings from the live HP/AI simulation, not diagnostic actors.
+                for snake in live.game.robots {
+                    let facing=snake.velocity.lengthSquared>0.01
+                        ? atan2(snake.velocity.y,snake.velocity.x)
+                        : snake.phase
+                    if let head=sourceRobotModels05[0] {
+                        drawMesh(head,Self.sphereStamp(
+                            snake.position,angle:facing,
+                            size:16*sourceMissionScale05.enemyFactor))
+                    }
+                    var parent=snake.position
+                    for ring in snake.rings {
+                        let delta=Sphere67.delta(
+                            target:parent,origin:ring.position)
+                        let halfLink=sqrt(delta.lengthSquared)*0.5
+                        let middle=Sphere67.offset(
+                            ring.position,by:delta*0.5)
+                        let angle=atan2(delta.y,delta.x)
+                        if let connector=sourceRobotModels05[2] {
+                            let joint=Self.sphereStamp(
+                                middle,angle:angle,
+                                size:sourceMissionScale05.enemyFactor)
+                            let stretch=simd_float4x4(diagonal:SIMD4(
+                                Float(5),
+                                max(0.1,halfLink/max(0.001,
+                                    sourceMissionScale05.enemyFactor)),
+                                Float(5),Float(1)))
+                            drawMesh(connector,joint * stretch)
+                        }
+                        if let segment=sourceRobotModels05[1] {
+                            drawMesh(segment,Self.sphereStamp(
+                                ring.position,angle:angle,
+                                size:9.5*sourceMissionScale05.enemyFactor))
+                        }
+                        parent=ring.position
+                    }
                 }
                 for shot in live.game.bullets {
                     let p=PlanetPreview556.shipSurfacePosition(
