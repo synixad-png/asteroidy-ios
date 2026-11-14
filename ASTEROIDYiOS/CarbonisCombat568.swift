@@ -142,8 +142,7 @@ struct SourceRobotSnake70 {
         let speed=warning ? base*0.55 :
             charging ? base*2.2 :
             base+min(15,Float(initialRings-rings.count)*1.6)
-        let desired=dir*speed+
-            side*(sin(age*1.7+phase)*(charging ? 0:18))
+        let desired=dir*speed + side*(sin(age*1.7+phase)*(charging ? 0:18))
         velocity=velocity+(desired-velocity)*(1-exp(-dt*2.4))
         position=Sphere67.advance(position,velocity:&velocity,dt:dt)
 
@@ -152,8 +151,8 @@ struct SourceRobotSnake70 {
             difficulty == .hard ? 1.32:1.10
         let distance=sqrt(Sphere67.delta(target:target,
                                           origin:position).lengthSquared)
-        let future=Sphere67.offset(target,by:playerVelocity*
-            min(Float(0.8),distance/(230*danger)))
+        let predictedTravel=playerVelocity * min(Float(0.8),distance/(230*danger))
+        let future=Sphere67.offset(target,by:predictedTravel)
         let predicted=Sphere67.delta(target:future,origin:position)
         let targetAngle=atan2(predicted.y,predicted.x)
         aim=CarbonisCombat568.turn72(aim,targetAngle,dt:dt)
