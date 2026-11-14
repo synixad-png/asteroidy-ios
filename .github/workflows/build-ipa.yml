@@ -332,7 +332,7 @@ jobs:
     needs: [select, verify-sphere-linux, verify-new-game-source]
     if: ${{ contains(needs.select.outputs.jobs, ' compile-device ') && (github.event.repository.private == false) }}
     runs-on: macos-15-intel
-    timeout-minutes: 45
+    timeout-minutes: 60
     permissions:
       contents: write
     steps:
@@ -518,15 +518,25 @@ jobs:
           python3 Tools/prepare_v568_w3_home_planet290.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tools/prepare_v568_w3_original_assets.py --root . --destination ASTEROIDYiOS/Assets
           echo 'Verified real CARBONIS C279 and W3 assets staged for unsigned IPA.'
-      # PC602HomeWorldDriver291.resourcesInstalled needs these two files for
-      # every ship. Without them NEW GAME and URUCHOM MISJĘ show
-      # "BRAK ZASOBÓW H290". Same commands as job boreas-complete-release.
-      - name: Stage PC602 H290 height map and 820-asteroid orbit belt
+      # The push IPA must be the full game, as job boreas-complete-release.
+      # PC602HomeWorldDriver291.resourcesInstalled needs the H290 height map
+      # and the orbit belt for every ship. Without them NEW GAME and
+      # URUCHOM MISJĘ show "BRAK ZASOBÓW H290".
+      - name: Stage full game assets (same commands as boreas-complete-release)
         run: |
           set -euo pipefail
+          python3 Tools/prepare_vanguard431_assets.py
+          python3 Tools/verify_original_vanguard_resources.py --assets ASTEROIDYiOS/Assets
+          python3 Tools/prepare_v568_player_ship_ios.py --root . --destination ASTEROIDYiOS/Assets
+          python3 Tools/stage_pc602_planetarium.py
           python3 Tools/stage_pc602_newhome290.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tools/stage_pc602_orbit_belt51.py --root . --destination ASTEROIDYiOS/Assets
           python3 Tests/PC602OrbitBelt51Tests.py --root . --asset ASTEROIDYiOS/Assets/PC602OrbitBelt51.bin
+          python3 Tools/materialize_pc586_original_resources.py --report reports/pc586-source.json
+          python3 Tools/export_boreas_node_tracks556.py --root . \
+            --destination ASTEROIDYiOS/Assets/Boreas556.asnt
+          python3 Tests/BoreasNodeTracks556Tests.py
+          python3 Tools/verify_embedded_pc609_assets.py --assets ASTEROIDYiOS/Assets --boreas
       - name: Audit every source C279 planet triangle, alpha and PC Metal culling before IPA
         run: |
           set -euo pipefail
@@ -591,9 +601,14 @@ jobs:
           echo "Packaging $APP"
           mkdir -p distribution/Payload
           cp -R "$APP" distribution/Payload/
+          python3 Tools/materialize_pc586_original_resources.py --app "distribution/Payload/$(basename "$APP")" --report reports/pc586-in-ipa.json
           (cd distribution && zip -q -r -y ../ASTEROIDY_iOS_UNSIGNED.ipa Payload)
           unzip -t ASTEROIDY_iOS_UNSIGNED.ipa | tail -1
           python3 Tools/verify_ipa.py ASTEROIDY_iOS_UNSIGNED.ipa | tee reports/ipa-verification.txt
+          python3 Tools/verify_embedded_pc609_assets.py --ipa ASTEROIDY_iOS_UNSIGNED.ipa --boreas | tee reports/ipa-pc609-ships.txt
+          python3 Tools/verify_pc586_complete_ipa.py ASTEROIDY_iOS_UNSIGNED.ipa | tee reports/ipa-pc586.txt
+          python3 Tools/verify_pc602_planetarium_ipa.py ASTEROIDY_iOS_UNSIGNED.ipa | tee reports/ipa-planetarium.txt
+          python3 Tools/verify_bastion_full_ipa.py ASTEROIDY_iOS_UNSIGNED.ipa | tee reports/ipa-full-95.txt
           # Fail closed: the same 5 files PC602HomeWorldDriver291.resourcesInstalled checks.
           python3 - <<'PY' | tee reports/h290-orbit-files.txt
           import zipfile
