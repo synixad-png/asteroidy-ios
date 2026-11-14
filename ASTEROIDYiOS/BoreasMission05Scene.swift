@@ -224,6 +224,10 @@ struct BoreasMission05Scene:View {
             input.gameplayPaused=false
             session.paused=false
             session.refreshControls586()
+            // Reuse PC586 remapped P / gamepad START pause route.
+            session.onPauseRequested={
+                pause(!userPaused)
+            }
             session.onAudioEvents={ events in
                 for code in events {onAudioEvent(code)}
             }
@@ -243,6 +247,7 @@ struct BoreasMission05Scene:View {
         .onChange(of:scenePhase) { _,phase in
             if phase != .active {
                 session.release()
+                SourceHardwareInput586.shared.clearKeyboard()
                 session.paused=true
                 input.gameplayPaused=true
                 onEnginePower(0)
@@ -254,6 +259,8 @@ struct BoreasMission05Scene:View {
         }
         .onDisappear {
             session.release()
+            SourceHardwareInput586.shared.clearKeyboard()
+            session.onPauseRequested=nil
             session.onAudioEvents=nil
             session.paused=true
             input.gameplayPaused=true
