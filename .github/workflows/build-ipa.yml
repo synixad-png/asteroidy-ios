@@ -96,7 +96,7 @@ jobs:
               'Actions: ' + url,
               'Status: started (check Actions jobs for final result)',
               'Signing: unsigned IPA; signing required for device'
-            ].join('\\n') + '\\n';
+            ].join('\n') + '\n';
             // Re-read blob SHA after conflicts; prevent an older, slower run
             // from overwriting the marker of a newer workflow run.
             for (let attempt = 0; attempt < 5; attempt++) {
@@ -109,7 +109,7 @@ jobs:
                 sha = old.data.sha;
                 const oldText = Buffer.from(old.data.content || '', 'base64')
                   .toString('utf8');
-                const matched = oldText.match(/^Run ID: (\\d+)$/m);
+                const matched = oldText.match(/^Run ID: (\d+)$/m);
                 if (matched && Number(matched[1]) > runId) {
                   core.info('Newer run ' + matched[1] + ' already recorded on ' + branch);
                   return;
